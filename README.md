@@ -31,7 +31,9 @@ Silesia corpus benchmark
 -------------------------
 
 i7-7700K @4.20GHz, 32GB RAM, Ubuntu 18.04
+
 g++ version 7.3.0
+
 Kanzi version 1.4 C++ implementation. Block size is 100 MB. 
 
 
