@@ -65,3 +65,28 @@ Kanzi version 1.4 C++ implementation. Block size is 100 MB.
 |**Kanzi -l 6 -j 12**         |     **28.5**	  |    **28.9**     |  **41,144,431**  |
 |zpaq v7.14 m5 t1             |	     343.1	    |     352.0       |    39,112,924    |
 |zpaq v7.14 m5 t12            |	     344.3	    |     350.4       |    39,112,924    |
+
+
+Build Kanzi
+===========
+
+The C++ code can be built on Windows with Visual Studio and Linux with g++.
+Porting to other operating systems should be straightforward.
+
+### Visual Studio 2008
+This version of VS uses C++03 (AFAIK). Unzip the file "Kanzi_VS2008.zip" in place.
+The project generates a Windows 32 binary. Multithreading is not supported with this version.
+
+### Visual Studio 2015
+This version of VS uses C++11 (AFAIK). Unzip the file "Kanzi_VS2015.zip" in place.
+The project generates a Windows 64 binary. Multithreading is supported with this version.
+
+### mingw-w64
+Go to the Kanzi directory and run 'mingw32-make.exe'. The Makefile contains all the necessary
+targets. Tested successfully on Win64 with mingw-w64 using Gnu Make 4.2.1.
+Multithreading is supported.
+
+### Linux
+Go to the Kanzi directory and run 'make'. The Makefile contains all the necessary
+targets. g++ is required. Tested successfully on Ubuntu 18.04 with g++ 7.3.0
+and clang++ 6.0.0. Multithreading is supported with g++ version 5.0.0 or newer.
