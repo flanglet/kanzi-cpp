@@ -67,6 +67,27 @@ Kanzi version 1.4 C++ implementation. Block size is 100 MB.
 |zpaq v7.14 m5 t12            |	     344.3	    |     350.4       |    39,112,924    |
 
 
+enwik8
+-------
+
+i7-7700K @4.20GHz, 32GB RAM, Ubuntu 18.04
+
+g++ version 7.3.0
+
+Kanzi version 1.4 C++ implementation. Block size is 100 MB. 1 thread
+
+
+|        Compressor           | Encoding (sec)  | Decoding (sec)  |    Size          |
+|-----------------------------|-----------------|-----------------|------------------|
+|Original     	              |                 |                 |   100,000,000    |	
+|**Kanzi -l 1**               |  	   **1.6** 	  |     **0.9**     |  **37,389,414**  |
+|**Kanzi -l 2**               |      **4.9**    |     **3.4**     |  **25,439,827**  |        
+|**Kanzi -l 3**               |	     **9.4**    |     **7.3**     |  **22,744,813**  |
+|**Kanzi -l 4**               |	    **10.8**	  |     **9.1**     |  **22,096,910**  |
+|**Kanzi -l 5**               |	    **15.6**	  |    **13.4**     |  **20,791,382**  |
+|**Kanzi -l 6**               |	    **31.0**	  |    **31.8**     |  **19,464,686**  |
+
+
 Build Kanzi
 -----------
 
