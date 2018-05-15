@@ -68,9 +68,9 @@ Kanzi version 1.4 C++ implementation. Block size is 100 MB.
 
 
 Build Kanzi
-===========
+-----------
 
-The C++ code can be built on Windows with Visual Studio and Linux with g++.
+The C++ code can be built on Windows with Visual Studio and Linux with g++ and clang++.
 Porting to other operating systems should be straightforward.
 
 ### Visual Studio 2008
