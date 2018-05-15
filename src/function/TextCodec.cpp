@@ -1223,7 +1223,7 @@ int TextCodec::createDictionary(SliceArray<byte> input, DictEntry dict[], int ma
             continue;
         }
 
-        if ((isDelimiter(cur)) && (nbWords < maxWords) && (i >= delimAnchor + 1)) { // At least 2 letters
+        if ((isDelimiter(cur)) && (i >= delimAnchor + 1)) { // At least 2 letters
             dict[nbWords] = DictEntry(words, delimAnchor, h, nbWords, i - delimAnchor);
             nbWords++;
         }
