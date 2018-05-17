@@ -378,13 +378,12 @@ inline TPAQMixer::TPAQMixer()
 // Adjust weights to minimize coding cost of last prediction
 inline void TPAQMixer::update(int bit)
 {
-    int32 err = (bit << 12) - _pr;
+    const int32 err = (((bit << 12) - _pr) * _learnRate) >> 7;
 
     if (err == 0)
         return;
 
     // Quickly decaying learn rate
-    err = (err * _learnRate) >> 7;
     _learnRate += ((END_LEARN_RATE - _learnRate) >> 31);
     _skew += err;
 
@@ -411,9 +410,8 @@ inline int TPAQMixer::get(int32 p0, int32 p1, int32 p2, int32 p3, int32 p4, int3
     _p7 = p7;
 
     // Neural Network dot product (sum weights*inputs)
-    const int32 p = (p0 * _w0) + (p1 * _w1) + (p2 * _w2) + (p3 * _w3) +
-                    (p4 * _w4) + (p5 * _w5) + (p6 * _w6) + (p7 * _w7) + _skew;
-
-    _pr = Global::squash((p + 65536) >> 17);
+    _pr = Global::squash(((p0 * _w0) + (p1 * _w1) + (p2 * _w2) + (p3 * _w3) +
+                         (p4 * _w4) + (p5 * _w5) + (p6 * _w6) + (p7 * _w7) +
+                          _skew  + 65536) >> 17);
     return _pr;
 }
