@@ -616,11 +616,11 @@ TextCodec::TextCodec(map<string, string>& ctx)
     int log;
 
     if (blockSize >= 1<<28) {
-       log = 28;
+       log = 26;
     } else if (blockSize < 1<<10) {
-       log = 10;
+       log = 8;
     } else {
-       log = Global::log2(3 * blockSize / 2);
+       log = Global::log2(blockSize/4);
     }
 
     // Select an appropriate initial dictionary size
