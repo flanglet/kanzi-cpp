@@ -25,14 +25,12 @@ namespace kanzi {
    class DictEntry {
    public:
        int32 _hash; // full word hash
-       int _pos; // position in text
-       int32 _idx; // index in dictionary
-       int16 _length; // length in text
-       const byte* _buf; // text data
+       int32 _data; // packed word length (8 MSB) + index in dictionary (24 LSB)
+       const byte* _ptr; // text data
 
        DictEntry();
 
-       DictEntry(const byte buf[], int pos, int32 hash, int idx, int length);
+       DictEntry(const byte* ptr, int32 hash, int idx, int length);
 
        DictEntry& operator = (const DictEntry& de);
 
@@ -52,8 +50,8 @@ namespace kanzi {
        static const int LOG_THRESHOLD1 = 7;
        static const int THRESHOLD1 = 1 << LOG_THRESHOLD1;
        static const int THRESHOLD2 = THRESHOLD1 * THRESHOLD1;
-       static const int MAX_DICT_SIZE = 1 << 19;
-       static const int MAX_WORD_LENGTH = 32;
+       static const int MAX_DICT_SIZE = 1 << 19; // must be less than 1<<24
+       static const int MAX_WORD_LENGTH = 32; // must be less than 128
        static const int LOG_HASHES_SIZE = 24; // 16 MB
        static const byte ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
        static const byte ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
@@ -131,29 +129,23 @@ namespace kanzi {
 
    inline DictEntry::DictEntry()
    {
-       _buf = nullptr;
-       _pos = -1;
+       _ptr = nullptr;
        _hash = 0;
-       _idx = int32(0);
-       _length = int16(0);
+       _data = 0;
    }
 
-   inline DictEntry::DictEntry(const byte buf[], int pos, int32 hash, int idx, int length)
+   inline DictEntry::DictEntry(const byte* ptr, int32 hash, int idx, int length)
    {
-       _buf = buf;
-       _pos = pos;
+       _ptr = ptr;
        _hash = hash;
-       _idx = int32(idx);
-       _length = int16(length);
+       _data = ((length & 0xFF) << 24) | (idx & 0x00FFFFFF);
    }
 
    inline DictEntry& DictEntry::operator = (const DictEntry& de)
    {
-       _buf = de._buf;
-       _pos = de._pos;
+       _ptr = de._ptr;
        _hash = de._hash;
-       _idx = de._idx;
-       _length = de._length;
+       _data = de._data;
        return *this;
    }
 }
