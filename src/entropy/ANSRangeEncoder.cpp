@@ -228,11 +228,11 @@ void ANSRangeEncoder::encodeChunk(byte block[], int start, int end)
     // Write final ANS state
     _bitstream.writeBits(st, 32);
 
-    // Write encoded data to bitstream
-    for (p--; p != p0; p--)
-        _bitstream.writeBits(*p, 8);
-
-    _bitstream.writeBits(*p0, 8);
+    if (p != p0) {
+       // Write encoded data to bitstream
+       for (p--; p >= p0; p--)
+           _bitstream.writeBits(*p, 8);
+    }
 }
 
 // Compute chunk frequencies, cumulated frequencies and encode chunk header
