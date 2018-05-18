@@ -178,8 +178,8 @@ void ANSRangeDecoder::decodeChunk(byte block[], int start, int end)
     const uint mask = (1 << _logRange) - 1;
 
     if (_order == 0) {
-        byte* freq2sym = &_f2s[0];
-        ANSDecSymbol* symb = &_symbols[0];
+        const byte* freq2sym = &_f2s[0];
+        const ANSDecSymbol* symb = &_symbols[0];
 
         for (int i = start; i < end; i++) {
             byte cur = freq2sym[st & mask];
@@ -221,7 +221,7 @@ void ANSDecSymbol::reset(int cumFreq, int freq, int logRange)
     // Mirror encoder
     if (freq >= 1<<logRange)
         freq = (1<<logRange) - 1;
-    
+
     _cumFreq = cumFreq;
     _freq = freq;
 }

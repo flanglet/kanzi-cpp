@@ -169,7 +169,8 @@ int ANSRangeEncoder::encode(byte block[], uint blkptr, uint len)
 void ANSRangeEncoder::encodeChunk(byte block[], int start, int end)
 {
     int st = ANS_TOP;
-    int n = 0;
+    byte* p0 = &_buffer[0];
+    byte* p = p0;
 
     if (_order == 0) {
         const ANSEncSymbol* symb = &_symbols[0];
@@ -179,7 +180,7 @@ void ANSRangeEncoder::encodeChunk(byte block[], int start, int end)
             const int max = sym._xMax;
 
             while (st >= max) {
-                _buffer[n++] = byte(st);
+                *p++ = byte(st);
                 st >>= 8;
             }
 
@@ -199,7 +200,7 @@ void ANSRangeEncoder::encodeChunk(byte block[], int start, int end)
             const int max = sym._xMax;
 
             while (st >= max) {
-                _buffer[n++] = byte(st);
+                *p++ = byte(st);
                 st >>= 8;
             }
 
@@ -216,7 +217,7 @@ void ANSRangeEncoder::encodeChunk(byte block[], int start, int end)
         const int max = sym._xMax;
 
         while (st >= max) {
-            _buffer[n++] = byte(st);
+            *p++ = byte(st);
             st >>= 8;
         }
 
@@ -228,8 +229,10 @@ void ANSRangeEncoder::encodeChunk(byte block[], int start, int end)
     _bitstream.writeBits(st, 32);
 
     // Write encoded data to bitstream
-    for (n--; n >= 0; n--)
-        _bitstream.writeBits(_buffer[n], 8);
+    for (p--; p != p0; p--)
+        _bitstream.writeBits(*p, 8);
+
+    _bitstream.writeBits(*p0, 8);
 }
 
 // Compute chunk frequencies, cumulated frequencies and encode chunk header
