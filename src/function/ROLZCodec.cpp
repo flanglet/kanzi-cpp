@@ -299,8 +299,7 @@ inline ROLZPredictor::ROLZPredictor(uint logPosChecks)
 {
     _logSize = logPosChecks;
     _size = 1 << logPosChecks;
-    _p1 = new uint16[256 * _size];
-    _p2 = new uint16[256 * _size];
+    _p = new uint32[256 * _size];
     reset();
 }
 
@@ -309,19 +308,18 @@ inline void ROLZPredictor::reset()
     _c1 = 1;
     _ctx = 0;
 
-    for (int i = 0; i < 256 * _size; i++) {
-        _p1[i] = 1 << 15;
-        _p2[i] = 1 << 15;
-    }
+    for (int i = 0; i < 256 * _size; i++) 
+        _p[i] = (32768 << 16) | 32768;
 }
 
 inline void ROLZPredictor::update(int bit)
 {
-    const int32 idx = _ctx + _c1;
-    _p1[idx] -= (((_p1[idx] - (-bit & 0xFFFF)) >> 3) + bit);
-    _p2[idx] -= (((_p2[idx] - (-bit & 0xFFFF)) >> 6) + bit);
-    _c1 <<= 1;
-    _c1 += bit;
+    uint8* p = (uint8*) &_p[_ctx + _c1];
+    uint16* pr = (uint16*) p;
+    *pr -= (((*pr - uint16(-bit)) >> 3) + bit);
+    pr = (uint16*) (p + 2);
+    *pr -= (((*pr - uint16(-bit)) >> 6) + bit);
+    _c1 = (_c1 << 1) + bit;
 
     if (_c1 >= _size)
         _c1 = 1;
@@ -329,8 +327,8 @@ inline void ROLZPredictor::update(int bit)
 
 inline int ROLZPredictor::get()
 {
-    const int32 idx = _ctx + _c1;
-    return (int(_p1[idx]) + int(_p2[idx])) >> 5;
+    uint8* p = (uint8*) &_p[_ctx + _c1];
+    return (int(*(uint16*) p) + int(*(uint16*) (p + 2))) >> 5;
 }
 
 ROLZEncoder::ROLZEncoder(Predictor* predictors[2], byte buf[], int& idx)

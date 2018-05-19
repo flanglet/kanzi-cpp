@@ -24,13 +24,10 @@ limitations under the License.
 // Code based on 'balz' by Ilya Muravyov
 // More information about ROLZ at http://ezcodesample.com/rolz/rolz_article.html
 
-namespace kanzi
-{
-	class ROLZPredictor : public Predictor
-	{
+namespace kanzi {
+	class ROLZPredictor : public Predictor {
 	private:
-		uint16* _p1;
-		uint16* _p2;
+		uint32* _p; // packed probability: 16 bits + 16 bits
 		uint _logSize;
 		int32 _size;
 		int32 _c1;
@@ -39,9 +36,9 @@ namespace kanzi
 	public:
 		ROLZPredictor(uint logMaxSymbolSize);
 
-		~ROLZPredictor() {
-			delete[] _p1;
-			delete[] _p2;
+		~ROLZPredictor()
+		{
+			delete[] _p;
 		};
 
 		void reset();
@@ -53,9 +50,7 @@ namespace kanzi
 		void setContext(byte ctx) { _ctx = uint8(ctx) << _logSize; }
 	};
 
-
-	class ROLZEncoder
-	{
+	class ROLZEncoder {
 	private:
 		static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
 		static const uint64 MASK_24_56 = 0x00FFFFFFFF000000;
@@ -80,11 +75,10 @@ namespace kanzi
 
 		void dispose();
 
-      void setContext(int n) { _predictor = _predictors[n]; }
+		void setContext(int n) { _predictor = _predictors[n]; }
 	};
 
-	class ROLZDecoder
-	{
+	class ROLZDecoder {
 	private:
 		static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
 		static const uint64 MASK_24_56 = 0x00FFFFFFFF000000;
@@ -99,7 +93,6 @@ namespace kanzi
 		uint64 _high;
 		uint64 _current;
 
-
 	public:
 		ROLZDecoder(Predictor* predictors[2], byte buf[], int& idx);
 
@@ -111,12 +104,10 @@ namespace kanzi
 
 		void dispose() {}
 
-        void setContext(int n) { _predictor = _predictors[n]; }
+		void setContext(int n) { _predictor = _predictors[n]; }
 	};
 
-
-	class ROLZCodec : public Function<byte>
-	{
+	class ROLZCodec : public Function<byte> {
 	public:
 		ROLZCodec(uint logPosChecks = LOG_POS_CHECKS) THROW;
 
@@ -148,18 +139,18 @@ namespace kanzi
 		ROLZPredictor _litPredictor;
 		ROLZPredictor _matchPredictor;
 
-
 		int findMatch(const byte buf[], const int pos, const int end);
 
-		uint16 getKey(const byte* p) {
+		uint16 getKey(const byte* p)
+		{
 			return uint16(LittleEndian::readInt16(p));
 		}
 
-		int32 hash(const byte* p) {
+		int32 hash(const byte* p)
+		{
 			return ((LittleEndian::readInt32(p) & 0x00FFFFFF) * HASH) & HASH_MASK;
 		}
 	};
-
 }
 
 #endif
