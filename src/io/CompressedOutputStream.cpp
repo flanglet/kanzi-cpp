@@ -90,8 +90,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, map<string, str
 
     _initialized = false;
     _closed = false;
-    const int bufferSize = (bSize <= 65536) ? bSize : 65536;
-    _obs = new DefaultOutputBitStream(os, bufferSize);
+    _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
     _entropyType = EntropyCodecFactory::getType(entropyCodec.c_str());
     _transformType = FunctionFactory<byte>::getType(transform.c_str());
     it = ctx.find("checksum");
