@@ -202,7 +202,7 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
             log.println("   -j, --jobs=<jobs>", true);
             log.println("        maximum number of jobs the program may start concurrently", true);
-            log.println("        (default is 1, maximum is 32).\n", true);
+            log.println("        (default is 1, maximum is 64).\n", true);
             log.println("", true);
 
             if (mode.compare(0, 1, "d") != 0) {
