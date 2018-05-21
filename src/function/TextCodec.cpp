@@ -754,7 +754,7 @@ bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
     // DOS encoded end of line (CR+LF) ?
     _isCRLF = (mode & 0x01) != 0;
     dst[dstIdx++] = mode;
-    
+
     if (src[srcIdx] == ' ') {
         dst[dstIdx++] = ' ';
         srcIdx++;
@@ -942,7 +942,7 @@ inline int TextCodec::emitSymbols(byte src[], byte dst[], const int srcEnd, cons
 {
     int dstIdx = 0;
 
-    for (int i = 0; i <= srcEnd; i++) {         		
+    for (int i = 0; i <= srcEnd; i++) {
          if (dstIdx >= dstEnd)
             break;
 
@@ -964,16 +964,16 @@ inline int TextCodec::emitSymbols(byte src[], byte dst[], const int srcEnd, cons
 
                if (dstIdx + lenIdx < dstEnd)
                   dstIdx += emitWordIndex(&dst[dstIdx], idx);
-               
+
                break;
             }
-               
+
             case CR :
                if (_isCRLF == false)
                   dst[dstIdx++] = cur;
-               
-               break;               
-               
+
+               break;
+
             default:
                dst[dstIdx++] = cur;
          }
@@ -1058,7 +1058,7 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
     for (int i = 0; i < mapSize; i++)
         _dictMap[i] = nullptr;
 
-    for (int i = 0; i < _staticDictSize; i++) 
+    for (int i = 0; i < _staticDictSize; i++)
         _dictMap[_dictList[i]._hash & _hashMask] = &_dictList[i];
 
     // Pre-allocate all dictionary entries
@@ -1070,8 +1070,7 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
     int delimAnchor = isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
     int words = _staticDictSize;
     bool wordRun = false;
-    const bool isCRLF = (src[srcIdx++] & 0x01) != 0;
-    _isCRLF = isCRLF;
+    _isCRLF = (src[srcIdx++] & 0x01) != 0;
 
     while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
         byte cur = src[srcIdx];
@@ -1097,9 +1096,8 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
             if (pe != nullptr) {
                if (((pe->_data >> 24) != length) || (pe->_hash != h1)) {
                    pe = nullptr;
-               } else {
-                   if (!sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1))
-                       pe = nullptr;
+               } else if (!sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1)) {
+                   pe = nullptr;
                }
             }
 
@@ -1171,7 +1169,7 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
                 // Flip case of first character
                 dst[dstIdx++] = isUpperCase(*buf) ? *buf + 32 : *buf - 32;
             }
-            
+
             for (int n = 1, l = e._data >> 24; n < l; n++, dstIdx++)
                 dst[dstIdx] = buf[n];
 
