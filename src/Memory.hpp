@@ -71,8 +71,6 @@ namespace kanzi {
 		return one.c[3] == 1;
 	}
 
-	static const bool KANZI_BIG_ENDIAN = isBigEndian();
-
 	#ifndef IS_BIG_ENDIAN
 		#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
 			   defined(__BIG_ENDIAN__) || \
