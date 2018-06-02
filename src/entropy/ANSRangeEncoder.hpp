@@ -42,6 +42,7 @@ namespace kanzi
       }
 
       ~ANSEncSymbol() { }
+
       void reset(int cumFreq, int freq, int logRange);
 
       int _xMax; // (Exclusive) upper bound of pre-normalization interval

@@ -36,8 +36,6 @@ namespace kanzi
 
        ~RangeEncoder() { dispose(); };
 
-       int updateFrequencies(uint frequencies[], int size, int lr);
-
        int encode(byte block[], uint blkptr, uint len);
 
        OutputBitStream& getBitStream() const { return _bitstream; }
@@ -63,6 +61,8 @@ namespace kanzi
        uint _shift;
 
        int rebuildStatistics(byte block[], int start, int end, int lr);
+
+       int updateFrequencies(uint frequencies[], int size, int lr);
 
        void encodeByte(byte b);
 

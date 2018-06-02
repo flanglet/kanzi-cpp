@@ -75,7 +75,7 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW 
 }
 
 // Rebuild Huffman codes
-bool HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
+int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
 {
     int count = 0;
 
@@ -126,7 +126,7 @@ bool HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
         _codes[r] |= (_sizes[r] << 24);
     }
 
-    return true;
+    return count;
 }
 
 // See [In-Place Calculation of Minimum-Redundancy Codes]

@@ -51,7 +51,7 @@ namespace kanzi
 
        ~HuffmanEncoder() { dispose(); }
 
-       bool updateFrequencies(uint frequencies[]) THROW;
+       int updateFrequencies(uint frequencies[]) THROW;
 
        int encode(byte block[], uint blkptr, uint len);
 
