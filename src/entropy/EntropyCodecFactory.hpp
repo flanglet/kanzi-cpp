@@ -214,6 +214,9 @@ namespace kanzi {
        if (name == "TPAQ")
            return TPAQ_TYPE;
 
+       if (name == "TPAQX")
+           return TPAQX_TYPE;
+
        if (name == "NONE")
            return NONE_TYPE;
 

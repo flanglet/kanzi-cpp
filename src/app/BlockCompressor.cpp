@@ -356,6 +356,7 @@ int BlockCompressor::call()
         ss.str(string());
         ss << _jobs;
         ctx["jobs"] = ss.str();
+        ctx["extra"] = (_codec == "TPAQX") ? "true" : "false";
         FileCompressTask<FileCompressResult> task(ctx, _listeners);
         FileCompressResult fcr = task.call();
         res = fcr._code;
@@ -538,6 +539,11 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
     case 6:
         tranformAndCodec[0] = "X86+RLT+TEXT";
         tranformAndCodec[1] = "TPAQ";
+        return;
+
+    case 7:
+        tranformAndCodec[0] = "X86+RLT+TEXT";
+        tranformAndCodec[1] = "TPAQX";
         return;
 
     default:
