@@ -42,7 +42,7 @@ CMPredictor::CMPredictor()
     }
 
     _pc1 = _counter1[_ctx];
-    _pc2 = _counter2[(_ctx << 1) | _runMask];
+    _pc2 = _counter2[_ctx | _runMask];
 }
 
 // Update the probability model
@@ -57,10 +57,10 @@ inline void CMPredictor::update(int bit)
         _pc2[_idx] -= (_pc2[_idx] >> SLOW_RATE);
     }
     else {
-        _pc1[256] += ((_pc1[256] ^ 0xFFFF) >> FAST_RATE);
-        _pc1[_c1] += ((_pc1[_c1] ^ 0xFFFF) >> MEDIUM_RATE);
-        _pc2[_idx + 1] += ((_pc2[_idx + 1] ^ 0xFFFF) >> SLOW_RATE);
-        _pc2[_idx] += ((_pc2[_idx] ^ 0xFFFF) >> SLOW_RATE);
+        _pc1[256] += ((0xFFFF - _pc1[256]) >> FAST_RATE);
+        _pc1[_c1] += ((0xFFFF - _pc1[_c1]) >> MEDIUM_RATE);
+        _pc2[_idx + 1] += ((0xFFFF - _pc2[_idx + 1]) >> SLOW_RATE);
+        _pc2[_idx] += ((0xFFFF - _pc2[_idx]) >> SLOW_RATE);
         _ctx++;
     }
 
@@ -71,7 +71,7 @@ inline void CMPredictor::update(int bit)
 
         if (_c1 == _c2) {
             _run++;
-            _runMask = ((uint32)(2 - _run)) >> 31;
+            _runMask = (_run > 2) ? 256 : 0;
         }
         else {
             _run = 0;
@@ -86,9 +86,9 @@ inline int CMPredictor::get()
     _pc1 = _counter1[_ctx];
     const int p = (13 * _pc1[256] + 14 * _pc1[_c1] + 5 * _pc1[_c2]) >> 5;
     _idx = p >> 12;
-    _pc2 = _counter2[(_ctx << 1) | _runMask];
+    _pc2 = _counter2[_ctx  | _runMask];
     const int x1 = _pc2[_idx];
     const int x2 = _pc2[_idx + 1];
     const int ssep = x1 + (((x2 - x1) * (p & 4095)) >> 12);
-    return (p + ssep + ssep + ssep + 32) >> 6; // rescale to [0..4095]
+    return (p + 3*ssep + 32) >> 6; // rescale to [0..4095]
 }
