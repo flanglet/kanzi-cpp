@@ -35,7 +35,39 @@ void testBitStreamCorrectnessAligned()
     srand((uint)time(nullptr));
     cout << "\nInitial" << endl;
 
-    for (int test = 0; test < 10; test++) {
+    // Check correctness of read() and written()
+    for (int t = 1; t <= 32; t++) {
+        stringbuf buffer;
+        iostream ios(&buffer);
+        DefaultOutputBitStream obs(ios, 16384);
+        cout << endl;
+        obs.writeBits(0x0123456789ABCDEFL, t);
+        cout << "Written (before close): " << obs.written() << endl;
+        obs.close();
+        cout << "Written (after close): " << obs.written() << endl;
+        ios.rdbuf()->pubseekpos(0);
+        istringstream is;
+        char* cvalues = new char[4 * length];
+
+        for (int i = 0; i < length; i++) {
+            cvalues[4 * i] = (values[i] >> 24) & 0xFF;
+            cvalues[4 * i + 1] = (values[i] >> 16) & 0xFF;
+            cvalues[4 * i + 2] = (values[i] >> 8) & 0xFF;
+            cvalues[4 * i + 3] = (values[i] >> 0) & 0xFF;
+        }
+
+        is.read(cvalues, length);
+        DefaultInputBitStream ibs(ios, 16384);
+        ibs.readBits(t);
+
+        cout << ((ibs.read() == uint64(t)) ? "OK" : "KO") << endl;
+        cout << "Read (before close): " << ibs.read() << endl;
+        ibs.close();
+        cout << "Read (after close): " << ibs.read() << endl;
+        delete[] cvalues;
+    }
+
+    for (int test = 1; test <= 10; test++) {
         stringbuf buffer;
         iostream ios(&buffer);
         DefaultOutputBitStream obs(ios, 16384);
@@ -46,7 +78,7 @@ void testBitStreamCorrectnessAligned()
             values[i] = rand();
             cout << (int)values[i] << " ";
 
-            if ((i % 50) == 49)
+            if ((i % 20) == 19)
                 cout << endl;
         }
 
@@ -84,7 +116,121 @@ void testBitStreamCorrectnessAligned()
             cout << ((x == values[i]) ? " " : "* ");
             ok &= (x == values[i]);
 
-            if ((i % 50) == 49)
+            if ((i % 20) == 19)
+                cout << endl;
+        }
+
+        delete[] cvalues;
+        ibs.close();
+        cout << endl;
+        cout << endl
+             << "Bits written: " << dbs.written() << endl;
+        cout << endl
+             << "Bits read: " << ibs.read() << endl;
+        cout << endl
+             << "\n" << ((ok) ? "Success" : "Failure") << endl;
+        cout << endl;
+        cout << endl;
+    }
+
+    delete[] values;
+}
+
+void testBitStreamCorrectnessMisaligned()
+{
+    // Test correctness (not byte aligned)
+    cout << "Correctness Test - not byte aligned" << endl;
+    const int length = 100;
+    int* values = new int[length];
+    srand((uint)time(nullptr));
+    cout << "\nInitial" << endl;
+
+    // Check correctness of read() and written()
+    for (int t = 1; t <= 32; t++) {
+        stringbuf buffer;
+        iostream ios(&buffer);
+        DefaultOutputBitStream obs(ios, 16384);
+        cout << endl;
+        obs.writeBit(1);
+        obs.writeBits(0x0123456789ABCDEFL, t);
+        cout << "Written (before close): " << obs.written() << endl;
+        obs.close();
+        cout << "Written (after close): " << obs.written() << endl;
+        ios.rdbuf()->pubseekpos(0);
+        istringstream is;
+        char* cvalues = new char[4 * length];
+
+        for (int i = 0; i < length; i++) {
+            cvalues[4 * i] = (values[i] >> 24) & 0xFF;
+            cvalues[4 * i + 1] = (values[i] >> 16) & 0xFF;
+            cvalues[4 * i + 2] = (values[i] >> 8) & 0xFF;
+            cvalues[4 * i + 3] = (values[i] >> 0) & 0xFF;
+        }
+
+        is.read(cvalues, length);
+        DefaultInputBitStream ibs(ios, 16384);
+        ibs.readBit();
+        ibs.readBits(t);
+
+        cout << ((ibs.read() == uint64(t + 1)) ? "OK" : "KO") << endl;
+        cout << "Read (before close): " << ibs.read() << endl;
+        ibs.close();
+        cout << "Read (after close): " << ibs.read() << endl;
+        delete[] cvalues;
+    }
+
+    for (int test = 1; test <= 10; test++) {
+        stringbuf buffer;
+        iostream ios(&buffer);
+        DefaultOutputBitStream obs(ios, 16384);
+        DebugOutputBitStream dbs(obs, cout);
+        dbs.showByte(true);
+
+        for (int i = 0; i < length; i++) {
+            values[i] = rand();
+            const int mask = (1 << (1 + (i & 63))) - 1;
+            values[i] &= mask;
+            cout << (int)values[i] << " ";
+
+            if ((i % 20) == 19)
+                cout << endl;
+        }
+
+        cout << endl
+             << endl;
+
+        for (int i = 0; i < length; i++) {
+            dbs.writeBits(values[i], (1 + (i & 63)));
+        }
+
+        // Close first to force flush()
+        dbs.close();
+        ios.rdbuf()->pubseekpos(0);
+        istringstream is;
+        char* cvalues = new char[4 * length];
+
+        for (int i = 0; i < length; i++) {
+            cvalues[4 * i] = (values[i] >> 24) & 0xFF;
+            cvalues[4 * i + 1] = (values[i] >> 16) & 0xFF;
+            cvalues[4 * i + 2] = (values[i] >> 8) & 0xFF;
+            cvalues[4 * i + 3] = (values[i] >> 0) & 0xFF;
+        }
+
+        is.read(cvalues, length);
+
+        DefaultInputBitStream ibs(ios, 16384);
+        cout << endl
+             << endl
+             << "Read:" << endl;
+        bool ok = true;
+
+        for (int i = 0; i < length; i++) {
+            int x = (int)ibs.readBits((1 + (i & 63)));
+            cout << x;
+            cout << ((x == values[i]) ? " " : "* ");
+            ok &= (x == values[i]);
+
+            if ((i % 20) == 19)
                 cout << endl;
         }
 

@@ -33,7 +33,7 @@ DefaultInputBitStream::DefaultInputBitStream(InputStream& is, uint bufferSize) T
 
     _bufferSize = bufferSize;
     _buffer = new byte[_bufferSize];
-    _bitIndex = 63;
+    _bitIndex = -1;
     _maxPosition = -1;
     _position = 0;
     _current = 0;
@@ -50,11 +50,11 @@ DefaultInputBitStream::~DefaultInputBitStream()
 // Returns 1 or 0
 inline int DefaultInputBitStream::readBit() THROW
 {
-    if (_bitIndex == 63)
+    if (_bitIndex < 0)
         pullCurrent(); // Triggers an exception if stream is closed
 
     int bit = (int)((_current >> _bitIndex) & 1);
-    _bitIndex = (_bitIndex + 63) & 63;
+    _bitIndex--;
     return bit;
 }
 
@@ -65,22 +65,22 @@ uint64 DefaultInputBitStream::readBits(uint count) THROW
 
     uint64 res;
 
-    if (count <= _bitIndex + 1) {
+    if (count <= uint(_bitIndex + 1)) {
         // Enough spots available in 'current'
         uint shift = _bitIndex + 1 - count;
 
-        if (_bitIndex == 63) {
+        if (_bitIndex < 0) {
             pullCurrent();
             shift += (_bitIndex - 63); // adjust if bitIndex != 63 (end of stream)
         }
 
         res = (_current >> shift) & ((uint64(-1)) >> (64 - count));
-        _bitIndex = (_bitIndex - count) & 63;
+        _bitIndex -= count;
     }
     else {
         // Not enough spots available in 'current'
         uint remaining = count - _bitIndex - 1;
-        res = _current & (uint64(-1) >> (63 - _bitIndex));
+        res = _current & ((uint64(1) << (_bitIndex + 1)) - 1);
         pullCurrent();
         res <<= remaining;
         _bitIndex -= remaining;
@@ -96,11 +96,10 @@ void DefaultInputBitStream::close() THROW
         return;
 
     _closed = true;
-    _read += 63;
 
     // Reset fields to force a readFromInputStream() and trigger an exception
     // on readBit() or readBits()
-    _bitIndex = 63;
+    _bitIndex = -1;
     _maxPosition = -1;
 }
 
@@ -146,7 +145,7 @@ bool DefaultInputBitStream::hasMoreToRead()
     if (isClosed() == true)
         return false;
 
-    if ((_position < _maxPosition) || (_bitIndex != 63))
+    if ((_position < _maxPosition) || (_bitIndex >= 0))
         return true;
 
     try {
@@ -165,25 +164,23 @@ inline void DefaultInputBitStream::pullCurrent()
     if (_position > _maxPosition)
         readFromInputStream(_bufferSize);
 
-    uint64 val;
-
     if (_position + 7 > _maxPosition) {
         // End of stream: overshoot max position => adjust bit index
         uint shift = (_maxPosition - _position) << 3;
         _bitIndex = shift + 7;
-        val = 0;
+        uint64 val = 0;
 
         while (_position <= _maxPosition) {
             val |= ((uint64(_buffer[_position++] & 0xFF)) << shift);
             shift -= 8;
         }
+
+        _current = val;
     }
     else {
         // Regular processing, buffer length is multiple of 8
-        val = BigEndian::readLong64(&_buffer[_position]);
+        _current = BigEndian::readLong64(&_buffer[_position]);
         _bitIndex = 63;
         _position += 8;
     }
-
-    _current = val;
 }
