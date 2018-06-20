@@ -151,7 +151,7 @@ void CompressedOutputStream::writeHeader() THROW
     if (_obs->writeBits(_nbInputBlocks, 6) != 6)
         throw IOException("Cannot write  number of blocks to header", Error::ERR_WRITE_FILE);
 
-    if (_obs->writeBits(0, 5) != 5)
+    if (_obs->writeBits(uint64(0), 5) != 5)
         throw IOException("Cannot write reserved bits to header", Error::ERR_WRITE_FILE);
 }
 
@@ -241,7 +241,7 @@ void CompressedOutputStream::close() THROW
     try {
         // Write end block of size 0
         _obs->writeBits(COPY_BLOCK_MASK, 8);
-        _obs->writeBits(0, 8);
+        _obs->writeBits(uint64(0), 8);
         _obs->close();
     }
     catch (exception& e) {

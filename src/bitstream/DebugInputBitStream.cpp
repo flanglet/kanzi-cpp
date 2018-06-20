@@ -131,9 +131,51 @@ uint64 DebugInputBitStream::readBits(uint count) THROW
     return res;
 }
 
+uint DebugInputBitStream::readBits(byte bits[], uint count) THROW
+{
+    count = _delegate.readBits(bits, count);
+
+    for (uint i = 0; i <= (count >> 3); i++) {
+        for (int j = 7; j >= 0; j--) {
+            int bit = (bits[i] >> j) & 1;
+            _idx++;
+            _current <<= 1;
+            _current |= bit;
+            _out << ((bit == 1) ? "1" : "0");
+
+            if ((_mark == true) && (j == int(count)))
+                _out << "r";
+
+            if (_width != -1) {
+                if (_idx % _width == 0) {
+                    if (showByte())
+                        printByte(_current);
+
+                    _out << endl;
+                    _idx = 0;
+                }
+                else if ((_idx & 7) == 0) {
+                    if (showByte())
+                        printByte(_current);
+                    else
+                        _out << " ";
+                }
+            }
+            else if ((_idx & 7) == 0) {
+                if (showByte())
+                    printByte(_current);
+                else
+                    _out << " ";
+            }
+        }
+    }
+
+    return count;
+}
+
 void DebugInputBitStream::printByte(byte b)
 {
-	int val = b & 0xFF;
+    int val = b & 0xFF;
 
     if (val < 10)
         _out << " [00" << val << "] ";

@@ -45,28 +45,9 @@ namespace kanzi {
    {
    }
 
-   inline int NullEntropyEncoder::encode(byte block[], uint blkptr, uint len)
+   inline int NullEntropyEncoder::encode(byte block[], uint blkptr, uint count)
    {
-       const uint len8 = len & -8;
-       const uint end8 = blkptr + len8;
-       uint i = blkptr;
-
-       try {
-           while (i < end8) {
-               _bitstream.writeBits(BigEndian::readLong64(&block[i]), 64);
-               i += 8;
-           }
-
-           while (i < blkptr + len) {
-               _bitstream.writeBits(block[i], 8);
-               i++;
-           }
-       }
-       catch (BitStreamException&) {
-           return i - blkptr;
-       }
-
-       return len;
+       return _bitstream.writeBits(&block[blkptr], 8 * count) >> 3;
    }
 
    inline void NullEntropyEncoder::encodeByte(byte val) {

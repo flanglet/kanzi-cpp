@@ -54,6 +54,8 @@ namespace kanzi
 
        uint64 readBits(uint length) THROW;
 
+       uint readBits(byte bits[], uint length) THROW;
+
        // Number of bits read
        uint64 read() const { return _delegate.read(); }
 

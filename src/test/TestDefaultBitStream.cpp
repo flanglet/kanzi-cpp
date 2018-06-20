@@ -26,10 +26,10 @@ limitations under the License.
 using namespace std;
 using namespace kanzi;
 
-void testBitStreamCorrectnessAligned()
+void testBitStreamCorrectnessAligned1()
 {
     // Test correctness (byte aligned)
-    cout << "Correctness Test - byte aligned" << endl;
+    cout << "Correctness Test - write long - byte aligned" << endl;
     const int length = 100;
     int* values = new int[length];
     srand((uint)time(nullptr));
@@ -136,10 +136,10 @@ void testBitStreamCorrectnessAligned()
     delete[] values;
 }
 
-void testBitStreamCorrectnessMisaligned()
+void testBitStreamCorrectnessMisaligned1()
 {
     // Test correctness (not byte aligned)
-    cout << "Correctness Test - not byte aligned" << endl;
+    cout << "Correctness Test - write long - not byte aligned" << endl;
     const int length = 100;
     int* values = new int[length];
     srand((uint)time(nullptr));
@@ -250,10 +250,10 @@ void testBitStreamCorrectnessMisaligned()
     delete[] values;
 }
 
-void testBitStreamSpeed(const string& fileName)
+void testBitStreamSpeed1(const string& fileName)
 {
     // Test speed
-    cout << "\nSpeed Test" << endl;
+    cout << "\nSpeed Test1" << endl;
 
     int values[] = { 3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3,
         31, 14, 41, 15, 59, 92, 26, 65, 53, 35, 58, 89, 97, 79, 93, 32 };
@@ -306,16 +306,238 @@ void testBitStreamSpeed(const string& fileName)
     cout << "Throughput [MB/s] : " << (int)((double)read / d / (delta2 / CLOCKS_PER_SEC)) << endl;
 }
 
+void testBitStreamCorrectnessAligned2()
+{
+    // Test correctness (byte aligned)
+    cout << "Correctness Test - write array - byte aligned" << endl;
+    const int length = 100;
+    byte* input = new byte[length];
+    byte* output = new byte[length];
+    srand((uint)time(nullptr));
+    cout << "\nInitial" << endl;
+
+    for (int test = 1; test <= 10; test++) {
+        stringbuf buffer;
+        iostream ios(&buffer);
+        DefaultOutputBitStream obs(ios, 16384);
+        DebugOutputBitStream dbs(obs, cout);
+        dbs.showByte(true);
+
+        for (int i = 0; i < length; i++) {
+            input[i] = (byte) rand();
+            cout << (input[i] & 0xFF) << " ";
+
+            if ((i % 20) == 19)
+                cout << endl;
+        }
+
+        cout << endl
+             << endl;
+
+        uint count = 8 + test*(20+(test&1)) + (test&3);
+        dbs.writeBits(input, count);
+        cout << obs.written() << endl;
+
+        // Close first to force flush()
+        dbs.close();
+        ios.rdbuf()->pubseekpos(0);
+        istringstream is;
+        char* cvalues = new char[length];
+
+        for (int i = 0; i < length; i++) {
+            cvalues[i] = input[i] & 0xFF;
+        }
+
+        is.read(cvalues, length);
+
+        DefaultInputBitStream ibs(ios, 16384);
+        cout << endl
+             << endl
+             << "Read:" << endl;
+
+        uint r = ibs.readBits(output, count);
+        bool ok = r == count;
+
+        if (ok == true) {
+           for (uint i = 1; i < (r>>3); i++) {
+               cout << (output[i] & 0xFF);
+               cout << ((output[i] == input[i]) ? " " : "* ");
+               ok &= (output[i] == input[i]);
+
+               if ((i % 20) == 19)
+                   cout << endl;
+           }
+        }
+
+        delete[] cvalues;
+        ibs.close();
+        cout << endl;
+        cout << endl
+             << "Bits written: " << dbs.written() << endl;
+        cout << endl
+             << "Bits read: " << ibs.read() << endl;
+        cout << endl
+             << "\n" << ((ok) ? "Success" : "Failure") << endl;
+        cout << endl;
+        cout << endl;
+    }
+
+    delete[] input;
+    delete[] output;
+}
+
+void testBitStreamCorrectnessMisaligned2()
+{
+    // Test correctness (not byte aligned)
+    cout << "Correctness Test - write array - not byte aligned" << endl;
+    const int length = 100;
+    byte* input = new byte[length];
+    byte* output = new byte[length];
+    srand((uint)time(nullptr));
+    cout << "\nInitial" << endl;
+
+    for (int test = 1; test <= 10; test++) {
+        stringbuf buffer;
+        iostream ios(&buffer);
+        DefaultOutputBitStream obs(ios, 16384);
+        DebugOutputBitStream dbs(obs, cout);
+        dbs.showByte(true);
+
+        for (int i = 0; i < length; i++) {
+            input[i] = (byte) rand();
+            cout << (input[i] & 0xFF) << " ";
+
+            if ((i % 20) == 19)
+                cout << endl;
+        }
+
+        cout << endl
+             << endl;
+
+        uint count = 8 + test*(20+(test&1)) + (test&3);
+        dbs.writeBit(0);
+        dbs.writeBits(&input[1], count);
+
+        // Close first to force flush()
+        dbs.close();
+        ios.rdbuf()->pubseekpos(0);
+        istringstream is;
+        char* cvalues = new char[4 * length];
+
+        for (int i = 0; i < length; i++) {
+            cvalues[i] = input[i] & 0xFF;
+        }
+
+        is.read(cvalues, length);
+
+        DefaultInputBitStream ibs(ios, 16384);
+        cout << endl
+             << endl
+             << "Read:" << endl;
+
+        ibs.readBit();
+        uint r = ibs.readBits(&output[1], count);
+        bool ok = r == count;
+
+        if (ok == true) {
+           for (uint i = 1; i < (r>>3); i++) {
+               cout << (output[i] & 0xFF);
+               cout << ((output[i] == input[i]) ? " " : "* ");
+               ok &= (output[i] == input[i]);
+
+               if ((i % 20) == 19)
+                   cout << endl;
+           }
+        }
+
+        delete[] cvalues;
+        ibs.close();
+        cout << endl;
+        cout << endl
+             << "Bits written: " << dbs.written() << endl;
+        cout << endl
+             << "Bits read: " << ibs.read() << endl;
+        cout << endl
+             << "\n" << ((ok) ? "Success" : "Failure") << endl;
+        cout << endl;
+        cout << endl;
+    }
+
+    delete[] input;
+    delete[] output;
+}
+
+void testBitStreamSpeed2(const string& fileName)
+{
+    // Test speed
+    cout << "\nSpeed Test2" << endl;
+
+    int values[] = { 3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3,
+        31, 14, 41, 15, 59, 92, 26, 65, 53, 35, 58, 89, 97, 79, 93, 32 };
+
+    int iter = 150;
+    uint64 written = 0;
+    uint64 read = 0;
+    double delta1 = 0, delta2 = 0;
+    int nn = 100000 * 32;
+
+    for (int test = 1; test <= iter; test++) {
+        ofstream os(fileName.c_str(), std::ofstream::binary);
+        DefaultOutputBitStream obs(os, 1024 * 1024);
+        clock_t before = clock();
+
+        for (int i = 0; i < nn; i++) {
+            obs.writeBits((uint64)values[i % 32], 1 + (i & 63));
+        }
+
+        // Close first to force flush()
+        obs.close();
+        os.close();
+        clock_t after = clock();
+        delta1 += (after - before);
+        written += obs.written();
+
+        ifstream is(fileName.c_str(), std::ifstream::binary);
+        DefaultInputBitStream ibs(is, 1024 * 1024);
+        before = clock();
+
+        for (int i = 0; i < nn; i++) {
+            ibs.readBits(1 + (i & 63));
+        }
+
+        ibs.close();
+        is.close();
+        after = clock();
+        delta2 += (after - before);
+        read += ibs.read();
+    }
+
+    double d = 1024.0 * 8192.0;
+    //cout << delta1 << " " << delta2 << endl;
+    cout << written << " bits written (" << (written / 1024 / 1024 / 8) << " MB)" << endl;
+    cout << read << " bits read (" << (read / 1024 / 1024 / 8) << " MB)" << endl;
+    cout << endl;
+    cout << "Write [ms]        : " << (int)(delta1 / CLOCKS_PER_SEC * 1000) << endl;
+    cout << "Throughput [MB/s] : " << (int)((double)written / d / (delta1 / CLOCKS_PER_SEC)) << endl;
+    cout << "Read [ms]         : " << (int)(delta2 / CLOCKS_PER_SEC * 1000) << endl;
+    cout << "Throughput [MB/s] : " << (int)((double)read / d / (delta2 / CLOCKS_PER_SEC)) << endl;
+}
+
+
 #ifdef __GNUG__
 int main(int argc, const char* argv[])
 #else
 int TestDefaultBitStream_main(int argc, const char* argv[])
 #endif
 {
-    testBitStreamCorrectnessAligned();
+    testBitStreamCorrectnessAligned1();
+    testBitStreamCorrectnessAligned2();
+    testBitStreamCorrectnessMisaligned1();
+    testBitStreamCorrectnessMisaligned2();
 
     string fileName;
     fileName = (argc > 1) ? argv[1] :  "r:\\output.bin";
-    testBitStreamSpeed(fileName);
+    testBitStreamSpeed1(fileName);
+    testBitStreamSpeed2(fileName);
     return 0;
 }

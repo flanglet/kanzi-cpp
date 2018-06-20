@@ -90,6 +90,72 @@ uint64 DefaultInputBitStream::readBits(uint count) THROW
     return res;
 }
 
+uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
+{
+    if (isClosed() == true)
+        throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);
+
+    int remaining = count;
+    int start = 0;
+
+    // Byte aligned cursor ?
+    if (((_bitIndex + 1) & 7) == 0) {
+        if (_bitIndex < 0)
+            pullCurrent();
+
+        // Empty _current
+        while ((_bitIndex >= 0) && (remaining >= 8)) {
+            bits[start] = byte(readBits(8));
+            start++;
+            remaining -= 8;
+        }
+
+        // Copy internal buffer to bits array
+        while ((remaining >> 3) > _maxPosition + 1 - _position) {
+            memcpy(&bits[start], &_buffer[_position], _maxPosition + 1 - _position);
+            start += (_maxPosition + 1 - _position);
+            remaining -= ((_maxPosition + 1 - _position) << 3);
+            readFromInputStream(_bufferSize);
+        }
+
+        const int r = (remaining >> 6) << 3;
+
+        if (r > 0) {
+            memcpy(&bits[start], &_buffer[_position], r);
+            _position += r;
+            start += r;
+            remaining -= (r << 3);
+        }
+    }
+    else {
+        // Not byte aligned
+        const int r = 63 - _bitIndex;
+
+        while (remaining >= 64) {
+            uint64 v = _current & ((uint64(1) << (_bitIndex + 1)) - 1);
+            pullCurrent();
+            v <<= r;
+            _bitIndex -= r;
+            v |= (_current >> (_bitIndex + 1));
+            BigEndian::writeLong64(&bits[start], v);
+            start += 8;
+            remaining -= 64;
+        }
+    }
+
+    // Last bytes
+    while (remaining >= 8) {
+        bits[start] = byte(readBits(8));
+        start++;
+        remaining -= 8;
+    }
+
+    if (remaining > 0)
+        bits[start] = byte(readBits(remaining) << (8 - remaining));
+
+    return count;
+}
+
 void DefaultInputBitStream::close() THROW
 {
     if (isClosed() == true)
@@ -112,7 +178,7 @@ int DefaultInputBitStream::readFromInputStream(uint count) THROW
 
     try {
         _read += (uint64(_maxPosition + 1) << 3);
-        _is.read(reinterpret_cast<char*>(_buffer), count);  
+        _is.read(reinterpret_cast<char*>(_buffer), count);
 
         if (_is.good()) {
             size = count;
@@ -121,10 +187,10 @@ int DefaultInputBitStream::readFromInputStream(uint count) THROW
             size = int(_is.gcount());
 
             if (!_is.eof()) {
-               _position = 0;
-               _maxPosition = (size <= 0) ? -1 : size - 1;
-               throw BitStreamException("No more data to read in the bitstream",
-                   BitStreamException::END_OF_STREAM);
+                _position = 0;
+                _maxPosition = (size <= 0) ? -1 : size - 1;
+                throw BitStreamException("No more data to read in the bitstream",
+                    BitStreamException::END_OF_STREAM);
             }
         }
     }

@@ -130,6 +130,49 @@ int DebugOutputBitStream::writeBits(uint64 bits, uint count) THROW
     return res;
 }
 
+uint DebugOutputBitStream::writeBits(byte bits[], uint count) THROW
+{
+    int res = _delegate.writeBits(bits, count);
+    const int end = int(count >> 3);
+
+    for (int i = 0; i <= end; i++) {
+        for (int j = 7; j >=0 ; j--) {
+           uint64 bit = (bits[i] >> j) & 1;
+           _current <<= 1;
+           _current |= bit;
+           _idx++;
+           _out << ((bit == 1) ? "1" : "0");
+
+           if ((_mark == true) && (i == res))
+               _out << "w";
+
+           if (_width != -1) {
+               if (_idx % _width == 0) {
+                   if (showByte())
+                       printByte(_current);
+
+                   _out << endl;
+                   _idx = 0;
+               }
+               else if ((_idx & 7) == 0) {
+                   if (showByte())
+                       printByte(_current);
+                   else
+                       _out << " ";
+               }
+           }
+           else if ((_idx & 7) == 0) {
+               if (showByte())
+                   printByte(_current);
+               else
+                   _out << " ";
+           }
+       }
+    }
+
+    return res;
+}
+
 void DebugOutputBitStream::printByte(byte b)
 {
     int val = b & 0xFF;

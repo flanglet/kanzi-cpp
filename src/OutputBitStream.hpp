@@ -26,9 +26,17 @@ namespace kanzi
    {
    public:
        // Write the least significant bit of the input integer
+       // Throws if the stream is closed.
        virtual void writeBit(int bit) THROW = 0;
 
+       // Length is the number of bits in [1..64]. Return the number of bits written.
+       // Throws if the stream is closed.
        virtual int writeBits(uint64 bits, uint length) THROW = 0;
+
+       // Write bits ouf of the byte array. Length is the number of bits. 
+       // Return the number of bits written.
+       // Throws if the stream is closed.
+       virtual uint writeBits(byte bits[], uint length) THROW = 0;
 
        virtual void close() THROW = 0;
 

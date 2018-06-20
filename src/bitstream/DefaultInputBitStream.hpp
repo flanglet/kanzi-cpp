@@ -48,6 +48,8 @@ namespace kanzi
 
        uint64 readBits(uint length) THROW;
 
+       uint readBits(byte bits[], uint count) THROW;
+
        void close() THROW;
 
        // Number of bits read

@@ -87,6 +87,72 @@ int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
     return count;
 }
 
+uint DefaultOutputBitStream::writeBits(byte bits[], uint count) THROW
+{
+    if (isClosed() == true)
+        throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);
+
+    if (count == 0)
+        return 0;
+
+    int remaining = count;
+    int start = 0;
+
+    // Byte aligned cursor ?
+    if (((_bitIndex + 1) & 7) == 0) {
+        // Fill up _current
+        while ((_bitIndex != 63) && (remaining >= 8)) {
+            writeBits(uint64(bits[start]), 8);
+            start++;
+            remaining -= 8;
+        }
+
+        // Copy bits array to internal buffer
+        while (uint(remaining >> 3) >= _bufferSize - _position) {
+            memcpy(&_buffer[_position], &bits[start], _bufferSize - _position);
+            start += (_bufferSize - _position);
+            remaining -= ((_bufferSize - _position) << 3);
+            _position = _bufferSize;
+            flush();
+        }
+
+        const int r = (remaining >> 6) << 3;
+
+        if (r > 0) {
+            memcpy(&_buffer[_position], &bits[start], r);
+            start += r;
+            _position += r;
+            remaining -= (r << 3);
+        }
+    }
+    else {
+        // Not byte aligned
+        const int r = _bitIndex - 63;
+
+        while (remaining >= 64) {
+            const uint64 value = uint64(BigEndian::readLong64(&bits[start]));
+            _current |= (value >> -r);
+            pushCurrent();
+            _current = (value << r);
+            _bitIndex += r;
+            start += 8;
+            remaining -= 64;
+        }
+    }
+
+    // Last bytes
+    while (remaining >= 8) {
+        writeBits(uint64(bits[start]), 8);
+        start++;
+        remaining -= 8;
+    }
+
+    if (remaining > 0)
+        writeBits(uint64(bits[start]) >> (8 - remaining), remaining);
+
+    return count;
+}
+
 void DefaultOutputBitStream::close() THROW
 {
     if (isClosed() == true)
@@ -113,10 +179,10 @@ void DefaultOutputBitStream::close() THROW
 
     try {
         _os.flush();
-	
-		if (!_os.good())
-			throw BitStreamException("Write to bitstream failed.", BitStreamException::INPUT_OUTPUT);
-	}
+
+        if (!_os.good())
+            throw BitStreamException("Write to bitstream failed.", BitStreamException::INPUT_OUTPUT);
+    }
     catch (ios_base::failure& e) {
         throw BitStreamException(e.what(), BitStreamException::INPUT_OUTPUT);
     }
@@ -136,7 +202,7 @@ void DefaultOutputBitStream::close() THROW
 // Push 64 bits of current value into buffer.
 inline void DefaultOutputBitStream::pushCurrent() THROW
 {
-    BigEndian::writeLong64(&_buffer[_position], _current);   
+    BigEndian::writeLong64(&_buffer[_position], _current);
     _bitIndex = 63;
     _current = 0;
     _position += 8;
@@ -154,13 +220,13 @@ void DefaultOutputBitStream::flush() THROW
     try {
         if (_position > 0) {
             _os.write(reinterpret_cast<char*>(_buffer), _position);
-			
-			   if (!_os.good())
-				   throw BitStreamException("Write to bitstream failed", BitStreamException::INPUT_OUTPUT);
+
+            if (!_os.good())
+                throw BitStreamException("Write to bitstream failed", BitStreamException::INPUT_OUTPUT);
 
             _written += (uint64(_position) << 3);
             _position = 0;
-        }	
+        }
     }
     catch (ios_base::failure& e) {
         throw BitStreamException(e.what(), BitStreamException::INPUT_OUTPUT);

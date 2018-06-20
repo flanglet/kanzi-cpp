@@ -48,6 +48,8 @@ namespace kanzi
        void writeBit(int bit) THROW;
 
        int writeBits(uint64 bits, uint length) THROW;
+       
+       uint writeBits(byte bits[], uint length) THROW;
 
        void close() THROW;
 
