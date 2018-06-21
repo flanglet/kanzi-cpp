@@ -472,23 +472,26 @@ void testBitStreamSpeed2(const string& fileName)
     // Test speed
     cout << "\nSpeed Test2" << endl;
 
-    int values[] = { 3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3,
+    byte values[] = { 3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3,
         31, 14, 41, 15, 59, 92, 26, 65, 53, 35, 58, 89, 97, 79, 93, 32 };
 
     int iter = 150;
     uint64 written = 0;
     uint64 read = 0;
     double delta1 = 0, delta2 = 0;
-    int nn = 100000 * 32;
+    byte* input = new byte[3250000*32];
+    byte* output = new byte[3250000*32];
+
+	for (int i = 0; i < 3250000; i++) {
+		memcpy(&input[i*32], &values[0], 32);
+	}
 
     for (int test = 1; test <= iter; test++) {
         ofstream os(fileName.c_str(), std::ofstream::binary);
         DefaultOutputBitStream obs(os, 1024 * 1024);
         clock_t before = clock();
 
-        for (int i = 0; i < nn; i++) {
-            obs.writeBits((uint64)values[i % 32], 1 + (i & 63));
-        }
+        obs.writeBits(input, 3250000*32);
 
         // Close first to force flush()
         obs.close();
@@ -501,9 +504,7 @@ void testBitStreamSpeed2(const string& fileName)
         DefaultInputBitStream ibs(is, 1024 * 1024);
         before = clock();
 
-        for (int i = 0; i < nn; i++) {
-            ibs.readBits(1 + (i & 63));
-        }
+        ibs.readBits(output, 3250000*32);
 
         ibs.close();
         is.close();
@@ -521,6 +522,9 @@ void testBitStreamSpeed2(const string& fileName)
     cout << "Throughput [MB/s] : " << (int)((double)written / d / (delta1 / CLOCKS_PER_SEC)) << endl;
     cout << "Read [ms]         : " << (int)(delta2 / CLOCKS_PER_SEC * 1000) << endl;
     cout << "Throughput [MB/s] : " << (int)((double)read / d / (delta2 / CLOCKS_PER_SEC)) << endl;
+
+    delete[] input;
+    delete[] output;
 }
 
 
