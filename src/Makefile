@@ -37,7 +37,6 @@ LIB_SOURCES=Global.cpp \
 	entropy/RiceGolombDecoder.cpp \
 	entropy/CMPredictor.cpp \
 	entropy/FPAQPredictor.cpp \
-	entropy/PAQPredictor.cpp \
 	entropy/TPAQPredictor.cpp \
 	function/BWTBlockCodec.cpp \
 	function/LZ4Codec.cpp \
