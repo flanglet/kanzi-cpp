@@ -189,7 +189,7 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println("        3=BWT+RANK+ZRLT&ANS0, 4=BWT+RANK+ZRLT&FPAQ, 5=BWT&CM", true);
                 log.println("        6=X86+RLT+TEXT&TPAQ, 7=X86+RLT+TEXT&TPAQX\n", true);
                 log.println("   -e, --entropy=<codec>", true);
-                log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|PAQ|FPAQ|TPAQ|TPAQX|CM]", true);
+                log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]", true);
                 log.println("        (default is ANS0)\n", true);
                 log.println("   -t, --transform=<codec>", true);
                 log.println("        transform [None|BWT|BWTS|SNAPPY|LZ4|ROLZ|RLT|ZRLT|MTFT|RANK|TEXT|X86]", true);

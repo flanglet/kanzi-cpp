@@ -33,7 +33,6 @@ limitations under the License.
 #include "RiceGolombEncoder.hpp"
 #include "CMPredictor.hpp"
 #include "FPAQPredictor.hpp"
-#include "PAQPredictor.hpp"
 #include "TPAQPredictor.hpp"
 #include "../IllegalArgumentException.hpp"
 
@@ -44,7 +43,7 @@ namespace kanzi {
        static const byte NONE_TYPE = 0; // No compression
        static const byte HUFFMAN_TYPE = 1; // Huffman
        static const byte FPAQ_TYPE = 2; // Fast PAQ (order 0)
-       static const byte PAQ_TYPE = 3; // PAQ (stripped from many models for speed)
+       static const byte PAQ_TYPE = 3; // Obsolete
        static const byte RANGE_TYPE = 4; // Range
        static const byte ANS0_TYPE = 5; // Asymmetric Numerical System order 0
        static const byte CM_TYPE = 6; // Context Model
@@ -77,9 +76,6 @@ namespace kanzi {
 
        case RANGE_TYPE:
            return new RangeDecoder(ibs);
-
-       case PAQ_TYPE:
-           return new BinaryEntropyDecoder(ibs, new PAQPredictor());
 
        case FPAQ_TYPE:
            return new BinaryEntropyDecoder(ibs, new FPAQPredictor());
@@ -119,9 +115,6 @@ namespace kanzi {
        case RANGE_TYPE:
            return new RangeEncoder(obs);
 
-       case PAQ_TYPE:
-           return new BinaryEntropyEncoder(obs, new PAQPredictor());
-
        case FPAQ_TYPE:
            return new BinaryEntropyEncoder(obs, new FPAQPredictor());
 
@@ -159,9 +152,6 @@ namespace kanzi {
 
        case RANGE_TYPE:
            return "RANGE";
-
-       case PAQ_TYPE:
-           return "PAQ";
 
        case FPAQ_TYPE:
            return "FPAQ";
@@ -201,9 +191,6 @@ namespace kanzi {
 
        if (name == "FPAQ")
            return FPAQ_TYPE;
-
-       if (name == "PAQ")
-           return PAQ_TYPE;
 
        if (name == "RANGE")
            return RANGE_TYPE;

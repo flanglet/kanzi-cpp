@@ -38,16 +38,12 @@ limitations under the License.
 #include "../entropy/RiceGolombDecoder.hpp"
 #include "../entropy/FPAQPredictor.hpp"
 #include "../entropy/CMPredictor.hpp"
-#include "../entropy/PAQPredictor.hpp"
 #include "../entropy/TPAQPredictor.hpp"
 
 using namespace kanzi;
 
 static Predictor* getPredictor(string type)
 {
-    if (type.compare("PAQ") == 0)
-        return new PAQPredictor();
-
     if (type.compare("TPAQ") == 0)
         return new TPAQPredictor();
 
@@ -81,9 +77,6 @@ static EntropyEncoder* getEncoder(string name, OutputBitStream& obs, Predictor* 
         return new RiceGolombEncoder(obs, 4);
 
     if (predictor != nullptr) {
-       if (name.compare("PAQ") == 0)
-           return new BinaryEntropyEncoder(obs, predictor, false);
-
        if (name.compare("TPAQ") == 0)
            return new BinaryEntropyEncoder(obs, predictor, false);
 
@@ -111,9 +104,6 @@ static EntropyDecoder* getDecoder(string name, InputBitStream& ibs, Predictor* p
 
     if (name.compare("RANGE") == 0)
         return new RangeDecoder(ibs);
-
-    if (name.compare("PAQ") == 0)
-        return new BinaryEntropyDecoder(ibs, predictor, false);
 
     if (name.compare("TPAQ") == 0)
         return new BinaryEntropyDecoder(ibs, predictor, false);
@@ -380,7 +370,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
                 testEntropyCodecSpeed("ANS1");
                 cout << endl
                      << endl
-                     << "TestRangCodec" << endl;
+                     << "TestRangeCodec" << endl;
                 testEntropyCodecCorrectness("RANGE");
                 testEntropyCodecSpeed("RANGE");
                 cout << endl
@@ -393,11 +383,6 @@ int TestEntropyCodec_main(int argc, const char* argv[])
                      << "TestCMCodec" << endl;
                 testEntropyCodecCorrectness("CM");
                 testEntropyCodecSpeed("CM");
-                cout << endl
-                     << endl
-                     << "TestPAQCodec" << endl;
-                testEntropyCodecCorrectness("PAQ");
-                testEntropyCodecSpeed("PAQ");
                 cout << endl
                      << endl
                      << "TestTPAQCodec" << endl;
