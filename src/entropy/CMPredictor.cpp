@@ -49,18 +49,21 @@ CMPredictor::CMPredictor()
 inline void CMPredictor::update(int bit)
 {
     _ctx <<= 1;
+    int* p = &_pc2[_idx];
 
     if (bit == 0) {
         _pc1[256] -= (_pc1[256] >> FAST_RATE);
         _pc1[_c1] -= (_pc1[_c1] >> MEDIUM_RATE);
-        _pc2[_idx + 1] -= (_pc2[_idx + 1] >> SLOW_RATE);
-        _pc2[_idx] -= (_pc2[_idx] >> SLOW_RATE);
+        *p -= (*p>> SLOW_RATE);
+        p++;
+        *p -= (*p>> SLOW_RATE);
     }
     else {
         _pc1[256] += ((0xFFFF - _pc1[256]) >> FAST_RATE);
         _pc1[_c1] += ((0xFFFF - _pc1[_c1]) >> MEDIUM_RATE);
-        _pc2[_idx + 1] += ((0xFFFF - _pc2[_idx + 1]) >> SLOW_RATE);
-        _pc2[_idx] += ((0xFFFF - _pc2[_idx]) >> SLOW_RATE);
+        *p += ((0xFFFF - *p) >> SLOW_RATE);
+        p++;
+        *p += ((0xFFFF - *p) >> SLOW_RATE);
         _ctx++;
     }
 
