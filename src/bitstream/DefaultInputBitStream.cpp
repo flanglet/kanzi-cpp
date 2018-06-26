@@ -33,7 +33,7 @@ DefaultInputBitStream::DefaultInputBitStream(InputStream& is, uint bufferSize) T
 
     _bufferSize = bufferSize;
     _buffer = new byte[_bufferSize];
-    _bitIndex = -1;
+    _availBits = 0;
     _maxPosition = -1;
     _position = 0;
     _current = 0;
@@ -50,12 +50,11 @@ DefaultInputBitStream::~DefaultInputBitStream()
 // Returns 1 or 0
 inline int DefaultInputBitStream::readBit() THROW
 {
-    if (_bitIndex < 0)
+    if (_availBits  == 0)
         pullCurrent(); // Triggers an exception if stream is closed
 
-    int bit = (int)((_current >> _bitIndex) & 1);
-    _bitIndex--;
-    return bit;
+    _availBits--;
+    return int(_current >> _availBits) & 1;
 }
 
 uint64 DefaultInputBitStream::readBits(uint count) THROW
@@ -65,26 +64,25 @@ uint64 DefaultInputBitStream::readBits(uint count) THROW
 
     uint64 res;
 
-    if (count <= uint(_bitIndex + 1)) {
+    if (count <= uint(_availBits)) {
         // Enough spots available in 'current'
-        uint shift = _bitIndex + 1 - count;
+        uint shift = _availBits - count;
 
-        if (_bitIndex < 0) {
+        if (_availBits == 0) {
             pullCurrent();
-            shift += (_bitIndex - 63); // adjust if bitIndex != 63 (end of stream)
+            shift += (_availBits - 64); // adjust if _availBits != 64 (end of stream)
         }
 
         res = (_current >> shift) & ((uint64(-1)) >> (64 - count));
-        _bitIndex -= count;
+        _availBits -= count;
     }
     else {
         // Not enough spots available in 'current'
-        uint remaining = count - _bitIndex - 1;
-        res = _current & ((uint64(1) << (_bitIndex + 1)) - 1);
+        const uint remaining = count - _availBits;
+        res = _current & ((uint64(1) << _availBits) - 1);
         pullCurrent();
-        res <<= remaining;
-        _bitIndex -= remaining;
-        res |= (_current >> (_bitIndex + 1));
+        _availBits -= remaining;
+        res = (res << remaining) | (_current >> _availBits);
     }
 
     return res;
@@ -99,12 +97,12 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
     int start = 0;
 
     // Byte aligned cursor ?
-    if (((_bitIndex + 1) & 7) == 0) {
-        if (_bitIndex < 0)
+    if ((_availBits & 7) == 0) {
+        if (_availBits == 0)
             pullCurrent();
 
         // Empty _current
-        while ((_bitIndex >= 0) && (remaining >= 8)) {
+        while ((_availBits > 0) && (remaining >= 8)) {
             bits[start] = byte(readBits(8));
             start++;
             remaining -= 8;
@@ -129,14 +127,13 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
     }
     else {
         // Not byte aligned
-        const int r = 63 - _bitIndex;
+        const int r = 64 - _availBits;
 
         while (remaining >= 64) {
-            uint64 v = _current & ((uint64(1) << (_bitIndex + 1)) - 1);
+            uint64 v = _current & ((uint64(1) << _availBits) - 1);
             pullCurrent();
-            v <<= r;
-            _bitIndex -= r;
-            v |= (_current >> (_bitIndex + 1));
+            _availBits -= r;
+            v = (v << r) | (_current >> _availBits);
             BigEndian::writeLong64(&bits[start], v);
             start += 8;
             remaining -= 64;
@@ -165,7 +162,7 @@ void DefaultInputBitStream::close() THROW
 
     // Reset fields to force a readFromInputStream() and trigger an exception
     // on readBit() or readBits()
-    _bitIndex = -1;
+    _availBits = 0;
     _maxPosition = -1;
 }
 
@@ -211,7 +208,7 @@ bool DefaultInputBitStream::hasMoreToRead()
     if (isClosed() == true)
         return false;
 
-    if ((_position < _maxPosition) || (_bitIndex >= 0))
+    if ((_position < _maxPosition) || (_availBits > 0))
         return true;
 
     try {
@@ -233,7 +230,7 @@ inline void DefaultInputBitStream::pullCurrent()
     if (_position + 7 > _maxPosition) {
         // End of stream: overshoot max position => adjust bit index
         uint shift = (_maxPosition - _position) << 3;
-        _bitIndex = shift + 7;
+        _availBits = shift + 8;
         uint64 val = 0;
 
         while (_position <= _maxPosition) {
@@ -246,7 +243,7 @@ inline void DefaultInputBitStream::pullCurrent()
     else {
         // Regular processing, buffer length is multiple of 8
         _current = BigEndian::readLong64(&_buffer[_position]);
-        _bitIndex = 63;
+        _availBits = 64;
         _position += 8;
     }
 }
