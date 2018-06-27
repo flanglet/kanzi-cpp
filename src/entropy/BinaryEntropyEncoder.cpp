@@ -68,8 +68,10 @@ inline void BinaryEntropyEncoder::encodeBit(int bit)
     const uint64 split = (((_high - _low) >> 4) * uint64(_predictor->get())) >> 8;
 
     // Update fields with new interval bounds
-    _high -= (-bit & (_high - _low - split));
-    _low += (~-bit & (split + 1));
+    if (bit == 0) 
+       _low = _low + split + 1;
+    else 
+       _high = _low + split;
 
     // Update predictor
     _predictor->update(bit);
