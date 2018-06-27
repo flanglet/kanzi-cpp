@@ -32,7 +32,7 @@ namespace kanzi
        bool _closed;
        uint _bufferSize;
        uint _position; // index of current byte in buffer
-       int _bitIndex; // index of current bit to write in current
+       int _availBits; // bits not consumed in _current
        uint64 _written;
        uint64 _current; // cached bits
 
@@ -57,7 +57,7 @@ namespace kanzi
        uint64 written() const
        {
            // Number of bits flushed + bytes written in memory + bits written in memory
-           return _written + ((uint64)_position << 3) + (63 - _bitIndex);
+           return _written + ((uint64)_position << 3) + (64 - _availBits);
        }
 
        bool isClosed() const { return _closed; }

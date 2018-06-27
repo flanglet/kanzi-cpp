@@ -32,7 +32,7 @@ DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize
     if ((bufferSize & 7) != 0)
         throw IllegalArgumentException("Invalid buffer size (must be a multiple of 8)");
 
-    _bitIndex = 63;
+    _availBits = 64;
     _bufferSize = bufferSize;
     _buffer = new byte[_bufferSize];
     _position = 0;
@@ -44,14 +44,14 @@ DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize
 // Write least significant bit of the input integer. Trigger exception if stream is closed
 inline void DefaultOutputBitStream::writeBit(int bit) THROW
 {
-    if (_bitIndex <= 0) // bitIndex = -1 if stream is closed => force pushCurrent()
+    if (_availBits <= 1) // _availBits = 0 if stream is closed => force pushCurrent()
     {
         _current |= (bit & 1);
         pushCurrent();
     }
     else {
-        _current |= (uint64(bit & 1) << _bitIndex);
-        _bitIndex--;
+        _availBits--;
+        _current |= (uint64(bit & 1) << _availBits);
     }
 }
 
@@ -65,22 +65,20 @@ int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
         throw BitStreamException("Invalid count: " + to_string(count) + " (must be in [1..64])");
 
     value &= (uint64(-1) >> (64 - count));
-    uint bi = _bitIndex + 1;
 
-    if (count < bi) {
+    if (count < uint(_availBits)) {
         // Enough spots available in 'current'
-        uint remaining = bi - count;
-        _current |= (value << remaining);
-        _bitIndex -= count;
+        _current |= (value << (_availBits - count));
+        _availBits -= count;
     }
     else {
-        uint remaining = count - bi;
+        uint remaining = count - _availBits;
         _current |= (value >> remaining);
         pushCurrent();
 
         if (remaining != 0) {
             _current = value << (64 - remaining);
-            _bitIndex -= remaining;
+            _availBits -= remaining;
         }
     }
 
@@ -99,9 +97,9 @@ uint DefaultOutputBitStream::writeBits(byte bits[], uint count) THROW
     int start = 0;
 
     // Byte aligned cursor ?
-    if (((_bitIndex + 1) & 7) == 0) {
+    if ((_availBits & 7) == 0) {
         // Fill up _current
-        while ((_bitIndex != 63) && (remaining >= 8)) {
+        while ((_availBits != 64) && (remaining >= 8)) {
             writeBits(uint64(bits[start]), 8);
             start++;
             remaining -= 8;
@@ -127,14 +125,14 @@ uint DefaultOutputBitStream::writeBits(byte bits[], uint count) THROW
     }
     else {
         // Not byte aligned
-        const int r = _bitIndex - 63;
+        const int r = _availBits - 64;
 
         while (remaining >= 64) {
             const uint64 value = uint64(BigEndian::readLong64(&bits[start]));
             _current |= (value >> -r);
             pushCurrent();
             _current = (value << r);
-            _bitIndex += r;
+            _availBits += r;
             start += 8;
             remaining -= 64;
         }
@@ -158,13 +156,13 @@ void DefaultOutputBitStream::close() THROW
     if (isClosed() == true)
         return;
 
-    int savedBitIndex = _bitIndex;
+    int savedBitIndex = _availBits;
     uint savedPosition = _position;
     uint64 savedCurrent = _current;
 
     try {
         // Push last bytes (the very last byte may be incomplete)
-        int size = ((63 - _bitIndex) + 7) >> 3;
+        int size = ((64 - _availBits) + 7) >> 3;
         pushCurrent();
         _position -= (8 - size);
         flush();
@@ -172,7 +170,7 @@ void DefaultOutputBitStream::close() THROW
     catch (BitStreamException& e) {
         // Revert fields to allow subsequent attempts in case of transient failure
         _position = savedPosition;
-        _bitIndex = savedBitIndex;
+        _availBits = savedBitIndex;
         _current = savedCurrent;
         throw e;
     }
@@ -192,7 +190,7 @@ void DefaultOutputBitStream::close() THROW
 
     // Reset fields to force a flush() and trigger an exception
     // on writeBit() or writeBits()
-    _bitIndex = -1;
+    _availBits = 0;
     delete[] _buffer;
     _bufferSize = 8;
     _buffer = new byte[_bufferSize];
@@ -203,7 +201,7 @@ void DefaultOutputBitStream::close() THROW
 inline void DefaultOutputBitStream::pushCurrent() THROW
 {
     BigEndian::writeLong64(&_buffer[_position], _current);
-    _bitIndex = 63;
+    _availBits = 64;
     _current = 0;
     _position += 8;
 

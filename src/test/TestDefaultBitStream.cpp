@@ -359,7 +359,7 @@ void testBitStreamCorrectnessAligned2()
         bool ok = r == count;
 
         if (ok == true) {
-           for (uint i = 1; i < (r>>3); i++) {
+           for (uint i = 0; i < (r>>3); i++) {
                cout << (output[i] & 0xFF);
                cout << ((output[i] == input[i]) ? " " : "* ");
                ok &= (output[i] == input[i]);
@@ -440,7 +440,7 @@ void testBitStreamCorrectnessMisaligned2()
         bool ok = r == count;
 
         if (ok == true) {
-           for (uint i = 1; i < (r>>3); i++) {
+           for (uint i = 1; i < 1 + (r>>3); i++) {
                cout << (output[i] & 0xFF);
                cout << ((output[i] == input[i]) ? " " : "* ");
                ok &= (output[i] == input[i]);
