@@ -66,10 +66,6 @@ namespace kanzi {
 	}
 
    
-   inline bool isBigEndian() {
-		const union { uint32 u; byte c[4]; } one = { 1 };
-		return one.c[3] == 1;
-	}
 
 	#ifndef IS_BIG_ENDIAN
 		#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
@@ -80,8 +76,12 @@ namespace kanzi {
 			   defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__)
 			#define IS_BIG_ENDIAN true
 		#else
-			//#define IS_BIG_ENDIAN (((const union { uint32 x; byte c[4]; }) {1}).c[3] != 0)
-            #define IS_BIG_ENDIAN KANZI_BIG_ENDIAN
+         static inline bool IS_BIG_ENDIAN() {
+            union { uint32 v; byte c[4]; } one = { 0x03020100 };
+            return one.c[0] == 0;
+            //const union { uint32 u; byte c[4]; } one = { 1 };
+            //return one.c[3] == 1;
+         }
 		#endif
 	#endif
 
