@@ -57,7 +57,7 @@ namespace kanzi {
    inline int LinearAdaptiveProbMap<RATE>::get(int bit, int pr, int ctx)
    {
        // Update probability based on error and learning rate
-       const int g = (bit * 65528) + (bit << RATE);
+       const int g = (-bit & 65528) + (bit << RATE);
        _data[_index] += uint16((g - int(_data[_index])) >> RATE);
        _data[_index + 1] += uint16((g - int(_data[_index + 1])) >> RATE);
 
@@ -103,7 +103,7 @@ namespace kanzi {
    inline int LogisticAdaptiveProbMap<RATE>::get(int bit, int pr, int ctx)
    {
        // Update probability based on error and learning rate
-       const int g = (bit * 65528) + (bit << RATE);
+       const int g = (-bit & 65528) + (bit << RATE);
        _data[_index] += uint16((g - int(_data[_index])) >> RATE);
        _data[_index + 1] += uint16((g - int(_data[_index + 1])) >> RATE);
        pr = Global::STRETCH[pr];
@@ -150,7 +150,7 @@ namespace kanzi {
    inline int FastLogisticAdaptiveProbMap<RATE>::get(int bit, int pr, int ctx)
    {
        // Update probability based on error and learning rate
-       const int g = (bit * 65528) + (bit << RATE);
+       const int g = (-bit & 65528) + (bit << RATE);
        *_p += ((g - int(*_p)) >> RATE);
 
        // Find index: 33*ctx + quantized prediction in [0..32]
