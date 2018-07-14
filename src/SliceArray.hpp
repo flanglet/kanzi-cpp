@@ -27,9 +27,9 @@ namespace kanzi
       int _length; // buffer length (aka capacity)
       int _index;
 
-      SliceArray(T* arr, int len, int index) { _array=arr; _length = len; _index = index; }
+      SliceArray(T* arr, int len, int index = 0) { _array = arr; _length = len; _index = index; }
      
-      SliceArray(const SliceArray& sa) { _array=sa._array; _length = sa._length; _index = sa._index; }
+      SliceArray(const SliceArray& sa) { _array = sa._array; _length = sa._length; _index = sa._index; }
 
       ~SliceArray(){}; // does not deallocate buffer memory
 

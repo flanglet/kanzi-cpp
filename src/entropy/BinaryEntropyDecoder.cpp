@@ -14,15 +14,18 @@ limitations under the License.
 */
 
 #include "BinaryEntropyDecoder.hpp"
+#include "EntropyUtils.hpp"
 #include "../IllegalArgumentException.hpp"
+#include "../Memory.hpp"
 
 using namespace kanzi;
 
 BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor* predictor, bool deallocate) THROW
-: _bitstream(bitstream)
+    : _bitstream(bitstream),
+      _sba(new byte[0], 0)
 {
     if (predictor == nullptr)
-       throw IllegalArgumentException("Invalid null predictor parameter");
+        throw IllegalArgumentException("Invalid null predictor parameter");
 
     _predictor = predictor;
     _low = 0;
@@ -35,22 +38,50 @@ BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor*
 BinaryEntropyDecoder::~BinaryEntropyDecoder()
 {
     dispose();
+    delete[] _sba._array;
 
     if (_deallocate)
-       delete _predictor;
+        delete _predictor;
 }
 
-int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint len)
+int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
 {
-    if (isInitialized() == false)
-        initialize();
+    if (count >= 1 << 30)
+        throw IllegalArgumentException("Invalid block size parameter (max is 1<<30)");
 
-    const int end = blkptr + len;
+    int startChunk = blkptr;
+    const int end = blkptr + count;
+    int length = (count < 64) ? 64 : count;
 
-    for (int i = blkptr; i < end; i++)
-        block[i] = decodeByte();
+    if (count >= 1 << 26) {
+        // If the block is big (>=64MB), split the decoding to avoid allocating
+        // too much memory.
+        length = (count < (1 << 29)) ? count >> 3 : count >> 4;
+    }
 
-    return len;
+    // Split block into chunks, read bit array from bitstream and decode chunk
+    while (startChunk < end) {
+        const int chunkSize = startChunk + length < end ? length : end - startChunk;
+
+        if (_sba._length<(chunkSize * 9) >> 3) {
+            delete[] _sba._array;
+            _sba._array = new byte[(chunkSize * 9) >> 3];
+        }
+
+        const int szBytes = EntropyUtils::readVarInt(_bitstream);
+        _current = _bitstream.readBits(56);
+        _initialized = true;
+        _bitstream.readBits(&_sba._array[0], 8 * szBytes);
+        _sba._index = 0;
+        const int endChunk = startChunk + chunkSize;
+
+        for (int i = startChunk; i < endChunk; i++)
+            block[i] = decodeByte();
+
+        startChunk = endChunk;
+    }
+
+    return count;
 }
 
 inline byte BinaryEntropyDecoder::decodeByte()
@@ -84,7 +115,8 @@ inline int BinaryEntropyDecoder::decodeBit()
     if (split >= _current) {
         bit = 1;
         _high = split;
-    } else {
+    }
+    else {
         bit = 0;
         _low = split + 1;
     }
@@ -103,7 +135,9 @@ inline void BinaryEntropyDecoder::read()
 {
     _low = (_low << 32) & MASK_0_56;
     _high = ((_high << 32) | MASK_0_32) & MASK_0_56;
-    _current = ((_current << 32) | _bitstream.readBits(32)) & MASK_0_56;
+    uint64 val = BigEndian::readInt32(&_sba._array[_sba._index]) & 0xFFFFFFFF;
+    _current = ((_current<<32) | val) & MASK_0_56;
+    _sba._index += 4;
 }
 
 void BinaryEntropyDecoder::dispose()

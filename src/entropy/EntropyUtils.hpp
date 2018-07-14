@@ -55,6 +55,10 @@ namespace kanzi
        int normalizeFrequencies(uint freqs[], uint alphabet[], int length, uint totalFreq, uint scale) THROW;
 
        static int computeFirstOrderEntropy1024(byte block[], int length, int histo[]);
+
+       static int writeVarInt(OutputBitStream& obs, int val);
+
+       static int readVarInt(InputBitStream& ibs);
    };
 
 }

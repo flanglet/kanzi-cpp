@@ -18,6 +18,7 @@ limitations under the License.
 
 #include "../EntropyDecoder.hpp"
 #include "../Predictor.hpp"
+#include "../SliceArray.hpp"
 
 namespace kanzi 
 {
@@ -38,6 +39,7 @@ namespace kanzi
        InputBitStream& _bitstream;
        bool _initialized;
        bool _deallocate;
+       SliceArray<byte> _sba;
 
    protected:
        virtual void initialize();
@@ -49,7 +51,7 @@ namespace kanzi
 
        virtual ~BinaryEntropyDecoder();
 
-       int decode(byte array[], uint blkptr, uint len);
+       int decode(byte block[], uint blkptr, uint count) THROW;
 
        InputBitStream& getBitStream() const { return _bitstream; };
 

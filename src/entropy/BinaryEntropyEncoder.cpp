@@ -14,12 +14,15 @@ limitations under the License.
 */
 
 #include "BinaryEntropyEncoder.hpp"
+#include "EntropyUtils.hpp"
 #include "../IllegalArgumentException.hpp"
+#include "../Memory.hpp"
 
 using namespace kanzi;
 
 BinaryEntropyEncoder::BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor* predictor, bool deallocate) THROW
-: _bitstream(bitstream)
+: _bitstream(bitstream),
+  _sba(new byte[0], 0)
 {
     if (predictor == nullptr)
        throw IllegalArgumentException("Invalid null predictor parameter");
@@ -34,19 +37,52 @@ BinaryEntropyEncoder::BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor
 BinaryEntropyEncoder::~BinaryEntropyEncoder()
 {
     dispose();
+    delete[] _sba._array;
 
     if (_deallocate)
        delete _predictor;
 }
 
-int BinaryEntropyEncoder::encode(byte block[], uint blkptr, uint len)
+int BinaryEntropyEncoder::encode(byte block[], uint blkptr, uint count) THROW
 {
-    const int end = blkptr + len;
+   if (count >= 1<<30)
+      throw IllegalArgumentException("Invalid block size parameter (max is 1<<30)");
 
-    for (int i = blkptr; i < end; i++)
-        encodeByte(block[i]);
+   int startChunk = blkptr;
+   const int end = blkptr + count;
+   int length = (count < 64) ? 64 : count;
 
-    return len;
+   if (count >= 1 << 26)
+   {
+      // If the block is big (>=64MB), split the encoding to avoid allocating
+      // too much memory.
+      length = (count < (1 << 29)) ? count >> 3 : count >> 4;
+   }  
+
+   // Split block into chunks, encode chunk and write bit array to bitstream
+   while (startChunk < end)
+   {
+      const int chunkSize = startChunk+length < end ? length : end-startChunk;
+     
+      if (_sba._length < (chunkSize * 9) >> 3) {
+         delete[] _sba._array;
+         _sba._array = new byte[(chunkSize * 9) >> 3];
+      }
+      
+      _sba._index = 0;
+
+      for (int i=startChunk; i<startChunk+chunkSize; i++)
+         encodeByte(block[i]);
+
+      EntropyUtils::writeVarInt(_bitstream, _sba._index);
+      _bitstream.writeBits(&_sba._array[0], 8 * _sba._index); 
+      startChunk += chunkSize;
+
+      if (startChunk < end)         
+         _bitstream.writeBits(_low | MASK_0_24, 56);         
+   }
+
+   return count;
 }
 
 inline void BinaryEntropyEncoder::encodeByte(byte val)
@@ -83,7 +119,8 @@ inline void BinaryEntropyEncoder::encodeBit(int bit)
 
 inline void BinaryEntropyEncoder::flush()
 {
-    _bitstream.writeBits(_high >> 24, 32);
+    BigEndian::writeInt32(&_sba._array[_sba._index], int32(_high >> 24));
+    _sba._index += 4;
     _low <<= 32;
     _high = (_high << 32) | MASK_0_32;
 }
