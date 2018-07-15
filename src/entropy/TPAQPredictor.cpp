@@ -308,14 +308,16 @@ void TPAQPredictor::update(int bit)
     int p = _mixer->get(p0, p1, p2, p3, p4, p5, p6, p7);
 
     // SSE (Secondary Symbol Estimation)
-    if ((_extra == false) || (_binCount < (_pos >> 3))) {
-        p = _sse1.get(bit, p, _c0 | (_c4 & 0xFF00));
-    }
-    else {
-        if (_binCount >= (_pos >> 2))
-           p = _sse0.get(bit, p, _c0);
+    if (_extra == true) {
+       if (_binCount < (_pos >> 3)) {
+           p = _sse1.get(bit, p, _c0 | (_c4 & 0xFF00));
+       }
+       else {
+           if (_binCount >= (_pos >> 2))
+              p = _sse0.get(bit, p, _c0);
 
-        p = (3 * _sse1.get(bit, p, _c0 | (_c4 & 0xFF00)) + p + 2) >> 2;
+           p = (3 * _sse1.get(bit, p, _c0 | (_c4 & 0xFF00)) + p + 2) >> 2;
+       }
     }
 
     _pr = p + (uint32(p - 2048) >> 31);
