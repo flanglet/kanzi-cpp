@@ -261,7 +261,7 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
     }
 
     // DELTA_ENCODED_ALPHABET
-    int log = 1 + int(ibs.readBits(4));
+    uint log = 1 + uint(ibs.readBits(4));
     count = int(ibs.readBits(log));
 
     if (count == 0)
@@ -272,11 +272,17 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
     int symbol = 0;
 
     if (ibs.readBit() == ABSENT_SYMBOLS_MASK) {
-        int alphabetSize = 1 << int(ibs.readBits(5));
+        const int alphabetSize = 1 << int(ibs.readBits(5));
+        
+        if (alphabetSize > 256) {
+            stringstream ss;
+            ss << "Invalid bitstream: incorrect alphabet size: " << alphabetSize;
+            throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
+        }
 
         // Read missing symbols
         for (int i = 0; i < count; i += ckSize) {
-            log = 1 + int(ibs.readBits(4));
+            log = 1 + uint(ibs.readBits(4));
 
             // Read deltas for this chunk
             for (int j = i; (j < count) && (j < i + ckSize); j++) {

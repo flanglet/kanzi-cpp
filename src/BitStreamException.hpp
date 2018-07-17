@@ -38,12 +38,12 @@ namespace kanzi
        static const int INVALID_STREAM = 3;
        static const int STREAM_CLOSED = 4;
 
-       BitStreamException(const string& msg) : runtime_error(msg+". Error code: "+to_string(UNDEFINED))
+       BitStreamException(const string& msg) : runtime_error(msg)
        {
            _code = UNDEFINED;
        }
 
-       BitStreamException(const string& msg, int code) : runtime_error(string(msg)+". Error code: "+to_string(code))
+       BitStreamException(const string& msg, int code) : runtime_error(string(msg))
        {
            _code = code;
        }
