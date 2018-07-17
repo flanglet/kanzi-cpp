@@ -31,8 +31,8 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
     if ((chunkSize != 0) && (chunkSize != -1) && (chunkSize < 1024))
         throw IllegalArgumentException("The chunk size must be at least 1024");
 
-    if (chunkSize > 1 << 30)
-        throw IllegalArgumentException("The chunk size must be at most 2^30");
+    if (chunkSize > MAX_CHUNK_SIZE)
+        throw IllegalArgumentException("The chunk size must be at most 2^27");
 
     if ((logRange < 8) || (logRange > 16)) {
         stringstream ss;
@@ -41,7 +41,7 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
     }
 
     if (chunkSize == -1)
-    	chunkSize = DEFAULT_ANS0_CHUNK_SIZE << (8*order);
+        chunkSize = DEFAULT_ANS0_CHUNK_SIZE << (8 * order);
 
     _order = order;
     const int dim = 255 * order + 1;
@@ -74,7 +74,7 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], int lr)
         uint* f = &frequencies[k * 257];
         ANSEncSymbol* symb = &_symbols[k << 8];
         uint* curAlphabet = &_alphabet[k << 8];
-        int alphabetSize = _eu.normalizeFrequencies(f, curAlphabet, 256, f[256], 1 << lr);
+        const int alphabetSize = _eu.normalizeFrequencies(f, curAlphabet, 256, f[256], 1 << lr);
 
         if (alphabetSize > 0) {
             int sum = 0;
@@ -141,46 +141,50 @@ int ANSRangeEncoder::encode(byte block[], uint blkptr, uint len)
         return 0;
 
     const int end = blkptr + len;
-    const int sz = (_chunkSize == 0) ? len : _chunkSize;
+    int sz = (_chunkSize == 0) ? len : _chunkSize;
+
+    if (sz > MAX_CHUNK_SIZE)
+        sz = MAX_CHUNK_SIZE;
+
     int startChunk = blkptr;
 
-    if (_bufferSize < uint(2 * sz)) {
+    if (_bufferSize < uint(sz + (sz >> 3))) {
         delete[] _buffer;
-        _bufferSize = 2 * sz;
+        _bufferSize = uint(sz + (sz >> 3));
         _buffer = new byte[_bufferSize];
     }
 
     while (startChunk < end) {
-        const int endChunk = (startChunk + sz < end) ? startChunk + sz : end;
+        const int sizeChunk = (startChunk + sz < end) ? sz : end - startChunk;
         int lr = _logRange;
 
         // Lower log range if the size of the data chunk is small
-        while ((lr > 8) && (1 << lr > endChunk - startChunk))
+        while ((lr > 8) && (1 << lr > sizeChunk))
             lr--;
 
-        rebuildStatistics(block, startChunk, endChunk, lr);
-        encodeChunk(block, startChunk, endChunk);
-        startChunk = endChunk;
+        rebuildStatistics(&block[startChunk], sizeChunk, lr);
+        encodeChunk(&block[startChunk], sizeChunk);
+        startChunk += sizeChunk;
     }
 
     return len;
 }
 
-void ANSRangeEncoder::encodeChunk(byte block[], int start, int end)
+void ANSRangeEncoder::encodeChunk(byte block[], int end)
 {
     int st = ANS_TOP;
-    byte* p0 = &_buffer[0];
+    byte* p0 = &_buffer[_bufferSize - 1];
     byte* p = p0;
 
     if (_order == 0) {
         const ANSEncSymbol* symb = &_symbols[0];
 
-        for (int i = end - 1; i >= start; i--) {
-            const ANSEncSymbol sym = symb[block[i] & 0xFF];
+        for (int i = end - 1; i >= 0; i--) {
+            const ANSEncSymbol sym = symb[uint8(block[i])];
             const int max = sym._xMax;
 
             while (st >= max) {
-                *p++ = byte(st);
+                *p-- = byte(st);
                 st >>= 8;
             }
 
@@ -194,13 +198,13 @@ void ANSRangeEncoder::encodeChunk(byte block[], int start, int end)
     else { // order 1
         int prv = block[end - 1] & 0xFF;
 
-        for (int i = end - 2; i >= start; i--) {
+        for (int i = end - 2; i >= 0; i--) {
             const int cur = block[i] & 0xFF;
             const ANSEncSymbol sym = _symbols[(cur << 8) + prv];
             const int max = sym._xMax;
 
             while (st >= max) {
-                *p++ = byte(st);
+                *p-- = byte(st);
                 st >>= 8;
             }
 
@@ -217,7 +221,7 @@ void ANSRangeEncoder::encodeChunk(byte block[], int start, int end)
         const int max = sym._xMax;
 
         while (st >= max) {
-            *p++ = byte(st);
+            *p-- = byte(st);
             st >>= 8;
         }
 
@@ -225,33 +229,33 @@ void ANSRangeEncoder::encodeChunk(byte block[], int start, int end)
         st = int(st + sym._bias + q * sym._cmplFreq);
     }
 
+    // Write chunk size
+    EntropyUtils::writeVarInt(_bitstream, p0 - p);
+
     // Write final ANS state
     _bitstream.writeBits(st, 32);
 
-    if (p != p0) {
-       // Write encoded data to bitstream
-       for (p--; p >= p0; p--)
-           _bitstream.writeBits(*p, 8);
-    }
+    // Write encoded data to bitstream
+    _bitstream.writeBits(p + 1, 8 * (p0 - p));
 }
 
 // Compute chunk frequencies, cumulated frequencies and encode chunk header
-int ANSRangeEncoder::rebuildStatistics(byte block[], int start, int end, int lr)
+int ANSRangeEncoder::rebuildStatistics(byte block[], int end, int lr)
 {
     const int dim = 255 * _order + 1;
     memset(_freqs, 0, dim * 257 * sizeof(int));
 
     if (_order == 0) {
         uint* f = &_freqs[0];
-        f[256] = end - start;
+        f[256] = end;
 
-        for (int i = start; i < end; i++)
+        for (int i = 0; i < end; i++)
             f[block[i] & 0xFF]++;
     }
     else {
         int prv = 0;
 
-        for (int i = start; i < end; i++) {
+        for (int i = 0; i < end; i++) {
             const int cur = block[i] & 0xFF;
             _freqs[prv + cur]++;
             _freqs[prv + 256]++;
@@ -265,8 +269,8 @@ int ANSRangeEncoder::rebuildStatistics(byte block[], int start, int end, int lr)
 void ANSEncSymbol::reset(int cumFreq, int freq, int logRange)
 {
     // Make sure xMax is a positive int32. Compatibility with Java implementation
-    if (freq >= 1<<logRange)
-        freq = (1<<logRange) - 1;
+    if (freq >= 1 << logRange)
+        freq = (1 << logRange) - 1;
 
     _xMax = ((ANSRangeEncoder::ANS_TOP >> logRange) << 8) * freq;
     _cmplFreq = (1 << logRange) - freq;

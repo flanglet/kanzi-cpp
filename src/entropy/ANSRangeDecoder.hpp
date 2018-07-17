@@ -13,11 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
 #ifndef _ANSRangeDecoder_
 #define _ANSRangeDecoder_
 
 #include "../EntropyDecoder.hpp"
+
 
 using namespace std;
 
@@ -26,12 +26,18 @@ using namespace std;
 // Some code has been ported from https://github.com/rygorous/ryg_rans
 // For an alternate C implementation example, see https://github.com/Cyan4973/FiniteStateEntropy
 
-namespace kanzi 
+namespace kanzi
 {
-   class ANSDecSymbol 
+
+   class ANSDecSymbol
    {
    public:
-      ANSDecSymbol() { _freq = 0; _cumFreq = 0; }
+      ANSDecSymbol()
+      {
+		  _freq = 0;
+		  _cumFreq = 0;
+      }
+
       ~ANSDecSymbol() { }
       void reset(int cumFreq, int freq, int logRange);
 
@@ -44,7 +50,7 @@ namespace kanzi
    public:
 	   static const int ANS_TOP = 1 << 23;
 
-      ANSRangeDecoder(InputBitStream& bitstream, int order = 0, int chunkSize = -1) THROW;
+	   ANSRangeDecoder(InputBitStream& bitstream, int order = 0, int chunkSize = -1) THROW;
 
 	   ~ANSRangeDecoder();
 
@@ -57,6 +63,7 @@ namespace kanzi
    private:
 	   static const int DEFAULT_ANS0_CHUNK_SIZE = 1 << 15; // 32 KB by default
 	   static const int DEFAULT_LOG_RANGE = 13;
+	   static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
 
 	   InputBitStream& _bitstream;
 	   uint* _alphabet;
@@ -64,11 +71,13 @@ namespace kanzi
 	   byte* _f2s;
 	   int _f2sSize;
 	   ANSDecSymbol* _symbols;
+	   byte* _buffer;
+	   uint _bufferSize;
 	   uint _chunkSize;
 	   uint _order;
 	   uint _logRange;
 
-	   void decodeChunk(byte block[], int start, int end);
+	   void decodeChunk(byte block[], int end);
 
 	   int decodeHeader(uint frequencies[]);
    };

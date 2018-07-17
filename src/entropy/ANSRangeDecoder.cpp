@@ -32,11 +32,11 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
     if ((chunkSize != 0) && (chunkSize != -1) && (chunkSize < 1024))
         throw IllegalArgumentException("The chunk size must be at least 1024");
 
-    if (chunkSize > 1 << 30)
-        throw IllegalArgumentException("The chunk size must be at most 2^30");
+    if (chunkSize > 1 << 27) // 8*chunkSize must not overflow
+        throw IllegalArgumentException("The chunk size must be at most 2^27");
 
     if (chunkSize == -1)
-    	chunkSize = DEFAULT_ANS0_CHUNK_SIZE << (8*order);
+        chunkSize = DEFAULT_ANS0_CHUNK_SIZE << (8 * order);
 
     _chunkSize = chunkSize;
     _order = order;
@@ -44,6 +44,8 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
     _alphabet = new uint[dim * 256];
     _freqs = new uint[dim * 256];
     _symbols = new ANSDecSymbol[dim * 256];
+    _buffer = new byte[0];
+    _bufferSize = 0;
     _f2s = new byte[0];
     _f2sSize = 0;
 }
@@ -51,6 +53,7 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
 ANSRangeDecoder::~ANSRangeDecoder()
 {
     dispose();
+    delete[] _buffer;
     delete[] _symbols;
     delete[] _f2s;
     delete[] _freqs;
@@ -156,32 +159,47 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint len)
         return 0;
 
     const int end = blkptr + len;
-    const int sz = (_chunkSize == 0) ? len : _chunkSize;
+    int sz = (_chunkSize == 0) ? len : _chunkSize;
+
+    if (sz > MAX_CHUNK_SIZE)
+        sz = MAX_CHUNK_SIZE;
+
     int startChunk = blkptr;
+
+    if (_bufferSize < uint(sz + (sz >> 3))) {
+        delete[] _buffer;
+        _bufferSize = uint(sz + (sz >> 3));
+        _buffer = new byte[_bufferSize];
+    }
 
     while (startChunk < end) {
         if (decodeHeader(_freqs) == 0)
             return startChunk - blkptr;
 
-        const int endChunk = (startChunk + sz < end) ? startChunk + sz : end;
-        decodeChunk(block, startChunk, endChunk);
-        startChunk = endChunk;
+        const int sizeChunk = (startChunk + sz < end) ? sz : end - startChunk;
+        decodeChunk(&block[startChunk], sizeChunk);
+        startChunk += sizeChunk;
     }
 
     return len;
 }
 
-void ANSRangeDecoder::decodeChunk(byte block[], int start, int end)
+void ANSRangeDecoder::decodeChunk(byte block[], int end)
 {
+    // Read chunk size
+    const int sz = EntropyUtils::readVarInt(_bitstream) & (MAX_CHUNK_SIZE - 1);
+
     // Read initial ANS state
     int st = int(_bitstream.readBits(32));
+    _bitstream.readBits(&_buffer[0], 8 * sz);
+    uint8* p = (uint8*)&_buffer[0];
     const uint mask = (1 << _logRange) - 1;
 
     if (_order == 0) {
         const byte* freq2sym = &_f2s[0];
         const ANSDecSymbol* symb = &_symbols[0];
 
-        for (int i = start; i < end; i++) {
+        for (int i = 0; i < end; i++) {
             byte cur = freq2sym[st & mask];
             block[i] = cur;
             const ANSDecSymbol sym = symb[cur & 0xFF];
@@ -192,13 +210,13 @@ void ANSRangeDecoder::decodeChunk(byte block[], int start, int end)
 
             // Normalize
             while (st < ANS_TOP)
-                st = (st << 8) | int(_bitstream.readBits(8));
+                st = (st << 8) | (*p++);
         }
     }
     else {
         int prv = 0;
 
-        for (int i = start; i < end; i++) {
+        for (int i = 0; i < end; i++) {
             byte cur = _f2s[(prv << _logRange) + (st & mask)];
             block[i] = cur;
             const ANSDecSymbol sym = _symbols[(prv << 8) + (cur & 0xFF)];
@@ -209,7 +227,7 @@ void ANSRangeDecoder::decodeChunk(byte block[], int start, int end)
 
             // Normalize
             while (st < ANS_TOP)
-                st = (st << 8) | int(_bitstream.readBits(8));
+                st = (st << 8) | (*p++);
 
             prv = cur & 0xFF;
         }
@@ -219,8 +237,8 @@ void ANSRangeDecoder::decodeChunk(byte block[], int start, int end)
 void ANSDecSymbol::reset(int cumFreq, int freq, int logRange)
 {
     // Mirror encoder
-    if (freq >= 1<<logRange)
-        freq = (1<<logRange) - 1;
+    if (freq >= 1 << logRange)
+        freq = (1 << logRange) - 1;
 
     _cumFreq = cumFreq;
     _freq = freq;

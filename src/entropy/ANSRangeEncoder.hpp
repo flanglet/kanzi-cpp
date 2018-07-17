@@ -26,14 +26,14 @@ using namespace std;
 // Some code has been ported from https://github.com/rygorous/ryg_rans
 // For an alternate C implementation example, see https://github.com/Cyan4973/FiniteStateEntropy
 
-namespace kanzi 
+namespace kanzi
 {
 
-   class ANSEncSymbol 
+   class ANSEncSymbol
    {
    public:
-      ANSEncSymbol() 
-      { 
+      ANSEncSymbol()
+      {
          _xMax = 0;
          _bias = 0;
          _cmplFreq = 0;
@@ -58,9 +58,9 @@ namespace kanzi
    public:
 	   static const int ANS_TOP = 1 << 23;
 
-      ANSRangeEncoder(OutputBitStream& bitstream, 
-                      int order = 0, 
-                      int chunkSize = -1, 
+	   ANSRangeEncoder(OutputBitStream& bitstream,
+                      int order = 0,
+                      int chunkSize = -1,
                       int logRange = DEFAULT_LOG_RANGE) THROW;
 
 	   ~ANSRangeEncoder();
@@ -72,12 +72,12 @@ namespace kanzi
 	   OutputBitStream& getBitStream() const { return _bitstream; }
 
 	   void dispose() {};
-   
+
 
    private:
 	   static const int DEFAULT_ANS0_CHUNK_SIZE = 1 << 15; // 32 KB by default
 	   static const int DEFAULT_LOG_RANGE = 13; // max possible for ANS_TOP=1<23
-
+	   static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
 
 	   uint* _alphabet;
 	   uint* _freqs;
@@ -91,9 +91,9 @@ namespace kanzi
 	   uint _order;
 
 
-	   int rebuildStatistics(byte block[], int start, int end, int lr);
+	   int rebuildStatistics(byte block[], int end, int lr);
 
-	   void encodeChunk(byte block[], int start, int end);
+	   void encodeChunk(byte block[], int end);
 
 	   bool encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], int lr);
    };
