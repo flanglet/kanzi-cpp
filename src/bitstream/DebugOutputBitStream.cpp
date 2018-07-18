@@ -135,7 +135,7 @@ uint DebugOutputBitStream::writeBits(byte bits[], uint count) THROW
     int res = _delegate.writeBits(bits, count);
     const int end = int(count >> 3);
 
-    for (int i = 0; i <= end; i++) {
+    for (int i = 0; i < end; i++) {
         for (int j = 7; j >=0 ; j--) {
            uint64 bit = (bits[i] >> j) & 1;
            _current <<= 1;

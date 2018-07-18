@@ -96,6 +96,9 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
     int remaining = count;
     int start = 0;
 
+    if (count == 0)
+       return 0;
+
     // Byte aligned cursor ?
     if ((_availBits & 7) == 0) {
         if (_availBits == 0)

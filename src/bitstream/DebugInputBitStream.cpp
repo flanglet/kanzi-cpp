@@ -135,7 +135,7 @@ uint DebugInputBitStream::readBits(byte bits[], uint count) THROW
 {
     count = _delegate.readBits(bits, count);
 
-    for (uint i = 0; i <= (count >> 3); i++) {
+    for (uint i = 0; i < (count >> 3); i++) {
         for (int j = 7; j >= 0; j--) {
             int bit = (bits[i] >> j) & 1;
             _idx++;
