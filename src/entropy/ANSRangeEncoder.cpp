@@ -230,13 +230,13 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
     }
 
     // Write chunk size
-    EntropyUtils::writeVarInt(_bitstream, p0 - p);
+    EntropyUtils::writeVarInt(_bitstream, int(p0 - p));
 
     // Write final ANS state
     _bitstream.writeBits(st, 32);
 
     // Write encoded data to bitstream
-    _bitstream.writeBits(p + 1, 8 * (p0 - p));
+    _bitstream.writeBits(p + 1, 8 * uint(p0 - p));
 }
 
 // Compute chunk frequencies, cumulated frequencies and encode chunk header

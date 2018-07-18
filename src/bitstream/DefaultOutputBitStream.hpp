@@ -57,7 +57,7 @@ namespace kanzi
        uint64 written() const
        {
            // Number of bits flushed + bytes written in memory + bits written in memory
-           return _written + ((uint64)_position << 3) + (64 - _availBits);
+           return _written + (uint64(_position) << 3) + (64 - _availBits);
        }
 
        bool isClosed() const { return _closed; }
