@@ -596,7 +596,7 @@ TextCodec::TextCodec(int dictSize)
 	_dictList = new DictEntry[_dictSize];
 	_hashMask = mapSize - 1;
 	int nbWords = STATIC_DICT_WORDS;
-	memcpy(&_dictList[0], &STATIC_DICTIONARY[0], STATIC_DICT_WORDS * sizeof(DictEntry));
+	memcpy(static_cast<void*>(&_dictList[0]), &STATIC_DICTIONARY[0], STATIC_DICT_WORDS * sizeof(DictEntry));
 
 	// Add special entries at start of map
 	_escapes[0] = ESCAPE_TOKEN2;
@@ -648,7 +648,7 @@ TextCodec::TextCodec(map<string, string>& ctx)
 	_dictList = new DictEntry[_dictSize];
 	_hashMask = mapSize - 1;
 	int nbWords = STATIC_DICT_WORDS;
-	memcpy(&_dictList[0], &STATIC_DICTIONARY[0], STATIC_DICT_WORDS * sizeof(DictEntry));
+	memcpy(static_cast<void*>(&_dictList[0]), &STATIC_DICTIONARY[0], STATIC_DICT_WORDS * sizeof(DictEntry));
 
 	// Add special entries at start of map
 	_escapes[0] = ESCAPE_TOKEN2;
@@ -690,7 +690,7 @@ TextCodec::TextCodec(int dictSize, byte dict[], int size, int logHashSize)
 		if (sz > _dictSize)
 			sz = _dictSize;
 
-		memcpy(&_dictList[0], &STATIC_DICTIONARY[0], sz);
+		memcpy(static_cast<void*>(&_dictList[0]), &STATIC_DICTIONARY[0], sz);
 		nbWords = STATIC_DICT_WORDS;
 	}
 
@@ -942,7 +942,7 @@ bool TextCodec::expandDictionary()
 		return false;
 
 	DictEntry* newDict = new DictEntry[_dictSize * 2];
-	memcpy(&newDict[0], &_dictList[0], sizeof(DictEntry) * _dictSize);
+	memcpy(static_cast<void*>(&newDict[0]), &_dictList[0], sizeof(DictEntry) * _dictSize);
 
 	for (int i = _dictSize; i < _dictSize * 2; i++)
 		newDict[i] = DictEntry(nullptr, 0, i, 0);

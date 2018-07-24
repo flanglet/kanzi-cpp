@@ -32,6 +32,8 @@ namespace kanzi {
 
        DictEntry(const byte* ptr, int32 hash, int idx, int length);
 
+       DictEntry(const DictEntry& de);
+
        DictEntry& operator = (const DictEntry& de);
 
        ~DictEntry() {}
@@ -139,6 +141,13 @@ namespace kanzi {
        _ptr = ptr;
        _hash = hash;
        _data = ((length & 0xFF) << 24) | (idx & 0x00FFFFFF);
+   }
+
+   inline DictEntry::DictEntry(const DictEntry& de)
+   {
+       _ptr = de._ptr;
+       _hash = de._hash;
+       _data = de._data;
    }
 
    inline DictEntry& DictEntry::operator = (const DictEntry& de)

@@ -727,7 +727,7 @@ T FileCompressTask<T>::call()
             _cos->write((const char*)&sa._array[0], len);
         }
     }
-    catch (IOException ioe) {
+    catch (IOException& ioe) {
         delete[] buf;
         return T(ioe.error(), read, _cos->getWritten(), ioe.what());
     }
@@ -840,7 +840,7 @@ FileCompressTask<T>::~FileCompressTask()
 
         _is = nullptr;
     }
-    catch (exception ioe) {
+    catch (exception&) {
     }
 }
 

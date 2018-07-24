@@ -416,7 +416,7 @@ FileDecompressTask<T>::~FileDecompressTask()
 
         _os = nullptr;
     }
-    catch (exception ioe) {
+    catch (exception&) {
     }
 }
 

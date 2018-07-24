@@ -171,7 +171,7 @@ namespace kanzi {
 
 		for (int i = 0; i < 8; i++) {
 			transforms[i] = nullptr;
-			uint64 t = (functionType >> (MAX_SHIFT - ONE_SHIFT * i)) & MASK;
+			const uint64 t = (functionType >> (MAX_SHIFT - ONE_SHIFT * i)) & MASK;
 
 			if ((t != NONE_TYPE) || (i == 0))
 				transforms[nbtr++] = newFunctionToken(ctx, t);

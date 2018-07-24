@@ -72,7 +72,7 @@ CompressedInputStream::~CompressedInputStream()
     try {
         close();
     }
-    catch (exception) {
+    catch (exception&) {
         // Ignore and continue
     }
 

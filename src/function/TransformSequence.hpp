@@ -59,7 +59,7 @@ namespace kanzi
        _length = 8;
        _skipFlags = 0;
 
-       for (int i = 8; i >= 0; i--) {
+       for (int i = 7; i >= 0; i--) {
            _transforms[i] = transforms[i];
 
            if (_transforms[i] == nullptr)
