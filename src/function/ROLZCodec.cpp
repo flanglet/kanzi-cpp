@@ -40,6 +40,8 @@ ROLZCodec::ROLZCodec(uint logPosChecks)
 inline int ROLZCodec::findMatch(const byte buf[], const int pos, const int end)
 {
     const uint32 key = getKey(&buf[pos - 2]);
+    prefetchRead(&_matches[key << _logPosChecks]);
+    prefetchRead(&_counters[key]);
     int32* matches = &_matches[key << _logPosChecks];
     const int32 hash32 = hash(&buf[pos]);
     const int32 counter = _counters[key];
@@ -49,8 +51,8 @@ inline int ROLZCodec::findMatch(const byte buf[], const int pos, const int end)
     const int maxMatch = (end - pos >= MAX_MATCH) ? MAX_MATCH : end - pos;
 
     // Check all recorded positions
-    for (int i = 0; i < _posChecks; i++) {
-        int32 ref = matches[(counter - i) & _maskChecks];
+    for (int i = counter ; i > counter - _posChecks; i--) {
+        int32 ref = matches[i & _maskChecks];
 
         if (ref == 0)
             break;
@@ -70,7 +72,7 @@ inline int ROLZCodec::findMatch(const byte buf[], const int pos, const int end)
             n++;
 
         if (n > bestLen) {
-            bestIdx = i;
+            bestIdx = counter - i;
             bestLen = n;
 
             if (bestLen == maxMatch)
