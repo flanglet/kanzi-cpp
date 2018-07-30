@@ -112,17 +112,17 @@ inline int BinaryEntropyDecoder::decodeBit()
     const uint64 split = ((((_high - _low) >> 4) * uint64(_predictor->get())) >> 8) + _low;
     int bit;
 
+    // Update predictor
     if (split >= _current) {
         bit = 1;
         _high = split;
+        _predictor->update(1);
     }
     else {
         bit = 0;
         _low = split + 1;
+        _predictor->update(0);
     }
-
-    // Update predictor
-    _predictor->update(bit);
 
     // Read 32 bits from bitstream
     while (((_low ^ _high) & MASK_24_56) == 0)

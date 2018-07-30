@@ -249,7 +249,7 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
                 int matchLen = rd.decodeByte() & 0xFF;
 
                 // Sanity check
-                if (dstIdx + matchLen > dstEnd) {
+                if (dstIdx + matchLen + 3 > dstEnd) {
                     output._index += dstIdx;
                     break;
                 }
@@ -270,8 +270,15 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
                 dstIdx += 3;
                 ref += 3;
 
-                //while (matchLen >= 4)
-                // dst[dstIdx] = src[ref];
+                while (matchLen >= 4) {
+                    dst[dstIdx] = dst[ref];
+                    dst[dstIdx + 1] = dst[ref + 1];
+                    dst[dstIdx + 2] = dst[ref + 2];
+                    dst[dstIdx + 3] = dst[ref + 3];
+                    dstIdx += 4;
+                    ref += 4;
+                    matchLen -= 4;
+                }
 
                 while (matchLen != 0) {
                     dst[dstIdx++] = dst[ref++];
@@ -369,7 +376,7 @@ inline void ROLZEncoder::encodeBit(int bit)
     _predictor->update(bit);
 
     // Emit unchanged first 32 bits
-    while (((_low ^ _high) & MASK_24_56) == 0) {
+    while (((_low ^ _high) >> 24) == 0) {
         BigEndian::writeInt32(&_buf[_idx], int32(_high >> 32));
         _idx += 4;
         _low <<= 32;
@@ -415,20 +422,20 @@ inline int ROLZDecoder::decodeBit()
     const uint64 mid = _low + ((((_high - _low) >> 4) * uint64(_predictor->get())) >> 8);
     int bit;
 
+    // Update predictor
     if (mid >= _current) {
         bit = 1;
         _high = mid;
+        _predictor->update(1);
     }
     else {
         bit = 0;
         _low = mid + 1;
+        _predictor->update(0);
     }
 
-    // Update predictor
-    _predictor->update(bit);
-
     // Read 32 bits
-    while (((_low ^ _high) & MASK_24_56) == 0) {
+    while (((_low ^ _high) >> 24) == 0) {
         _low = (_low << 32) & MASK_0_56;
         _high = ((_high << 32) | MASK_0_32) & MASK_0_56;
         const uint64 val = uint64(BigEndian::readInt32(&_buf[_idx])) & MASK_0_32;

@@ -209,7 +209,7 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     }
 
     // Initialize with a value different from the first symbol
-    byte prev = (byte)~src[srcIdx];
+    byte prev = byte(~src[srcIdx]);
 
     while (srcIdx < srcEnd) {
         const byte val = src[srcIdx++];
@@ -242,11 +242,20 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
                     break;
                 }
 
-                // Emit length times the previous byte
-                while (--run >= 0)
-                    dst[dstIdx++] = prev;
+                // Emit 'run' times the previous byte
+                while (run >= 4) {
+                    dst[dstIdx] = prev;
+                    dst[dstIdx + 1] = prev;
+                    dst[dstIdx + 2] = prev;
+                    dst[dstIdx + 3] = prev;
+                    dstIdx += 4;
+                    run -= 4;
+                }
 
-                run = 0;
+                while (run > 0) {
+                    dst[dstIdx++] = prev;
+                    run--;
+                }
             }
         }
         else {

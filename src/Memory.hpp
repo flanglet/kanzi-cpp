@@ -178,7 +178,7 @@ namespace kanzi {
 
 	inline void BigEndian::writeInt32(byte* p, int32 val)
 	{
-  #if (!IS_BIG_ENDIAN)
+   #if (!IS_BIG_ENDIAN)
       val = bswap32(val);
    #endif 
 
@@ -193,7 +193,7 @@ namespace kanzi {
 
 	inline void BigEndian::writeInt16(byte* p, int16 val)
 	{
-  #if (!IS_BIG_ENDIAN)
+   #if (!IS_BIG_ENDIAN)
       val = bswap16  (val);
    #endif 
 
