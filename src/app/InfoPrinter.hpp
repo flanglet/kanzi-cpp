@@ -20,6 +20,7 @@ limitations under the License.
 #include <ostream>
 #include "../concurrent.hpp"
 #include "../types.hpp"
+#include "../util.hpp"
 #include "../Listener.hpp"
 #include "../OutputStream.hpp"
 #ifdef CONCURRENCY_ENABLED
@@ -33,10 +34,6 @@ namespace kanzi
 
    class BlockInfo {
    public:
-       clock_t _time0;
-       clock_t _time1;
-       clock_t _time2;
-       clock_t _time3;
        int64 _stage0Size;
        int64 _stage1Size;
    };
@@ -65,6 +62,9 @@ namespace kanzi
        Event::Type _thresholds[6];
        InfoPrinter::Type _type;
        int _level;
+       Clock _clock12;
+       Clock _clock23;
+       Clock _clock34;
    };
 }
 #endif

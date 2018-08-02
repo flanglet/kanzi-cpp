@@ -51,7 +51,7 @@ void InfoPrinter::processEvent(const Event& evt)
 
         // Register initial block size
         BlockInfo* bi = new BlockInfo();
-        bi->_time0 = evt.getTime();
+        _clock12.start();
 
         if (_type == InfoPrinter::ENCODING)
             bi->_stage0Size = evt.getSize();
@@ -84,12 +84,13 @@ void InfoPrinter::processEvent(const Event& evt)
 
         if (_type == InfoPrinter::DECODING)
             bi->_stage0Size = evt.getSize();
-
-        bi->_time1 = evt.getTime();
+        
+        _clock12.stop();
+        _clock23.start();
 
         if (_level >= 5) {
             stringstream ss;
-            ss << evt.toString() << " [" << uint(double(bi->_time1 - bi->_time0) / CLOCKS_PER_SEC * 1000.0) << " ms]";
+            ss << evt.toString() << " [" << int64(_clock12.elapsed())  << " ms]";
             _os << ss.str() << endl;
         }
     }
@@ -108,14 +109,13 @@ void InfoPrinter::processEvent(const Event& evt)
             bi = it->second;
         }
 
-        bi->_time2 = evt.getTime();
+        _clock23.stop();
+        _clock34.start();
         bi->_stage1Size = evt.getSize();
 
         if (_level >= 5) {
-            stringstream ss;
-            ss << evt.toString() << " [" << uint(double(bi->_time2 - bi->_time1) / CLOCKS_PER_SEC * 1000.0) << " ms]";
-            _os << ss.str() << endl;
-        }
+            _os << evt.toString() << endl;
+        }        
     }
     else if (evt.getType() == _thresholds[4]) {
         BlockInfo* bi = nullptr;
@@ -140,18 +140,18 @@ void InfoPrinter::processEvent(const Event& evt)
         }
 
         int64 stage2Size = evt.getSize();
-        bi->_time3 = evt.getTime();
+        _clock34.stop();
         stringstream ss;
 
         if (_level >= 5) {
-            ss << evt.toString() << " [" << uint(double(bi->_time3 - bi->_time2) / CLOCKS_PER_SEC * 1000.0) << " ms]" << endl;
+            ss << evt.toString() << endl;
         }
 
         // Display block info
         if (_level >= 4) {
             ss << "Block " << currentBlockId << ": " << bi->_stage0Size << " => ";
-            ss << bi->_stage1Size << " [" << uint(double(bi->_time1 - bi->_time0) / CLOCKS_PER_SEC * 1000.0) << " ms] => " << stage2Size;
-            ss << " [" << uint(double(bi->_time3 - bi->_time2) / CLOCKS_PER_SEC * 1000.0) << " ms]";
+            ss << bi->_stage1Size << " [" << int64(_clock12.elapsed()) << " ms] => " << stage2Size;
+            ss << " [" << int64(_clock34.elapsed()) << " ms]";
 
             // Add compression ratio for encoding
             if (_type == InfoPrinter::ENCODING) {
@@ -171,7 +171,7 @@ void InfoPrinter::processEvent(const Event& evt)
 
             _os << ss.str() << endl;
         }
-
+ 
         delete bi;
 
         {
