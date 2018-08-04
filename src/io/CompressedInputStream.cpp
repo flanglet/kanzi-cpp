@@ -323,23 +323,23 @@ int CompressedInputStream::processBlock() THROW
         int decoded = 0;
         _sa->_index = 0;
         const int firstBlockId = _blockId.load();
-        int nbJobs = _jobs;
+        int nbTasks = _jobs;
         int* jobsPerTask;
 
         // Assign optimal number of tasks and jobs per task
-        if (nbJobs > 1) {
+        if (nbTasks > 1) {
             // If the number of input blocks is available, use it to optimize
             // memory usage
             if (_nbInputBlocks != 0) {
                 // Limit the number of jobs if there are fewer blocks that this.jobs
                 // It allows more jobs per task and reduces memory usage.
-                if (nbJobs > _nbInputBlocks) {
-                    nbJobs = _nbInputBlocks;
+                if (nbTasks > _nbInputBlocks) {
+                    nbTasks = _nbInputBlocks;
                 }
             }
 
-            jobsPerTask = new int[nbJobs];
-            Global::computeJobsPerTask(jobsPerTask, _jobs, nbJobs);
+            jobsPerTask = new int[nbTasks];
+            Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
         }
         else {
             jobsPerTask = new int[1];
@@ -347,7 +347,7 @@ int CompressedInputStream::processBlock() THROW
         }
 
         // Create as many tasks as required
-        for (int jobId = 0; jobId < nbJobs; jobId++) {
+        for (int jobId = 0; jobId < nbTasks; jobId++) {
             _buffers[2 * jobId]->_index = 0;
             _buffers[2 * jobId + 1]->_index = 0;
 
@@ -386,7 +386,7 @@ int CompressedInputStream::processBlock() THROW
             decoded += res._decoded;
             const int size = _sa->_index + decoded;
 
-            if (size > nbJobs * _blockSize)
+            if (size > nbTasks * _blockSize)
                 throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
 
             if (_sa->_length < size) {
@@ -428,7 +428,7 @@ int CompressedInputStream::processBlock() THROW
 
             const int size = _sa->_index + decoded;
 
-            if (size > nbJobs * _blockSize)
+            if (size > nbTasks * _blockSize)
                 throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
 
             if (_sa->_length < size) {
@@ -494,7 +494,7 @@ void CompressedInputStream::close() THROW
     _sa->_length = 0;
     _sa->_index = -1;
 
-    for (int i = 0; i < _jobs; i++) {
+    for (int i = 0; i < 2 * _jobs; i++) {
         delete[] _buffers[i]->_array;
         _buffers[i]->_array = new byte[0];
         _buffers[i]->_length = 0;
