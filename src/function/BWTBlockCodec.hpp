@@ -16,31 +16,33 @@ limitations under the License.
 #ifndef _BWTBlockCodec_
 #define _BWTBlockCodec_
 
+#include <map>
+#include <string>
 #include "../transform/BWT.hpp"
 #include "../Function.hpp"
 
-namespace kanzi 
-{
+using namespace std;
 
-// Utility class to en/de-code a BWT data block and its associated primary index(es)
+namespace kanzi {
 
-// BWT stream format: Header (m bytes) Data (n bytes)
-// Header: For each primary index,
-//   mode (8 bits) + primary index (8,16 or 24 bits)
-//   mode: bits 7-6 contain the size in bits of the primary index :
-//             00: primary index size <=  6 bits (fits in mode byte)
-//             01: primary index size <= 14 bits (1 extra byte)
-//             10: primary index size <= 22 bits (2 extra bytes)
-//             11: primary index size  > 22 bits (3 extra bytes)
-//         bits 5-0 contain 6 most significant bits of primary index
-//   primary index: remaining bits (up to 3 bytes)
+   // Utility class to en/de-code a BWT data block and its associated primary index(es)
 
+   // BWT stream format: Header (m bytes) Data (n bytes)
+   // Header: For each primary index,
+   //   mode (8 bits) + primary index (8,16 or 24 bits)
+   //   mode: bits 7-6 contain the size in bits of the primary index :
+   //             00: primary index size <=  6 bits (fits in mode byte)
+   //             01: primary index size <= 14 bits (1 extra byte)
+   //             10: primary index size <= 22 bits (2 extra bytes)
+   //             11: primary index size  > 22 bits (3 extra bytes)
+   //         bits 5-0 contain 6 most significant bits of primary index
+   //   primary index: remaining bits (up to 3 bytes)
 
    class BWTBlockCodec : public Function<byte> {
    public:
-       BWTBlockCodec() {}
+       BWTBlockCodec(map<string, string>&);
 
-       ~BWTBlockCodec() {}
+       ~BWTBlockCodec() { delete _pBWT; }
 
        bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length);
 
@@ -50,12 +52,11 @@ namespace kanzi
        int getMaxEncodedLength(int srcLen) const
        {
            // Return input buffer size + max header size
-           return srcLen + 4*8;
+           return srcLen + 4 * 8;
        }
 
    private:
-       BWT _bwt;
+       BWT* _pBWT;
    };
-
 }
 #endif

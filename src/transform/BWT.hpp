@@ -17,11 +17,10 @@ limitations under the License.
 #define _BWT_
 
 #include "../Transform.hpp"
+#include "../concurrent.hpp"
 #include "DivSufSort.hpp"
 
-namespace kanzi
-{
-
+namespace kanzi {
    // The Burrows-Wheeler Transform is a reversible transform based on
    // permutation of the data in the original message to reduce the entropy.
 
@@ -34,10 +33,6 @@ namespace kanzi
 
    // This implementation replaces the 'slow' sorting of permutation strings
    // with the construction of a suffix array (faster but more complex).
-   // The suffix array contains the indexes of the sorted suffixes.
-   // The BWT may be split in chunks (depending of block size). In this case, 
-   // several 'primary indexes' (one for each chunk) is kept and the inverse
-   // can be processed in parallel; each chunk being inverted concurrently.
    //
    // E.G.    0123456789A
    // Source: mississippi\0
@@ -60,40 +55,80 @@ namespace kanzi
    //
    // See https://code.google.com/p/libdivsufsort/source/browse/wiki/SACA_Benchmarks.wiki
    // for respective performance of different suffix sorting algorithms.
+   //
+   // This implementation extends the canonical algorithm to use up to MAX_CHUNKS primary
+   // indexes (based on input block size). Each primary index corresponds to a data chunk.
+   // Chunks may be inverted concurrently.
+   template <class T>
+   class InverseBigChunkTask : public Task<T> {
+   private:
+       uint32* _buffer1;
+       byte* _buffer2;
+       uint32* _buckets;
+       int* _primaryIndexes;
+       byte* _dst;
+       int _pIdx0;
+       int _startIdx;
+       int _step;
+       int _startChunk;
+       int _endChunk;
+
+   public:
+       InverseBigChunkTask(uint32* buf1, byte* buf2, uint32* buckets, byte* output,
+           int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
+       ~InverseBigChunkTask() {}
+
+       T call() THROW;
+   };
+
+   template <class T>
+   class InverseRegularChunkTask : public Task<T> {
+   private:
+       uint32* _buffer;
+       uint32* _buckets;
+       int* _primaryIndexes;
+       byte* _dst;
+       int _pIdx0;
+       int _startIdx;
+       int _step;
+       int _startChunk;
+       int _endChunk;
+
+   public:
+       InverseRegularChunkTask(uint32* buf, uint32* buckets, byte* output,
+           int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
+       ~InverseRegularChunkTask() {}
+
+       T call() THROW;
+   };
 
    class BWT : public Transform<byte> {
 
    private:
        static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1 GB (30 bits)
        static const int BWT_MAX_HEADER_SIZE = 4;
+       static const int BWT_MAX_CHUNKS = 8;
 
        uint32* _buffer1;
        byte* _buffer2;
        int* _buffer3;
        int _bufferSize;
        uint32 _buckets[256];
-       int _primaryIndexes[9];
+       int _primaryIndexes[8];
        DivSufSort _saAlgo;
+       int _jobs;
 
        bool inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count);
 
        bool inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count);
 
    public:
-       BWT()
-       {
-           _buffer1 = nullptr; // Only used in inverse
-           _buffer2 = nullptr; // Only used for big blocks (size >= 1<<24)
-           _buffer3 = nullptr; // Only used in forward
-           _bufferSize = 0;
-           memset(_buckets, 0, sizeof(uint32) * 256);
-           memset(_primaryIndexes, 0, sizeof(int) * 9);
-       }
+       BWT(int jobs = 1);
 
        ~BWT()
        {
            if (_buffer1 != nullptr)
-              delete[] _buffer1;
+               delete[] _buffer1;
 
            if (_buffer2 != nullptr)
                delete[] _buffer2;
@@ -114,6 +149,5 @@ namespace kanzi
 
        static int getBWTChunks(int size);
    };
-
 }
 #endif

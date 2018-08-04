@@ -13,10 +13,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <cstring>
+
 #include "BWTBlockCodec.hpp"
 
 using namespace kanzi;
+
+BWTBlockCodec::BWTBlockCodec(map<string, string>& ctx)
+{ 
+	int jobs = 1;
+	map<string, string>::iterator it = ctx.find("jobs");
+
+	if (it != ctx.end()) {
+		jobs = atoi(it->second.c_str());
+	}
+
+	_pBWT = new BWT(jobs);
+}
 
 // Return true if the compression chain succeeded. In this case, the input data
 // may be modified. If the compression failed, the input data is returned unmodified.
@@ -38,30 +50,26 @@ bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, i
     while (1 << log <= blockSize)
         log++;
 
-    log--;
-
     // Estimate header size based on block size
-    const int headerSizeBytes1 = (chunks * (2 + log) + 7) >> 3;
+    const int headerSizeBytes1 = chunks * ((2 + log + 7) >> 3);
     output._index += headerSizeBytes1;
 
     // Apply forward transform
-    if (_bwt.forward(input, output, blockSize) == false)
+    if (_pBWT->forward(input, output, blockSize) == false)
         return false;
 
     int headerSizeBytes2 = 0;
 
     for (int i = 0; i < chunks; i++) {
-        int primaryIndex = _bwt.getPrimaryIndex(i);
+        int primaryIndex = _pBWT->getPrimaryIndex(i);
         int pIndexSizeBits = 6;
 
         while ((1 << pIndexSizeBits) <= primaryIndex)
             pIndexSizeBits++;
 
         // Compute block size based on primary index
-        headerSizeBytes2 += (2 + pIndexSizeBits);
+        headerSizeBytes2 += ((2 + pIndexSizeBits + 7) >> 3);
     }
-
-    headerSizeBytes2 = (headerSizeBytes2 + 7) >> 3;
 
     if (headerSizeBytes2 != headerSizeBytes1) {
         // Adjust space for header
@@ -72,7 +80,7 @@ bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, i
     int idx = 0;
 
     for (int i = 0; i < chunks; i++) {
-        int primaryIndex = _bwt.getPrimaryIndex(i);
+        int primaryIndex = _pBWT->getPrimaryIndex(i);
         int pIndexSizeBits = 6;
 
         while ((1 << pIndexSizeBits) <= primaryIndex)
@@ -124,9 +132,9 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
             primaryIndex |= ((input._array[input._index++] & 0xFF) << shift);
         }
 
-        _bwt.setPrimaryIndex(i, primaryIndex);
+        _pBWT->setPrimaryIndex(i, primaryIndex);
     }
 
     // Apply inverse Transform
-    return _bwt.inverse(input, output, blockSize);
+    return _pBWT->inverse(input, output, blockSize);
 }

@@ -194,7 +194,7 @@ namespace kanzi {
 			return new ROLZCodec();
 
 		case BWT_TYPE:
-			return new BWTBlockCodec();
+			return new BWTBlockCodec(ctx);
 
 		case BWTS_TYPE:
 			return new BWTS();

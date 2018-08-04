@@ -15,9 +15,34 @@ limitations under the License.
 */
 
 #include <cstring>
-#include "BWT.hpp"
 #include <cstdio>
+#include <map>
+#include <vector>
+#include "BWT.hpp"
+#include "../IllegalArgumentException.hpp"
+
+#ifdef CONCURRENCY_ENABLED
+#include <future>
+#endif
+
 using namespace kanzi;
+
+BWT::BWT(int jobs) THROW
+{
+    _buffer1 = nullptr; // Only used in inverse
+    _buffer2 = nullptr; // Only used for big blocks (size >= 1<<24)
+    _buffer3 = nullptr; // Only used in forward
+    _bufferSize = 0;
+
+#ifndef CONCURRENCY_ENABLED
+    if (jobs > 1)
+        throw IllegalArgumentException("The number of jobs is limited to 1 in this version");
+#endif
+
+    _jobs = jobs;
+    memset(_buckets, 0, sizeof(uint32) * 256);
+    memset(_primaryIndexes, 0, sizeof(int) * 8);
+}
 
 bool BWT::setPrimaryIndex(int n, int primaryIndex)
 {
@@ -52,7 +77,7 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     // Lazy dynamic memory allocation
     if ((_buffer3 == nullptr) || (_bufferSize < count)) {
         if (_buffer3 != nullptr)
-           delete[] _buffer3;
+            delete[] _buffer3;
 
         _bufferSize = count;
         _buffer3 = new int[_bufferSize];
@@ -64,9 +89,9 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     const int chunks = getBWTChunks(count);
     bool res = true;
 
-    if (chunks == 1) {
+    if ((chunks == 1) || (_jobs == 1)) {
         for (; n < count; n++) {
-           if (sa[n] == 0) {
+            if (sa[n] == 0) {
                 res &= setPrimaryIndex(0, n);
                 break;
             }
@@ -188,7 +213,7 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
     int idx = count - 1;
 
     // Build inverse
-    if (chunks == 1) {
+    if ((chunks == 1) || (_jobs == 1)) {
         uint32 ptr = data[pIdx];
         dst[idx--] = byte(ptr);
 
@@ -197,23 +222,45 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
             dst[idx] = byte(ptr);
         }
     }
+#ifdef CONCURRENCY_ENABLED
     else {
+        // Several chunks may be decoded concurrently (depending on the availaibility
+        // of jobs per block).
         const int step = count / chunks;
+        const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
+        int* jobsPerTask = new int[nbTasks];
+        Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
+        int c = chunks;
+        vector<future<int> > futures;
+        vector<InverseRegularChunkTask<int>*> tasks;
 
-        for (int i = chunks - 1; i >= 0; i--) {
-            uint32 ptr = data[pIdx];
-            dst[idx--] = byte(ptr);
-            const int endChunk = i * step;
-
-            for (; idx >= endChunk; idx--) {
-                ptr = data[(ptr >> 8) + buckets_[ptr & 0xFF]];
-                dst[idx] = byte(ptr);
-            }
-
-            pIdx = getPrimaryIndex(i);
-            idx = endChunk - 1;
+        // Create one task per job
+        for (int j = 0; j < nbTasks; j++) {
+            // Each task decodes jobsPerTask[j] chunks
+            const int nc = c - jobsPerTask[j];
+            const int end = nc * step;
+            InverseRegularChunkTask<int>* task = new InverseRegularChunkTask<int>(data, buckets_, dst, _primaryIndexes,
+                pIdx, idx, step, c - 1, c - 1 - jobsPerTask[j]);
+            tasks.push_back(task);
+            futures.push_back(async(launch::async, &InverseRegularChunkTask<int>::call, task));
+            c = nc;
+            pIdx = getPrimaryIndex(c);
+            idx = end - 1;
         }
+
+        // Wait for completion of all concurrent tasks
+        for (int j = 0; j < nbTasks; j++) {
+            futures[j].get();
+        }
+
+        // Cleanup
+        for (vector<InverseRegularChunkTask<int>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+            delete *it;
+
+        tasks.clear();
+        delete jobsPerTask;
     }
+#endif
 
     input._index += count;
     output._index += count;
@@ -229,7 +276,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
     // Lazy dynamic memory allocations
     if ((_buffer1 == nullptr) || (_bufferSize < count)) {
         if (_buffer1 != nullptr)
-           delete[] _buffer1;
+            delete[] _buffer1;
 
         if (_buffer2 != nullptr)
             delete[] _buffer2;
@@ -282,7 +329,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
     int idx = count - 1;
 
     // Build inverse
-    if (chunks == 1) {
+    if ((chunks == 1) || (_jobs == 1)) {
         uint32 val1 = data1[pIdx];
         uint8 val2 = data2[pIdx];
         dst[idx--] = val2;
@@ -294,44 +341,144 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
             dst[idx] = val2;
         }
     }
+#ifdef CONCURRENCY_ENABLED
     else {
+        // Several chunks may be decoded concurrently (depending on the availaibility
+        // of jobs per block).
         const int step = count / chunks;
+        const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
+        int* jobsPerTask = new int[nbTasks];
+        Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
+        int c = chunks;
+        vector<future<int> > futures;
+        vector<InverseBigChunkTask<int>*> tasks;
 
-        for (int i = chunks - 1; i >= 0; i--) {
-            uint32 val1 = data1[pIdx];
-            uint8 val2 = data2[pIdx];
-            dst[idx--] = val2;
-            const int endChunk = i * step;
+        // Create one task per job
+        for (int j = 0; j < nbTasks; j++) {
+            // Each task decodes jobsPerTask[j] chunks
+            const int nc = c - jobsPerTask[j];
+            const int end = nc * step;
 
-            for (; idx >= endChunk; idx--) {
-                const int n = val1 + buckets_[val2];
-                val1 = data1[n];
-                val2 = data2[n];
-                dst[idx] = val2;
-            }
-
-            pIdx = getPrimaryIndex(i);
-            idx = endChunk - 1;
+            InverseBigChunkTask<int>* task = new InverseBigChunkTask<int>(data1, data2, buckets_, dst, _primaryIndexes,
+                pIdx, idx, step, c - 1, c - 1 - jobsPerTask[j]);
+            tasks.push_back(task);
+            futures.push_back(async(launch::async, &InverseBigChunkTask<int>::call, task));
+            c = nc;
+            pIdx = getPrimaryIndex(c);
+            idx = end - 1;
         }
+
+        // Wait for completion of all concurrent tasks
+        for (int j = 0; j < nbTasks; j++) {
+            futures[j].get();
+        }
+
+        // Cleanup
+        for (vector<InverseBigChunkTask<int>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+            delete *it;
+
+        tasks.clear();
+        delete jobsPerTask;
     }
+#endif
 
     input._index += count;
     output._index += count;
     return true;
 }
 
-int BWT::getBWTChunks(int)
+int BWT::getBWTChunks(int size)
 {
-    // For now, return 1 always !!!!
-    return 1;
-    //       int log = 0;
-    //       size >>= 10;
-    //
-    //       while ((size>0) && (log<3))
-    //       {
-    //          size >>= 2;
-    //          log++;
-    //       }
-    //
-    //       return 1<<log;
+    if (size < 1 << 23) // 8 MB
+        return 1;
+
+    int res = (size + (1 << 22)) >> 23;
+
+    if (res > BWT_MAX_CHUNKS)
+        return BWT_MAX_CHUNKS;
+
+    return res;
+}
+
+template <class T>
+InverseRegularChunkTask<T>::InverseRegularChunkTask(uint32* buf, uint32* buckets, byte* output,
+    int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk)
+{
+    _buffer = buf;
+    _buckets = buckets;
+    _primaryIndexes = primaryIndexes;
+    _dst = output;
+    _pIdx0 = pIdx0;
+    _startIdx = startIdx;
+    _step = step;
+    _startChunk = startChunk;
+    _endChunk = endChunk;
+}
+
+template <class T>
+T InverseRegularChunkTask<T>::call() THROW
+{
+    int idx = _startIdx;
+    int pIdx = _pIdx0;
+    uint32* data = _buffer;
+    byte* dst = _dst;
+
+    for (int i = _startChunk; i > _endChunk; i--) {
+        uint32 ptr = data[pIdx];
+        dst[idx--] = byte(ptr);
+        const int endIdx = i * _step;
+
+        for (; idx >= endIdx; idx--) {
+            ptr = data[(ptr >> 8) + _buckets[ptr & 0xFF]];
+            dst[idx] = byte(ptr);
+        }
+
+        pIdx = _primaryIndexes[i];
+    }
+
+    return T(0);
+}
+
+template <class T>
+InverseBigChunkTask<T>::InverseBigChunkTask(uint32* buf1, byte* buf2, uint32* buckets, byte* output,
+    int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk)
+{
+    _buffer1 = buf1;
+    _buffer2 = buf2;
+    _buckets = buckets;
+    _primaryIndexes = primaryIndexes;
+    _dst = output;
+    _pIdx0 = pIdx0;
+    _startIdx = startIdx;
+    _step = step;
+    _startChunk = startChunk;
+    _endChunk = endChunk;
+}
+
+template <class T>
+T InverseBigChunkTask<T>::call() THROW
+{
+    int idx = _startIdx;
+    int pIdx = _pIdx0;
+    uint32* data1 = _buffer1;
+    byte* data2 = _buffer2;
+    byte* dst = _dst;
+
+    for (int i = _startChunk; i > _endChunk; i--) {
+        uint32 val1 = data1[pIdx];
+        uint8 val2 = data2[pIdx];
+        dst[idx--] = val2;
+        const int endIdx = i * _step;
+
+        for (; idx >= endIdx; idx--) {
+            const int n = val1 + _buckets[val2];
+            val1 = data1[n];
+            val2 = data2[n];
+            dst[idx] = val2;
+        }
+
+        pIdx = _primaryIndexes[i];
+    }
+
+    return T(0);
 }
