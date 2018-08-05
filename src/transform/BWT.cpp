@@ -330,15 +330,14 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     // Build inverse
     if ((chunks == 1) || (_jobs == 1)) {
-        uint32 val1 = data1[pIdx];
-        uint8 val2 = data2[pIdx];
-        dst[idx--] = val2;
+        uint8 val = data2[pIdx];
+        dst[idx--] = val;
+        int n = data1[pIdx] + buckets_[val];
 
         for (; idx >= 0; idx--) {
-            const int n = val1 + buckets_[val2];
-            val1 = data1[n];
-            val2 = data2[n];
-            dst[idx] = val2;
+            val = data2[n];
+            dst[idx] = val;
+            n = data1[n] + buckets_[val];
         }
     }
 #ifdef CONCURRENCY_ENABLED
@@ -465,16 +464,15 @@ T InverseBigChunkTask<T>::call() THROW
     byte* dst = _dst;
 
     for (int i = _startChunk; i > _endChunk; i--) {
-        uint32 val1 = data1[pIdx];
-        uint8 val2 = data2[pIdx];
-        dst[idx--] = val2;
         const int endIdx = i * _step;
+        uint8 val = data2[pIdx];
+        dst[idx--] = val;
+        int n = data1[pIdx] + _buckets[val];
 
         for (; idx >= endIdx; idx--) {
-            const int n = val1 + _buckets[val2];
-            val1 = data1[n];
-            val2 = data2[n];
-            dst[idx] = val2;
+            val = data2[n];
+            dst[idx] = val;
+            n = data1[n] + _buckets[val];
         }
 
         pIdx = _primaryIndexes[i];
