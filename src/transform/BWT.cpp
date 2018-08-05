@@ -258,7 +258,7 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
             delete *it;
 
         tasks.clear();
-        delete jobsPerTask;
+        delete[] jobsPerTask;
     }
 #endif
 
@@ -377,7 +377,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
             delete *it;
 
         tasks.clear();
-        delete jobsPerTask;
+        delete[] jobsPerTask;
     }
 #endif
 
