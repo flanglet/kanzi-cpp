@@ -89,7 +89,7 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     const int chunks = getBWTChunks(count);
     bool res = true;
 
-    if ((chunks == 1) || (_jobs == 1)) {
+    if (chunks == 1) {
         for (; n < count; n++) {
             if (sa[n] == 0) {
                 res &= setPrimaryIndex(0, n);
