@@ -31,7 +31,10 @@ public:
 	#include <atomic>
 
 	#ifndef CONCURRENCY_ENABLED
-		#ifdef __GNUC__
+		#ifdef __clang__
+			// Process clang first because it may define __GNUC__ with an old version
+			#define CONCURRENCY_ENABLED
+		#elif __GNUC__
 			// Require g++ 5.0 minimum, 4.8.4 generates exceptions on futures (?)
 			#if ((__GNUC__ << 16) + __GNUC_MINOR__ >= (5 << 16) + 0)
 				#define CONCURRENCY_ENABLED
