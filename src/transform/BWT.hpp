@@ -21,49 +21,48 @@ limitations under the License.
 #include "DivSufSort.hpp"
 
 namespace kanzi {
-   // The Burrows-Wheeler Transform is a reversible transform based on
-   // permutation of the data in the original message to reduce the entropy.
+// The Burrows-Wheeler Transform is a reversible transform based on
+// permutation of the data in the original message to reduce the entropy.
 
-   // The initial text can be found here:
-   // Burrows M and Wheeler D, [A block sorting lossless data compression algorithm]
-   // Technical Report 124, Digital Equipment Corporation, 1994
+// The initial text can be found here:
+// Burrows M and Wheeler D, [A block sorting lossless data compression algorithm]
+// Technical Report 124, Digital Equipment Corporation, 1994
 
-   // See also Peter Fenwick, [Block sorting text compression - final report]
-   // Technical Report 130, 1996
+// See also Peter Fenwick, [Block sorting text compression - final report]
+// Technical Report 130, 1996
 
-   // This implementation replaces the 'slow' sorting of permutation strings
-   // with the construction of a suffix array (faster but more complex).
-   //
-   // E.G.    0123456789A
-   // Source: mississippi\0
-   // Suffixes:    rank  sorted
-   // mississippi\0  0  -> 4             i\0
-   //  ississippi\0  1  -> 3          ippi\0
-   //   ssissippi\0  2  -> 10      issippi\0
-   //    sissippi\0  3  -> 8    ississippi\0
-   //     issippi\0  4  -> 2   mississippi\0
-   //      ssippi\0  5  -> 9            pi\0
-   //       sippi\0  6  -> 7           ppi\0
-   //        ippi\0  7  -> 1         sippi\0
-   //         ppi\0  8  -> 6      sissippi\0
-   //          pi\0  9  -> 5        ssippi\0
-   //           i\0  10 -> 0     ssissippi\0
-   // Suffix array SA : 10 7 4 1 0 9 8 6 3 5 2
-   // BWT[i] = input[SA[i]-1] => BWT(input) = pssm[i]pissii (+ primary index 4)
-   // The suffix array and permutation vector are equal when the input is 0 terminated
-   // The insertion of a guard is done internally and is entirely transparent.
-   //
-   // See https://code.google.com/p/libdivsufsort/source/browse/wiki/SACA_Benchmarks.wiki
-   // for respective performance of different suffix sorting algorithms.
-   //
-   // This implementation extends the canonical algorithm to use up to MAX_CHUNKS primary
-   // indexes (based on input block size). Each primary index corresponds to a data chunk.
-   // Chunks may be inverted concurrently.
+// This implementation replaces the 'slow' sorting of permutation strings
+// with the construction of a suffix array (faster but more complex).
+//
+// E.G.    0123456789A
+// Source: mississippi\0
+// Suffixes:    rank  sorted
+// mississippi\0  0  -> 4             i\0
+//  ississippi\0  1  -> 3          ippi\0
+//   ssissippi\0  2  -> 10      issippi\0
+//    sissippi\0  3  -> 8    ississippi\0
+//     issippi\0  4  -> 2   mississippi\0
+//      ssippi\0  5  -> 9            pi\0
+//       sippi\0  6  -> 7           ppi\0
+//        ippi\0  7  -> 1         sippi\0
+//         ppi\0  8  -> 6      sissippi\0
+//          pi\0  9  -> 5        ssippi\0
+//           i\0  10 -> 0     ssissippi\0
+// Suffix array SA : 10 7 4 1 0 9 8 6 3 5 2
+// BWT[i] = input[SA[i]-1] => BWT(input) = pssm[i]pissii (+ primary index 4)
+// The suffix array and permutation vector are equal when the input is 0 terminated
+// The insertion of a guard is done internally and is entirely transparent.
+//
+// See https://code.google.com/p/libdivsufsort/source/browse/wiki/SACA_Benchmarks.wiki
+// for respective performance of different suffix sorting algorithms.
+//
+// This implementation extends the canonical algorithm to use up to MAX_CHUNKS primary
+// indexes (based on input block size). Each primary index corresponds to a data chunk.
+// Chunks may be inverted concurrently.
    template <class T>
    class InverseBigChunkTask : public Task<T> {
    private:
-       uint32* _buffer1;
-       byte* _buffer2;
+       byte* _buffer;
        uint32* _buckets;
        int* _primaryIndexes;
        byte* _dst;
@@ -74,7 +73,7 @@ namespace kanzi {
        int _endChunk;
 
    public:
-       InverseBigChunkTask(uint32* buf1, byte* buf2, uint32* buckets, byte* output,
+       InverseBigChunkTask(byte* buf, uint32* buckets, byte* output,
            int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
        ~InverseBigChunkTask() {}
 
@@ -113,7 +112,6 @@ namespace kanzi {
        byte* _buffer2;
        int* _buffer3;
        int _bufferSize;
-       uint32 _buckets[256];
        int _primaryIndexes[8];
        DivSufSort _saAlgo;
        int _jobs;
