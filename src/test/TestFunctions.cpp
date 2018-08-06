@@ -169,6 +169,10 @@ int testFunctionsCorrectness(const string& name)
         }
 
         Function<byte>* f = getByteFunction(name);
+        
+        if (f == nullptr)
+            exit(1);
+
         byte* input = new byte[size];
         byte* output = new byte[f->getMaxEncodedLength(size)];
         byte* reverse = new byte[size];
@@ -270,6 +274,10 @@ int testFunctionsSpeed(const string& name)
     byte output[50000];
     byte reverse[50000];
     Function<byte>* f = getByteFunction(name);
+    
+    if (f == nullptr)
+       exit(1);
+
     SliceArray<byte> iba1(input, size, 0);
     SliceArray<byte> iba2(output, f->getMaxEncodedLength(size), 0);
     SliceArray<byte> iba3(reverse, size, 0);
