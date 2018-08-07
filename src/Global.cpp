@@ -14,14 +14,6 @@ limitations under the License.
 */
 
 
-#if defined(_MSC_VER)
-   #include <intrin.h>  
-#elif defined(__clang__)
-   #ifdef __x86_64__
-      #include <x86intrin.h>
-   #endif
-#endif
-
 #include "Global.hpp"
 #include "IllegalArgumentException.hpp"
 
@@ -249,33 +241,6 @@ int Global::log2(uint32 x) THROW
     return _log2(x);
 }
 
-
-inline int Global::_log2(uint32 x)
-{
-    #if defined(_MSC_VER)
-        int res;
-        _BitScanReverse((unsigned long*) &res, x);
-        return res;
-    #elif defined(__GNUG__)
-        return 31 - __builtin_clz(x);
-    #elif defined(__clang__)
-        return 31 - __lzcnt32(x);
-    #else
-        int res = 0;
-
-        if (x >= 1 << 16) {
-           x >>= 16;
-           res = 16;
-        }
-
-        if (x >= 1 << 8) {
-           x >>= 8;
-           res += 8;
-        }
-
-        return res + Global::LOG2[x - 1];
-    #endif
-}
 
 
 void Global::computeJobsPerTask(int jobsPerTask[], int jobs, int tasks)

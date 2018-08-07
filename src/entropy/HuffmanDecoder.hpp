@@ -52,8 +52,8 @@ namespace kanzi
        InputBitStream& _bitstream;
        uint _codes[256];
        uint _ranks[256];
-       uint _fdTable[1 << DECODING_BATCH_SIZE]; // Fast decoding table
-       uint _sdTable[256]; // Slow decoding table
+       uint16 _fdTable[1 << DECODING_BATCH_SIZE]; // Fast decoding table
+       uint16 _sdTable[256]; // Slow decoding table
        int _sdtIndexes[MAX_SYMBOL_SIZE + 1]; // Indexes for slow decoding table
        short _sizes[256];
        uint _chunkSize;

@@ -21,6 +21,13 @@ limitations under the License.
 #include "util.hpp"
 #include "IllegalArgumentException.hpp"
 
+#if defined(_MSC_VER)
+   #include <intrin.h>  
+#elif defined(__clang__)
+   #ifdef __x86_64__
+      #include <x86intrin.h>
+   #endif
+#endif
 
 namespace kanzi {
 
@@ -50,7 +57,9 @@ namespace kanzi {
 
        static int log2(uint32 x) THROW; // fast, integer rounded
 
-       static int log2_1024(uint32 x) THROW; // slow, accurate
+       static int _log2(uint32 x); // same as log2 minus check on input value
+
+       static int log2_1024(uint32 x) THROW; // slow, accurate to 1/1024th
 
        static int sqrt(uint32 x);
        
@@ -75,8 +84,6 @@ namespace kanzi {
 
        static const int* initStretch();
        static const int* initSquash();
-
-       static int _log2(uint32 x);
    };
 
 
@@ -197,5 +204,31 @@ namespace kanzi {
        return (val - ((x - (val * val)) >> 31)) << (10 - (shift >> 1));
    }
 
+   inline int Global::_log2(uint32 x)
+   {
+       #if defined(_MSC_VER)
+           int res;
+           _BitScanReverse((unsigned long*) &res, x);
+           return res;
+       #elif defined(__GNUG__)
+           return 31 - __builtin_clz(x);
+       #elif defined(__clang__)
+           return 31 - __lzcnt32(x);
+       #else
+           int res = 0;
+
+           if (x >= 1 << 16) {
+              x >>= 16;
+              res = 16;
+           }
+
+           if (x >= 1 << 8) {
+              x >>= 8;
+              res += 8;
+           }
+
+           return res + Global::LOG2[x - 1];
+       #endif
+   }
 }
 #endif

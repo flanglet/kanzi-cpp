@@ -45,16 +45,11 @@ namespace kanzi
        bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length);
 
    private:
-
-       int _mode;
-       int _prev[256];
-       int _curr[256];
-       int _symbols[256];
-       int _ranks[256];
-
-       void computeForward(int* pSrc, int* pDst, int shift);
-
-       void computeInverse(int* pSrc, int* pDst, int shift);
+      
+       const int _mode;
+       const int _mask1;
+       const int _mask2;
+       const int _shift;
    };
 
 }

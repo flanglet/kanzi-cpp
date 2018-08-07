@@ -19,16 +19,14 @@ limitations under the License.
 
 using namespace kanzi;
 
-SBRT::SBRT(int mode)
+SBRT::SBRT(int mode) :
+	  _mode(mode)
+	, _mask1((mode == MODE_TIMESTAMP) ? 0 : -1)
+	, _mask2((mode == MODE_MTF) ? 0 : -1)
+	, _shift((mode == MODE_RANK) ? 1 : 0)
 {
     if ((mode != MODE_MTF) && (mode != MODE_RANK) && (mode != MODE_TIMESTAMP))
         throw IllegalArgumentException("Invalid mode parameter");
-
-    _mode = mode;
-    memset(_prev, 0, sizeof(int) * 256);
-    memset(_curr, 0, sizeof(int) * 256);
-    memset(_symbols, 0, sizeof(int) * 256);
-    memset(_ranks, 0, sizeof(int) * 256);
 }
 
 bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
@@ -45,32 +43,26 @@ bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     // Aliasing
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    int* p = _prev;
-    int* q = _curr;
-    int* s2r = _symbols;
-    int* r2s = _ranks;
-
-    const int mask1 = (_mode == MODE_TIMESTAMP) ? 0 : -1;
-    const int mask2 = (_mode == MODE_MTF) ? 0 : -1;
-    const int shift = (_mode == MODE_RANK) ? 1 : 0;
+    int p[256] = { 0 };
+    int q[256] = { 0 };
+    int s2r[256];
+    int r2s[256];
 
     for (int i = 0; i < 256; i++) {
-        p[i] = 0;
-        q[i] = 0;
         s2r[i] = i;
         r2s[i] = i;
     }
 
     for (int i = 0; i < count; i++) {
-        int c = src[i] & 0xFF;
+        const int c = src[i] & 0xFF;
         int r = s2r[c];
-        dst[i] = (byte)r;
-        q[c] = ((i & mask1) + (p[c] & mask2)) >> shift;
+        dst[i] = byte(r);
+        const int qc = ((i & _mask1) + (p[c] & _mask2)) >> _shift;
         p[c] = i;
-        int curVal = q[c];
+        q[c] = qc;
 
         // Move up symbol to correct rank
-        while ((r > 0) && (q[r2s[r - 1]] <= curVal)) {
+        while ((r > 0) && (q[r2s[r - 1]] <= qc)) {
             r2s[r] = r2s[r - 1];
             s2r[r2s[r]] = r;
             r--;
@@ -99,30 +91,23 @@ bool SBRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     // Aliasing
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    int* p = _prev;
-    int* q = _curr;
-    int* r2s = _ranks;
+    int p[256] = { 0 };
+    int q[256] = { 0 };
+    int r2s[256];
 
-    const int mask1 = (_mode == MODE_TIMESTAMP) ? 0 : -1;
-    const int mask2 = (_mode == MODE_MTF) ? 0 : -1;
-    const int shift = (_mode == MODE_RANK) ? 1 : 0;
-
-    for (int i = 0; i < 256; i++) {
-        p[i] = 0;
-        q[i] = 0;
+    for (int i = 0; i < 256; i++)
         r2s[i] = i;
-    }
 
     for (int i = 0; i < count; i++) {
         int r = src[i] & 0xFF;
-        int c = r2s[r];
-        dst[i] = (byte)c;
-        q[c] = ((i & mask1) + (p[c] & mask2)) >> shift;
+        const int c = r2s[r];
+        dst[i] = byte(c);
+        const int qc = ((i & _mask1) + (p[c] & _mask2)) >> _shift;
         p[c] = i;
-        int curVal = q[c];
+        q[c] = qc;
 
         // Move up symbol to correct rank
-        while ((r > 0) && (q[r2s[r - 1]] <= curVal)) {
+        while ((r > 0) && (q[r2s[r - 1]] <= qc)) {
             r2s[r] = r2s[r - 1];
             r--;
         }

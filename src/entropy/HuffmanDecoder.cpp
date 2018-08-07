@@ -226,7 +226,7 @@ byte HuffmanDecoder::slowDecodeByte(int code, int codeLen) THROW
         if (idx == SYMBOL_ABSENT) // No code with this length ?
             continue;
 
-        if ((_sdTable[idx + code] >> 8) == uint(codeLen))
+        if ((_sdTable[idx + code] >> 8) == uint16(codeLen))
             return byte(_sdTable[idx + code]);
     }
 
@@ -239,9 +239,8 @@ byte HuffmanDecoder::fastDecodeByte()
 {
     if (_bits < DECODING_BATCH_SIZE) {
         // Fetch more bits from bitstream
-        const uint64 read = _bitstream.readBits(64 - _bits);
         const uint64 mask = (1 << _bits) - 1;
-        _state = ((_state & mask) << (64 - _bits)) | read;
+        _state = ((_state & mask) << (64 - _bits)) | _bitstream.readBits(64 - _bits);
         _bits = 64;
     }
 
