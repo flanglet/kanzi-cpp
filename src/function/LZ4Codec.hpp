@@ -22,7 +22,7 @@ namespace kanzi
 {
 
    // LZ4 is a very fast lossless compression algorithm created by Yann Collet.
-   // See original code here: https://code.google.com/p/lz4/
+   // See original code here: https://github.com/lz4/lz4
    // More details on the algorithm are available here:
    // http://fastcompression.blogspot.com/2011/05/lz4-explained.html
 
