@@ -224,6 +224,7 @@ bool LZ4Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     byte* src = &input._array[input._index];
     byte* dst = &output._array[ output._index];
+    uint8* usrc = (uint8*) src;
     const int srcEnd = count;
     const int dstEnd = output._length;
     const int srcEnd2 = srcEnd - COPY_LENGTH;
@@ -233,16 +234,16 @@ bool LZ4Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     while (true) {
         // Get literal length
-        const int token = src[srcIdx++] & 0xFF;
+        const int token = usrc[srcIdx++];
         int length = token >> ML_BITS;
 
         if (length == RUN_MASK) {
-            byte len;
+            uint8 len;
 
-            while (((len = src[srcIdx++]) == byte(0xFF)) && (srcIdx <= srcEnd))
+            while (((len = usrc[srcIdx++]) == uint8(0xFF)) && (srcIdx <= srcEnd))
                 length += 0xFF;
 
-            length += (len & 0xFF);
+            length += len;
 
             if (length > MAX_LENGTH) {
                 stringstream ss;
@@ -267,11 +268,10 @@ bool LZ4Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
             break;
 
         // Get offset
-        const int delta = (src[srcIdx] & 0xFF) | ((src[srcIdx + 1] & 0xFF) << 8);
+        const int delta = usrc[srcIdx] | (usrc[srcIdx + 1] << 8);
         srcIdx += 2;
-        int match = dstIdx - delta;
 
-        if (match < 0)
+        if (dstIdx < delta)
             break;
 
         length = token & ML_MASK;
@@ -284,7 +284,7 @@ bool LZ4Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
             }
 
             if (srcIdx < srcEnd)
-                length += (src[srcIdx++] & 0xFF);
+                length += usrc[srcIdx++];
 
             if ((length > MAX_LENGTH) || (srcIdx == srcEnd)) {
                 stringstream ss;
@@ -294,6 +294,7 @@ bool LZ4Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
 
         length += MIN_MATCH;
+        int match = dstIdx - delta;
         const int cpy = dstIdx + length;
 
         // Copy repeated sequence
