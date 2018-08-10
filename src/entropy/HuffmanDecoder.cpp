@@ -245,12 +245,11 @@ byte HuffmanDecoder::fastDecodeByte()
     }
 
     // Retrieve symbol from fast decoding table
-    const int idx = int(_state >> (_bits - DECODING_BATCH_SIZE)) & DECODING_MASK;
-    const uint val = _fdTable[idx];
+    const int val = _fdTable[(_state >> (_bits - DECODING_BATCH_SIZE)) & DECODING_MASK];
 
     if (val > MAX_DECODING_INDEX) {
         _bits -= DECODING_BATCH_SIZE;
-        return slowDecodeByte(idx, DECODING_BATCH_SIZE);
+        return slowDecodeByte(int(_state >> _bits) & DECODING_MASK, DECODING_BATCH_SIZE);
     }
 
     _bits -= (val >> 8);
