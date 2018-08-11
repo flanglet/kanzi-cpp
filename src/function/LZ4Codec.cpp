@@ -30,7 +30,8 @@ inline int LZ4Codec::writeLength(byte block[], int length)
     int idx = 0;
 
     while (length >= 0x1FE) {
-        *(int16*) block[idx] = int16(0xFFFF);
+        block[idx] = byte(0xFF);
+        block[idx + 1] = byte(0xFF);
         idx += 2;
         length -= 0x1FE;
     }
