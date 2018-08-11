@@ -181,11 +181,11 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint len)
             endPaddingSize++;
 
         const int endChunk = (startChunk + sz < end) ? startChunk + sz : end;
-        const int endChunk1 = (endChunk - endPaddingSize) & -8;
+        const int endChunk8 = (endChunk - endPaddingSize) & -8;
         int i = startChunk;
 
         // Fast decoding (read DECODING_BATCH_SIZE bits at a time)
-        for (; i < endChunk1; i+=8)
+        for (; i < endChunk8; i+=8)
         {
             block[i]   = fastDecodeByte();
             block[i+1] = fastDecodeByte();
@@ -238,7 +238,7 @@ byte HuffmanDecoder::slowDecodeByte(int code, int codeLen) THROW
 byte HuffmanDecoder::fastDecodeByte()
 {
     if (_bits < DECODING_BATCH_SIZE) {
-        // Fetch more bits from bitstream
+        // Fetch more bits from bitstream       
         const uint64 mask = (1 << _bits) - 1;
         _state = ((_state & mask) << (64 - _bits)) | _bitstream.readBits(64 - _bits);
         _bits = 64;

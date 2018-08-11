@@ -187,25 +187,25 @@ void HuffmanEncoder::computeInPlaceSizesPhase1(uint data[], int n)
 
 void HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
 {
-    uint level_top = n - 2; //root
+    uint topLevel = n - 2; //root
     int depth = 1;
     int i = n;
-    int total_nodes_at_level = 2;
+    int totalNodesAtLevel = 2;
 
     while (i > 0) {
-        int k = level_top;
+        int k = topLevel;
 
-        while ((k > 0) && (data[k - 1] >= level_top))
+        while ((k > 0) && (data[k - 1] >= topLevel))
             k--;
 
-        const int internal_nodes_at_level = level_top - k;
-        const int leaves_at_level = total_nodes_at_level - internal_nodes_at_level;
+        const int internalNodesAtLevel = topLevel - k;
+        const int leavesAtLevel = totalNodesAtLevel - internalNodesAtLevel;
 
-        for (int j = 0; j < leaves_at_level; j++)
+        for (int j = 0; j < leavesAtLevel; j++)
             data[--i] = depth;
 
-        total_nodes_at_level = internal_nodes_at_level << 1;
-        level_top = k;
+        totalNodesAtLevel = internalNodesAtLevel << 1;
+        topLevel = k;
         depth++;
     }
 }
@@ -220,6 +220,7 @@ int HuffmanEncoder::encode(byte block[], uint blkptr, uint len)
     const int end = blkptr + len;
     const int sz = (_chunkSize == 0) ? len : _chunkSize;
     int startChunk = blkptr;
+    uint8* data = (uint8*) &block[0];
 
     while (startChunk < end) {
         const int endChunk = (startChunk + sz < end) ? startChunk + sz : end;
@@ -227,44 +228,44 @@ int HuffmanEncoder::encode(byte block[], uint blkptr, uint len)
         memset(frequencies, 0, sizeof(_freqs));
 
         for (int i = startChunk; i < endChunk8; i += 8) {
-            frequencies[block[i] & 0xFF]++;
-            frequencies[block[i + 1] & 0xFF]++;
-            frequencies[block[i + 2] & 0xFF]++;
-            frequencies[block[i + 3] & 0xFF]++;
-            frequencies[block[i + 4] & 0xFF]++;
-            frequencies[block[i + 5] & 0xFF]++;
-            frequencies[block[i + 6] & 0xFF]++;
-            frequencies[block[i + 7] & 0xFF]++;
+            frequencies[data[i]]++;
+            frequencies[data[i + 1]]++;
+            frequencies[data[i + 2]]++;
+            frequencies[data[i + 3]]++;
+            frequencies[data[i + 4]]++;
+            frequencies[data[i + 5]]++;
+            frequencies[data[i + 6]]++;
+            frequencies[data[i + 7]]++;
         }
 
         for (int i = endChunk8; i < endChunk; i++)
-            frequencies[block[i] & 0xFF]++;
+            frequencies[data[i]]++;
 
         // Rebuild Huffman codes
         updateFrequencies(frequencies);
 
         for (int i = startChunk; i < endChunk8; i += 8) {
             uint val;
-            val = _codes[block[i] & 0xFF];
+            val = _codes[data[i]];
             _bitstream.writeBits(val, val >> 24);
-            val = _codes[block[i + 1] & 0xFF];
+            val = _codes[data[i + 1]];
             _bitstream.writeBits(val, val >> 24);
-            val = _codes[block[i + 2] & 0xFF];
+            val = _codes[data[i + 2]];
             _bitstream.writeBits(val, val >> 24);
-            val = _codes[block[i + 3] & 0xFF];
+            val = _codes[data[i + 3]];
             _bitstream.writeBits(val, val >> 24);
-            val = _codes[block[i + 4] & 0xFF];
+            val = _codes[data[i + 4]];
             _bitstream.writeBits(val, val >> 24);
-            val = _codes[block[i + 5] & 0xFF];
+            val = _codes[data[i + 5]];
             _bitstream.writeBits(val, val >> 24);
-            val = _codes[block[i + 6] & 0xFF];
+            val = _codes[data[i + 6]];
             _bitstream.writeBits(val, val >> 24);
-            val = _codes[block[i + 7] & 0xFF];
+            val = _codes[data[i + 7]];
             _bitstream.writeBits(val, val >> 24);
         }
 
         for (int i = endChunk8; i < endChunk; i++) {
-            uint val = _codes[block[i] & 0xFF];
+            const uint val = _codes[data[i]];
             _bitstream.writeBits(val, val >> 24);
         }
 

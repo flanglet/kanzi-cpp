@@ -874,7 +874,7 @@ byte TextCodec::computeStats(byte block[], int count, int freqs[])
 
 	// Unroll loop
 	for (int i = 0; i<count4; i += 4) {
-		int cur = uint8(block[i]);
+		uint8 cur = uint8(block[i]);
 		freqs[65536 + cur]++;
 		freqs[(prv << 8) + cur]++;
 		prv = cur;
@@ -893,7 +893,7 @@ byte TextCodec::computeStats(byte block[], int count, int freqs[])
 	}
 
 	for (int i = count4; i<count; i++) {
-		const int cur = uint8(block[i]);
+		const uint8 cur = uint8(block[i]);
 		freqs[65536 + cur]++;
 		freqs[(prv << 8) + cur]++;
 		prv = cur;
