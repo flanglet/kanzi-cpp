@@ -13,16 +13,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <cstring>
 #include "DCT8.hpp"
 
 using namespace kanzi;
 
 DCT8::DCT8()
 {
-   _fShift = 10;
-   _iShift = 20;
+    _fShift = 10;
+    _iShift = 20;
+    memset(_data, 0, 64);
 }
-
 
 bool DCT8::forward(SliceArray<int>& input, SliceArray<int>& output, int length)
 {

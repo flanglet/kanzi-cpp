@@ -33,6 +33,8 @@ namespace kanzi
 
       ~SliceArray(){}; // does not deallocate buffer memory
 
+      SliceArray& operator=(const SliceArray& sa);
+
       static bool isValid(const SliceArray& sa);
    };
 
@@ -46,6 +48,15 @@ namespace kanzi
              
        return (sa._index <= sa._length);
    }
+   
+   template <class T>
+   SliceArray<T>& SliceArray<T>::operator=(const SliceArray& sa) {
+      _array = sa._array;
+      _length = sa._length;
+      _index = sa._index;
+      return this;
+   }
+
 
 }
 #endif

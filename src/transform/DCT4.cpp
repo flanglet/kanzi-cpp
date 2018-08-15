@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <cstring>
 #include "DCT4.hpp"
 
 using namespace kanzi;
@@ -21,6 +22,7 @@ DCT4::DCT4()
 {
     _fShift = 8;
     _iShift = 20;
+    memset(_data, 0, 16);
 }
 
 bool DCT4::forward(SliceArray<int>& input, SliceArray<int>& output, int length)
