@@ -6,13 +6,7 @@ LIB_SOURCES=Global.cpp \
 	Event.cpp \
 	transform/BWT.cpp \
 	transform/BWTS.cpp \
-	transform/DCT16.cpp \
-	transform/DCT32.cpp \
-	transform/DCT4.cpp \
-	transform/DCT8.cpp \
-	transform/DST4.cpp \
 	transform/DivSufSort.cpp \
-	transform/DWT_CDF_9_7.cpp \
 	transform/MTFT.cpp \
 	transform/SBRT.cpp \
 	bitstream/DebugInputBitStream.cpp \
@@ -52,8 +46,7 @@ TEST_SOURCES=test/TestEntropyCodec.cpp \
 	test/TestBWT.cpp \
 	test/TestDefaultBitStream.cpp \
 	test/TestFunctions.cpp \
-	test/TestMTFT.cpp \
-	test/TestTransforms.cpp
+	test/TestMTFT.cpp 
 TEST_OBJECTS=$(TEST_SOURCES:.cpp=.o)
 
 APP_SOURCES=app/Kanzi.cpp \
