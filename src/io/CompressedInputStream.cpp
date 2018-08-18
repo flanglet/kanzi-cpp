@@ -117,9 +117,11 @@ void CompressedInputStream::readHeader() THROW
 
     // Read entropy codec
     _entropyType = uint32(_ibs->readBits(5));
+    _ctx["codec"] = EntropyCodecFactory::getName(_entropyType);
 
     // Read transform: 8*6 bits
     _transformType = _ibs->readBits(48);
+    _ctx["transform"] = FunctionFactory<byte>::getName(_transformType);
 
     // Read block size
     _blockSize = int(_ibs->readBits(26)) << 4;
