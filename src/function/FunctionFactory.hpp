@@ -154,20 +154,8 @@ namespace kanzi {
 	template <class T>
 	TransformSequence<T>* FunctionFactory<T>::newFunction(map<string, string>& ctx, uint64 functionType) THROW
 	{
-		int nbtr = 0;
-
-		// Several transforms
-		for (int i = 0; i < 8; i++) {
-			if (((functionType >> (MAX_SHIFT - ONE_SHIFT * i)) & MASK) != NONE_TYPE)
-				nbtr++;
-		}
-
-		// Only null transforms ? Keep first.
-		if (nbtr == 0)
-			nbtr = 1;
-
 		Transform<T>* transforms[8];
-		nbtr = 0;
+		int nbtr = 0;
 
 		for (int i = 0; i < 8; i++) {
 			transforms[i] = nullptr;
