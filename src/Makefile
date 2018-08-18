@@ -59,7 +59,7 @@ SOURCES=$(LIB_SOURCES) $(APP_SOURCES)
 OBJECTS=$(SOURCES:.cpp=.o)
 TESTS=testBWT testMTFT \
 	testEntropyCodec testDefaultBitStream \
-        testFunctions testTransforms
+        testFunctions
 
 APP=kanzi
 	
