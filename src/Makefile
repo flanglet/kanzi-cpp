@@ -105,9 +105,6 @@ testDefaultBitStream: $(LIB_OBJECTS) test/TestDefaultBitStream.o
 testFunctions: $(LIB_OBJECTS) test/TestFunctions.o
 	$(CC) $^ -o ../bin/$@ $(LDFLAGS) 
 
-testTransforms: $(LIB_OBJECTS) test/TestTransforms.o
-	$(CC) $^ -o ../bin/$@ $(LDFLAGS)
-
 kanzi: $(OBJECTS) app/Kanzi.o
 	$(CC) $^ -o ../bin/$@ $(LDFLAGS)
 
