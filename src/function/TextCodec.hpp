@@ -39,32 +39,14 @@ namespace kanzi {
        ~DictEntry() {}
    };
 
-   // Simple one-pass text codec. Uses a default (small) static dictionary
-   // or potentially larger custom one. Generates a dynamic dictionary.
-   // Encoding: tokenize text into words. If word is in dictionary, emit escape
-   // and word index (varint encode -> max 2 bytes). Otherwise, emit
-   // word and add entry in dictionary with word position and length.
-   // Decoding: If symbol is an escape, read word index (varint decode).
-   // If current word is not in dictionary, add new entry. Otherwise,
-   // emit current symbol.
-   class TextCodec : public Function<byte> {
+
+   class TextCodec1 : public Function<byte> {
    public:
-       static const int LOG_THRESHOLD1 = 7;
-       static const int THRESHOLD1 = 1 << LOG_THRESHOLD1;
-       static const int THRESHOLD2 = THRESHOLD1 * THRESHOLD1;
-       static const int MAX_DICT_SIZE = 1 << 19; // must be less than 1<<24
-       static const int MAX_WORD_LENGTH = 32; // must be less than 128
-       static const int LOG_HASHES_SIZE = 24; // 16 MB
-       static const byte ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
-       static const byte ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
+       TextCodec1();
 
-       TextCodec(map<string, string>& ctx);
+       TextCodec1(map<string, string>& ctx);
 
-       TextCodec(int dictSize=THRESHOLD2*4);
-
-       TextCodec(int dictSize, byte dict[], int size, int logHashSize=LOG_HASHES_SIZE);
-
-       virtual ~TextCodec()
+       virtual ~TextCodec1()
        {
            delete[] _dictList;
            delete[] _dictMap;
@@ -74,11 +56,104 @@ namespace kanzi {
 
        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
-       // Required encoding output buffer size
-       // Space needed by destination buffer could be 3 x srcLength (if input data
-       // is all delimiters). Limit to 1 x srcLength and let the caller deal with
+       // Limit to 1 x srcLength and let the caller deal with
        // a failure when the output is not smaller than the input
        inline int getMaxEncodedLength(int srcLen) const { return srcLen; }
+
+   private:
+       DictEntry** _dictMap;
+       DictEntry* _dictList;
+       int _freqs[257][256];
+       byte _escapes[2];
+       int _staticDictSize;
+       int _dictSize;
+       int _logHashSize;
+       int32 _hashMask;
+       bool _isCRLF; // EOL = CR + LF
+
+       bool expandDictionary();
+       int emitWordIndex(byte dst[], int val);
+       int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
+   };
+
+
+   class TextCodec2 : public Function<byte> {
+   public:
+       TextCodec2();
+
+       TextCodec2(map<string, string>& ctx);
+
+       virtual ~TextCodec2()
+       {
+           delete[] _dictList;
+           delete[] _dictMap;
+       }
+
+       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
+
+       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
+
+       // Limit to 1 x srcLength and let the caller deal with
+       // a failure when the output is not smaller than the input
+       inline int getMaxEncodedLength(int srcLen) const { return srcLen; }
+
+   private:
+       DictEntry** _dictMap;
+       DictEntry* _dictList;
+       int _freqs[257][256];
+       byte _escapes[2];
+       int _staticDictSize;
+       int _dictSize;
+       int _logHashSize;
+       int32 _hashMask;
+       bool _isCRLF; // EOL = CR + LF
+
+       bool expandDictionary();
+       int emitWordIndex(byte dst[], int val, int mask);
+       int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
+   };
+
+
+   // Simple one-pass text codec. Uses a default (small) static dictionary
+   // or potentially larger custom one. Generates a dynamic dictionary.
+   class TextCodec : public Function<byte> {
+      friend class TextCodec1;
+      friend class TextCodec2;
+
+   public:
+       static const int THRESHOLD1 = 128;
+       static const int THRESHOLD2 = THRESHOLD1 * THRESHOLD1;
+       static const int THRESHOLD3 = 32;
+       static const int THRESHOLD4 = THRESHOLD3 * 128;
+       static const int MAX_DICT_SIZE = 1 << 19; // must be less than 1<<24
+       static const int MAX_WORD_LENGTH = 32; // must be less than 128
+       static const int LOG_HASHES_SIZE = 24; // 16 MB
+       static const byte ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
+       static const byte ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
+
+       TextCodec();
+
+       TextCodec(map<string, string>& ctx);
+
+       virtual ~TextCodec()
+       {
+           delete _delegate;
+       }
+
+       inline bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length)
+       {
+          return _delegate->forward(src, dst, length);
+       }
+
+       inline bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length)
+       {
+          return _delegate->inverse(src, dst, length);
+       }
+
+       inline int getMaxEncodedLength(int srcLen) const 
+       { 
+          return _delegate->getMaxEncodedLength(srcLen) ; 
+       }
 
        inline static bool isText(byte val) { return TEXT_CHARS[uint8(val)]; }
 
@@ -89,10 +164,10 @@ namespace kanzi {
        inline static bool isDelimiter(byte val) { return DELIMITER_CHARS[val & 0xFF]; }
 
    private:
-       static const int HASH1 = 200002979;
-       static const int HASH2 = 50004239;
-       static const byte CR = byte(0x0D); 
-       static const byte LF = byte(0x0A); 
+       static const int32 HASH1 = 0x7FEB352D;
+       static const int32 HASH2 = 0x846CA68B;
+       static const byte CR = byte(0x0D);
+       static const byte LF = byte(0x0A);
 
        static bool* initDelimiterChars();
        static const bool* DELIMITER_CHARS;
@@ -103,9 +178,7 @@ namespace kanzi {
 
        static bool sameWords(const byte src[], byte dst[], const int length);
 
-       static byte computeStats(byte block[], int count, int freqs[]);
-
-       bool expandDictionary();
+       static byte computeStats(byte block[], int count, int freqs[][256]);
 
        // Default dictionary
        static const byte DICT_EN_1024[];
@@ -115,19 +188,9 @@ namespace kanzi {
        static int createDictionary(SliceArray<byte> words, DictEntry dict[], int maxWords, int startWord);
        static const int STATIC_DICT_WORDS;
 
-       DictEntry** _dictMap;
-       DictEntry* _dictList;
-       int _freqs[257*256];
-       byte _escapes[2];
-       int _staticDictSize;
-       int _dictSize;
-       int _logHashSize;
-       int32 _hashMask;
-       bool _isCRLF; // EOL = CR + LF
-
-       int emitWordIndex(byte dst[], int val);
-       int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
+       Function<byte>* _delegate;
    };
+
 
    inline DictEntry::DictEntry()
    {

@@ -199,8 +199,22 @@ namespace kanzi {
 		case RANK_TYPE:
 			return new SBRT(SBRT::MODE_RANK);
 
-		case DICT_TYPE:
+		case DICT_TYPE: {
+			string textCodecType = "1";
+         
+			if (ctx.find("codec") != ctx.end()) {			
+				string entropyType = ctx["codec"];
+				transform(entropyType.begin(), entropyType.end(), entropyType.begin(), ::toupper);
+            
+				// Select text encoding based on entropy codec.
+				if ((entropyType.compare(0, 4, "NONE") == 0) || (entropyType.compare(0, 4, "ANS0") == 0) ||
+				   (entropyType.compare(0, 7, "HUFFMAN") == 0) || (entropyType.compare(0, 5, "RANGE") == 0))
+				    textCodecType = "2";
+			}
+         
+			ctx["textcodec"] = textCodecType;
 			return new TextCodec(ctx);
+		}
 
 		case X86_TYPE:
 			return new X86Codec();
