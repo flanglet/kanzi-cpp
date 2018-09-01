@@ -541,6 +541,7 @@ const byte TextCodec::DICT_EN_1024[] = {
 
 DictEntry TextCodec::STATIC_DICTIONARY[1024] = {};
 const bool* TextCodec::DELIMITER_CHARS = TextCodec::initDelimiterChars();
+const bool* TextCodec::TEXT_CHARS = TextCodec::initTextChars();
 const int TextCodec::STATIC_DICT_WORDS = TextCodec::createDictionary(TextCodec::unpackDictionary32(DICT_EN_1024, sizeof(DICT_EN_1024)), STATIC_DICTIONARY, 1024, 0);
 
 bool* TextCodec::initDelimiterChars()
@@ -569,6 +570,17 @@ bool* TextCodec::initDelimiterChars()
 				res[i] = false;
 			}
 		}
+	}
+
+	return res;
+}
+
+bool* TextCodec::initTextChars()
+{
+	bool* res = new bool[256];
+
+	for (int i = 0; i < 256; i++) {
+		res[i] = isUpperCase(byte(i)) | isLowerCase(byte(i));
 	}
 
 	return res;
@@ -928,7 +940,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 				DictEntry* pe2 = _dictMap[h2 & _hashMask];
 
 				// Hash collision (quick check)  ?
-				if ((pe2 != nullptr) && ((pe2->_data >> 24) == length) && (pe2->_hash == h2))
+				if ((pe2 == nullptr) || (((pe2->_data >> 24) == length) && (pe2->_hash == h2)))
 					pe = pe2;
 			}
 
@@ -1406,7 +1418,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 				DictEntry* pe2 = _dictMap[h2 & _hashMask];
 
 				// Hash collision (quick check)  ?
-				if ((pe2 != nullptr) && ((pe2->_data >> 24) == length) && (pe2->_hash == h2))
+				if ((pe2 == nullptr) || (((pe2->_data >> 24) == length) && (pe2->_hash == h2)))
 					pe = pe2;
 			}
 

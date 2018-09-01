@@ -155,7 +155,7 @@ namespace kanzi {
           return _delegate->getMaxEncodedLength(srcLen) ; 
        }
 
-       inline static bool isText(byte val) { return isLowerCase(val) || isUpperCase(val); }
+       inline static bool isText(byte val) { return TEXT_CHARS[uint8(val)]; }
 
        inline static bool isLowerCase(byte val) { return (val >= 'a') && (val <= 'z'); }
 
@@ -171,6 +171,8 @@ namespace kanzi {
 
        static bool* initDelimiterChars();
        static const bool* DELIMITER_CHARS;
+       static bool* initTextChars();
+       static const bool* TEXT_CHARS;
 
        static SliceArray<byte> unpackDictionary32(const byte dict[], int dictSize);
 
