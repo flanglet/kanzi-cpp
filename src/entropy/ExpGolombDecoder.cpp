@@ -18,18 +18,29 @@ limitations under the License.
 using namespace kanzi;
 
 ExpGolombDecoder::ExpGolombDecoder(InputBitStream& bitstream, bool sgn)
-    : _bitstream(bitstream)
+    : _bitstream(bitstream), _signed(sgn)
 {
-    _signed = sgn;
 }
 
 
 int ExpGolombDecoder::decode(byte block[], uint blkptr, uint len)
 {
-    const int end = blkptr + len;
+    byte* buf = &block[blkptr];
+    const uint len8 = len & -8;
 
-    for (int i = blkptr; i < end; i++)
-        block[i] = decodeByte();
+    for (uint i = 0; i < len8; i+=8) {
+        buf[i]   = decodeByte();
+        buf[i+1] = decodeByte();
+        buf[i+2] = decodeByte();
+        buf[i+3] = decodeByte();
+        buf[i+4] = decodeByte();
+        buf[i+5] = decodeByte();
+        buf[i+6] = decodeByte();
+        buf[i+7] = decodeByte();
+	}
+
+    for (uint i = len8; i < len; i++)
+        buf[i] = decodeByte();
 
     return len;
 }
@@ -47,7 +58,7 @@ byte ExpGolombDecoder::decodeByte()
     if (_signed == true) {
         // Decode signed: read value + sign
         byte res = byte(_bitstream.readBits(log2 + 1));
-        byte sgn = res & 1;
+        const byte sgn = res & 1;
         res = (res >> 1) + (1 << log2) - 1;
         return byte((res - sgn) ^ -sgn); // res or -res
     }

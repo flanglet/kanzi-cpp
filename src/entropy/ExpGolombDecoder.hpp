@@ -25,7 +25,7 @@ namespace kanzi
    {
    private:
        InputBitStream& _bitstream;
-       bool _signed;
+       const bool _signed;
 
        void flush();
 

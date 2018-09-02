@@ -173,6 +173,7 @@ int ANSRangeEncoder::encode(byte block[], uint blkptr, uint len)
 void ANSRangeEncoder::encodeChunk(byte block[], int end)
 {
     int st = ANS_TOP;
+    const uint8* data = (uint8*) &block[0];
     byte* p0 = &_buffer[_bufferSize - 1];
     byte* p = p0;
 
@@ -180,7 +181,7 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
         const ANSEncSymbol* symb = &_symbols[0];
 
         for (int i = end - 1; i >= 0; i--) {
-            const ANSEncSymbol sym = symb[uint8(block[i])];
+            const ANSEncSymbol sym = symb[data[i]];
             const int max = sym._xMax;
 
             while (st >= max) {
@@ -199,7 +200,7 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
         int prv = block[end - 1] & 0xFF;
 
         for (int i = end - 2; i >= 0; i--) {
-            const int cur = block[i] & 0xFF;
+            const int cur = int(data[i]);
             const ANSEncSymbol sym = _symbols[(cur << 8) + prv];
             const int max = sym._xMax;
 

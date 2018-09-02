@@ -18,7 +18,7 @@ limitations under the License.
 using namespace kanzi;
 
 const int CACHE[2][256] = {
-       // Unsigned 
+       // Unsigned
        {
           513, 1538, 1539, 2564, 2565, 2566, 2567, 3592, 3593, 3594, 3595, 3596, 3597, 3598, 3599, 4624,
          4625, 4626, 4627, 4628, 4629, 4630, 4631, 4632, 4633, 4634, 4635, 4636, 4637, 4638, 4639, 5664,
@@ -54,22 +54,33 @@ const int CACHE[2][256] = {
          7299, 7297, 6271, 6269, 6267, 6265, 6263, 6261, 6259, 6257, 6255, 6253, 6251, 6249, 6247, 6245,
          6243, 6241, 6239, 6237, 6235, 6233, 6231, 6229, 6227, 6225, 6223, 6221, 6219, 6217, 6215, 6213,
          6211, 6209, 5183, 5181, 5179, 5177, 5175, 5173, 5171, 5169, 5167, 5165, 5163, 5161, 5159, 5157,
-         5155, 5153, 4127, 4125, 4123, 4121, 4119, 4117, 4115, 4113, 3087, 3085, 3083, 3081, 2055, 2053      
+         5155, 5153, 4127, 4125, 4123, 4121, 4119, 4117, 4115, 4113, 3087, 3085, 3083, 3081, 2055, 2053
       }
 };
 
 ExpGolombEncoder::ExpGolombEncoder(OutputBitStream& bitstream, bool sgn)
-    : _bitstream(bitstream)
+    : _bitstream(bitstream), _signed((sgn == true) ? 1 : 0)
 {
-    _signed = (sgn == true) ? 1 : 0;
 }
 
 int ExpGolombEncoder::encode(byte arr[], uint blkptr, uint len)
 {
-    const int end = blkptr + len;
+    byte* buf = &arr[blkptr];
+    const uint len8 = len & -8;
 
-    for (int i = blkptr; i < end; i++)
-        encodeByte(arr[i]);
+    for (uint i = 0; i < len8; i+=8) {
+        encodeByte(buf[i]);
+        encodeByte(buf[i+1]);
+        encodeByte(arr[i+2]);
+        encodeByte(buf[i+3]);
+        encodeByte(buf[i+4]);
+        encodeByte(buf[i+5]);
+        encodeByte(buf[i+6]);
+        encodeByte(buf[i+7]);
+	}
+
+    for (uint i = len8; i < len; i++)
+        encodeByte(buf[i]);
 
     return len;
 }
@@ -81,7 +92,7 @@ void ExpGolombEncoder::encodeByte(byte val)
         _bitstream.writeBit(1);
         return;
     }
-    
-    const int emit = CACHE[_signed][val&0xFF];     
+
+    const int emit = CACHE[_signed][val&0xFF];
     _bitstream.writeBits(emit&0x1FF, emit>>9);
 }
