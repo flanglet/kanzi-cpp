@@ -196,21 +196,12 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
 
         // Write deltas for this chunk
         for (int j = i; (j < count) && (j < i + ckSize); j++)
-            encodeSize(obs, log, diffs[j]);
+            // Encode size
+            obs.writeBits(diffs[j], log);
     }
 
     delete[] diffs;
     return count;
-}
-
-void EntropyUtils::encodeSize(OutputBitStream& obs, int log, int val)
-{
-    obs.writeBits(val, log);
-}
-
-uint64 EntropyUtils::decodeSize(InputBitStream& ibs, int log)
-{
-    return ibs.readBits(log);
 }
 
 int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
@@ -286,7 +277,7 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
 
             // Read deltas for this chunk
             for (int j = i; (j < count) && (j < i + ckSize); j++) {
-                const int next = symbol + int(decodeSize(ibs, log));
+                const int next = symbol + int(ibs.readBits(log));
 
                 while ((symbol < next) && (n < alphabetSize)) {
                     alphabet[n] = symbol++;
@@ -309,7 +300,7 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
 
             // Read deltas for this chunk
             for (int j = i; (j < count) && (j < i + ckSize); j++) {
-                symbol += int(decodeSize(ibs, log));
+                symbol += int(ibs.readBits(log));
                 alphabet[j] = symbol;
                 symbol++;
             }

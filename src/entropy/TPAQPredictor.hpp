@@ -75,7 +75,7 @@ namespace kanzi
        static const int MASK_BUFFER = BUFFER_SIZE - 1;
        static const int MASK_80808080 = 0x80808080;
        static const int MASK_F0F0F0F0 = 0xF0F0F0F0;
-       static const int HASH = 200002979;
+       static const int HASH = 0x7FEB352D;
 
        int _pr; // next predicted value (0-4095)
        int32 _c0; // bitwise context: last 0-7 bits with a leading 1 (1-255)

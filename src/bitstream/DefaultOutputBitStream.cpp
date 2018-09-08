@@ -72,7 +72,7 @@ int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
         _availBits -= count;
     }
     else {
-        uint remaining = count - _availBits;
+        const uint remaining = count - _availBits;
         _current |= (value >> remaining);
         pushCurrent();
 

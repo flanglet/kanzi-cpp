@@ -37,10 +37,6 @@ namespace kanzi
 
        int _buffer[65536];
 
-       static void encodeSize(OutputBitStream& obs, int log, int val);
-
-       static uint64 decodeSize(InputBitStream& ibs, int log);
-
    public:
        static const int INCOMPRESSIBLE_THRESHOLD = 973; // 0.95*1024
 
