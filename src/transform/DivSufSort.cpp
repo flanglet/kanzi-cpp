@@ -61,8 +61,6 @@ DivSufSort::DivSufSort()
     _trStack = new Stack(TR_STACKSIZE);
     _mergeStack = new Stack(SS_SMERGE_STACKSIZE);
     _sa = nullptr;
-    memset(_bucketA, 0, sizeof(int) * 256);
-    memset(_bucketB, 0, sizeof(int) * 65536);
 }
 
 DivSufSort::~DivSufSort()
@@ -78,12 +76,6 @@ void DivSufSort::reset()
     _ssStack->_index = 0;
     _trStack->_index = 0;
     _mergeStack->_index = 0;
-
-    for (int i = 255; i >= 0; i--)
-        _bucketA[i] = 0;
-
-    for (int i = 65535; i >= 0; i--)
-        _bucketB[i] = 0;
 }
 
 void DivSufSort::computeSuffixArray(byte input[], int sa[], int start, int length)
@@ -99,20 +91,22 @@ void DivSufSort::computeSuffixArray(byte input[], int sa[], int start, int lengt
 
     _sa = sa;
     reset();
-    int m = sortTypeBstar(_bucketA, _bucketB, length);
-    constructSuffixArray(_bucketA, _bucketB, length, m);
+    int bucketA[256] = { 0 };
+    int bucketB[65536] = { 0 };
+    int m = sortTypeBstar(bucketA, bucketB, length);
+    constructSuffixArray(bucketA, bucketB, length, m);
 }
 
-void DivSufSort::constructSuffixArray(int bucket_A[], int bucket_B[], int n, int m)
+void DivSufSort::constructSuffixArray(int bucketA[], int bucketB[], int n, int m)
 {
     if (m > 0) {
         for (int c1 = 254; c1 >= 0; c1--) {
             const int idx = c1 << 8;
-            const int i = bucket_B[idx + c1 + 1];
+            const int i = bucketB[idx + c1 + 1];
             int k = 0;
             int c2 = -1;
 
-            for (int j = bucket_A[c1 + 1] - 1; j >= i; j--) {
+            for (int j = bucketA[c1 + 1] - 1; j >= i; j--) {
                 int s = _sa[j];
                 _sa[j] = ~s;
 
@@ -127,10 +121,10 @@ void DivSufSort::constructSuffixArray(int bucket_A[], int bucket_B[], int n, int
 
                 if (c0 != c2) {
                     if (c2 >= 0)
-                        bucket_B[idx + c2] = k;
+                        bucketB[idx + c2] = k;
 
                     c2 = c0;
-                    k = bucket_B[idx + c2];
+                    k = bucketB[idx + c2];
                 }
 
                 _sa[k--] = s;
@@ -139,7 +133,7 @@ void DivSufSort::constructSuffixArray(int bucket_A[], int bucket_B[], int n, int
     }
 
     int c2 = _buffer[n - 1];
-    int k = bucket_A[c2];
+    int k = bucketA[c2];
     _sa[k++] = (_buffer[n - 2] < c2) ? ~(n - 1) : (n - 1);
 
     // Scan the suffix array from left to right.
@@ -158,9 +152,9 @@ void DivSufSort::constructSuffixArray(int bucket_A[], int bucket_B[], int n, int
             s = ~s;
 
         if (c0 != c2) {
-            bucket_A[c2] = k;
+            bucketA[c2] = k;
             c2 = c0;
-            k = bucket_A[c2];
+            k = bucketA[c2];
         }
 
         _sa[k++] = s;
@@ -180,22 +174,24 @@ int DivSufSort::computeBWT(byte input[], int sa[], int start, int length)
 
     _sa = sa;
     reset();
-    int m = sortTypeBstar(_bucketA, _bucketB, length);
-    return constructBWT(_bucketA, _bucketB, length, m);
+    int bucketA[256] = { 0 };
+    int bucketB[65536] = { 0 };
+    int m = sortTypeBstar(bucketA, bucketB, length);
+    return constructBWT(bucketA, bucketB, length, m);
 }
 
-int DivSufSort::constructBWT(int bucket_A[], int bucket_B[], int n, int m)
+int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m)
 {
     int pIdx = -1;
 
     if (m > 0) {
         for (int c1 = 254; c1 >= 0; c1--) {
             const int idx = c1 << 8;
-            const int i = bucket_B[idx + c1 + 1];
+            const int i = bucketB[idx + c1 + 1];
             int k = 0;
             int c2 = -1;
 
-            for (int j = bucket_A[c1 + 1] - 1; j >= i; j--) {
+            for (int j = bucketA[c1 + 1] - 1; j >= i; j--) {
                 int s = _sa[j];
 
                 if (s <= 0) {
@@ -214,10 +210,10 @@ int DivSufSort::constructBWT(int bucket_A[], int bucket_B[], int n, int m)
 
                 if (c0 != c2) {
                     if (c2 >= 0)
-                        bucket_B[idx + c2] = k;
+                        bucketB[idx + c2] = k;
 
                     c2 = c0;
-                    k = bucket_B[idx + c2];
+                    k = bucketB[idx + c2];
                 }
 
                 _sa[k--] = s;
@@ -226,7 +222,7 @@ int DivSufSort::constructBWT(int bucket_A[], int bucket_B[], int n, int m)
     }
 
     int c2 = _buffer[n - 1];
-    int k = bucket_A[c2];
+    int k = bucketA[c2];
     _sa[k++] = (_buffer[n - 2] < c2) ? ~_buffer[n - 2] : (n - 1);
 
     // Scan the suffix array from left to right.
@@ -250,9 +246,9 @@ int DivSufSort::constructBWT(int bucket_A[], int bucket_B[], int n, int m)
             s = ~_buffer[s - 1];
 
         if (c0 != c2) {
-            bucket_A[c2] = k;
+            bucketA[c2] = k;
             c2 = c0;
-            k = bucket_A[c2];
+            k = bucketA[c2];
         }
 
         _sa[k++] = s;
@@ -261,7 +257,7 @@ int DivSufSort::constructBWT(int bucket_A[], int bucket_B[], int n, int m)
     return pIdx;
 }
 
-int DivSufSort::sortTypeBstar(int bucket_A[], int bucket_B[], int n)
+int DivSufSort::sortTypeBstar(int bucketA[], int bucketB[], int n)
 {
     int m = n;
     int c0 = _buffer[n - 1];
@@ -274,21 +270,21 @@ int DivSufSort::sortTypeBstar(int bucket_A[], int bucket_B[], int n)
 
         do {
             c1 = c0;
-            bucket_A[c1]++;
+            bucketA[c1]++;
             i--;
         } while ((i >= 0) && ((c0 = _buffer[i]) >= c1));
 
         if (i < 0)
             break;
 
-        bucket_B[(c0 << 8) + c1]++;
+        bucketB[(c0 << 8) + c1]++;
         m--;
         _sa[m] = i;
         i--;
         c1 = c0;
 
         while ((i >= 0) && ((c0 = _buffer[i]) <= c1)) {
-            bucket_B[(c1 << 8) + c0]++;
+            bucketB[(c1 << 8) + c0]++;
             c1 = c0;
             i--;
         }
@@ -302,15 +298,15 @@ int DivSufSort::sortTypeBstar(int bucket_A[], int bucket_B[], int n)
 
     // Calculate the index of start/end point of each bucket.
     for (int i = 0, j = 0; c0 < 256; c0++) {
-        const int t = i + bucket_A[c0];
-        bucket_A[c0] = i + j; // start point
+        const int t = i + bucketA[c0];
+        bucketA[c0] = i + j; // start point
         const int idx = c0 << 8;
-        i = t + bucket_B[idx + c0];
+        i = t + bucketB[idx + c0];
 
         for (int c1 = c0 + 1; c1 < 256; c1++) {
-            j += bucket_B[idx + c1];
-            bucket_B[idx + c1] = j; // end point
-            i += bucket_B[(c1 << 8) + c0];
+            j += bucketB[idx + c1];
+            bucketB[idx + c1] = j; // end point
+            i += bucketB[(c1 << 8) + c0];
         }
     }
 
@@ -321,14 +317,14 @@ int DivSufSort::sortTypeBstar(int bucket_A[], int bucket_B[], int n)
         for (int i = m - 2; i >= 0; i--) {
             const int t = _sa[pab + i];
             const int idx = (_buffer[t] << 8) + _buffer[t + 1];
-            bucket_B[idx]--;
-            _sa[bucket_B[idx]] = i;
+            bucketB[idx]--;
+            _sa[bucketB[idx]] = i;
         }
 
         const int t = _sa[pab + m - 1];
         c0 = (_buffer[t] << 8) + _buffer[t + 1];
-        bucket_B[c0]--;
-        _sa[bucket_B[c0]] = m - 1;
+        bucketB[c0]--;
+        _sa[bucketB[c0]] = m - 1;
 
         // Sort the type B* substrings using ssSort.
         const int bufSize = n - m - m;
@@ -338,7 +334,7 @@ int DivSufSort::sortTypeBstar(int bucket_A[], int bucket_B[], int n)
             const int idx = c0 << 8;
 
             for (int c1 = 255; c1 > c0; c1--) {
-                const int i = bucket_B[idx + c1];
+                const int i = bucketB[idx + c1];
 
                 if (j > i + 1)
                     ssSort(pab, i, j, m, bufSize, 2, n, _sa[i] == m - 1);
@@ -401,26 +397,26 @@ int DivSufSort::sortTypeBstar(int bucket_A[], int bucket_B[], int n)
         }
 
         // Calculate the index of start/end point of each bucket.
-        bucket_B[65535] = n; // end
+        bucketB[65535] = n; // end
         int k = m - 1;
 
         for (c0 = 254; c0 >= 0; c0--) {
-            int i = bucket_A[c0 + 1] - 1;
+            int i = bucketA[c0 + 1] - 1;
             const int idx = c0 << 8;
 
             for (int c1 = 255; c1 > c0; c1--) {
-                const int tt = i - bucket_B[(c1 << 8) + c0];
-                bucket_B[(c1 << 8) + c0] = i; // end point
+                const int tt = i - bucketB[(c1 << 8) + c0];
+                bucketB[(c1 << 8) + c0] = i; // end point
                 i = tt;
 
                 // Move all type B* suffixes to the correct position.
                 // Typically very small number of copies, no need for arraycopy
-                for (int j = bucket_B[idx + c1]; j <= k; i--, k--)
+                for (int j = bucketB[idx + c1]; j <= k; i--, k--)
                     _sa[i] = _sa[k];
             }
 
-            bucket_B[idx + c0 + 1] = i - bucket_B[idx + c0] + 1; // start point
-            bucket_B[idx + c0] = i; // end point
+            bucketB[idx + c0 + 1] = i - bucketB[idx + c0] + 1; // start point
+            bucketB[idx + c0] = i; // end point
         }
     }
 
