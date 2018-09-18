@@ -152,30 +152,30 @@ void CompressedInputStream::readHeader() THROW
         ss << "Block size set to " << _blockSize << " bytes" << endl;
 
         try {
-            string w1 = FunctionFactory<byte>::getName(_transformType);
+            string w1 = EntropyCodecFactory::getName(_entropyType);
 
             if (w1 == "NONE")
                 w1 = "no";
 
-            ss << "Using " << w1 << " transform (stage 1)" << endl;
-        }
-        catch (IllegalArgumentException&) {
-            stringstream err;
-            err << "Invalid bitstream, unknown transform type: " << _transformType;
-            throw IOException(err.str(), Error::ERR_INVALID_CODEC);
-        }
-
-        try {
-            string w2 = EntropyCodecFactory::getName(_entropyType);
-
-            if (w2 == "NONE")
-                w2 = "no";
-
-            ss << "Using " << w2 << " entropy codec (stage 2)";
+            ss << "Using " << w1 << " entropy codec (stage 1)" << endl;
         }
         catch (IllegalArgumentException&) {
             stringstream err;
             err << "Invalid bitstream, unknown entropy codec type: " << _entropyType;
+            throw IOException(err.str(), Error::ERR_INVALID_CODEC);
+        }
+
+        try {
+            string w2 = FunctionFactory<byte>::getName(_transformType);
+
+            if (w2 == "NONE")
+                w2 = "no";
+
+            ss << "Using " << w2 << " transform (stage 2)" << endl;
+        }
+        catch (IllegalArgumentException&) {
+            stringstream err;
+            err << "Invalid bitstream, unknown transform type: " << _transformType;
             throw IOException(err.str(), Error::ERR_INVALID_CODEC);
         }
 

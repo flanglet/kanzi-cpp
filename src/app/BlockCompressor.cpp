@@ -222,7 +222,7 @@ int BlockCompressor::call()
     log.println(ss.str().c_str(), printFlag);
     ss.str(string());
 
-    if (_level < 0) {
+    if (printFlag == true) {
         string etransform = _transform;
         transform(etransform.begin(), etransform.end(), etransform.begin(), ::toupper);
         ss << "Using " << ((etransform == "NONE") ? "no" : _transform) << " transform (stage 1)";
@@ -231,11 +231,6 @@ int BlockCompressor::call()
         string ecodec = _codec;
         transform(ecodec.begin(), ecodec.end(), ecodec.begin(), ::toupper);
         ss << "Using " << ((ecodec == "NONE") ? "no" : _codec) << " entropy codec (stage 2)";
-        log.println(ss.str().c_str(), printFlag);
-        ss.str(string());
-    }
-    else {
-        ss << "Compression level set to " << _level;
         log.println(ss.str().c_str(), printFlag);
         ss.str(string());
     }
