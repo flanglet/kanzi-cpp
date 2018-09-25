@@ -1663,20 +1663,20 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		}
 
 		srcIdx++;
-      
+
 		if ((cur & 0x80) != 0) {
 			// Word in dictionary
 			// Read word index (varint 5 bits + 7 bits + 7 bits)
 			int idx = cur & 0x1F;
-         
+
 			if ((cur & 0x40) != 0) {
 				int idx2 = src[srcIdx++];
-            
+
 				if ((idx2 & 0x80) != 0) {
 					idx = (idx << 7) | (idx2 & 0x7F);
 					idx2 = src[srcIdx++];
 				}
-            
+
  				idx = (idx << 7) | (idx2 & 0x7F);
 
 				if (idx >= _dictSize)
@@ -1721,12 +1721,10 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		}
 		else {
 			// Escape token followed by symbol > 0x80 ?
-			if (cur == TextCodec::ESCAPE_TOKEN1)
-			{
+			if (cur == TextCodec::ESCAPE_TOKEN1) {
 				dst[dstIdx++] = src[srcIdx++];
 			}
-			else
-			{
+			else {
 				if ((_isCRLF == true) && (cur == TextCodec::LF))
 					dst[dstIdx++] = TextCodec::CR;
 

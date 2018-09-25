@@ -198,11 +198,10 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     const uint mask = (1 << _logRange) - 1;
 
     if (_order == 0) {
-        const byte* freq2sym = &_f2s[0];
         const ANSDecSymbol* symb = &_symbols[0];
 
         for (int i = 0; i < end; i++) {
-            const byte cur = freq2sym[st & mask];
+            const byte cur = _f2s[st & mask];
             block[i] = cur;
             const ANSDecSymbol& sym = symb[uint8(cur)];
 
@@ -216,7 +215,7 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
         }
     }
     else {
-        uint16 prv = 0;
+        uint8 prv = 0;
 
         for (int i = 0; i < end; i++) {
             const byte cur = _f2s[(prv << _logRange) + (st & mask)];
