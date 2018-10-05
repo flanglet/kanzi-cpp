@@ -304,6 +304,12 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
     return srcIdx == count;
 }
 
+inline int ROLZCodec::getMaxEncodedLength(int srcLen) const 
+{
+   const int res = (srcLen * 5) >> 2;
+   return (res >= 32) ? res : 32;
+}
+
 inline ROLZPredictor::ROLZPredictor(uint logPosChecks)
 {
     _logSize = logPosChecks;

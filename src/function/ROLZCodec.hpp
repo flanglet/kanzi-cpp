@@ -117,7 +117,7 @@ namespace kanzi {
 		bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
 		// Required encoding output buffer size
-		int getMaxEncodedLength(int srcLen) const { return srcLen * 5 / 4; }
+		int getMaxEncodedLength(int srcLen) const;
 
 	private:
 		static const int HASH_SIZE = 1 << 16;
