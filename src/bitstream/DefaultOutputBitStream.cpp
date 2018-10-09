@@ -58,9 +58,6 @@ inline void DefaultOutputBitStream::writeBit(int bit) THROW
 // Write 'count' (in [1..64]) bits. Trigger exception if stream is closed
 int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
 {
-    if (count == 0)
-        return 0;
-
     if (count > 64)
         throw BitStreamException("Invalid count: " + to_string(count) + " (must be in [1..64])");
 
@@ -89,9 +86,6 @@ uint DefaultOutputBitStream::writeBits(byte bits[], uint count) THROW
 {
     if (isClosed() == true)
         throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);
-
-    if (count == 0)
-        return 0;
 
     int remaining = count;
     int start = 0;
