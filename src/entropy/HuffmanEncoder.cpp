@@ -38,7 +38,7 @@ public:
     bool operator()(int i, int j);
 };
 
-bool FrequencyArrayComparator::operator()(int lidx, int ridx)
+inline bool FrequencyArrayComparator::operator()(int lidx, int ridx)
 {
     // Check size (natural order) as first key
     const int res = _freqs[lidx] - _freqs[ridx];
@@ -110,7 +110,7 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
 
     for (int i = 0; i < count; i++) {
         const short currSize = _sizes[_ranks[i]];
-        egenc.encodeByte((byte)(currSize - prevSize));
+        egenc.encodeByte(byte(currSize - prevSize));
         prevSize = currSize;
     }
 
@@ -147,7 +147,7 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], int count) THROW
     computeInPlaceSizesPhase2(_buffer, count);
 
     for (int i = 0; i < count; i++) {
-        short codeLen = (short)_buffer[i];
+        short codeLen = short(_buffer[i]);
 
         if ((codeLen <= 0) || (codeLen > MAX_SYMBOL_SIZE)) {
             stringstream ss;

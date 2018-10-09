@@ -32,7 +32,7 @@ public:
     bool operator()(int i, int j);
 };
 
-bool CodeLengthArrayComparator::operator()(int lidx, int ridx)
+inline bool CodeLengthArrayComparator::operator()(int lidx, int ridx)
 {
     // Check size (natural order) as first key
     const int res = _sizes[lidx] - _sizes[ridx];
@@ -49,8 +49,7 @@ int HuffmanCommon::generateCanonicalCodes(short sizes[], uint codes[], uint rank
         vector<uint> v(ranks, ranks + count);
         CodeLengthArrayComparator comparator(sizes);
         sort(v.begin(), v.end(), comparator);
-        uint* pv = &v[0];
-        memcpy(ranks, pv, count*sizeof(uint));
+        memcpy(ranks, &v[0], count*sizeof(uint));
     }
 
     int code = 0;
