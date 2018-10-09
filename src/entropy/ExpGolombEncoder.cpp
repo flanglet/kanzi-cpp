@@ -63,15 +63,15 @@ ExpGolombEncoder::ExpGolombEncoder(OutputBitStream& bitstream, bool sgn)
 {
 }
 
-int ExpGolombEncoder::encode(byte arr[], uint blkptr, uint len)
+int ExpGolombEncoder::encode(byte block[], uint blkptr, uint len)
 {
-    byte* buf = &arr[blkptr];
-    const uint len8 = len & -8;
+    byte* buf = &block[blkptr];
+    const uint len8 = len & uint(-8);
 
     for (uint i = 0; i < len8; i+=8) {
         encodeByte(buf[i]);
         encodeByte(buf[i+1]);
-        encodeByte(arr[i+2]);
+        encodeByte(buf[i+2]);
         encodeByte(buf[i+3]);
         encodeByte(buf[i+4]);
         encodeByte(buf[i+5]);
