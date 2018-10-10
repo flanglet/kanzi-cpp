@@ -27,6 +27,8 @@ namespace kanzi
    class DefaultOutputBitStream : public OutputBitStream
    {
    private:
+       static uint64 MASKS[65];
+
        OutputStream&_os;
        byte* _buffer;
        bool _closed;

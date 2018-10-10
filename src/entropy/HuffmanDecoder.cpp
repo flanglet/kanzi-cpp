@@ -125,8 +125,8 @@ void HuffmanDecoder::buildDecodingTables(int count)
     int len = 0;
 
     for (int i = 0; i < count; i++) {
-        const int r = _ranks[i];
-        const int code = _codes[r];
+        const uint r = _ranks[i];
+        const uint code = _codes[r];
 
         if (_sizes[r] > len) {
             len = _sizes[r];
@@ -134,25 +134,24 @@ void HuffmanDecoder::buildDecodingTables(int count)
         }
 
         // Fill slow decoding table
-        const int val = (_sizes[r] << 8) | r;
+        const uint16 val = uint16((_sizes[r] << 8) | r);
         _sdTable[i] = val;
-        int idx, end;
 
         // Fill fast decoding table
         // Find location index in table
         if (len < DECODING_BATCH_SIZE) {
-            idx = code << (DECODING_BATCH_SIZE - len);
-            end = idx + (1 << (DECODING_BATCH_SIZE - len));
+            uint idx = code << (DECODING_BATCH_SIZE - len);
+            const uint end = idx + (1 << (DECODING_BATCH_SIZE - len));
+
+            // All DECODING_BATCH_SIZE bit values read from the bit stream and
+            // starting with the same prefix point to symbol r
+            while (idx < end)
+               _fdTable[idx++] = val;
         }
         else {
-            idx = code >> (len - DECODING_BATCH_SIZE);
-            end = idx + 1;
+            const uint idx = code >> (len - DECODING_BATCH_SIZE);
+            _fdTable[idx] = val;
         }
-
-        // All DECODING_BATCH_SIZE bit values read from the bit stream and
-        // starting with the same prefix point to symbol r
-        while (idx < end)
-            _fdTable[idx++] = val;
     }
 }
 
@@ -239,7 +238,7 @@ byte HuffmanDecoder::fastDecodeByte()
 {
     if (_bits < DECODING_BATCH_SIZE) {
         // Fetch more bits from bitstream       
-        const uint64 mask = (1 << _bits) - 1;
+        const uint64 mask = (1 << _bits) - 1; // for _bits = 0
         _state = ((_state & mask) << (64 - _bits)) | _bitstream.readBits(64 - _bits);
         _bits = 64;
     }
