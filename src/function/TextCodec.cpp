@@ -657,7 +657,7 @@ byte TextCodec::computeStats(byte block[], int count, int freqs[][256])
 	uint8* data = (uint8*)&block[0];
 	uint8 prv = 0;
 	const int count4 = count & -4;
-   int* freqs0 = &freqs[256][0];
+	int* freqs0 = &freqs[256][0];
 
 	// Unroll loop
 	for (int i = 0; i<count4; i += 4) {
@@ -910,9 +910,9 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		}
 
 		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(cur)) { // At least 2 letters
-																		 // Compute hashes
-																		 // h1 -> hash of word chars
-																		 // h2 -> hash of word chars with first char case flipped
+			// Compute hashes
+			// h1 -> hash of word chars
+			// h2 -> hash of word chars with first char case flipped
 			byte val = src[delimAnchor + 1];
 			const byte caseFlag = TextCodec::isUpperCase(val) ? 32 : -32;
 			int32 h1 = TextCodec::HASH1;

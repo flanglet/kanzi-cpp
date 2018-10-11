@@ -86,14 +86,16 @@ void DivSufSort::computeSuffixArray(byte input[], int sa[], int start, int lengt
         _buffer = new short[length + 1];
     }
 
+    const uint8* src = (uint8*) &input[start];
+
     for (int i = 0; i < length; i++)
-        _buffer[i] = (short)(input[start + i] & 0xFF);
+        _buffer[i] = short(src[i]);
 
     _sa = sa;
     reset();
     int bucketA[256] = { 0 };
     int bucketB[65536] = { 0 };
-    int m = sortTypeBstar(bucketA, bucketB, length);
+    const int m = sortTypeBstar(bucketA, bucketB, length);
     constructSuffixArray(bucketA, bucketB, length, m);
 }
 
@@ -169,14 +171,16 @@ int DivSufSort::computeBWT(byte input[], int sa[], int start, int length)
         _buffer = new short[length + 1];
     }
 
+    const uint8* src = (uint8*) &input[start];
+
     for (int i = 0; i < length; i++)
-        _buffer[i] = (short)(input[start + i] & 0xFF);
+        _buffer[i] = short(src[i]);
 
     _sa = sa;
     reset();
     int bucketA[256] = { 0 };
     int bucketB[65536] = { 0 };
-    int m = sortTypeBstar(bucketA, bucketB, length);
+    const int m = sortTypeBstar(bucketA, bucketB, length);
     return constructBWT(bucketA, bucketB, length, m);
 }
 
