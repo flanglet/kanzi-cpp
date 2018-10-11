@@ -34,7 +34,6 @@ namespace kanzi {
    class Global {
    public:
        static const int INV_EXP[]; //  1<<16* 1/(1 + exp(-alpha*x)) with alpha = 0.52631
-       static const int TEN_LOG10_100[]; // array with 10 elements: 10 * (4096*Math.log10(x))
        static const int LOG2_4096[]; // array with 256 elements: 4096*Math.log2(x)
        static const int LOG2[]; // array with 256 elements: int(Math.log2(x-1))
 
@@ -42,8 +41,6 @@ namespace kanzi {
        static const int* SQUASH;
 
        static int squash(int d);
-
-       static int ten_log10(uint32 x) THROW;
 
        static int log2(uint32 x) THROW; // fast, integer rounded
 
@@ -54,8 +51,6 @@ namespace kanzi {
        static void computeJobsPerTask(int jobsPerTask[], int jobs, int tasks);
 
    private:
-       static const int INFINITE_VALUE;
-
        static const int* initStretch();
        static const int* initSquash();
    };
