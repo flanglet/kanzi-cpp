@@ -20,8 +20,7 @@ limitations under the License.
 using namespace kanzi;
 
 SBRT::SBRT(int mode) :
-	  _mode(mode)
-	, _mask1((mode == MODE_TIMESTAMP) ? 0 : -1)
+	  _mask1((mode == MODE_TIMESTAMP) ? 0 : -1)
 	, _mask2((mode == MODE_MTF) ? 0 : -1)
 	, _shift((mode == MODE_RANK) ? 1 : 0)
 {

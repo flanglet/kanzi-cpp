@@ -101,7 +101,6 @@ namespace kanzi {
        DictEntry** _dictMap;
        DictEntry* _dictList;
        int _freqs[257][256];
-       byte _escapes[2];
        int _staticDictSize;
        int _dictSize;
        int _logHashSize;

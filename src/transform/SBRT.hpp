@@ -46,7 +46,6 @@ namespace kanzi
 
    private:
       
-       const int _mode;
        const int _mask1;
        const int _mask2;
        const int _shift;
