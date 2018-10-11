@@ -415,6 +415,7 @@ T InverseRegularChunkTask<T>::call() THROW
         uint32 ptr = data[pIdx];
         dst[idx--] = byte(ptr);
         const int endIdx = i * _step;
+        prefetchRead(&dst[idx]);
 
         for (; idx >= endIdx; idx--) {
             ptr = data[(ptr >> 8) + _buckets[ptr & 0xFF]];
@@ -455,6 +456,7 @@ T InverseBigChunkTask<T>::call() THROW
         uint8 val = data[5 * pIdx + 4];
         dst[idx--] = val;
         uint32 n = uint32(LittleEndian::readInt32(&data[5 * pIdx])) + _buckets[val];
+        prefetchRead(&dst[idx]);
 
         for (; idx >= endIdx; idx--) {
             val = data[5 * n + 4];
