@@ -1208,32 +1208,30 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 					break;
 			}
 
-			DictEntry& e = _dictList[idx];
+			const DictEntry& e = _dictList[idx];
 			const int length = e._data >> 24;
+			const byte* buf = e._ptr;
 
 			// Sanity check
-			if ((e._ptr == nullptr) || (dstIdx + length >= dstEnd))
+			if ((buf == nullptr) || (dstIdx + length >= dstEnd))
 				break;
 
 			// Add space if only delimiter between 2 words (not an escaped delimiter)
 			if ((wordRun == true) && (length > 1))
 				dst[dstIdx++] = ' ';
 
-			const byte* buf = e._ptr;
-
 			// Emit word
 			if (cur != TextCodec::ESCAPE_TOKEN2) {
-				dst[dstIdx++] = *buf;
+				dst[dstIdx] = *buf;
 			}
 			else {
 				// Flip case of first character
-				dst[dstIdx++] = TextCodec::isUpperCase(*buf) ? *buf + 32 : *buf - 32;
+				dst[dstIdx] = TextCodec::isUpperCase(*buf) ? *buf + 32 : *buf - 32;
 			}
 
-			for (int n = 1, l = e._data >> 24; n < l; n++, dstIdx++)
-				dst[dstIdx] = buf[n];
-
 			if (length > 1) {
+				memcpy(&dst[dstIdx+1], &buf[1], length-1);
+
 				// Regular word entry
 				wordRun = true;
 				delimAnchor = srcIdx;
@@ -1243,6 +1241,8 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 				wordRun = false;
 				delimAnchor = srcIdx - 1;
 			}
+
+			dstIdx += length;
 		}
 		else {
 			wordRun = false;
@@ -1683,32 +1683,30 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 					break;
 			}
 
-			DictEntry& e = _dictList[idx];
+			const DictEntry& e = _dictList[idx];
 			const int length = e._data >> 24;
+			const byte* buf = e._ptr;
 
 			// Sanity check
-			if ((e._ptr == nullptr) || (dstIdx + length >= dstEnd))
+			if ((buf == nullptr) || (dstIdx + length >= dstEnd))
 				break;
 
 			// Add space if only delimiter between 2 words (not an escaped delimiter)
 			if ((wordRun == true) && (length > 1))
 				dst[dstIdx++] = ' ';
 
-			const byte* buf = e._ptr;
-
 			// Emit word
 			if ((cur & 0x20) == 0) {
-				dst[dstIdx++] = *buf;
+				dst[dstIdx] = *buf;
 			}
 			else {
 				// Flip case of first character
-				dst[dstIdx++] = TextCodec::isUpperCase(*buf) ? *buf + 32 : *buf - 32;
+				dst[dstIdx] = TextCodec::isUpperCase(*buf) ? *buf + 32 : *buf - 32;
 			}
 
-			for (int n = 1, l = e._data >> 24; n < l; n++, dstIdx++)
-				dst[dstIdx] = buf[n];
-
 			if (length > 1) {
+				memcpy(&dst[dstIdx+1], &buf[1], length-1);
+
 				// Regular word entry
 				wordRun = true;
 				delimAnchor = srcIdx;
@@ -1718,6 +1716,8 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 				wordRun = false;
 				delimAnchor = srcIdx - 1;
 			}
+
+			dstIdx += length;
 		}
 		else {
 			// Escape token followed by symbol > 0x80 ?
