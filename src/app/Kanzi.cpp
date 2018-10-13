@@ -186,7 +186,7 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println("        set the compression level [0..6]", true);
                 log.println("        Providing this option forces entropy and transform.", true);
                 log.println("        0=None&None (store), 1=TEXT+LZ4&HUFFMAN, 2=TEXT+ROLZ", true);
-                log.println("        3=BWT+RANK+ZRLT&ANS0, 4=BWT+RANK+ZRLT&FPAQ, 5=BWT&CM", true);
+                log.println("        3=TEXT+BWT+RANK+ZRLT&ANS0, 4=TEXT+BWT+RANK+ZRLT&FPAQ, 5=BWT&CM", true);
                 log.println("        6=X86+RLT+TEXT&TPAQ, 7=X86+RLT+TEXT&TPAQX\n", true);
                 log.println("   -e, --entropy=<codec>", true);
                 log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]", true);
