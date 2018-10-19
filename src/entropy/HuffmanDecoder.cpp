@@ -234,7 +234,7 @@ byte HuffmanDecoder::slowDecodeByte(int code, int codeLen) THROW
 }
 
 // 64 bits must be available in the bitstream
-byte HuffmanDecoder::fastDecodeByte()
+inline byte HuffmanDecoder::fastDecodeByte()
 {
     if (_bits < DECODING_BATCH_SIZE) {
         // Fetch more bits from bitstream       

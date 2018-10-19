@@ -45,7 +45,7 @@ int ExpGolombDecoder::decode(byte block[], uint blkptr, uint len)
     return len;
 }
 
-byte ExpGolombDecoder::decodeByte()
+inline byte ExpGolombDecoder::decodeByte()
 {
     if (_bitstream.readBit() == 1)
         return 0;

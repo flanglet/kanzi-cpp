@@ -143,12 +143,11 @@ int RangeDecoder::decode(byte block[], uint blkptr, uint len)
     return len;
 }
 
-byte RangeDecoder::decodeByte()
+inline byte RangeDecoder::decodeByte()
 {
     // Compute next low and range
     _range >>= _shift;
-    const int count = int((_code - _low) / _range);
-    const int symbol = _f2s[count];
+    const int symbol = _f2s[int((_code - _low) / _range)];
     const uint64 cumFreq = _cumFreqs[symbol];
     const uint64 freq = _cumFreqs[symbol + 1] - cumFreq;
     _low += (cumFreq * _range);
@@ -169,5 +168,5 @@ byte RangeDecoder::decodeByte()
         _low <<= 28;
     }
 
-    return (byte)symbol;
+    return byte(symbol);
 }

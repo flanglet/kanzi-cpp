@@ -85,7 +85,7 @@ int ExpGolombEncoder::encode(byte block[], uint blkptr, uint len)
     return len;
 }
 
-void ExpGolombEncoder::encodeByte(byte val)
+inline void ExpGolombEncoder::encodeByte(byte val)
 {
     if (val == 0) {
         // shortcut when input is 0

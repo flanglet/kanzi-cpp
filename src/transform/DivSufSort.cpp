@@ -506,7 +506,7 @@ void DivSufSort::ssSort(const int pa, int first, int last, int buf, int bufSize,
     }
 }
 
-int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
+inline int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
 {
     int u1 = depth + pa;
     int u2 = depth + _sa[p2];
@@ -529,7 +529,7 @@ int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
     return (u1 < u1n) ? ((u2 < u2n) ? _buffer[u1] - _buffer[u2] : 1) : ((u2 < u2n) ? -1 : 0);
 }
 
-int DivSufSort::ssCompare(int p1, int p2, int depth)
+inline int DivSufSort::ssCompare(int p1, int p2, int depth)
 {
     int u1 = depth + _sa[p1];
     int u2 = depth + _sa[p2];
@@ -667,7 +667,7 @@ void DivSufSort::ssRotate(int first, int middle, int last)
     }
 }
 
-void DivSufSort::ssBlockSwap(int a, int b, int n)
+inline void DivSufSort::ssBlockSwap(int a, int b, int n)
 {
     while (n > 0) {
         const int t = _sa[a];
@@ -1321,7 +1321,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
     }
 }
 
-int DivSufSort::ssPivot(int td, int pa, int first, int last)
+inline int DivSufSort::ssPivot(int td, int pa, int first, int last)
 {
     int t = last - first;
     int middle = first + (t >> 1);
@@ -1681,7 +1681,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                         limit = trIlg(last - b);
                     }
                     else {
-                        StackElement* se = _trStack->pop();
+                        const StackElement* se = _trStack->pop();
 
                         if (se == nullptr)
                             return;
@@ -1704,7 +1704,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                         limit = trIlg(a - first);
                     }
                     else {
-                        StackElement* se = _trStack->pop();
+                        const StackElement* se = _trStack->pop();
 
                         if (se == nullptr)
                             return;
@@ -1719,7 +1719,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
             }
             else if (limit == -2) {
                 // tandem repeat copy
-                StackElement* se = _trStack->pop();
+                const StackElement* se = _trStack->pop();
 
                 if (se->_d == 0) {
                     trCopy(isa, first, se->_b, se->_c, last, isad - isa);
@@ -2039,7 +2039,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
     }
 }
 
-int DivSufSort::trPivot(int arr[], int isad, int first, int last)
+inline int DivSufSort::trPivot(int arr[], int isad, int first, int last)
 {
     int t = last - first;
     int middle = first + (t >> 1);
@@ -2292,7 +2292,7 @@ void DivSufSort::trCopy(int isa, int first, int a, int b, int last, int depth)
     }
 }
 
-int DivSufSort::trIlg(int n)
+inline int DivSufSort::trIlg(int n)
 {
     return ((n & 0xFFFF0000) != 0) ? (((n & 0xFF000000) != 0) ? 24 + LOG_TABLE[(n >> 24) & 0xFF]
                                                               : 16 + LOG_TABLE[(n >> 16) & 0xFF])
@@ -2311,24 +2311,19 @@ StackElement::StackElement()
 
 Stack::Stack(int size)
 {
-    _arr = new StackElement*[size];
+    _arr = new StackElement[size];
     _length = size;
-
-    for (int i = 0; i < _length; i++)
-        _arr[i] = new StackElement();
+    _index = 0;
 }
 
 Stack::~Stack()
 {
-    for (int i = 0; i < _length; i++)
-        delete _arr[i];
-
     delete[] _arr;
 }
 
-void Stack::push(int a, int b, int c, int d, int e)
+inline void Stack::push(int a, int b, int c, int d, int e)
 {
-    StackElement* elt = _arr[_index];
+    StackElement* elt = &_arr[_index];
     elt->_a = a;
     elt->_b = b;
     elt->_c = c;
@@ -2339,7 +2334,7 @@ void Stack::push(int a, int b, int c, int d, int e)
 
 inline StackElement* Stack::pop()
 {
-    return (_index == 0) ? nullptr : _arr[--_index];
+    return (_index == 0) ? nullptr : &_arr[--_index];
 }
 
 TRBudget::TRBudget(int chance, int incval)
@@ -2349,7 +2344,7 @@ TRBudget::TRBudget(int chance, int incval)
     _incVal = incval;
 }
 
-bool TRBudget::check(int size)
+inline bool TRBudget::check(int size)
 {
     if (size <= _remain) {
         _remain -= size;

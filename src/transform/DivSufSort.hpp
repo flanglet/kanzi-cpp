@@ -45,7 +45,7 @@ namespace kanzi
        friend class DivSufSort;
 
    private:
-       StackElement** _arr;
+       StackElement* _arr;
        int _index;
        int _length;
 
@@ -53,7 +53,7 @@ namespace kanzi
 
        ~Stack();
 
-       StackElement* get(int idx) const { return _arr[idx]; }
+       StackElement* get(int idx) const { return &_arr[idx]; }
 
        int size() const { return _index; }
 
