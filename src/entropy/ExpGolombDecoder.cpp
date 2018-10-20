@@ -44,25 +44,3 @@ int ExpGolombDecoder::decode(byte block[], uint blkptr, uint len)
 
     return len;
 }
-
-inline byte ExpGolombDecoder::decodeByte()
-{
-    if (_bitstream.readBit() == 1)
-        return 0;
-
-    int log2 = 1;
-
-    while (_bitstream.readBit() == 0)
-        log2++;
-
-    if (_signed == true) {
-        // Decode signed: read value + sign
-        byte res = byte(_bitstream.readBits(log2 + 1));
-        const byte sgn = res & 1;
-        res = (res >> 1) + (1 << log2) - 1;
-        return byte((res - sgn) ^ -sgn); // res or -res
-    }
-
-    // Decode unsigned
-    return byte((1 << log2) - 1 + _bitstream.readBits(log2));
-}

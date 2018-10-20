@@ -57,9 +57,9 @@ namespace kanzi
 
        int size() const { return _index; }
 
-       void push(int a, int b, int c, int d, int e);
+       inline void push(int a, int b, int c, int d, int e);
 
-       StackElement* pop();
+       inline StackElement* pop();
    };
 
    class TRBudget
@@ -107,15 +107,15 @@ namespace kanzi
        void ssSort(int pa, int first, int last, int buf, int bufSize,
            int depth, int n, bool lastSuffix);
 
-       int ssCompare(int pa, int pb, int p2, int depth);
+       inline int ssCompare(int pa, int pb, int p2, int depth);
 
-       int ssCompare(int p1, int p2, int depth);
+       inline int ssCompare(int p1, int p2, int depth);
 
        void ssInplaceMerge(int pa, int first, int middle, int last, int depth);
 
        void ssRotate(int first, int middle, int last);
 
-       void ssBlockSwap(int a, int b, int n);
+       inline void ssBlockSwap(int a, int b, int n);
 
        static int getIndex(int a) { return (a >= 0) ? a : ~a; }
 
@@ -130,15 +130,15 @@ namespace kanzi
 
        void ssInsertionSort(int pa, int first, int last, int depth);
 
-       static int ssIsqrt(int x);
+       inline int ssIsqrt(int x);
 
        void ssMultiKeyIntroSort(const int pa, int first, int last, int depth);
 
-       int ssPivot(int td, int pa, int first, int last);
+       inline int ssPivot(int td, int pa, int first, int last);
 
-       int ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5);
+       inline int ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5);
 
-       int ssMedian3(int idx, int pa, int v1, int v2, int v3);
+       inline int ssMedian3(int idx, int pa, int v1, int v2, int v3);
 
        int ssPartition(int pa, int first, int last, int depth);
 
@@ -146,9 +146,9 @@ namespace kanzi
 
        void ssFixDown(int idx, int pa, int saIdx, int i, int size);
 
-       static int ssIlg(int n);
+       inline int ssIlg(int n);
 
-       void swapInSA(int a, int b);
+       inline void swapInSA(int a, int b);
 
        void trSort(int n, int depth);
 
@@ -156,11 +156,11 @@ namespace kanzi
 
        void trIntroSort(int isa, int isad, int first, int last, TRBudget& budget);
 
-       static int trPivot(int arr[], int isad, int first, int last);
+       inline int trPivot(int arr[], int isad, int first, int last);
 
-       static int trMedian5(int arr[], int isad, int v1, int v2, int v3, int v4, int v5);
+       inline int trMedian5(int arr[], int isad, int v1, int v2, int v3, int v4, int v5);
 
-       static int trMedian3(int arr[], int isad, int v1, int v2, int v3);
+       inline int trMedian3(int arr[], int isad, int v1, int v2, int v3);
 
        void trHeapSort(int isad, int saIdx, int size);
 

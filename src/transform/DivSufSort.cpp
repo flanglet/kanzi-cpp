@@ -669,11 +669,8 @@ void DivSufSort::ssRotate(int first, int middle, int last)
 
 inline void DivSufSort::ssBlockSwap(int a, int b, int n)
 {
-    while (n > 0) {
-        const int t = _sa[a];
-        _sa[a] = _sa[b];
-        _sa[b] = t;
-        n--;
+    while (n-- > 0) {
+        std::swap(_sa[a], _sa[b]);
         a++;
         b++;
     }

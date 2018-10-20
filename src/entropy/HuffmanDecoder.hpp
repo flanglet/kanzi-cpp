@@ -65,7 +65,7 @@ namespace kanzi
 
        byte slowDecodeByte(int code, int codeLen) THROW;
 
-       byte fastDecodeByte();
+       inline byte fastDecodeByte();
    };
 
 }
