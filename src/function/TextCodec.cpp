@@ -937,10 +937,10 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			DictEntry* pe = pe1;
 
 			if (pe == nullptr) {
+				prefetchRead(&_dictMap[h2 & _hashMask]);
 				DictEntry* pe2 = _dictMap[h2 & _hashMask];
 
-				// Hash collision (quick check)  ?
-				if ((pe2 == nullptr) || (((pe2->_data >> 24) == length) && (pe2->_hash == h2)))
+				if ((pe2 != nullptr) && ((pe2->_data >> 24) == length) && (pe2->_hash == h2))
 					pe = pe2;
 			}
 
@@ -1415,10 +1415,10 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			DictEntry* pe = pe1;
 
 			if (pe == nullptr) {
+				prefetchRead(&_dictMap[h2 & _hashMask]);
 				DictEntry* pe2 = _dictMap[h2 & _hashMask];
 
-				// Hash collision (quick check)  ?
-				if ((pe2 == nullptr) || (((pe2->_data >> 24) == length) && (pe2->_hash == h2)))
+				if ((pe2 != nullptr) && ((pe2->_data >> 24) == length) && (pe2->_hash == h2))
 					pe = pe2;
 			}
 
