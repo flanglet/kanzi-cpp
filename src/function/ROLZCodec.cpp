@@ -126,15 +126,15 @@ bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
         const int endChunk = (startChunk + sizeChunk < srcEnd) ? startChunk + sizeChunk : srcEnd;
         sizeChunk = endChunk - startChunk;
         src = &input._array[startChunk];
-        srcIdx = 2;
+        srcIdx = 0;
         _litPredictor.setContext(0);
         re.setContext(LITERAL_FLAG);
         re.encodeBit(LITERAL_FLAG);
-        re.encodeByte(src[0]);
+        re.encodeByte(src[srcIdx++]);
 
         if (startChunk + 1 < srcEnd) {
             re.encodeBit(LITERAL_FLAG);
-            re.encodeByte(src[1]);
+            re.encodeByte(src[srcIdx++]);
         }
 
         while (srcIdx < sizeChunk) {
@@ -215,19 +215,19 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
         const int endChunk = (startChunk + sizeChunk < dstEnd) ? startChunk + sizeChunk : dstEnd;
         sizeChunk = endChunk - startChunk;
         dst = &output._array[output._index];
-        int dstIdx = 2;
+        int dstIdx = 0;
         _litPredictor.setContext(0);
         rd.setContext(LITERAL_FLAG);
         int bit = rd.decodeBit();
 
         if (bit == LITERAL_FLAG) {
-            dst[0] = rd.decodeByte();
+            dst[dstIdx++] = rd.decodeByte();
 
             if (output._index + 1 < dstEnd) {
                 bit = rd.decodeBit();
 
                 if (bit == LITERAL_FLAG)
-                    dst[1] = rd.decodeByte();
+                    dst[dstIdx++] = rd.decodeByte();
             }
         }
 
