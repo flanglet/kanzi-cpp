@@ -41,7 +41,7 @@ limitations under the License.
 
 using namespace kanzi;
 
-BlockCompressor::BlockCompressor(map<string, string>& args)
+BlockCompressor::BlockCompressor(map<string, string>& args) THROW
 {
     map<string, string>::iterator it;
     it = args.find("level");
@@ -106,6 +106,12 @@ BlockCompressor::BlockCompressor(map<string, string>& args)
     else {
         _blockSize = atoi(it->second.c_str());
         args.erase(it);
+
+        if (_blockSize > 1024 * 1024 * 1024) {
+           stringstream sserr;
+           sserr << "Maximum block size is 1 GB (1073741824 bytes), got " << _blockSize << " bytes";
+           throw IllegalArgumentException(sserr.str().c_str());
+        }
     }
 
     it = args.find("transform");

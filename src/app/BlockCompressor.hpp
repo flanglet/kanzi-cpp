@@ -90,7 +90,7 @@ namespace kanzi {
        friend class FileCompressTask<FileCompressResult>;
 
    public:
-       BlockCompressor(map<string, string>& m);
+       BlockCompressor(map<string, string>& m) THROW;
 
        ~BlockCompressor();
 

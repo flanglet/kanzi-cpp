@@ -290,7 +290,7 @@ istream& CompressedInputStream::read(char* data, streamsize length) THROW
         if (c2 == EOF)
             break;
 
-        data[off++] = (byte)c2;
+        data[off++] = byte(c2);
         _gcount++;
         remaining--;
     }
