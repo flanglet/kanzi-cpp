@@ -145,13 +145,13 @@ void CompressedOutputStream::writeHeader() THROW
     if (_obs->writeBits(_transformType, 48) != 48)
         throw IOException("Cannot write transform types to header", Error::ERR_WRITE_FILE);
 
-    if (_obs->writeBits(_blockSize >> 4, 26) != 26)
+    if (_obs->writeBits(_blockSize >> 4, 28) != 28)
         throw IOException("Cannot write block size to header", Error::ERR_WRITE_FILE);
 
     if (_obs->writeBits(_nbInputBlocks, 6) != 6)
         throw IOException("Cannot write  number of blocks to header", Error::ERR_WRITE_FILE);
 
-    if (_obs->writeBits(uint64(0), 5) != 5)
+    if (_obs->writeBits(uint64(0), 3) != 3)
         throw IOException("Cannot write reserved bits to header", Error::ERR_WRITE_FILE);
 }
 

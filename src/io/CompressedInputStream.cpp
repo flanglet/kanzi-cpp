@@ -124,7 +124,7 @@ void CompressedInputStream::readHeader() THROW
     _ctx["transform"] = FunctionFactory<byte>::getName(_transformType);
 
     // Read block size
-    _blockSize = int(_ibs->readBits(26)) << 4;
+    _blockSize = int(_ibs->readBits(28)) << 4;
     stringstream ss;
     ss << _blockSize;
     _ctx["blockSize"] = ss.str().c_str();
@@ -144,7 +144,7 @@ void CompressedInputStream::readHeader() THROW
     _nbInputBlocks = uint8(_ibs->readBits(6));
 
     // Read reserved bits
-    _ibs->readBits(5);
+    _ibs->readBits(3);
 
     if (_listeners.size() > 0) {
         stringstream ss;
