@@ -24,7 +24,7 @@ namespace kanzi
    {
    public:
       T* _array;
-      int _length; // buffer length (aka capacity)
+      int _length; // buffer length (a.k.a capacity)
       int _index;
 
       SliceArray(T* arr, int len, int index = 0) { _array = arr; _length = len; _index = index; }
@@ -44,6 +44,9 @@ namespace kanzi
           return false;
        
        if (sa._index < 0)
+          return false;
+             
+       if (sa._length < 0)
           return false;
              
        return (sa._index <= sa._length);
