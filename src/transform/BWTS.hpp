@@ -31,7 +31,7 @@ namespace kanzi
    class BWTS : public Transform<byte> {
 
    private:
-       static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1 GB (30 bits)
+       static const int MAX_BLOCK_SIZE = 512 * 1024 * 1024; // 512 MB (libsufsort limit)
 
        int* _buffer1;
        int* _buffer2;
@@ -56,9 +56,9 @@ namespace kanzi
           delete[] _buffer2; 
        }
 
-       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length);
+       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
-       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length);
+       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
        static int maxBlockSize() { return MAX_BLOCK_SIZE; }
    };

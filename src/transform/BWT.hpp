@@ -62,7 +62,8 @@ namespace kanzi {
    template <class T>
    class InverseBigChunkTask : public Task<T> {
    private:
-       byte* _buffer;
+       uint32* _buffer1;
+       byte* _buffer2;
        uint32* _buckets;
        int* _primaryIndexes;
        byte* _dst;
@@ -73,7 +74,7 @@ namespace kanzi {
        int _endChunk;
 
    public:
-       InverseBigChunkTask(byte* buf, uint32* buckets, byte* output,
+       InverseBigChunkTask(uint32* buf1, byte* buf2, uint32* buckets, byte* output,
            int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
        ~InverseBigChunkTask() {}
 
@@ -104,14 +105,14 @@ namespace kanzi {
    class BWT : public Transform<byte> {
 
    private:
-       static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1 GB (30 bits)
-       static const int BWT_MAX_HEADER_SIZE = 4;
+       static const int MAX_BLOCK_SIZE = 512 * 1024 * 1024; // 512 MB (libsufsort limit)
        static const int BWT_MAX_CHUNKS = 8;
 
-       uint32* _buffer1;
-       byte* _buffer2;
-       int* _buffer3;
+       uint32* _buffer1;  // inverse regular blocks
+       byte* _buffer2;    // inverse big blocks
+       int* _buffer3;     // forward
        int _bufferSize;
+       uint32 _buckets[256];
        int _primaryIndexes[8];
        DivSufSort _saAlgo;
        int _jobs;
@@ -123,27 +124,17 @@ namespace kanzi {
    public:
        BWT(int jobs = 1);
 
-       ~BWT()
-       {
-           if (_buffer1 != nullptr)
-               delete[] _buffer1;
+       virtual ~BWT();      
 
-           if (_buffer2 != nullptr)
-               delete[] _buffer2;
+       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
-           if (_buffer3 != nullptr)
-               delete[] _buffer3;
-       }
-
-       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length);
-
-       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length);
+       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
        int getPrimaryIndex(int n) const { return _primaryIndexes[n]; }
 
        bool setPrimaryIndex(int n, int primaryIndex);
 
-       static int maxBlockSize() { return MAX_BLOCK_SIZE - BWT_MAX_HEADER_SIZE; }
+       static int maxBlockSize() { return MAX_BLOCK_SIZE; }
 
        static int getBWTChunks(int size);
    };

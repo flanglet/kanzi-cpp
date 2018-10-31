@@ -52,10 +52,12 @@ namespace kanzi {
        int getMaxEncodedLength(int srcLen) const
        {
            // Return input buffer size + max header size
-           return srcLen + 4 * 8;
+           return srcLen + BWT_MAX_HEADER_SIZE;
        }
 
    private:
+       static const int BWT_MAX_HEADER_SIZE = 8 * 4;
+
        BWT* _pBWT;
    };
 }

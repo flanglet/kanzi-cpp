@@ -15,10 +15,11 @@ limitations under the License.
 
 #include <cstring>
 #include "BWTS.hpp"
+#include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
 
-bool BWTS::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool BWTS::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
     if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
        return false;
@@ -26,8 +27,13 @@ bool BWTS::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     if ((count < 0) || (count + input._index > input._length))
         return false;
 
-    if (count > maxBlockSize())
-        return false;
+    if (count > maxBlockSize()) {
+        // Not a recoverable error: instead of silently fail the transform,
+        // issue a fatal error.
+        stringstream ss;
+        ss << "The max BWTS block size is " << maxBlockSize() << ", got " << count;
+        throw IllegalArgumentException(ss.str());
+    }
 
     if (count < 2) {
         if (count == 1)
@@ -149,7 +155,7 @@ int BWTS::moveLyndonWordHead(int sa[], int isa[], byte data[], int count, int st
     return rank;
 }
 
-bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
     if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
        return false;
@@ -157,8 +163,13 @@ bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     if ((count < 0) || (count + input._index > input._length))
         return false;
 
-    if (count > maxBlockSize())
-        return false;
+    if (count > maxBlockSize()) {
+        // Not a recoverable error: instead of silently fail the transform,
+        // issue a fatal error.
+        stringstream ss;
+        ss << "The max BWTS block size is " << maxBlockSize() << ", got " << count;
+        throw IllegalArgumentException(ss.str());
+    }
 
     if (count < 2) {
         if (count == 1)
@@ -167,8 +178,8 @@ bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         return true;
     }
 
-    byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    uint8* src = (uint8*) &input._array[input._index];
+    uint8* dst = (uint8*) &input._array[output._index];
 
     // Lazy dynamic memory allocation
     if (_bufferSize < count) {
@@ -185,7 +196,7 @@ bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     memset(_buckets, 0, sizeof(_buckets));
 
     for (int i = 0; i < count; i++)
-        buckets_[src[i] & 0xFF]++;
+        buckets_[src[i]]++;
 
     // Histogram
     for (int i = 0, sum = 0; i < 256; i++) {
@@ -194,7 +205,7 @@ bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     }
 
     for (int i = 0; i < count; i++)
-        lf[i] = buckets_[src[i] & 0xFF]++;
+        lf[i] = buckets_[src[i]]++;
 
     // Build inverse
     for (int i = 0, j = count - 1; j >= 0; i++) {

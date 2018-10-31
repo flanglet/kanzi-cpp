@@ -42,6 +42,18 @@ BWT::BWT(int jobs) THROW
     memset(_primaryIndexes, 0, sizeof(int) * 8);
 }
 
+BWT::~BWT() 
+{
+    if (_buffer1 != nullptr)
+        delete[] _buffer1;
+
+    if (_buffer2 != nullptr)
+        delete[] _buffer2;
+
+    if (_buffer3 != nullptr)
+        delete[] _buffer3;
+}
+
 bool BWT::setPrimaryIndex(int n, int primaryIndex)
 {
     if ((primaryIndex < 0) || (n < 0) || (n >= 8))
@@ -51,7 +63,7 @@ bool BWT::setPrimaryIndex(int n, int primaryIndex)
     return true;
 }
 
-bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
     if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
         return false;
@@ -59,8 +71,13 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     if ((count < 0) || (count + input._index > input._length))
         return false;
 
-    if (count > maxBlockSize())
-        return false;
+    if (count > maxBlockSize()) {
+        // Not a recoverable error: instead of silently fail the transform,
+        // issue a fatal error.
+        stringstream ss;
+        ss << "The max BWT block size is " << maxBlockSize() << ", got " << count;
+        throw IllegalArgumentException(ss.str());
+    }
 
     if (count < 2) {
         if (count == 1)
@@ -133,7 +150,7 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     return res;
 }
 
-bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
     if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
         return false;
@@ -141,8 +158,13 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     if ((count < 0) || (count + input._index > input._length))
         return false;
 
-    if (count > maxBlockSize())
-        return false;
+    if (count > maxBlockSize()) {
+        // Not a recoverable error: instead of silently fail the transform,
+        // issue a fatal error.
+        stringstream ss;
+        ss << "The max BWT block size is " << maxBlockSize() << ", got " << count;
+        throw IllegalArgumentException(ss.str());
+    }
 
     if (count < 2) {
         if (count == 1)
@@ -270,39 +292,47 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
     byte* dst = &output._array[output._index];
 
     // Lazy dynamic memory allocations
-    if ((_buffer2 == nullptr) || (_bufferSize < 5 * count)) {
+    if ((_buffer1 == nullptr) || (_bufferSize < count)) {
+        if (_buffer1 != nullptr)
+            delete[] _buffer1;
+
         if (_buffer2 != nullptr)
             delete[] _buffer2;
 
-        _bufferSize = 5 * count;
+        _bufferSize = count;
+        _buffer1 = new uint32[_bufferSize];
         _buffer2 = new byte[_bufferSize];
     }
 
     // Aliasing
-    byte* data = _buffer2;
+    uint32* buckets = _buckets;
+    uint32* data1 = _buffer1;
+    byte* data2 = _buffer2;
 
     int chunks = getBWTChunks(count);
-    uint32 buckets[256] = { 0 };
+
+    // Initialize histogram
+    memset(_buckets, 0, sizeof(_buckets));
 
     // Build arrays
     // Start with the primary index position
     int pIdx = getPrimaryIndex(0);
     const uint8 val0 = src[pIdx];
-    LittleEndian::writeInt32(&data[5 * pIdx], buckets[val0]);
-    data[5 * pIdx + 4] = val0;
+    data1[pIdx] = buckets[val0];
+    data2[pIdx] = val0;
     buckets[val0]++;
 
     for (int i = 0; i < pIdx; i++) {
         const uint8 val = src[i];
-        LittleEndian::writeInt32(&data[5 * i], buckets[val]);
-        data[5 * i + 4] = val;
+        data1[i] = buckets[val];
+        data2[i] = val;
         buckets[val]++;
     }
 
     for (int i = pIdx + 1; i < count; i++) {
         const uint8 val = src[i];
-        LittleEndian::writeInt32(&data[5 * i], buckets[val]);
-        data[5 * i + 4] = val;
+        data1[i] = buckets[val];
+        data2[i] = val;
         buckets[val]++;
     }
 
@@ -318,15 +348,14 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     // Build inverse
     if ((chunks == 1) || (_jobs == 1)) {
-        // Shortcut for 1 chunk scenario
-        uint8 val = data[5 * pIdx + 4];
+        uint8 val = data2[pIdx];
         dst[idx--] = val;
-        uint32 n = uint32(LittleEndian::readInt32(&data[5 * pIdx])) + buckets[val];
+        int n = data1[pIdx] + buckets[val];
 
         for (; idx >= 0; idx--) {
-            val = data[5 * n + 4];
+            val = data2[n];
             dst[idx] = val;
-            n = uint32(LittleEndian::readInt32(&data[5 * n])) + buckets[val];
+            n = data1[n] + buckets[val];
         }
     }
 #ifdef CONCURRENCY_ENABLED
@@ -347,7 +376,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
             const int nc = c - jobsPerTask[j];
             const int end = nc * step;
 
-            InverseBigChunkTask<int>* task = new InverseBigChunkTask<int>(data, buckets, dst, _primaryIndexes,
+            InverseBigChunkTask<int>* task = new InverseBigChunkTask<int>(data1, data2, buckets, dst, _primaryIndexes,
                 pIdx, idx, step, c - 1, c - 1 - jobsPerTask[j]);
             tasks.push_back(task);
             futures.push_back(async(launch::async, &InverseBigChunkTask<int>::call, task));
@@ -429,10 +458,11 @@ T InverseRegularChunkTask<T>::call() THROW
 }
 
 template <class T>
-InverseBigChunkTask<T>::InverseBigChunkTask(byte* buf, uint32* buckets, byte* output,
+InverseBigChunkTask<T>::InverseBigChunkTask(uint32* buf1, byte* buf2, uint32* buckets, byte* output,
     int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk)
 {
-    _buffer = buf;
+    _buffer1 = buf1;
+    _buffer2 = buf2;
     _buckets = buckets;
     _primaryIndexes = primaryIndexes;
     _dst = output;
@@ -448,20 +478,20 @@ T InverseBigChunkTask<T>::call() THROW
 {
     int idx = _startIdx;
     int pIdx = _pIdx0;
-    byte* data = _buffer;
+    uint32* data1 = _buffer1;
+    byte* data2 = _buffer2;
     byte* dst = _dst;
 
     for (int i = _startChunk; i > _endChunk; i--) {
         const int endIdx = i * _step;
-        uint8 val = data[5 * pIdx + 4];
+        uint8 val = data2[pIdx];
         dst[idx--] = val;
-        uint32 n = uint32(LittleEndian::readInt32(&data[5 * pIdx])) + _buckets[val];
-        prefetchRead(&dst[idx]);
+        int n = data1[pIdx] + _buckets[val];
 
         for (; idx >= endIdx; idx--) {
-            val = data[5 * n + 4];
+            val = data2[n];
             dst[idx] = val;
-            n = uint32(LittleEndian::readInt32(&data[5 * n])) + _buckets[val];
+            n = data1[n] + _buckets[val];
         }
 
         pIdx = _primaryIndexes[i];
