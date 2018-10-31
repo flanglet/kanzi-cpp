@@ -52,6 +52,7 @@ namespace kanzi {
       while (count > 0) {
 	      const int ckSize = (count < 1<<23) ? count : 1<<23;
 	      res += (_bitstream.readBits(&block[blkptr], 8 * ckSize) >> 3);
+	      blkptr += ckSize;
 	      count -= ckSize;
       }
 
