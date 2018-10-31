@@ -62,7 +62,6 @@ namespace kanzi {
    private:
        DictEntry** _dictMap;
        DictEntry* _dictList;
-       int _freqs[257][256];
        byte _escapes[2];
        int _staticDictSize;
        int _dictSize;
@@ -71,6 +70,7 @@ namespace kanzi {
        bool _isCRLF; // EOL = CR + LF
 
        bool expandDictionary();
+       void reset();
        int emitWordIndex(byte dst[], int val);
        int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
@@ -98,7 +98,6 @@ namespace kanzi {
    private:
        DictEntry** _dictMap;
        DictEntry* _dictList;
-       int _freqs[257][256];
        int _staticDictSize;
        int _dictSize;
        int _logHashSize;
@@ -106,6 +105,7 @@ namespace kanzi {
        bool _isCRLF; // EOL = CR + LF
 
        bool expandDictionary();
+       void reset();
        int emitWordIndex(byte dst[], int val, int mask);
        int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
@@ -119,6 +119,7 @@ namespace kanzi {
    public:
        static const int MAX_DICT_SIZE = 1 << 19; // must be less than 1<<24
        static const int MAX_WORD_LENGTH = 32; // must be less than 128
+       static const int CHUNK_SIZE = 1 << 28; // 256 MB
        static const byte ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
        static const byte ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
 
@@ -131,15 +132,9 @@ namespace kanzi {
            delete _delegate;
        }
 
-       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length)
-       {
-           return _delegate->forward(src, dst, length);
-       }
-
-       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length)
-       {
-           return _delegate->inverse(src, dst, length);
-       }
+       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
+       
+       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
        int getMaxEncodedLength(int srcLen) const
        {
@@ -174,7 +169,7 @@ namespace kanzi {
 
        static bool sameWords(const byte src[], byte dst[], const int length);
 
-       static byte computeStats(byte block[], int count, int freqs[][256]);
+       static byte computeStats(byte block[], int count);
 
        // Default dictionary
        static const byte DICT_EN_1024[];
