@@ -119,7 +119,7 @@ namespace kanzi {
    public:
        static const int MAX_DICT_SIZE = 1 << 19; // must be less than 1<<24
        static const int MAX_WORD_LENGTH = 32; // must be less than 128
-       static const int CHUNK_SIZE = 1 << 28; // 256 MB
+       static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB       
        static const byte ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
        static const byte ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
 

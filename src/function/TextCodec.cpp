@@ -769,29 +769,27 @@ TextCodec::TextCodec(map<string, string>& ctx)
 }
 
 bool TextCodec::forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) {
-	while (length > 0) {
-		const int count = (length < CHUNK_SIZE) ? length : CHUNK_SIZE;
-
-		if (_delegate->forward(src, dst, count) == false)
-         return false;
-
-		length -= count;
+	if (length > MAX_BLOCK_SIZE) {
+		// Not a recoverable error: instead of silently fail the transform,
+		// issue a fatal error.
+		stringstream ss;
+		ss << "The max TextCodec block size is " << MAX_BLOCK_SIZE << ", got " << length;
+		throw IllegalArgumentException(ss.str());
 	}
 
-	return true;
+	return _delegate->forward(src, dst, length);
 }
 
 bool TextCodec::inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) {
-	while (length > 0) {
-		const int count = (length < CHUNK_SIZE) ? length : CHUNK_SIZE;
-
-		if (_delegate->inverse(src, dst, length) == false)
-         return false;
-
-		length -= count;
+	if (length > MAX_BLOCK_SIZE) {
+		// Not a recoverable error: instead of silently fail the transform,
+		// issue a fatal error.
+		stringstream ss;
+		ss << "The max TextCodec block size is " << MAX_BLOCK_SIZE << ", got " << length;
+		throw IllegalArgumentException(ss.str());
 	}
 
-	return true;
+	return _delegate->inverse(src, dst, length);
 }
 
 
