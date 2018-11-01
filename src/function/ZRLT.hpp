@@ -42,7 +42,7 @@ namespace kanzi
        int getMaxEncodedLength(int srcLen) const { return srcLen; }
 
    private:
-       static const int ZRLT_MAX_RUN = 0x7FFFFFFF;
+       static const int ZRLT_MAX_RUN = 0x7FFFFFFE;
    };
 
 }
