@@ -173,10 +173,14 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
         return true;
     }
 
-    if (count >= 1 << 24)
-        return inverseBigBlock(input, output, count);
+    // Find the fastest way to implement inverse based on block size
+    if (count < 1 << 24)
+        return inverseRegularBlock(input, output, count);
 
-    return inverseRegularBlock(input, output, count);
+    if (5 * uint32(count) >= uint32(1 << 31))
+        return inverseHugeBlock(input, output, count);
+
+    return inverseBigBlock(input, output, count);
 }
 
 // When count < 1<<24
@@ -285,8 +289,120 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
     return true;
 }
 
-// When count >= 1<<24
+// When count >= 1<<24 and 5*count < 1<<31
 bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+{
+    byte* src = &input._array[input._index];
+    byte* dst = &output._array[output._index];
+
+    // Lazy dynamic memory allocations
+    if ((_buffer2 == nullptr) || (_bufferSize < 5 * count)) {
+        if (_buffer2 != nullptr)
+            delete[] _buffer2;
+
+        _bufferSize = 5 * count;
+        _buffer2 = new byte[_bufferSize];
+    }
+
+    // Aliasing
+    byte* data = _buffer2;
+
+    int chunks = getBWTChunks(count);
+    uint32 buckets[256] = { 0 };
+
+    // Build arrays
+    // Start with the primary index position
+    int pIdx = getPrimaryIndex(0);
+    const uint8 val0 = src[pIdx];
+    LittleEndian::writeInt32(&data[5 * pIdx], buckets[val0]);
+    data[5 * pIdx + 4] = val0;
+    buckets[val0]++;
+
+    for (int i = 0; i < pIdx; i++) {
+        const uint8 val = src[i];
+        LittleEndian::writeInt32(&data[5 * i], buckets[val]);
+        data[5 * i + 4] = val;
+        buckets[val]++;
+    }
+
+    for (int i = pIdx + 1; i < count; i++) {
+        const uint8 val = src[i];
+        LittleEndian::writeInt32(&data[5 * i], buckets[val]);
+        data[5 * i + 4] = val;
+        buckets[val]++;
+    }
+
+    uint32 sum = 0;
+
+    // Create cumulative histogram
+    for (int i = 0; i < 256; i++) {
+        sum += buckets[i];
+        buckets[i] = sum - buckets[i];
+    }
+
+    int idx = count - 1;
+
+    // Build inverse
+    if ((chunks == 1) || (_jobs == 1)) {
+        // Shortcut for 1 chunk scenario
+        uint8 val = data[5 * pIdx + 4];
+        dst[idx--] = val;
+        uint32 n = uint32(LittleEndian::readInt32(&data[5 * pIdx])) + buckets[val];
+
+        for (; idx >= 0; idx--) {
+            val = data[5 * n + 4];
+            dst[idx] = val;
+            n = uint32(LittleEndian::readInt32(&data[5 * n])) + buckets[val];
+        }
+    }
+#ifdef CONCURRENCY_ENABLED
+    else {
+        // Several chunks may be decoded concurrently (depending on the availaibility
+        // of jobs per block).
+        const int step = count / chunks;
+        const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
+        int* jobsPerTask = new int[nbTasks];
+        Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
+        int c = chunks;
+        vector<future<int> > futures;
+        vector<InverseBigChunkTask<int>*> tasks;
+
+        // Create one task per job
+        for (int j = 0; j < nbTasks; j++) {
+            // Each task decodes jobsPerTask[j] chunks
+            const int nc = c - jobsPerTask[j];
+            const int end = nc * step;
+
+            InverseBigChunkTask<int>* task = new InverseBigChunkTask<int>(data, buckets, dst, _primaryIndexes,
+                pIdx, idx, step, c - 1, c - 1 - jobsPerTask[j]);
+            tasks.push_back(task);
+            futures.push_back(async(launch::async, &InverseBigChunkTask<int>::call, task));
+            c = nc;
+            pIdx = getPrimaryIndex(c);
+            idx = end - 1;
+        }
+
+        // Wait for completion of all concurrent tasks
+        for (int j = 0; j < nbTasks; j++) {
+            futures[j].get();
+        }
+
+        // Cleanup
+        for (vector<InverseBigChunkTask<int>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+            delete *it;
+
+        tasks.clear();
+        delete[] jobsPerTask;
+    }
+#endif
+
+    input._index += count;
+    output._index += count;
+    return true;
+}
+
+// When 5*count >= 1<<31
+bool BWT::inverseHugeBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -368,7 +484,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
         Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
         int c = chunks;
         vector<future<int> > futures;
-        vector<InverseBigChunkTask<int>*> tasks;
+        vector<InverseHugeChunkTask<int>*> tasks;
 
         // Create one task per job
         for (int j = 0; j < nbTasks; j++) {
@@ -376,10 +492,10 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
             const int nc = c - jobsPerTask[j];
             const int end = nc * step;
 
-            InverseBigChunkTask<int>* task = new InverseBigChunkTask<int>(data1, data2, buckets, dst, _primaryIndexes,
+            InverseHugeChunkTask<int>* task = new InverseHugeChunkTask<int>(data1, data2, buckets, dst, _primaryIndexes,
                 pIdx, idx, step, c - 1, c - 1 - jobsPerTask[j]);
             tasks.push_back(task);
-            futures.push_back(async(launch::async, &InverseBigChunkTask<int>::call, task));
+            futures.push_back(async(launch::async, &InverseHugeChunkTask<int>::call, task));
             c = nc;
             pIdx = getPrimaryIndex(c);
             idx = end - 1;
@@ -391,7 +507,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
 
         // Cleanup
-        for (vector<InverseBigChunkTask<int>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+        for (vector<InverseHugeChunkTask<int>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
             delete *it;
 
         tasks.clear();
@@ -409,12 +525,8 @@ int BWT::getBWTChunks(int size)
     if (size < 1 << 23) // 8 MB
         return 1;
 
-    int res = (size + (1 << 22)) >> 23;
-
-    if (res > BWT_MAX_CHUNKS)
-        return BWT_MAX_CHUNKS;
-
-    return res;
+    const int res = (size + (1 << 22)) >> 23;
+    return (res > BWT_MAX_CHUNKS) ? BWT_MAX_CHUNKS : res;
 }
 
 template <class T>
@@ -458,7 +570,7 @@ T InverseRegularChunkTask<T>::call() THROW
 }
 
 template <class T>
-InverseBigChunkTask<T>::InverseBigChunkTask(uint32* buf1, byte* buf2, uint32* buckets, byte* output,
+InverseHugeChunkTask<T>::InverseHugeChunkTask(uint32* buf1, byte* buf2, uint32* buckets, byte* output,
     int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk)
 {
     _buffer1 = buf1;
@@ -474,7 +586,7 @@ InverseBigChunkTask<T>::InverseBigChunkTask(uint32* buf1, byte* buf2, uint32* bu
 }
 
 template <class T>
-T InverseBigChunkTask<T>::call() THROW
+T InverseHugeChunkTask<T>::call() THROW
 {
     int idx = _startIdx;
     int pIdx = _pIdx0;
@@ -492,6 +604,48 @@ T InverseBigChunkTask<T>::call() THROW
             val = data2[n];
             dst[idx] = val;
             n = data1[n] + _buckets[val];
+        }
+
+        pIdx = _primaryIndexes[i];
+    }
+
+    return T(0);
+}
+
+template <class T>
+InverseBigChunkTask<T>::InverseBigChunkTask(byte* buf, uint32* buckets, byte* output,
+    int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk)
+{
+    _buffer = buf;
+    _buckets = buckets;
+    _primaryIndexes = primaryIndexes;
+    _dst = output;
+    _pIdx0 = pIdx0;
+    _startIdx = startIdx;
+    _step = step;
+    _startChunk = startChunk;
+    _endChunk = endChunk;
+}
+
+template <class T>
+T InverseBigChunkTask<T>::call() THROW
+{
+    int idx = _startIdx;
+    int pIdx = _pIdx0;
+    byte* data = _buffer;
+    byte* dst = _dst;
+
+    for (int i = _startChunk; i > _endChunk; i--) {
+        const int endIdx = i * _step;
+        uint8 val = data[5 * pIdx + 4];
+        dst[idx--] = val;
+        uint32 n = uint32(LittleEndian::readInt32(&data[5 * pIdx])) + _buckets[val];
+        prefetchRead(&dst[idx]);
+
+        for (; idx >= endIdx; idx--) {
+            val = data[5 * n + 4];
+            dst[idx] = val;
+            n = uint32(LittleEndian::readInt32(&data[5 * n])) + _buckets[val];
         }
 
         pIdx = _primaryIndexes[i];

@@ -132,7 +132,8 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
             primaryIndex |= ((input._array[input._index++] & 0xFF) << shift);
         }
 
-        _pBWT->setPrimaryIndex(i, primaryIndex);
+        if (_pBWT->setPrimaryIndex(i, primaryIndex) == false)
+            return false;
     }
 
     // Apply inverse Transform

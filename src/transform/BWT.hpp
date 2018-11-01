@@ -60,28 +60,6 @@ namespace kanzi {
 // indexes (based on input block size). Each primary index corresponds to a data chunk.
 // Chunks may be inverted concurrently.
    template <class T>
-   class InverseBigChunkTask : public Task<T> {
-   private:
-       uint32* _buffer1;
-       byte* _buffer2;
-       uint32* _buckets;
-       int* _primaryIndexes;
-       byte* _dst;
-       int _pIdx0;
-       int _startIdx;
-       int _step;
-       int _startChunk;
-       int _endChunk;
-
-   public:
-       InverseBigChunkTask(uint32* buf1, byte* buf2, uint32* buckets, byte* output,
-           int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
-       ~InverseBigChunkTask() {}
-
-       T call() THROW;
-   };
-
-   template <class T>
    class InverseRegularChunkTask : public Task<T> {
    private:
        uint32* _buffer;
@@ -102,10 +80,53 @@ namespace kanzi {
        T call() THROW;
    };
 
+   template <class T>
+   class InverseBigChunkTask : public Task<T> {
+   private:
+       byte* _buffer;
+       uint32* _buckets;
+       int* _primaryIndexes;
+       byte* _dst;
+       int _pIdx0;
+       int _startIdx;
+       int _step;
+       int _startChunk;
+       int _endChunk;
+
+   public:
+       InverseBigChunkTask(byte* buf, uint32* buckets, byte* output,
+           int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
+       ~InverseBigChunkTask() {}
+
+       T call() THROW;
+   };
+
+   template <class T>
+   class InverseHugeChunkTask : public Task<T> {
+   private:
+       uint32* _buffer1;
+       byte* _buffer2;
+       uint32* _buckets;
+       int* _primaryIndexes;
+       byte* _dst;
+       int _pIdx0;
+       int _startIdx;
+       int _step;
+       int _startChunk;
+       int _endChunk;
+
+   public:
+       InverseHugeChunkTask(uint32* buf1, byte* buf2, uint32* buckets, byte* output,
+           int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
+       ~InverseHugeChunkTask() {}
+
+       T call() THROW;
+   };
+
    class BWT : public Transform<byte> {
 
    private:
-       static const int MAX_BLOCK_SIZE = 512 * 1024 * 1024; // 512 MB (libsufsort limit)
+       static const int MAX_BLOCK_SIZE = 512 * 1024 * 1024; // 512 MB
        static const int BWT_MAX_CHUNKS = 8;
 
        uint32* _buffer1;  // inverse regular blocks
@@ -118,6 +139,8 @@ namespace kanzi {
        int _jobs;
 
        bool inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count);
+
+       bool inverseHugeBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count);
 
        bool inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count);
 
