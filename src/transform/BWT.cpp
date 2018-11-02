@@ -249,7 +249,8 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
     else {
         // Several chunks may be decoded concurrently (depending on the availaibility
         // of jobs per block).
-        const int step = count / chunks;
+        const int st = count / chunks;
+        const int step = (chunks*st == count) ? st : st + 1;
         const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
         int* jobsPerTask = new int[nbTasks];
         Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
@@ -360,7 +361,8 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
     else {
         // Several chunks may be decoded concurrently (depending on the availaibility
         // of jobs per block).
-        const int step = count / chunks;
+        const int st = count / chunks;
+        const int step = (chunks*st == count) ? st : st + 1;
         const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
         int* jobsPerTask = new int[nbTasks];
         Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
@@ -479,7 +481,8 @@ bool BWT::inverseHugeBlock(SliceArray<byte>& input, SliceArray<byte>& output, in
     else {
         // Several chunks may be decoded concurrently (depending on the availaibility
         // of jobs per block).
-        const int step = count / chunks;
+        const int st = count / chunks;
+        const int step = (chunks*st == count) ? st : st + 1;
         const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
         int* jobsPerTask = new int[nbTasks];
         Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
