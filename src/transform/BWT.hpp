@@ -126,7 +126,7 @@ namespace kanzi {
    class BWT : public Transform<byte> {
 
    private:
-       static const int MAX_BLOCK_SIZE = 512 * 1024 * 1024; // 512 MB
+       static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB
        static const int BWT_MAX_CHUNKS = 8;
 
        uint32* _buffer1;  // inverse regular blocks

@@ -121,7 +121,8 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
             dst[n] = src[sa[n] - 1];
     }
     else {
-        const int step = count / chunks;
+        const int st = count / chunks;
+        const int step = (chunks*st == count) ? st : st + 1;
 
         for (; n < count; n++) {
             if ((sa[n] % step) == 0) {
@@ -177,7 +178,7 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     if (count < 1 << 24)
         return inverseRegularBlock(input, output, count);
 
-    if (5 * uint32(count) >= uint32(1 << 31))
+    if (5 * uint64(count) >= (uint64(1) << 31))
         return inverseHugeBlock(input, output, count);
 
     return inverseBigBlock(input, output, count);

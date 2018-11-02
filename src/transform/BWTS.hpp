@@ -31,7 +31,7 @@ namespace kanzi
    class BWTS : public Transform<byte> {
 
    private:
-       static const int MAX_BLOCK_SIZE = 512 * 1024 * 1024; // 512 MB (libsufsort limit)
+       static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB 
 
        int* _buffer1;
        int* _buffer2;
