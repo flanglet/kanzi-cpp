@@ -93,7 +93,7 @@ namespace kanzi
 
        int _length;
        int* _sa;
-       short* _buffer;
+       uint8* _buffer;
        Stack* _ssStack;
        Stack* _trStack;
        Stack* _mergeStack;

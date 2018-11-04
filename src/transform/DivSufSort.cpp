@@ -56,7 +56,6 @@ const int DivSufSort::LOG_TABLE[] = {
 DivSufSort::DivSufSort()
 {
     _length = 0;
-    _buffer = new short[0];
     _ssStack = new Stack(SS_MISORT_STACKSIZE);
     _trStack = new Stack(TR_STACKSIZE);
     _mergeStack = new Stack(SS_SMERGE_STACKSIZE);
@@ -65,7 +64,6 @@ DivSufSort::DivSufSort()
 
 DivSufSort::~DivSufSort()
 {
-    delete[] _buffer;
     delete _ssStack;
     delete _trStack;
     delete _mergeStack;
@@ -83,14 +81,10 @@ void DivSufSort::computeSuffixArray(byte input[], int sa[], int start, int lengt
     // Lazy dynamic memory allocation
     if (_length < length + 1) {
         delete[] _buffer;
-        _buffer = new short[length + 1];
+        _buffer = new uint8[length + 1];
     }
 
-    const uint8* src = (uint8*) &input[start];
-
-    for (int i = 0; i < length; i++)
-        _buffer[i] = short(src[i]);
-
+    _buffer = (uint8*) &input[start];
     _sa = sa;
     reset();
     int bucketA[256] = { 0 };
@@ -168,14 +162,10 @@ int DivSufSort::computeBWT(byte input[], int sa[], int start, int length)
     // Lazy dynamic memory allocation
     if (_length < length + 1) {
         delete[] _buffer;
-        _buffer = new short[length + 1];
+        _buffer = new uint8[length + 1];
     }
 
-    const uint8* src = (uint8*) &input[start];
-
-    for (int i = 0; i < length; i++)
-        _buffer[i] = short(src[i]);
-
+    _buffer = (uint8*) &input[start];
     _sa = sa;
     reset();
     int bucketA[256] = { 0 };
@@ -1336,7 +1326,7 @@ inline int DivSufSort::ssPivot(int td, int pa, int first, int last)
 
 inline int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5)
 {
-    short* buf0 = &_buffer[idx];
+    uint8* buf0 = &_buffer[idx];
     int* buf1 = &_sa[pa];
 
     if (buf0[buf1[_sa[v2]]] > buf0[buf1[_sa[v3]]]) {
@@ -1380,7 +1370,7 @@ inline int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, 
 
 inline int DivSufSort::ssMedian3(int idx, int pa, int v1, int v2, int v3)
 {
-    short* buf0 = &_buffer[idx];
+    uint8* buf0 = &_buffer[idx];
     int* buf1 = &_sa[pa];
 
     if (buf0[buf1[_sa[v1]]] > buf0[buf1[_sa[v2]]]) {
