@@ -27,7 +27,7 @@ private:
 public:
     CodeLengthArrayComparator(short sizes[]) { _sizes = sizes; }
 
-    CodeLengthArrayComparator() {}
+    ~CodeLengthArrayComparator() {}
 
     bool operator()(int i, int j);
 };
@@ -35,10 +35,8 @@ public:
 inline bool CodeLengthArrayComparator::operator()(int lidx, int ridx)
 {
     // Check size (natural order) as first key
-    const int res = _sizes[lidx] - _sizes[ridx];
-
     // Check index (natural order) as second key
-    return (res != 0) ? res < 0 : lidx < ridx;
+    return (_sizes[lidx] != _sizes[ridx]) ? _sizes[lidx] < _sizes[ridx] : lidx < ridx;
 }
 
 // Return the number of codes generated

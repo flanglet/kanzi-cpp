@@ -111,6 +111,8 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
             remaining -= 8;
         }
 
+        prefetchRead(&_buffer[_position]);
+
         // Copy internal buffer to bits array
         while ((remaining >> 3) > _maxPosition + 1 - _position) {
             memcpy(&bits[start], &_buffer[_position], _maxPosition + 1 - _position);

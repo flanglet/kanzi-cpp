@@ -33,7 +33,7 @@ private:
 public:
     FrequencyArrayComparator(uint freqs[]) { _freqs = freqs; }
 
-    FrequencyArrayComparator() {}
+    ~FrequencyArrayComparator() {}
 
     bool operator()(int i, int j);
 };
@@ -41,10 +41,8 @@ public:
 inline bool FrequencyArrayComparator::operator()(int lidx, int ridx)
 {
     // Check size (natural order) as first key
-    const int res = _freqs[lidx] - _freqs[ridx];
-
     // Check index (natural order) as second key
-    return (res != 0) ? res < 0 : lidx < ridx;
+    return (_freqs[lidx] != _freqs[ridx]) ? _freqs[lidx] < _freqs[ridx] : lidx < ridx;
 }
 
 
