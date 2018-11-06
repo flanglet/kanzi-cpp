@@ -22,15 +22,15 @@ using namespace kanzi;
 bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 {
     if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-       return false;
+        return false;
 
     if (input._array == output._array)
         return false;
 
     if (output._length - output._index < getMaxEncodedLength(length))
-         return false;   
+        return false;
 
-    byte* src = &input._array[input._index];
+    uint8* src = (uint8*)&input._array[input._index];
     byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;
@@ -39,56 +39,47 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
     int runLength = 0;
 
     if (dstIdx < dstEnd) {
-       while (srcIdx < srcEnd) {
-           int val = src[srcIdx];
+        while (srcIdx < srcEnd) {
+            if (src[srcIdx] == 0) {
+                runLength = 1;
 
-           if (val == 0) {
-               runLength++;
-               srcIdx++;
+                while ((srcIdx + runLength < srcEnd) && src[srcIdx + runLength] == src[srcIdx] && (runLength < ZRLT_MAX_RUN))
+                    runLength++;
 
-               if ((srcIdx < srcEnd) && (runLength < ZRLT_MAX_RUN))
-                   continue;
-           }
+                srcIdx += runLength;
 
-           if (runLength > 0) {
-               runLength++;
+                // Encode length
+                runLength++;
+                int log = Global::_log2(runLength);
 
-               // Encode length
-               int log = Global::_log2(runLength);
+                if (dstIdx >= dstEnd - log)
+                    break;
 
-               if (dstIdx >= dstEnd - log)
-                   break;
+                // Write every bit as a byte except the most significant one
+                while (log > 0) {
+                    log--;
+                    dst[dstIdx++] = byte((runLength >> log) & 1);
+                }
 
-               // Write every bit as a byte except the most significant one
-               while (log > 0) {
-                   log--;
-                   dst[dstIdx++] = byte((runLength >> log) & 1);
-               }
+                runLength = 0;
+                continue;
+            }
 
-               runLength = 0;
-               continue;
-           }
+            if (src[srcIdx] >= 0xFE) {
+                if (dstIdx >= dstEnd - 1)
+                    break;
 
-           val &= 0xFF;
+                dst[dstIdx] = byte(0xFF);
+                dstIdx++;
+                dst[dstIdx] = byte(src[srcIdx] - 0xFE);
+            }
+            else {
+                dst[dstIdx] = byte(src[srcIdx] + 1);
+            }
 
-           if (val >= 0xFE) {
-               if (dstIdx >= dstEnd - 1)
-                   break;
-
-               dst[dstIdx] = byte(0xFF);
-               dstIdx++;
-               dst[dstIdx] = byte(val - 0xFE);
-           }
-           else {
-               if (dstIdx >= dstEnd)
-                   break;
-
-               dst[dstIdx] = byte(val + 1);
-           }
-
-           srcIdx++;
-           dstIdx++;
-       }
+            srcIdx++;
+            dstIdx++;
+        }
     }
 
     input._index = srcIdx;
@@ -99,12 +90,12 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
 bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 {
     if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-       return false;
+        return false;
 
     if (input._array == output._array)
         return false;
 
-    byte* src = &input._array[input._index];
+    uint8* src = (uint8*)&input._array[input._index];
     byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;
@@ -113,50 +104,51 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
     int runLength = 1;
 
     if (srcIdx < srcEnd) {
-       while (dstIdx < dstEnd) {
-           if (runLength > 1) {
-               runLength--;
-               dst[dstIdx++] = 0;
-               continue;
-           }
+        while (dstIdx < dstEnd) {
+            if (runLength > 1) {
+                runLength--;
+                dst[dstIdx++] = 0;
+                continue;
+            }
 
-           if (srcIdx >= srcEnd)
-               break;
+            uint8 val = src[srcIdx];
 
-           uint8 val = src[srcIdx];
+            if (val <= 1) {
+                // Generate the run length bit by bit (but force MSB)
+                runLength = 1;
 
-           if (val <= 1) {
-               // Generate the run length bit by bit (but force MSB)
-               runLength = 1;
+                do {
+                    runLength = (runLength << 1) | val;
+                    srcIdx++;
 
-               do {
-                   runLength = (runLength << 1) | val;
-                   srcIdx++;
+                    if (srcIdx >= srcEnd)
+                        break;
 
-                   if (srcIdx >= srcEnd)
-                       break;
+                    val = src[srcIdx];
+                } while (val <= 1);
 
-                   val = src[srcIdx];
-               } while (val <= 1);
+                continue;
+            }
 
-               continue;
-           }
+            // Regular data processing
+            if (val == 0xFF) {
+                srcIdx++;
 
-           // Regular data processing
-           if (val == 0xFF) {
-               srcIdx++;
+                if (srcIdx >= srcEnd)
+                    break;
 
-               if (srcIdx >= srcEnd)
-                   break;
+                dst[dstIdx] = byte(0xFE + src[srcIdx]);
+            }
+            else {
+                dst[dstIdx] = byte(val - 1);
+            }
 
-               dst[dstIdx] = byte(0xFE + src[srcIdx]);
-           } else {
-               dst[dstIdx] = byte(val - 1);
-           }
+            srcIdx++;
+            dstIdx++;
 
-           srcIdx++;
-           dstIdx++;
-       }
+            if (srcIdx >= srcEnd)
+                break;
+        }
     }
 
     // If runLength is not 1, add trailing 0s
