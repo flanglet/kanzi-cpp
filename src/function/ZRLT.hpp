@@ -20,7 +20,6 @@ limitations under the License.
 
 namespace kanzi 
 {
-
    // Zero Run Length Encoding is a simple encoding algorithm by Wheeler
    // closely related to Run Length Encoding. The main difference is
    // that only runs of 0 values are processed. Also, the length is
@@ -40,9 +39,6 @@ namespace kanzi
 
        // Required encoding output buffer size unknown => guess
        int getMaxEncodedLength(int srcLen) const { return srcLen; }
-
-   private:
-       static const int ZRLT_MAX_RUN = 0x7FFFFFFE;
    };
 
 }

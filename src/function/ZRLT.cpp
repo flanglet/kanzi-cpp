@@ -43,7 +43,7 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
             if (src[srcIdx] == 0) {
                 runLength = 1;
 
-                while ((srcIdx + runLength < srcEnd) && src[srcIdx + runLength] == src[srcIdx] && (runLength < ZRLT_MAX_RUN))
+                while ((srcIdx + runLength < srcEnd) && src[srcIdx + runLength] == src[srcIdx])
                     runLength++;
 
                 srcIdx += runLength;
@@ -122,7 +122,7 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
                     srcIdx++;
 
                     if (srcIdx >= srcEnd)
-                        break;
+                        goto End;
 
                     val = src[srcIdx];
                 } while (val <= 1);
@@ -151,6 +151,7 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
         }
     }
 
+End:    
     // If runLength is not 1, add trailing 0s
     const int end = dstIdx + runLength - 1;
     input._index = srcIdx;
