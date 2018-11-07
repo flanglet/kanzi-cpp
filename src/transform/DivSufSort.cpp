@@ -78,13 +78,7 @@ void DivSufSort::reset()
 
 void DivSufSort::computeSuffixArray(byte input[], int sa[], int start, int length)
 {
-    // Lazy dynamic memory allocation
-    if (_length < length + 1) {
-        delete[] _buffer;
-        _buffer = new uint8[length + 1];
-    }
-
-    _buffer = (uint8*) &input[start];
+    _buffer = (uint8*)&input[start];
     _sa = sa;
     reset();
     int bucketA[256] = { 0 };
@@ -159,13 +153,7 @@ void DivSufSort::constructSuffixArray(int bucketA[], int bucketB[], int n, int m
 
 int DivSufSort::computeBWT(byte input[], int sa[], int start, int length)
 {
-    // Lazy dynamic memory allocation
-    if (_length < length + 1) {
-        delete[] _buffer;
-        _buffer = new uint8[length + 1];
-    }
-
-    _buffer = (uint8*) &input[start];
+    _buffer = (uint8*)&input[start];
     _sa = sa;
     reset();
     int bucketA[256] = { 0 };
