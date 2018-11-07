@@ -132,7 +132,7 @@ int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
     if (count < uint(_availBits)) {
         // Enough spots available in 'current'
         _current |= ((value & MASKS[count]) << (_availBits - count));
-        _availBits -= count;
+        _availBits -= int(count);
     }
     else {
         const uint remaining = count - _availBits;
@@ -142,7 +142,7 @@ int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
 
         if (remaining != 0) {
             _current = value << (64 - remaining);
-            _availBits -= remaining;
+            _availBits -= int(remaining);
         }
     }
 

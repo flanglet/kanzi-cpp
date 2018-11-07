@@ -40,7 +40,7 @@ bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
       return false;
 
     // Aliasing
-    byte* src = &input._array[input._index];
+    uint8* src = (uint8*) &input._array[input._index];
     byte* dst = &output._array[output._index];
     int p[256] = { 0 };
     int q[256] = { 0 };
@@ -53,7 +53,7 @@ bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     }
 
     for (int i = 0; i < count; i++) {
-        const int c = src[i] & 0xFF;
+        const uint8 c = src[i];
         int r = s2r[c];
         dst[i] = byte(r);
         const int qc = ((i & _mask1) + (p[c] & _mask2)) >> _shift;
@@ -88,7 +88,7 @@ bool SBRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
       return false;
 
     // Aliasing
-    byte* src = &input._array[input._index];
+    uint8* src = (uint8*) &input._array[input._index];
     byte* dst = &output._array[output._index];
     int p[256] = { 0 };
     int q[256] = { 0 };
@@ -98,7 +98,7 @@ bool SBRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         r2s[i] = i;
 
     for (int i = 0; i < count; i++) {
-        int r = src[i] & 0xFF;
+        uint8 r = src[i];
         const int c = r2s[r];
         dst[i] = byte(c);
         const int qc = ((i & _mask1) + (p[c] & _mask2)) >> _shift;
