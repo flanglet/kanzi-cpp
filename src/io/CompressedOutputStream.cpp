@@ -459,24 +459,22 @@ T EncodingTask<T>::call() THROW
             mode |= CompressedOutputStream::COPY_BLOCK_MASK;
         }
         else {
-            bool skipHighEntropyBlocks = false;
             map<string, string>::iterator it = _ctx.find("skipBlocks");
 
             if (it != _ctx.end()) {
                 string str = it->second;
                 transform(str.begin(), str.end(), str.begin(), ::toupper);
-                skipHighEntropyBlocks = str == "TRUE";
-            }
 
-            if (skipHighEntropyBlocks == true) {
-                int histo[256];
-                const int entropy = EntropyUtils::computeFirstOrderEntropy1024(&_data->_array[_data->_index], _blockLength, histo);
-                //_ctx["histo0"] = toString(histo, 256);
+                if (str == "TRUE") {
+                   int histo[256];
+                   const int entropy = EntropyUtils::computeFirstOrderEntropy1024(&_data->_array[_data->_index], _blockLength, histo);
+                   //_ctx["histo0"] = toString(histo, 256);
 
-                if (entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD) {
-                    _transformType = FunctionFactory<byte>::NONE_TYPE;
-                    _entropyType = EntropyCodecFactory::NONE_TYPE;
-                    mode |= CompressedOutputStream::COPY_BLOCK_MASK;
+                   if (entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD) {
+                       _transformType = FunctionFactory<byte>::NONE_TYPE;
+                       _entropyType = EntropyCodecFactory::NONE_TYPE;
+                       mode |= CompressedOutputStream::COPY_BLOCK_MASK;
+                   }
                 }
             }
         }
