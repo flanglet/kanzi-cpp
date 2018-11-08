@@ -74,6 +74,9 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
                 dst[dstIdx] = byte(src[srcIdx] - 0xFE);
             }
             else {
+                if (dstIdx >= dstEnd)
+                    break;
+
                 dst[dstIdx] = byte(src[srcIdx] + 1);
             }
 
