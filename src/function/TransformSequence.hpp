@@ -121,8 +121,9 @@ namespace kanzi
 
            // Apply forward transform
            if (transform->forward(*sa1, *sa2, count) == false) {
-               // Transform failed (probably due to lack of space in output). Revert
-               if (sa1->_array != sa2->_array)
+               // Transform failed. Either it does not apply to this type
+               // of data or a recoverable error occured => revert
+               if (sa1->_array != sa2->_array)  
                    memmove(&sa2->_array[savedOIdx], &sa1->_array[savedIIdx], count);
 
                sa2->_index = savedOIdx + count;
