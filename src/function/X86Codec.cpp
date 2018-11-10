@@ -14,19 +14,20 @@ limitations under the License.
 */
 
 #include "X86Codec.hpp"
+#include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
 
-bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (count == 0)
+        return true;
 
-    if (input._array == output._array)
-        return false;
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
 
-    if ((count < 0) || (count + input._index > input._length))
-        return false;
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     // Aliasing
     byte* src = &input._array[input._index];
@@ -99,13 +100,16 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return true;
 }
 
-bool X86Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool X86Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (count == 0)
+        return true;
 
-    if ((count < 0) || (count + input._index > input._length))
-        return false;
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     // Aliasing
     byte* src = &input._array[input._index];

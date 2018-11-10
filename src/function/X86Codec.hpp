@@ -27,9 +27,9 @@ namespace kanzi
 
        ~X86Codec() {}
 
-       bool forward(SliceArray<byte>& source, SliceArray<byte>& destination, int length);
+       bool forward(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
 
-       bool inverse(SliceArray<byte>& source, SliceArray<byte>& destination, int length);
+       bool inverse(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
 
        int getMaxEncodedLength(int inputLen) const { return (inputLen * 5) >> 2; }
 

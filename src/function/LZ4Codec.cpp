@@ -66,8 +66,14 @@ int LZ4Codec::writeLastLiterals(byte src[], byte dst[], int runLength)
 // for a 32 bit architecture.
 bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -216,8 +222,14 @@ bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 // for a 32 bit architecture.
 bool LZ4Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (input._array == output._array)
         return false;

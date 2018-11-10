@@ -36,9 +36,9 @@ namespace kanzi
 
        ~RLT() {}
 
-       bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length);
+       bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;
 
-       bool inverse(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length);
+       bool inverse(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;
 
        int getRunThreshold() const { return _runThreshold; }
 

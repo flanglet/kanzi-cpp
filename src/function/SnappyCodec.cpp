@@ -111,10 +111,16 @@ int SnappyCodec::emitCopy(SliceArray<byte>& output, int offset, int len)
 }
 
 
-bool SnappyCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool SnappyCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-       return false;
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -246,7 +252,7 @@ uint64 SnappyCodec::getUvarint(SliceArray<byte>& iba) THROW
 }
 
 
- // getDecodedLength returns the length of the decoded block or -1 if error
+// getDecodedLength returns the length of the decoded block or -1 if error
 // The index of the indexed byte array is incremented by the number
 // of bytes read
 inline int SnappyCodec::getDecodedLength(SliceArray<byte>& input)
@@ -260,10 +266,16 @@ inline int SnappyCodec::getDecodedLength(SliceArray<byte>& input)
     }
 }
 
-bool SnappyCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool SnappyCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-       return false;
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (input._array == output._array)
         return false;

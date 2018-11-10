@@ -15,17 +15,21 @@ limitations under the License.
 
 #include <stddef.h>
 #include "../Global.hpp"
+#include "../IllegalArgumentException.hpp"
 #include "ZRLT.hpp"
 
 using namespace kanzi;
 
-bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
+bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (length == 0)
+        return true;
 
-    if (input._array == output._array)
-        return false;
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(length))
         return false;
@@ -90,13 +94,16 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
     return (srcIdx == srcEnd) && (runLength == 0);
 }
 
-bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
+bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (length == 0)
+        return true;
 
-    if (input._array == output._array)
-        return false;
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     uint8* src = (uint8*)&input._array[input._index];
     byte* dst = &output._array[output._index];

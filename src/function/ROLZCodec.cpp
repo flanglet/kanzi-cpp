@@ -86,10 +86,16 @@ inline int ROLZCodec::findMatch(const byte buf[], const int pos, const int end)
     return (bestLen < MIN_MATCH) ? -1 : (bestIdx << 8) | (bestLen - MIN_MATCH);
 }
 
-bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -180,10 +186,16 @@ bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
     return input._index == count;
 }
 
-bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (input._array == output._array)
         return false;

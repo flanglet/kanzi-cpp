@@ -82,14 +82,16 @@ namespace kanzi
    }
 
    template <class T>
-   bool TransformSequence<T>::forward(SliceArray<T>& input, SliceArray<T>& output, int count)
+   bool TransformSequence<T>::forward(SliceArray<T>& input, SliceArray<T>& output, int count) THROW
    {
-       // Check for null buffers. Let individual transforms decide on buffer equality
-       if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-           return false;
-
        if (count == 0)
            return true;
+
+       if (!SliceArray<byte>::isValid(input))
+           throw IllegalArgumentException("Invalid input block");
+
+       if (!SliceArray<byte>::isValid(output))
+           throw IllegalArgumentException("Invalid output block");
 
        if ((count < 0) || (count + input._index > input._length))
            return false;
@@ -144,13 +146,16 @@ namespace kanzi
    }
 
    template <class T>
-   bool TransformSequence<T>::inverse(SliceArray<T>& input, SliceArray<T>& output, int length)
+   bool TransformSequence<T>::inverse(SliceArray<T>& input, SliceArray<T>& output, int length) THROW
    {
-       if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-           return false;
-
        if (length == 0)
            return true;
+
+       if (!SliceArray<byte>::isValid(input))
+           throw IllegalArgumentException("Invalid input block");
+
+       if (!SliceArray<byte>::isValid(output))
+           throw IllegalArgumentException("Invalid output block");
 
        if ((length < 0) || (length + input._index > input._length))
            return false;

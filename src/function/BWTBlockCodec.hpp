@@ -44,9 +44,9 @@ namespace kanzi {
 
        ~BWTBlockCodec() { delete _pBWT; }
 
-       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length);
+       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
-       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length);
+       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
        // Required encoding output buffer size
        int getMaxEncodedLength(int srcLen) const

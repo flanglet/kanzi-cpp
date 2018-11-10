@@ -32,9 +32,9 @@ namespace kanzi
 
        ~SnappyCodec( ){}
 
-       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
+       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
-       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
+       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
        // Required encoding output buffer size
        int getMaxEncodedLength(int srcLen) const;

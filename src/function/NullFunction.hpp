@@ -28,23 +28,29 @@ namespace kanzi
 
        ~NullFunction() {}
 
-       bool forward(SliceArray<T>& input, SliceArray<T>& output, int length) { return doCopy(input, output, length); }
+       bool forward(SliceArray<T>& input, SliceArray<T>& output, int length) THROW { return doCopy(input, output, length); }
 
-       bool inverse(SliceArray<T>& input, SliceArray<T>& output, int length) { return doCopy(input, output, length); }
+       bool inverse(SliceArray<T>& input, SliceArray<T>& output, int length) THROW { return doCopy(input, output, length); }
 
        // Required encoding output buffer size
        int getMaxEncodedLength(int inputLen) const { return inputLen; }
 
    private:
-       static bool doCopy(SliceArray<T>& input, SliceArray<T>& output, int length);
+       static bool doCopy(SliceArray<T>& input, SliceArray<T>& output, int length) THROW;
 
    };
 
    template <class T>
-   bool NullFunction<T>::doCopy(SliceArray<T>& input, SliceArray<T>& output, int length)
+   bool NullFunction<T>::doCopy(SliceArray<T>& input, SliceArray<T>& output, int length) THROW
    {
-       if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-          return false;
+       if (length == 0)
+           return true;
+
+       if (!SliceArray<byte>::isValid(input))
+            throw IllegalArgumentException("Invalid input block");
+
+       if (!SliceArray<byte>::isValid(output))
+           throw IllegalArgumentException("Invalid output block");
 
        if (input._index + length > input._length)
            return false;

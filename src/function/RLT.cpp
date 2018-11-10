@@ -26,10 +26,16 @@ RLT::RLT(int runThreshold)
     _runThreshold = runThreshold;
 }
 
-bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
+bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (length == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(length))
         return false;
@@ -177,10 +183,16 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     return res && (srcIdx == srcEnd);
 }
 
-bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
+bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
 {
-    if ((input._array == nullptr) || (output._array == nullptr) || (input._array == output._array))
-        return false;
+    if (length == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     int srcIdx = input._index;
     int dstIdx = output._index;

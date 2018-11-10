@@ -40,9 +40,9 @@ namespace kanzi
 
        ~SBRT() {}
 
-       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length);
+       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
-       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length);
+       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
    private:
       

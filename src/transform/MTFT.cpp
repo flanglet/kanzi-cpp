@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <cstring>
 #include "MTFT.hpp"
+#include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
 
@@ -26,16 +27,16 @@ MTFT::MTFT()
    memset(_heads, 0, sizeof(Payload*) * 16);
 }
 
-bool MTFT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool MTFT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-       return false;
+    if (count == 0)
+        return true;
 
-    if (input._array == output._array)
-        return false;
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
 
-    if ((count < 0) || (count + input._index > input._length))
-        return false;
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     byte* indexes = _buckets;
 
@@ -132,16 +133,16 @@ void MTFT::balanceLists(bool resetValues)
     }
 }
 
-bool MTFT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool MTFT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-       return false;
+    if (count == 0)
+        return true;
 
-    if (input._array == output._array)
-        return false;
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
 
-    if ((count < 0) || (count + input._index > input._length))
-        return false;
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (_anchor == nullptr)
         initLists();

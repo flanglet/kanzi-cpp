@@ -768,28 +768,54 @@ TextCodec::TextCodec(map<string, string>& ctx)
 	_delegate = (encodingType == 1) ? (Function<byte>*) new TextCodec1(ctx) : (Function<byte>*) new TextCodec2(ctx);
 }
 
-bool TextCodec::forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) {
-	if (length > MAX_BLOCK_SIZE) {
-		// Not a recoverable error: instead of silently fail the transform,
-		// issue a fatal error.
-		stringstream ss;
-		ss << "The max TextCodec block size is " << MAX_BLOCK_SIZE << ", got " << length;
-		throw IllegalArgumentException(ss.str());
+bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+{
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
+
+    if (input._array == output._array)
+        return false;
+
+    if (count > MAX_BLOCK_SIZE) {
+        // Not a recoverable error: instead of silently fail the transform,
+        // issue a fatal error.
+        stringstream ss;
+        ss << "The max TextCodec block size is " << MAX_BLOCK_SIZE << ", got " << count;
+        throw IllegalArgumentException(ss.str());
 	}
 
-	return _delegate->forward(src, dst, length);
+	return _delegate->forward(input, output, count);
 }
 
-bool TextCodec::inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) {
-	if (length > MAX_BLOCK_SIZE) {
-		// Not a recoverable error: instead of silently fail the transform,
-		// issue a fatal error.
-		stringstream ss;
-		ss << "The max TextCodec block size is " << MAX_BLOCK_SIZE << ", got " << length;
-		throw IllegalArgumentException(ss.str());
+bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+{
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
+
+    if (input._array == output._array)
+        return false;
+
+    if (count > MAX_BLOCK_SIZE) {
+        // Not a recoverable error: instead of silently fail the transform,
+        // issue a fatal error.
+        stringstream ss;
+        ss << "The max TextCodec block size is " << MAX_BLOCK_SIZE << ", got " << count;
+        throw IllegalArgumentException(ss.str());
 	}
 
-	return _delegate->inverse(src, dst, length);
+	return _delegate->inverse(input, output, count);
 }
 
 
@@ -879,12 +905,6 @@ void TextCodec1::reset() {
 
 bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-	if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-		return false;
-
-	if (input._array == output._array)
-		return false;
-
 	if (output._length - output._index < getMaxEncodedLength(count))
 		return false;
 
@@ -1116,12 +1136,6 @@ inline int TextCodec1::emitWordIndex(byte dst[], int val)
 
 bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-	if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-		return false;
-
-	if (input._array == output._array)
-		return false;
-
 	byte* src = &input._array[input._index];
 	byte* dst = &output._array[output._index];
 	int srcIdx = 0;
@@ -1347,12 +1361,6 @@ void TextCodec2::reset() {
 
 bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-	if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-		return false;
-
-	if (input._array == output._array)
-		return false;
-
 	if (output._length - output._index < getMaxEncodedLength(count))
 		return false;
 
@@ -1583,12 +1591,6 @@ inline int TextCodec2::emitWordIndex(byte dst[], int val, int mask)
 
 bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-	if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-		return false;
-
-	if (input._array == output._array)
-		return false;
-
 	byte* src = &input._array[input._index];
 	byte* dst = &output._array[output._index];
 	int srcIdx = 0;

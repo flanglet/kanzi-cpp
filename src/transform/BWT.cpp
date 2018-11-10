@@ -65,11 +65,14 @@ bool BWT::setPrimaryIndex(int n, int primaryIndex)
 
 bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (count == 0)
+        return true;
 
-    if ((count < 0) || (count + input._index > input._length))
-        return false;
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (count > maxBlockSize()) {
         // Not a recoverable error: instead of silently fail the transform,
@@ -153,11 +156,14 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
 
 bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (count == 0)
+        return true;
 
-    if ((count < 0) || (count + input._index > input._length))
-        return false;
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (count > maxBlockSize()) {
         // Not a recoverable error: instead of silently fail the transform,

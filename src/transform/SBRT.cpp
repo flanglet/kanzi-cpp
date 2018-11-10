@@ -30,14 +30,14 @@ SBRT::SBRT(int mode) :
 
 bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-       return false;
+    if (count == 0)
+        return true;
 
-    if (input._array == output._array)
-        return false;
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
 
-    if ((count < 0) || (count+input._index > input._length))
-      return false;
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     // Aliasing
     uint8* src = (uint8*) &input._array[input._index];
@@ -78,14 +78,14 @@ bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 
 bool SBRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-       return false;
+    if (count == 0)
+        return true;
 
-    if (input._array == output._array)
-        return false;
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
 
-    if ((count < 0) || (count+input._index > input._length))
-      return false;
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     // Aliasing
     uint8* src = (uint8*) &input._array[input._index];

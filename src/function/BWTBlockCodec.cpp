@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <cstring>
 #include "BWTBlockCodec.hpp"
+#include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
 
@@ -32,10 +33,16 @@ BWTBlockCodec::BWTBlockCodec(map<string, string>& ctx)
 
 // Return true if the compression chain succeeded. In this case, the input data
 // may be modified. If the compression failed, the input data is returned unmodified.
-bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int blockSize)
+bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int blockSize) THROW
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (blockSize == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -106,8 +113,14 @@ bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, i
 
 bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int blockSize)
 {
-    if ((!SliceArray<byte>::isValid(input)) || (!SliceArray<byte>::isValid(output)))
-        return false;
+    if (blockSize == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw IllegalArgumentException("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw IllegalArgumentException("Invalid output block");
 
     if (input._array == output._array)
         return false;
