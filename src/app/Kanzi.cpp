@@ -47,7 +47,7 @@ static const char* APP_HEADER = "Kanzi 1.4 (C) 2018,  Frederic Langlet";
 #endif
 
 
-void processCommandLine(int argc, const char* argv[], map<string, string>& map)
+int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 {
     string inputName;
     string outputName;
@@ -84,7 +84,7 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
         if ((arg.compare(0, 10, "--compress") == 0) || (arg.compare(0, 2, "-c") == 0)) {
             if (mode == "d") {
                 cerr << "Both compression and decompression options were provided." << endl;
-                exit(Error::ERR_INVALID_PARAM);
+                return Error::ERR_INVALID_PARAM;
             }
 
             mode = "c";
@@ -94,7 +94,7 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
         if ((arg.compare(0, 12, "--decompress") == 0) || (arg.compare(0, 2, "-d") == 0)) {
             if (mode == "c") {
                 cerr << "Both compression and decompression options were provided." << endl;
-                exit(Error::ERR_INVALID_PARAM);
+                return Error::ERR_INVALID_PARAM;
             }
 
             mode = "d";
@@ -107,7 +107,7 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
             if ((verbose < 0) || (verbose > 5)) {
                 cerr << "Invalid verbosity level provided on command line: " << arg << endl;
-                exit(Error::ERR_INVALID_PARAM);
+                return Error::ERR_INVALID_PARAM;
             }
         }
         else if ((arg.compare(0, 9, "--output=") == 0) || (ctx == ARG_IDX_OUTPUT)) {
@@ -217,7 +217,7 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println("EG. Kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
             }
 
-            exit(0);
+            return -1;
         }
 
         if ((arg == "--compress") || (arg == "-c") || (arg == "--decompress") || (arg == "-d")) {
@@ -312,7 +312,7 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
             if (((level < 0) || (level > 7)) || ((level == 0) && (strLevel != "0"))) {
                 cerr << "Invalid compression level provided on command line: " << arg << endl;
-                exit(Error::ERR_INVALID_PARAM);
+                return Error::ERR_INVALID_PARAM;
             }
 
             ctx = -1;
@@ -344,7 +344,7 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
             if (bk <= 0) {
                 cerr << "Invalid block size provided on command line: " << arg << endl;
-                exit(Error::ERR_INVALID_PARAM);
+                return Error::ERR_INVALID_PARAM;
             }
 
             stringstream ss;
@@ -360,7 +360,7 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
             if (tasks < 1) {
                 cerr << "Invalid number of jobs provided on command line: " << arg << endl;
-                exit(Error::ERR_INVALID_PARAM);
+                return Error::ERR_INVALID_PARAM;
             }
 
             ctx = -1;
@@ -378,7 +378,7 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
     if (inputName.length() == 0) {
         cerr << "Missing input file name, exiting ..." << endl;
-        exit(Error::ERR_MISSING_PARAM);
+        return Error::ERR_MISSING_PARAM;
     }
 
     if (ctx != -1) {
@@ -429,12 +429,17 @@ void processCommandLine(int argc, const char* argv[], map<string, string>& map)
         map["skipBlocks"] = strSkip;
 
     map["jobs"] = strTasks;
+    return 0;
 }
 
 int main(int argc, const char* argv[])
 {
     map<string, string> args;
-    processCommandLine(argc, argv, args);
+    int status = processCommandLine(argc, argv, args);
+
+    if (status != 0)
+       exit((status < 0) ? 0 : status);
+
     map<string, string>::iterator it = args.find("mode");
     string mode = it->second;
     args.erase(it);
