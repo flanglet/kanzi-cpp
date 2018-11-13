@@ -919,10 +919,8 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	if ((mode & 0x80) != 0)
 		return false;
 
-	if (count <= 16) {
-		for (int i = 0; i < count; i++)
-			dst[dstIdx++] = src[srcIdx++];
-
+	if (count <= 64) {
+		memcpy(&dst[dstIdx], &src[srcIdx], count);
 		input._index += count;
 		output._index += count;
 		return true;
@@ -931,7 +929,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	reset();
 	const int srcEnd = count;
 	const int dstEnd = getMaxEncodedLength(count);
-	const int dstEnd3 = dstEnd - 3;
+	const int dstEnd4 = dstEnd - 4;
 	int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 	int emitAnchor = 0; // never less than 0
 	int words = _staticDictSize;
@@ -946,7 +944,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		emitAnchor++;
 	}
 
-	while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
+	while (srcIdx < srcEnd) {
 		const byte cur = src[srcIdx];
 
 		if (TextCodec::isText(cur)) {
@@ -976,7 +974,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
 			// Check for hash collisions
-			if ((pe1 != nullptr) && (((pe1->_data >> 24) != length) || (pe1->_hash != h1)))
+			if ((pe1 != nullptr) && ((pe1->_hash != h1) || ((pe1->_data >> 24) != length)))
 				pe1 = nullptr;
 
 			DictEntry* pe = pe1;
@@ -1024,14 +1022,12 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 				if ((emitAnchor != delimAnchor) || (src[delimAnchor] != ' '))
 					dstIdx += emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor - emitAnchor, dstEnd - dstIdx);
 
-				emitAnchor = delimAnchor + 1;
-
-				if (dstIdx >= dstEnd3)
+				if (dstIdx >= dstEnd4)
 					break;
 
 				dst[dstIdx++] = (pe == pe1) ? TextCodec::ESCAPE_TOKEN1 : TextCodec::ESCAPE_TOKEN2;
 				dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & 0x00FFFFFF);
-				emitAnchor += (pe->_data >> 24);
+				emitAnchor = delimAnchor + 1 + int(pe->_data >> 24);
 			}
 		}
 
@@ -1089,12 +1085,10 @@ inline int TextCodec1::emitSymbols(byte src[], byte dst[], const int srcEnd, con
 			// Emit special word
 			dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
 			const int idx = (cur == TextCodec::ESCAPE_TOKEN1) ? _staticDictSize - 1 : _staticDictSize - 2;
-			int lenIdx = 2;
+			int lenIdx = 1;
 
-			if (idx >= TextCodec::THRESHOLD2)
-				lenIdx = 3;
-			else if (idx < TextCodec::THRESHOLD1)
-				lenIdx = 1;
+			if (idx >= TextCodec::THRESHOLD1)
+				lenIdx = (idx >= TextCodec::THRESHOLD2) ? 3 : 2;
 
 			if (dstIdx + lenIdx < dstEnd)
 				dstIdx += emitWordIndex(&dst[dstIdx], idx);
@@ -1141,10 +1135,8 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int srcIdx = 0;
 	int dstIdx = 0;
 
-	if (count <= 16) {
-		for (int i = 0; i < count; i++)
-			dst[dstIdx++] = src[srcIdx++];
-
+	if (count <= 64) {
+		memcpy(&dst[dstIdx], &src[srcIdx], count);
 		input._index += count;
 		output._index += count;
 		return true;
@@ -1180,7 +1172,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 			// Check for hash collisions
 			if (pe != nullptr) {
-				if (((pe->_data >> 24) != length) || (pe->_hash != h1)) {
+				if ((pe->_hash != h1) || ((pe->_data >> 24) != length)) {
 					pe = nullptr;
 				}
 				else if (!TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1)) {
@@ -1375,10 +1367,8 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	if ((mode & 0x80) != 0)
 		return false;
 
-	if (count <= 16) {
-		for (int i = 0; i < count; i++)
-			dst[dstIdx++] = src[srcIdx++];
-
+	if (count <= 64) {
+		memcpy(&dst[dstIdx], &src[srcIdx], count);
 		input._index += count;
 		output._index += count;
 		return true;
@@ -1402,7 +1392,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		emitAnchor++;
 	}
 
-	while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
+	while (srcIdx < srcEnd) {
 		const byte cur = src[srcIdx];
 
 		if (TextCodec::isText(cur)) {
@@ -1433,7 +1423,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
 			// Check for hash collisions
-			if ((pe1 != nullptr) && (((pe1->_data >> 24) != length) || (pe1->_hash != h1)))
+			if ((pe1 != nullptr) && ((pe1->_hash != h1) || ((pe1->_data >> 24) != length)))
 				pe1 = nullptr;
 
 			DictEntry* pe = pe1;
@@ -1481,13 +1471,11 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 				if ((emitAnchor != delimAnchor) || (src[delimAnchor] != ' '))
 					dstIdx += emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor - emitAnchor, dstEnd - dstIdx);
 
-				emitAnchor = delimAnchor + 1;
-
 				if (dstIdx >= dstEnd3)
 					break;
 
 				dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & 0x00FFFFFF, (pe == pe1) ? 0 : 32);
-				emitAnchor += (pe->_data >> 24);
+				emitAnchor = delimAnchor + 1 + int(pe->_data >> 24);
 			}
 		}
 
@@ -1596,10 +1584,8 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int srcIdx = 0;
 	int dstIdx = 0;
 
-	if (count <= 16) {
-		for (int i = 0; i < count; i++)
-			dst[dstIdx++] = src[srcIdx++];
-
+	if (count <= 64) {
+		memcpy(&dst[dstIdx], &src[srcIdx], count);
 		input._index += count;
 		output._index += count;
 		return true;
@@ -1635,7 +1621,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 			// Check for hash collisions
 			if (pe != nullptr) {
-				if (((pe->_data >> 24) != length) || (pe->_hash != h1)) {
+				if ((pe->_hash != h1) || ((pe->_data >> 24) != length)) {
 					pe = nullptr;
 				}
 				else if (!TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1)) {
