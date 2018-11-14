@@ -63,22 +63,21 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW 
     // Default frequencies, sizes and codes
     for (int i = 0; i < 256; i++) {
         _freqs[i] = 1;
-        _sizes[i] = 8;
         _codes[i] = i;
     }
 
     memset(_ranks, 0, sizeof(_ranks));
     memset(_sranks, 0, sizeof(_sranks));
-    memset(_buffer, 0, sizeof(_buffer));
 }
 
 // Rebuild Huffman codes
 int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
 {
     int count = 0;
+    short sizes[256]; 
 
     for (int i = 0; i < 256; i++) {
-        _sizes[i] = 0;
+        sizes[i] = 0;
         _codes[i] = 0;
 
         if (frequencies[i] > 0)
@@ -88,10 +87,10 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
     try {
         if (count == 1) {
             _sranks[0] = _ranks[0];
-            _sizes[_ranks[0]] = 1;
+            sizes[_ranks[0]] = 1;
         }
         else {
-            computeCodeLengths(frequencies, count);
+            computeCodeLengths(frequencies, sizes, count);
         }
     }
     catch (IllegalArgumentException& e) {
@@ -107,13 +106,13 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
     short prevSize = 2;
 
     for (int i = 0; i < count; i++) {
-        const short currSize = _sizes[_ranks[i]];
+        const short currSize = sizes[_ranks[i]];
         egenc.encodeByte(byte(currSize - prevSize));
         prevSize = currSize;
     }
 
     // Create canonical codes
-    if (HuffmanCommon::generateCanonicalCodes(_sizes, _codes, _sranks, count) < 0) {
+    if (HuffmanCommon::generateCanonicalCodes(sizes, _codes, _sranks, count) < 0) {
         throw BitStreamException("Could not generate codes: max code length (24 bits) exceeded",
             BitStreamException::INVALID_STREAM);
     }
@@ -121,7 +120,7 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
     // Pack size and code (size <= MAX_SYMBOL_SIZE bits)
     for (int i = 0; i < count; i++) {
         const int r = _ranks[i];
-        _codes[r] |= (_sizes[r] << 24);
+        _codes[r] |= (sizes[r] << 24);
     }
 
     return count;
@@ -130,22 +129,23 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
 // See [In-Place Calculation of Minimum-Redundancy Codes]
 // by Alistair Moffat & Jyrki Katajainen
 // count > 1 by design
-void HuffmanEncoder::computeCodeLengths(uint frequencies[], int count) THROW
+void HuffmanEncoder::computeCodeLengths(uint frequencies[], short sizes[], int count) THROW
 {
     // Sort by increasing frequencies (first key) and increasing value (second key)
     vector<uint> v(_ranks, _ranks + count);
     FrequencyArrayComparator comparator(frequencies);
     sort(v.begin(), v.end(), comparator);
     memcpy(_sranks, &v[0], count*sizeof(uint));
+    uint buffer[256]; 
 
     for (int i = 0; i < count; i++)
-        _buffer[i] = frequencies[_sranks[i]];
+        buffer[i] = frequencies[_sranks[i]];
 
-    computeInPlaceSizesPhase1(_buffer, count);
-    computeInPlaceSizesPhase2(_buffer, count);
+    computeInPlaceSizesPhase1(buffer, count);
+    computeInPlaceSizesPhase2(buffer, count);
 
     for (int i = 0; i < count; i++) {
-        short codeLen = short(_buffer[i]);
+        short codeLen = short(buffer[i]);
 
         if ((codeLen <= 0) || (codeLen > MAX_SYMBOL_SIZE)) {
             stringstream ss;
@@ -154,7 +154,7 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], int count) THROW
             throw IllegalArgumentException(ss.str());
         }
 
-        _sizes[_sranks[i]] = codeLen;
+        sizes[_sranks[i]] = codeLen;
     }
 }
 

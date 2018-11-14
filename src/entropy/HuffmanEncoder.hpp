@@ -36,11 +36,9 @@ namespace kanzi
        uint _codes[256];
        uint _ranks[256];
        uint _sranks[256]; // sorted ranks
-       uint _buffer[256]; // temporary data
-       short _sizes[256]; // Cache for speed purpose
        uint _chunkSize;
 
-       void computeCodeLengths(uint frequencies[], int count) THROW;
+       void computeCodeLengths(uint frequencies[], short sizes[], int count) THROW;
 
        static void computeInPlaceSizesPhase1(uint data[], int n);
 
