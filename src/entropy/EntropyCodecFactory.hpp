@@ -87,7 +87,6 @@ namespace kanzi {
            return new BinaryEntropyDecoder(ibs, new TPAQPredictor(&ctx));
        
        case TPAQX_TYPE: 
-           ctx["extra"] = "true";
            return new BinaryEntropyDecoder(ibs, new TPAQPredictor(&ctx));
 
        case NONE_TYPE:
@@ -125,7 +124,6 @@ namespace kanzi {
            return new BinaryEntropyEncoder(obs, new TPAQPredictor(&ctx));
        
        case TPAQX_TYPE: 
-           ctx["extra"] = "true";
            return new BinaryEntropyEncoder(obs, new TPAQPredictor(&ctx));
 
        case NONE_TYPE:

@@ -141,9 +141,9 @@ TPAQPredictor::TPAQPredictor(map<string, string>* ctx)
     uint extraMem = 0;
 
     if (ctx != nullptr) {
-        if (ctx->find("extra") != ctx->end()) {
-            string strExtra = (*ctx)["extra"];
-            _extra = strExtra.compare(0, 5, "true") == 0;
+        if (ctx->find("codec") != ctx->end()) {
+            string strCodec = (*ctx)["codec"];
+            _extra = strCodec.compare(0, 5, "TPAQX") == 0;
         }
 
         extraMem = (_extra == true) ? 1 : 0;
