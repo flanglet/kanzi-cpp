@@ -29,7 +29,7 @@ namespace kanzi
    private:
        static uint64 MASKS[65];
 
-       OutputStream&_os;
+       OutputStream& _os;
        byte* _buffer;
        bool _closed;
        uint _bufferSize;

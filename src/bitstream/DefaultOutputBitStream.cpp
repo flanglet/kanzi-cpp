@@ -186,14 +186,14 @@ uint DefaultOutputBitStream::writeBits(byte bits[], uint count) THROW
     }
     else {
         // Not byte aligned
-        const int r = _availBits - 64;
+        const int r = 64 - _availBits;
 
         while (remaining >= 64) {
             const uint64 value = uint64(BigEndian::readLong64(&bits[start]));
-            _current |= (value >> -r);
+            _current |= (value >> r);
             pushCurrent();
-            _current = (value << r);
-            _availBits += r;
+            _current = (value << (64-r));
+            _availBits -= r;
             start += 8;
             remaining -= 64;
         }
