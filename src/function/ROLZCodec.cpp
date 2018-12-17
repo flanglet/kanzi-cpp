@@ -94,7 +94,7 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
 	return _delegate->inverse(input, output, count);
 }
 
-int ROLZCodec::emitCopy(byte dst[], int dstIdx, int ref, int matchLen)
+inline int ROLZCodec::emitCopy(byte dst[], int dstIdx, int ref, int matchLen)
 {
 	dst[dstIdx] = dst[ref];
 	dst[dstIdx + 1] = dst[ref + 1];
@@ -314,7 +314,7 @@ End:
     return input._index == count;
 }
 
-void ROLZCodec1::emitLiteralLength(SliceArray<byte>& litBuf, const int length)
+inline void ROLZCodec1::emitLiteralLength(SliceArray<byte>& litBuf, const int length)
 {
     if (length >= 1<<7) {
         if (length >= 1<<21)
@@ -405,6 +405,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         if (output._index+1 < dstEnd)
             dst[dstIdx++] = litBuf._array[litBuf._index++];
 
+        // Next chunk
         while (dstIdx < sizeChunk) {
             const int length = emitLiterals(litBuf, dst, dstIdx, output._index);
             litBuf._index += length;
@@ -459,7 +460,7 @@ End:
     return srcIdx == count;
 }
 
-int ROLZCodec1::emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx)
+inline int ROLZCodec1::emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx)
 {
 	// Read length
    int litLen = litBuf._array[litBuf._index++];

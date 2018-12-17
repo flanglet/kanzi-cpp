@@ -156,7 +156,7 @@ namespace kanzi {
 		static const int LITERAL_FLAG = 0;
 		static const int MATCH_FLAG = 1;
 
-      int32* _matches;
+		int32* _matches;
 		int32 _counters[65536];
 		int _logPosChecks;
 		int _maskChecks;
