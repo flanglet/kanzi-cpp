@@ -186,13 +186,14 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println("        set the compression level [0..6]", true);
                 log.println("        Providing this option forces entropy and transform.", true);
                 log.println("        0=None&None (store), 1=TEXT+LZ4&HUFFMAN, 2=TEXT+ROLZ", true);
-                log.println("        3=TEXT+BWT+RANK+ZRLT&ANS0, 4=TEXT+BWT+RANK+ZRLT&FPAQ, 5=BWT&CM", true);
-                log.println("        6=X86+RLT+TEXT&TPAQ, 7=X86+RLT+TEXT&TPAQX\n", true);
+                log.println("        3=TEXT+ROLZX, 4=TEXT+BWT+RANK+ZRLT&ANS0, 5=TEXT+BWT+RANK+ZRLT&FPAQ", true);
+                log.println("        6=BWT&CM, 7=X86+RLT+TEXT&TPAQ, 8=X86+RLT+TEXT&TPAQX\n", true);
                 log.println("   -e, --entropy=<codec>", true);
                 log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]", true);
                 log.println("        (default is ANS0)\n", true);
                 log.println("   -t, --transform=<codec>", true);
-                log.println("        transform [None|BWT|BWTS|SNAPPY|LZ4|ROLZ|RLT|ZRLT|MTFT|RANK|TEXT|X86]", true);
+                log.println("        transform [None|BWT|BWTS|SNAPPY|LZ4|ROLZ|ROLZX|RLT|ZRLT|MTFT]", true);
+                log.println("                  [RANK|TEXT|X86]", true);
                 log.println("        EG: BWT+RANK or BWTS+MTFT (default is BWT+RANK+ZRLT)\n", true);
                 log.println("   -x, --checksum", true);
                 log.println("        enable block checksum\n", true);
@@ -310,7 +311,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             strLevel = (arg.compare(0, 8, "--level=") == 0) ? arg.substr(8) : arg;
             level = atoi(strLevel.c_str());
 
-            if (((level < 0) || (level > 7)) || ((level == 0) && (strLevel != "0"))) {
+            if (((level < 0) || (level > 8)) || ((level == 0) && (strLevel != "0"))) {
                 cerr << "Invalid compression level provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
             }

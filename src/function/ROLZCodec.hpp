@@ -16,12 +16,16 @@ limitations under the License.
 #ifndef _ROLZCodec_
 #define _ROLZCodec_
 
+#include <map>
 #include "../Function.hpp"
 #include "../Memory.hpp"
 #include "../Predictor.hpp"
 
+
+using namespace std;
+
 // Implementation of a Reduced Offset Lempel Ziv transform
-// Code based on 'balz' by Ilya Muravyov
+// Code loosely based on 'balz' by Ilya Muravyov
 // More information about ROLZ at http://ezcodesample.com/rolz/rolz_article.html
 
 namespace kanzi {
@@ -106,11 +110,12 @@ namespace kanzi {
 		void setContext(int n) { _predictor = _predictors[n]; }
 	};
 
-	class ROLZCodec : public Function<byte> {
+	// Use ANS to encode/decode literals and matches
+	class ROLZCodec1 : public Function<byte> {
 	public:
-		ROLZCodec(uint logPosChecks = LOG_POS_CHECKS) THROW;
+      ROLZCodec1(uint logPosChecks) THROW;
 
-		~ROLZCodec() { delete[] _matches; }
+      ~ROLZCodec1() { delete[] _matches; }
 
 		bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
@@ -120,17 +125,38 @@ namespace kanzi {
 		int getMaxEncodedLength(int srcLen) const;
 
 	private:
-		static const int HASH_SIZE = 1 << 16;
-		static const int MIN_MATCH = 3;
-		static const int MAX_MATCH = MIN_MATCH + 255;
-		static const int LOG_POS_CHECKS = 5;
-		static const int CHUNK_SIZE = 1 << 26;
+		int32* _matches;
+		int32 _counters[65536];
+		int _logPosChecks;
+		int _maskChecks;
+		int _posChecks;
+
+		int findMatch(const byte buf[], const int pos, const int end);	
+
+      void emitLiteralLength(SliceArray<byte>& litBuf, const int length);
+
+      int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx);
+	};
+
+	// Use CM (ROLZEncoder/ROLZDecoder) to encode/decode literals and matches
+	class ROLZCodec2 : public Function<byte> {
+	public:
+      ROLZCodec2(uint logPosChecks) THROW;
+
+      ~ROLZCodec2() { delete[] _matches; }
+
+		bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+
+		bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+
+		// Required encoding output buffer size
+		int getMaxEncodedLength(int srcLen) const;
+
+	private:
 		static const int LITERAL_FLAG = 0;
 		static const int MATCH_FLAG = 1;
-		static const int32 HASH = 200002979;
-		static const int32 HASH_MASK = ~(CHUNK_SIZE - 1);
 
-		int32* _matches;
+      int32* _matches;
 		int32 _counters[65536];
 		int _logPosChecks;
 		int _maskChecks;
@@ -139,17 +165,56 @@ namespace kanzi {
 		ROLZPredictor _matchPredictor;
 
 		int findMatch(const byte buf[], const int pos, const int end);
+	};
 
-		uint16 getKey(const byte* p)
+	class ROLZCodec : public Function<byte> {
+		friend class ROLZCodec1;
+		friend class ROLZCodec2;
+
+	public:
+		ROLZCodec(uint logPosChecks = LOG_POS_CHECKS) THROW;
+
+		ROLZCodec(map<string, string>& ctx) THROW;
+
+		virtual ~ROLZCodec()
+		{
+		   delete _delegate;
+		}
+
+		bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+
+		bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+
+		// Required encoding output buffer size
+		int getMaxEncodedLength(int srcLen) const
+		{
+		   return _delegate->getMaxEncodedLength(srcLen);
+		}
+
+	private:
+		static const int HASH_SIZE = 1 << 16;
+		static const int MIN_MATCH = 3;
+		static const int MAX_MATCH = MIN_MATCH + 255;
+		static const int LOG_POS_CHECKS = 5;
+		static const int CHUNK_SIZE = 1 << 26; // 64 MB
+		static const int32 HASH = 200002979;
+		static const int32 HASH_MASK = ~(CHUNK_SIZE - 1);
+		static const int MAX_BLOCK_SIZE = 1 << 27; // 128 MB
+
+		Function<byte>* _delegate;
+
+		static uint16 getKey(const byte* p)
 		{
 			return uint16(LittleEndian::readInt16(p));
 		}
 
-		int32 hash(const byte* p)
+		static int32 hash(const byte* p)
 		{
 			return ((LittleEndian::readInt32(p) & 0x00FFFFFF) * HASH) & HASH_MASK;
 		}
-	};
+
+      static int emitCopy(byte dst[], int dstIdx, int ref, int matchLen);
+   };
 }
 
 #endif

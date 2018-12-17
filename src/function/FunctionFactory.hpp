@@ -40,6 +40,7 @@ namespace kanzi {
 		static const uint64 X86_TYPE = 9; // X86 codec
 		static const uint64 DICT_TYPE = 10; // Text codec
 		static const uint64 ROLZ_TYPE = 11; // ROLZ codec
+		static const uint64 ROLZX_TYPE = 12; // ROLZ Extra codec
 
 		static uint64 getType(const char* name) THROW;
 
@@ -125,6 +126,9 @@ namespace kanzi {
 		if (name.compare("ROLZ") == 0)
 			return ROLZ_TYPE;
 
+		if (name.compare("ROLZX") == 0)
+			return ROLZX_TYPE;
+
 		if (name.compare("MTFT") == 0)
 			return MTFT_TYPE;
 
@@ -179,7 +183,10 @@ namespace kanzi {
 			return new LZ4Codec();
 
 		case ROLZ_TYPE:
-			return new ROLZCodec();
+			return new ROLZCodec(ctx);
+
+		case ROLZX_TYPE:
+			return new ROLZCodec(ctx);
 
 		case BWT_TYPE:
 			return new BWTBlockCodec(ctx);
@@ -276,6 +283,9 @@ namespace kanzi {
 
 		case ROLZ_TYPE:
 			return "ROLZ";
+
+		case ROLZX_TYPE:
+			return "ROLZX";
 
 		case ZRLT_TYPE:
 			return "ZRLT";
