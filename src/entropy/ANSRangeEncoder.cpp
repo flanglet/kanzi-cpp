@@ -31,8 +31,11 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
     if ((chunkSize != 0) && (chunkSize != -1) && (chunkSize < 1024))
         throw IllegalArgumentException("The chunk size must be at least 1024");
 
-    if (chunkSize > MAX_CHUNK_SIZE)
-        throw IllegalArgumentException("The chunk size must be at most 2^27");
+    if (chunkSize > MAX_CHUNK_SIZE) {
+        stringstream ss;
+        ss << "The chunk size must be at most " << MAX_CHUNK_SIZE;
+        throw IllegalArgumentException(ss.str());
+    }
 
     if ((logRange < 8) || (logRange > 16)) {
         stringstream ss;
