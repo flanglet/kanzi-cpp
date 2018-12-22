@@ -17,7 +17,6 @@ limitations under the License.
 #define _Memory_
 
 #include <cstring>
-#include <emmintrin.h>
 #include "types.hpp"
 
 namespace kanzi {
