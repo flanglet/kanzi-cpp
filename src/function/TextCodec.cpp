@@ -653,7 +653,7 @@ SliceArray<byte> TextCodec::unpackDictionary32(const byte dict[], int dictSize)
 
 byte TextCodec::computeStats(byte block[], int count)
 {
-   int freqs[257][256] = { { 0 } };
+	int freqs[257][256] = { { 0 } };
 	uint8* data = (uint8*)&block[0];
 	uint8 prv = 0;
 	const int count4 = count & -4;
