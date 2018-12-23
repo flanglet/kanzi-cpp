@@ -111,7 +111,7 @@ namespace kanzi
 
    private:
        static const int BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
-       static const int BITSTREAM_FORMAT_VERSION = 6;
+       static const int BITSTREAM_FORMAT_VERSION = 7;
        static const int DEFAULT_BUFFER_SIZE = 256 * 1024;
        static const int EXTRA_BUFFER_SIZE = 256;
        static const int COPY_BLOCK_MASK = 0x80;
