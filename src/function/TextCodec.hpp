@@ -39,6 +39,7 @@ namespace kanzi {
        ~DictEntry() {}
    };
 
+   // Encode word indexes using a token
    class TextCodec1 : public Function<byte> {
    public:
        TextCodec1();
@@ -56,7 +57,7 @@ namespace kanzi {
        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
        // Limit to 1 x srcLength and let the caller deal with
-       // a failure when the output is not smaller than the input
+       // a failure when the output is too small
        inline int getMaxEncodedLength(int srcLen) const { return srcLen; }
 
    private:
@@ -75,6 +76,7 @@ namespace kanzi {
        int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
 
+   // Encode word indexes using a mask (0x80)
    class TextCodec2 : public Function<byte> {
    public:
        TextCodec2();
@@ -92,7 +94,7 @@ namespace kanzi {
        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
        // Limit to 1 x srcLength and let the caller deal with
-       // a failure when the output is not smaller than the input
+       // a failure when the output is too small
        inline int getMaxEncodedLength(int srcLen) const { return srcLen; }
 
    private:

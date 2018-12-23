@@ -930,7 +930,6 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	const int srcEnd = count;
 	const int dstEnd = getMaxEncodedLength(count);
 	const int dstEnd4 = dstEnd - 4;
-	int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 	int emitAnchor = 0; // never less than 0
 	int words = _staticDictSize;
 
@@ -938,11 +937,13 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	_isCRLF = (mode & 0x01) != 0;
 	dst[dstIdx++] = mode;
 
-	if (src[srcIdx] == ' ') {
+	while ((srcIdx < srcEnd) && (src[srcIdx] == ' ')) {
 		dst[dstIdx++] = ' ';
 		srcIdx++;
 		emitAnchor++;
 	}
+
+	int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 
 	while (srcIdx < srcEnd) {
 		const byte cur = src[srcIdx];
@@ -1378,7 +1379,6 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	const int srcEnd = count;
 	const int dstEnd = getMaxEncodedLength(count);
 	const int dstEnd3 = dstEnd - 3;
-	int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 	int emitAnchor = 0; // never less than 0
 	int words = _staticDictSize;
 
@@ -1386,11 +1386,13 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	_isCRLF = (mode & 0x01) != 0;
 	dst[dstIdx++] = mode;
 
-	if (src[srcIdx] == ' ') {
+	while ((srcIdx < srcEnd) && (src[srcIdx] == ' ')) {
 		dst[dstIdx++] = ' ';
 		srcIdx++;
 		emitAnchor++;
 	}
+
+	int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 
 	while (srcIdx < srcEnd) {
 		const byte cur = src[srcIdx];
