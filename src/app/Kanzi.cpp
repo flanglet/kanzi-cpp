@@ -207,15 +207,15 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             log.println("", true);
 
             if (mode.compare(0, 1, "d") != 0) {
-                log.println("EG. Kanzi -c -i foo.txt -o none -b 4m -l 4 -v 3\n", true);
-                log.println("EG. Kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -v 3 -j 4\n", true);
-                log.println("EG. Kanzi --compress --input=foo.txt --output=foo.knz --force", true);
+                log.println("EG. kanzi -c -i foo.txt -o none -b 4m -l 4 -v 3\n", true);
+                log.println("EG. kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -v 3 -j 4\n", true);
+                log.println("EG. kanzi --compress --input=foo.txt --output=foo.knz --force", true);
                 log.println("          --transform=BWT+MTFT+ZRLT --block=4m --entropy=FPAQ --verbose=3 --jobs=4\n", true);
             }
 
             if (mode.compare(0, 1, "c") != 0) {
-                log.println("EG. Kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
-                log.println("EG. Kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
+                log.println("EG. kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
+                log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
             }
 
             return -1;
