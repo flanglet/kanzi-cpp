@@ -18,8 +18,6 @@ limitations under the License.
 
 #include <cstddef>
 #include <stdlib.h>
-#include <emmintrin.h>
-
 
 	#ifdef _MSC_VER
 		#if !defined(__x86_64__)
@@ -28,6 +26,10 @@ limitations under the License.
 		#if !defined(__i386__)
 			#define __i386__  _M_IX86 
 		#endif
+	#endif
+
+	#ifdef __x86_64__
+	   #include <emmintrin.h>
 	#endif
 
    /*
