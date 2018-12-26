@@ -106,7 +106,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
     if (alphabetSize == 0)
         return true;
 
-    const int chkSize = (alphabetSize > 64) ? 16 : 8;
+    const int chkSize = (alphabetSize >= 64) ? 6 : 4;
     int llr = 3;
 
     while (1 << llr <= lr)
@@ -116,7 +116,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
     for (int i = 1; i < alphabetSize; i += chkSize) {
         uint max = 0;
         uint logMax = 1;
-        int endj = (i + chkSize < alphabetSize) ? i + chkSize : alphabetSize;
+        const int endj = (i + chkSize < alphabetSize) ? i + chkSize : alphabetSize;
 
         // Search for max frequency log size in next chunk
         for (int j = i; j < endj; j++) {
