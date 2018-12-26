@@ -336,6 +336,7 @@ int BlockCompressor::call()
     ctx["checksum"] = (_checksum == true) ? "TRUE" : "FALSE";
     ctx["codec"] = _codec;
     ctx["transform"] = _transform;
+    ctx["extra"] = (_codec == "TPAQX") ? "true" : "false";
 
     // Run the task(s)
     if (nbFiles == 1) {
@@ -357,7 +358,6 @@ int BlockCompressor::call()
         ss.str(string());
         ss << _jobs;
         ctx["jobs"] = ss.str();
-        ctx["extra"] = (_codec == "TPAQX") ? "true" : "false";
         FileCompressTask<FileCompressResult> task(ctx, _listeners);
         FileCompressResult fcr = task.call();
         res = fcr._code;
