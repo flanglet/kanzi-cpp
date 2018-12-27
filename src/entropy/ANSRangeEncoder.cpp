@@ -47,7 +47,7 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
         chunkSize = DEFAULT_ANS0_CHUNK_SIZE << (8 * order);
 
     _order = order;
-    const int dim = 255 * order + 1;
+    const int32 dim = 255 * order + 1;
     _alphabet = new uint[dim * 256];
     _freqs = new uint[dim * 257]; // freqs[x][256] = total(freqs[x][0..255])
     _symbols = new ANSEncSymbol[dim * 256];
@@ -244,7 +244,7 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
 // Compute chunk frequencies, cumulated frequencies and encode chunk header
 int ANSRangeEncoder::rebuildStatistics(byte block[], int end, int lr)
 {
-    const int dim = 255 * _order + 1;
+    const int32 dim = 255 * _order + 1;
     memset(_freqs, 0, dim * 257 * sizeof(int));
 
     if (_order == 0) {

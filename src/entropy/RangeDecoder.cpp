@@ -15,8 +15,8 @@ limitations under the License.
 
 #include <sstream>
 #include "RangeDecoder.hpp"
-#include "../IllegalArgumentException.hpp"
 #include "EntropyUtils.hpp"
+#include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
 
@@ -39,6 +39,9 @@ RangeDecoder::RangeDecoder(InputBitStream& bitstream, int chunkSize) THROW : _bi
     _f2s = new short[_f2s_length];
     _chunkSize = chunkSize;
     _shift = 0;
+    memset(_alphabet, 0, sizeof(uint) * 256);
+    memset(_freqs, 0, sizeof(uint) * 256);
+    memset(_cumFreqs, 0, sizeof(uint64) * 257);
 }
 
 int RangeDecoder::decodeHeader(uint frequencies[])

@@ -653,7 +653,7 @@ SliceArray<byte> TextCodec::unpackDictionary32(const byte dict[], int dictSize)
 
 byte TextCodec::computeStats(byte block[], int count)
 {
-	int freqs[257][256] = { { 0 } };
+	int32 freqs[257][256] = { { 0 } };
 	uint8* data = (uint8*)&block[0];
 	uint8 prv = 0;
 	const int count4 = count & -4;
@@ -836,6 +836,7 @@ TextCodec1::TextCodec1()
 	_dictList[nbWords] = DictEntry(&_escapes[0], 0, nbWords, 1);
 	_dictList[nbWords + 1] = DictEntry(&_escapes[1], 0, nbWords + 1, 1);
 	_staticDictSize = nbWords + 2;
+	_isCRLF = false;
 }
 
 TextCodec1::TextCodec1(map<string, string>& ctx)
@@ -886,6 +887,7 @@ TextCodec1::TextCodec1(map<string, string>& ctx)
 	_dictList[nbWords] = DictEntry(&_escapes[0], 0, nbWords, 1);
 	_dictList[nbWords + 1] = DictEntry(&_escapes[1], 0, nbWords + 1, 1);
 	_staticDictSize = nbWords + 2;
+	_isCRLF = false;
 }
 
 void TextCodec1::reset() {
@@ -1290,6 +1292,7 @@ TextCodec2::TextCodec2()
 	_hashMask = mapSize - 1;
 	memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], TextCodec::STATIC_DICT_WORDS * sizeof(DictEntry));
 	_staticDictSize = TextCodec::STATIC_DICT_WORDS;
+	_isCRLF = false;
 }
 
 TextCodec2::TextCodec2(map<string, string>& ctx)
@@ -1333,6 +1336,7 @@ TextCodec2::TextCodec2(map<string, string>& ctx)
 	_hashMask = mapSize - 1;
 	memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], TextCodec::STATIC_DICT_WORDS * sizeof(DictEntry));
 	_staticDictSize = TextCodec::STATIC_DICT_WORDS;
+	_isCRLF = false;
 }
 
 
