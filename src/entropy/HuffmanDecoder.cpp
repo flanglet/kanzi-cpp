@@ -238,7 +238,7 @@ inline byte HuffmanDecoder::fastDecodeByte()
 {
     if (_bits < DECODING_BATCH_SIZE) {
         // Fetch more bits from bitstream       
-        const uint64 mask = (1 << _bits) - 1; // for _bits = 0
+        const uint64 mask = uint64(1 << _bits) - 1; // for _bits = 0
         _state = ((_state & mask) << (64 - _bits)) | _bitstream.readBits(64 - _bits);
         _bits = 64;
     }

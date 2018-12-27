@@ -81,10 +81,12 @@ void DivSufSort::computeSuffixArray(byte input[], int sa[], int start, int lengt
     _buffer = (uint8*)&input[start];
     _sa = sa;
     reset();
-    int bucketA[256] = { 0 };
-    int bucketB[65536] = { 0 };
+    int32 bucketA[256] = { 0 };
+    int32* bucketB = new int32[65536];
+    memset(&bucketB[0], 0, sizeof(int32) * 65536);
     const int m = sortTypeBstar(bucketA, bucketB, length);
     constructSuffixArray(bucketA, bucketB, length, m);
+    delete[] bucketB;
 }
 
 void DivSufSort::constructSuffixArray(int bucketA[], int bucketB[], int n, int m)
@@ -156,10 +158,12 @@ int DivSufSort::computeBWT(byte input[], int sa[], int start, int length)
     _buffer = (uint8*)&input[start];
     _sa = sa;
     reset();
-    int bucketA[256] = { 0 };
-    int bucketB[65536] = { 0 };
+    int32 bucketA[256] = { 0 };
+    int32* bucketB = new int32[65536];
+    memset(&bucketB[0], 0, sizeof(int32) * 65536);
     const int m = sortTypeBstar(bucketA, bucketB, length);
     return constructBWT(bucketA, bucketB, length, m);
+    delete []bucketB;
 }
 
 int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m)
@@ -2317,6 +2321,7 @@ TRBudget::TRBudget(int chance, int incval)
     _chance = chance;
     _remain = incval;
     _incVal = incval;
+    _count = 0;
 }
 
 inline bool TRBudget::check(int size)

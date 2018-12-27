@@ -103,12 +103,12 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
     }
 
     obs.writeBit(DELTA_ENCODED_ALPHABET);
-    int* diffs = new int[count];
+    int32* diffs = new int32[count];
 
     if (length - count < count) {
         // Encode all missing symbols
         count = length - count;
-        int log = 1;
+        int32 log = 1;
 
         while (1 << log <= count)
             log++;
@@ -130,12 +130,12 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
 
         // Write log(alphabet size)
         obs.writeBits(log - 1, 5);
-        uint symbol = 0;
-        int previous = 0;
+        int32 symbol = 0;
+        int32 previous = 0;
 
         // Create deltas of missing symbols
         for (int n = 0, i = 0; n < count;) {
-            if (symbol == alphabet[i]) {
+            if (symbol == int32(alphabet[i])) {
                 if (i < length - 1 - count)
                     i++;
 
@@ -151,7 +151,7 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
     }
     else {
         // Encode all present symbols
-        int log = 1;
+        int32 log = 1;
 
         while (1 << log <= count)
             log++;
@@ -166,12 +166,12 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
         }
 
         obs.writeBit(PRESENT_SYMBOLS_MASK);
-        int previous = 0;
+        int32 previous = 0;
 
         // Create deltas of present symbols
         for (int i = 0; i < count; i++) {
-            diffs[i] = alphabet[i] - previous;
-            previous = alphabet[i] + 1;
+            diffs[i] = int32(alphabet[i]) - previous;
+            previous = int32(alphabet[i]) + 1;
         }
     }
 
@@ -179,7 +179,7 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
 
     // Encode all deltas by chunks
     for (int i = 0; i < count; i += ckSize) {
-        int max = 0;
+        int32 max = 0;
 
         // Find log(max(deltas)) for this chunk
         for (int j = i; (j < count) && (j < i + ckSize); j++) {
@@ -187,7 +187,7 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
                 max = diffs[j];
         }
 
-        int log = 1;
+        int32 log = 1;
 
         while (1 << log <= max)
             log++;
@@ -416,8 +416,8 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         else {
             // Find best frequency rounding value
             scaledFreq = uint(sf / totalFreq);
-            int64 errCeiling = (scaledFreq + 1) * int64(totalFreq) - sf;
-            int64 errFloor = sf - scaledFreq * int64(totalFreq);
+            int64 errCeiling = int64(scaledFreq + 1) * int64(totalFreq) - sf;
+            int64 errFloor = sf - int64(scaledFreq) * int64(totalFreq);
 
             if (errCeiling < errFloor) {
                 scaledFreq++;
