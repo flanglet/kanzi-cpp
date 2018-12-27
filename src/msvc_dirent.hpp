@@ -1003,7 +1003,7 @@ scandir(
     }
 
     /* Release allocated memory on error */
-    if (result < 0) {
+    if (files && (result < 0)) {
         for (i = 0; i < size; i++) {
             free (files[i]);
         }
