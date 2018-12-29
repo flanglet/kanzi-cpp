@@ -59,7 +59,7 @@ int RangeDecoder::decodeHeader(uint frequencies[])
     const int scale = 1 << logRange;
     _shift = logRange;
     int sum = 0;
-    const int chkSize = (alphabetSize >= 64) ? 6 : 4;
+    const int chkSize = (alphabetSize >= 64) ? 12 : 6;
     int llr = 3;
 
     while (uint(1 << llr) <= logRange)
