@@ -466,7 +466,7 @@ T EncodingTask<T>::call() THROW
                 transform(str.begin(), str.end(), str.begin(), ::toupper);
 
                 if (str == "TRUE") {
-                   int histo[256];
+                   uint histo[256];
                    const int entropy = EntropyUtils::computeFirstOrderEntropy1024(&_data->_array[_data->_index], _blockLength, histo);
                    //_ctx["histo0"] = toString(histo, 256);
 

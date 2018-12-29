@@ -312,31 +312,12 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
 
 // Return the first order entropy in the [0..1024] range
 // Fills in the histogram with order 0 frequencies. Incoming array size must be 256
-int EntropyUtils::computeFirstOrderEntropy1024(byte block[], int length, int histo[])
+int EntropyUtils::computeFirstOrderEntropy1024(byte block[], int length, uint histo[])
 {
     if (length == 0)
         return 0;
 
-    for (int i = 0; i < 256; i++) {
-        histo[i] = 0;
-    }
-
-    const int end8 = length & -8;
-
-    for (int i = 0; i < end8; i += 8) {
-        histo[block[i] & 0xFF]++;
-        histo[block[i + 1] & 0xFF]++;
-        histo[block[i + 2] & 0xFF]++;
-        histo[block[i + 3] & 0xFF]++;
-        histo[block[i + 4] & 0xFF]++;
-        histo[block[i + 5] & 0xFF]++;
-        histo[block[i + 6] & 0xFF]++;
-        histo[block[i + 7] & 0xFF]++;
-    }
-
-    for (int i = end8; i < length; i++)
-        histo[block[i] & 0xFF]++;
-
+    Global::computeHistogram(block, length, histo, true);
     uint64 sum = 0;
     const int logLength1024 = Global::log2_1024(length);
 

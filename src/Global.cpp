@@ -141,7 +141,54 @@ int Global::log2(uint32 x) THROW
     return _log2(x);
 }
 
+// If withTotal is true, the last spot in each frequencies order 0 array is for the total
+void Global::computeHistogram(byte block[], int end, uint freqs[], bool isOrder0, bool withTotal)
+{
+    const int32 dim = (isOrder0 == true) ? 1 : 256;
+    const int mult = (withTotal == true) ? 257 : 256;
+    memset(freqs, 0, dim * mult * sizeof(int));
 
+    if (isOrder0 == true) {
+        uint* f = &freqs[0];
+        uint8* p = (uint8*)&block[0];
+        const int end8 = end & -8;
+
+        if (withTotal == true)
+           f[256] = end;
+
+        for (int i = 0; i < end8; i += 8) {
+            f[*p]++; p++;
+            f[*p]++; p++;
+            f[*p]++; p++;
+            f[*p]++; p++;
+            f[*p]++; p++;
+            f[*p]++; p++;
+            f[*p]++; p++;
+            f[*p]++; p++;
+        }
+
+        for (int i = end8; i < end; i++, p++)
+            f[*p]++;
+    }
+    else { // Order 1
+        uint prv = 0;
+        uint8* p = (uint8*)&block[0];
+
+        if (withTotal == true) {
+           for (int i = 0; i < end; i++) {
+               freqs[prv + uint(p[i])]++;
+               freqs[prv + 256]++;
+               prv = 257 * uint(p[i]);
+           }
+        } else {
+           for (int i = 0; i < end; i++) {
+               freqs[prv + uint(p[i])]++;
+               prv = 256 * uint(p[i]);
+           }
+        }
+    }
+
+}
 
 void Global::computeJobsPerTask(int jobsPerTask[], int jobs, int tasks)
 {

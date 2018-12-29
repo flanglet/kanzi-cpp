@@ -244,40 +244,7 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
 // Compute chunk frequencies, cumulated frequencies and encode chunk header
 int ANSRangeEncoder::rebuildStatistics(byte block[], int end, int lr)
 {
-    const int32 dim = 255 * _order + 1;
-    memset(_freqs, 0, dim * 257 * sizeof(int));
-
-    if (_order == 0) {
-        uint* f = &_freqs[0];
-        uint8* p = (uint8*)&block[0];
-        f[256] = end;
-        const int end8 = end & -8;
-
-        for (int i = 0; i < end8; i += 8) {
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
-        }
-
-        for (int i = end8; i < end; i++, p++)
-            f[*p]++;
-    }
-    else {
-        int prv = 0;
-
-        for (int i = 0; i < end; i++) {
-            const int cur = block[i] & 0xFF;
-            _freqs[prv + cur]++;
-            _freqs[prv + 256]++;
-            prv = 257 * cur;
-        }
-    }
-
+    Global::computeHistogram(block, end, _freqs, _order == 0, true);
     return updateFrequencies(_freqs, lr);
 }
 

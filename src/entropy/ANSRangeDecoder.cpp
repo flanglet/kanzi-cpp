@@ -85,7 +85,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
         if (alphabetSize != 256)
             memset(f, 0, sizeof(uint) * 256);
 
-        const int chkSize = (alphabetSize > 64) ? 16 : 8;
+        const int chkSize = (alphabetSize >= 64) ? 6 : 4;
         int sum = 0;
         int llr = 3;
 

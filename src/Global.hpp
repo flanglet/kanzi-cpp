@@ -50,6 +50,8 @@ namespace kanzi {
        
        static void computeJobsPerTask(int jobsPerTask[], int jobs, int tasks);
 
+       static void computeHistogram(byte block[], int end, uint freqs[], bool isOrder0, bool withTotal=false);
+
    private:
        static const int* initStretch();
        static const int* initSquash();

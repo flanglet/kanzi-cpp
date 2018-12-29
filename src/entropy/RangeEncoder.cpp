@@ -162,10 +162,7 @@ inline void RangeEncoder::encodeByte(byte b)
 // Compute chunk frequencies, cumulated frequencies and encode chunk header
 int RangeEncoder::rebuildStatistics(byte block[], int start, int end, int lr)
 {
-    memset(_freqs, 0, sizeof(_freqs));
-
-    for (int i = start; i < end; i++)
-        _freqs[block[i] & 0xFF]++;
+    Global::computeHistogram(&block[start], end - start, _freqs, true);
 
     // Rebuild statistics
     return updateFrequencies(_freqs, end - start, lr);

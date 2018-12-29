@@ -214,7 +214,6 @@ int HuffmanEncoder::encode(byte block[], uint blkptr, uint len)
     if (len == 0)
         return 0;
 
-    uint* frequencies = _freqs;
     const int end = blkptr + len;
     const int sz = (_chunkSize == 0) ? len : _chunkSize;
     int startChunk = blkptr;
@@ -223,24 +222,10 @@ int HuffmanEncoder::encode(byte block[], uint blkptr, uint len)
     while (startChunk < end) {
         const int endChunk = (startChunk + sz < end) ? startChunk + sz : end;
         const int endChunk8 = ((endChunk - startChunk) & -8) + startChunk;
-        memset(frequencies, 0, sizeof(_freqs));
-
-        for (int i = startChunk; i < endChunk8; i += 8) {
-            frequencies[data[i]]++;
-            frequencies[data[i + 1]]++;
-            frequencies[data[i + 2]]++;
-            frequencies[data[i + 3]]++;
-            frequencies[data[i + 4]]++;
-            frequencies[data[i + 5]]++;
-            frequencies[data[i + 6]]++;
-            frequencies[data[i + 7]]++;
-        }
-
-        for (int i = endChunk8; i < endChunk; i++)
-            frequencies[data[i]]++;
+        Global::computeHistogram(&block[startChunk], endChunk - startChunk, _freqs, true);
 
         // Rebuild Huffman codes
-        updateFrequencies(frequencies);
+        updateFrequencies(_freqs);
 
         for (int i = startChunk; i < endChunk8; i += 8) {
             uint val;
