@@ -459,7 +459,17 @@ int BlockCompressor::call()
     if (nbFiles > 1) {
         double delta = stopClock.elapsed();
         log.println("", _verbosity > 0);
-        ss << "Total encoding time: " << uint64(delta) << " ms";
+        char buffer[32];
+        
+        if (delta >= 1e5) {
+            sprintf(buffer, "%.1f s", delta / 1000);
+            ss << "Total encoding time: " << buffer;
+        }
+        else {
+            sprintf(buffer, "%.0f ms", delta);
+            ss << "Total encoding time: " << buffer;
+        }
+
         log.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
         ss << "Total output size: " << written << " byte" << ((written > 1) ? "s" : "");
