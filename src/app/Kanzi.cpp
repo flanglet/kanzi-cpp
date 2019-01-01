@@ -151,19 +151,19 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if (extraHeader.str().length() > 0) {
 #if defined(__AVX2__)
-        extraHeader << " - AVX2";
+            extraHeader << " - AVX2";
 #elif defined(__AVX__)   
-        extraHeader << " - AVX";
+            extraHeader << " - AVX";
 #elif defined(__SSE4_1__)   
-        extraHeader << " - SSE4.1";
+            extraHeader << " - SSE4.1";
 #elif  defined(__SSSE3__)
-        extraHeader << " - SSE3";
+            extraHeader << " - SSE3";
 #elif defined(__SSE2__) 
-        extraHeader << " - SSE2";
+            extraHeader << " - SSE2";
 #elif defined(__SSE__)
-        extraHeader << " - SSE";
+            extraHeader << " - SSE";
 #endif
-            log.println(extraHeader.str().c_str(), true);
+            log.println(extraHeader.str().c_str(), verbose >= 3);
         }
 
         log.println("", true);
