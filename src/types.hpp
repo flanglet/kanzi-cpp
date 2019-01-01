@@ -47,6 +47,32 @@ limitations under the License.
    MSVC++ 6.0  _MSC_VER == 1200
    MSVC++ 5.0  _MSC_VER == 1100
    */
+   #ifdef _MSC_VER
+      #if _MSC_VER == 1300
+         #define _MSC_VER_STR 2003
+      #endif 
+      #if _MSC_VER == 1400
+         #define _MSC_VER_STR 2005
+      #endif 
+      #if _MSC_VER == 1500
+         #define _MSC_VER_STR 2008
+      #endif 
+      #if _MSC_VER == 1600
+         #define _MSC_VER_STR 2010
+      #endif 
+      #if _MSC_VER == 1700
+         #define _MSC_VER_STR 2012
+      #endif 
+      #if _MSC_VER == 1800
+         #define _MSC_VER_STR 2013
+      #endif 
+      #if _MSC_VER == 1900
+         #define _MSC_VER_STR 2015
+      #endif 
+      #if _MSC_VER >= 1910 && _MSC_VER <= 1912 
+         #define _MSC_VER_STR 2017
+      #endif
+   #endif
 
 	#ifndef _GLIBCXX_USE_NOEXCEPT
 	#define _GLIBCXX_USE_NOEXCEPT

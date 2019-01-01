@@ -132,6 +132,40 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     if (verbose >= 1) {
         log.println("", true);
         log.println(APP_HEADER, true);
+        stringstream extraHeader;
+        
+#ifdef __GNUC__  
+        extraHeader << "\nCompiled with gcc version ";
+        extraHeader << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__;
+#endif
+#ifdef _clang_major__
+        extraHeader << "\nCompiled with clang version ";
+        extraHeader << __clang_major__ << "." << __clang_minor__;
+#endif
+#ifdef _MSC_VER 
+        extraHeader << "\nCompiled with Visual Studio";
+   #ifdef _MSC_VER_STR // see types.h 
+        extraHeader << " " << _MSC_VER_STR;
+   #endif
+#endif
+
+        if (extraHeader.str().length() > 0) {
+#if defined(__AVX2__)
+        extraHeader << " - AVX2";
+#elif defined(__AVX__)   
+        extraHeader << " - AVX";
+#elif defined(__SSE4_1__)   
+        extraHeader << " - SSE4.1";
+#elif  defined(__SSSE3__)
+        extraHeader << " - SSE3";
+#elif defined(__SSE2__) 
+        extraHeader << " - SSE2";
+#elif defined(__SSE__)
+        extraHeader << " - SSE";
+#endif
+            log.println(extraHeader.str().c_str(), true);
+        }
+
         log.println("", true);
     }
 
