@@ -578,7 +578,7 @@ T FileDecompressTask<T>::call()
         // Decode next block
         do {
             _cis->read((char*)&sa._array[0], sa._length);
-            decoded = (int)_cis->gcount();
+            decoded = int(_cis->gcount());
 
             if (decoded < 0) {
                 delete[] buf;
