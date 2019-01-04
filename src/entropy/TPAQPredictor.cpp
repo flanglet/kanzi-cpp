@@ -252,17 +252,17 @@ void TPAQPredictor::update(int bit)
 
         if (_binCount < (_pos >> 2)) {
             // Mostly text or mixed
-            const int32 h1 = ((_c4 & MASK_80808080) == 0) ? _c4 : _c4 & MASK_80808080;
-            const int32 h2 = ((_c8 & MASK_80808080) == 0) ? _c8 : _c8 & MASK_80808080;
-            _ctx4 = createContext(4, _c4 ^ (_c8 & 0xFFFF));
+            const int32 h1 = ((_c4 & MASK_80808080) == 0) ? _c4 & MASK_4F4FFFFF : _c4 & MASK_80808080;
+            const int32 h2 = ((_c8 & MASK_80808080) == 0) ? _c8 & MASK_4F4FFFFF : _c8 & MASK_80808080;
+            _ctx4 = createContext(_c4 & 0xFFFF, _c4 ^ (_c8 & 0xFFFF));
             _ctx5 = hash(h1, h2);
             _ctx6 = hash(_c8 & MASK_F0F0F0F0, _c4 & MASK_F0F0F0F0);
         }
         else {
             // Mostly binary
-            _ctx4 = createContext(4, _c4 ^ (_c4 & 0xFFFF));
-            _ctx5 = hash(_c4 >> 16, _c8 >> 16);
-            _ctx6 = ((_c4 & 0xFF) << 8) | ((_c8 & 0xFFFF) << 16);
+            _ctx4 = createContext(HASH, _c4 ^ (_c4 & 0xFFFF));
+            _ctx5 = hash(_c4 & 0xFFFF0000, _c8 >> 16);
+            _ctx6 = _ctx0 | (_c8 << 16);
         }
 
         // Find match
