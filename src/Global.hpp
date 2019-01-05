@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _Kanzi_
-#define _Kanzi_
+#ifndef _Global_
+#define _Global_
 
 #include <cstring>
 #include "types.hpp"

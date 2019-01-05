@@ -142,46 +142,51 @@ int Global::log2(uint32 x) THROW
 }
 
 // If withTotal is true, the last spot in each frequencies order 0 array is for the total
-void Global::computeHistogram(byte block[], int end, uint freqs[], bool isOrder0, bool withTotal)
+void Global::computeHistogram(byte block[], int length, uint freqs[], bool isOrder0, bool withTotal)
 {
-    const int32 dim = (isOrder0 == true) ? 1 : 256;
     const int mult = (withTotal == true) ? 257 : 256;
-    memset(freqs, 0, dim * mult * sizeof(int));
 
     if (isOrder0 == true) {
-        uint* f = &freqs[0];
-        uint8* p = (uint8*)&block[0];
-        const int end8 = end & -8;
+        memset(freqs, 0, mult * sizeof(uint));
+        const uint8* end4 = (uint8*)&block[length & -4];
 
         if (withTotal == true)
-           f[256] = end;
+           freqs[256] = length;
 
-        for (int i = 0; i < end8; i += 8) {
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
-            f[*p]++; p++;
+        uint f0[256] = { 0 };
+        uint f1[256] = { 0 };
+        uint f2[256] = { 0 };
+        uint f3[256] = { 0 };
+        uint8* p = (uint8*)&block[0];
+
+        while (p < end4) {
+            f0[*p++]++;
+            f1[*p++]++;
+            f2[*p++]++;
+            f3[*p++]++;
         }
 
-        for (int i = end8; i < end; i++, p++)
-            f[*p]++;
+        const uint8* end = (uint8*)&block[length];
+
+        while (p < end)
+            freqs[*p++]++;
+
+        for (int i = 0; i < 256; i++)
+            freqs[i] += (f0[i] + f1[i] + f2[i] + f3[i]);
     }
     else { // Order 1
+        memset(freqs, 0, 256 * mult * sizeof(uint));
         uint prv = 0;
         uint8* p = (uint8*)&block[0];
 
         if (withTotal == true) {
-           for (int i = 0; i < end; i++) {
+           for (int i = 0; i < length; i++) {
                freqs[prv + uint(p[i])]++;
                freqs[prv + 256]++;
                prv = 257 * uint(p[i]);
            }
         } else {
-           for (int i = 0; i < end; i++) {
+           for (int i = 0; i < length; i++) {
                freqs[prv + uint(p[i])]++;
                prv = 256 * uint(p[i]);
            }
