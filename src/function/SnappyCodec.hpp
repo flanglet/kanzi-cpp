@@ -98,6 +98,9 @@ namespace kanzi
    // This last factor dominates the blowup, so the const estimate is:
    inline int SnappyCodec::getMaxEncodedLength(int srcLen) const
    {
+       if (srcLen >= 1<<30)
+           return srcLen;
+       
        return 32 + srcLen + srcLen / 6;
    }
 

@@ -190,13 +190,6 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     if (output._length < getMaxEncodedLength(count))
         return false;
 
-    if (count <= 16) {
-        memcpy(&output._array[output._index], &input._array[input._index], count);
-        input._index += count;
-        output._index += count;
-        return true;
-    }
-
     const int srcEnd = count - 4;
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -328,13 +321,6 @@ inline void ROLZCodec1::emitLiteralLength(SliceArray<byte>& litBuf, const int le
 
 bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if (count <= 16) {
-        memcpy(&output._array[output._index], &input._array[input._index], count);
-        input._index += count;
-        output._index += count;
-        return true;
-    }
-
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     const int dstEnd = BigEndian::readInt32(&src[0]) - 4;
@@ -492,8 +478,7 @@ inline int ROLZCodec1::emitLiterals(SliceArray<byte>& litBuf, byte dst[], int ds
 
 inline int ROLZCodec1::getMaxEncodedLength(int srcLen) const 
 {
-   const int res = (srcLen * 5) >> 2;
-   return (res >= 32) ? res : 32;
+   return (srcLen <= 512) ? srcLen+32 : srcLen;
 }
 
 inline ROLZPredictor::ROLZPredictor(uint logPosChecks)
@@ -721,13 +706,6 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     if (output._length < getMaxEncodedLength(count))
         return false;
 
-    if (count <= 16) {
-        memcpy(&output._array[output._index], &input._array[input._index], count);
-        input._index += count;
-        output._index += count;
-        return true;
-    }
-
     const int srcEnd = count - 4;
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -814,13 +792,6 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     if (input._array == output._array)
         return false;
-
-    if (count <= 16) {
-        memcpy(&output._array[output._index], &input._array[input._index], count);
-        input._index += count;
-        output._index += count;
-        return true;
-    }
 
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -911,6 +882,10 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 inline int ROLZCodec2::getMaxEncodedLength(int srcLen) const 
 {
-   const int res = (srcLen * 5) >> 2;
-   return (res >= 32) ? res : 32;
+    // Since we do not check the dst index for each byte (for speed purpose)
+    // allocate some extra buffer for incompressible data.
+    if (srcLen >= CHUNK_SIZE)
+        return srcLen;
+         
+    return (srcLen <= 512) ? srcLen + 32 : srcLen + srcLen / 8;
 }

@@ -157,3 +157,13 @@ bool X86Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     output._index = dstIdx;
     return true;
 }
+
+int X86Codec::getMaxEncodedLength(int inputLen) const 
+{ 
+    // Since we do not check the dst index for each byte (for speed purpose)
+    // allocate some extra buffer for incompressible data.
+    if (srcLen >= 1<<30)
+        return srcLen;
+      
+    return (srcLen <= 512) ? srcLen+32 : srcLen+srcLen/16;return (inputLen * 5) >> 2; 
+}

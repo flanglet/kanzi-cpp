@@ -51,8 +51,7 @@ namespace kanzi {
        // Required encoding output buffer size
        int getMaxEncodedLength(int srcLen) const
        {
-           // Return input buffer size + max header size
-           return srcLen + BWT_MAX_HEADER_SIZE;
+           return srcLen + BWT_MAX_HEADER_SIZE + BWT::maxBlockSize();
        }
 
    private:

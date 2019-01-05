@@ -38,7 +38,13 @@ namespace kanzi
        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
        // Required encoding output buffer size
-       int getMaxEncodedLength(int srcLen) const { return srcLen + (srcLen / 255) + 16; }
+       int getMaxEncodedLength(int srcLen) const 
+       { 
+           if (srcLen >= 1<<30)
+               return srcLen;
+
+           return srcLen + (srcLen / 255) + 16; 
+       }
 
    private:
       static const uint LZ4_HASH_SEED     = 0x9E3779B1;

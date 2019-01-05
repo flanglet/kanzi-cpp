@@ -921,13 +921,6 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	if ((mode & 0x80) != 0)
 		return false;
 
-	if (count <= 64) {
-		memcpy(&dst[dstIdx], &src[srcIdx], count);
-		input._index += count;
-		output._index += count;
-		return true;
-	}
-
 	reset();
 	const int srcEnd = count;
 	const int dstEnd = getMaxEncodedLength(count);
@@ -948,14 +941,12 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 
 	while (srcIdx < srcEnd) {
-		const byte cur = src[srcIdx];
-
-		if (TextCodec::isText(cur)) {
+		if (TextCodec::isText(src[srcIdx])) {
 			srcIdx++;
 			continue;
 		}
 
-		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(cur)) { // At least 2 letters
+		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(src[srcIdx])) { // At least 2 letters
 			// Compute hashes
 			// h1 -> hash of word chars
 			// h2 -> hash of word chars with first char case flipped
@@ -1137,14 +1128,6 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	byte* dst = &output._array[output._index];
 	int srcIdx = 0;
 	int dstIdx = 0;
-
-	if (count <= 64) {
-		memcpy(&dst[dstIdx], &src[srcIdx], count);
-		input._index += count;
-		output._index += count;
-		return true;
-	}
-
 	reset();
 	const int srcEnd = count;
 	const int dstEnd = output._length;
@@ -1372,13 +1355,6 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	if ((mode & 0x80) != 0)
 		return false;
 
-	if (count <= 64) {
-		memcpy(&dst[dstIdx], &src[srcIdx], count);
-		input._index += count;
-		output._index += count;
-		return true;
-	}
-
 	reset();
 	const int srcEnd = count;
 	const int dstEnd = getMaxEncodedLength(count);
@@ -1399,14 +1375,12 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 
 	while (srcIdx < srcEnd) {
-		const byte cur = src[srcIdx];
-
-		if (TextCodec::isText(cur)) {
+		if (TextCodec::isText(src[srcIdx])) {
 			srcIdx++;
 			continue;
 		}
 
-		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(cur)) {
+		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(src[srcIdx])) {
 			// At least 2 letters
 			// Compute hashes
 			// h1 -> hash of word chars
@@ -1589,14 +1563,6 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	byte* dst = &output._array[output._index];
 	int srcIdx = 0;
 	int dstIdx = 0;
-
-	if (count <= 64) {
-		memcpy(&dst[dstIdx], &src[srcIdx], count);
-		input._index += count;
-		output._index += count;
-		return true;
-	}
-
 	reset();
 	const int srcEnd = count;
 	const int dstEnd = output._length;
