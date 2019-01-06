@@ -884,7 +884,7 @@ inline int ROLZCodec2::getMaxEncodedLength(int srcLen) const
 {
     // Since we do not check the dst index for each byte (for speed purpose)
     // allocate some extra buffer for incompressible data.
-    if (srcLen >= CHUNK_SIZE)
+    if (srcLen >= ROLZCodec::CHUNK_SIZE)
         return srcLen;
          
     return (srcLen <= 512) ? srcLen + 32 : srcLen + srcLen / 8;
