@@ -381,7 +381,7 @@ inline TPAQMixer::TPAQMixer()
 {
     _pr = 2048;
     _skew = 0;
-    _w0 = _w1 = _w2 = _w3 = _w4 = _w5 = _w6 = _w7 = 2048;
+    _w0 = _w1 = _w2 = _w3 = _w4 = _w5 = _w6 = _w7 = 32768;
     _p0 = _p1 = _p2 = _p3 = _p4 = _p5 = _p6 = _p7 = 0;
     _learnRate = BEGIN_LEARN_RATE;
 }
@@ -389,7 +389,7 @@ inline TPAQMixer::TPAQMixer()
 // Adjust weights to minimize coding cost of last prediction
 inline void TPAQMixer::update(int bit)
 {
-    const int32 err = (((bit << 12) - _pr) * _learnRate) >> 7;
+    const int32 err = (((bit << 12) - _pr) * _learnRate) >> 10;
 
     if (err == 0)
         return;
@@ -399,14 +399,14 @@ inline void TPAQMixer::update(int bit)
     _skew += err;
 
     // Train Neural Network: update weights
-    _w0 += ((_p0 * err + 0) >> 15);
-    _w1 += ((_p1 * err + 0) >> 15);
-    _w2 += ((_p2 * err + 0) >> 15);
-    _w3 += ((_p3 * err + 0) >> 15);
-    _w4 += ((_p4 * err + 0) >> 15);
-    _w5 += ((_p5 * err + 0) >> 15);
-    _w6 += ((_p6 * err + 0) >> 15);
-    _w7 += ((_p7 * err + 0) >> 15);
+    _w0 += ((_p0 * err + 0) >> 12);
+    _w1 += ((_p1 * err + 0) >> 12);
+    _w2 += ((_p2 * err + 0) >> 12);
+    _w3 += ((_p3 * err + 0) >> 12);
+    _w4 += ((_p4 * err + 0) >> 12);
+    _w5 += ((_p5 * err + 0) >> 12);
+    _w6 += ((_p6 * err + 0) >> 12);
+    _w7 += ((_p7 * err + 0) >> 12);
 }
 
 inline int TPAQMixer::get(int32 p0, int32 p1, int32 p2, int32 p3, int32 p4, int32 p5, int32 p6, int32 p7)
