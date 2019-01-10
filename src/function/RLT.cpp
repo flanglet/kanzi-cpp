@@ -18,13 +18,6 @@ limitations under the License.
 
 using namespace kanzi;
 
-RLT::RLT(int runThreshold)
-{
-    if (runThreshold < 2)
-        throw IllegalArgumentException("Invalid run threshold parameter (must be at least 2)");
-
-    _runThreshold = runThreshold;
-}
 
 bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
 {
@@ -40,147 +33,169 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     if (output._length - output._index < getMaxEncodedLength(length))
         return false;
 
-    int _counters[256];
-    byte _flags[32];
-
-    for (int i = 0; i < 32; i++)
-        _flags[i] = 0;
-
-    for (int i = 0; i < 256; i++)
-        _counters[i] = 0;
-
-    byte* src = input._array;
-    byte* dst = output._array;
-    int srcIdx = input._index;
-    int dstIdx = output._index;
+    byte* src = &input._array[input._index];
+    byte* dst = &output._array[output._index];
+    int srcIdx = 0;
+    int dstIdx = 0;
     const int srcEnd = srcIdx + length;
+    const int srcEnd4 = srcEnd - 4;
     const int dstEnd = output._length;
-    const int dstEnd4 = dstEnd - 4;
+    uint freqs[256] = { 0 };
+    Global::computeHistogram(&src[srcIdx], srcEnd, freqs, true, false);
+
+    int minIdx = 0;
+
+    if (freqs[minIdx] > 0) {
+        for (int i=1; i<256; i++) {
+            if (freqs[i] < freqs[minIdx]) {
+                minIdx = i;
+
+                if (freqs[i] == 0)
+                    break;
+            }
+        }
+    }
+
     bool res = true;
+    byte escape = byte(minIdx);
     int run = 0;
-    const int threshold = _runThreshold;
-    const int maxRun = MAX_RUN + _runThreshold;
+    byte prev = src[srcIdx++];
+    dst[dstIdx++] = escape;
+    dst[dstIdx++] = prev;
 
-    // Initialize with a value different from the first data
-    byte prev = byte(~src[srcIdx]);
+    if (prev == escape)
+        dst[dstIdx++] = 0;
 
-    // Step 1: create counters and set compression flags
-    while (srcIdx < srcEnd) {
-        const byte val = src[srcIdx++];
+    // Main loop
+    while (srcIdx < srcEnd4) {
+        if (prev == src[srcIdx]) {
+            srcIdx++; run++;
 
-        if ((prev == val) && (run < MAX_RUN)) {
-            run++;
-            continue;
+            if (prev == src[srcIdx]) {
+                srcIdx++; run++;
+
+                if (prev == src[srcIdx]) {
+                    srcIdx++; run++; ;
+
+                    if (prev == src[srcIdx]) {
+                        srcIdx++; run++;
+
+                        if (run < MAX_RUN4)
+                            continue;
+                    }
+                }
+            }
         }
 
-        if (run >= threshold)
-            _counters[prev & 0xFF] += (run - threshold - 1);
+        if (run > RUN_THRESHOLD) {
+            const int dIdx = emitRunLength(&dst[dstIdx], dstEnd-dstIdx, run, escape, prev);
 
-        prev = val;
+            if (dIdx < 0) {
+               res = false;
+               break;
+            }
+
+            dstIdx += dIdx;
+        }
+        else if (prev != escape) {
+            if (dstIdx+run >= dstEnd)
+            {
+               res = false;
+               break;
+            }
+
+            if (run-- > 0)
+               dst[dstIdx++] = prev;
+
+            while (run-- > 0)
+               dst[dstIdx++] = prev;
+        }
+        else { // escape literal
+            if (dstIdx+2*run >= dstEnd)
+            {
+               res = false;
+               break;
+            }
+
+            while (run-- > 0) {
+               dst[dstIdx++] = escape;
+               dst[dstIdx++] = 0;
+            }
+        }
+
+        prev = src[srcIdx];
+        srcIdx++;
         run = 1;
     }
 
-    if (run >= threshold)
-        _counters[prev & 0xFF] += (run - threshold - 1);
+    if (res == true) {
+        // Process any remaining run
+        if (run > RUN_THRESHOLD) {
+            const int dIdx = emitRunLength(&dst[dstIdx], dstEnd-dstIdx, run, escape, prev);
 
-    for (int i = 0; i < 256; i++) {
-        if (_counters[i] > 0)
-            _flags[i >> 3] |= (1 << (7 - (i & 7)));
-    }
-
-    // Write flags to output
-    for (int i = 0; i < 32; i++)
-        dst[dstIdx++] = _flags[i];
-
-    srcIdx = input._index;
-    prev = byte(~src[srcIdx]);
-    run = 0;
-
-    // Step 2: output run lengths and literals
-    // Note that it is possible to output runs over the threshold (for symbols
-    // with an unset compression flag)
-    while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
-        const byte val = src[srcIdx++];
-
-        // Encode repetitions in the 'length' if the flag of the symbol is set.
-        if ((prev == val) && (run < maxRun) && (_counters[prev & 0xFF] > 0)) {
-            if (++run < threshold)
-                dst[dstIdx++] = prev;
-
-            continue;
+            if (dIdx > 0)
+               dstIdx += dIdx;
+        }
+        else if (prev != escape) {
+            if (dstIdx + run < dstEnd) {
+               while (run-- > 0)
+                  dst[dstIdx++] = prev;
+            }
+        }
+        else { // escape literal
+            if (dstIdx + 2 * run < dstEnd) {
+               while (run-- > 0) {
+                  dst[dstIdx++] = escape;
+                  dst[dstIdx++] = 0;
+               }
+            }
         }
 
-        if (run >= threshold) {
-            run -= threshold;
+        // Copy the last few bytes
+        while ((srcIdx < srcEnd) && (dstIdx < dstEnd))
+            dst[dstIdx++] = src[srcIdx++];
 
-            if (dstIdx >= dstEnd4) {
-                if (run >= RUN_LEN_ENCODE2) {
-                    break;
-                }
-
-                if ((run >= RUN_LEN_ENCODE1) && (dstIdx > dstEnd4)) {
-                    break;
-                }
-            }
-
-            dst[dstIdx++] = prev;
-
-            // Encode run length
-            if (run >= RUN_LEN_ENCODE1) {
-                if (run < RUN_LEN_ENCODE2) {
-                    run -= RUN_LEN_ENCODE1;
-                    dst[dstIdx++] = byte(RUN_LEN_ENCODE1 + (run >> 8));
-                }
-                else {
-                    run -= RUN_LEN_ENCODE2;
-                    dst[dstIdx] = byte(0xFF);
-                    dst[dstIdx + 1] = byte(run >> 8);
-                    dstIdx += 2;
-                }
-            }
-
-            dst[dstIdx++] = byte(run);
-        }
-
-        dst[dstIdx++] = val;
-        prev = val;
-        run = 1;
+        res = srcIdx == srcEnd;
     }
 
-    // Fill up the output array
-    if (run >= threshold) {
-        run -= threshold;
+    input._index += srcIdx;
+    output._index += dstIdx;
+    return res;
+}
 
-        if (dstIdx >= dstEnd4) {
-            if (run >= RUN_LEN_ENCODE2)
-                res = false;
-            else if ((run >= RUN_LEN_ENCODE1) && (dstIdx > dstEnd4))
-                res = false;
+int RLT::emitRunLength(byte* dst, int length, int run, byte escape, byte val) {
+    int dstIdx = 1;
+    dst[0] = val;
+
+    if (val == escape) {
+        dst[1] = 0;
+        dstIdx = 2;
+    }
+
+    dst[dstIdx++] = escape;
+    run -= RUN_THRESHOLD;
+
+    // Encode run length
+    if (run >= RUN_LEN_ENCODE1) {
+        if (run < RUN_LEN_ENCODE2) {
+            if (dstIdx >= length - 2)
+                return -1;
+
+            run -= RUN_LEN_ENCODE1;
+            dst[dstIdx++] = byte(RUN_LEN_ENCODE1 + (run >> 8));
         }
         else {
-            dst[dstIdx++] = prev;
+            if (dstIdx >= length - 3)
+                return -1;
 
-            // Encode run length
-            if (run >= RUN_LEN_ENCODE1) {
-                if (run < RUN_LEN_ENCODE2) {
-                    run -= RUN_LEN_ENCODE1;
-                    dst[dstIdx++] = byte(RUN_LEN_ENCODE1 + (run >> 8));
-                }
-                else {
-                    run -= RUN_LEN_ENCODE2;
-                    dst[dstIdx] = byte(0xFF);
-                    dst[dstIdx + 1] = byte(run >> 8);
-                    dstIdx += 2;
-                }
-            }
-
-            dst[dstIdx++] = byte(run);
+            run -= RUN_LEN_ENCODE2;
+            dst[dstIdx++] = byte(0xFF);
+            dst[dstIdx++] = byte(run >> 8);
         }
     }
 
-    input._index = srcIdx;
-    output._index = dstIdx;
-    return res && (srcIdx == srcEnd);
+    dst[dstIdx] = byte(run);
+    return dstIdx + 1;
 }
 
 bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
@@ -194,94 +209,106 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     if (!SliceArray<byte>::isValid(output))
         throw IllegalArgumentException("Invalid output block");
 
-    int srcIdx = input._index;
-    int dstIdx = output._index;
-    byte* src = input._array;
-    byte* dst = output._array;
+    uint8* src = (uint8*)&input._array[input._index];
+    uint8* dst = (uint8*)&output._array[output._index];
+    int srcIdx = 0;
+    int dstIdx = 0;
     const int srcEnd = srcIdx + length;
     const int dstEnd = output._length;
-    int run = 0;
-    const int threshold = _runThreshold;
-    const int maxRun = MAX_RUN + _runThreshold;
     bool res = true;
+    uint8 escape = src[srcIdx++];
 
-    int _counters[256];
+    if (src[srcIdx] == escape) {
+        srcIdx++;
 
-    // Read compression flags from input
-    for (int i = 0, j = 0; i < 32; i++, j += 8) {
-        const byte flag = src[srcIdx++];
-        _counters[j] = (flag >> 7) & 1;
-        _counters[j + 1] = (flag >> 6) & 1;
-        _counters[j + 2] = (flag >> 5) & 1;
-        _counters[j + 3] = (flag >> 4) & 1;
-        _counters[j + 4] = (flag >> 3) & 1;
-        _counters[j + 5] = (flag >> 2) & 1;
-        _counters[j + 6] = (flag >> 1) & 1;
-        _counters[j + 7] = flag & 1;
+        // The data cannot start with a run but may start with an escape literal
+        if ((srcIdx < srcEnd) && (src[srcIdx] != 0))
+            return false;
+
+        dst[dstIdx++] = escape;
+        srcIdx++;
     }
 
-    // Initialize with a value different from the first symbol
-    byte prev = byte(~src[srcIdx]);
-
+    // Main loop
     while (srcIdx < srcEnd) {
-        const byte val = src[srcIdx++];
-
-        if ((prev == val) && (_counters[prev & 0xFF] > 0)) {
-            run++;
-
-            if (run >= threshold) {
-                // Decode run length
-                run = src[srcIdx++] & 0xFF;
-
-                if (run == 0xFF) {
-                    if (srcIdx + 1 >= srcEnd)
-                        break;
-
-                    run = ((src[srcIdx] & 0xFF) << 8) | (src[srcIdx + 1] & 0xFF);
-                    srcIdx += 2;
-                    run += RUN_LEN_ENCODE2;
-                }
-                else if (run >= RUN_LEN_ENCODE1) {
-                    if (srcIdx >= srcEnd)
-                        break;
-
-                    run = ((run - RUN_LEN_ENCODE1) << 8) | (src[srcIdx++] & 0xFF);
-                    run += RUN_LEN_ENCODE1;
-                }
-
-                if ((dstIdx >= dstEnd + run) || (run > maxRun)) {
-                    res = false;
-                    break;
-                }
-
-                // Emit 'run' times the previous byte
-                while (run >= 4) {
-                    dst[dstIdx] = prev;
-                    dst[dstIdx + 1] = prev;
-                    dst[dstIdx + 2] = prev;
-                    dst[dstIdx + 3] = prev;
-                    dstIdx += 4;
-                    run -= 4;
-                }
-
-                while (run > 0) {
-                    dst[dstIdx++] = prev;
-                    run--;
-                }
+        if (src[srcIdx] != escape) {
+            // Literal
+            if (dstIdx >= dstEnd) {
+                  res = false;
+                  break;
             }
-        }
-        else {
-            prev = val;
-            run = 1;
+
+            dst[dstIdx++] = src[srcIdx++];
+            continue;
         }
 
-        if (dstIdx >= dstEnd)
+        srcIdx++;
+
+        if (srcIdx >= srcEnd) {
+            res = false;
             break;
+        }
 
-        dst[dstIdx++] = val;
+        const uint8 val = dst[dstIdx-1];
+        int run = src[srcIdx++];
+
+        if (run == 0) {
+            // Just an escape symbol, not a run
+            if (dstIdx >= dstEnd) {
+                  res = false;
+                  break;
+            }
+
+            dst[dstIdx++] = escape;
+            continue;
+        }
+
+        // Decode run length
+        if (run == 0xFF) {
+            if (srcIdx + 1 >= srcEnd) {
+                  res = false;
+                  break;
+            }
+
+            run = (uint8(src[srcIdx]) << 8) | uint8(src[srcIdx + 1]);
+            srcIdx += 2;
+            run += RUN_LEN_ENCODE2;
+        }
+        else if (run >= RUN_LEN_ENCODE1) {
+            if (srcIdx >= srcEnd) {
+                  res = false;
+                  break;
+            }
+
+            run = ((run - RUN_LEN_ENCODE1) << 8) | uint8(src[srcIdx++]);
+            run += RUN_LEN_ENCODE1;
+        }
+
+        run += (RUN_THRESHOLD - 1);
+
+        if ((dstIdx + run >= dstEnd) || (run > MAX_RUN)) {
+            res = false;
+            break;
+        }
+
+        // Emit 'run' times the previous byte
+        while (run >= 4) {
+            dst[dstIdx] = val;
+            dst[dstIdx + 1] = val;
+            dst[dstIdx + 2] = val;
+            dst[dstIdx + 3] = val;
+            dstIdx += 4;
+            run -= 4;
+        }
+
+        while (run > 0) {
+            dst[dstIdx++] = val;
+            run--;
+        }
     }
 
-    input._index = srcIdx;
-    output._index = dstIdx;
-    return res & (srcIdx == srcEnd);
+    res &= srcIdx == srcEnd;
+    input._index += srcIdx;
+    output._index += dstIdx;
+    return res;
 }

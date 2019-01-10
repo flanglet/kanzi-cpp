@@ -21,18 +21,17 @@ limitations under the License.
 namespace kanzi 
 {
 
-   // Implementation of Mespotine RLE
-   // See [An overhead-reduced and improved Run-Length-Encoding Method] by Meo Mespotine
-   // Length is transmitted as 1 to 3 bytes. The run threshold can be provided.
-   // EG. runThreshold = 2 and RUN_LEN_ENCODE1 = 239 => RUN_LEN_ENCODE2 = 4096
-   // 2    <= runLen < 239+2      -> 1 byte
-   // 241  <= runLen < 4096+2     -> 2 bytes
-   // 4098 <= runLen < 65536+4098 -> 3 bytes
+   // Implementation of an escaped RLE
+   // Run length encoding:
+   // RUN_LEN_ENCODE1 = 224 => RUN_LEN_ENCODE2 = 31*224 = 6944
+   // 4    <= runLen < 224+4      -> 1 byte
+   // 228  <= runLen < 6944+228   -> 2 bytes
+   // 7172 <= runLen < 65535+7172 -> 3 bytes
 
    class RLT : public Function<byte> 
    {
    public:
-       RLT(int runThreshold=2);
+       RLT() {}
 
        ~RLT() {}
 
@@ -40,17 +39,16 @@ namespace kanzi
 
        bool inverse(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;
 
-       int getRunThreshold() const { return _runThreshold; }
-
-       // Required encoding output buffer size unknown => guess
-       int getMaxEncodedLength(int srcLen) const { return srcLen + 32; }
+       int getMaxEncodedLength(int srcLen) const { return (srcLen <= 512) ? srcLen + 32 : srcLen; }
 
    private:
        static const int RUN_LEN_ENCODE1 = 224; // used to encode run length
-       static const int RUN_LEN_ENCODE2 = (256-1-RUN_LEN_ENCODE1) << 8; // used to encode run length
-       static const int MAX_RUN = 0xFFFF + RUN_LEN_ENCODE2; 
+       static const int RUN_LEN_ENCODE2 = (255 - RUN_LEN_ENCODE1) << 8; // used to encode run length
+       static const int RUN_THRESHOLD = 3;
+       static const int MAX_RUN = 0xFFFF + RUN_LEN_ENCODE2 + RUN_THRESHOLD - 1;
+       static const int MAX_RUN4 = MAX_RUN - 4;
 
-       int _runThreshold;
+       int emitRunLength(byte* dst, int length, int run, byte escape, byte val);
    };
 
 }

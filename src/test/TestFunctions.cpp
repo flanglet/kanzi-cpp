@@ -33,7 +33,7 @@ using namespace kanzi;
 static Function<byte>* getByteFunction(string name)
 {
     if (name.compare("RLT") == 0)
-        return new RLT(3);
+        return new RLT();
 
     if (name.compare("ZRLT") == 0)
         return new ZRLT();
@@ -63,7 +63,7 @@ int testFunctionsCorrectness(const string& name)
         cout << endl
              << "Test " << ii << endl;
         int size = 32;
-        byte values[66000];
+        byte values[80000];
 
         if (ii == 0) {
             byte arr[] = {
@@ -73,11 +73,11 @@ int testFunctionsCorrectness(const string& name)
             memcpy(values, &arr[0], size);
         }
         else if (ii == 1) {
-            size = 66000;
-            byte arr[66000];
+            size = 80000;
+            byte arr[80000];
             arr[0] = 1;
 
-            for (int i = 1; i < 66000; i++)
+            for (int i = 1; i < 80000; i++)
                 arr[i] = 8;
 
             memcpy(values, &arr[0], size);
@@ -88,18 +88,16 @@ int testFunctionsCorrectness(const string& name)
             memcpy(values, &arr[0], size);
         }
         else if (ii == 3) {
-            // Lots of zeros
+            // For RLT
             size = 512;
             byte arr[512];
 
-            for (int i = 0; i < size; i++) {
-                int val = rand() % 100;
-
-                if (val >= 33)
-                    val = 0;
-
-                arr[i] = byte(val);
+            for (int i = 0; i < 256; i++) {              
+                arr[2 * i] = byte(i);
+                arr[2 * i + 1] = byte(i);
             }
+
+            arr[1] = byte(255); // force RLT escape to be first symbol
             memcpy(values, &arr[0], size);
         }
         else if (ii == 4) {
