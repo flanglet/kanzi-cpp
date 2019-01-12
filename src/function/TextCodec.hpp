@@ -161,6 +161,11 @@ namespace kanzi {
        static const int THRESHOLD3 = 32;
        static const int THRESHOLD4 = THRESHOLD3 * 128;
        static const int LOG_HASHES_SIZE = 24; // 16 MB
+       static const int MASK_NOT_TEXT = byte(0x80);
+       static const int MASK_ALMOST_FULL_ASCII = byte(0x08);
+       static const int MASK_FULL_ASCII = byte(0x04);
+       static const int MASK_XML_HTML = byte(0x02);
+       static const int MASK_CRLF = byte(0x01);
 
        static bool* initDelimiterChars();
        static const bool* DELIMITER_CHARS;
@@ -171,7 +176,7 @@ namespace kanzi {
 
        static bool sameWords(const byte src[], byte dst[], const int length);
 
-       static byte computeStats(byte block[], int count);
+       static byte computeStats(byte block[], int count, int32 freqs[]);
 
        // Default dictionary
        static const byte DICT_EN_1024[];

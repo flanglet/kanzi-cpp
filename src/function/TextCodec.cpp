@@ -599,7 +599,7 @@ int TextCodec::createDictionary(SliceArray<byte> input, DictEntry dict[], int ma
 		byte cur = words[i];
 
 		if (isText(cur)) {
-			h = h * HASH1 ^ int(cur) * HASH2;
+			h = h * HASH1 ^ int32(cur) * HASH2;
 			continue;
 		}
 
@@ -651,24 +651,28 @@ SliceArray<byte> TextCodec::unpackDictionary32(const byte dict[], int dictSize)
 	return SliceArray<byte>(res, d, 0);
 }
 
-byte TextCodec::computeStats(byte block[], int count)
+// return 8-bit status (see MASK flags constants)
+byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 {
-	int32 freqs[257][256] = { { 0 } };
+	int32 freqs[256][256] = { { 0 } };
+	int32 f0[256] = { 0 };
+	int32 f1[256] = { 0 };
+	int32 f3[256] = { 0 };
+	int32 f2[256] = { 0 };
 	uint8* data = (uint8*)&block[0];
 	uint8 prv = 0;
 	const int count4 = count & -4;
-	int* freqs0 = &freqs[256][0];
 
 	// Unroll loop
-	for (int i = 0; i<count4; i += 4) {
+	for (int i = 0; i < count4; i += 4) {
 		const uint8 cur0 = data[i];
 		const uint8 cur1 = data[i + 1];
 		const uint8 cur2 = data[i + 2];
 		const uint8 cur3 = data[i + 3];
-		freqs0[cur0]++;
-		freqs0[cur1]++;
-		freqs0[cur2]++;
-		freqs0[cur3]++;
+		f0[cur0]++;
+		f1[cur1]++;
+		f2[cur2]++;
+		f3[cur3]++;
 		freqs[prv][cur0]++;
 		freqs[cur0][cur1]++;
 		freqs[cur1][cur2]++;
@@ -677,10 +681,13 @@ byte TextCodec::computeStats(byte block[], int count)
 	}
 
 	for (int i = count4; i<count; i++) {
-		const uint8 cur = data[i];
-		freqs0[cur]++;
-		freqs[prv][cur]++;
-		prv = cur;
+		freqs0[data[i]]++;
+		freqs[prv][data[i]]++;
+		prv = data[i];
+	}
+
+	for (int i = 0; i < 256; i++) {
+		freqs0[i] += (f0[i] + f1[i] + f2[i] + f3[i]);
 	}
 
 	int nbTextChars = 0;
@@ -692,7 +699,7 @@ byte TextCodec::computeStats(byte block[], int count)
 
 	// Not text (crude threshold)
 	if (2 * nbTextChars < count)
-		return byte(0x80);
+		return TextCodec::MASK_NOT_TEXT;
 
 	int nbBinChars = 0;
 
@@ -701,17 +708,46 @@ byte TextCodec::computeStats(byte block[], int count)
 
 	// Not text (crude threshold)
 	if (4 * nbBinChars > count)
-		return byte(0x80);
+		return TextCodec::MASK_NOT_TEXT;
 
-	// Check CR+LF matches
 	int res = 0;
 
+	if (nbBinChars == 0)
+		res |= TextCodec::MASK_FULL_ASCII;
+	else if (nbBinChars <= count/100)
+		res |= TextCodec::MASK_ALMOST_FULL_ASCII;
+      
+	if (nbBinChars <= count-count/10){
+		// Check if likely XML/HTML
+		// Another crude test: check that the frequencies of < and > are similar
+		// and 'high enough'. Also check it is worth to attempt replacing ampersand sequences.
+		// Getting this flag wrong results in a very small compression speed degradation.
+		const int32 f1 = freqs0['<'];
+		const int32 f2 = freqs0['>'];
+		int32 f3 = freqs['&']['a'] + freqs['&']['g'] + freqs['&']['l'] +freqs['&']['q'];
+		int32 minFreq = max((count - nbBinChars) >> 9, 2);         
+         
+		if ((f1 >= minFreq) && (f2 >= minFreq) && (f3 > 0)){
+			if (f1 < f2) { 
+				if (f1 >= f2-f2/100) 
+					res |= TextCodec::MASK_XML_HTML;
+			}
+			else if (f2 < f1)  {
+				if (f2 >= f1-f1/100)            
+					res |= TextCodec::MASK_XML_HTML;
+			} 
+			else 
+				res |= TextCodec::MASK_XML_HTML;
+ 		}
+	}
+
+	// Check CR+LF matches
 	if ((freqs0[CR] != 0) && (freqs0[CR] == freqs0[LF])) {
-		res = 1;
+		res |= TextCodec::MASK_CRLF;
 
 		for (int i = 0; i < 256; i++) {
 			if ((i != LF) && (freqs[CR][i]) != 0) {
-				res = 0;
+				res &= ~TextCodec::MASK_CRLF;
 				break;
 			}
 		}
@@ -786,7 +822,7 @@ bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
         // Not a recoverable error: instead of silently fail the transform,
         // issue a fatal error.
         stringstream ss;
-        ss << "The max TextCodec block size is " << MAX_BLOCK_SIZE << ", got " << count;
+        ss << "The max text transform block size is " << MAX_BLOCK_SIZE << ", got " << count;
         throw IllegalArgumentException(ss.str());
 	}
 
@@ -811,7 +847,7 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
         // Not a recoverable error: instead of silently fail the transform,
         // issue a fatal error.
         stringstream ss;
-        ss << "The max TextCodec block size is " << MAX_BLOCK_SIZE << ", got " << count;
+        ss << "The max text transform block size is " << MAX_BLOCK_SIZE << ", got " << count;
         throw IllegalArgumentException(ss.str());
 	}
 
@@ -915,10 +951,11 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int srcIdx = 0;
 	int dstIdx = 0;
 
-	byte mode = TextCodec::computeStats(&src[srcIdx], count);
+	int32 freqs[256] = { 0 };
+	byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs);
 
 	// Not text ?
-	if ((mode & 0x80) != 0)
+	if ((mode & TextCodec::MASK_NOT_TEXT) != 0)
 		return false;
 
 	reset();
@@ -929,8 +966,9 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int words = _staticDictSize;
 
 	// DOS encoded end of line (CR+LF) ?
-	_isCRLF = (mode & 0x01) != 0;
+	_isCRLF = (mode & TextCodec::MASK_CRLF) != 0;
 	dst[dstIdx++] = mode;
+	bool res = true;
 
 	while ((srcIdx < srcEnd) && (src[srcIdx] == ' ')) {
 		dst[dstIdx++] = ' ';
@@ -1013,11 +1051,21 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			else {
 				// Word found in the dictionary
 				// Skip space if only delimiter between 2 word references
-				if ((emitAnchor != delimAnchor) || (src[delimAnchor] != ' '))
-					dstIdx += emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor - emitAnchor, dstEnd - dstIdx);
+				if ((emitAnchor != delimAnchor) || (src[delimAnchor] != ' ')) {
+					int dIdx = emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor + 1 - emitAnchor, dstEnd - dstIdx);
 
-				if (dstIdx >= dstEnd4)
+ 					if (dIdx < 0) {
+ 						res = false;
+ 						break;
+					}
+
+					dstIdx += dIdx;
+				}
+
+				if (dstIdx >= dstEnd4){
+					res = false;
 					break;
+				}
 
 				dst[dstIdx++] = (pe == pe1) ? TextCodec::ESCAPE_TOKEN1 : TextCodec::ESCAPE_TOKEN2;
 				dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & 0x00FFFFFF);
@@ -1030,12 +1078,21 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		srcIdx++;
 	}
 
-	// Emit last symbols
-	dstIdx += emitSymbols(&src[emitAnchor], &dst[dstIdx], srcEnd - 1 - emitAnchor, dstEnd - dstIdx);
+	if (res == true) {
+		// Emit last symbols
+		int dIdx = emitSymbols(&src[emitAnchor], &dst[dstIdx], srcEnd - emitAnchor, dstEnd - dstIdx);
+
+		if (dIdx < 0) 
+			res = false;
+		else 
+			dstIdx += dIdx;
+
+		res &= (srcIdx == srcEnd);
+	}
 
 	output._index += dstIdx;
 	input._index += srcIdx;
-	return srcIdx == srcEnd;
+	return res;
 }
 
 
@@ -1066,9 +1123,9 @@ inline int TextCodec1::emitSymbols(byte src[], byte dst[], const int srcEnd, con
 {
 	int dstIdx = 0;
 
-	for (int i = 0; i <= srcEnd; i++) {
+	for (int i = 0; i < srcEnd; i++) {
 		if (dstIdx >= dstEnd)
-			break;
+			return -1;
 
 		const byte cur = src[i];
 
@@ -1084,9 +1141,10 @@ inline int TextCodec1::emitSymbols(byte src[], byte dst[], const int srcEnd, con
 			if (idx >= TextCodec::THRESHOLD1)
 				lenIdx = (idx >= TextCodec::THRESHOLD2) ? 3 : 2;
 
-			if (dstIdx + lenIdx < dstEnd)
-				dstIdx += emitWordIndex(&dst[dstIdx], idx);
-
+			if (dstIdx + lenIdx >= dstEnd)
+				return -1;
+         
+			dstIdx += emitWordIndex(&dst[dstIdx], idx);
 			break;
 		}
 
@@ -1349,10 +1407,11 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int srcIdx = 0;
 	int dstIdx = 0;
 
-	byte mode = TextCodec::computeStats(&src[srcIdx], count);
+	int32 freqs[256]= { 0 };
+	byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs);
 
 	// Not text ?
-	if ((mode & 0x80) != 0)
+	if ((mode & TextCodec::MASK_NOT_TEXT) != 0)
 		return false;
 
 	reset();
@@ -1363,8 +1422,9 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int words = _staticDictSize;
 
 	// DOS encoded end of line (CR+LF) ?
-	_isCRLF = (mode & 0x01) != 0;
+	_isCRLF = (mode & TextCodec::MASK_CRLF) != 0;
 	dst[dstIdx++] = mode;
+	bool res = true;
 
 	while ((srcIdx < srcEnd) && (src[srcIdx] == ' ')) {
 		dst[dstIdx++] = ' ';
@@ -1448,11 +1508,21 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			else {
 				// Word found in the dictionary
 				// Skip space if only delimiter between 2 word references
-				if ((emitAnchor != delimAnchor) || (src[delimAnchor] != ' '))
-					dstIdx += emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor - emitAnchor, dstEnd - dstIdx);
+            if ((emitAnchor != delimAnchor) || (src[delimAnchor] != ' ')) {
+					int dIdx = emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor + 1 - emitAnchor, dstEnd - dstIdx);
 
-				if (dstIdx >= dstEnd3)
+ 					if (dIdx < 0) {
+ 						res = false;
+ 						break;
+					}
+
+					dstIdx += dIdx;
+				}
+
+				if (dstIdx >= dstEnd3){
+					res = false;
 					break;
+				}
 
 				dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & 0x00FFFFFF, (pe == pe1) ? 0 : 32);
 				emitAnchor = delimAnchor + 1 + int(pe->_data >> 24);
@@ -1464,12 +1534,21 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		srcIdx++;
 	}
 
-	// Emit last symbols
-	dstIdx += emitSymbols(&src[emitAnchor], &dst[dstIdx], srcEnd - 1 - emitAnchor, dstEnd - dstIdx);
+	if (res == true) {
+		// Emit last symbols
+		int dIdx = emitSymbols(&src[emitAnchor], &dst[dstIdx], srcEnd - emitAnchor, dstEnd - dstIdx);
+
+		if (dIdx < 0) 
+			res = false;
+		else 
+			dstIdx += dIdx;
+
+		res &= (srcIdx == srcEnd);
+	}
 
 	output._index += dstIdx;
 	input._index += srcIdx;
-	return srcIdx == srcEnd;
+	return res;
 }
 
 
@@ -1500,32 +1579,70 @@ inline int TextCodec2::emitSymbols(byte src[], byte dst[], const int srcEnd, con
 {
 	int dstIdx = 0;
 
-	for (int i = 0; i <= srcEnd; i++) {
-		if (dstIdx >= dstEnd - 1)
-			break;
+   if (2 * srcEnd < dstEnd) {
+      for (int i = 0; i < srcEnd; i++) {
+		   const byte cur = src[i];
 
-		const byte cur = src[i];
+		   switch (cur)
+		   {
+		   case TextCodec::ESCAPE_TOKEN1:
+			   dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
+			   dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
+			   break;
 
-		switch (cur)
-		{
-		case TextCodec::ESCAPE_TOKEN1:
-			dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
-			dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
-			break;
+		   case TextCodec::CR:
+			   if (_isCRLF == false)
+				   dst[dstIdx++] = cur;
 
-		case TextCodec::CR:
-			if (_isCRLF == false)
-				dst[dstIdx++] = cur;
+			   break;
 
-			break;
+		   default:
+			   if ((cur & 0x80) != 0)
+				   dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
 
-		default:
-			if ((cur & 0x80) != 0)
-				dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
+			   dst[dstIdx++] = cur;
+		   }
+	   }
+   }
+   else {
+	   for (int i = 0; i < srcEnd; i++) {
+		   const byte cur = src[i];
 
-			dst[dstIdx++] = cur;
-		}
-	}
+		   switch (cur)
+		   {
+		   case TextCodec::ESCAPE_TOKEN1:
+			   if (dstIdx >= dstEnd - 1)
+			      return -1;
+
+			   dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
+			   dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
+			   break;
+
+		   case TextCodec::CR:
+            if (_isCRLF == false) {
+				   if (dstIdx >= dstEnd)
+				      return -1;
+
+				   dst[dstIdx++] = cur;
+            }
+
+			   break;
+
+		   default:
+            if ((cur & 0x80) != 0) {
+				   if (dstIdx >= dstEnd)
+				      return -1;
+
+				   dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
+            }
+
+            if (dstIdx >= dstEnd)
+				   return -1;
+
+			   dst[dstIdx++] = cur;
+		   }
+	   }
+   }
 
 	return dstIdx;
 }
