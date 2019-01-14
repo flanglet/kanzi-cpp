@@ -21,6 +21,7 @@ limitations under the License.
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include "../function/BRT.hpp"
 #include "../function/RLT.hpp"
 #include "../function/ZRLT.hpp"
 #include "../function/LZ4Codec.hpp"
@@ -32,6 +33,9 @@ using namespace kanzi;
 
 static Function<byte>* getByteFunction(string name)
 {
+    if (name.compare("BRT") == 0)
+        return new BRT();
+
     if (name.compare("RLT") == 0)
         return new RLT();
 
@@ -261,7 +265,7 @@ int testFunctionsSpeed(const string& name)
 {
     // Test speed
     srand((uint)time(nullptr));
-    int iter = (name == "ROLZ") ? 5000 : 50000;
+    int iter = (name.rfind("ROLZ", 0) == 0) ? 2000 : ((name == "BRT") ? 5000 : 50000);
     int size = 30000;
     cout << endl
          << endl
@@ -396,6 +400,11 @@ int TestFunctions_main(int argc, const char* argv[])
                  << "TestROLZ" << endl;
             testFunctionsCorrectness("ROLZ");
             testFunctionsSpeed("ROLZ");
+            cout << endl
+                 << endl
+                 << "TestBRT" << endl;
+            testFunctionsCorrectness("BRT");
+            testFunctionsSpeed("BRT");
             cout << endl
                  << endl
                  << "TestSnappy" << endl;

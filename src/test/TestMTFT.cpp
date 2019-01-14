@@ -21,7 +21,7 @@ limitations under the License.
 #include <cstring>
 #include <algorithm>
 #include "../types.hpp"
-#include "../transform/MTFT.hpp"
+#include "../transform/SBRT.hpp"
 
 using namespace std;
 using namespace kanzi;
@@ -47,7 +47,7 @@ void testMTFTCorrectness()
                 val[i] = byte(65 + (rand() % (5 * ii)));
         }
 
-        MTFT mtft;
+        SBRT mtft(SBRT::MODE_MTF);
         byte* input = &val[0];
         byte* transform = new byte[size + 20];
         byte* reverse = new byte[size];
@@ -110,7 +110,7 @@ int testMTFTSpeed()
         byte input[20000];
         byte output[20000];
         byte reverse[20000];
-        MTFT mtft;
+        SBRT mtft(SBRT::MODE_MTF);
         double delta1 = 0, delta2 = 0;
 
         if (jj == 0) {

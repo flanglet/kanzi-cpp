@@ -9,9 +9,8 @@
 #include "../IllegalArgumentException.hpp"
 #include "../transform/BWT.hpp"
 #include "../transform/BWTS.hpp"
-#include "../transform/MTFT.hpp"
 #include "../transform/SBRT.hpp"
-#include "TransformSequence.hpp"
+#include "BRT.hpp"
 #include "BWTBlockCodec.hpp"
 #include "LZ4Codec.hpp"
 #include "NullFunction.hpp"
@@ -19,6 +18,7 @@
 #include "RLT.hpp"
 #include "SnappyCodec.hpp"
 #include "TextCodec.hpp"
+#include "TransformSequence.hpp"
 #include "X86Codec.hpp"
 #include "ZRLT.hpp"
 
@@ -41,6 +41,7 @@ namespace kanzi {
 		static const uint64 DICT_TYPE = 10; // Text codec
 		static const uint64 ROLZ_TYPE = 11; // ROLZ codec
 		static const uint64 ROLZX_TYPE = 12; // ROLZ Extra codec
+		static const uint64 BRT_TYPE = 13; // Behemoth Rank
 
 		static uint64 getType(const char* name) THROW;
 
@@ -111,17 +112,14 @@ namespace kanzi {
 		string name(cname);
 		transform(name.begin(), name.end(), name.begin(), ::toupper);
 
+		if (name.compare("TEXT") == 0)
+			return DICT_TYPE;
+
 		if (name.compare("BWT") == 0)
 			return BWT_TYPE;
 
 		if (name.compare("BWTS") == 0)
 			return BWTS_TYPE;
-
-		if (name.compare("SNAPPY") == 0)
-			return SNAPPY_TYPE;
-
-		if (name.compare("LZ4") == 0)
-			return LZ4_TYPE;
 
 		if (name.compare("ROLZ") == 0)
 			return ROLZ_TYPE;
@@ -138,11 +136,17 @@ namespace kanzi {
 		if (name.compare("RLT") == 0)
 			return RLT_TYPE;
 
+		if (name.compare("BRT") == 0)
+			return BRT_TYPE;
+
 		if (name.compare("RANK") == 0)
 			return RANK_TYPE;
 
-		if (name.compare("TEXT") == 0)
-			return DICT_TYPE;
+		if (name.compare("SNAPPY") == 0)
+			return SNAPPY_TYPE;
+
+		if (name.compare("LZ4") == 0)
+			return LZ4_TYPE;
 
 		if (name.compare("X86") == 0)
 			return X86_TYPE;
@@ -176,36 +180,6 @@ namespace kanzi {
 	Transform<T>* FunctionFactory<T>::newFunctionToken(map<string, string>& ctx, uint64 functionType) THROW
 	{
 		switch (functionType) {
-		case SNAPPY_TYPE:
-			return new SnappyCodec();
-
-		case LZ4_TYPE:
-			return new LZ4Codec();
-
-		case ROLZ_TYPE:
-			return new ROLZCodec(ctx);
-
-		case ROLZX_TYPE:
-			return new ROLZCodec(ctx);
-
-		case BWT_TYPE:
-			return new BWTBlockCodec(ctx);
-
-		case BWTS_TYPE:
-			return new BWTS();
-
-		case MTFT_TYPE:
-			return new MTFT();
-
-		case ZRLT_TYPE:
-			return new ZRLT();
-
-		case RLT_TYPE:
-			return new RLT();
-
-		case RANK_TYPE:
-			return new SBRT(SBRT::MODE_RANK);
-
 		case DICT_TYPE: {
 			string textCodecType = "1";
          
@@ -222,6 +196,39 @@ namespace kanzi {
 			ctx["textcodec"] = textCodecType;
 			return new TextCodec(ctx);
 		}
+
+      case ROLZ_TYPE:
+			return new ROLZCodec(ctx);
+
+		case ROLZX_TYPE:
+			return new ROLZCodec(ctx);
+
+		case BWT_TYPE:
+			return new BWTBlockCodec(ctx);
+
+		case BWTS_TYPE:
+			return new BWTS();
+
+		case RANK_TYPE:
+			return new SBRT(SBRT::MODE_RANK);
+
+		case BRT_TYPE:
+			return new BRT();
+
+      case MTFT_TYPE:
+			return new SBRT(SBRT::MODE_MTF);
+
+		case ZRLT_TYPE:
+			return new ZRLT();
+
+		case RLT_TYPE:
+			return new RLT();
+
+		case SNAPPY_TYPE:
+			return new SnappyCodec();
+
+		case LZ4_TYPE:
+			return new LZ4Codec();
 
 		case X86_TYPE:
 			return new X86Codec();
@@ -266,20 +273,14 @@ namespace kanzi {
 	const char* FunctionFactory<T>::getNameToken(uint64 functionType) THROW
 	{
 		switch (functionType) {
-		case LZ4_TYPE:
-			return "LZ4";
+		case DICT_TYPE:
+			return "TEXT";
 
-		case BWT_TYPE:
+      case BWT_TYPE:
 			return "BWT";
 
 		case BWTS_TYPE:
 			return "BWTS";
-
-		case SNAPPY_TYPE:
-			return "SNAPPY";
-
-		case MTFT_TYPE:
-			return "MTFT";
 
 		case ROLZ_TYPE:
 			return "ROLZ";
@@ -293,13 +294,22 @@ namespace kanzi {
 		case RLT_TYPE:
 			return "RLT";
 
+		case BRT_TYPE:
+			return "BRT";
+
 		case RANK_TYPE:
 			return "RANK";
 
-		case DICT_TYPE:
-			return "TEXT";
+		case MTFT_TYPE:
+			return "MTFT";
 
-		case X86_TYPE:
+		case LZ4_TYPE:
+			return "LZ4";
+
+		case SNAPPY_TYPE:
+			return "SNAPPY";
+
+      case X86_TYPE:
 			return "X86";
 
 		case NONE_TYPE:

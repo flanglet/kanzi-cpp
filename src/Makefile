@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -DNDEBUG -march=native
+CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -DNDEBUG -march=native
 #CFLAGS=-c  -Wall -DNDEBUG -O3 -fomit-frame-pointer -msse2 -std=c++0x -D_FILE_OFFSET_BITS=64 
 LDFLAGS=-lpthread
 LIB_SOURCES=Global.cpp \
@@ -7,7 +7,6 @@ LIB_SOURCES=Global.cpp \
 	transform/BWT.cpp \
 	transform/BWTS.cpp \
 	transform/DivSufSort.cpp \
-	transform/MTFT.cpp \
 	transform/SBRT.cpp \
 	bitstream/DebugInputBitStream.cpp \
 	bitstream/DebugOutputBitStream.cpp \
@@ -32,6 +31,7 @@ LIB_SOURCES=Global.cpp \
 	entropy/CMPredictor.cpp \
 	entropy/FPAQPredictor.cpp \
 	entropy/TPAQPredictor.cpp \
+	function/BRT.cpp \
 	function/BWTBlockCodec.cpp \
 	function/LZ4Codec.cpp \
 	function/ROLZCodec.cpp \
