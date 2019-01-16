@@ -19,10 +19,9 @@ limitations under the License.
 #include "../Function.hpp"
 
 namespace kanzi {
-   // Behemoth Rank Transform
-   // A strong rank transform based on https://github.com/loxxous/Behemoth-Rank-Coding
-   // by Lucas Marsh. Typically used post BWT to reduce the variance of the data 
-   // prior to entropy coding.
+
+   // Sorted Rank Transform is typically used after a BWT to reduce the variance 
+   // of the data prior to entropy coding.
 
    class SRT : public Function<byte> {
    public:
@@ -39,7 +38,7 @@ namespace kanzi {
    private:
        static const int HEADER_SIZE = 4 * 256; // freqs
 
-       static int preprocess(int32 freqs[], byte symbols[]);
+       static int preprocess(int32 freqs[], uint8 symbols[]);
 
        static int encodeHeader(int32 freqs[], byte dst[]);
 

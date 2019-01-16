@@ -56,10 +56,10 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     }
 
     // init arrays
-    byte symbols[256];
+    uint8 symbols[256];
     int32 buckets[256];
 
-    int nbSymbols = preprocess(freqs, symbols);
+    const int nbSymbols = preprocess(freqs, symbols);
 
     for (int i = 0, bucketPos = 0; i < nbSymbols; i++) {
         const int c = symbols[i] & 0xFF;
@@ -118,22 +118,25 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     if (!SliceArray<byte>::isValid(output))
         throw IllegalArgumentException("Invalid output block");
 
-    // init arrays
     int32 freqs[256];
     const int headerSize = decodeHeader(&input._array[input._index], freqs);
     input._index += headerSize;
+    length -= headerSize;
     byte* src = &input._array[input._index];
-    byte symbols[256];
+    uint8 symbols[256];
+
+    // init arrays
     int nbSymbols = preprocess(freqs, symbols);
+
     int32 buckets[256];
     int32 bucketEnds[256];
     uint8 r2s[256];
 
     for (int i = 0, bucketPos = 0; i < nbSymbols; i++) {
-        uint8 c = uint8(symbols[i]);
-        r2s[src[bucketPos]] = c;
+        const uint8 c = symbols[i];
+        r2s[src[bucketPos] & 0xFF] = c;
         buckets[c] = bucketPos + 1;
-        bucketPos += int(freqs[c]);
+        bucketPos += freqs[c];
         bucketEnds[c] = bucketPos;
     }
 
@@ -145,7 +148,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         dst[i] = c;
 
         if (buckets[c] < bucketEnds[c]) {
-            int r = src[buckets[c]] & 0xFF;
+            const int r = src[buckets[c]] & 0xFF;
             buckets[c]++;
 
             if (r == 0)
@@ -158,10 +161,10 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             c = r2s[0];
         }
         else {
-            nbSymbols--;
-
             if (nbSymbols == 0)
                 continue;
+            
+            nbSymbols--;
 
             for (int s = 0; s < nbSymbols; s++)
                 r2s[s] = r2s[s + 1];
@@ -175,7 +178,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     return true;
 }
 
-int SRT::preprocess(int32 freqs[], byte symbols[])
+int SRT::preprocess(int32 freqs[], uint8 symbols[])
 {
     int nbSymbols = 0;
 
@@ -183,7 +186,7 @@ int SRT::preprocess(int32 freqs[], byte symbols[])
         if (freqs[i] == 0)
             continue;
 
-        symbols[nbSymbols] = byte(i);
+        symbols[nbSymbols] = uint8(i);
         nbSymbols++;
     }
 
@@ -196,10 +199,11 @@ int SRT::preprocess(int32 freqs[], byte symbols[])
         h /= 3;
 
         for (int i = h; i < nbSymbols; i++) {
-            int t = symbols[i];
+            uint8 t = symbols[i];
             int b;
 
-            for (b = i - h; (b >= 0) && ((freqs[symbols[b]] < freqs[t]) || ((freqs[t] == freqs[symbols[b]]) && (t < symbols[b]))); b -= h) {
+            for (b = i - h; (b >= 0) && ((freqs[symbols[b]] < freqs[t]) || 
+              ((freqs[t] == freqs[symbols[b]]) && (t < (symbols[b])))); b -= h) {
                 symbols[b + h] = symbols[b];
             }
 
@@ -212,11 +216,11 @@ int SRT::preprocess(int32 freqs[], byte symbols[])
 
 int SRT::encodeHeader(int32 freqs[], byte dst[])
 {
-    for (int i = 0; i < 256; i++) {
-        dst[4 * i] = byte(freqs[i] >> 24);
-        dst[4 * i + 1] = byte(freqs[i] >> 16);
-        dst[4 * i + 2] = byte(freqs[i] >> 8);
-        dst[4 * i + 3] = byte(freqs[i]);
+    for (int i = 0, j = 0; i < 256; i++, j += 4) {
+        dst[j] = byte(freqs[i] >> 24);
+        dst[j + 1] = byte(freqs[i] >> 16);
+        dst[j + 2] = byte(freqs[i] >> 8);
+        dst[j + 3] = byte(freqs[i]);
     }
 
     return HEADER_SIZE;
@@ -224,12 +228,12 @@ int SRT::encodeHeader(int32 freqs[], byte dst[])
 
 int SRT::decodeHeader(byte src[], int32 freqs[])
 {
-    for (int i = 0; i < 256; i++) {
-        const uint32 f1 = uint32(src[4 * i]);
-        const uint32 f2 = uint32(src[4 * i + 1]);
-        const uint32 f3 = uint32(src[4 * i + 2]);
-        const uint32 f4 = uint32(src[4 * i + 3]);
-        freqs[i] = int32((f1 << 24) | (f2 << 16) | (f3 << 8) | f4);
+    for (int i = 0, j = 0; i < 1024; i += 4, j++) {
+        const int f1 = src[i] & 0xFF;
+        const int f2 = src[i + 1] & 0xFF;
+        const int f3 = src[i + 2] & 0xFF;
+        const int f4 = src[i + 3] & 0xFF;
+        freqs[j] = int32((f1 << 24) | (f2 << 16) | (f3 << 8) | f4);
     }
 
     return HEADER_SIZE;
