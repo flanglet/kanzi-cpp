@@ -57,7 +57,7 @@ APP_OBJECTS=$(APP_SOURCES:.cpp=.o)
 
 SOURCES=$(LIB_SOURCES) $(APP_SOURCES)
 OBJECTS=$(SOURCES:.cpp=.o)
-TESTS=testBWT testMTFT \
+TESTS=testBWT testTransforms \
 	testEntropyCodec testDefaultBitStream \
         testFunctions
 
@@ -93,7 +93,7 @@ $(SHARED_LIB):$(LIB_OBJECTS)
 testBWT: $(LIB_OBJECTS) test/TestBWT.o
 	$(CC) $^ -o ../bin/$@ $(LDFLAGS)
 
-testMTFT: $(LIB_OBJECTS) test/TestMTFT.o
+testTransforms: $(LIB_OBJECTS) test/TestTransforms.o
 	$(CC) $^ -o ../bin/$@ $(LDFLAGS)
 
 testEntropyCodec: $(LIB_OBJECTS) test/TestEntropyCodec.o
