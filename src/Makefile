@@ -46,7 +46,7 @@ TEST_SOURCES=test/TestEntropyCodec.cpp \
 	test/TestBWT.cpp \
 	test/TestDefaultBitStream.cpp \
 	test/TestFunctions.cpp \
-	test/TestMTFT.cpp 
+	test/TestTransforms.cpp 
 TEST_OBJECTS=$(TEST_SOURCES:.cpp=.o)
 
 APP_SOURCES=app/Kanzi.cpp \
