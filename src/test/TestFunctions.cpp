@@ -62,6 +62,7 @@ int testFunctionsCorrectness(const string& name)
     cout << endl
          << "Correctness for " << name << endl;
     int mod = (name == "ZRLT") ? 5 : 256;
+    int res = 0;
 
     for (int ii = 0; ii < 20; ii++) {
         cout << endl
@@ -202,7 +203,8 @@ int testFunctionsCorrectness(const string& name)
 
             cout << endl
                  << "Encoding error" << endl;
-            return 1;
+            res = 1;
+            goto End;
         }
 
         if (iba1._index != size) {
@@ -227,8 +229,8 @@ int testFunctionsCorrectness(const string& name)
 
         if (f->inverse(iba2, iba3, count) == false) {
             cout << "Decoding error" << endl;
-            delete f;
-            return 1;
+            res = 1;
+            goto End;
         }
 
         cout << "Decoded: " << endl;
@@ -241,10 +243,10 @@ int testFunctionsCorrectness(const string& name)
         for (int i = 0; i < size; i++) {
             if (input[i] != reverse[i]) {
                 cout << "Different (index " << i << ": ";
-                cout << (int)input[i] << " - " << (reverse[i] & 255);
+                cout << (input[i] & 255) << " - " << (reverse[i] & 255);
                 cout << ")" << endl;
-                delete f;
-                return 1;
+                res = 1;
+                goto End;
             }
         }
 
@@ -252,13 +254,14 @@ int testFunctionsCorrectness(const string& name)
              << "Identical" << endl
              << endl;
 
+End:
         delete f;
         delete[] input;
         delete[] output;
         delete[] reverse;
     }
 
-    return 0;
+    return res;
 }
 
 int testFunctionsSpeed(const string& name)
