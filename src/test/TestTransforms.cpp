@@ -21,37 +21,25 @@ limitations under the License.
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
-#include "../function/SRT.hpp"
-#include "../function/RLT.hpp"
-#include "../function/ZRLT.hpp"
-#include "../function/LZ4Codec.hpp"
-#include "../function/ROLZCodec.hpp"
-#include "../function/SnappyCodec.hpp"
+#include "../types.hpp"
+#include "../transform/SBRT.hpp"
+#include "../transform/BWTS.hpp"
 
 using namespace std;
 using namespace kanzi;
 
-static Function<byte>* getByteFunction(string name)
+static Transform<byte>* getByteTransform(string name)
 {
-    if (name.compare("SRT") == 0)
-        return new SRT();
+    if (name.compare("RANK") == 0)
+        return new SBRT(SBRT::MODE_RANK);
 
-    if (name.compare("RLT") == 0)
-        return new RLT();
+    if (name.compare("MTFT") == 0)
+       return new SBRT(SBRT::MODE_MTF);
 
-    if (name.compare("ZRLT") == 0)
-        return new ZRLT();
+    if (name.compare("BWTS") == 0)
+        return new BWTS();
 
-    if (name.compare("LZ4") == 0)
-        return new LZ4Codec();
-
-    if (name.compare("SNAPPY") == 0)
-        return new SnappyCodec();
-
-    if (name.compare("ROLZ") == 0)
-        return new ROLZCodec();
-
-    cout << "No such byte function: " << name << endl;
+    cout << "No such byte transform: " << name << endl;
     return nullptr;
 }
 
@@ -61,7 +49,7 @@ int testFunctionsCorrectness(const string& name)
 
     cout << endl
          << "Correctness for " << name << endl;
-    int mod = (name == "ZRLT") ? 5 : 256;
+    int mod = 256;
 
     for (int ii = 0; ii < 20; ii++) {
         cout << endl
@@ -101,7 +89,7 @@ int testFunctionsCorrectness(const string& name)
                 arr[2 * i + 1] = byte(i);
             }
 
-            arr[1] = byte(255); // force RLT escape to be first symbol
+            arr[1] = byte(255); 
             memcpy(values, &arr[0], size);
         }
         else if (ii == 4) {
@@ -139,7 +127,7 @@ int testFunctionsCorrectness(const string& name)
             size = 512;
             byte arr[512];
 
-            // Leave zeros at the beginning for ZRLT to succeed
+            // Leave zeros at the beginning 
             for (int j = 20; j < 512; j++)
                 arr[j] = byte(rand() % mod);
 
@@ -149,7 +137,7 @@ int testFunctionsCorrectness(const string& name)
             size = 1024;
             byte arr[1024];
 
-            // Leave zeros at the beginning for ZRLT to succeed
+            // Leave zeros at the beginning 
             int idx = 20;
 
             while (idx < 1024) {
@@ -170,18 +158,18 @@ int testFunctionsCorrectness(const string& name)
             memcpy(values, &arr[0], size);
         }
 
-        Function<byte>* f = getByteFunction(name);
+        Transform<byte>* f = getByteTransform(name);
         
         if (f == nullptr)
             exit(1);
 
         byte* input = new byte[size];
-        byte* output = new byte[f->getMaxEncodedLength(size)];
+        byte* output = new byte[size];
         byte* reverse = new byte[size];
         SliceArray<byte> iba1(input, size, 0);
-        SliceArray<byte> iba2(output, f->getMaxEncodedLength(size), 0);
+        SliceArray<byte> iba2(output, size, 0);
         SliceArray<byte> iba3(reverse, size, 0);
-        memset(output, 0xAA, f->getMaxEncodedLength(size));
+        memset(output, 0xAA, size);
         memset(reverse, 0xAA, size);
 
         for (int i = 0; i < size; i++)
@@ -205,12 +193,6 @@ int testFunctionsCorrectness(const string& name)
             return 1;
         }
 
-        if (iba1._index != size) {
-            cout << endl
-                 << "No compression (ratio > 1.0), skip reverse" << endl;
-            continue;
-        }
-
         delete f;
         cout << endl;
         cout << "Coded: " << endl;
@@ -219,7 +201,7 @@ int testFunctionsCorrectness(const string& name)
             cout << (output[i] & 255) << " ";
 
         cout << " (Compression ratio: " << (iba2._index * 100 / size) << "%)" << endl;
-        f = getByteFunction(name);
+        f = getByteTransform(name);
         int count = iba2._index;
         iba1._index = 0;
         iba2._index = 0;
@@ -265,7 +247,7 @@ int testFunctionsSpeed(const string& name)
 {
     // Test speed
     srand((uint)time(nullptr));
-    int iter = (name.rfind("ROLZ", 0) == 0) ? 2000 : ((name == "SRT") ? 4000 : 50000);
+    int iter = 4000;
     int size = 30000;
     cout << endl
          << endl
@@ -275,20 +257,20 @@ int testFunctionsSpeed(const string& name)
     byte input[50000];
     byte output[50000];
     byte reverse[50000];
-    Function<byte>* f = getByteFunction(name);
+    Transform<byte>* f = getByteTransform(name);
     
     if (f == nullptr)
        exit(1);
 
     SliceArray<byte> iba1(input, size, 0);
-    SliceArray<byte> iba2(output, f->getMaxEncodedLength(size), 0);
+    SliceArray<byte> iba2(output, size, 0);
     SliceArray<byte> iba3(reverse, size, 0);
-    int mod = (name == "ZRLT") ? 5 : 256;
+    int mod = 256;
     delete f;
 
     for (int jj = 0; jj < 3; jj++) {
         // Generate random data with runs
-        // Leave zeros at the beginning for ZRLT to succeed
+        // Leave zeros at the beginning
         int n = iter / 20;
 
         while (n < size) {
@@ -306,13 +288,12 @@ int testFunctionsSpeed(const string& name)
         double delta2 = 0;
 
         for (int ii = 0; ii < iter; ii++) {
-            Function<byte>* f = getByteFunction(name);
+            Transform<byte>* f = getByteTransform(name);
             iba1._index = 0;
             iba2._index = 0;
             before = clock();
 
             if (f->forward(iba1, iba2, size) == false) {
-                // ZRLT may fail if the input data has too few 0s
                 cout << "Encoding error" << endl;
                 delete f;
                 continue;
@@ -324,7 +305,7 @@ int testFunctionsSpeed(const string& name)
         }
 
         for (int ii = 0; ii < iter; ii++) {
-            Function<byte>* f = getByteFunction(name);
+            Transform<byte>* f = getByteTransform(name);
             int count = iba2._index;
             iba3._index = 0;
             iba2._index = 0;
@@ -372,7 +353,7 @@ int testFunctionsSpeed(const string& name)
 #ifdef __GNUG__
 int main(int argc, const char* argv[])
 #else
-int TestFunctions_main(int argc, const char* argv[])
+int TestTransforms_main(int argc, const char* argv[])
 #endif
 {
     string str;
@@ -392,34 +373,19 @@ int TestFunctions_main(int argc, const char* argv[])
         if (str.compare("ALL") == 0) {
             cout << endl
                  << endl
-                 << "TestLZ4" << endl;
-            testFunctionsCorrectness("LZ4");
-            testFunctionsSpeed("LZ4");
+                 << "TestRANK" << endl;
+            testFunctionsCorrectness("RANK");
+            testFunctionsSpeed("RANK");
             cout << endl
                  << endl
-                 << "TestROLZ" << endl;
-            testFunctionsCorrectness("ROLZ");
-            testFunctionsSpeed("ROLZ");
+                 << "TestMTFT" << endl;
+            testFunctionsCorrectness("MTFT");
+            testFunctionsSpeed("MTFT");
             cout << endl
                  << endl
-                 << "TestSRT" << endl;
-            testFunctionsCorrectness("SRT");
-            testFunctionsSpeed("SRT");
-            cout << endl
-                 << endl
-                 << "TestSnappy" << endl;
-            testFunctionsCorrectness("SNAPPY");
-            testFunctionsSpeed("SNAPPY");
-            cout << endl
-                 << endl
-                 << "TestRLT" << endl;
-            testFunctionsCorrectness("RLT");
-            testFunctionsSpeed("RLT");
-            cout << endl
-                 << endl
-                 << "TestZRLT" << endl;
-            testFunctionsCorrectness("ZRLT");
-            testFunctionsSpeed("ZRLT");
+                 << "TestBWTS" << endl;
+            testFunctionsCorrectness("BWTS");
+            testFunctionsSpeed("BWTS");            
         }
         else {
             cout << "Test" << str << endl;

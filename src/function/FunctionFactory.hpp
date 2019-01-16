@@ -10,7 +10,7 @@
 #include "../transform/BWT.hpp"
 #include "../transform/BWTS.hpp"
 #include "../transform/SBRT.hpp"
-#include "BRT.hpp"
+#include "SRT.hpp"
 #include "BWTBlockCodec.hpp"
 #include "LZ4Codec.hpp"
 #include "NullFunction.hpp"
@@ -41,7 +41,7 @@ namespace kanzi {
 		static const uint64 DICT_TYPE = 10; // Text codec
 		static const uint64 ROLZ_TYPE = 11; // ROLZ codec
 		static const uint64 ROLZX_TYPE = 12; // ROLZ Extra codec
-		static const uint64 BRT_TYPE = 13; // Behemoth Rank
+		static const uint64 SRT_TYPE = 13; // Sorted Rank
 
 		static uint64 getType(const char* name) THROW;
 
@@ -136,8 +136,8 @@ namespace kanzi {
 		if (name.compare("RLT") == 0)
 			return RLT_TYPE;
 
-		if (name.compare("BRT") == 0)
-			return BRT_TYPE;
+		if (name.compare("SRT") == 0)
+			return SRT_TYPE;
 
 		if (name.compare("RANK") == 0)
 			return RANK_TYPE;
@@ -212,8 +212,8 @@ namespace kanzi {
 		case RANK_TYPE:
 			return new SBRT(SBRT::MODE_RANK);
 
-		case BRT_TYPE:
-			return new BRT();
+		case SRT_TYPE:
+			return new SRT();
 
       case MTFT_TYPE:
 			return new SBRT(SBRT::MODE_MTF);
@@ -294,8 +294,8 @@ namespace kanzi {
 		case RLT_TYPE:
 			return "RLT";
 
-		case BRT_TYPE:
-			return "BRT";
+		case SRT_TYPE:
+			return "SRT";
 
 		case RANK_TYPE:
 			return "RANK";

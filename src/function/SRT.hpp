@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _BRT_
-#define _BRT_
+#ifndef _SRT_
+#define _SRT_
 
 #include "../Function.hpp"
 
@@ -24,11 +24,11 @@ namespace kanzi {
    // by Lucas Marsh. Typically used post BWT to reduce the variance of the data 
    // prior to entropy coding.
 
-   class BRT : public Function<byte> {
+   class SRT : public Function<byte> {
    public:
-       BRT() {}
+       SRT() {}
 
-       ~BRT() {}
+       ~SRT() {}
 
        bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;
 
@@ -37,15 +37,13 @@ namespace kanzi {
        int getMaxEncodedLength(int srcLen) const { return srcLen + HEADER_SIZE; }
 
    private:
-       static const int HEADER_SIZE = 1024 + 1; // 4*256 freqs + 1 nbSymbols
+       static const int HEADER_SIZE = 4 * 256; // freqs
 
-       static void sortMap(int32 freqs[], uint8 map[]);
+       static int preprocess(int32 freqs[], byte symbols[]);
 
-       static int computeFrequencies(SliceArray<byte>& input, int length, int32 freqs[], int32 ranks[]);
+       static int encodeHeader(int32 freqs[], byte dst[]);
 
-       static int encodeHeader(byte block[], int32 freqs[], int nbSymbols);
-
-       static int decodeHeader(byte block[], int32 freqs[], int& nbSymbols, int& total);
+       static int decodeHeader(byte src[], int32 freqs[]);
    };
 }
 #endif

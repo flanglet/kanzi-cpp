@@ -31,12 +31,12 @@ LIB_SOURCES=Global.cpp \
 	entropy/CMPredictor.cpp \
 	entropy/FPAQPredictor.cpp \
 	entropy/TPAQPredictor.cpp \
-	function/BRT.cpp \
 	function/BWTBlockCodec.cpp \
 	function/LZ4Codec.cpp \
 	function/ROLZCodec.cpp \
 	function/RLT.cpp \
 	function/SnappyCodec.cpp \
+	function/SRT.cpp \
 	function/TextCodec.cpp \
 	function/X86Codec.cpp \
 	function/ZRLT.cpp 
