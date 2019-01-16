@@ -43,7 +43,7 @@ static Transform<byte>* getByteTransform(string name)
     return nullptr;
 }
 
-int testFunctionsCorrectness(const string& name)
+int testTransformsCorrectness(const string& name)
 {
     srand((uint)time(nullptr));
 
@@ -243,7 +243,7 @@ int testFunctionsCorrectness(const string& name)
     return 0;
 }
 
-int testFunctionsSpeed(const string& name)
+int testTransformsSpeed(const string& name)
 {
     // Test speed
     srand((uint)time(nullptr));
@@ -374,23 +374,23 @@ int TestTransforms_main(int argc, const char* argv[])
             cout << endl
                  << endl
                  << "TestRANK" << endl;
-            testFunctionsCorrectness("RANK");
-            testFunctionsSpeed("RANK");
+            testTransformsCorrectness("RANK");
+            testTransformsSpeed("RANK");
             cout << endl
                  << endl
                  << "TestMTFT" << endl;
-            testFunctionsCorrectness("MTFT");
-            testFunctionsSpeed("MTFT");
+            testTransformsCorrectness("MTFT");
+            testTransformsSpeed("MTFT");
             cout << endl
                  << endl
                  << "TestBWTS" << endl;
-            testFunctionsCorrectness("BWTS");
-            testFunctionsSpeed("BWTS");            
+            testTransformsCorrectness("BWTS");
+            testTransformsSpeed("BWTS");            
         }
         else {
             cout << "Test" << str << endl;
-            testFunctionsCorrectness(str);
-            testFunctionsSpeed(str);
+            testTransformsCorrectness(str);
+            testTransformsSpeed(str);
         }
     }
 
