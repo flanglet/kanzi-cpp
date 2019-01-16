@@ -193,9 +193,6 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
 // When count < 1<<24
 bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-    byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
-
     // Lazy dynamic memory allocation
     if ((_buffer1 == nullptr) || (_bufferSize < count)) {
         if (_buffer1 != nullptr)
@@ -205,15 +202,19 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
         _buffer1 = new uint32[_bufferSize];
     }
 
-    // Aliasing
-    uint32* data = _buffer1;
-
-    int chunks = getBWTChunks(count);
-    uint32 buckets[256] = { 0 };
+    byte* src = &input._array[input._index];
+    byte* dst = &output._array[output._index];
+    const int chunks = getBWTChunks(count);
 
     // Build array of packed index + value (assumes block size < 2^24)
     // Start with the primary index position
-    int pIdx = getPrimaryIndex(0);
+    const int pIdx = getPrimaryIndex(0);
+
+    if (pIdx >= count)
+       return false;
+
+    uint32 buckets[256] = { 0 };
+    uint32* data = _buffer1;
     const uint8 val0 = src[pIdx];
     data[pIdx] = val0;
     buckets[val0]++;
@@ -300,9 +301,6 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
 // When count >= 1<<24 and 5*count < 1<<31
 bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-    byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
-
     // Lazy dynamic memory allocations
     if ((_buffer2 == nullptr) || (_bufferSize < 5 * count)) {
         if (_buffer2 != nullptr)
@@ -312,16 +310,20 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
         _buffer2 = new byte[_bufferSize];
     }
 
-    // Aliasing
-    byte* data = _buffer2;
-
-    int chunks = getBWTChunks(count);
-    uint32 buckets[256] = { 0 };
+    byte* src = &input._array[input._index];
+    byte* dst = &output._array[output._index];
+    const int chunks = getBWTChunks(count);
 
     // Build arrays
     // Start with the primary index position
-    int pIdx = getPrimaryIndex(0);
+    const int pIdx = getPrimaryIndex(0);
+
+    if (pIdx >= count)
+       return false;
+
     const uint8 val0 = src[pIdx];
+    byte* data = _buffer2;
+    uint32 buckets[256] = { 0 };
     LittleEndian::writeInt32(&data[5 * pIdx], buckets[val0]);
     data[5 * pIdx + 4] = val0;
     buckets[val0]++;
@@ -413,9 +415,6 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
 // When 5*count >= 1<<31
 bool BWT::inverseHugeBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-    byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
-
     // Lazy dynamic memory allocations
     if ((_buffer1 == nullptr) || (_bufferSize < count)) {
         if (_buffer1 != nullptr)
@@ -429,19 +428,23 @@ bool BWT::inverseHugeBlock(SliceArray<byte>& input, SliceArray<byte>& output, in
         _buffer2 = new byte[_bufferSize];
     }
 
-    // Aliasing
-    uint32* buckets = _buckets;
-    uint32* data1 = _buffer1;
-    byte* data2 = _buffer2;
-
-    int chunks = getBWTChunks(count);
-
-    // Initialize histogram
-    memset(_buckets, 0, sizeof(_buckets));
+    byte* src = &input._array[input._index];
+    byte* dst = &output._array[output._index];
+    const int chunks = getBWTChunks(count);
 
     // Build arrays
     // Start with the primary index position
-    int pIdx = getPrimaryIndex(0);
+    const int pIdx = getPrimaryIndex(0);
+    
+    if (pIdx >= count)
+       return false;
+
+    // Initialize histogram
+    uint32* buckets = _buckets;
+    memset(_buckets, 0, sizeof(_buckets));
+
+    uint32* data1 = _buffer1;
+    byte* data2 = _buffer2;
     const uint8 val0 = src[pIdx];
     data1[pIdx] = buckets[val0];
     data2[pIdx] = val0;
