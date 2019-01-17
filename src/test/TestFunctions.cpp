@@ -184,6 +184,7 @@ int testFunctionsCorrectness(const string& name)
         SliceArray<byte> iba3(reverse, size, 0);
         memset(output, 0xAA, f->getMaxEncodedLength(size));
         memset(reverse, 0xAA, size);
+        int count;
 
         for (int i = 0; i < size; i++)
             input[i] = byte(values[i] & 255);
@@ -222,7 +223,7 @@ int testFunctionsCorrectness(const string& name)
 
         cout << " (Compression ratio: " << (iba2._index * 100 / size) << "%)" << endl;
         f = getByteFunction(name);
-        int count = iba2._index;
+        count = iba2._index;
         iba1._index = 0;
         iba2._index = 0;
         iba3._index = 0;
