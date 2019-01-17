@@ -208,7 +208,7 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
 
     // Build array of packed index + value (assumes block size < 2^24)
     // Start with the primary index position
-    const int pIdx = getPrimaryIndex(0);
+    int pIdx = getPrimaryIndex(0);
 
     if (pIdx >= count)
        return false;
@@ -316,7 +316,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     // Build arrays
     // Start with the primary index position
-    const int pIdx = getPrimaryIndex(0);
+    int pIdx = getPrimaryIndex(0);
 
     if (pIdx >= count)
        return false;
@@ -434,7 +434,7 @@ bool BWT::inverseHugeBlock(SliceArray<byte>& input, SliceArray<byte>& output, in
 
     // Build arrays
     // Start with the primary index position
-    const int pIdx = getPrimaryIndex(0);
+    int pIdx = getPrimaryIndex(0);
     
     if (pIdx >= count)
        return false;
