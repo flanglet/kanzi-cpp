@@ -176,6 +176,7 @@ TPAQPredictor::TPAQPredictor(map<string, string>* ctx)
             mixersSize = (absz >= 1 * 1024 * 1024) ? 1 << 10 : 1 << 9;
     }
 
+    mixersSize <<= extraMem;
     statesSize <<= extraMem;
     hashSize <<= (2 * extraMem);
     _pr = 2048;
