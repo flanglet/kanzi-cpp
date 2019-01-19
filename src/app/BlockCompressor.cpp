@@ -543,7 +543,7 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         return;
 
     case 5:
-        tranformAndCodec[0] = "TEXT+BWT+RANK+ZRLT";
+        tranformAndCodec[0] = "TEXT+BWT+SRT+ZRLT";
         tranformAndCodec[1] = "FPAQ";
         return;
 

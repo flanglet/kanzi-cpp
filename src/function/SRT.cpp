@@ -154,9 +154,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             if (r == 0)
                 continue;
 
-            for (int s = 0; s < r; s++)
-                r2s[s] = r2s[s + 1];
-
+            memmove(&r2s[0], &r2s[1], r);
             r2s[r] = c;
             c = r2s[0];
         }
@@ -165,10 +163,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
                 continue;
             
             nbSymbols--;
-
-            for (int s = 0; s < nbSymbols; s++)
-                r2s[s] = r2s[s + 1];
-
+            memmove(&r2s[0], &r2s[1], nbSymbols);
             c = r2s[0];
         }
     }
