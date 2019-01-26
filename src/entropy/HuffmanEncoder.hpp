@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef _HuffmanEncoder_
 #define _HuffmanEncoder_
 
+#include "HuffmanCommon.hpp"
 #include "../EntropyEncoder.hpp"
 
 using namespace std;
@@ -24,17 +25,13 @@ namespace kanzi
 {
 
    // Implementation of a static Huffman encoder.
-   // Uses in place generation of canonical codes instead of a tree
    class HuffmanEncoder : public EntropyEncoder 
    {
    private:
-       static const int DEFAULT_CHUNK_SIZE = 1 << 16; // 64 KB by default
-       static const int MAX_SYMBOL_SIZE = 24;
-
        OutputBitStream& _bitstream;
        uint _freqs[256];
        uint _codes[256];
-       uint _ranks[256];
+       uint _alphabet[256];
        uint _sranks[256]; // sorted ranks
        uint _chunkSize;
 
@@ -45,7 +42,7 @@ namespace kanzi
        static void computeInPlaceSizesPhase2(uint data[], int n);
 
    public:
-       HuffmanEncoder(OutputBitStream& bitstream, int chunkSize=DEFAULT_CHUNK_SIZE) THROW;
+       HuffmanEncoder(OutputBitStream& bitstream, int chunkSize=HuffmanCommon::MAX_CHUNK_SIZE) THROW;
 
        ~HuffmanEncoder() { dispose(); }
 

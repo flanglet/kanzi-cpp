@@ -18,7 +18,6 @@ limitations under the License.
 #include <algorithm>
 #include <vector>
 #include "HuffmanEncoder.hpp"
-#include "HuffmanCommon.hpp"
 #include "EntropyUtils.hpp"
 #include "ExpGolombEncoder.hpp"
 #include "../BitStreamException.hpp"
@@ -52,11 +51,14 @@ inline bool FrequencyArrayComparator::operator()(int lidx, int ridx)
 // The default chunk size is 65536 bytes.
 HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW : _bitstream(bitstream)
 {
-    if ((chunkSize != 0) && (chunkSize < 1024))
+    if (chunkSize < 1024)
         throw IllegalArgumentException("The chunk size must be at least 1024");
 
-    if (chunkSize > 1 << 30)
-        throw IllegalArgumentException("The chunk size must be at most 2^30");
+    if (chunkSize > HuffmanCommon::MAX_CHUNK_SIZE) {
+        stringstream ss;
+        ss << "The chunk size must be at most" << HuffmanCommon::MAX_CHUNK_SIZE;
+        throw IllegalArgumentException(ss.str());
+    }
 
     _chunkSize = chunkSize;
 
@@ -66,7 +68,7 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW 
         _codes[i] = i;
     }
 
-    memset(_ranks, 0, sizeof(_ranks));
+    memset(_alphabet, 0, sizeof(_alphabet));
     memset(_sranks, 0, sizeof(_sranks));
 }
 
@@ -81,24 +83,11 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
         _codes[i] = 0;
 
         if (frequencies[i] > 0)
-            _ranks[count++] = i;
+            _alphabet[count++] = i;
     }
 
-    try {
-        if (count == 1) {
-            _sranks[0] = _ranks[0];
-            sizes[_ranks[0]] = 1;
-        }
-        else {
-            computeCodeLengths(frequencies, sizes, count);
-        }
-    }
-    catch (IllegalArgumentException& e) {
-        // Happens when a very rare symbol cannot be coded to due code length limit
-        throw BitStreamException(e.what(), BitStreamException::INVALID_STREAM);
-    }
-
-    EntropyUtils::encodeAlphabet(_bitstream, _ranks, 256, count);
+    EntropyUtils::encodeAlphabet(_bitstream, _alphabet, 256, count);
+    computeCodeLengths(frequencies, sizes, count);    
 
     // Transmit code lengths only, frequencies and codes do not matter
     // Unary encode the length difference
@@ -106,7 +95,7 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
     short prevSize = 2;
 
     for (int i = 0; i < count; i++) {
-        const short currSize = sizes[_ranks[i]];
+        const short currSize = sizes[_alphabet[i]];
         egenc.encodeByte(byte(currSize - prevSize));
         prevSize = currSize;
     }
@@ -119,8 +108,8 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
 
     // Pack size and code (size <= MAX_SYMBOL_SIZE bits)
     for (int i = 0; i < count; i++) {
-        const int r = _ranks[i];
-        _codes[r] |= (sizes[r] << 24);
+        const int s = _alphabet[i];
+        _codes[s] |= (sizes[s] << 24);
     }
 
     return count;
@@ -131,8 +120,14 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
 // count > 1 by design
 void HuffmanEncoder::computeCodeLengths(uint frequencies[], short sizes[], int count) THROW
 {
+    if (count == 1) {
+        _sranks[0] = _alphabet[0];
+        sizes[_alphabet[0]] = 1;
+        return;
+    }
+
     // Sort by increasing frequencies (first key) and increasing value (second key)
-    vector<uint> v(_ranks, _ranks + count);
+    vector<uint> v(_alphabet, _alphabet + count);
     FrequencyArrayComparator comparator(frequencies);
     sort(v.begin(), v.end(), comparator);
     memcpy(_sranks, &v[0], count*sizeof(uint));
@@ -147,9 +142,10 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], short sizes[], int c
     for (int i = 0; i < count; i++) {
         short codeLen = short(buffer[i]);
 
-        if ((codeLen <= 0) || (codeLen > MAX_SYMBOL_SIZE)) {
+        if ((codeLen <= 0) || (codeLen > HuffmanCommon::MAX_SYMBOL_SIZE)) {
             stringstream ss;
-            ss << "Could not generate codes: max code length (" << MAX_SYMBOL_SIZE;
+            ss << "Could not generate codes: max code length (";
+            ss << HuffmanCommon::MAX_SYMBOL_SIZE;
             ss << " bits) exceeded";
             throw IllegalArgumentException(ss.str());
         }

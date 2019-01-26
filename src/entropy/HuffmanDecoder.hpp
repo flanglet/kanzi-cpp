@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef _HuffmanDecoder_
 #define _HuffmanDecoder_
 
+#include "HuffmanCommon.hpp"
 #include "../EntropyDecoder.hpp"
 
 using namespace std;
@@ -28,10 +29,7 @@ namespace kanzi
    class HuffmanDecoder : public EntropyDecoder 
    {
    public:
-       static const int DECODING_BATCH_SIZE = 12; // in bits
-       static const int DECODING_MASK = (1 << DECODING_BATCH_SIZE) - 1;
-
-       HuffmanDecoder(InputBitStream& bitstream, int chunkSize=DEFAULT_CHUNK_SIZE) THROW;
+       HuffmanDecoder(InputBitStream& bitstream, int chunkSize=HuffmanCommon::MAX_CHUNK_SIZE) THROW;
 
        ~HuffmanDecoder() { dispose(); };
 
@@ -44,17 +42,17 @@ namespace kanzi
        void dispose(){};
 
    private:
+       static const int DECODING_BATCH_SIZE = 12; // in bits
+       static const int DECODING_MASK = (1 << DECODING_BATCH_SIZE) - 1;
        static const int MAX_DECODING_INDEX = (DECODING_BATCH_SIZE << 8) | 0xFF;
-       static const int DEFAULT_CHUNK_SIZE = 1 << 16; // 64 KB by default
        static const int SYMBOL_ABSENT = 0x7FFFFFFF;
-       static const int MAX_SYMBOL_SIZE = 24;
 
        InputBitStream& _bitstream;
        uint _codes[256];
-       uint _ranks[256];
+       uint _alphabet[256];
        uint16 _fdTable[1 << DECODING_BATCH_SIZE]; // Fast decoding table
        uint16 _sdTable[256]; // Slow decoding table
-       int _sdtIndexes[MAX_SYMBOL_SIZE + 1]; // Indexes for slow decoding table
+       int _sdtIndexes[HuffmanCommon::MAX_SYMBOL_SIZE + 1]; // Indexes for slow decoding table
        short _sizes[256];
        uint _chunkSize;
        uint64 _state; // holds bits read from bitstream

@@ -13,59 +13,49 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <algorithm>
-#include <cstring>
-#include <vector>
+
 #include "HuffmanCommon.hpp"
 
 using namespace kanzi;
 
-class CodeLengthArrayComparator {
-private:
-    short* _sizes;
-
-public:
-    CodeLengthArrayComparator(short sizes[]) { _sizes = sizes; }
-
-    ~CodeLengthArrayComparator() {}
-
-    bool operator()(int i, int j);
-};
-
-inline bool CodeLengthArrayComparator::operator()(int lidx, int ridx)
-{
-    // Check size (natural order) as first key
-    // Check index (natural order) as second key
-    return (_sizes[lidx] != _sizes[ridx]) ? _sizes[lidx] < _sizes[ridx] : lidx < ridx;
-}
-
 // Return the number of codes generated
-int HuffmanCommon::generateCanonicalCodes(short sizes[], uint codes[], uint ranks[], int count)
+int HuffmanCommon::generateCanonicalCodes(short sizes[], uint codes[], uint symbols[], int count)
 {
     // Sort by increasing size (first key) and increasing value (second key)
     if (count > 1) {
-        vector<uint> v(ranks, ranks + count);
-        CodeLengthArrayComparator comparator(sizes);
-        sort(v.begin(), v.end(), comparator);
-        memcpy(ranks, &v[0], count*sizeof(uint));
+        byte buf[BUFFER_SIZE] = { 0 };
+         
+        for (int i=0; i<count; i++)
+            buf[(sizes[symbols[i]] << 8) | symbols[i]] = 1;
+         
+        int n = 0;
+         
+        for (int i=0; i<BUFFER_SIZE; i++) {
+            if (buf[i] > 0) {
+               symbols[n++] = i & 0xFF;
+               
+               if (n == count)
+                  break;
+            }
+        }
     }
 
     int code = 0;
-    int len = sizes[ranks[0]];
+    int len = sizes[symbols[0]];
 
     for (int i = 0; i < count; i++) {
-        const int r = ranks[i];
+        const int s = symbols[i];
 
-        if (sizes[r] > len) {
-            code <<= (sizes[r] - len);
-            len = sizes[r];
+        if (sizes[s] > len) {
+            code <<= (sizes[s] - len);
+            len = sizes[s];
 
             // Max length reached
-            if (len > 24)
+            if (len > HuffmanCommon::MAX_SYMBOL_SIZE)
                 return -1;
         }
 
-        codes[r] = code;
+        codes[s] = code;
         code++;
     }
 
