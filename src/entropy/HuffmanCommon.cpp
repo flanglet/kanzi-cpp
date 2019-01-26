@@ -26,7 +26,7 @@ int HuffmanCommon::generateCanonicalCodes(short sizes[], uint codes[], uint symb
         byte buf[BUFFER_SIZE] = { 0 };
          
         for (int i=0; i<count; i++)
-            buf[(sizes[symbols[i]] << 8) | symbols[i]] = 1;
+            buf[((sizes[symbols[i]] - 1) << 8) | symbols[i]] = 1;
          
         int n = 0;
          
