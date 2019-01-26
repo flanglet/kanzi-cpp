@@ -51,6 +51,7 @@ int testTransformsCorrectness(const string& name)
          << "Correctness for " << name << endl;
     int mod = 256;
     int res = 0;
+    int count;
 
     for (int ii = 0; ii < 20; ii++) {
         cout << endl
@@ -204,7 +205,7 @@ int testTransformsCorrectness(const string& name)
 
         cout << " (Compression ratio: " << (iba2._index * 100 / size) << "%)" << endl;
         f = getByteTransform(name);
-        int count = iba2._index;
+        count = iba2._index;
         iba1._index = 0;
         iba2._index = 0;
         iba3._index = 0;
