@@ -60,7 +60,7 @@ inline int DefaultInputBitStream::readBit() THROW
 uint64 DefaultInputBitStream::readBits(uint count) THROW
 {
     if ((count == 0) || (count > 64))
-        throw BitStreamException("Invalid count: " + to_string(count) + " (must be in [1..64])");
+        throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
 
     uint64 res;
 
@@ -95,9 +95,6 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
 
     int remaining = count;
     int start = 0;
-
-    if (count == 0)
-       return 0;
 
     // Byte aligned cursor ?
     if ((_availBits & 7) == 0) {

@@ -127,14 +127,15 @@ inline void DefaultOutputBitStream::writeBit(int bit) THROW
 int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
 {
     if (count > 64)
-        throw BitStreamException("Invalid count: " + to_string(count) + " (must be in [1..64])");
+        throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
 
     if (count < uint(_availBits)) {
         // Enough spots available in 'current'
-        _current |= ((value & MASKS[count]) << (_availBits - count));
         _availBits -= int(count);
+        _current |= ((value & MASKS[count]) << _availBits);
     }
     else {
+        // Not enough spots available in 'current'
         const uint remaining = count - _availBits;
         value &= MASKS[count];
         _current |= (value >> remaining);
