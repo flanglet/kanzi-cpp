@@ -714,26 +714,26 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 
 	if (nbBinChars == 0)
 		res |= TextCodec::MASK_FULL_ASCII;
-	else if (nbBinChars <= count/100)
+	else if (nbBinChars <= count / 100)
 		res |= TextCodec::MASK_ALMOST_FULL_ASCII;
       
-	if (nbBinChars <= count-count/10){
+	if (nbBinChars <= count-count / 10) {
 		// Check if likely XML/HTML
 		// Another crude test: check that the frequencies of < and > are similar
 		// and 'high enough'. Also check it is worth to attempt replacing ampersand sequences.
 		// Getting this flag wrong results in a very small compression speed degradation.
 		const int32 f1 = freqs0['<'];
 		const int32 f2 = freqs0['>'];
-		int32 f3 = freqs['&']['a'] + freqs['&']['g'] + freqs['&']['l'] +freqs['&']['q'];
-		int32 minFreq = max((count - nbBinChars) >> 9, 2);         
+		const int32 f3 = freqs['&']['a'] + freqs['&']['g'] + freqs['&']['l'] + freqs['&']['q'];
+		const int32 minFreq = max((count - nbBinChars) >> 9, 2);         
          
-		if ((f1 >= minFreq) && (f2 >= minFreq) && (f3 > 0)){
+		if ((f1 >= minFreq) && (f2 >= minFreq) && (f3 > 0)) {
 			if (f1 < f2) { 
-				if (f1 >= f2-f2/100) 
+				if (f1 >= (f2 - f2 / 100)) 
 					res |= TextCodec::MASK_XML_HTML;
 			}
 			else if (f2 < f1)  {
-				if (f2 >= f1-f1/100)            
+				if (f2 >= (f1 - f1 / 100))            
 					res |= TextCodec::MASK_XML_HTML;
 			} 
 			else 
@@ -758,28 +758,22 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 
 inline bool TextCodec::sameWords(const byte src[], byte dst[], const int length)
 {
+	int n = 0;
+   
 	if (length >= 4) {
 		int32* p1 = (int32*)&dst[0];
 		int32* p2 = (int32*)&src[0];
-		int l = length;
 
-		while (l >= 4) {
+		while (n < length) {
 			if (*p1++ != *p2++)
 				return false;
 
-			l -= 4;
+			n += 4;
 		}
-
-		for (int i = length - l; i < length; i++) {
-			if (dst[i] != src[i])
-				return false;
-		}
-
-		return true;
 	}
 
-	for (int i = 0; i < length; i++) {
-		if (dst[i] != src[i])
+	for ( ; n < length; n++) {
+		if (dst[n] != src[n])
 			return false;
 	}
 
