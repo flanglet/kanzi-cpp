@@ -23,17 +23,19 @@ using namespace kanzi;
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats. 0 means that frequencies calculated at the
 // beginning of the block apply to the whole block.
-// The default chunk size is 65536 bytes.
 ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunkSize) THROW : _bitstream(bitstream)
 {
     if ((order != 0) && (order != 1))
-        throw IllegalArgumentException("The order must be 0 or 1");
+        throw IllegalArgumentException("ANS Codec: The order must be 0 or 1");
 
     if ((chunkSize != 0) && (chunkSize != -1) && (chunkSize < 1024))
-        throw IllegalArgumentException("The chunk size must be at least 1024");
+        throw IllegalArgumentException("ANS Codec: The chunk size must be at least 1024");
 
-    if (chunkSize > 1 << 27) // 8*chunkSize must not overflow
-        throw IllegalArgumentException("The chunk size must be at most 2^27");
+    if (chunkSize > MAX_CHUNK_SIZE) {
+        stringstream ss;
+        ss << "ANS Codec: The chunk size must be at most " << MAX_CHUNK_SIZE;
+        throw IllegalArgumentException(ss.str());
+    }
 
     if (chunkSize == -1)
         chunkSize = DEFAULT_ANS0_CHUNK_SIZE << (8 * order);
@@ -63,9 +65,16 @@ ANSRangeDecoder::~ANSRangeDecoder()
 
 int ANSRangeDecoder::decodeHeader(uint frequencies[])
 {
+    _logRange = int(8 + _bitstream.readBits(3));
+
+    if ((_logRange < 8) || (_logRange > 16)) {
+        stringstream ss;
+        ss << "ANS Codec: Invalid range: " << _logRange << " (must be in [8..16])";
+        throw IllegalArgumentException(ss.str());
+    }
+
     int res = 0;
     const int dim = 255 * _order + 1;
-    _logRange = int(8 + _bitstream.readBits(3));
     const int scale = 1 << _logRange;
 
     if (_f2sSize < dim * scale) {
@@ -219,9 +228,9 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
         uint8 prv = 0;
 
         for (int i = 0; i < end; i++) {
-            const byte cur = _f2s[(prv << _logRange) + (st & mask)];
+            const byte cur = _f2s[(prv << _logRange) | (st & mask)];
             block[i] = cur;
-            const ANSDecSymbol& sym = _symbols[(prv << 8) + uint8(cur)];
+            const ANSDecSymbol& sym = _symbols[(prv << 8) | uint8(cur)];
 
             // Compute next ANS state
             // D(x) = (s, q_s (x/M) + mod(x,M) - b_s) where s is such b_s <= x mod M < b_{s+1}

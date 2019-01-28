@@ -22,24 +22,23 @@ using namespace kanzi;
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats. 0 means that frequencies calculated at the
 // beginning of the block apply to the whole block.
-// The default chunk size is 65536 bytes.
 ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chunkSize, int logRange) THROW : _bitstream(bitstream)
 {
     if ((order != 0) && (order != 1))
-        throw IllegalArgumentException("The order must be 0 or 1");
+        throw IllegalArgumentException("ANS Codec: The order must be 0 or 1");
 
     if ((chunkSize != 0) && (chunkSize != -1) && (chunkSize < 1024))
-        throw IllegalArgumentException("The chunk size must be at least 1024");
+        throw IllegalArgumentException("ANS Codec: The chunk size must be at least 1024");
 
     if (chunkSize > MAX_CHUNK_SIZE) {
         stringstream ss;
-        ss << "The chunk size must be at most " << MAX_CHUNK_SIZE;
+        ss << "ANS Codec: The chunk size must be at most " << MAX_CHUNK_SIZE;
         throw IllegalArgumentException(ss.str());
     }
 
     if ((logRange < 8) || (logRange > 16)) {
         stringstream ss;
-        ss << "Invalid range: " << logRange << " (must be in [8..16])";
+        ss << "ANS Codec: Invalid range: " << logRange << " (must be in [8..16])";
         throw IllegalArgumentException(ss.str());
     }
 
@@ -203,7 +202,7 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
 
         for (int i = end - 2; i >= 0; i--) {
             const int cur = int(data[i]);
-            const ANSEncSymbol sym = _symbols[(cur << 8) + prv];
+            const ANSEncSymbol sym = _symbols[(cur << 8) | prv];
 
             while (st >= sym._xMax) {
                 *p-- = byte(st);
