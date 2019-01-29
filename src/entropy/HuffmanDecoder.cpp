@@ -35,7 +35,7 @@ HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) THROW :
 
     if (chunkSize > HuffmanCommon::MAX_CHUNK_SIZE) {
         stringstream ss;
-        ss << "The chunk size must be at most" << HuffmanCommon::MAX_CHUNK_SIZE;
+        ss << "The chunk size must be at most " << HuffmanCommon::MAX_CHUNK_SIZE;
         throw IllegalArgumentException(ss.str());
     }
 
@@ -150,17 +150,16 @@ void HuffmanDecoder::buildDecodingTables(int count)
 }
 
 // Use fastDecodeByte until the near end of chunk or block.
-int HuffmanDecoder::decode(byte block[], uint blkptr, uint len)
+int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
 {
-    if (len == 0)
+    if (count == 0)
         return 0;
 
     if (_minCodeLen == 0)
         return -1;
 
-    const int sz = (_chunkSize == 0) ? len : _chunkSize;
     int startChunk = blkptr;
-    const int end = blkptr + len;
+    const int end = blkptr + count;
 
     while (startChunk < end) {
         // Reinitialize the Huffman tables
@@ -173,7 +172,7 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint len)
         if (_minCodeLen * endPaddingSize != 64)
             endPaddingSize++;
 
-        const int endChunk = (startChunk + sz < end) ? startChunk + sz : end;
+        const int endChunk = (startChunk + _chunkSize < end) ? startChunk + _chunkSize : end;
         const int endChunk8 = max((endChunk - endPaddingSize) & -8, 0);
         int i = startChunk;
 
@@ -197,7 +196,7 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint len)
         startChunk = endChunk;
     }
 
-    return len;
+    return count;
 }
 
 byte HuffmanDecoder::slowDecodeByte(int code, int codeLen) THROW

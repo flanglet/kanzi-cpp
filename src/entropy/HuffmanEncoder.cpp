@@ -56,7 +56,7 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW 
 
     if (chunkSize > HuffmanCommon::MAX_CHUNK_SIZE) {
         stringstream ss;
-        ss << "The chunk size must be at most" << HuffmanCommon::MAX_CHUNK_SIZE;
+        ss << "The chunk size must be at most " << HuffmanCommon::MAX_CHUNK_SIZE;
         throw IllegalArgumentException(ss.str());
     }
 
@@ -204,18 +204,17 @@ void HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
 }
 
 // Dynamically compute the frequencies for every chunk of data in the block
-int HuffmanEncoder::encode(byte block[], uint blkptr, uint len)
+int HuffmanEncoder::encode(byte block[], uint blkptr, uint count)
 {
-    if (len == 0)
+    if (count == 0)
         return 0;
 
-    const int end = blkptr + len;
-    const int sz = (_chunkSize == 0) ? len : _chunkSize;
+    const int end = blkptr + count;
     int startChunk = blkptr;
     uint8* data = (uint8*) &block[0];
 
     while (startChunk < end) {
-        const int endChunk = (startChunk + sz < end) ? startChunk + sz : end;
+        const int endChunk = (startChunk + _chunkSize < end) ? startChunk + _chunkSize : end;
         const int endChunk3 = 3 * ((endChunk - startChunk) / 3) + startChunk;
         Global::computeHistogram(&block[startChunk], endChunk - startChunk, _freqs, true);
 
@@ -244,5 +243,5 @@ int HuffmanEncoder::encode(byte block[], uint blkptr, uint len)
         startChunk = endChunk;
     }
 
-    return len;
+    return count;
 }

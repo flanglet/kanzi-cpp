@@ -33,7 +33,7 @@ namespace kanzi
        uint _codes[256];
        uint _alphabet[256];
        uint _sranks[256]; // sorted ranks
-       uint _chunkSize;
+       int _chunkSize;
 
        void computeCodeLengths(uint frequencies[], short sizes[], int count) THROW;
 

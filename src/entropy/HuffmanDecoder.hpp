@@ -54,7 +54,7 @@ namespace kanzi
        uint16 _sdTable[256]; // Slow decoding table
        int _sdtIndexes[HuffmanCommon::MAX_SYMBOL_SIZE + 1]; // Indexes for slow decoding table
        short _sizes[256];
-       uint _chunkSize;
+       int _chunkSize;
        uint64 _state; // holds bits read from bitstream
        uint _bits; // hold number of unused bits in 'state'
        int _minCodeLen;
