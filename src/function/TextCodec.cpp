@@ -725,7 +725,7 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 		const int32 f1 = freqs0['<'];
 		const int32 f2 = freqs0['>'];
 		const int32 f3 = freqs['&']['a'] + freqs['&']['g'] + freqs['&']['l'] + freqs['&']['q'];
-		const int32 minFreq = max((count - nbBinChars) >> 9, 2);         
+		const int32 minFreq = (((count - nbBinChars) >> 9) < 2) ? 2 : (count - nbBinChars) >> 9;         
          
 		if ((f1 >= minFreq) && (f2 >= minFreq) && (f3 > 0)) {
 			if (f1 < f2) { 
