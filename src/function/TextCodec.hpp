@@ -174,7 +174,7 @@ namespace kanzi {
 
        static SliceArray<byte> unpackDictionary32(const byte dict[], int dictSize);
 
-       static bool sameWords(const byte src[], byte dst[], const int length);
+       static inline bool sameWords(const byte src[], byte dst[], const int length);
 
        static byte computeStats(byte block[], int count, int32 freqs[]);
 

@@ -717,7 +717,7 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 	else if (nbBinChars <= count / 100)
 		res |= TextCodec::MASK_ALMOST_FULL_ASCII;
       
-	if (nbBinChars <= count-count / 10) {
+	if (nbBinChars <= count - count / 10) {
 		// Check if likely XML/HTML
 		// Another crude test: check that the frequencies of < and > are similar
 		// and 'high enough'. Also check it is worth to attempt replacing ampersand sequences.
@@ -755,30 +755,36 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 
 	return res;
 }
-
 inline bool TextCodec::sameWords(const byte src[], byte dst[], const int length)
 {
-	int n = 0;
-   
 	if (length >= 4) {
 		int32* p1 = (int32*)&dst[0];
 		int32* p2 = (int32*)&src[0];
+		int n = length;
 
-		while (n < length) {
+		while (n >= 4) {
 			if (*p1++ != *p2++)
 				return false;
 
-			n += 4;
+			n -= 4;
 		}
+
+		for (int i = length - n; i < length; i++) {
+			if (dst[i] != src[i])
+				return false;
+		}
+
+		return true;
 	}
 
-	for ( ; n < length; n++) {
-		if (dst[n] != src[n])
+	for (int i = 0; i < length; i++) {
+		if (dst[i] != src[i])
 			return false;
 	}
 
 	return true;
 }
+
 
 
 TextCodec::TextCodec()
