@@ -43,8 +43,8 @@ namespace kanzi
 
    private:
        static const int DECODING_BATCH_SIZE = 12; // in bits
-       static const int DECODING_MASK0 = (1 << DECODING_BATCH_SIZE) - 1;
-       static const int DECODING_MASK1 = (1 << (HuffmanCommon::MAX_SYMBOL_SIZE + 1)) - 1;
+       static const int TABLE0_MASK = (1 << DECODING_BATCH_SIZE) - 1;
+       static const int TABLE1_MASK = (1 << (HuffmanCommon::MAX_SYMBOL_SIZE + 1)) - 1;
 
        InputBitStream& _bitstream;
        uint _codes[256];
