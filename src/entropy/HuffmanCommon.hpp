@@ -26,8 +26,8 @@ namespace kanzi
    class HuffmanCommon
    {
    public:
-       static const int MAX_CHUNK_SIZE = 1 << 16; 
-       static const int MAX_SYMBOL_SIZE = 20;
+       static const int MAX_CHUNK_SIZE = 1 << 15; 
+       static const int MAX_SYMBOL_SIZE = 18;
 
        static int generateCanonicalCodes(short sizes[], uint codes[], uint ranks[], int count);
 

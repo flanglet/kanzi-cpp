@@ -31,7 +31,7 @@ namespace kanzi
    public:
        HuffmanDecoder(InputBitStream& bitstream, int chunkSize=HuffmanCommon::MAX_CHUNK_SIZE) THROW;
 
-       ~HuffmanDecoder() { dispose(); };
+       ~HuffmanDecoder() { dispose(); delete[] _table1; };
 
        int readLengths() THROW;
 
@@ -39,20 +39,18 @@ namespace kanzi
 
        InputBitStream& getBitStream() const { return _bitstream; }
 
-       void dispose(){};
+       virtual void dispose() {};
 
    private:
        static const int DECODING_BATCH_SIZE = 12; // in bits
-       static const int DECODING_MASK = (1 << DECODING_BATCH_SIZE) - 1;
-       static const int MAX_DECODING_INDEX = (DECODING_BATCH_SIZE << 8) | 0xFF;
-       static const int SYMBOL_ABSENT = 0x7FFFFFFF;
+       static const int DECODING_MASK0 = (1 << DECODING_BATCH_SIZE) - 1;
+       static const int DECODING_MASK1 = (1 << (HuffmanCommon::MAX_SYMBOL_SIZE + 1)) - 1;
 
        InputBitStream& _bitstream;
        uint _codes[256];
        uint _alphabet[256];
-       uint16 _fdTable[1 << DECODING_BATCH_SIZE]; // Fast decoding table
-       uint16 _sdTable[256]; // Slow decoding table
-       int _sdtIndexes[HuffmanCommon::MAX_SYMBOL_SIZE + 1]; // Indexes for slow decoding table
+       uint16 _table0[TABLE0_MASK + 1]; // small decoding table: code -> size, symbol
+       uint16* _table1; // big decoding table: code -> size, symbol
        short _sizes[256];
        int _chunkSize;
        uint64 _state; // holds bits read from bitstream
@@ -61,9 +59,11 @@ namespace kanzi
 
        void buildDecodingTables(int count);
 
-       byte slowDecodeByte(int code, int codeLen) THROW;
+       byte slowDecodeByte() THROW;
 
        inline byte fastDecodeByte();
+
+       inline void fetchBits();
    };
 
 }

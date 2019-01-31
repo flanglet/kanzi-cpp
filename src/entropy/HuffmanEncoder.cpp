@@ -25,25 +25,6 @@ limitations under the License.
 
 using namespace kanzi;
 
-class FrequencyArrayComparator {
-private:
-    uint* _freqs;
-
-public:
-    FrequencyArrayComparator(uint freqs[]) { _freqs = freqs; }
-
-    ~FrequencyArrayComparator() {}
-
-    bool operator()(int i, int j);
-};
-
-inline bool FrequencyArrayComparator::operator()(int lidx, int ridx)
-{
-    // Check size (natural order) as first key
-    // Check index (natural order) as second key
-    return (_freqs[lidx] != _freqs[ridx]) ? _freqs[lidx] < _freqs[ridx] : lidx < ridx;
-}
-
 
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats. 0 means that frequencies calculated at the
@@ -52,11 +33,11 @@ inline bool FrequencyArrayComparator::operator()(int lidx, int ridx)
 HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW : _bitstream(bitstream)
 {
     if (chunkSize < 1024)
-        throw IllegalArgumentException("The chunk size must be at least 1024");
+        throw IllegalArgumentException("Huffman codec: The chunk size must be at least 1024");
 
     if (chunkSize > HuffmanCommon::MAX_CHUNK_SIZE) {
         stringstream ss;
-        ss << "The chunk size must be at most " << HuffmanCommon::MAX_CHUNK_SIZE;
+        ss << "Huffman codec: The chunk size must be at most " << HuffmanCommon::MAX_CHUNK_SIZE;
         throw IllegalArgumentException(ss.str());
     }
 
@@ -102,7 +83,7 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
 
     // Create canonical codes
     if (HuffmanCommon::generateCanonicalCodes(sizes, _codes, _sranks, count) < 0) {
-        throw BitStreamException("Could not generate codes: max code length (24 bits) exceeded",
+        throw BitStreamException("Could not generate Huffman codes: max code length (24 bits) exceeded",
             BitStreamException::INVALID_STREAM);
     }
 
@@ -125,15 +106,19 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], short sizes[], int c
         return;
     }
 
-    // Sort by increasing frequencies (first key) and increasing value (second key)
-    vector<uint> v(_alphabet, _alphabet + count);
-    FrequencyArrayComparator comparator(frequencies);
-    sort(v.begin(), v.end(), comparator);
-    memcpy(_sranks, &v[0], count*sizeof(uint));
+    // Sort _sranks by increasing frequencies (first key) and increasing value (second key)
+    for (int i = 0; i < count; i++)
+       _sranks[i] = (frequencies[_alphabet[i]] << 8) | _alphabet[i];
+    
+    vector<uint> v(_sranks, _sranks + count);
+    sort(v.begin(), v.end());
+    memcpy(_sranks, &v[0], count * sizeof(uint));
     uint buffer[256]; 
 
-    for (int i = 0; i < count; i++)
-        buffer[i] = frequencies[_sranks[i]];
+    for (int i = 0; i < count; i++) {
+        buffer[i] = _sranks[i] >> 8;
+        _sranks[i] &= 0xFF;
+    }
 
     computeInPlaceSizesPhase1(buffer, count);
     computeInPlaceSizesPhase2(buffer, count);
@@ -143,7 +128,7 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], short sizes[], int c
 
         if ((codeLen <= 0) || (codeLen > HuffmanCommon::MAX_SYMBOL_SIZE)) {
             stringstream ss;
-            ss << "Could not generate codes: max code length (";
+            ss << "Could not generate Huffman codes: max code length (";
             ss << HuffmanCommon::MAX_SYMBOL_SIZE;
             ss << " bits) exceeded";
             throw IllegalArgumentException(ss.str());

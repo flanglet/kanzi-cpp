@@ -31,11 +31,11 @@ using namespace kanzi;
 HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) THROW : _bitstream(bitstream)
 {
     if (chunkSize < 1024)
-        throw IllegalArgumentException("The chunk size must be at least 1024");
+       throw IllegalArgumentException("Huffman codec: The chunk size must be at least 1024");
 
     if (chunkSize > HuffmanCommon::MAX_CHUNK_SIZE) {
         stringstream ss;
-        ss << "The chunk size must be at most " << HuffmanCommon::MAX_CHUNK_SIZE;
+        ss << "Huffman codec: The chunk size must be at most " << HuffmanCommon::MAX_CHUNK_SIZE;
         throw IllegalArgumentException(ss.str());
     }
 
@@ -43,6 +43,7 @@ HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) THROW :
     _minCodeLen = 8;
     _state = 0;
     _bits = 0;
+    _table1 = new uint16[DECODING_MASK1 + 1];
 
     // Default lengths & canonical codes
     for (int i = 0; i < 256; i++) {
@@ -61,7 +62,6 @@ int HuffmanDecoder::readLengths() THROW
         return 0;
 
     ExpGolombDecoder egdec(_bitstream, true);
-    _minCodeLen = HuffmanCommon::MAX_SYMBOL_SIZE; // max code length
     int prevSize = 2;
 
     // Read lengths
@@ -84,9 +84,6 @@ int HuffmanDecoder::readLengths() THROW
             throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
         }
 
-        if (_minCodeLen > currSize)
-            _minCodeLen = currSize;
-
         _sizes[s] = short(currSize);
         prevSize = currSize;
     }
@@ -94,7 +91,7 @@ int HuffmanDecoder::readLengths() THROW
     // Create canonical codes
     if (HuffmanCommon::generateCanonicalCodes(_sizes, _codes, _alphabet, count) < 0) {
         stringstream ss;
-        ss << "Could not generate codes: max code length (";
+        ss << "Could not generate Huffman codes: max code length (";
         ss << HuffmanCommon::MAX_SYMBOL_SIZE;
         ss << " bits) exceeded";
         throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
@@ -105,46 +102,41 @@ int HuffmanDecoder::readLengths() THROW
     return count;
 }
 
-// Build decoding tables
-// The slow decoding table contains the codes in natural order.
-// The fast decoding table contains all the prefixes with DECODING_BATCH_SIZE bits.
 void HuffmanDecoder::buildDecodingTables(int count)
 {
-    memset(_fdTable, 0, sizeof(_fdTable));
-    memset(_sdTable, 0, sizeof(_sdTable));
-
-    for (int i = 0; i <= HuffmanCommon::MAX_SYMBOL_SIZE; i++)
-        _sdtIndexes[i] = SYMBOL_ABSENT;
+    _minCodeLen = _sizes[_alphabet[0]];
+    const int maxCodeLen = _sizes[_alphabet[count-1]];
+    memset(_table0, 0, sizeof(_table0));
+    memset(_table1, 0, sizeof(uint16)*(2<<maxCodeLen));
 
     int length = 0;
 
     for (int i = 0; i < count; i++) {
         const uint s = _alphabet[i];
-        const uint code = _codes[s];
 
-        if (_sizes[s] > length) {
+        if (_sizes[s] > length)
             length = _sizes[s];
-            _sdtIndexes[length] = i - code;
-        }
 
-        // Fill slow decoding table
+        // code -> size, symbol
         const uint16 val = uint16((_sizes[s] << 8) | s);
-        _sdTable[i] = val;
+        const uint code = _codes[s];
+        _table1[code] = val;
 
-        // Fill fast decoding table
-        // Find location index in table
-        if (length < DECODING_BATCH_SIZE) {
+        // All DECODING_BATCH_SIZE bit values read from the bit stream and
+        // starting with the same prefix point to symbol r
+        if (length <= DECODING_BATCH_SIZE) {
             uint idx = code << (DECODING_BATCH_SIZE - length);
-            const uint end = idx + (1 << (DECODING_BATCH_SIZE - length));
+            const uint end = (code + 1) << (DECODING_BATCH_SIZE - length);
 
-            // All DECODING_BATCH_SIZE bit values read from the bit stream and
-            // starting with the same prefix point to symbol r
             while (idx < end)
-               _fdTable[idx++] = val;
+               _table0[idx++] = val;
         }
         else {
-            const uint idx = code >> (length - DECODING_BATCH_SIZE);
-            _fdTable[idx] = val;
+            uint idx = code << (HuffmanCommon::MAX_SYMBOL_SIZE + 1 - length);
+            const uint end = (code + 1) << (HuffmanCommon::MAX_SYMBOL_SIZE + 1 - length);
+
+            while (idx < end)
+               _table1[idx++] = val;
         }
     }
 }
@@ -173,10 +165,10 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
             endPaddingSize++;
 
         const int endChunk = (startChunk + _chunkSize < end) ? startChunk + _chunkSize : end;
-        const int endChunk8 = max((endChunk - endPaddingSize) & -8, 0);
+        const int endChunk8 = startChunk + max((endChunk - startChunk - endPaddingSize) & -8, 0);
         int i = startChunk;
 
-        // Fast decoding (read DECODING_BATCH_SIZE bits at a time)
+        // Fast decoding 
         for (; i < endChunk8; i+=8)
         {
             block[i]   = fastDecodeByte();
@@ -188,10 +180,10 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
             block[i+6] = fastDecodeByte();
             block[i+7] = fastDecodeByte();
         }
-
+  
         // Fallback to regular decoding (read one bit at a time)
         for (; i < endChunk; i++)
-            block[i] = slowDecodeByte(0, 0);
+            block[i] = slowDecodeByte();
 
         startChunk = endChunk;
     }
@@ -199,51 +191,54 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
     return count;
 }
 
-byte HuffmanDecoder::slowDecodeByte(int code, int codeLen) THROW
+byte HuffmanDecoder::slowDecodeByte() THROW
 {
+    int code = 0;
+    int codeLen = uint16(0);
+    
     while (codeLen < HuffmanCommon::MAX_SYMBOL_SIZE) {
         codeLen++;
         code <<= 1;
 
-        if (_bits == 0)
+        if (_bits == 0) {
             code |= _bitstream.readBit();
+        }
         else {
-            // Consume remaining bits in 'state'
             _bits--;
             code |= ((_state >> _bits) & 1);
         }
 
-        const int idx = _sdtIndexes[codeLen];
-
-        if (idx == SYMBOL_ABSENT) // No code with this length ?
-            continue;
-
-        if ((_sdTable[idx + code] >> 8) == uint16(codeLen))
-            return byte(_sdTable[idx + code]);
+        if ((_table1[code] >> 8) == codeLen)
+            return byte(_table1[code]);
     }
 
     throw BitStreamException("Invalid bitstream: incorrect Huffman code",
         BitStreamException::INVALID_STREAM);
 }
 
-// 64 bits must be available in the bitstream
-inline byte HuffmanDecoder::fastDecodeByte()
+byte HuffmanDecoder::fastDecodeByte()
 {
-    if (_bits < DECODING_BATCH_SIZE) {
-        // Fetch more bits from bitstream       
-        const uint64 mask = uint64(1 << _bits) - 1; // for _bits = 0
-        _state = ((_state & mask) << (64 - _bits)) | _bitstream.readBits(64 - _bits);
-        _bits = 64;
-    }
+    if (_bits < DECODING_BATCH_SIZE) 
+        fetchBits();
 
-    // Retrieve symbol from fast decoding table
-    const int val = _fdTable[(_state >> (_bits - DECODING_BATCH_SIZE)) & DECODING_MASK];
+    // Use small table
+    int val = _table0[int(_state >> (_bits - DECODING_BATCH_SIZE)) & DECODING_MASK0];
 
-    if (val > MAX_DECODING_INDEX) {
-        _bits -= DECODING_BATCH_SIZE;
-        return slowDecodeByte(int(_state >> _bits) & DECODING_MASK, DECODING_BATCH_SIZE);
+    if (val == 0) {
+        if (_bits < HuffmanCommon::MAX_SYMBOL_SIZE + 1) 
+            fetchBits();
+
+        // Fallback to big table
+        val = _table1[int(_state >> (_bits - (HuffmanCommon::MAX_SYMBOL_SIZE + 1))) & DECODING_MASK1];
     }
 
     _bits -= (val >> 8);
     return byte(val);
+}
+
+void HuffmanDecoder::fetchBits()
+{
+    const uint64 mask = uint64(1 << _bits) - 1; // for _bits = 0
+    _state = ((_state & mask) << (64 - _bits)) | _bitstream.readBits(64 - _bits);
+    _bits = 64;
 }
