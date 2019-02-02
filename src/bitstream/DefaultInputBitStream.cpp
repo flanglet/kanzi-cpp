@@ -66,14 +66,7 @@ uint64 DefaultInputBitStream::readBits(uint count) THROW
 
     if (count <= uint(_availBits)) {
         // Enough spots available in 'current'
-        uint shift = _availBits - count;
-
-        if (_availBits == 0) {
-            pullCurrent();
-            shift += (_availBits - 64); // adjust if _availBits != 64 (end of stream)
-        }
-
-        res = (_current >> shift) & (uint64(-1) >> (64 - count));
+        res = (_current >> (_availBits - count)) & (uint64(-1) >> (64 - count));
         _availBits -= count;
     }
     else {
