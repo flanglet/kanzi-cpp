@@ -81,9 +81,9 @@ void DivSufSort::computeSuffixArray(byte input[], int sa[], int start, int lengt
     _buffer = (uint8*)&input[start];
     _sa = sa;
     reset();
-    int32 bucketA[256] = { 0 };
-    int32* bucketB = new int32[65536];
-    memset(&bucketB[0], 0, sizeof(int32) * 65536);
+    int bucketA[256] = { 0 };
+    int* bucketB = new int[65536];
+    memset(&bucketB[0], 0, sizeof(int) * 65536);
     const int m = sortTypeBstar(bucketA, bucketB, length);
     constructSuffixArray(bucketA, bucketB, length, m);
     delete[] bucketB;
@@ -158,9 +158,9 @@ int DivSufSort::computeBWT(byte input[], int sa[], int start, int length)
     _buffer = (uint8*)&input[start];
     _sa = sa;
     reset();
-    int32 bucketA[256] = { 0 };
-    int32* bucketB = new int32[65536];
-    memset(&bucketB[0], 0, sizeof(int32) * 65536);
+    int bucketA[256] = { 0 };
+    int* bucketB = new int[65536];
+    memset(&bucketB[0], 0, sizeof(int) * 65536);
     const int m = sortTypeBstar(bucketA, bucketB, length);
     return constructBWT(bucketA, bucketB, length, m);
     delete []bucketB;

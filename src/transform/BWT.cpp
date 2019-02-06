@@ -199,7 +199,7 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
             delete[] _buffer1;
 
         _bufferSize = count;
-        _buffer1 = new uint32[_bufferSize];
+        _buffer1 = new uint[_bufferSize];
     }
 
     byte* src = &input._array[input._index];
@@ -213,8 +213,8 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
     if (pIdx >= count)
        return false;
 
-    uint32 buckets[256] = { 0 };
-    uint32* data = _buffer1;
+    uint buckets[256] = { 0 };
+    uint* data = _buffer1;
     const uint8 val0 = src[pIdx];
     data[pIdx] = val0;
     buckets[val0]++;
@@ -231,7 +231,7 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
         buckets[val]++;
     }
 
-    uint32 sum = 0;
+    uint sum = 0;
 
     // Create cumulative histogram
     for (int i = 0; i < 256; i++) {
@@ -244,7 +244,7 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
     // Build inverse
     if ((chunks == 1) || (_jobs == 1)) {
         // Shortcut for 1 chunk scenario
-        uint32 ptr = data[pIdx];
+        uint ptr = data[pIdx];
         dst[idx--] = byte(ptr);
 
         for (; idx >= 0; idx--) {
@@ -254,7 +254,7 @@ bool BWT::inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output,
     }
 #ifdef CONCURRENCY_ENABLED
     else {
-        // Several chunks may be decoded concurrently (depending on the availaibility
+        // Several chunks may be decoded concurrently (depending on the availability
         // of jobs per block).
         const int st = count / chunks;
         const int step = (chunks*st == count) ? st : st + 1;
@@ -323,7 +323,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     const uint8 val0 = src[pIdx];
     byte* data = _buffer2;
-    uint32 buckets[256] = { 0 };
+    uint buckets[256] = { 0 };
     LittleEndian::writeInt32(&data[5 * pIdx], buckets[val0]);
     data[5 * pIdx + 4] = val0;
     buckets[val0]++;
@@ -342,7 +342,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
         buckets[val]++;
     }
 
-    uint32 sum = 0;
+    uint sum = 0;
 
     // Create cumulative histogram
     for (int i = 0; i < 256; i++) {
@@ -367,7 +367,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
     }
 #ifdef CONCURRENCY_ENABLED
     else {
-        // Several chunks may be decoded concurrently (depending on the availaibility
+        // Several chunks may be decoded concurrently (depending on the availability
         // of jobs per block).
         const int st = count / chunks;
         const int step = (chunks*st == count) ? st : st + 1;
@@ -424,7 +424,7 @@ bool BWT::inverseHugeBlock(SliceArray<byte>& input, SliceArray<byte>& output, in
             delete[] _buffer2;
 
         _bufferSize = count;
-        _buffer1 = new uint32[_bufferSize];
+        _buffer1 = new uint[_bufferSize];
         _buffer2 = new byte[_bufferSize];
     }
 
@@ -440,10 +440,10 @@ bool BWT::inverseHugeBlock(SliceArray<byte>& input, SliceArray<byte>& output, in
        return false;
 
     // Initialize histogram
-    uint32* buckets = _buckets;
+    uint* buckets = _buckets;
     memset(_buckets, 0, sizeof(_buckets));
 
-    uint32* data1 = _buffer1;
+    uint* data1 = _buffer1;
     byte* data2 = _buffer2;
     const uint8 val0 = src[pIdx];
     data1[pIdx] = buckets[val0];
@@ -464,7 +464,7 @@ bool BWT::inverseHugeBlock(SliceArray<byte>& input, SliceArray<byte>& output, in
         buckets[val]++;
     }
 
-    uint32 sum = 0;
+    uint sum = 0;
 
     // Create cumulative histogram
     for (int i = 0; i < 256; i++) {
@@ -488,7 +488,7 @@ bool BWT::inverseHugeBlock(SliceArray<byte>& input, SliceArray<byte>& output, in
     }
 #ifdef CONCURRENCY_ENABLED
     else {
-        // Several chunks may be decoded concurrently (depending on the availaibility
+        // Several chunks may be decoded concurrently (depending on the availability
         // of jobs per block).
         const int st = count / chunks;
         const int step = (chunks*st == count) ? st : st + 1;
@@ -543,7 +543,7 @@ int BWT::getBWTChunks(int size)
 }
 
 template <class T>
-InverseRegularChunkTask<T>::InverseRegularChunkTask(uint32* buf, uint32* buckets, byte* output,
+InverseRegularChunkTask<T>::InverseRegularChunkTask(uint* buf, uint* buckets, byte* output,
     int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk)
 {
     _buffer = buf;
@@ -562,11 +562,11 @@ T InverseRegularChunkTask<T>::call() THROW
 {
     int idx = _startIdx;
     int pIdx = _pIdx0;
-    uint32* data = _buffer;
+    uint* data = _buffer;
     byte* dst = _dst;
 
     for (int i = _startChunk; i > _endChunk; i--) {
-        uint32 ptr = data[pIdx];
+        uint ptr = data[pIdx];
         dst[idx--] = byte(ptr);
         const int endIdx = i * _step;
         prefetchRead(&dst[idx]);
@@ -583,7 +583,7 @@ T InverseRegularChunkTask<T>::call() THROW
 }
 
 template <class T>
-InverseHugeChunkTask<T>::InverseHugeChunkTask(uint32* buf1, byte* buf2, uint32* buckets, byte* output,
+InverseHugeChunkTask<T>::InverseHugeChunkTask(uint* buf1, byte* buf2, uint* buckets, byte* output,
     int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk)
 {
     _buffer1 = buf1;
@@ -603,7 +603,7 @@ T InverseHugeChunkTask<T>::call() THROW
 {
     int idx = _startIdx;
     int pIdx = _pIdx0;
-    uint32* data1 = _buffer1;
+    uint* data1 = _buffer1;
     byte* data2 = _buffer2;
     byte* dst = _dst;
 
@@ -626,7 +626,7 @@ T InverseHugeChunkTask<T>::call() THROW
 }
 
 template <class T>
-InverseBigChunkTask<T>::InverseBigChunkTask(byte* buf, uint32* buckets, byte* output,
+InverseBigChunkTask<T>::InverseBigChunkTask(byte* buf, uint* buckets, byte* output,
     int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk)
 {
     _buffer = buf;

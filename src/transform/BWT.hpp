@@ -62,8 +62,8 @@ namespace kanzi {
    template <class T>
    class InverseRegularChunkTask : public Task<T> {
    private:
-       uint32* _buffer;
-       uint32* _buckets;
+       uint* _buffer;
+       uint* _buckets;
        int* _primaryIndexes;
        byte* _dst;
        int _pIdx0;
@@ -73,7 +73,7 @@ namespace kanzi {
        int _endChunk;
 
    public:
-       InverseRegularChunkTask(uint32* buf, uint32* buckets, byte* output,
+       InverseRegularChunkTask(uint* buf, uint* buckets, byte* output,
            int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
        ~InverseRegularChunkTask() {}
 
@@ -84,7 +84,7 @@ namespace kanzi {
    class InverseBigChunkTask : public Task<T> {
    private:
        byte* _buffer;
-       uint32* _buckets;
+       uint* _buckets;
        int* _primaryIndexes;
        byte* _dst;
        int _pIdx0;
@@ -94,7 +94,7 @@ namespace kanzi {
        int _endChunk;
 
    public:
-       InverseBigChunkTask(byte* buf, uint32* buckets, byte* output,
+       InverseBigChunkTask(byte* buf, uint* buckets, byte* output,
            int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
        ~InverseBigChunkTask() {}
 
@@ -104,9 +104,9 @@ namespace kanzi {
    template <class T>
    class InverseHugeChunkTask : public Task<T> {
    private:
-       uint32* _buffer1;
+       uint* _buffer1;
        byte* _buffer2;
-       uint32* _buckets;
+       uint* _buckets;
        int* _primaryIndexes;
        byte* _dst;
        int _pIdx0;
@@ -116,7 +116,7 @@ namespace kanzi {
        int _endChunk;
 
    public:
-       InverseHugeChunkTask(uint32* buf1, byte* buf2, uint32* buckets, byte* output,
+       InverseHugeChunkTask(uint* buf1, byte* buf2, uint* buckets, byte* output,
            int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
        ~InverseHugeChunkTask() {}
 
@@ -129,11 +129,11 @@ namespace kanzi {
        static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB
        static const int BWT_MAX_CHUNKS = 8;
 
-       uint32* _buffer1;  // inverse regular blocks
+       uint* _buffer1;  // inverse regular blocks
        byte* _buffer2;    // inverse big blocks
-       int* _buffer3;     // forward
+       int* _buffer3;   // forward
        int _bufferSize;
-       uint32 _buckets[256];
+       uint _buckets[256];
        int _primaryIndexes[8];
        DivSufSort _saAlgo;
        int _jobs;
