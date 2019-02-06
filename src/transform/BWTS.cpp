@@ -185,7 +185,7 @@ bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     }
 
     uint8* src = (uint8*) &input._array[input._index];
-    uint8* dst = (uint8*) &input._array[output._index];
+    uint8* dst = (uint8*) &output._array[output._index];
 
     // Lazy dynamic memory allocation
     if (_bufferSize < count) {
@@ -194,24 +194,21 @@ bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         _buffer1 = new int[_bufferSize];
     }
 
-    // Aliasing
-    int* buckets_ = _buckets;
-    int* lf = _buffer1;
-
     // Initialize histogram
-    memset(_buckets, 0, sizeof(_buckets));
-
-    for (int i = 0; i < count; i++)
-        buckets_[src[i]]++;
+    uint buckets[256] = { 0 };
+    Global::computeHistogram(&input._array[input._index], count, buckets, true);
 
     // Histogram
     for (int i = 0, sum = 0; i < 256; i++) {
-        sum += buckets_[i];
-        buckets_[i] = sum - buckets_[i];
+        sum += buckets[i];
+        buckets[i] = sum - buckets[i];
     }
 
+    // Aliasing
+    int* lf = _buffer1;
+
     for (int i = 0; i < count; i++)
-        lf[i] = buckets_[src[i]]++;
+        lf[i] = buckets[src[i]]++;
 
     // Build inverse
     for (int i = 0, j = count - 1; j >= 0; i++) {

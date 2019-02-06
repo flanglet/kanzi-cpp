@@ -36,7 +36,6 @@ namespace kanzi
        int* _buffer1;
        int* _buffer2;
        int _bufferSize;
-       int _buckets[256];
        DivSufSort _saAlgo;
 
        int moveLyndonWordHead(int sa[], int isa[], byte data[], int count, int start, int size, int rank);
@@ -47,7 +46,6 @@ namespace kanzi
            _buffer1 = new int[0];
            _buffer2 = new int[0];
            _bufferSize = 0;
-           memset(_buckets, 0, sizeof(int) * 256);
        }
 
        ~BWTS() 
