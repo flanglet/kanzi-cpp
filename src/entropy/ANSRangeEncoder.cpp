@@ -93,7 +93,7 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], int lr)
         encodeHeader(alphabetSize, curAlphabet, f, lr);
         res += alphabetSize;
     }
-
+   
     return res;
 }
 

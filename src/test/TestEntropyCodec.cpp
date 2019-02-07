@@ -147,10 +147,6 @@ void testEntropyCodecCorrectness(const string& name)
             size = 16;
             memcpy(val, &val2[0], size);
         }
-        else if (ii == 4) {
-            byte val2[] = { 65, 71, 74, 66, 76, 65, 69, 77, 74, 79, 68, 75, 73, 72, 77, 68, 78, 65, 79, 79, 78, 66, 77, 71, 64, 70, 74, 77, 64, 67, 71, 64 };
-            memcpy(val, &val2[0], size);
-        }
         else if (ii == 1) {
             for (int i = 0; i < 32; i++)
                 val[i] = (byte)2; // all identical
@@ -160,8 +156,8 @@ void testEntropyCodecCorrectness(const string& name)
                 val[i] = (byte)(2 + (i & 1)); // 2 symbols
         }
         else {
-            for (int i = 0; i < 32; i++)
-                val[i] = (byte)(64 + 3 * ii + (rand() % (ii + 1)));
+            for (int i = 0; i < 256; i++)
+                val[i] = (byte)(64 + 4 * ii + (rand() % (8*ii + 1)));
         }
 
         byte* values = &val[0];

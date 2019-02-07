@@ -71,7 +71,10 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
         const int szBytes = EntropyUtils::readVarInt(_bitstream);
         _current = _bitstream.readBits(56);
         _initialized = true;
-        _bitstream.readBits(&_sba._array[0], 8 * szBytes);
+        
+        if (szBytes != 0)
+            _bitstream.readBits(&_sba._array[0], 8 * szBytes);
+
         _sba._index = 0;
         const int endChunk = startChunk + chunkSize;
 

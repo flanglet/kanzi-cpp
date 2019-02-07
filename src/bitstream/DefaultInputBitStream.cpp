@@ -86,6 +86,9 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
     if (isClosed() == true)
         throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);
 
+    if (count == 0)
+       return 0;
+    
     int remaining = count;
     int start = 0;
 
