@@ -15,79 +15,11 @@ limitations under the License.
 
 #include "DefaultOutputBitStream.hpp"
 #include "../IllegalArgumentException.hpp"
-#include "../Memory.hpp"
 #include "../io/IOException.hpp"
 #include <fstream>
 
 using namespace kanzi;
 
-uint64 DefaultOutputBitStream::MASKS[65] = {
-   0x0,
-   0x1,
-   0x3,
-   0x7,
-   0xF,
-   0x1F,
-   0x3F,
-   0x7F,
-   0xFF,
-   0x1FF,
-   0x3FF,
-   0x7FF,
-   0xFFF,
-   0x1FFF,
-   0x3FFF,
-   0x7FFF,
-   0xFFFF,
-   0x1FFFF,
-   0x3FFFF,
-   0x7FFFF,
-   0xFFFFF,
-   0x1FFFFF,
-   0x3FFFFF,
-   0x7FFFFF,
-   0xFFFFFF,
-   0x1FFFFFF,
-   0x3FFFFFF,
-   0x7FFFFFF,
-   0xFFFFFFF,
-   0x1FFFFFFF,
-   0x3FFFFFFF,
-   0x7FFFFFFF,
-   0xFFFFFFFF,
-   0x1FFFFFFFF,
-   0x3FFFFFFFF,
-   0x7FFFFFFFF,
-   0xFFFFFFFFF,
-   0x1FFFFFFFFF,
-   0x3FFFFFFFFF,
-   0x7FFFFFFFFF,
-   0xFFFFFFFFFF,
-   0x1FFFFFFFFFF,
-   0x3FFFFFFFFFF,
-   0x7FFFFFFFFFF,
-   0xFFFFFFFFFFF,
-   0x1FFFFFFFFFFF,
-   0x3FFFFFFFFFFF,
-   0x7FFFFFFFFFFF,
-   0xFFFFFFFFFFFF,
-   0x1FFFFFFFFFFFF,
-   0x3FFFFFFFFFFFF,
-   0x7FFFFFFFFFFFF,
-   0xFFFFFFFFFFFFF,
-   0x1FFFFFFFFFFFFF,
-   0x3FFFFFFFFFFFFF,
-   0x7FFFFFFFFFFFFF,
-   0xFFFFFFFFFFFFFF,
-   0x1FFFFFFFFFFFFFF,
-   0x3FFFFFFFFFFFFFF,
-   0x7FFFFFFFFFFFFFF,
-   0xFFFFFFFFFFFFFFF,
-   0x1FFFFFFFFFFFFFFF,
-   0x3FFFFFFFFFFFFFFF,
-   0x7FFFFFFFFFFFFFFF,
-   0xFFFFFFFFFFFFFFFF,
-};
 
 DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize) THROW : _os(os)
 {
@@ -107,47 +39,6 @@ DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize
     _current = 0;
     _written = 0;
     _closed = false;
-}
-
-// Write least significant bit of the input integer. Trigger exception if stream is closed
-inline void DefaultOutputBitStream::writeBit(int bit) THROW
-{
-    if (_availBits <= 1) // _availBits = 0 if stream is closed => force pushCurrent()
-    {
-        _current |= (bit & 1);
-        pushCurrent();
-    }
-    else {
-        _availBits--;
-        _current |= (uint64(bit & 1) << _availBits);
-    }
-}
-
-// Write 'count' (in [1..64]) bits. Trigger exception if stream is closed
-int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
-{
-    if (count > 64)
-        throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
-
-    if (count < uint(_availBits)) {
-        // Enough spots available in 'current'
-        _availBits -= int(count);
-        _current |= ((value & MASKS[count]) << _availBits);
-    }
-    else {
-        // Not enough spots available in 'current'
-        const uint remaining = count - _availBits;
-        value &= MASKS[count];
-        _current |= (value >> remaining);
-        pushCurrent();
-
-        if (remaining != 0) {
-            _current = value << (64 - remaining);
-            _availBits -= int(remaining);
-        }
-    }
-
-    return count;
 }
 
 uint DefaultOutputBitStream::writeBits(byte bits[], uint count) THROW
@@ -259,17 +150,6 @@ void DefaultOutputBitStream::close() THROW
     _written -= 64; // adjust for method written()
 }
 
-// Push 64 bits of current value into buffer.
-inline void DefaultOutputBitStream::pushCurrent() THROW
-{
-    BigEndian::writeLong64(&_buffer[_position], _current);
-    _availBits = 64;
-    _current = 0;
-    _position += 8;
-
-    if (_position >= _bufferSize)
-        flush();
-}
 
 // Write buffer to underlying stream
 void DefaultOutputBitStream::flush() THROW

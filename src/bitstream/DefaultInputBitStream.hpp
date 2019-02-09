@@ -19,6 +19,7 @@ limitations under the License.
 #include <istream>
 #include "../InputBitStream.hpp"
 #include "../InputStream.hpp"
+#include "../Memory.hpp"
 
 using namespace std;
 
@@ -68,5 +69,61 @@ namespace kanzi
        ~DefaultInputBitStream();
    };
 
+
+   // Returns 1 or 0
+   int DefaultInputBitStream::readBit() THROW
+   {
+       if (_availBits  == 0)
+           pullCurrent(); // Triggers an exception if stream is closed
+
+       _availBits--;
+       return int(_current >> _availBits) & 1;
+   }
+
+   uint64 DefaultInputBitStream::readBits(uint count) THROW
+   {
+       if ((count == 0) || (count > 64))
+           throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
+
+       if (int(count) <= _availBits) {
+           // Enough spots available in 'current'
+           _availBits -= count;
+           return (_current >> _availBits) & (uint64(-1) >> (64 - count));
+       }
+
+       // Not enough spots available in 'current'
+       count -= _availBits;
+       const uint64 res = _current & ((uint64(1) << _availBits) - 1);
+       pullCurrent();
+       _availBits -= count;
+       return (res << count) | (_current >> _availBits);
+   }
+
+   // Pull 64 bits of current value from buffer.
+   void DefaultInputBitStream::pullCurrent()
+   {
+       if (_position > _maxPosition)
+           readFromInputStream(_bufferSize);
+
+       if (_position + 7 > _maxPosition) {
+           // End of stream: overshoot max position => adjust bit index
+           uint shift = (_maxPosition - _position) << 3;
+           _availBits = shift + 8;
+           uint64 val = 0;
+
+           while (_position <= _maxPosition) {
+               val |= ((uint64(_buffer[_position++] & 0xFF)) << shift);
+               shift -= 8;
+           }
+
+           _current = val;
+       }
+       else {
+           // Regular processing, buffer length is multiple of 8
+           _current = BigEndian::readLong64(&_buffer[_position]);
+           _availBits = 64;
+           _position += 8;
+       }
+   }
 }
 #endif

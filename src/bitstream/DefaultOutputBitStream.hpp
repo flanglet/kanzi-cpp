@@ -18,6 +18,7 @@ limitations under the License.
 
 #include "../OutputStream.hpp"
 #include "../OutputBitStream.hpp"
+#include "../Memory.hpp"
 
 using namespace std;
 
@@ -27,8 +28,6 @@ namespace kanzi
    class DefaultOutputBitStream : public OutputBitStream
    {
    private:
-       static uint64 MASKS[65];
-
        OutputStream& _os;
        byte* _buffer;
        bool _closed;
@@ -65,5 +64,57 @@ namespace kanzi
        bool isClosed() const { return _closed; }
    };
 
+   // Write least significant bit of the input integer. Trigger exception if stream is closed
+   void DefaultOutputBitStream::writeBit(int bit) THROW
+   {
+       if (_availBits <= 1) // _availBits = 0 if stream is closed => force pushCurrent()
+       {
+           _current |= (bit & 1);
+           pushCurrent();
+       }
+       else {
+           _availBits--;
+           _current |= (uint64(bit & 1) << _availBits);
+       }
+   }
+
+   // Write 'count' (in [1..64]) bits. Trigger exception if stream is closed
+   int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
+   {
+       if (count > 64)
+           throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
+
+       if (int(count) < _availBits) {
+           // Enough spots available in 'current'
+           _availBits -= int(count);
+           _current |= ((value & (uint64(-1) >> (64 - count))) << _availBits);
+       }
+       else {
+           // Not enough spots available in 'current'
+           value &= (uint64(-1) >> (64 - count));
+           const uint remaining = count - _availBits;
+           _current |= (value >> remaining);
+           pushCurrent();
+
+           if (remaining != 0) {
+               _current = value << (64 - remaining);
+               _availBits -= int(remaining);
+           }
+       }
+
+       return count;
+   }
+
+   // Push 64 bits of current value into buffer.
+   void DefaultOutputBitStream::pushCurrent() THROW
+   {
+       BigEndian::writeLong64(&_buffer[_position], _current);
+       _availBits = 64;
+       _current = 0;
+       _position += 8;
+
+       if (_position >= _bufferSize)
+           flush();
+   }
 }
 #endif

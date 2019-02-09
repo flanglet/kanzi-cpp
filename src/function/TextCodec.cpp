@@ -722,9 +722,9 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 		// Another crude test: check that the frequencies of < and > are similar
 		// and 'high enough'. Also check it is worth to attempt replacing ampersand sequences.
 		// Getting this flag wrong results in a very small compression speed degradation.
-		const int32 f1 = freqs0['<'];
-		const int32 f2 = freqs0['>'];
-		const int32 f3 = freqs['&']['a'] + freqs['&']['g'] + freqs['&']['l'] + freqs['&']['q'];
+		const int32 f1 = freqs0[60]; // '<'
+		const int32 f2 = freqs0[62]; // '>'
+		const int32 f3 = freqs[38][97] + freqs[38][103] + freqs[38][108] + freqs[38][113]; // '&a', '&g', '&l', '&q'
 		const int32 minFreq = (((count - nbBinChars) >> 9) < 2) ? 2 : (count - nbBinChars) >> 9;         
          
 		if ((f1 >= minFreq) && (f2 >= minFreq) && (f3 > 0)) {
