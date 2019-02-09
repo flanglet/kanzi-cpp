@@ -37,7 +37,7 @@ namespace kanzi
        uint64 _written;
        uint64 _current; // cached bits
 
-       inline void pushCurrent() THROW;
+       void pushCurrent() THROW;
 
        void flush() THROW;
 
@@ -46,9 +46,9 @@ namespace kanzi
 
        ~DefaultOutputBitStream();
 
-       inline void writeBit(int bit) THROW;
+       void writeBit(int bit) THROW;
 
-       inline int writeBits(uint64 bits, uint length) THROW;
+       int writeBits(uint64 bits, uint length) THROW;
        
        uint writeBits(byte bits[], uint length) THROW;
 
@@ -65,7 +65,7 @@ namespace kanzi
    };
 
    // Write least significant bit of the input integer. Trigger exception if stream is closed
-   void DefaultOutputBitStream::writeBit(int bit) THROW
+   inline void DefaultOutputBitStream::writeBit(int bit) THROW
    {
        if (_availBits <= 1) // _availBits = 0 if stream is closed => force pushCurrent()
        {
@@ -79,7 +79,7 @@ namespace kanzi
    }
 
    // Write 'count' (in [1..64]) bits. Trigger exception if stream is closed
-   int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
+   inline int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
    {
        if (count > 64)
            throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
@@ -106,7 +106,7 @@ namespace kanzi
    }
 
    // Push 64 bits of current value into buffer.
-   void DefaultOutputBitStream::pushCurrent() THROW
+   inline void DefaultOutputBitStream::pushCurrent() THROW
    {
        BigEndian::writeLong64(&_buffer[_position], _current);
        _availBits = 64;

@@ -41,13 +41,13 @@ namespace kanzi
 
        int readFromInputStream(uint count) THROW;
 
-       inline void pullCurrent();
+       void pullCurrent();
 
    public:
        // Returns 1 or 0
-       inline int readBit() THROW;
+       int readBit() THROW;
 
-       inline uint64 readBits(uint length) THROW;
+       uint64 readBits(uint length) THROW;
 
        uint readBits(byte bits[], uint count) THROW;
 
@@ -71,7 +71,7 @@ namespace kanzi
 
 
    // Returns 1 or 0
-   int DefaultInputBitStream::readBit() THROW
+   inline int DefaultInputBitStream::readBit() THROW
    {
        if (_availBits  == 0)
            pullCurrent(); // Triggers an exception if stream is closed
@@ -80,7 +80,7 @@ namespace kanzi
        return int(_current >> _availBits) & 1;
    }
 
-   uint64 DefaultInputBitStream::readBits(uint count) THROW
+   inline uint64 DefaultInputBitStream::readBits(uint count) THROW
    {
        if ((count == 0) || (count > 64))
            throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
@@ -100,7 +100,7 @@ namespace kanzi
    }
 
    // Pull 64 bits of current value from buffer.
-   void DefaultInputBitStream::pullCurrent()
+   inline void DefaultInputBitStream::pullCurrent()
    {
        if (_position > _maxPosition)
            readFromInputStream(_bufferSize);
