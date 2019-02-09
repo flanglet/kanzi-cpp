@@ -134,7 +134,7 @@ void testEntropyCodecCorrectness(const string& name)
         cout << endl
              << endl
              << "Test " << ii << endl;
-        byte val[32];
+        byte val[256];
         int size = 32;
 
         if (ii == 3) {
@@ -156,6 +156,8 @@ void testEntropyCodecCorrectness(const string& name)
                 val[i] = (byte)(2 + (i & 1)); // 2 symbols
         }
         else {
+            size = 256;
+            
             for (int i = 0; i < 256; i++)
                 val[i] = (byte)(64 + 4 * ii + (rand() % (8*ii + 1)));
         }
