@@ -38,7 +38,7 @@ namespace kanzi
        uint64 _written;
        uint64 _current; // cached bits
 
-       void pushCurrent() THROW;
+       inline void pushCurrent() THROW;
 
        void flush() THROW;
 
@@ -47,9 +47,9 @@ namespace kanzi
 
        ~DefaultOutputBitStream();
 
-       void writeBit(int bit) THROW;
+       inline void writeBit(int bit) THROW;
 
-       int writeBits(uint64 bits, uint length) THROW;
+       inline int writeBits(uint64 bits, uint length) THROW;
        
        uint writeBits(byte bits[], uint length) THROW;
 

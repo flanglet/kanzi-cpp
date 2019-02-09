@@ -40,13 +40,13 @@ namespace kanzi
 
        int readFromInputStream(uint count) THROW;
 
-       void pullCurrent();
+       inline void pullCurrent();
 
    public:
        // Returns 1 or 0
-       int readBit() THROW;
+       inline int readBit() THROW;
 
-       uint64 readBits(uint length) THROW;
+       inline uint64 readBits(uint length) THROW;
 
        uint readBits(byte bits[], uint count) THROW;
 

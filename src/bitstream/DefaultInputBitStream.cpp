@@ -62,23 +62,18 @@ uint64 DefaultInputBitStream::readBits(uint count) THROW
     if ((count == 0) || (count > 64))
         throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
 
-    uint64 res;
-
-    if (count <= uint(_availBits)) {
+    if (int(count) <= _availBits) {
         // Enough spots available in 'current'
-        res = (_current >> (_availBits - count)) & (uint64(-1) >> (64 - count));
         _availBits -= count;
-    }
-    else {
-        // Not enough spots available in 'current'
-        const uint remaining = count - _availBits;
-        res = _current & ((uint64(1) << _availBits) - 1);
-        pullCurrent();
-        _availBits -= remaining;
-        res = (res << remaining) | (_current >> _availBits);
+        return (_current >> _availBits) & (uint64(-1) >> (64 - count));
     }
 
-    return res;
+    // Not enough spots available in 'current'
+    count -= _availBits;
+    const uint64 res = _current & ((uint64(1) << _availBits) - 1);
+    pullCurrent();
+    _availBits -= count;
+    return (res << count) | (_current >> _availBits);
 }
 
 uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
