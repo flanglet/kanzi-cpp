@@ -23,7 +23,6 @@ CMPredictor::CMPredictor()
 {
     _ctx = 1;
     _run = 1;
-    _idx = 8;
     _runMask = 0;
     _c1 = 0;
     _c2 = 0;
@@ -32,15 +31,15 @@ CMPredictor::CMPredictor()
         for (int j = 0; j <= 256; j++)
             _counter1[i][j] = 32768;
 
-        for (int j = 0; j <= 16; j++) {
-            _counter2[i + i][j] = j << 12;
-            _counter2[i + i + 1][j] = j << 12;
+        for (int j = 0; j < 16; j++) {
+            _counter2[2 * i][j] = j << 12;
+            _counter2[2 * i + 1][j] = j << 12;
         }
 
-        _counter2[i + i][16] -= 16;
-        _counter2[i + i + 1][16] -= 16;
+        _counter2[2 * i][16] = 65520;
+        _counter2[2 * i + 1][16] = 65520;
     }
 
     _pc1 = _counter1[_ctx];
-    _pc2 = _counter2[_ctx | _runMask];
+    _pc2 = &_counter2[_ctx | _runMask][8];
 }

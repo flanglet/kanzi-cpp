@@ -18,12 +18,12 @@ limitations under the License.
 
 #include "../Predictor.hpp"
 
-namespace kanzi 
+namespace kanzi
 {
 
    // Context model predictor based on BCM by Ilya Muravyov.
    // See https://github.com/encode84/bcm
-   class CMPredictor : public Predictor 
+   class CMPredictor : public Predictor
    {
    private:
        static const int FAST_RATE = 2;
@@ -34,7 +34,6 @@ namespace kanzi
        int _c2;
        int _ctx;
        int _run;
-       int _idx;
        int _runMask;
        int _counter1[256][257];
        int _counter2[512][17];
@@ -55,21 +54,18 @@ namespace kanzi
    inline void CMPredictor::update(int bit)
    {
        _ctx <<= 1;
-       int* p = &_pc2[_idx];
 
        if (bit == 0) {
            _pc1[256] -= (_pc1[256] >> FAST_RATE);
            _pc1[_c1] -= (_pc1[_c1] >> MEDIUM_RATE);
-           *p -= (*p>> SLOW_RATE);
-           p++;
-           *p -= (*p>> SLOW_RATE);
+           _pc2[0] -= (_pc2[0]>> SLOW_RATE);
+           _pc2[1] -= (_pc2[1]>> SLOW_RATE);
        }
        else {
            _pc1[256] += ((0xFFFF - _pc1[256]) >> FAST_RATE);
            _pc1[_c1] += ((0xFFFF - _pc1[_c1]) >> MEDIUM_RATE);
-           *p += ((0xFFFF - *p) >> SLOW_RATE);
-           p++;
-           *p += ((0xFFFF - *p) >> SLOW_RATE);
+           _pc2[0] += ((0xFFFF - _pc2[0]) >> SLOW_RATE);
+           _pc2[1] += ((0xFFFF - _pc2[1]) >> SLOW_RATE);
            _ctx++;
        }
 
@@ -94,10 +90,9 @@ namespace kanzi
    {
        _pc1 = _counter1[_ctx];
        const int p = (13 * _pc1[256] + 14 * _pc1[_c1] + 5 * _pc1[_c2]) >> 5;
-       _idx = p >> 12;
-       _pc2 = _counter2[_ctx  | _runMask];
-       const int x1 = _pc2[_idx];
-       const int x2 = _pc2[_idx + 1];
+       _pc2 = &_counter2[_ctx | _runMask][p >> 12];
+       const int x1 = _pc2[0];
+       const int x2 = _pc2[1];
        const int ssep = x1 + (((x2 - x1) * (p & 4095)) >> 12);
        return (p + 3*ssep + 32) >> 6; // rescale to [0..4095]
    }
