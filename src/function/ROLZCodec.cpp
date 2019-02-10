@@ -94,33 +94,6 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
 	return _delegate->inverse(input, output, count);
 }
 
-inline int ROLZCodec::emitCopy(byte dst[], int dstIdx, int ref, int matchLen)
-{
-	dst[dstIdx] = dst[ref];
-	dst[dstIdx + 1] = dst[ref + 1];
-	dst[dstIdx + 2] = dst[ref + 2];
-	dstIdx += 3;
-	ref += 3;
-
-	while (matchLen >= 4) {
-	   dst[dstIdx] = dst[ref];
-	   dst[dstIdx + 1] = dst[ref + 1];
-	   dst[dstIdx + 2] = dst[ref + 2];
- 	   dst[dstIdx + 3] = dst[ref + 3];
-	   dstIdx += 4;
-	   ref += 4;
-	   matchLen -= 4;
-	}
-
-	while (matchLen != 0) {
-	   dst[dstIdx++] = dst[ref++];
-	   matchLen--;
-	}
-
-   return dstIdx;
-}
-
-
 ROLZCodec1::ROLZCodec1(uint logPosChecks) THROW
 {
     if ((logPosChecks < 2) || (logPosChecks > 8)) {
@@ -136,7 +109,7 @@ ROLZCodec1::ROLZCodec1(uint logPosChecks) THROW
 }
 
 // return position index (_logPosChecks bits) + length (8 bits) or -1
-inline int ROLZCodec1::findMatch(const byte buf[], const int pos, const int end)
+int ROLZCodec1::findMatch(const byte buf[], const int pos, const int end)
 {
     const uint32 key = ROLZCodec::getKey(&buf[pos - 2]);
     prefetchRead(&_matches[key << _logPosChecks]);
@@ -303,7 +276,7 @@ End:
     return input._index == count;
 }
 
-inline void ROLZCodec1::emitLiteralLength(SliceArray<byte>& litBuf, const int length)
+void ROLZCodec1::emitLiteralLength(SliceArray<byte>& litBuf, const int length)
 {
     if (length >= 1<<7) {
         if (length >= 1<<21)
@@ -441,7 +414,7 @@ End:
     return srcIdx == count;
 }
 
-inline int ROLZCodec1::emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx)
+int ROLZCodec1::emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx)
 {
 	// Read length
    int litLen = litBuf._array[litBuf._index++];
@@ -476,12 +449,12 @@ inline int ROLZCodec1::emitLiterals(SliceArray<byte>& litBuf, byte dst[], int ds
 }
 
 
-inline int ROLZCodec1::getMaxEncodedLength(int srcLen) const 
+int ROLZCodec1::getMaxEncodedLength(int srcLen) const 
 {
    return (srcLen <= 512) ? srcLen+32 : srcLen;
 }
 
-inline ROLZPredictor::ROLZPredictor(uint logPosChecks)
+ROLZPredictor::ROLZPredictor(uint logPosChecks)
 {
     _logSize = logPosChecks;
     _size = 1 << logPosChecks;
@@ -489,7 +462,7 @@ inline ROLZPredictor::ROLZPredictor(uint logPosChecks)
     reset();
 }
 
-inline void ROLZPredictor::reset()
+void ROLZPredictor::reset()
 {
     _c1 = 1;
     _ctx = 0;
@@ -498,24 +471,6 @@ inline void ROLZPredictor::reset()
         _p[i] = (32768 << 16) | 32768;
 }
 
-inline void ROLZPredictor::update(int bit)
-{
-    uint8* p = (uint8*) &_p[_ctx + _c1];
-    uint16* pr = (uint16*) p;
-    *pr -= (((*pr - uint16(-bit)) >> 3) + bit);
-    pr = (uint16*) (p + 2);
-    *pr -= (((*pr - uint16(-bit)) >> 6) + bit);
-    _c1 = (_c1 << 1) + bit;
-
-    if (_c1 >= _size)
-        _c1 = 1;
-}
-
-inline int ROLZPredictor::get()
-{
-    uint8* p = (uint8*) &_p[_ctx + _c1];
-    return (int(*(uint16*) p) + int(*(uint16*) (p + 2))) >> 5;
-}
 
 ROLZEncoder::ROLZEncoder(Predictor* predictors[2], byte buf[], int& idx)
     : _idx(idx)
@@ -528,7 +483,7 @@ ROLZEncoder::ROLZEncoder(Predictor* predictors[2], byte buf[], int& idx)
     _predictor = _predictors[0];
 }
 
-inline void ROLZEncoder::encodeByte(byte val)
+void ROLZEncoder::encodeByte(byte val)
 {
     encodeBit((val >> 7) & 1);
     encodeBit((val >> 6) & 1);
@@ -540,7 +495,7 @@ inline void ROLZEncoder::encodeByte(byte val)
     encodeBit(val & 1);
 }
 
-inline void ROLZEncoder::encodeBit(int bit)
+void ROLZEncoder::encodeBit(int bit)
 {
     // Calculate interval split
     const uint64 split = (((_high - _low) >> 4) * uint64(_predictor->get())) >> 8;
@@ -561,7 +516,7 @@ inline void ROLZEncoder::encodeBit(int bit)
     }
 }
 
-inline void ROLZEncoder::dispose()
+void ROLZEncoder::dispose()
 {
     for (int i = 0; i < 8; i++) {
         _buf[_idx + i] = byte(_low >> 56);
@@ -588,12 +543,12 @@ ROLZDecoder::ROLZDecoder(Predictor* predictors[2], byte buf[], int& idx)
     _predictor = _predictors[0];
 }
 
-inline byte ROLZDecoder::decodeByte()
+byte ROLZDecoder::decodeByte()
 {
     return byte((decodeBit() << 7) | (decodeBit() << 6) | (decodeBit() << 5) | (decodeBit() << 4) | (decodeBit() << 3) | (decodeBit() << 2) | (decodeBit() << 1) | decodeBit());
 }
 
-inline int ROLZDecoder::decodeBit()
+int ROLZDecoder::decodeBit()
 {
     // Calculate interval split
     const uint64 mid = _low + ((((_high - _low) >> 4) * uint64(_predictor->get())) >> 8);
@@ -640,7 +595,7 @@ ROLZCodec2::ROLZCodec2(uint logPosChecks) THROW
 }
 
 // return position index (_logPosChecks bits) + length (8 bits) or -1
-inline int ROLZCodec2::findMatch(const byte buf[], const int pos, const int end)
+int ROLZCodec2::findMatch(const byte buf[], const int pos, const int end)
 {
     const uint32 key = ROLZCodec::getKey(&buf[pos - 2]);
     prefetchRead(&_matches[key << _logPosChecks]);
@@ -880,7 +835,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     return srcIdx == count;
 }
 
-inline int ROLZCodec2::getMaxEncodedLength(int srcLen) const 
+int ROLZCodec2::getMaxEncodedLength(int srcLen) const 
 {
     // Since we do not check the dst index for each byte (for speed purpose)
     // allocate some extra buffer for incompressible data.

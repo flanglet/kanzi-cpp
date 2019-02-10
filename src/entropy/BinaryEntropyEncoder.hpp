@@ -17,6 +17,7 @@ limitations under the License.
 #define _BinaryEntropyEncoder_
 
 #include "../EntropyEncoder.hpp"
+#include "../Memory.hpp"
 #include "../Predictor.hpp"
 #include "../SliceArray.hpp"
 
@@ -54,10 +55,38 @@ namespace kanzi
 
        virtual void dispose();
 
-       void encodeByte(byte val);
+       virtual void encodeByte(byte val);
 
-       virtual void encodeBit(int bit);
-  };
+       inline void encodeBit(int bit);
+   };
 
+
+   inline void BinaryEntropyEncoder::encodeBit(int bit)
+   {
+       // Calculate interval split
+       // Written in a way to maximize accuracy of multiplication/division
+       const uint64 split = (((_high - _low) >> 4) * uint64(_predictor->get())) >> 8;
+
+       // Update fields with new interval bounds
+       if (bit == 0) 
+          _low = _low + split + 1;
+       else 
+          _high = _low + split;
+
+       // Update predictor
+       _predictor->update(bit);
+
+       // Write unchanged first 32 bits to bitstream
+       while (((_low ^ _high) & MASK_24_56) == 0)
+           flush();
+   }
+
+   inline void BinaryEntropyEncoder::flush()
+   {
+       BigEndian::writeInt32(&_sba._array[_sba._index], int32(_high >> 24));
+       _sba._index += 4;
+       _low <<= 32;
+       _high = (_high << 32) | MASK_0_32;
+   }
 }
 #endif

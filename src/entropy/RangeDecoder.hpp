@@ -65,7 +65,7 @@ namespace kanzi
 
        int decodeHeader(uint frequencies[]);
 
-       byte decodeByte();
+       inline byte decodeByte();
    };
 
 }

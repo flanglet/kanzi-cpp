@@ -133,7 +133,7 @@ int RangeEncoder::encode(byte block[], uint blkptr, uint len)
     return len;
 }
 
-inline void RangeEncoder::encodeByte(byte b)
+void RangeEncoder::encodeByte(byte b)
 {
     // Compute next low and range
     const int symbol = b & 0xFF;

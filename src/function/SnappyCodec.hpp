@@ -59,17 +59,17 @@ namespace kanzi
 
       int _buffer[MAX_TABLE_SIZE];
 
-      static int emitLiteral(SliceArray<byte>& source, SliceArray<byte>& destination, int len);
+      inline int emitLiteral(SliceArray<byte>& source, SliceArray<byte>& destination, int len);
 
-      static int emitCopy(SliceArray<byte>& destination, int offset, int len);
+      inline int emitCopy(SliceArray<byte>& destination, int offset, int len);
 
-      static int putUvarint(byte buf[], uint64 x);
+      inline int putUvarint(byte buf[], uint64 x);
 
-      static uint64 getUvarint(SliceArray<byte>& iba) THROW; 
+      inline uint64 getUvarint(SliceArray<byte>& iba) THROW; 
        
-      static int getDecodedLength(SliceArray<byte>& source);
+      inline int getDecodedLength(SliceArray<byte>& source);
 
-      static bool differentInts(byte block[], int srcIdx, int dstIdx);
+      inline bool differentInts(byte block[], int srcIdx, int dstIdx);
    };
 
 

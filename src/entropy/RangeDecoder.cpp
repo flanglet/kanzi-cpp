@@ -146,7 +146,7 @@ int RangeDecoder::decode(byte block[], uint blkptr, uint len)
     return len;
 }
 
-inline byte RangeDecoder::decodeByte()
+byte RangeDecoder::decodeByte()
 {
     // Compute next low and range
     _range >>= _shift;

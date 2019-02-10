@@ -16,7 +16,6 @@ limitations under the License.
 #include "BinaryEntropyEncoder.hpp"
 #include "EntropyUtils.hpp"
 #include "../IllegalArgumentException.hpp"
-#include "../Memory.hpp"
 
 using namespace kanzi;
 
@@ -85,7 +84,7 @@ int BinaryEntropyEncoder::encode(byte block[], uint blkptr, uint count) THROW
    return count;
 }
 
-inline void BinaryEntropyEncoder::encodeByte(byte val)
+void BinaryEntropyEncoder::encodeByte(byte val)
 {
     encodeBit((val >> 7) & 1);
     encodeBit((val >> 6) & 1);
@@ -95,34 +94,6 @@ inline void BinaryEntropyEncoder::encodeByte(byte val)
     encodeBit((val >> 2) & 1);
     encodeBit((val >> 1) & 1);
     encodeBit(val & 1);
-}
-
-inline void BinaryEntropyEncoder::encodeBit(int bit)
-{
-    // Calculate interval split
-    // Written in a way to maximize accuracy of multiplication/division
-    const uint64 split = (((_high - _low) >> 4) * uint64(_predictor->get())) >> 8;
-
-    // Update fields with new interval bounds
-    if (bit == 0) 
-       _low = _low + split + 1;
-    else 
-       _high = _low + split;
-
-    // Update predictor
-    _predictor->update(bit);
-
-    // Write unchanged first 32 bits to bitstream
-    while (((_low ^ _high) & MASK_24_56) == 0)
-        flush();
-}
-
-inline void BinaryEntropyEncoder::flush()
-{
-    BigEndian::writeInt32(&_sba._array[_sba._index], int32(_high >> 24));
-    _sba._index += 4;
-    _low <<= 32;
-    _high = (_high << 32) | MASK_0_32;
 }
 
 void BinaryEntropyEncoder::dispose()

@@ -36,7 +36,7 @@ namespace kanzi
 
        OutputBitStream& getBitStream() const { return _bitstream; };
 
-       inline void encodeByte(byte val);
+       void encodeByte(byte val);
 
        void dispose() {}
 

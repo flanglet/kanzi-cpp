@@ -45,5 +45,31 @@ namespace kanzi
        bool isSigned() const { return _signed; }
    };
 
+
+   inline void RiceGolombEncoder::encodeByte(byte val)
+   {
+       if (val == 0)
+       {
+          _bitstream.writeBits(_base, _logBase+1);
+          return;
+       }
+
+       int32 iVal = val;
+       iVal = (iVal + (iVal >> 31)) ^ (iVal >> 31); // abs(val2)
+
+        // quotient is unary encoded, remainder is binary encoded
+       int emit = _base | (iVal & (_base-1));
+       int n = (1 + (iVal >> _logBase)) + _logBase;
+
+       if (_signed == true)
+       {
+          // Add 0 for positive and 1 for negative sign
+          n++;
+          emit = (emit << 1) | (uint32(val) >> 31);
+       }
+
+       _bitstream.writeBits(emit, n);
+   }
+
 }
 #endif

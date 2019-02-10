@@ -73,11 +73,11 @@ namespace kanzi {
 
 		~ROLZEncoder() {}
 
-		void encodeByte(byte val);
+		inline void encodeByte(byte val);
 
-		void encodeBit(int bit);
+		inline void encodeBit(int bit);
 
-		void dispose();
+		inline void dispose();
 
 		void setContext(int n) { _predictor = _predictors[n]; }
 	};
@@ -101,9 +101,9 @@ namespace kanzi {
 
 		~ROLZDecoder() {}
 
-		byte decodeByte();
+		inline byte decodeByte();
 
-		int decodeBit();
+		inline int decodeBit();
 
 		void dispose() {}
 
@@ -131,11 +131,11 @@ namespace kanzi {
 		int _maskChecks;
 		int _posChecks;
 
-		int findMatch(const byte buf[], const int pos, const int end);	
+		inline int findMatch(const byte buf[], const int pos, const int end);	
 
-      void emitLiteralLength(SliceArray<byte>& litBuf, const int length);
+      inline void emitLiteralLength(SliceArray<byte>& litBuf, const int length);
 
-      int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx);
+      inline int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx);
 	};
 
 	// Use CM (ROLZEncoder/ROLZDecoder) to encode/decode literals and matches
@@ -150,7 +150,7 @@ namespace kanzi {
 		bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
 		// Required encoding output buffer size
-		int getMaxEncodedLength(int srcLen) const;
+		inline int getMaxEncodedLength(int srcLen) const;
 
 	private:
 		static const int LITERAL_FLAG = 0;
@@ -215,6 +215,53 @@ namespace kanzi {
 
       static int emitCopy(byte dst[], int dstIdx, int ref, int matchLen);
    };
-}
 
+
+   inline void ROLZPredictor::update(int bit)
+   {
+       uint8* p = (uint8*) &_p[_ctx + _c1];
+       uint16* pr = (uint16*) p;
+       *pr -= (((*pr - uint16(-bit)) >> 3) + bit);
+       pr = (uint16*) (p + 2);
+       *pr -= (((*pr - uint16(-bit)) >> 6) + bit);
+       _c1 = (_c1 << 1) + bit;
+
+       if (_c1 >= _size)
+           _c1 = 1;
+   }
+   
+   inline int ROLZPredictor::get()
+   {
+       uint8* p = (uint8*) &_p[_ctx + _c1];
+       return (int(*(uint16*) p) + int(*(uint16*) (p + 2))) >> 5;
+   }
+
+
+   inline int ROLZCodec::emitCopy(byte dst[], int dstIdx, int ref, int matchLen)
+   {
+	   dst[dstIdx] = dst[ref];
+	   dst[dstIdx + 1] = dst[ref + 1];
+	   dst[dstIdx + 2] = dst[ref + 2];
+	   dstIdx += 3;
+	   ref += 3;
+
+	   while (matchLen >= 4) {
+	      dst[dstIdx] = dst[ref];
+	      dst[dstIdx + 1] = dst[ref + 1];
+	      dst[dstIdx + 2] = dst[ref + 2];
+ 	      dst[dstIdx + 3] = dst[ref + 3];
+	      dstIdx += 4;
+	      ref += 4;
+	      matchLen -= 4;
+	   }
+
+	   while (matchLen != 0) {
+	      dst[dstIdx++] = dst[ref++];
+	      matchLen--;
+	   }
+
+      return dstIdx;
+   }
+
+}
 #endif

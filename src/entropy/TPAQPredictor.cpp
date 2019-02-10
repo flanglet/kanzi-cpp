@@ -124,7 +124,7 @@ const int32 STATE_MAP[] = {
      1,     1,     1,     1,     1,     1,     1,     1,
 };
 
-inline int32 TPAQPredictor::hash(int32 x, int32 y)
+int32 TPAQPredictor::hash(int32 x, int32 y)
 {
     const int32 h = x * HASH ^ y * HASH;
     return (h >> 1) ^ (h >> 9) ^ (x >> 2) ^ (y >> 3) ^ HASH;
@@ -324,7 +324,7 @@ void TPAQPredictor::update(int bit)
     _pr = p + (uint32(p - 2048) >> 31);
 }
 
-inline void TPAQPredictor::findMatch()
+void TPAQPredictor::findMatch()
 {
     // Update ongoing sequence match or detect match in the buffer (LZ like)
     if (_matchLen > 0) {
@@ -350,7 +350,7 @@ inline void TPAQPredictor::findMatch()
 }
 
 // Get a prediction from the match model in [-2047..2048]
-inline int TPAQPredictor::getMatchContextPred()
+int TPAQPredictor::getMatchContextPred()
 {
     int p = 0;
 
@@ -371,14 +371,14 @@ inline int TPAQPredictor::getMatchContextPred()
     return p;
 }
 
-inline int32 TPAQPredictor::createContext(uint32 ctxId, uint32 cx)
+int32 TPAQPredictor::createContext(uint32 ctxId, uint32 cx)
 {
     cx = cx * 987654323 + ctxId;
     cx = (cx << 16) | (cx >> 16);
     return cx * 123456791 + ctxId;
 }
 
-inline TPAQMixer::TPAQMixer()
+TPAQMixer::TPAQMixer()
 {
     _pr = 2048;
     _skew = 0;
@@ -387,43 +387,3 @@ inline TPAQMixer::TPAQMixer()
     _learnRate = BEGIN_LEARN_RATE;
 }
 
-// Adjust weights to minimize coding cost of last prediction
-inline void TPAQMixer::update(int bit)
-{
-    const int32 err = (((bit << 12) - _pr) * _learnRate) >> 10;
-
-    if (err == 0)
-        return;
-
-    // Quickly decaying learn rate
-    _learnRate += ((END_LEARN_RATE - _learnRate) >> 31);
-    _skew += err;
-
-    // Train Neural Network: update weights
-    _w0 += ((_p0 * err + 0) >> 12);
-    _w1 += ((_p1 * err + 0) >> 12);
-    _w2 += ((_p2 * err + 0) >> 12);
-    _w3 += ((_p3 * err + 0) >> 12);
-    _w4 += ((_p4 * err + 0) >> 12);
-    _w5 += ((_p5 * err + 0) >> 12);
-    _w6 += ((_p6 * err + 0) >> 12);
-    _w7 += ((_p7 * err + 0) >> 12);
-}
-
-inline int TPAQMixer::get(int32 p0, int32 p1, int32 p2, int32 p3, int32 p4, int32 p5, int32 p6, int32 p7)
-{
-    _p0 = p0;
-    _p1 = p1;
-    _p2 = p2;
-    _p3 = p3;
-    _p4 = p4;
-    _p5 = p5;
-    _p6 = p6;
-    _p7 = p7;
-
-    // Neural Network dot product (sum weights*inputs)
-    _pr = Global::squash(((p0 * _w0) + (p1 * _w1) + (p2 * _w2) + (p3 * _w3) +
-                          (p4 * _w4) + (p5 * _w5) + (p6 * _w6) + (p7 * _w7) +
-                          _skew + 65536) >> 17);
-    return _pr;
-}

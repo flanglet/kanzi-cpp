@@ -64,7 +64,7 @@ namespace kanzi
 
        int updateFrequencies(uint frequencies[], int size, int lr);
 
-       void encodeByte(byte b);
+       inline void encodeByte(byte b);
 
        bool encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], int lr);
    };

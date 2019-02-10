@@ -488,7 +488,7 @@ void DivSufSort::ssSort(const int pa, int first, int last, int buf, int bufSize,
     }
 }
 
-inline int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
+int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
 {
     int u1 = depth + pa;
     int u2 = depth + _sa[p2];
@@ -511,7 +511,7 @@ inline int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
     return (u1 < u1n) ? ((u2 < u2n) ? _buffer[u1] - _buffer[u2] : 1) : ((u2 < u2n) ? -1 : 0);
 }
 
-inline int DivSufSort::ssCompare(int p1, int p2, int depth)
+int DivSufSort::ssCompare(int p1, int p2, int depth)
 {
     int u1 = depth + _sa[p1];
     int u2 = depth + _sa[p2];
@@ -649,7 +649,7 @@ void DivSufSort::ssRotate(int first, int middle, int last)
     }
 }
 
-inline void DivSufSort::ssBlockSwap(int a, int b, int n)
+void DivSufSort::ssBlockSwap(int a, int b, int n)
 {
     while (n-- > 0) {
         std::swap(_sa[a], _sa[b]);
@@ -1053,7 +1053,7 @@ void DivSufSort::ssInsertionSort(int pa, int first, int last, int depth)
     }
 }
 
-inline int DivSufSort::ssIsqrt(int x)
+int DivSufSort::ssIsqrt(int x)
 {
     if (x >= (SS_BLOCKSIZE * SS_BLOCKSIZE))
         return SS_BLOCKSIZE;
@@ -1300,7 +1300,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
     }
 }
 
-inline int DivSufSort::ssPivot(int td, int pa, int first, int last)
+int DivSufSort::ssPivot(int td, int pa, int first, int last)
 {
     int t = last - first;
     int middle = first + (t >> 1);
@@ -1316,7 +1316,7 @@ inline int DivSufSort::ssPivot(int td, int pa, int first, int last)
     return ssMedian3(td, pa, first, middle, last);
 }
 
-inline int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5)
+int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5)
 {
     uint8* buf0 = &_buffer[idx];
     int* buf1 = &_sa[pa];
@@ -1360,7 +1360,7 @@ inline int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, 
     return (buf0[buf1[_sa[v3]]] > buf0[buf1[_sa[v4]]]) ? v4 : v3;
 }
 
-inline int DivSufSort::ssMedian3(int idx, int pa, int v1, int v2, int v3)
+int DivSufSort::ssMedian3(int idx, int pa, int v1, int v2, int v3)
 {
     uint8* buf0 = &_buffer[idx];
     int* buf1 = &_sa[pa];
@@ -1467,13 +1467,13 @@ void DivSufSort::ssFixDown(int idx, int pa, int saIdx, int i, int size)
     _sa[i + saIdx] = v;
 }
 
-inline int DivSufSort::ssIlg(int n)
+int DivSufSort::ssIlg(int n)
 {
     return ((n & 0xFF00) != 0) ? 8 + LOG_TABLE[(n >> 8) & 0xFF]
                                : LOG_TABLE[n & 0xFF];
 }
 
-inline void DivSufSort::swapInSA(int a, int b)
+void DivSufSort::swapInSA(int a, int b)
 {
    std::swap(_sa[a], _sa[b]);
 }
@@ -2018,7 +2018,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
     }
 }
 
-inline int DivSufSort::trPivot(int arr[], int isad, int first, int last)
+int DivSufSort::trPivot(int arr[], int isad, int first, int last)
 {
     int t = last - first;
     int middle = first + (t >> 1);
@@ -2038,7 +2038,7 @@ inline int DivSufSort::trPivot(int arr[], int isad, int first, int last)
     return trMedian3(arr, isad, first, middle, last);
 }
 
-inline int DivSufSort::trMedian5(int _sa[], int isad, int v1, int v2, int v3, int v4, int v5)
+int DivSufSort::trMedian5(int _sa[], int isad, int v1, int v2, int v3, int v4, int v5)
 {
     if (_sa[isad + _sa[v2]] > _sa[isad + _sa[v3]]) {
         int t = v2;
@@ -2082,7 +2082,7 @@ inline int DivSufSort::trMedian5(int _sa[], int isad, int v1, int v2, int v3, in
     return v3;
 }
 
-inline int DivSufSort::trMedian3(int _sa[], int isad, int v1, int v2, int v3)
+int DivSufSort::trMedian3(int _sa[], int isad, int v1, int v2, int v3)
 {
     if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v2]]) {
         const int t = v1;
@@ -2271,7 +2271,7 @@ void DivSufSort::trCopy(int isa, int first, int a, int b, int last, int depth)
     }
 }
 
-inline int DivSufSort::trIlg(int n)
+int DivSufSort::trIlg(int n)
 {
     return ((n & 0xFFFF0000) != 0) ? (((n & 0xFF000000) != 0) ? 24 + LOG_TABLE[(n >> 24) & 0xFF]
                                                               : 16 + LOG_TABLE[(n >> 16) & 0xFF])
@@ -2300,7 +2300,7 @@ Stack::~Stack()
     delete[] _arr;
 }
 
-inline void Stack::push(int a, int b, int c, int d, int e)
+void Stack::push(int a, int b, int c, int d, int e)
 {
     StackElement* elt = &_arr[_index];
     elt->_a = a;
@@ -2311,7 +2311,7 @@ inline void Stack::push(int a, int b, int c, int d, int e)
     _index++;
 }
 
-inline StackElement* Stack::pop()
+StackElement* Stack::pop()
 {
     return (_index == 0) ? nullptr : &_arr[--_index];
 }
@@ -2324,7 +2324,7 @@ TRBudget::TRBudget(int chance, int incval)
     _count = 0;
 }
 
-inline bool TRBudget::check(int size)
+bool TRBudget::check(int size)
 {
     if (size <= _remain) {
         _remain -= size;

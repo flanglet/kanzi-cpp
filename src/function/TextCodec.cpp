@@ -755,37 +755,6 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 
 	return res;
 }
-inline bool TextCodec::sameWords(const byte src[], byte dst[], const int length)
-{
-	if (length >= 4) {
-		int32* p1 = (int32*)&dst[0];
-		int32* p2 = (int32*)&src[0];
-		int n = length;
-
-		while (n >= 4) {
-			if (*p1++ != *p2++)
-				return false;
-
-			n -= 4;
-		}
-
-		for (int i = length - n; i < length; i++) {
-			if (dst[i] != src[i])
-				return false;
-		}
-
-		return true;
-	}
-
-	for (int i = 0; i < length; i++) {
-		if (dst[i] != src[i])
-			return false;
-	}
-
-	return true;
-}
-
-
 
 TextCodec::TextCodec()
 {
@@ -1119,7 +1088,7 @@ bool TextCodec1::expandDictionary()
 	return true;
 }
 
-inline int TextCodec1::emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd)
+int TextCodec1::emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd)
 {
 	int dstIdx = 0;
 
@@ -1162,7 +1131,7 @@ inline int TextCodec1::emitSymbols(byte src[], byte dst[], const int srcEnd, con
 	return dstIdx;
 }
 
-inline int TextCodec1::emitWordIndex(byte dst[], int val)
+int TextCodec1::emitWordIndex(byte dst[], int val)
 {
 	// Emit word index (varint 5 bits + 7 bits + 7 bits)
 	if (val >= TextCodec::THRESHOLD1) {
@@ -1575,7 +1544,7 @@ bool TextCodec2::expandDictionary()
 	return true;
 }
 
-inline int TextCodec2::emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd)
+int TextCodec2::emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd)
 {
 	int dstIdx = 0;
 
@@ -1647,7 +1616,7 @@ inline int TextCodec2::emitSymbols(byte src[], byte dst[], const int srcEnd, con
 	return dstIdx;
 }
 
-inline int TextCodec2::emitWordIndex(byte dst[], int val, int mask)
+int TextCodec2::emitWordIndex(byte dst[], int val, int mask)
 {
 	// Emit word index (varint 5 bits + 7 bits + 7 bits)
 	// 1st byte: 0x80 => word idx, 0x40 => more bytes, 0x20 => toggle case 1st symbol

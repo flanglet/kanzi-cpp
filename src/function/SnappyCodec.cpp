@@ -210,7 +210,7 @@ bool SnappyCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-inline int SnappyCodec::putUvarint(byte buf[], uint64 x)
+ int SnappyCodec::putUvarint(byte buf[], uint64 x)
 {
     int idx = 0;
 
@@ -255,7 +255,7 @@ uint64 SnappyCodec::getUvarint(SliceArray<byte>& iba) THROW
 // getDecodedLength returns the length of the decoded block or -1 if error
 // The index of the indexed byte array is incremented by the number
 // of bytes read
-inline int SnappyCodec::getDecodedLength(SliceArray<byte>& input)
+int SnappyCodec::getDecodedLength(SliceArray<byte>& input)
 {
     try {
         uint64 v = getUvarint(input);
@@ -366,7 +366,7 @@ bool SnappyCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
     return (d - dstIdx == dLen);
 }
 
-inline bool SnappyCodec::differentInts(byte block[], int srcIdx, int dstIdx)
+ bool SnappyCodec::differentInts(byte block[], int srcIdx, int dstIdx)
 {
     return *((int32*)&block[srcIdx]) != *((int32*)&block[dstIdx]);
 }

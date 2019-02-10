@@ -35,9 +35,6 @@ namespace kanzi
    {
        friend class TPAQPredictor;
 
-       static const int BEGIN_LEARN_RATE = 60 << 7;
-       static const int END_LEARN_RATE = 11 << 7;
-
    public:
       TPAQMixer();
 
@@ -48,6 +45,9 @@ namespace kanzi
        int get(int32 p0, int32 p1, int32 p2, int32 p3, int32 p4, int32 p5, int32 p6, int32 p7);
 
    private:
+       static const int BEGIN_LEARN_RATE = 60 << 7;
+       static const int END_LEARN_RATE = 11 << 7;
+
        int32 _w0, _w1, _w2, _w3, _w4, _w5, _w6, _w7;
        int32 _p0, _p1, _p2, _p3, _p4, _p5, _p6, _p7;
        int _pr;
@@ -116,14 +116,55 @@ namespace kanzi
        int32 _ctx5;
        int32 _ctx6;
 
-       static int32 hash(int32 x, int32 y);
+       inline int32 hash(int32 x, int32 y);
 
-       int32 createContext(uint32 ctxId, uint32 cx);
+       inline int32 createContext(uint32 ctxId, uint32 cx);
 
-       int getMatchContextPred();
+       inline int getMatchContextPred();
 
-       void findMatch();
+       inline void findMatch();
   };
 
+
+   // Adjust weights to minimize coding cost of last prediction
+   inline void TPAQMixer::update(int bit)
+   {
+       const int32 err = (((bit << 12) - _pr) * _learnRate) >> 10;
+
+       if (err == 0)
+           return;
+
+       // Quickly decaying learn rate
+       _learnRate += ((END_LEARN_RATE - _learnRate) >> 31);
+       _skew += err;
+
+       // Train Neural Network: update weights
+       _w0 += ((_p0 * err + 0) >> 12);
+       _w1 += ((_p1 * err + 0) >> 12);
+       _w2 += ((_p2 * err + 0) >> 12);
+       _w3 += ((_p3 * err + 0) >> 12);
+       _w4 += ((_p4 * err + 0) >> 12);
+       _w5 += ((_p5 * err + 0) >> 12);
+       _w6 += ((_p6 * err + 0) >> 12);
+       _w7 += ((_p7 * err + 0) >> 12);
+   }
+
+   inline int TPAQMixer::get(int32 p0, int32 p1, int32 p2, int32 p3, int32 p4, int32 p5, int32 p6, int32 p7)
+   {
+       _p0 = p0;
+       _p1 = p1;
+       _p2 = p2;
+       _p3 = p3;
+       _p4 = p4;
+       _p5 = p5;
+       _p6 = p6;
+       _p7 = p7;
+
+       // Neural Network dot product (sum weights*inputs)
+       _pr = Global::squash(((p0 * _w0) + (p1 * _w1) + (p2 * _w2) + (p3 * _w3) +
+                             (p4 * _w4) + (p5 * _w5) + (p6 * _w6) + (p7 * _w7) +
+                             _skew + 65536) >> 17);
+       return _pr;
+   }
 }
 #endif

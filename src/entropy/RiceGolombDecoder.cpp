@@ -38,23 +38,3 @@ int RiceGolombDecoder::decode(byte block[], uint blkptr, uint len)
 
     return len;
 }
-
-inline byte RiceGolombDecoder::decodeByte()
-{
-       uint64 q = 0;
-
-       // quotient is unary encoded
-       while (_bitstream.readBit() == 0)
-          q++;
-
-       // remainder is binary encoded
-       const uint64 res = (q << _logBase) | _bitstream.readBits(_logBase);
-
-       if ((res != 0) && (_signed == true))
-       {
-          if (_bitstream.readBit() == 1)
-             return byte(~res+1);
-       }
-
-       return byte(res);
-}

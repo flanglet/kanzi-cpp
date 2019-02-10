@@ -58,7 +58,7 @@ namespace kanzi {
 
        // Limit to 1 x srcLength and let the caller deal with
        // a failure when the output is too small
-       inline int getMaxEncodedLength(int srcLen) const { return srcLen; }
+       int getMaxEncodedLength(int srcLen) const { return srcLen; }
 
    private:
        DictEntry** _dictMap;
@@ -71,9 +71,9 @@ namespace kanzi {
        bool _isCRLF; // EOL = CR + LF
 
        bool expandDictionary();
-       void reset();
-       int emitWordIndex(byte dst[], int val);
-       int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
+       inline void reset();
+       inline int emitWordIndex(byte dst[], int val);
+       inline int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
 
    // Encode word indexes using a mask (0x80)
@@ -107,9 +107,9 @@ namespace kanzi {
        bool _isCRLF; // EOL = CR + LF
 
        bool expandDictionary();
-       void reset();
-       int emitWordIndex(byte dst[], int val, int mask);
-       int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
+       inline void reset();
+       inline int emitWordIndex(byte dst[], int val, int mask);
+       inline int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
 
    // Simple one-pass text codec. Uses a default (small) static dictionary
@@ -143,13 +143,13 @@ namespace kanzi {
            return _delegate->getMaxEncodedLength(srcLen);
        }
 
-       inline static bool isText(byte val) { return TEXT_CHARS[uint8(val)]; }
+       static bool isText(byte val) { return TEXT_CHARS[uint8(val)]; }
 
-       inline static bool isLowerCase(byte val) { return (val >= 'a') && (val <= 'z'); }
+       static bool isLowerCase(byte val) { return (val >= 'a') && (val <= 'z'); }
 
-       inline static bool isUpperCase(byte val) { return (val >= 'A') && (val <= 'Z'); }
+       static bool isUpperCase(byte val) { return (val >= 'A') && (val <= 'Z'); }
 
-       inline static bool isDelimiter(byte val) { return DELIMITER_CHARS[uint8(val)]; }
+       static bool isDelimiter(byte val) { return DELIMITER_CHARS[uint8(val)]; }
 
    private:
        static const int32 HASH1 = 0x7FEB352D;
@@ -174,7 +174,7 @@ namespace kanzi {
 
        static SliceArray<byte> unpackDictionary32(const byte dict[], int dictSize);
 
-       static inline bool sameWords(const byte src[], byte dst[], const int length);
+       static bool sameWords(const byte src[], byte dst[], const int length);
 
        static byte computeStats(byte block[], int count, int32 freqs[]);
 
@@ -216,6 +216,37 @@ namespace kanzi {
        _hash = de._hash;
        _data = de._data;
        return *this;
+   }
+
+
+   inline bool TextCodec::sameWords(const byte src[], byte dst[], const int length)
+   {
+	   if (length >= 4) {
+		   int32* p1 = (int32*)&dst[0];
+		   int32* p2 = (int32*)&src[0];
+		   int n = length;
+
+		   while (n >= 4) {
+			   if (*p1++ != *p2++)
+				   return false;
+
+			   n -= 4;
+		   }
+
+		   for (int i = length - n; i < length; i++) {
+			   if (dst[i] != src[i])
+				   return false;
+		   }
+
+		   return true;
+	   }
+
+	   for (int i = 0; i < length; i++) {
+		   if (dst[i] != src[i])
+			   return false;
+	   }
+
+	   return true;
    }
 }
 #endif

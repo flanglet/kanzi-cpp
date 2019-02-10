@@ -43,5 +43,16 @@ namespace kanzi
        int get() { return int(_probs[_ctxIdx] >> 4); }
    };
 
+   // Update the probability model
+   // bit == 1 -> prob += ((PSCALE-prob) >> 6);
+   // bit == 0 -> prob -= (prob >> 6);
+   inline void FPAQPredictor::update(int bit)
+   {
+       _probs[_ctxIdx] -= (((_probs[_ctxIdx] - (-bit & PSCALE)) >> 6) + bit);
+
+       // Update context by registering the current bit (or wrapping after 8 bits)
+       _ctxIdx = (_ctxIdx < 128) ? (_ctxIdx << 1) + bit : 1;
+   }
+
 }
 #endif

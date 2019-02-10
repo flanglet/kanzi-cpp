@@ -76,7 +76,7 @@ namespace kanzi
 
        ~TRBudget() {}
 
-       bool check(int size);
+       inline bool check(int size);
    };
 
    class DivSufSort
@@ -172,9 +172,9 @@ namespace kanzi
 
        void trCopy(int isa, int first, int a, int b, int last, int depth);
 
-       void reset();
+       inline void reset();
 
-       static int trIlg(int n);
+       inline int trIlg(int n);
 
    public:
        DivSufSort();

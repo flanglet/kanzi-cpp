@@ -17,6 +17,7 @@ limitations under the License.
 #define _BinaryEntropyDecoder_
 
 #include "../EntropyDecoder.hpp"
+#include "../Memory.hpp"
 #include "../Predictor.hpp"
 #include "../SliceArray.hpp"
 
@@ -59,10 +60,46 @@ namespace kanzi
 
        virtual void dispose();
 
-       byte decodeByte();
+       virtual byte decodeByte();
 
-       virtual int decodeBit();
+       int decodeBit();
    };
+
+   
+   inline int BinaryEntropyDecoder::decodeBit()
+   {
+       // Calculate interval split
+       // Written in a way to maximize accuracy of multiplication/division
+       const uint64 split = ((((_high - _low) >> 4) * uint64(_predictor->get())) >> 8) + _low;
+       int bit;
+
+       // Update predictor
+       if (split >= _current) {
+           bit = 1;
+           _high = split;
+           _predictor->update(1);
+       }
+       else {
+           bit = 0;
+           _low = split + 1;
+           _predictor->update(0);
+       }
+
+       // Read 32 bits from bitstream
+       while (((_low ^ _high) & MASK_24_56) == 0)
+           read();
+
+       return bit;
+   }
+
+   inline void BinaryEntropyDecoder::read()
+   {
+       _low = (_low << 32) & MASK_0_56;
+       _high = ((_high << 32) | MASK_0_32) & MASK_0_56;
+       uint64 val = BigEndian::readInt32(&_sba._array[_sba._index]) & 0xFFFFFFFF;
+       _current = ((_current<<32) | val) & MASK_0_56;
+       _sba._index += 4;
+   }
 
 }
 #endif
