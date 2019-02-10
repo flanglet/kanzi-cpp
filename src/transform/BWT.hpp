@@ -49,76 +49,31 @@ namespace kanzi {
 //          pi\0  9  -> 5        ssippi\0
 //           i\0  10 -> 0     ssissippi\0
 // Suffix array SA : 10 7 4 1 0 9 8 6 3 5 2
-// BWT[i] = input[SA[i]-1] => BWT(input) = pssm[i]pissii (+ primary index 4)
+// BWT[i] = input[SA[i]-1] => BWT(input) = ipssmpissii (+ primary index 5)
 // The suffix array and permutation vector are equal when the input is 0 terminated
 // The insertion of a guard is done internally and is entirely transparent.
-//
-// See https://code.google.com/p/libdivsufsort/source/browse/wiki/SACA_Benchmarks.wiki
-// for respective performance of different suffix sorting algorithms.
 //
 // This implementation extends the canonical algorithm to use up to MAX_CHUNKS primary
 // indexes (based on input block size). Each primary index corresponds to a data chunk.
 // Chunks may be inverted concurrently.
    template <class T>
-   class InverseRegularChunkTask : public Task<T> {
-   private:
-       uint* _buffer;
-       uint* _buckets;
-       int* _primaryIndexes;
-       byte* _dst;
-       int _pIdx0;
-       int _startIdx;
-       int _step;
-       int _startChunk;
-       int _endChunk;
-
-   public:
-       InverseRegularChunkTask(uint* buf, uint* buckets, byte* output,
-           int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
-       ~InverseRegularChunkTask() {}
-
-       T call() THROW;
-   };
-
-   template <class T>
    class InverseBigChunkTask : public Task<T> {
    private:
-       byte* _buffer;
+       uint* _data;
        uint* _buckets;
+       uint16* _fastBits;
        int* _primaryIndexes;
        byte* _dst;
-       int _pIdx0;
-       int _startIdx;
-       int _step;
-       int _startChunk;
-       int _endChunk;
+       int _total;
+       int _start;
+       int _ckSize;
+       int _firstChunk;
+       int _lastChunk;
 
    public:
-       InverseBigChunkTask(byte* buf, uint* buckets, byte* output,
-           int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
+       InverseBigChunkTask(uint* buf, uint* buckets, uint16* fastBits, byte* output,
+           int* primaryIndexes, int total, int start, int ckSize, int firstChunk, int lastChunk);
        ~InverseBigChunkTask() {}
-
-       T call() THROW;
-   };
-
-   template <class T>
-   class InverseHugeChunkTask : public Task<T> {
-   private:
-       uint* _buffer1;
-       byte* _buffer2;
-       uint* _buckets;
-       int* _primaryIndexes;
-       byte* _dst;
-       int _pIdx0;
-       int _startIdx;
-       int _step;
-       int _startChunk;
-       int _endChunk;
-
-   public:
-       InverseHugeChunkTask(uint* buf1, byte* buf2, uint* buckets, byte* output,
-           int* primaryIndexes, int pIdx0, int startIdx, int step, int startChunk, int endChunk);
-       ~InverseHugeChunkTask() {}
 
        T call() THROW;
    };
@@ -128,10 +83,10 @@ namespace kanzi {
    private:
        static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB
        static const int BWT_MAX_CHUNKS = 8;
+       static const int NB_FASTBITS = 17;
 
-       uint* _buffer1;  // inverse regular blocks
-       byte* _buffer2;    // inverse big blocks
-       int* _buffer3;   // forward
+       uint* _buffer; 
+       int* _sa; 
        int _bufferSize;
        uint _buckets[256];
        int _primaryIndexes[8];
@@ -140,14 +95,14 @@ namespace kanzi {
 
        bool inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count);
 
-       bool inverseHugeBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count);
-
-       bool inverseRegularBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count);
+       bool inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count);
 
    public:
+       static const int MASK_FASTBITS = (1 << NB_FASTBITS) - 1;
+
        BWT(int jobs = 1);
 
-       virtual ~BWT();      
+       virtual ~BWT();
 
        bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
