@@ -124,11 +124,6 @@ const int32 STATE_MAP[] = {
      1,     1,     1,     1,     1,     1,     1,     1,
 };
 
-int32 TPAQPredictor::hash(int32 x, int32 y)
-{
-    const int32 h = x * HASH ^ y * HASH;
-    return (h >> 1) ^ (h >> 9) ^ (x >> 2) ^ (y >> 3) ^ HASH;
-}
 
 TPAQPredictor::TPAQPredictor(map<string, string>* ctx)
     : _sse0(256)
@@ -349,34 +344,6 @@ void TPAQPredictor::findMatch()
     }
 }
 
-// Get a prediction from the match model in [-2047..2048]
-int TPAQPredictor::getMatchContextPred()
-{
-    int p = 0;
-
-    if (_matchLen > 0) {
-        if (_c0 == ((_buffer[_matchPos & MASK_BUFFER] & 0xFF) | 256) >> (8 - _bpos)) {
-            // Add match length to NN inputs. Compute input based on run length
-            p = (_matchLen <= 24) ? _matchLen : 24 + ((_matchLen - 24) >> 3);
-
-            if (((_buffer[_matchPos & MASK_BUFFER] >> (7 - _bpos)) & 1) == 0)
-                p = -p;
-
-            p <<= 6;
-        }
-        else
-            _matchLen = 0;
-    }
-
-    return p;
-}
-
-int32 TPAQPredictor::createContext(uint32 ctxId, uint32 cx)
-{
-    cx = cx * 987654323 + ctxId;
-    cx = (cx << 16) | (cx >> 16);
-    return cx * 123456791 + ctxId;
-}
 
 TPAQMixer::TPAQMixer()
 {
