@@ -20,6 +20,7 @@ limitations under the License.
 #include "../Function.hpp"
 #include "../Memory.hpp"
 #include "../Predictor.hpp"
+#include "../util.hpp"
 
 
 using namespace std;
@@ -213,27 +214,26 @@ namespace kanzi {
 			return ((LittleEndian::readInt32(p) & 0x00FFFFFF) * HASH) & HASH_MASK;
 		}
 
-      static int emitCopy(byte dst[], int dstIdx, int ref, int matchLen);
+		static int emitCopy(byte dst[], int dstIdx, int ref, int matchLen);
    };
 
 
    inline void ROLZPredictor::update(int bit)
    {
-       uint8* p = (uint8*) &_p[_ctx + _c1];
-       uint16* pr = (uint16*) p;
-       *pr -= (((*pr - uint16(-bit)) >> 3) + bit);
-       pr = (uint16*) (p + 2);
-       *pr -= (((*pr - uint16(-bit)) >> 6) + bit);
-       _c1 = (_c1 << 1) + bit;
+	   uint16* pr = (uint16*) &_p[_ctx + _c1];
+	   pr[0] -= (((pr[0] - uint16(-bit)) >> 3) + bit);
+	   pr[1] -= (((pr[1] - uint16(-bit)) >> 6) + bit);
+	   _c1 = (_c1 << 1) + bit;
 
-       if (_c1 >= _size)
-           _c1 = 1;
+	   if (_c1 >= _size)
+	      _c1 = 1;
    }
    
    inline int ROLZPredictor::get()
    {
-       uint8* p = (uint8*) &_p[_ctx + _c1];
-       return (int(*(uint16*) p) + int(*(uint16*) (p + 2))) >> 5;
+	   prefetchRead(&_p[_ctx + _c1]);
+	   uint16* p = (uint16*) &_p[_ctx + _c1];
+	   return (int(p[0]) + int(p[1])) >> 5;
    }
 
 
