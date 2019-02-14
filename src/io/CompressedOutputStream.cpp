@@ -20,6 +20,7 @@ limitations under the License.
 #include "../IllegalArgumentException.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../entropy/EntropyCodecFactory.hpp"
+#include "../entropy/EntropyUtils.hpp"
 #include "../function/FunctionFactory.hpp"
 
 #ifdef CONCURRENCY_ENABLED

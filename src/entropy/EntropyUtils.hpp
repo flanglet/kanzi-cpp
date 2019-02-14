@@ -35,12 +35,10 @@ namespace kanzi
        static const int PRESENT_SYMBOLS_MASK = 0;
        static const int ABSENT_SYMBOLS_MASK = 1;
 
-       int _buffer[65536];
-
    public:
        static const int INCOMPRESSIBLE_THRESHOLD = 973; // 0.95*1024
 
-       EntropyUtils() { memset(_buffer, 0, sizeof(int) * 65536); }
+       EntropyUtils() {}
 
        ~EntropyUtils() {}
 
@@ -48,7 +46,7 @@ namespace kanzi
 
        static int decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW;
 
-       int normalizeFrequencies(uint freqs[], uint alphabet[], int length, uint totalFreq, uint scale) THROW;
+       static int normalizeFrequencies(uint freqs[], uint alphabet[], int length, uint totalFreq, uint scale) THROW;
 
        static int computeFirstOrderEntropy1024(byte block[], int length, uint histo[]);
 

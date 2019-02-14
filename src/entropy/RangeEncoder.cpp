@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <sstream>
 #include "RangeEncoder.hpp"
+#include "EntropyUtils.hpp"
 #include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
@@ -44,7 +45,7 @@ RangeEncoder::RangeEncoder(OutputBitStream& bitstream, int chunkSize, int logRan
 
 int RangeEncoder::updateFrequencies(uint frequencies[], int size, int lr)
 {
-    int alphabetSize = _eu.normalizeFrequencies(frequencies, _alphabet, 256, size, 1 << lr);
+    int alphabetSize = EntropyUtils::normalizeFrequencies(frequencies, _alphabet, 256, size, 1 << lr);
 
     if (alphabetSize > 0) {
         _cumFreqs[0] = 0;

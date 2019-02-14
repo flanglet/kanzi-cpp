@@ -17,7 +17,6 @@ limitations under the License.
 #define _RangeEncoder_
 
 #include "../EntropyEncoder.hpp"
-#include "EntropyUtils.hpp"
 
 using namespace std;
 
@@ -54,7 +53,6 @@ namespace kanzi
        uint _alphabet[256];
        uint _freqs[256];
        uint64 _cumFreqs[257];
-       EntropyUtils _eu;
        OutputBitStream& _bitstream;
        uint _chunkSize;
        uint _logRange;

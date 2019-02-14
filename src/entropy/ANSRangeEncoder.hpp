@@ -17,7 +17,6 @@ limitations under the License.
 #define _ANSRangeEncoder_
 
 #include "../EntropyEncoder.hpp"
-#include "EntropyUtils.hpp"
 
 using namespace std;
 
@@ -84,7 +83,6 @@ namespace kanzi
 	   ANSEncSymbol* _symbols;
 	   byte* _buffer;
 	   uint _bufferSize;
-	   EntropyUtils _eu;
 	   OutputBitStream& _bitstream;
 	   uint _chunkSize;
 	   uint _logRange;

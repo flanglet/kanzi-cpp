@@ -344,7 +344,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         throw IllegalArgumentException(ss.str());
     }
 
-    if ((scale < 1 << 8) || (scale > 1 << 16)) {
+    if ((scale < 256) || (scale > 65536)) {
         stringstream ss;
         ss << "Invalid scale parameter: " << scale << " (must be in [256..65536])";
         throw IllegalArgumentException(ss.str());
@@ -370,7 +370,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     uint sumFreq = 0;
     uint freqMax = 0;
     int idxMax = -1;
-    int* errors = &_buffer[0];
+    int errors[256] = { 0 };
 
     // Scale frequencies by stretching distribution over complete range
     for (int i = 0; (i < length) && (sumFreq < totalFreq); i++) {

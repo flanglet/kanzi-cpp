@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <sstream>
 #include "ANSRangeEncoder.hpp"
+#include "EntropyUtils.hpp"
 #include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
@@ -76,7 +77,7 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], int lr)
         uint* f = &frequencies[k * 257];
         ANSEncSymbol* symb = &_symbols[k << 8];
         uint* curAlphabet = &_alphabet[k << 8];
-        const int alphabetSize = _eu.normalizeFrequencies(f, curAlphabet, 256, f[256], 1 << lr);
+        const int alphabetSize = EntropyUtils::normalizeFrequencies(f, curAlphabet, 256, f[256], 1 << lr);
 
         if (alphabetSize > 0) {
             int sum = 0;
