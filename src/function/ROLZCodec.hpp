@@ -134,9 +134,9 @@ namespace kanzi {
 
 		inline int findMatch(const byte buf[], const int pos, const int end);	
 
-      inline void emitLiteralLength(SliceArray<byte>& litBuf, const int length);
+		inline void emitLiteralLength(SliceArray<byte>& litBuf, const int length);
 
-      inline int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx);
+		inline int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx);
 	};
 
 	// Use CM (ROLZEncoder/ROLZDecoder) to encode/decode literals and matches
