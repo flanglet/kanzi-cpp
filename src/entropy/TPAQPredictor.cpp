@@ -306,13 +306,13 @@ void TPAQPredictor::update(int bit)
     // SSE (Secondary Symbol Estimation)
     if (_extra == true) {
        if (_binCount < (_pos >> 3)) {
-           p = _sse1.get(bit, p, _c0 | (_c4 & 0xFF00));
+           p = _sse1.get(bit, p, _ctx0 + _c0);
        }
        else {
            if (_binCount >= (_pos >> 2))
               p = _sse0.get(bit, p, _c0);
 
-           p = (3 * _sse1.get(bit, p, _c0 | (_c4 & 0xFF00)) + p + 2) >> 2;
+           p = (3 * _sse1.get(bit, p, _ctx0 + _c0) + p + 2) >> 2;
        }
     }
 
