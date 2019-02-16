@@ -1161,7 +1161,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 	int words = _staticDictSize;
 	bool wordRun = false;
-	_isCRLF = (src[srcIdx++] & 0x01) != 0;
+	_isCRLF = (src[srcIdx++] & TextCodec::MASK_CRLF) != 0;
 
 	while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
 		byte cur = src[srcIdx];
@@ -1655,7 +1655,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 	int words = _staticDictSize;
 	bool wordRun = false;
-	_isCRLF = (src[srcIdx++] & 0x01) != 0;
+	_isCRLF = (src[srcIdx++] & TextCodec::MASK_CRLF) != 0;
 
 	while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
 		byte cur = src[srcIdx];
