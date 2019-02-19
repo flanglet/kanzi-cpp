@@ -88,7 +88,6 @@ namespace kanzi {
        uint* _buffer; 
        int* _sa; 
        int _bufferSize;
-       uint _buckets[256];
        int _primaryIndexes[8];
        DivSufSort _saAlgo;
        int _jobs;
