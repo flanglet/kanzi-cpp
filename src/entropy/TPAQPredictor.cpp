@@ -232,7 +232,7 @@ void TPAQPredictor::update(int bit)
         _pos++;
         _c8 = (_c8 << 8) | ((_c4 >> 24) & 0xFF);
         _c4 = (_c4 << 8) | (_c0 & 0xFF);
-        _hash = (((_hash * 43707) << 4) + _c4) & _hashMask;
+        _hash = (((_hash * HASH) << 4) + _c4) & _hashMask;
         _c0 = 1;
         _bpos = 0;
         _binCount += ((_c4 >> 7) & 1);
@@ -256,12 +256,11 @@ void TPAQPredictor::update(int bit)
         }
         else {
             // Mostly binary
-            _ctx4 = createContext(HASH, _c4 ^ (_c4 & 0xFFFF));
-            _ctx5 = hash(_c4 & 0xFFFF0000, _c8 >> 16);
+            _ctx4 = createContext(HASH, _c4 ^ (_c4 & 0x000FFFFF));
+            _ctx5 = hash(_ctx1, _c8 >> 16);
             _ctx6 = _ctx0 | (_c8 << 16);
         }
 
-        // Find match
         findMatch();
 
         // Keep track current position
