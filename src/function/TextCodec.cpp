@@ -848,18 +848,14 @@ TextCodec1::TextCodec1(map<string, string>& ctx)
 {
 	// Actual block size
 	int blockSize = 0;
-	int log = 8;
+	int log = 13;
 	map<string, string>::iterator it = ctx.find("size");
 
 	if (it != ctx.end()) {
 		blockSize = atoi(it->second.c_str());
-
-		if (blockSize >= 1 << 28) {
-			log = 26;
-		}
-		else if (blockSize >= 1 << 10) {
-			log = Global::log2(blockSize / 4);
-		}
+		
+		if (blockSize >= 4)		
+			log = max(min(Global::log2(blockSize / 4), 26), 13);
 	}
 
 	// Select an appropriate initial dictionary size
@@ -999,8 +995,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 					DictEntry* pe = &_dictList[words];
 
 					if ((pe->_data & 0x00FFFFFF) >= _staticDictSize) {
-						// Evict and reuse old entry
-						_dictMap[pe->_hash & _hashMask] = nullptr;
+						// Reuse old entry
 						pe->_ptr = &src[delimAnchor + 1];
 						pe->_hash = h1;
 						pe->_data = (length << 24) | words;
@@ -1199,8 +1194,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 					DictEntry& e = _dictList[words];
 
 					if ((e._data & 0x00FFFFFF) >= _staticDictSize) {
-						// Evict and reuse old entry
-						_dictMap[e._hash & _hashMask] = nullptr;
+						// Reuse old entry
 						e._ptr = &src[delimAnchor + 1];
 						e._hash = h1;
 						e._data = (length << 24) | words;
@@ -1309,18 +1303,14 @@ TextCodec2::TextCodec2(map<string, string>& ctx)
 {
 	// Actual block size
 	int blockSize = 0;
-	int log = 8;
+	int log = 13;
 	map<string, string>::iterator it = ctx.find("size");
 
 	if (it != ctx.end()) {
 		blockSize = atoi(it->second.c_str());
-
-		if (blockSize >= 1 << 28) {
-			log = 26;
-		}
-		else if (blockSize >= 1 << 10) {
-			log = Global::log2(blockSize / 4);
-		}
+		
+		if (blockSize >= 4)
+			log = max(min(Global::log2(blockSize / 4), 26), 13);
 	}
 
 	// Select an appropriate initial dictionary size
@@ -1456,8 +1446,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 					DictEntry* pe = &_dictList[words];
 
 					if ((pe->_data & 0x00FFFFFF) >= _staticDictSize) {
-						// Evict and reuse old entry
-						_dictMap[pe->_hash & _hashMask] = nullptr;
+						// Reuse old entry
 						pe->_ptr = &src[delimAnchor + 1];
 						pe->_hash = h1;
 						pe->_data = (length << 24) | words;
@@ -1475,8 +1464,8 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 				}
 			}
 			else {
-				// Word found in the dictionary
-				// Skip space if only delimiter between 2 word references
+            // Word found in the dictionary
+            // Skip space if only delimiter between 2 word references
             if ((emitAnchor != delimAnchor) || (src[delimAnchor] != ' ')) {
 					int dIdx = emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor + 1 - emitAnchor, dstEnd - dstIdx);
 
@@ -1693,8 +1682,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 					DictEntry& e = _dictList[words];
 
 					if ((e._data & 0x00FFFFFF) >= _staticDictSize) {
-						// Evict and reuse old entry
-						_dictMap[e._hash & _hashMask] = nullptr;
+						// Reuse old entry
 						e._ptr = &src[delimAnchor + 1];
 						e._hash = h1;
 						e._data = (length << 24) | words;
