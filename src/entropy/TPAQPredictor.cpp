@@ -250,14 +250,14 @@ void TPAQPredictor::update(int bit)
             // Mostly text or mixed
             const int32 h1 = ((_c4 & MASK_80808080) == 0) ? _c4 & MASK_4F4FFFFF : _c4 & MASK_80808080;
             const int32 h2 = ((_c8 & MASK_80808080) == 0) ? _c8 & MASK_4F4FFFFF : _c8 & MASK_80808080;
-            _ctx4 = createContext(_c4 & 0xFFFF, _c4 ^ (_c8 & 0xFFFF));
+            _ctx4 = createContext(_ctx1, _c4 ^ (_c8 & 0xFFFF));
             _ctx5 = hash(h1, h2);
             _ctx6 = hash(_c8 & MASK_F0F0F0F0, _c4 & MASK_F0F0F0F0);
         }
         else {
             // Mostly binary
             _ctx4 = createContext(HASH, _c4 ^ (_c4 & 0x000FFFFF));
-            _ctx5 = hash(_ctx1, _c8 >> 16);
+            _ctx5 = hash(_c4 & 0xFFFF0000, _c8 >> 16);
             _ctx6 = _ctx0 | (_c8 << 16);
         }
 
@@ -309,9 +309,9 @@ void TPAQPredictor::update(int bit)
        }
        else {
            if (_binCount >= (_pos >> 2))
-              p = _sse0.get(bit, p, _c0);
+              p = (3 * _sse0.get(bit, p, _c0) + p) >> 2;
 
-           p = (3 * _sse1.get(bit, p, _ctx0 + _c0) + p + 2) >> 2;
+           p = (3 * _sse1.get(bit, p, _ctx0 + _c0) + p) >> 2;
        }
     }
 
