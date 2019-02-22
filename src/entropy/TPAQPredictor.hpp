@@ -74,7 +74,7 @@ namespace kanzi
        static const int HASH_SIZE = 16 * 1024 * 1024;
        static const int MASK_BUFFER = BUFFER_SIZE - 1;
        static const int MASK_80808080 = 0x80808080;
-       static const int MASK_F0F0F0F0 = 0xF0F0F0F0;
+       static const int MASK_F0F0F000 = 0xF0F0F000;
        static const int MASK_4F4FFFFF = 0x4F4FFFFF;
        static const int HASH = 0x7FEB352D;
 
