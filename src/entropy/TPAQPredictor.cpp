@@ -276,24 +276,24 @@ void TPAQPredictor::update(int bit)
     // Get initial predictions
     const uint8* table = STATE_TRANSITIONS[bit];
     *_cp0 = table[*_cp0];
+    *_cp1 = table[*_cp1];
+    *_cp2 = table[*_cp2];
+    *_cp3 = table[*_cp3];
+    *_cp4 = table[*_cp4];
+    *_cp5 = table[*_cp5];
+    *_cp6 = table[*_cp6];
     _cp0 = &_smallStatesMap0[_ctx0 + _c0];
     const int p0 = STATE_MAP[*_cp0];
-    *_cp1 = table[*_cp1];
     _cp1 = &_smallStatesMap1[_ctx1 + _c0];
     const int p1 = STATE_MAP[*_cp1];
-    *_cp2 = table[*_cp2];
     _cp2 = &_bigStatesMap[(_ctx2 + _c0) & _statesMask];
     const int p2 = STATE_MAP[*_cp2];
-    *_cp3 = table[*_cp3];
     _cp3 = &_bigStatesMap[(_ctx3 + _c0) & _statesMask];
     const int p3 = STATE_MAP[*_cp3];
-    *_cp4 = table[*_cp4];
     _cp4 = &_bigStatesMap[(_ctx4 + _c0) & _statesMask];
     const int p4 = STATE_MAP[*_cp4];
-    *_cp5 = table[*_cp5];
     _cp5 = &_bigStatesMap[(_ctx5 + _c0) & _statesMask];
     const int p5 = STATE_MAP[*_cp5];
-    *_cp6 = table[*_cp6];
     _cp6 = &_bigStatesMap[(_ctx6 + _c0) & _statesMask];
     const int p6 = STATE_MAP[*_cp6];
 
