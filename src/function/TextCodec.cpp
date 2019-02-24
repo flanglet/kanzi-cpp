@@ -996,6 +996,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 					if ((pe->_data & 0x00FFFFFF) >= _staticDictSize) {
 						// Reuse old entry
+						_dictMap[e._hash & _hashMask] = nullptr;
 						pe->_ptr = &src[delimAnchor + 1];
 						pe->_hash = h1;
 						pe->_data = (length << 24) | words;
@@ -1195,6 +1196,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 					if ((e._data & 0x00FFFFFF) >= _staticDictSize) {
 						// Reuse old entry
+						_dictMap[e._hash & _hashMask] = nullptr;
 						e._ptr = &src[delimAnchor + 1];
 						e._hash = h1;
 						e._data = (length << 24) | words;
@@ -1447,6 +1449,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 					if ((pe->_data & 0x00FFFFFF) >= _staticDictSize) {
 						// Reuse old entry
+						_dictMap[e._hash & _hashMask] = nullptr;
 						pe->_ptr = &src[delimAnchor + 1];
 						pe->_hash = h1;
 						pe->_data = (length << 24) | words;
@@ -1683,6 +1686,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 					if ((e._data & 0x00FFFFFF) >= _staticDictSize) {
 						// Reuse old entry
+						_dictMap[e._hash & _hashMask] = nullptr;
 						e._ptr = &src[delimAnchor + 1];
 						e._hash = h1;
 						e._data = (length << 24) | words;
