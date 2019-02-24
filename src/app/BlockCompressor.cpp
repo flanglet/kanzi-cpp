@@ -106,6 +106,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     else {
         _blockSize = atoi(it->second.c_str());
         args.erase(it);
+        _blockSize = (_blockSize + 15) & -16;
 
         if (_blockSize > 1024 * 1024 * 1024) {
            stringstream sserr;
