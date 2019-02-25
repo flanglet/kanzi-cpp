@@ -793,9 +793,9 @@ bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
         stringstream ss;
         ss << "The max text transform block size is " << MAX_BLOCK_SIZE << ", got " << count;
         throw IllegalArgumentException(ss.str());
-	}
+    }
 
-	return _delegate->forward(input, output, count);
+    return _delegate->forward(input, output, count);
 }
 
 bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
@@ -818,9 +818,9 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
         stringstream ss;
         ss << "The max text transform block size is " << MAX_BLOCK_SIZE << ", got " << count;
         throw IllegalArgumentException(ss.str());
-	}
+    }
 
-	return _delegate->inverse(input, output, count);
+    return _delegate->inverse(input, output, count);
 }
 
 
