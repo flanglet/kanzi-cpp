@@ -84,10 +84,10 @@ namespace kanzi {
            return new BinaryEntropyDecoder(ibs, new CMPredictor());
 
        case TPAQ_TYPE: 
-           return new BinaryEntropyDecoder(ibs, new TPAQPredictor(&ctx));
+           return new BinaryEntropyDecoder(ibs, new TPAQPredictor<false>(&ctx));
        
        case TPAQX_TYPE: 
-           return new BinaryEntropyDecoder(ibs, new TPAQPredictor(&ctx));
+           return new BinaryEntropyDecoder(ibs, new TPAQPredictor<true>(&ctx));
 
        case NONE_TYPE:
            return new NullEntropyDecoder(ibs);
@@ -121,10 +121,10 @@ namespace kanzi {
            return new BinaryEntropyEncoder(obs, new CMPredictor());
 
        case TPAQ_TYPE: 
-           return new BinaryEntropyEncoder(obs, new TPAQPredictor(&ctx));
+           return new BinaryEntropyEncoder(obs, new TPAQPredictor<false>(&ctx));
        
        case TPAQX_TYPE: 
-           return new BinaryEntropyEncoder(obs, new TPAQPredictor(&ctx));
+           return new BinaryEntropyEncoder(obs, new TPAQPredictor<true>(&ctx));
 
        case NONE_TYPE:
            return new NullEntropyEncoder(obs);

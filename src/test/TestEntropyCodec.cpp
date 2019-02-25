@@ -45,7 +45,10 @@ using namespace kanzi;
 static Predictor* getPredictor(string type)
 {
     if (type.compare("TPAQ") == 0)
-        return new TPAQPredictor();
+        return new TPAQPredictor<false>();
+
+    if (type.compare("TPAQX") == 0)
+        return new TPAQPredictor<true>();
 
     if (type.compare("FPAQ") == 0)
         return new FPAQPredictor();
@@ -106,6 +109,9 @@ static EntropyDecoder* getDecoder(string name, InputBitStream& ibs, Predictor* p
         return new RangeDecoder(ibs);
 
     if (name.compare("TPAQ") == 0)
+        return new BinaryEntropyDecoder(ibs, predictor, false);
+
+    if (name.compare("TPAQX") == 0)
         return new BinaryEntropyDecoder(ibs, predictor, false);
 
     if (name.compare("FPAQ") == 0)
