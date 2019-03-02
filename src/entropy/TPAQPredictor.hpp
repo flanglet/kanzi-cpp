@@ -87,7 +87,7 @@ namespace kanzi
        int32 _matchLen;
        int32 _matchPos;
        int32 _hash;
-       LogisticAdaptiveProbMap<7> _sse0;
+       LogisticAdaptiveProbMap<6> _sse0;
        LogisticAdaptiveProbMap<7> _sse1;
        TPAQMixer* _mixers;
        TPAQMixer* _mixer; // current mixer
