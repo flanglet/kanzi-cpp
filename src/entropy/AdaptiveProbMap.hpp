@@ -127,21 +127,21 @@ namespace kanzi {
 
    private:
        uint16* _p; // last p
-       uint16* _data; // [NbCtx][33]:  p, context -> p
+       uint16* _data; // [NbCtx][32]:  p, context -> p
    };
 
    template <int RATE>
    inline FastLogisticAdaptiveProbMap<RATE>::FastLogisticAdaptiveProbMap(int n)
    {
-       _data = new uint16[33 * n];
+       _data = new uint16[32 * n];
        _p = &_data[0];
 
-       for (int j = 0; j <= 32; j++) {
+       for (int j = 0; j < 32; j++) {
            _data[j] = uint16(Global::squash((j - 16) << 7)) << 4;
        }
 
        for (int i = 1; i < n; i++) {
-           memcpy(&_data[i * 33], &_data[0], 33 * sizeof(uint16));
+           memcpy(&_data[i * 32], &_data[0], 32 * sizeof(uint16));
        }
    }
 
@@ -151,11 +151,11 @@ namespace kanzi {
    {
        // Update probability based on error and learning rate
        const int g = (-bit & 65528) + (bit << RATE);
-       *_p += ((g - int(*_p)) >> RATE);
+       _p[0] += ((g - int(_p[0])) >> RATE);
 
-       // Find index: 33*ctx + quantized prediction in [0..32]
-       _p = &_data[((Global::STRETCH[pr] + 2048) >> 7) + 33 * ctx];
-       return int(*_p) >> 4;
+       // Find index: 32*ctx + quantized prediction in [0..32[
+       _p = &_data[((Global::STRETCH[pr] + 2048) >> 7) + 32 * ctx];
+       return int(_p[0]) >> 4;
    }
 }
 #endif
