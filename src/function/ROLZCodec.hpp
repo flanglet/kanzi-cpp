@@ -26,13 +26,12 @@ limitations under the License.
 using namespace std;
 
 // Implementation of a Reduced Offset Lempel Ziv transform
-// Code loosely based on 'balz' by Ilya Muravyov
 // More information about ROLZ at http://ezcodesample.com/rolz/rolz_article.html
 
 namespace kanzi {
 	class ROLZPredictor : public Predictor {
 	private:
-		uint32* _p; // packed probability: 16 bits + 16 bits
+		uint16* _probs;
 		uint _logSize;
 		int32 _size;
 		int32 _c1;
@@ -43,7 +42,7 @@ namespace kanzi {
 
 		~ROLZPredictor()
 		{
-			delete[] _p;
+			delete[] _probs;
 		};
 
 		void reset();
@@ -74,11 +73,11 @@ namespace kanzi {
 
 		~ROLZEncoder() {}
 
-		inline void encodeByte(byte val);
+		void encodeByte(byte val);
 
-		inline void encodeBit(int bit);
+		void encodeBit(int bit);
 
-		inline void dispose();
+		void dispose();
 
 		void setContext(int n) { _predictor = _predictors[n]; }
 	};
@@ -102,9 +101,9 @@ namespace kanzi {
 
 		~ROLZDecoder() {}
 
-		inline byte decodeByte();
+		byte decodeByte();
 
-		inline int decodeBit();
+		int decodeBit();
 
 		void dispose() {}
 
@@ -132,14 +131,17 @@ namespace kanzi {
 		int _maskChecks;
 		int _posChecks;
 
-		inline int findMatch(const byte buf[], const int pos, const int end);	
+		int findMatch(const byte buf[], const int pos, const int end);	
 
-		inline void emitLiteralLength(SliceArray<byte>& litBuf, const int length);
+		void emitLengths(SliceArray<byte>& lenBuf, int litLen, int mLen);
 
-		inline int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx);
+		void readLengths(SliceArray<byte>& lenBuf, int& litLen, int& mLen);
+
+		int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx, int litLen);
 	};
 
 	// Use CM (ROLZEncoder/ROLZDecoder) to encode/decode literals and matches
+	// Code loosely based on 'balz' by Ilya Muravyov
 	class ROLZCodec2 : public Function<byte> {
 	public:
       ROLZCodec2(uint logPosChecks) THROW;
@@ -151,7 +153,7 @@ namespace kanzi {
 		bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
 		// Required encoding output buffer size
-		inline int getMaxEncodedLength(int srcLen) const;
+		int getMaxEncodedLength(int srcLen) const;
 
 	private:
 		static const int LITERAL_FLAG = 0;
@@ -173,7 +175,7 @@ namespace kanzi {
 		friend class ROLZCodec2;
 
 	public:
-		ROLZCodec(uint logPosChecks = LOG_POS_CHECKS) THROW;
+		ROLZCodec(uint logPosChecks = LOG_POS_CHECKS2) THROW;
 
 		ROLZCodec(map<string, string>& ctx) THROW;
 
@@ -196,7 +198,8 @@ namespace kanzi {
 		static const int HASH_SIZE = 1 << 16;
 		static const int MIN_MATCH = 3;
 		static const int MAX_MATCH = MIN_MATCH + 255;
-		static const int LOG_POS_CHECKS = 5;
+		static const int LOG_POS_CHECKS1 = 4;
+		static const int LOG_POS_CHECKS2 = 5;
 		static const int CHUNK_SIZE = 1 << 26; // 64 MB
 		static const int32 HASH = 200002979;
 		static const int32 HASH_MASK = ~(CHUNK_SIZE - 1);
@@ -220,20 +223,17 @@ namespace kanzi {
 
    inline void ROLZPredictor::update(int bit)
    {
-	   uint16* pr = (uint16*) &_p[_ctx + _c1];
-	   pr[0] -= (((pr[0] - uint16(-bit)) >> 3) + bit);
-	   pr[1] -= (((pr[1] - uint16(-bit)) >> 6) + bit);
+	   _probs[_ctx + _c1] -= (((_probs[_ctx + _c1] - uint16(-bit)) >> 5) + bit);
 	   _c1 = (_c1 << 1) + bit;
 
 	   if (_c1 >= _size)
 	      _c1 = 1;
    }
    
+
    inline int ROLZPredictor::get()
    {
-	   prefetchRead(&_p[_ctx + _c1]);
-	   uint16* p = (uint16*) &_p[_ctx + _c1];
-	   return (int(p[0]) + int(p[1])) >> 5;
+	   return int(_probs[_ctx + _c1]) >> 4;
    }
 
 
@@ -260,8 +260,60 @@ namespace kanzi {
 	      matchLen--;
 	   }
 
-      return dstIdx;
+	   return dstIdx;
    }
 
+
+   inline void ROLZEncoder::encodeBit(int bit)
+   {
+       // Calculate interval split
+       const uint64 split = (((_high - _low) >> 4) * uint64(_predictor->get())) >> 8;
+
+       // Update fields with new interval bounds
+       _high -= (-bit & (_high - _low - split));
+       _low += (~ - bit & (split + 1));
+
+       // Update predictor
+       _predictor->update(bit);
+
+       // Emit unchanged first 32 bits
+       while (((_low ^ _high) >> 24) == 0) {
+           BigEndian::writeInt32(&_buf[_idx], int32(_high >> 32));
+           _idx += 4;
+           _low <<= 32;
+           _high = (_high << 32) | MASK_0_32;
+       }
+   }
+
+
+   inline int ROLZDecoder::decodeBit()
+   {
+       // Calculate interval split
+       const uint64 mid = _low + ((((_high - _low) >> 4) * uint64(_predictor->get())) >> 8);
+       int bit;
+
+       // Update predictor
+       if (mid >= _current) {
+           bit = 1;
+           _high = mid;
+           _predictor->update(1);
+       }
+       else {
+           bit = 0;
+           _low = mid + 1;
+           _predictor->update(0);
+       }
+
+       // Read 32 bits
+       while (((_low ^ _high) >> 24) == 0) {
+           _low = (_low << 32) & MASK_0_56;
+           _high = ((_high << 32) | MASK_0_32) & MASK_0_56;
+           const uint64 val = uint64(BigEndian::readInt32(&_buf[_idx])) & MASK_0_32;
+           _current = ((_current << 32) | val) & MASK_0_56;
+           _idx += 4;
+       }
+
+       return bit;
+   }
 }
 #endif
