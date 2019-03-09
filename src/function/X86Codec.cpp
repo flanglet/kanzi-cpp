@@ -38,7 +38,7 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     for (int i = 0; i < end; i++) {
         if ((src[i] & INSTRUCTION_MASK) == INSTRUCTION_JUMP) {
            // Count valid relative jumps (E8/E9 .. .. .. 00/FF)
-           if ((src[i+4] == 0) || (src[i+4] == -1)) {
+           if ((src[i+4] == 0) || ((src[i+4] & 0xFF) == 0xFF)) {
               // No encoding conflict ?
               if ((src[i] != 0) && (src[i] != 1) && (src[i] != ESCAPE))
                  jumps++;
@@ -74,10 +74,10 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             continue;
         }
 
-        const byte sgn = src[srcIdx + 3];
+        const int sgn = src[srcIdx + 3] & 0xFF;
 
         // Invalid sign of jump address difference => false positive ?
-        if ((sgn != 0) && (sgn != -1))
+        if ((sgn != 0) && (sgn != 0xFF))
             continue;
 
         int addr = (0xFF & src[srcIdx]) | ((0xFF & src[srcIdx + 1]) << 8) | 

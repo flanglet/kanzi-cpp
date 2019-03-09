@@ -112,7 +112,13 @@ limitations under the License.
 	   #define nullptr NULL
 	#endif
 
+#if __cplusplus >= 201703L
+	// byte is defined in C++17 and above
+	#include <cstddef>
+#else
 	typedef int8_t byte;
+#endif
+
 	typedef uint8_t uint8;
 	typedef int16_t int16;
 	typedef int32_t int32;
