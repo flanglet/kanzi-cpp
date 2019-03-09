@@ -320,6 +320,7 @@ namespace kanzi
        _c4 = 0;
        _c8 = 0;
        _pos = 0;
+       _bpos = 8;
        _binCount = 0;
        _matchLen = 0;
        _matchPos = 0;
@@ -339,7 +340,6 @@ namespace kanzi
        _statesMask = statesSize - 1;
        _mixersMask = mixersSize - 1;
        _hashMask = hashSize - 1;
-       _bpos = 0;
        _cp0 = &_smallStatesMap0[0];
        _cp1 = &_smallStatesMap1[0];
        _cp2 = &_bigStatesMap[0];
@@ -367,7 +367,7 @@ namespace kanzi
    void TPAQPredictor<T>::update(int bit)
    {
        _mixer->update(bit);
-       _bpos++;
+       _bpos--;
        _c0 = (_c0 << 1) | bit;
 
        if (_c0 > 255) {
@@ -377,7 +377,7 @@ namespace kanzi
            _c4 = (_c4 << 8) | (_c0 & 0xFF);
            _hash = (((_hash * HASH) << 4) + _c4) & _hashMask;
            _c0 = 1;
-           _bpos = 0;
+           _bpos = 8;
            _binCount += ((_c4 >> 7) & 1);
 
            // Select Neural Net
@@ -444,7 +444,7 @@ namespace kanzi
        _cp6 = &_bigStatesMap[(_ctx6 ^ _c0) & _statesMask];
        const int p6 = STATE_MAP[*_cp6];
 
-       const int p7 = getMatchContextPred();
+       const int p7 = (_matchLen == 0) ? 0 : getMatchContextPred();
 
        // Mix predictions using NN
        int p = _mixer->get(p0, p1, p2, p3, p4, p5, p6, p7);
@@ -510,24 +510,17 @@ namespace kanzi
    template <bool T>
    inline int TPAQPredictor<T>::getMatchContextPred()
    {
-       if (_matchLen <= 0)
-           return 0;
+       if (_c0 == ((_buffer[_matchPos & MASK_BUFFER] & 0xFF) | 256) >> _bpos) {
+           int p = (_matchLen <= 24) ? _matchLen : 24 + ((_matchLen - 24) >> 3);
 
-       int p = 0;
-
-       if (_c0 == ((_buffer[_matchPos & MASK_BUFFER] & 0xFF) | 256) >> (8 - _bpos)) {
-           // Add match length to NN inputs. Compute input based on run length
-           p = (_matchLen <= 24) ? _matchLen : 24 + ((_matchLen - 24) >> 3);
-
-           if (((_buffer[_matchPos & MASK_BUFFER] >> (7 - _bpos)) & 1) == 0)
+           if (((_buffer[_matchPos & MASK_BUFFER] >> (_bpos - 1)) & 1) == 0)
                p = -p;
 
-           p <<= 6;
+           return p << 6;
        }
-       else
-           _matchLen = 0;
 
-       return p;
+       _matchLen = 0;
+       return 0;
    }
 }
 #endif
