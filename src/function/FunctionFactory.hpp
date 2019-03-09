@@ -16,7 +16,6 @@
 #include "NullFunction.hpp"
 #include "ROLZCodec.hpp"
 #include "RLT.hpp"
-#include "SnappyCodec.hpp"
 #include "TextCodec.hpp"
 #include "TransformSequence.hpp"
 #include "X86Codec.hpp"
@@ -31,8 +30,8 @@ namespace kanzi {
 		static const uint64 NONE_TYPE = 0; // copy
 		static const uint64 BWT_TYPE = 1; // Burrows Wheeler
 		static const uint64 BWTS_TYPE = 2; // Burrows Wheeler Scott
-		static const uint64 LZ4_TYPE = 3; // LZ4
-		static const uint64 SNAPPY_TYPE = 4; // Snappy
+		static const uint64 LZ_TYPE = 3; // Lempel Ziv
+		static const uint64 SNAPPY_TYPE = 4; // Snappy (obsolete)
 		static const uint64 RLT_TYPE = 5; // Run Length
 		static const uint64 ZRLT_TYPE = 6; // Zero Run Length
 		static const uint64 MTFT_TYPE = 7; // Move To Front
@@ -142,11 +141,8 @@ namespace kanzi {
 		if (name.compare("RANK") == 0)
 			return RANK_TYPE;
 
-		if (name.compare("SNAPPY") == 0)
-			return SNAPPY_TYPE;
-
-		if (name.compare("LZ4") == 0)
-			return LZ4_TYPE;
+		if (name.compare("LZ") == 0)
+			return LZ_TYPE;
 
 		if (name.compare("X86") == 0)
 			return X86_TYPE;
@@ -224,10 +220,7 @@ namespace kanzi {
 		case RLT_TYPE:
 			return new RLT();
 
-		case SNAPPY_TYPE:
-			return new SnappyCodec();
-
-		case LZ4_TYPE:
+		case LZ_TYPE:
 			return new LZ4Codec();
 
 		case X86_TYPE:
@@ -303,11 +296,8 @@ namespace kanzi {
 		case MTFT_TYPE:
 			return "MTFT";
 
-		case LZ4_TYPE:
-			return "LZ4";
-
-		case SNAPPY_TYPE:
-			return "SNAPPY";
+		case LZ_TYPE:
+			return "LZ";
 
       case X86_TYPE:
 			return "X86";

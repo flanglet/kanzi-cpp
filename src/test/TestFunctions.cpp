@@ -26,7 +26,6 @@ limitations under the License.
 #include "../function/ZRLT.hpp"
 #include "../function/LZ4Codec.hpp"
 #include "../function/ROLZCodec.hpp"
-#include "../function/SnappyCodec.hpp"
 
 using namespace std;
 using namespace kanzi;
@@ -42,11 +41,8 @@ static Function<byte>* getByteFunction(string name)
     if (name.compare("ZRLT") == 0)
         return new ZRLT();
 
-    if (name.compare("LZ4") == 0)
+    if (name.compare("LZ") == 0)
         return new LZ4Codec();
-
-    if (name.compare("SNAPPY") == 0)
-        return new SnappyCodec();
 
     if (name.compare("ROLZ") == 0)
         return new ROLZCodec();
@@ -396,9 +392,9 @@ int TestFunctions_main(int argc, const char* argv[])
         if (str.compare("ALL") == 0) {
             cout << endl
                  << endl
-                 << "TestLZ4" << endl;
-            testFunctionsCorrectness("LZ4");
-            testFunctionsSpeed("LZ4");
+                 << "TestLZ" << endl;
+            testFunctionsCorrectness("LZ");
+            testFunctionsSpeed("LZ");
             cout << endl
                  << endl
                  << "TestROLZ" << endl;
@@ -409,11 +405,6 @@ int TestFunctions_main(int argc, const char* argv[])
                  << "TestSRT" << endl;
             testFunctionsCorrectness("SRT");
             testFunctionsSpeed("SRT");
-            cout << endl
-                 << endl
-                 << "TestSnappy" << endl;
-            testFunctionsCorrectness("SNAPPY");
-            testFunctionsSpeed("SNAPPY");
             cout << endl
                  << endl
                  << "TestRLT" << endl;
