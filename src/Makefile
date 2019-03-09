@@ -35,7 +35,6 @@ LIB_SOURCES=Global.cpp \
 	function/LZ4Codec.cpp \
 	function/ROLZCodec.cpp \
 	function/RLT.cpp \
-	function/SnappyCodec.cpp \
 	function/SRT.cpp \
 	function/TextCodec.cpp \
 	function/X86Codec.cpp \
