@@ -25,7 +25,6 @@ limitations under the License.
 
 using namespace kanzi;
 
-
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats. 0 means that frequencies calculated at the
 // beginning of the block apply to the whole block.
@@ -42,6 +41,7 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW 
     }
 
     _chunkSize = chunkSize;
+    _maxCodeLength = 0;
 
     // Default frequencies, sizes and codes
     for (int i = 0; i < 256; i++) {
@@ -57,7 +57,7 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW 
 int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
 {
     int count = 0;
-    short sizes[256]; 
+    short sizes[256];
 
     for (int i = 0; i < 256; i++) {
         sizes[i] = 0;
@@ -68,7 +68,7 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
     }
 
     EntropyUtils::encodeAlphabet(_bitstream, _alphabet, 256, count);
-    computeCodeLengths(frequencies, sizes, count);    
+    computeCodeLengths(frequencies, sizes, count);
 
     // Transmit code lengths only, frequencies and codes do not matter
     // Unary encode the length difference
@@ -108,12 +108,12 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], short sizes[], int c
 
     // Sort _sranks by increasing frequencies (first key) and increasing value (second key)
     for (int i = 0; i < count; i++)
-       _sranks[i] = (frequencies[_alphabet[i]] << 8) | _alphabet[i];
-    
+        _sranks[i] = (frequencies[_alphabet[i]] << 8) | _alphabet[i];
+
     vector<uint> v(_sranks, _sranks + count);
     sort(v.begin(), v.end());
     memcpy(_sranks, &v[0], count * sizeof(uint));
-    uint buffer[256]; 
+    uint buffer[256];
 
     for (int i = 0; i < count; i++) {
         buffer[i] = _sranks[i] >> 8;
@@ -122,6 +122,7 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], short sizes[], int c
 
     computeInPlaceSizesPhase1(buffer, count);
     computeInPlaceSizesPhase2(buffer, count);
+    _maxCodeLength = 0;
 
     for (int i = 0; i < count; i++) {
         short codeLen = short(buffer[i]);
@@ -133,6 +134,9 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], short sizes[], int c
             ss << " bits) exceeded";
             throw IllegalArgumentException(ss.str());
         }
+
+        if (_maxCodeLength > codeLen)
+            _maxCodeLength = codeLen;
 
         sizes[_sranks[i]] = codeLen;
     }
@@ -196,33 +200,61 @@ int HuffmanEncoder::encode(byte block[], uint blkptr, uint count)
 
     const int end = blkptr + count;
     int startChunk = blkptr;
-    uint8* data = (uint8*) &block[0];
+    uint8* data = (uint8*)&block[0];
 
     while (startChunk < end) {
         const int endChunk = (startChunk + _chunkSize < end) ? startChunk + _chunkSize : end;
-        const int endChunk3 = 3 * ((endChunk - startChunk) / 3) + startChunk;
         Global::computeHistogram(&block[startChunk], endChunk - startChunk, _freqs, true);
 
         // Rebuild Huffman codes
         updateFrequencies(_freqs);
 
-        for (int i = startChunk; i < endChunk3; i += 3) {
-            // Pack 3 codes into 1 uint64
-            const uint code1 = _codes[data[i]];
-            const uint codeLen1 = code1 >> 24;
-            const uint code2 = _codes[data[i+1]];
-            const uint codeLen2 = code2 >> 24;
-            const uint code3 = _codes[data[i+2]];
-            const uint codeLen3 = code3 >> 24;
-            const uint64 st = ((uint64(code1) & 0xFFFFFF) << (codeLen2 + codeLen3)) |
-                              ((uint64(code2) & ((1 << codeLen2) - 1)) << codeLen3) |
-                               (uint64(code3) & ((1 << codeLen3) - 1));     
-            _bitstream.writeBits(st, codeLen1 + codeLen2 + codeLen3);
-        }
+        if (_maxCodeLength <= 16) {
+            const int endChunk4 = 4 * ((endChunk - startChunk) / 4) + startChunk;
 
-        for (int i = endChunk3; i < endChunk; i++) {
-            const uint code = _codes[data[i]];
-            _bitstream.writeBits(code, code >> 24);
+            for (int i = startChunk; i < endChunk4; i += 4) {
+                // Pack 4 codes into 1 uint64
+                const uint code1 = _codes[data[i]];
+                const uint codeLen1 = code1 >> 24;
+                const uint code2 = _codes[data[i + 1]];
+                const uint codeLen2 = code2 >> 24;
+                const uint code3 = _codes[data[i + 2]];
+                const uint codeLen3 = code3 >> 24;
+                const uint code4 = _codes[data[i + 3]];
+                const uint codeLen4 = code4 >> 24;
+                const uint64 st = (uint64(code1) << (codeLen2 + codeLen3 + codeLen4)) | 
+                   ((uint64(code2) & ((1 << codeLen2) - 1)) << (codeLen3 + codeLen4)) | 
+                   ((uint64(code3) & ((1 << codeLen3) - 1)) << codeLen4) | 
+                    (uint64(code4) & ((1 << codeLen4) - 1));
+                _bitstream.writeBits(st, codeLen1 + codeLen2 + codeLen3 + codeLen4);
+            }
+
+            for (int i = endChunk4; i < endChunk; i++) {
+                const uint code = _codes[data[i]];
+                _bitstream.writeBits(code, code >> 24);
+            }
+        }
+        else {
+            const int endChunk3 = 3 * ((endChunk - startChunk) / 3) + startChunk;
+
+            for (int i = startChunk; i < endChunk3; i += 3) {
+                // Pack 3 codes into 1 uint64
+                const uint code1 = _codes[data[i]];
+                const uint codeLen1 = code1 >> 24;
+                const uint code2 = _codes[data[i + 1]];
+                const uint codeLen2 = code2 >> 24;
+                const uint code3 = _codes[data[i + 2]];
+                const uint codeLen3 = code3 >> 24;
+                const uint64 st = (uint64(code1) << (codeLen2 + codeLen3)) | 
+                   ((uint64(code2) & ((1 << codeLen2) - 1)) << codeLen3) |
+                    (uint64(code3) & ((1 << codeLen3) - 1));
+                _bitstream.writeBits(st, codeLen1 + codeLen2 + codeLen3);
+            }
+
+            for (int i = endChunk3; i < endChunk; i++) {
+                const uint code = _codes[data[i]];
+                _bitstream.writeBits(code, code >> 24);
+            }
         }
 
         startChunk = endChunk;
