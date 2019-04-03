@@ -476,12 +476,13 @@ void ROLZCodec1::readLengths(SliceArray<byte>& lenBuf, int& litLen, int& mLen)
 int ROLZCodec1::emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx, int litLen)
 {
    memcpy(&dst[dstIdx], &litBuf._array[litBuf._index], litLen);
+   const int n0 = dstIdx - startIdx;
 
    for (int n = 0; n < litLen; n++) {
       const uint32 key = ROLZCodec::getKey(&dst[dstIdx + n - 2]);
       int32* matches = &_matches[key << _logPosChecks];
       _counters[key]++;
-      matches[_counters[key] & _maskChecks] = dstIdx + n - startIdx;
+      matches[_counters[key] & _maskChecks] = n0 + n;
    }
 
    return litLen;
