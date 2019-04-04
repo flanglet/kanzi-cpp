@@ -245,14 +245,18 @@ namespace kanzi {
 	   dstIdx += 3;
 	   ref += 3;
 
-	   while (matchLen >= 4) {
+	   while (matchLen >= 8) {
 	      dst[dstIdx] = dst[ref];
 	      dst[dstIdx + 1] = dst[ref + 1];
 	      dst[dstIdx + 2] = dst[ref + 2];
  	      dst[dstIdx + 3] = dst[ref + 3];
-	      dstIdx += 4;
-	      ref += 4;
-	      matchLen -= 4;
+ 	      dst[dstIdx + 4] = dst[ref + 4];
+ 	      dst[dstIdx + 5] = dst[ref + 5];
+ 	      dst[dstIdx + 6] = dst[ref + 6];
+ 	      dst[dstIdx + 7] = dst[ref + 7];
+	      dstIdx += 8;
+	      ref += 8;
+	      matchLen -= 8;
 	   }
 
 	   while (matchLen != 0) {

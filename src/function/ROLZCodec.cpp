@@ -791,7 +791,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             rd.setContext(LITERAL_FLAG);
             prefetchRead(&_counters[key]);
 
-            if (rd.decodeBit() == MATCH_FLAG) {
+            if (rd.decodeBit() == MATCH_FLAG) {               
                 // Match flag
                 const int matchLen = rd.decodeByte() & 0xFF;
 
