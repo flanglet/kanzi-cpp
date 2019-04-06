@@ -39,6 +39,7 @@ namespace kanzi
       }
 
       ~ANSDecSymbol() { }
+
       void reset(int cumFreq, int freq, int logRange);
 
       int _cumFreq;
@@ -48,7 +49,7 @@ namespace kanzi
 
    class ANSRangeDecoder : public EntropyDecoder {
    public:
-	   static const int ANS_TOP = 1 << 23;
+	   static const int ANS_TOP = 1 << 15;
 
 	   ANSRangeDecoder(InputBitStream& bitstream, int order = 0, int chunkSize = -1) THROW;
 
@@ -79,8 +80,33 @@ namespace kanzi
 
 	   void decodeChunk(byte block[], int end);
 
+	   int decodeSymbol(uint8*& p, int& st, const ANSDecSymbol& sym, const int mask);
+
 	   int decodeHeader(uint frequencies[]);
    };
+
+
+   inline void ANSDecSymbol::reset(int cumFreq, int freq, int logRange)
+   {
+       _cumFreq = cumFreq;
+       _freq = (freq >= 1 << logRange) ? (1 << logRange) - 1 : freq; // Mirror encoder
+   }
+
+
+   inline int ANSRangeDecoder::decodeSymbol(uint8*& p, int& st, const ANSDecSymbol& sym, const int mask)
+   {
+      // Compute next ANS state
+      // D(x) = (s, q_s (x/M) + mod(x,M) - b_s) where s is such b_s <= x mod M < b_{s+1}
+      st = int(sym._freq * (st >> _logRange) + (st & mask) - sym._cumFreq);
+
+      // Normalize
+      while (st < ANS_TOP) {
+	      st = (st << 8) | (*p++);
+	      st = (st << 8) | (*p++);
+      }
+
+      return st;
+   }
 
 }
 #endif

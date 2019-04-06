@@ -55,7 +55,7 @@ namespace kanzi
    class ANSRangeEncoder : public EntropyEncoder
    {
    public:
-	   static const int ANS_TOP = 1 << 23;
+	   static const int ANS_TOP = 1 << 15;
 
 	   ANSRangeEncoder(OutputBitStream& bitstream,
                       int order = 0,
@@ -93,8 +93,26 @@ namespace kanzi
 
 	   void encodeChunk(byte block[], int end);
 
+	   int encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym);
+
 	   bool encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], int lr);
    };
 
+
+   inline int ANSRangeEncoder::encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym)
+   {
+      while (st >= sym._xMax) {
+         *p-- = byte(st);
+         st >>= 8;
+         *p-- = byte(st);
+         st >>= 8;
+      }
+
+      // Compute next ANS state
+      // C(s,x) = M floor(x/q_s) + mod(x,q_s) + b_s where b_s = q_0 + ... + q_{s-1}
+      // st = ((st / freq) << lr) + (st % freq) + cumFreq[prv];
+      const uint64 q = ((st * sym._invFreq) >> sym._invShift);
+      return int(st + sym._bias + q * sym._cmplFreq);
+   }
 }
 #endif

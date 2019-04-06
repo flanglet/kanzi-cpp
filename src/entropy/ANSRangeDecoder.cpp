@@ -203,56 +203,32 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     int st = int(_bitstream.readBits(32));
 
     // Read bit buffer
-    if (sz != 0)
+    if (sz != 0) 
         _bitstream.readBits(&_buffer[0], 8 * sz);
 
     uint8* p = (uint8*)&_buffer[0];
-    const uint mask = (1 << _logRange) - 1;
+    const int mask = (1 << _logRange) - 1;
 
     if (_order == 0) {
-        const ANSDecSymbol* symb = &_symbols[0];
-
         for (int i = 0; i < end; i++) {
-            const byte cur = _f2s[st & mask];
-            block[i] = cur;
-            const ANSDecSymbol& sym = symb[uint8(cur)];
-
-            // Compute next ANS state
-            // D(x) = (s, q_s (x/M) + mod(x,M) - b_s) where s is such b_s <= x mod M < b_{s+1}
-            st = int(sym._freq * (st >> _logRange) + (st & mask) - sym._cumFreq);
-
-            // Normalize
-            while (st < ANS_TOP)
-                st = (st << 8) | (*p++);
+            const uint8 cur = _f2s[st & mask];
+            block[i] = byte(cur);
+            st = decodeSymbol(p, st, _symbols[cur], mask);
         }
     }
     else {
         uint8 prv = 0;
+        ANSDecSymbol* symbols = &_symbols[0];
 
         for (int i = 0; i < end; i++) {
-            const byte cur = _f2s[(prv << _logRange) | (st & mask)];
-            block[i] = cur;
-            const ANSDecSymbol& sym = _symbols[(prv << 8) | uint8(cur)];
-
-            // Compute next ANS state
-            // D(x) = (s, q_s (x/M) + mod(x,M) - b_s) where s is such b_s <= x mod M < b_{s+1}
-            st = int(sym._freq * (st >> _logRange) + (st & mask) - sym._cumFreq);
-
-            // Normalize
-            while (st < ANS_TOP)
-                st = (st << 8) | (*p++);
-
-            prv = uint8(cur);
+            prefetchRead(symbols);
+            byte* f2s = &_f2s[(prv << _logRange)];
+            prefetchRead(f2s);
+            const uint8 cur = f2s[st & mask];
+            block[i] = byte(cur);
+            st = decodeSymbol(p, st, symbols[cur], mask);
+            prv = cur;
+            symbols = &_symbols[prv << 8];
         }
     }
-}
-
-void ANSDecSymbol::reset(int cumFreq, int freq, int logRange)
-{
-    // Mirror encoder
-    if (freq >= 1 << logRange)
-        freq = (1 << logRange) - 1;
-
-    _cumFreq = cumFreq;
-    _freq = freq;
 }

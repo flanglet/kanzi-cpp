@@ -181,21 +181,8 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
     byte* p = p0;
 
     if (_order == 0) {
-        const ANSEncSymbol* symb = &_symbols[0];
-
         for (int i = end - 1; i >= 0; i--) {
-            const ANSEncSymbol sym = symb[data[i]];
-
-            while (st >= sym._xMax) {
-                *p-- = byte(st);
-                st >>= 8;
-            }
-
-            // Compute next ANS state
-            // C(s,x) = M floor(x/q_s) + mod(x,q_s) + b_s where b_s = q_0 + ... + q_{s-1}
-            // st = ((st / freq) << lr) + (st % freq) + cumFreq[prv];
-            const uint64 q = ((st * sym._invFreq) >> sym._invShift);
-            st = int(st + sym._bias + q * sym._cmplFreq);
+            st = encodeSymbol(p, st, _symbols[data[i]]);
         }
     }
     else { // order 1
@@ -203,32 +190,12 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
 
         for (int i = end - 2; i >= 0; i--) {
             const int cur = int(data[i]);
-            const ANSEncSymbol sym = _symbols[(cur << 8) | prv];
-
-            while (st >= sym._xMax) {
-                *p-- = byte(st);
-                st >>= 8;
-            }
-
-            // Compute next ANS state
-            // C(s,x) = M floor(x/q_s) + mod(x,q_s) + b_s where b_s = q_0 + ... + q_{s-1}
-            // st = ((st / freq) << lr) + (st % freq) + cumFreq[prv];
-            const uint64 q = ((st * sym._invFreq) >> sym._invShift);
-            st = int(st + sym._bias + q * sym._cmplFreq);
+            st = encodeSymbol(p, st, _symbols[(cur << 8) | prv]);
             prv = cur;
         }
 
         // Last symbol
-        const ANSEncSymbol sym = _symbols[prv];
-        const int max = sym._xMax;
-
-        while (st >= max) {
-            *p-- = byte(st);
-            st >>= 8;
-        }
-
-        const uint64 q = ((st * sym._invFreq) >> sym._invShift);
-        st = int(st + sym._bias + q * sym._cmplFreq);
+        st = encodeSymbol(p, st, _symbols[prv]);
     }
 
     // Write chunk size
@@ -237,8 +204,10 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
     // Write final ANS state
     _bitstream.writeBits(st, 32);
 
-    // Write encoded data to bitstream
-    _bitstream.writeBits(p + 1, 8 * uint(p0 - p));
+    if (p != p0) {
+        // Write encoded data to bitstream
+        _bitstream.writeBits(&p[1], 8 * uint(p0 - p));
+    }
 }
 
 // Compute chunk frequencies, cumulated frequencies and encode chunk header
@@ -254,7 +223,7 @@ void ANSEncSymbol::reset(int cumFreq, int freq, int logRange)
     if (freq >= 1 << logRange)
         freq = (1 << logRange) - 1;
 
-    _xMax = ((ANSRangeEncoder::ANS_TOP >> logRange) << 8) * freq;
+    _xMax = ((ANSRangeEncoder::ANS_TOP >> logRange) << 16) * freq;
     _cmplFreq = (1 << logRange) - freq;
 
     if (freq < 2) {
