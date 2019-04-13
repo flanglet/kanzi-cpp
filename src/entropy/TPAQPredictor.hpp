@@ -392,9 +392,9 @@ namespace kanzi
            if (_binCount < (_pos >> 2)) {
                // Mostly text or mixed
                const int h1 = ((_c4 & MASK_80808080) == 0) ? _c4 & MASK_4F4FFFFF : _c4 & MASK_80808080;
-               const int h2 = ((_c8 & MASK_80808080) == 0) ? _c8 & MASK_4F4FFFFF : (_c8 & MASK_80808080) >> 4;
+               const int h2 = ((_c8 & MASK_80808080) == 0) ? _c8 & MASK_4F4FFFFF : _c8 & MASK_80808080;
                _ctx4 = createContext(_ctx1, _c4 ^ (_c8 & 0xFFFF));
-               _ctx5 = hash(h1, h2);
+               _ctx5 = hash(h1 << 4, h2);
                _ctx6 = (_c8 & MASK_F0F0F000) | ((_c4 & MASK_F0F0F000) >> 4);
            }
            else {

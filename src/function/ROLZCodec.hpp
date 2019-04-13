@@ -113,9 +113,9 @@ namespace kanzi {
 	// Use ANS to encode/decode literals and matches
 	class ROLZCodec1 : public Function<byte> {
 	public:
-      ROLZCodec1(uint logPosChecks) THROW;
+		ROLZCodec1(uint logPosChecks) THROW;
 
-      ~ROLZCodec1() { delete[] _matches; }
+		~ROLZCodec1() { delete[] _matches; }
 
 		bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
@@ -144,9 +144,9 @@ namespace kanzi {
 	// Code loosely based on 'balz' by Ilya Muravyov
 	class ROLZCodec2 : public Function<byte> {
 	public:
-      ROLZCodec2(uint logPosChecks) THROW;
+		ROLZCodec2(uint logPosChecks) THROW;
 
-      ~ROLZCodec2() { delete[] _matches; }
+		~ROLZCodec2() { delete[] _matches; }
 
 		bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
