@@ -481,12 +481,16 @@ namespace kanzi
 
            // Detect match
            if ((_matchPos != 0) && (_pos - _matchPos <= MASK_BUFFER)) {
-               int r = _matchLen + 1;
+               int r = _matchLen + 2;
 
-               while ((r <= MAX_LENGTH) && (_buffer[(_pos - r) & MASK_BUFFER] == _buffer[(_matchPos - r) & MASK_BUFFER]))
-                   r++;
+               while (r <= MAX_LENGTH) {
+                   if (*(uint16*)&_buffer[(_pos - r - 1) & MASK_BUFFER] != *(uint16*)&_buffer[(_matchPos - r - 1) & MASK_BUFFER])
+                       break;
 
-               _matchLen = r - 1;
+                   r += 2;
+               }
+
+               _matchLen = r - 2;
            }
        }
    }
