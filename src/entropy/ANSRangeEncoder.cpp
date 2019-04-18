@@ -199,7 +199,7 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
     }
 
     // Write chunk size
-    EntropyUtils::writeVarInt(_bitstream, int(p0 - p));
+    EntropyUtils::writeVarInt(_bitstream, uint32(p0 - p));
 
     // Write final ANS state
     _bitstream.writeBits(st, 32);

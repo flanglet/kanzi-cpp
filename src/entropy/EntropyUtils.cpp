@@ -472,11 +472,11 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     return alphabetSize;
 }
 
-int EntropyUtils::writeVarInt(OutputBitStream& obs, int value) { 
-   int res = 0;
+int EntropyUtils::writeVarInt(OutputBitStream& obs, uint32 value) { 
+   uint32 res = 0;
 
-   while ((value >= 128) && (res < 4)) {        
-      obs.writeBits(0x80|(value&0x7F), 8);
+   while (value >= 128) {        
+      obs.writeBits(0x80 | (value & 0x7F), 8);
       value >>= 7;
       res++;
    }
@@ -485,14 +485,14 @@ int EntropyUtils::writeVarInt(OutputBitStream& obs, int value) {
    return res;
 }
 
-int EntropyUtils::readVarInt(InputBitStream& ibs) {
-   int val = (int) ibs.readBits(8);
-   int res = val & 0x7F;
+uint32 EntropyUtils::readVarInt(InputBitStream& ibs) {
+   uint32 value = uint32(ibs.readBits(8));
+   uint32 res = value & 0x7F;
    int shift = 7;
 
-   while ((val >= 128) && (shift < 28)) {
-      val = (int) ibs.readBits(8);
-      res |= ((val&0x7F) << shift);
+   while ((value >= 128) && (shift <= 28)) {
+      value = uint32(ibs.readBits(8));
+      res |= ((value & 0x7F) << shift);
       shift += 7;
    }
 

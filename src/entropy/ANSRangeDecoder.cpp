@@ -197,7 +197,7 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint len)
 void ANSRangeDecoder::decodeChunk(byte block[], int end)
 {
     // Read chunk size
-    const int sz = EntropyUtils::readVarInt(_bitstream) & (MAX_CHUNK_SIZE - 1);
+    const int sz = int(EntropyUtils::readVarInt(_bitstream) & (MAX_CHUNK_SIZE - 1));
 
     // Read initial ANS state
     int st = int(_bitstream.readBits(32));

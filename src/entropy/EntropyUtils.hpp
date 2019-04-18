@@ -50,9 +50,9 @@ namespace kanzi
 
        static int computeFirstOrderEntropy1024(byte block[], int length, uint histo[]);
 
-       static int writeVarInt(OutputBitStream& obs, int val);
+       static int writeVarInt(OutputBitStream& obs, uint32 val);
 
-       static int readVarInt(InputBitStream& ibs);
+       static uint32 readVarInt(InputBitStream& ibs);
    };
 
 }

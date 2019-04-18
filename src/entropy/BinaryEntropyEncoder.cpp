@@ -73,7 +73,7 @@ int BinaryEntropyEncoder::encode(byte block[], uint blkptr, uint count) THROW
       for (int i=startChunk; i<startChunk+chunkSize; i++)
          encodeByte(block[i]);
 
-      EntropyUtils::writeVarInt(_bitstream, _sba._index);
+      EntropyUtils::writeVarInt(_bitstream, uint32(_sba._index));
       _bitstream.writeBits(&_sba._array[0], 8 * _sba._index);
       startChunk += chunkSize;
 
