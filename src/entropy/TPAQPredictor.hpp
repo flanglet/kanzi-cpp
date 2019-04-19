@@ -514,10 +514,10 @@ namespace kanzi
    template <bool T>
    inline int TPAQPredictor<T>::getMatchContextPred()
    {
-       if (_c0 == ((_buffer[_matchPos & MASK_BUFFER] & 0xFF) | 256) >> _bpos) {
+       if (_c0 == ((_buffer[_matchPos & MASK_BUFFER] & byte(0xFF)) | 256) >> _bpos) {
            int p = (_matchLen <= 24) ? _matchLen : 24 + ((_matchLen - 24) >> 3);
 
-           if (((_buffer[_matchPos & MASK_BUFFER] >> (_bpos - 1)) & 1) == 0)
+           if ((int(_buffer[_matchPos & MASK_BUFFER] >> (_bpos - 1)) & 1) == 0)
                p = -p;
 
            return p << 6;

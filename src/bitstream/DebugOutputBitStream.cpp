@@ -22,7 +22,7 @@ DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs) THROW : _delega
 {
     _mark = false;
     _hexa = false;
-    _current = 0;
+    _current = byte(0);
     _idx = 0;
 }
 
@@ -30,7 +30,7 @@ DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs, OutputStream& o
 {
     _mark = false;
     _hexa = false;
-    _current = 0;
+    _current = byte(0);
     _idx = 0;
 }
 
@@ -45,7 +45,7 @@ DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs, OutputStream& o
     _width = width;
     _mark = false;
     _hexa = false;
-    _current = 0;
+    _current = byte(0);
     _idx = 0;
 }
 
@@ -59,7 +59,7 @@ void DebugOutputBitStream::writeBit(int bit) THROW
     bit &= 1;
     _out << ((bit == 1) ? "1" : "0");
     _current <<= 1;
-    _current |= bit;
+    _current |= byte(bit);
     _idx++;
 
     if (_mark == true)
@@ -97,7 +97,7 @@ int DebugOutputBitStream::writeBits(uint64 bits, uint count) THROW
     for (int i = 1; i <= res; i++) {
         uint64 bit = (bits >> (res - i)) & 1;
         _current <<= 1;
-        _current |= bit;
+        _current |= byte(bit);
         _idx++;
         _out << ((bit == 1) ? "1" : "0");
 
@@ -137,9 +137,9 @@ uint DebugOutputBitStream::writeBits(byte bits[], uint count) THROW
 
     for (int i = 0; i < end; i++) {
         for (int j = 7; j >=0 ; j--) {
-           uint64 bit = (bits[i] >> j) & 1;
+           uint64 bit = uint64(bits[i] >> j) & 1;
            _current <<= 1;
-           _current |= bit;
+           _current |= byte(bit);
            _idx++;
            _out << ((bit == 1) ? "1" : "0");
 
@@ -175,7 +175,7 @@ uint DebugOutputBitStream::writeBits(byte bits[], uint count) THROW
 
 void DebugOutputBitStream::printByte(byte b)
 {
-    int val = b & 0xFF;
+    int val = int(b) & 0xFF;
 
     if (val < 10)
         _out << " [00" << val << "] ";

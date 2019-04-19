@@ -57,7 +57,7 @@ namespace kanzi
    {
        _deallocate = deallocate;
        _length = 8;
-       _skipFlags = 0;
+       _skipFlags = byte(0);
 
        for (int i = 7; i >= 0; i--) {
            _transforms[i] = transforms[i];
@@ -100,7 +100,7 @@ namespace kanzi
        SliceArray<T>* sa[2] = { &input, &output };
        int saIdx = 0;
        const int requiredSize = getMaxEncodedLength(count);
-       _skipFlags = 0;
+       _skipFlags = byte(0);
 
        // Process transforms sequentially
        for (int i = 0; i < _length; i++) {
@@ -127,7 +127,7 @@ namespace kanzi
                    memmove(&sa2->_array[savedOIdx], &sa1->_array[savedIIdx], count);
 
                sa2->_index = savedOIdx + count;
-               _skipFlags |= (1 << (7 - i));
+               _skipFlags |= byte(1 << (7 - i));
            }
 
            count = sa2->_index - savedOIdx;
@@ -136,7 +136,7 @@ namespace kanzi
        }
 
        for (int i = _length; i < 8; i++)
-           _skipFlags |= (1 << (7 - i));
+           _skipFlags |= byte(1 << (7 - i));
 
        if (saIdx != 1)
            memmove(&sa[1]->_array[sa[1]->_index], &sa[0]->_array[sa[0]->_index], count);
@@ -178,7 +178,7 @@ namespace kanzi
 
        // Process transforms sequentially in reverse order
        for (int i = _length - 1; i >= 0; i--) {
-           if ((_skipFlags & (1 << (7 - i))) != 0)
+           if ((_skipFlags & byte(1 << (7 - i))) != 0)
                continue;
 
            SliceArray<T>* sa1 = sa[saIdx];

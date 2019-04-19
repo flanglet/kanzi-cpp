@@ -48,18 +48,18 @@ namespace kanzi
 
    inline void RiceGolombEncoder::encodeByte(byte val)
    {
-       if (val == 0)
+       if (val == byte(0))
        {
           _bitstream.writeBits(_base, _logBase+1);
           return;
        }
 
-       int32 iVal = val;
+       int32 iVal = int32(val);
        iVal = (iVal + (iVal >> 31)) ^ (iVal >> 31); // abs(val2)
 
         // quotient is unary encoded, remainder is binary encoded
        int emit = _base | (iVal & (_base-1));
-       int n = (1 + (iVal >> _logBase)) + _logBase;
+       int n = int(1 + (iVal >> _logBase)) + _logBase;
 
        if (_signed == true)
        {

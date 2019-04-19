@@ -89,7 +89,7 @@ namespace kanzi
        }
 
        while (idx < length) {
-           h32 += ((data[idx] & 0xFF) * PRIME32_5);
+           h32 += ((int(data[idx]) & 0xFF) * PRIME32_5);
            h32 = ((h32 << 11) | (h32 >> 21)) * PRIME32_1;
            idx++;
        }

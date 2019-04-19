@@ -145,9 +145,9 @@ namespace kanzi {
 
        static bool isText(byte val) { return TEXT_CHARS[uint8(val)]; }
 
-       static bool isLowerCase(byte val) { return (val >= 'a') && (val <= 'z'); }
+       static bool isLowerCase(byte val) { return (val >= byte('a')) && (val <= byte('z')); }
 
-       static bool isUpperCase(byte val) { return (val >= 'A') && (val <= 'Z'); }
+       static bool isUpperCase(byte val) { return (val >= byte('A')) && (val <= byte('Z')); }
 
        static bool isDelimiter(byte val) { return DELIMITER_CHARS[uint8(val)]; }
 
@@ -161,11 +161,11 @@ namespace kanzi {
        static const int THRESHOLD3 = 32;
        static const int THRESHOLD4 = THRESHOLD3 * 128;
        static const int LOG_HASHES_SIZE = 24; // 16 MB
-       static const int MASK_NOT_TEXT = byte(0x80);
-       static const int MASK_ALMOST_FULL_ASCII = byte(0x08);
-       static const int MASK_FULL_ASCII = byte(0x04);
-       static const int MASK_XML_HTML = byte(0x02);
-       static const int MASK_CRLF = byte(0x01);
+       static const byte MASK_NOT_TEXT = byte(0x80);
+       static const byte MASK_ALMOST_FULL_ASCII = byte(0x08);
+       static const byte MASK_FULL_ASCII = byte(0x04);
+       static const byte MASK_XML_HTML = byte(0x02);
+       static const byte MASK_CRLF = byte(0x01);
 
        static bool* initDelimiterChars();
        static const bool* DELIMITER_CHARS;

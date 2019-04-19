@@ -715,7 +715,7 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 	if (16 * freqs0[32] < count)
 		return TextCodec::MASK_NOT_TEXT;
 
-	int res = 0;
+	byte res = 0;
 
 	if (nbBinChars == 0)
 		res |= TextCodec::MASK_FULL_ASCII;

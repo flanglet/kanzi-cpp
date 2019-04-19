@@ -23,7 +23,7 @@ DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs) THROW : _delegate(
     _idx = 0;
     _mark = false;
     _hexa = false;
-    _current = 0;
+    _current = byte(0);
 }
 
 DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os) THROW : _delegate(ibs), _out(os), _width(80)
@@ -31,7 +31,7 @@ DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os) THROW
     _idx = 0;
     _mark = false;
     _hexa = false;
-    _current = 0;
+    _current = byte(0);
 }
 
 DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os, int width) THROW : _delegate(ibs), _out(os)
@@ -46,7 +46,7 @@ DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os, int w
     _idx = 0;
     _mark = false;
     _hexa = false;
-    _current = 0;
+    _current = byte(0);
 }
 
 DebugInputBitStream::~DebugInputBitStream()
@@ -59,7 +59,7 @@ int DebugInputBitStream::readBit() THROW
 {
     int res = _delegate.readBit();
     _current <<= 1;
-    _current |= res;
+    _current |= byte(res);
     _out << ((res & 1) == 1 ? "1" : "0");
     _idx++;
 
@@ -99,7 +99,7 @@ uint64 DebugInputBitStream::readBits(uint count) THROW
         int bit = (res >> (count - i)) & 1;
         _idx++;
         _current <<= 1;
-        _current |= bit;
+        _current |= byte(bit);
         _out << ((bit == 1) ? "1" : "0");
 
         if ((_mark == true) && (i == count))
@@ -137,10 +137,10 @@ uint DebugInputBitStream::readBits(byte bits[], uint count) THROW
 
     for (uint i = 0; i < (count >> 3); i++) {
         for (int j = 7; j >= 0; j--) {
-            int bit = (bits[i] >> j) & 1;
+            int bit = int(bits[i] >> j) & 1;
             _idx++;
             _current <<= 1;
-            _current |= bit;
+            _current |= byte(bit);
             _out << ((bit == 1) ? "1" : "0");
 
             if ((_mark == true) && (j == int(count)))
@@ -175,7 +175,7 @@ uint DebugInputBitStream::readBits(byte bits[], uint count) THROW
 
 void DebugInputBitStream::printByte(byte b)
 {
-    int val = b & 0xFF;
+    int val = int(b) & 0xFF;
 
     if (val < 10)
         _out << " [00" << val << "] ";

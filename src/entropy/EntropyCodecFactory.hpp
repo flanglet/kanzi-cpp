@@ -40,16 +40,16 @@ namespace kanzi {
 
    class EntropyCodecFactory {
    public:
-       static const byte NONE_TYPE = 0; // No compression
-       static const byte HUFFMAN_TYPE = 1; // Huffman
-       static const byte FPAQ_TYPE = 2; // Fast PAQ (order 0)
-       static const byte PAQ_TYPE = 3; // Obsolete
-       static const byte RANGE_TYPE = 4; // Range
-       static const byte ANS0_TYPE = 5; // Asymmetric Numerical System order 0
-       static const byte CM_TYPE = 6; // Context Model
-       static const byte TPAQ_TYPE = 7; // Tangelo PAQ
-       static const byte ANS1_TYPE = 8; // Asymmetric Numerical System order 1
-       static const byte TPAQX_TYPE = 9; // Tangelo PAQ Extra
+       static const short NONE_TYPE = 0; // No compression
+       static const short HUFFMAN_TYPE = 1; // Huffman
+       static const short FPAQ_TYPE = 2; // Fast PAQ (order 0)
+       static const short PAQ_TYPE = 3; // Obsolete
+       static const short RANGE_TYPE = 4; // Range
+       static const short ANS0_TYPE = 5; // Asymmetric Numerical System order 0
+       static const short CM_TYPE = 6; // Context Model
+       static const short TPAQ_TYPE = 7; // Tangelo PAQ
+       static const short ANS1_TYPE = 8; // Asymmetric Numerical System order 1
+       static const short TPAQX_TYPE = 9; // Tangelo PAQ Extra
 
        static EntropyDecoder* newDecoder(InputBitStream& ibs, map<string, string>& ctx, short entropyType) THROW;
 

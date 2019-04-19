@@ -49,7 +49,7 @@ namespace kanzi
    inline byte ExpGolombDecoder::decodeByte()
    {
        if (_bitstream.readBit() == 1)
-           return 0;
+           return byte(0);
 
        int log2 = 1;
 
@@ -58,8 +58,8 @@ namespace kanzi
 
        if (_signed == true) {
            // Decode signed: read value + sign
-           byte res = byte(_bitstream.readBits(log2 + 1));
-           const byte sgn = res & 1;
+           int res = int(_bitstream.readBits(log2 + 1));
+           const int sgn = res & 1;
            res = (res >> 1) + (1 << log2) - 1;
            return byte((res - sgn) ^ -sgn); // res or -res
        }
