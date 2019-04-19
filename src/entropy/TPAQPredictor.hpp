@@ -484,7 +484,7 @@ namespace kanzi
                int r = _matchLen + 2;
 
                while (r <= MAX_LENGTH) {
-                   if (*(uint16*)&_buffer[(_pos - r - 1) & MASK_BUFFER] != *(uint16*)&_buffer[(_matchPos - r - 1) & MASK_BUFFER])
+                   if (*(reinterpret_cast<uint16*>(&_buffer[(_pos - r - 1) & MASK_BUFFER])) != *(reinterpret_cast<uint16*>(&_buffer[(_matchPos - r - 1) & MASK_BUFFER])))
                        break;
 
                    r += 2;
@@ -514,7 +514,7 @@ namespace kanzi
    template <bool T>
    inline int TPAQPredictor<T>::getMatchContextPred()
    {
-       if (_c0 == ((_buffer[_matchPos & MASK_BUFFER] & byte(0xFF)) | 256) >> _bpos) {
+       if (_c0 == ((int(_buffer[_matchPos & MASK_BUFFER]) & 0xFF) | 256) >> _bpos) {
            int p = (_matchLen <= 24) ? _matchLen : 24 + ((_matchLen - 24) >> 3);
 
            if ((int(_buffer[_matchPos & MASK_BUFFER] >> (_bpos - 1)) & 1) == 0)

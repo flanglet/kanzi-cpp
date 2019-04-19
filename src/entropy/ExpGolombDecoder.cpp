@@ -37,7 +37,7 @@ int ExpGolombDecoder::decode(byte block[], uint blkptr, uint len)
         buf[i+5] = decodeByte();
         buf[i+6] = decodeByte();
         buf[i+7] = decodeByte();
-	}
+    }
 
     for (uint i = len8; i < len; i++)
         buf[i] = decodeByte();

@@ -36,7 +36,7 @@ int ExpGolombEncoder::encode(byte block[], uint blkptr, uint len)
         encodeByte(buf[i+5]);
         encodeByte(buf[i+6]);
         encodeByte(buf[i+7]);
-	}
+    }
 
     for (uint i = len8; i < len; i++)
         encodeByte(buf[i]);
