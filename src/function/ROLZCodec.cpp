@@ -407,7 +407,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             const uint32 key = ROLZCodec::getKey(&buf[dstIdx - 2]);
             prefetchRead(&_counters[key]);
-            const int matchIdx = mIdxBuf._array[mIdxBuf._index++] & 0xFF;
+            const int matchIdx = int(mIdxBuf._array[mIdxBuf._index++]) & 0xFF;
             int32* matches = &_matches[key << _logPosChecks];
             const int32 ref = output._index + matches[(_counters[key] - matchIdx) & _maskChecks];
             const int32 savedIdx = dstIdx;
@@ -440,30 +440,30 @@ End:
 void ROLZCodec1::readLengths(SliceArray<byte>& lenBuf, int& litLen, int& mLen)
 {
     // mode LLLLLMMM -> L lit length, M match length
-    const int mode = lenBuf._array[lenBuf._index++] & 0xFF;
+    const int mode = int(lenBuf._array[lenBuf._index++]) & 0xFF;
     mLen = mode & 0x07;
          
     if (mLen == 7)
-        mLen += (lenBuf._array[lenBuf._index++] & 0xFF);
+        mLen += (int(lenBuf._array[lenBuf._index++]) & 0xFF);
          
     if (mode < 0xF8) {
         litLen = mode >> 3;
         return;
     }
          
-    int next = lenBuf._array[lenBuf._index++];
+    int next = int(lenBuf._array[lenBuf._index++]);
     litLen = (next & 0x7F);
     
     if ((next & 0x80) != 0) {
-        next = lenBuf._array[lenBuf._index++];
+        next = int(lenBuf._array[lenBuf._index++]);
         litLen = (litLen << 7) | (next & 0x7F);
 
         if ((next & 0x80) != 0) {
-            next = lenBuf._array[lenBuf._index++];
+            next = int(lenBuf._array[lenBuf._index++]);
             litLen = (litLen << 7) | (next & 0x7F);
 
             if ((next & 0x80) != 0) {
-                next = lenBuf._array[lenBuf._index++];
+                next = int(lenBuf._array[lenBuf._index++]);
                 litLen = (litLen << 7) | (next & 0x7F);
             }
         }
@@ -525,14 +525,14 @@ ROLZEncoder::ROLZEncoder(Predictor* predictors[2], byte buf[], int& idx)
 
 void ROLZEncoder::encodeByte(byte val)
 {
-    encodeBit((val >> 7) & 1);
-    encodeBit((val >> 6) & 1);
-    encodeBit((val >> 5) & 1);
-    encodeBit((val >> 4) & 1);
-    encodeBit((val >> 3) & 1);
-    encodeBit((val >> 2) & 1);
-    encodeBit((val >> 1) & 1);
-    encodeBit(val & 1);
+    encodeBit(int(val >> 7) & 1);
+    encodeBit(int(val >> 6) & 1);
+    encodeBit(int(val >> 5) & 1);
+    encodeBit(int(val >> 4) & 1);
+    encodeBit(int(val >> 3) & 1);
+    encodeBit(int(val >> 2) & 1);
+    encodeBit(int(val >> 1) & 1);
+    encodeBit(int(val) & 1);
 }
 
 
@@ -555,7 +555,7 @@ ROLZDecoder::ROLZDecoder(Predictor* predictors[2], byte buf[], int& idx)
     _buf = buf;
 
     for (int i = 0; i < 8; i++)
-        _current = (_current << 8) | uint64(_buf[_idx + i] & 0xFF);
+        _current = (_current << 8) | (uint64(_buf[_idx + i]) & 0xFF);
 
     _idx += 8;
     _predictors[0] = predictors[0];
@@ -793,7 +793,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             if (rd.decodeBit() == MATCH_FLAG) {               
                 // Match flag
-                const int matchLen = rd.decodeByte() & 0xFF;
+                const int matchLen = int(rd.decodeByte()) & 0xFF;
 
                 // Sanity check
                 if (dstIdx + matchLen + 3 > dstEnd) {

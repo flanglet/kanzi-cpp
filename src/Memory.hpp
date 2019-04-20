@@ -76,9 +76,9 @@ namespace kanzi {
 			#define IS_BIG_ENDIAN true
 		#else
          static inline bool IS_BIG_ENDIAN() {
-            union { uint32 v; byte c[4]; } one = { 0x03020100 };
-            return one.c[0] == byte(0);
-            //const union { uint32 u; byte c[4]; } one = { 1 };
+            union { uint32 v; uint8 c[4]; } one = { 0x03020100 };
+            return one.c[0] == 0;
+            //const union { uint32 u; uint8 c[4]; } one = { 1 };
             //return one.c[3] == 1;
          }
 		#endif

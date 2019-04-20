@@ -93,7 +93,7 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         int j = i + 1;
 
         while ((j < length) && (src[j] == c)) {
-            dst[p] = 0;
+            dst[p] = byte(0);
             p++;
             j++;
         }
@@ -134,7 +134,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     for (int i = 0, bucketPos = 0; i < nbSymbols; i++) {
         const uint8 c = symbols[i];
-        r2s[src[bucketPos] & 0xFF] = c;
+        r2s[int(src[bucketPos]) & 0xFF] = c;
         buckets[c] = bucketPos + 1;
         bucketPos += freqs[c];
         bucketEnds[c] = bucketPos;
@@ -148,7 +148,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         dst[i] = c;
 
         if (buckets[c] < bucketEnds[c]) {
-            const int r = src[buckets[c]] & 0xFF;
+            const int r = int(src[buckets[c]]) & 0xFF;
             buckets[c]++;
 
             if (r == 0)
@@ -224,10 +224,10 @@ int SRT::encodeHeader(int32 freqs[], byte dst[])
 int SRT::decodeHeader(byte src[], int32 freqs[])
 {
     for (int i = 0, j = 0; i < 1024; i += 4, j++) {
-        const int f1 = src[i] & 0xFF;
-        const int f2 = src[i + 1] & 0xFF;
-        const int f3 = src[i + 2] & 0xFF;
-        const int f4 = src[i + 3] & 0xFF;
+        const int f1 = int(src[i]) & 0xFF;
+        const int f2 = int(src[i + 1]) & 0xFF;
+        const int f3 = int(src[i + 2]) & 0xFF;
+        const int f4 = int(src[i + 3]) & 0xFF;
         freqs[j] = int32((f1 << 24) | (f2 << 16) | (f3 << 8) | f4);
     }
 

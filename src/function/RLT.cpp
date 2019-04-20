@@ -64,7 +64,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     dst[dstIdx++] = prev;
 
     if (prev == escape)
-        dst[dstIdx++] = 0;
+        dst[dstIdx++] = byte(0);
 
     // Main loop
     while (srcIdx < srcEnd4) {
@@ -119,7 +119,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
             while (run-- > 0) {
                dst[dstIdx++] = escape;
-               dst[dstIdx++] = 0;
+               dst[dstIdx++] = byte(0);
             }
         }
 
@@ -146,7 +146,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             if (dstIdx + 2 * run < dstEnd) {
                while (run-- > 0) {
                   dst[dstIdx++] = escape;
-                  dst[dstIdx++] = 0;
+                  dst[dstIdx++] = byte(0);
                }
             }
         }
@@ -168,7 +168,7 @@ int RLT::emitRunLength(byte* dst, int length, int run, byte escape, byte val) {
     dst[0] = val;
 
     if (val == escape) {
-        dst[1] = 0;
+        dst[1] = byte(0);
         dstIdx = 2;
     }
 

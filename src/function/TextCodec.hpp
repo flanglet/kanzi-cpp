@@ -156,6 +156,7 @@ namespace kanzi {
        static const int32 HASH2 = 0x846CA68B;
        static const byte CR = byte(0x0D);
        static const byte LF = byte(0x0A);
+       static const byte SP = byte(0x20);
        static const int THRESHOLD1 = 128;
        static const int THRESHOLD2 = THRESHOLD1 * THRESHOLD1;
        static const int THRESHOLD3 = 32;

@@ -75,7 +75,7 @@ int HuffmanDecoder::readLengths() THROW
         }
 
         _codes[s] = 0;
-        int currSize = prevSize + egdec.decodeByte();
+        int currSize = prevSize + int(egdec.decodeByte());
 
         if ((currSize <= 0) || (currSize > HuffmanCommon::MAX_SYMBOL_SIZE)) {
             stringstream ss;

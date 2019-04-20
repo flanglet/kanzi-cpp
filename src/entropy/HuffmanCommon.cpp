@@ -23,15 +23,15 @@ int HuffmanCommon::generateCanonicalCodes(short sizes[], uint codes[], uint symb
 {
     // Sort by increasing size (first key) and increasing value (second key)
     if (count > 1) {
-        byte buf[BUFFER_SIZE] = { 0 };
+        byte buf[BUFFER_SIZE] = { byte(0) };
          
         for (int i=0; i<count; i++)
-            buf[((sizes[symbols[i]] - 1) << 8) | symbols[i]] = 1;
+            buf[((sizes[symbols[i]] - 1) << 8) | symbols[i]] = byte(1);
          
         int n = 0;
          
         for (int i=0; i<BUFFER_SIZE; i++) {
-            if (buf[i] > 0) {
+            if (buf[i] != byte(0)) {
                symbols[n++] = i & 0xFF;
                
                if (n == count)

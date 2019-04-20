@@ -625,14 +625,14 @@ SliceArray<byte> TextCodec::unpackDictionary32(const byte dict[], int dictSize)
 
 	// Unpack 3 bytes into 4 6-bit symbols
 	for (int i = 0; i < dictSize; i++) {
-		val = (val << 8) | (dict[i] & 0xFF);
+		val = (val << 8) | (int(dict[i]) & 0xFF);
 
 		if ((i % 3) == 2) {
 			for (int ii = 18; ii >= 0; ii -= 6) {
 				int c = (val >> ii) & 0x3F;
 
 				if (c >= 32)
-					buf[d++] = ' ';
+					buf[d++] = TextCodec::SP;
 
 				c &= 0x1F;
 
@@ -645,7 +645,7 @@ SliceArray<byte> TextCodec::unpackDictionary32(const byte dict[], int dictSize)
 		}
 	}
 
-	buf[d] = ' '; // End
+	buf[d] = TextCodec::SP; // End
 	byte* res = new byte[d];
 	memcpy(&res[0], &buf[1], d);
 	delete[] buf;
@@ -715,7 +715,7 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 	if (16 * freqs0[32] < count)
 		return TextCodec::MASK_NOT_TEXT;
 
-	byte res = 0;
+	byte res = byte(0);
 
 	if (nbBinChars == 0)
 		res |= TextCodec::MASK_FULL_ASCII;
@@ -936,12 +936,12 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int words = _staticDictSize;
 
 	// DOS encoded end of line (CR+LF) ?
-	_isCRLF = (mode & TextCodec::MASK_CRLF) != 0;
+	_isCRLF = int(mode & TextCodec::MASK_CRLF) != 0;
 	dst[dstIdx++] = mode;
 	bool res = true;
 
-	while ((srcIdx < srcEnd) && (src[srcIdx] == ' ')) {
-		dst[dstIdx++] = ' ';
+	while ((srcIdx < srcEnd) && (src[srcIdx] == TextCodec::SP)) {
+		dst[dstIdx++] = TextCodec::SP;
 		srcIdx++;
 		emitAnchor++;
 	}
@@ -1162,7 +1162,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 	int words = _staticDictSize;
 	bool wordRun = false;
-	_isCRLF = (src[srcIdx++] & TextCodec::MASK_CRLF) != 0;
+	_isCRLF = int(src[srcIdx++] & TextCodec::MASK_CRLF) != 0;
 
 	while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
 		byte cur = src[srcIdx];
@@ -1251,7 +1251,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 			// Add space if only delimiter between 2 words (not an escaped delimiter)
 			if ((wordRun == true) && (length > 1))
-				dst[dstIdx++] = ' ';
+				dst[dstIdx++] = TextCodec::SP;
 
 			// Emit word
 			if (cur != TextCodec::ESCAPE_TOKEN2) {
@@ -1392,8 +1392,8 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	dst[dstIdx++] = mode;
 	bool res = true;
 
-	while ((srcIdx < srcEnd) && (src[srcIdx] == ' ')) {
-		dst[dstIdx++] = ' ';
+	while ((srcIdx < srcEnd) && (src[srcIdx] == TextCodec::SP)) {
+		dst[dstIdx++] = TextCodec::SP;
 		srcIdx++;
 		emitAnchor++;
 	}
@@ -1474,7 +1474,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			else {
             // Word found in the dictionary
             // Skip space if only delimiter between 2 word references
-            if ((emitAnchor != delimAnchor) || (src[delimAnchor] != ' ')) {
+            if ((emitAnchor != delimAnchor) || (src[delimAnchor] != TextCodec::SP)) {
 					int dIdx = emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor + 1 - emitAnchor, dstEnd - dstIdx);
 
  					if (dIdx < 0) {
@@ -1740,7 +1740,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 			// Add space if only delimiter between 2 words (not an escaped delimiter)
 			if ((wordRun == true) && (length > 1))
-				dst[dstIdx++] = ' ';
+				dst[dstIdx++] = TextCodec::SP;
 
 			// Emit word
 			if ((cur & 0x20) == 0) {
