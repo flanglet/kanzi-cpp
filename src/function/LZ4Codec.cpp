@@ -171,11 +171,11 @@ bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
                 // Encode match length
                 if (matchLength >= ML_MASK) {
-                    dst[token] += byte(ML_MASK);
+                    dst[token] |= byte(ML_MASK);
                     dstIdx += writeLength(&dst[dstIdx], matchLength - ML_MASK);
                 }
                 else {
-                    dst[token] += byte(matchLength);
+                    dst[token] |= byte(matchLength);
                 }
 
                 anchor = srcIdx;
@@ -202,7 +202,7 @@ bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
                 token = dstIdx;
                 dstIdx++;
-                dst[token] = 0;
+                dst[token] = byte(0);
             } while (true);
 
             // Prepare next loop

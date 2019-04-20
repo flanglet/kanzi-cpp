@@ -19,6 +19,8 @@ limitations under the License.
 #include "types.hpp"
 #include "SliceArray.hpp"
 
+using namespace std; // for C++17 
+
 namespace kanzi 
 {
 

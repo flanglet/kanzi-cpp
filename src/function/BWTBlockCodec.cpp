@@ -142,7 +142,7 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
         // Extract BWT primary index
         for (int n = 1; n < pIndexSizeBytes; n++) {
             shift -= 8;
-            primaryIndex |= ((input._array[input._index++] & 0xFF) << shift);
+            primaryIndex |= ((int(input._array[input._index++]) & 0xFF) << shift);
         }
 
         if (_pBWT->setPrimaryIndex(i, primaryIndex) == false)

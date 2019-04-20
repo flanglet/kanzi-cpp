@@ -51,7 +51,7 @@ namespace kanzi {
 
 		int get();
 
-		void setContext(int ctx) { _ctx = uint8(ctx) << _logSize; }
+		void setContext(byte ctx) { _ctx = uint8(ctx) << _logSize; }
 	};
 
 	class ROLZEncoder {

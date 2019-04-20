@@ -676,7 +676,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         sizeChunk = endChunk - startChunk;
         src = &input._array[startChunk];
         srcIdx = 0;
-        _litPredictor.setContext(0);
+        _litPredictor.setContext(byte(0));
         re.setContext(LITERAL_FLAG);
         re.encodeBit(LITERAL_FLAG);
         re.encodeByte(src[srcIdx++]);
@@ -762,7 +762,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         sizeChunk = endChunk - startChunk;
         dst = &output._array[output._index];
         int dstIdx = 0;
-        _litPredictor.setContext(0);
+        _litPredictor.setContext(byte(0));
         rd.setContext(LITERAL_FLAG);
         int bit = rd.decodeBit();
 

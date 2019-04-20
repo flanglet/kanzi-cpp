@@ -39,6 +39,7 @@ namespace kanzi
       static const byte INSTRUCTION_JUMP = byte(0xE8);
       static const byte ADDRESS_MASK = byte(0xD5); 
       static const byte ESCAPE = byte(0x02);
+      static const byte MASK_FF = byte(0xFF);
    };
 
 }
