@@ -117,7 +117,7 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
         while (dstIdx < dstEnd) {
             if (runLength > 1) {
                 runLength--;
-                dst[dstIdx++] = 0;
+                dst[dstIdx++] = byte(0);
                 continue;
             }
 
@@ -171,7 +171,7 @@ End:
         return false;
 
     while (dstIdx < end)
-        dst[dstIdx++] = 0;
+        dst[dstIdx++] = byte(0);
 
     output._index = dstIdx;
     return srcIdx == srcEnd;

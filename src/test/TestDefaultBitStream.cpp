@@ -325,7 +325,7 @@ void testBitStreamCorrectnessAligned2()
 
         for (int i = 0; i < length; i++) {
             input[i] = (byte) rand();
-            cout << (input[i] & 0xFF) << " ";
+            cout << (int(input[i]) & 0xFF) << " ";
 
             if ((i % 20) == 19)
                 cout << endl;
@@ -345,7 +345,7 @@ void testBitStreamCorrectnessAligned2()
         char* cvalues = new char[length];
 
         for (int i = 0; i < length; i++) {
-            cvalues[i] = input[i] & 0xFF;
+            cvalues[i] = char(input[i]) & 0xFF;
         }
 
         is.read(cvalues, length);
@@ -360,7 +360,7 @@ void testBitStreamCorrectnessAligned2()
 
         if (ok == true) {
            for (uint i = 0; i < (r>>3); i++) {
-               cout << (output[i] & 0xFF);
+               cout << (int(output[i]) & 0xFF);
                cout << ((output[i] == input[i]) ? " " : "* ");
                ok &= (output[i] == input[i]);
 
@@ -405,7 +405,7 @@ void testBitStreamCorrectnessMisaligned2()
 
         for (int i = 0; i < length; i++) {
             input[i] = (byte) rand();
-            cout << (input[i] & 0xFF) << " ";
+            cout << (int(input[i]) & 0xFF) << " ";
 
             if ((i % 20) == 19)
                 cout << endl;
@@ -425,7 +425,7 @@ void testBitStreamCorrectnessMisaligned2()
         char* cvalues = new char[4 * length];
 
         for (int i = 0; i < length; i++) {
-            cvalues[i] = input[i] & 0xFF;
+            cvalues[i] = char(input[i]) & 0xFF;
         }
 
         is.read(cvalues, length);
@@ -441,7 +441,7 @@ void testBitStreamCorrectnessMisaligned2()
 
         if (ok == true) {
            for (uint i = 1; i < 1 + (r>>3); i++) {
-               cout << (output[i] & 0xFF);
+               cout << (int(output[i]) & 0xFF);
                cout << ((output[i] == input[i]) ? " " : "* ");
                ok &= (output[i] == input[i]);
 
@@ -472,8 +472,10 @@ void testBitStreamSpeed2(const string& fileName)
     // Test speed
     cout << "\nSpeed Test2" << endl;
 
-    byte values[] = { 3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3,
-        31, 14, 41, 15, 59, 92, 26, 65, 53, 35, 58, 89, 97, 79, 93, 32 };
+    byte values[] = { (byte)3, (byte)1, (byte)4, (byte)1, (byte)5,(byte) 9, (byte)2, (byte)6, 
+        (byte)5, (byte)3, (byte)5, (byte)8, (byte)9, (byte)7, (byte)9, (byte)3,
+        (byte)31, (byte)14, (byte)41, (byte)15, (byte)59, (byte)92, (byte)26, (byte)65, 
+        (byte)53, (byte)35, (byte)58, (byte)89, (byte)97, (byte)79, (byte)93, (byte)32 };
 
     int iter = 150;
     uint64 written = 0;

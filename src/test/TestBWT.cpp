@@ -81,7 +81,7 @@ void testBWTCorrectness(bool isBWT)
              << "Input   : ";
 
         for (int i = 0; i < size; i++)
-            cout << input[i];
+            cout << int(input[i]);
 
         SliceArray<byte> ia1(input, size, 0);
         SliceArray<byte> ia2(transform, size, 0);
@@ -91,7 +91,7 @@ void testBWTCorrectness(bool isBWT)
              << "Encoded : ";
 
         for (int i = 0; i < size; i++)
-            cout << transform[i];
+            cout << int(transform[i]);
 
         if (isBWT) {
             int primaryIndex = ((BWT*)bwt)->getPrimaryIndex(0);
@@ -109,7 +109,7 @@ void testBWTCorrectness(bool isBWT)
         cout << "Reverse : ";
 
         for (int i = 0; i < size; i++)
-            cout << reverse[i];
+            cout << int(reverse[i]);
 
         cout << endl;
 
@@ -159,7 +159,7 @@ int testBWTSpeed(bool isBWT)
 
         for (int ii = 0; ii < iter; ii++) {
             for (int i = 0; i < size; i++) {
-                input[i] = 1 + byte(rand() % 255);
+                input[i] = byte(1 + (rand() % 255));
             }
 
             clock_t before1 = clock();

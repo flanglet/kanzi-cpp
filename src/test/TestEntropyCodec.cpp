@@ -144,35 +144,35 @@ void testEntropyCodecCorrectness(const string& name)
         int size = 32;
 
         if (ii == 3) {
-            byte val2[] = { 0, 0, 32, 15, (byte)-4, 16, 0, 16, 0, 7, (byte)-1, (byte)-4, (byte)-32, 0, 31, (byte)-1 };
+            byte val2[] = { (byte)0, (byte)0, (byte)32, (byte)15, (byte)-4, (byte)16, (byte)0, (byte)16, (byte)0, (byte)7, (byte)-1, (byte)-4, (byte)-32, (byte)0, (byte)31, (byte)-1 };
             size = 16;
             memcpy(val, &val2[0], size);
         }
         else if (ii == 2) {
-            byte val2[] = { 0x3d, 0x4d, 0x54, 0x47, 0x5a, 0x36, 0x39, 0x26, 0x72, 0x6f, 0x6c, 0x65, 0x3d, 0x70, 0x72, 0x65 };
+            byte val2[] = { (byte)0x3d, (byte)0x4d, (byte)0x54, (byte)0x47, (byte)0x5a, (byte)0x36, (byte)0x39, (byte)0x26, (byte)0x72, (byte)0x6f, (byte)0x6c, (byte)0x65, (byte)0x3d, (byte)0x70, (byte)0x72, (byte)0x65 };
             size = 16;
             memcpy(val, &val2[0], size);
         }
         else if (ii == 1) {
             for (int i = 0; i < 32; i++)
-                val[i] = (byte)2; // all identical
+                val[i] = byte(2); // all identical
         }
         else if (ii == 5) {
             for (int i = 0; i < 32; i++)
-                val[i] = (byte)(2 + (i & 1)); // 2 symbols
+                val[i] = byte(2 + (i & 1)); // 2 symbols
         }
         else {
             size = 256;
             
             for (int i = 0; i < 256; i++)
-                val[i] = (byte)(64 + 4 * ii + (rand() % (8*ii + 1)));
+                val[i] = byte(64 + 4 * ii + (rand() % (8*ii + 1)));
         }
 
         byte* values = &val[0];
         cout << "Original:" << endl;
 
         for (int i = 0; i < size; i++)
-            cout << (int)values[i] << " ";
+            cout << int(values[i]) << " ";
 
         cout << endl
              << endl
