@@ -38,9 +38,9 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     for (int i = 0; i < end; i++) {
         if ((src[i] & INSTRUCTION_MASK) == INSTRUCTION_JUMP) {
            // Count valid relative jumps (E8/E9 .. .. .. 00/FF)
-           if ((src[i+4] == byte(0)) || ((src[i+4] & MASK_FF) == MASK_FF)) {
+           if ((src[i+4] == 0) || ((src[i+4] & 0xFF) == 0xFF)) {
               // No encoding conflict ?
-              if ((src[i] != byte(0)) && (src[i] != byte(1)) && (src[i] != ESCAPE))
+              if ((src[i] != 0) && (src[i] != 1) && (src[i] != ESCAPE))
                  jumps++;
            }
         }
@@ -65,7 +65,7 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         const byte cur = src[srcIdx];
 
-        if ((cur == byte(0)) || (cur == byte(1)) || (cur == ESCAPE)) {
+        if ((cur == 0) || (cur == 1) || (cur == ESCAPE)) {
             // Conflict prevents encoding the address. Emit escape symbol
             dst[dstIdx] = ESCAPE;
             dst[dstIdx + 1] = cur;
@@ -74,20 +74,20 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             continue;
         }
 
-        const int sgn = int(src[srcIdx + 3]) & 0xFF;
+        const int sgn = src[srcIdx + 3] & 0xFF;
 
         // Invalid sign of jump address difference => false positive ?
         if ((sgn != 0) && (sgn != 0xFF))
             continue;
 
-        int addr = (MASK_FF & src[srcIdx]) | ((MASK_FF & src[srcIdx + 1]) << 8) | 
-                  ((MASK_FF & src[srcIdx + 2]) << 16) | ((MASK_FF & sgn) << 24);
+        int addr = (0xFF & src[srcIdx]) | ((0xFF & src[srcIdx + 1]) << 8) | 
+                  ((0xFF & src[srcIdx + 2]) << 16) | ((0xFF & sgn) << 24);
 
         addr += srcIdx;
         dst[dstIdx] = byte(sgn + 1);
-        dst[dstIdx + 1] = ADDRESS_MASK ^ byte(0xFF & (addr >> 16));
-        dst[dstIdx + 2] = ADDRESS_MASK ^ byte(0xFF & (addr >> 8));
-        dst[dstIdx + 3] = ADDRESS_MASK ^ byte(0xFF & addr);
+        dst[dstIdx + 1] = byte(ADDRESS_MASK ^ (0xFF & (addr >> 16)));
+        dst[dstIdx + 2] = byte(ADDRESS_MASK ^ (0xFF & (addr >> 8)));
+        dst[dstIdx + 3] = byte(ADDRESS_MASK ^ (0xFF & addr));
         srcIdx += 4;
         dstIdx += 4;
     }
@@ -125,23 +125,21 @@ bool X86Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         if ((src[srcIdx - 1] & INSTRUCTION_MASK) != INSTRUCTION_JUMP)
             continue;
 
-        const byte flag = src[srcIdx];
+        const byte sgn = src[srcIdx];
 
-        if (flag == ESCAPE) {
+        if (sgn == ESCAPE) {
             // Not an encoded address. Skip escape symbol
             srcIdx++;
             continue;
         }
 
-        const int sgn = int(flag);
-        
         // Invalid sign of jump address difference => false positive ?
         if ((sgn != 1) && (sgn != 0))
             continue;
 
-        int addr =  (0xFF & int(ADDRESS_MASK ^ src[srcIdx+3]))        | 
-                   ((0xFF & int(ADDRESS_MASK ^ src[srcIdx+2])) <<  8) |
-                   ((0xFF & int(ADDRESS_MASK ^ src[srcIdx+1])) << 16) | 
+        int addr =  (0xFF & (ADDRESS_MASK ^ src[srcIdx+3]))        | 
+                   ((0xFF & (ADDRESS_MASK ^ src[srcIdx+2])) <<  8) |
+                   ((0xFF & (ADDRESS_MASK ^ src[srcIdx+1])) << 16) | 
                    ((0xFF & (sgn-1)) << 24);
         addr -= dstIdx;
         dst[dstIdx] = byte(addr);
@@ -164,8 +162,8 @@ int X86Codec::getMaxEncodedLength(int srcLen) const
 { 
     // Since we do not check the dst index for each byte (for speed purpose)
     // allocate some extra buffer for incompressible data.
-    if (srcLen >= 1 << 30)
+    if (srcLen >= 1<<30)
         return srcLen;
       
-    return (srcLen <= 512) ? srcLen + 32 : srcLen+srcLen / 16;
+    return (srcLen <= 512) ? srcLen+32 : srcLen+srcLen/16;
 }
