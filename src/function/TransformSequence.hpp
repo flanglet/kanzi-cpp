@@ -178,7 +178,7 @@ namespace kanzi
 
        // Process transforms sequentially in reverse order
        for (int i = _length - 1; i >= 0; i--) {
-           if ((_skipFlags & byte(1 << (7 - i))) != 0)
+           if ((_skipFlags & byte(1 << (7 - i))) != byte(0))
                continue;
 
            SliceArray<T>* sa1 = sa[saIdx];

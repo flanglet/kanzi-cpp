@@ -114,8 +114,8 @@ namespace kanzi
        static const int BITSTREAM_FORMAT_VERSION = 7;
        static const int DEFAULT_BUFFER_SIZE = 256 * 1024;
        static const int EXTRA_BUFFER_SIZE = 256;
-       static const int COPY_BLOCK_MASK = 0x80;
-       static const int TRANSFORMS_MASK = 0x10;
+       static const byte COPY_BLOCK_MASK = byte(0x80);
+       static const byte TRANSFORMS_MASK = byte(0x10);
        static const int MIN_BITSTREAM_BLOCK_SIZE = 1024;
        static const int MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
        static const int CANCEL_TASKS_ID = -1;

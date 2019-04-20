@@ -186,7 +186,7 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
         }
     }
     else { // order 1
-        int prv = block[end - 1] & 0xFF;
+        int prv = int(block[end - 1]) & 0xFF;
 
         for (int i = end - 2; i >= 0; i--) {
             const int cur = int(data[i]);

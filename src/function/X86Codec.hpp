@@ -23,7 +23,7 @@ namespace kanzi
    // Adapted from MCM: https://github.com/mathieuchartier/mcm/blob/master/X86Binary.hpp
    class X86Codec : public Function<byte> {
    public:
-       X86Codec() { }
+       X86Codec() {}
 
        ~X86Codec() {}
 
@@ -35,10 +35,10 @@ namespace kanzi
 
    private:
 
-      static const int INSTRUCTION_MASK = 0xFE;
-      static const int INSTRUCTION_JUMP = 0xE8;
-      static const int ADDRESS_MASK = 0xD5; 
-      static const int ESCAPE = 0x02;
+      static const byte INSTRUCTION_MASK = byte(0xFE);
+      static const byte INSTRUCTION_JUMP = byte(0xE8);
+      static const byte ADDRESS_MASK = byte(0xD5); 
+      static const byte ESCAPE = byte(0x02);
    };
 
 }

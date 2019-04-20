@@ -60,7 +60,7 @@ namespace kanzi {
    }
 
    inline void NullEntropyEncoder::encodeByte(byte val) {
-      _bitstream.writeBits(val, 8);
+      _bitstream.writeBits(uint64(val), 8);
    }
 }
 #endif

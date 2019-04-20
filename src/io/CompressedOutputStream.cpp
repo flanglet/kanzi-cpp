@@ -241,7 +241,7 @@ void CompressedOutputStream::close() THROW
 
     try {
         // Write end block of size 0
-        _obs->writeBits(COPY_BLOCK_MASK, 8);
+        _obs->writeBits(uint64(COPY_BLOCK_MASK), 8);
         _obs->writeBits(uint64(0), 8);
         _obs->close();
     }
@@ -438,7 +438,7 @@ T EncodingTask<T>::call() THROW
     EntropyEncoder* ee = nullptr;
 
     try {
-        byte mode = 0;
+        byte mode = byte(0);
         int postTransformLength = _blockLength;
         int checksum = 0;
 
@@ -513,7 +513,7 @@ T EncodingTask<T>::call() THROW
             return T(_blockId, Error::ERR_WRITE_FILE, "Invalid block data length");
 
         // Record size of 'block size' - 1 in bytes
-        mode |= ((dataSize & 0x03) << 5);
+        mode |= byte((dataSize & 0x03) << 5);
         dataSize++;
 
         if (_listeners.size() > 0) {
@@ -532,14 +532,14 @@ T EncodingTask<T>::call() THROW
         // Write block 'header' (mode + compressed length);
         uint64 written = _obs->written();
 
-        if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != 0) || (transform->getNbFunctions() <= 4)) {
-            mode |= (uint8(transform->getSkipFlags()) >> 4);
-            _obs->writeBits(mode, 8);
+        if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != byte(0)) || (transform->getNbFunctions() <= 4)) {
+            mode |= byte(uint8(transform->getSkipFlags()) >> 4);
+            _obs->writeBits(uint64(mode), 8);
         }
         else {
             mode |= CompressedOutputStream::TRANSFORMS_MASK;
-            _obs->writeBits(mode, 8);
-            _obs->writeBits(transform->getSkipFlags(), 8);
+            _obs->writeBits(uint64(mode), 8);
+            _obs->writeBits(uint64(transform->getSkipFlags()), 8);
         }
 
         delete transform;

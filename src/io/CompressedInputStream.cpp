@@ -216,7 +216,7 @@ int CompressedInputStream::peek() THROW
             }
         }
 
-        return _sa->_array[_sa->_index] & 0xFF;
+        return int(_sa->_array[_sa->_index]) & 0xFF;
     }
     catch (IOException& e) {
         setstate(ios::badbit);
@@ -290,7 +290,7 @@ istream& CompressedInputStream::read(char* data, streamsize length) THROW
         if (c2 == EOF)
             break;
 
-        data[off++] = byte(c2);
+        data[off++] = char(c2);
         _gcount++;
         remaining--;
     }
@@ -569,20 +569,20 @@ T DecodingTask<T>::call() THROW
         // Extract block header directly from bitstream
         uint64 read = _ibs->read();
         byte mode = byte(_ibs->readBits(8));
-        byte skipFlags = 0;
+        byte skipFlags = byte(0);
 
-        if ((mode & CompressedInputStream::COPY_BLOCK_MASK) != 0) {
+        if ((mode & CompressedInputStream::COPY_BLOCK_MASK) != byte(0)) {
             _transformType = FunctionFactory<byte>::NONE_TYPE;
             _entropyType = EntropyCodecFactory::NONE_TYPE;
         }
         else {
-            if ((mode & CompressedInputStream::TRANSFORMS_MASK) != 0)
+            if ((mode & CompressedInputStream::TRANSFORMS_MASK) != byte(0))
                 skipFlags = byte(_ibs->readBits(8));
             else
-                skipFlags = byte((mode << 4) | 0x0F);
+                skipFlags = (mode << 4) | byte(0x0F);
         }
 
-        int dataSize = 1 + ((mode >> 5) & 0x03);
+        int dataSize = 1 + (int(mode >> 5) & 0x03);
         int length = dataSize << 3;
         uint64 mask = (uint64(1) << length) - 1;
         int preTransformLength = int(_ibs->readBits(length) & mask);
