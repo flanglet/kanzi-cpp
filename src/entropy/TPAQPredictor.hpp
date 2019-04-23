@@ -394,14 +394,14 @@ namespace kanzi
                const int h1 = ((_c4 & MASK_80808080) == 0) ? _c4 & MASK_4F4FFFFF : _c4 & MASK_80808080;
                const int h2 = ((_c8 & MASK_80808080) == 0) ? _c8 & MASK_4F4FFFFF : _c8 & MASK_80808080;
                _ctx4 = createContext(_ctx1, _c4 ^ (_c8 & 0xFFFF));
-               _ctx5 = hash(h1 << 4, h2);
-               _ctx6 = (_c8 & MASK_F0F0F000) | ((_c4 & MASK_F0F0F000) >> 4);
+               _ctx5 = (_c8 & MASK_F0F0F000) | ((_c4 & MASK_F0F0F000) >> 4);
+               _ctx6 = hash(h1 << 4, h2);
            }
            else {
                // Mostly binary
                _ctx4 = createContext(HASH, _c4 ^ (_c4 & 0x000FFFFF));
-               _ctx5 = hash(_c4 & 0xFFFF0000, _c8 >> 16);
-               _ctx6 = _ctx0 | (_c8 << 16);
+               _ctx5 = _ctx0 | (_c8 << 16);
+               _ctx6 = hash(_c4 & 0xFFFF0000, _c8 >> 16);
            }
 
            findMatch();
@@ -413,13 +413,13 @@ namespace kanzi
        // Get initial predictions
        // It has been observed that accessing memory via [ctx ^ c] is significantly faster
        // on SandyBridge/Windows and slower on SkyLake/Linux except when [ctx & 255 == 0]
-       // (with c < 256). So, use XOR for _ctx6 which is the only context that fullfills
+       // (with c < 256). Hence, use XOR for _ctx5 which is the only context that fullfills
        // the condition.
        prefetchRead(&_bigStatesMap[(_ctx2 + _c0) & _statesMask]);
        prefetchRead(&_bigStatesMap[(_ctx3 + _c0) & _statesMask]);
        prefetchRead(&_bigStatesMap[(_ctx4 + _c0) & _statesMask]);
-       prefetchRead(&_bigStatesMap[(_ctx5 + _c0) & _statesMask]);
-       prefetchRead(&_bigStatesMap[(_ctx6 ^ _c0) & _statesMask]);
+       prefetchRead(&_bigStatesMap[(_ctx5 ^ _c0) & _statesMask]);
+       prefetchRead(&_bigStatesMap[(_ctx6 + _c0) & _statesMask]);
 
        const uint8* table = STATE_TRANSITIONS[bit];
        *_cp0 = table[*_cp0];
@@ -428,7 +428,6 @@ namespace kanzi
        *_cp3 = table[*_cp3];
        *_cp4 = table[*_cp4];
        *_cp5 = table[*_cp5];
-       *_cp6 = table[*_cp6];
        _cp0 = &_smallStatesMap0[_ctx0 + _c0];
        const int p0 = STATE_MAP[*_cp0];
        _cp1 = &_smallStatesMap1[_ctx1 + _c0];
@@ -439,18 +438,25 @@ namespace kanzi
        const int p3 = STATE_MAP[*_cp3];
        _cp4 = &_bigStatesMap[(_ctx4 + _c0) & _statesMask];
        const int p4 = STATE_MAP[*_cp4];
-       _cp5 = &_bigStatesMap[(_ctx5 + _c0) & _statesMask];
+       _cp5 = &_bigStatesMap[(_ctx5 ^ _c0) & _statesMask];
        const int p5 = STATE_MAP[*_cp5];
-       _cp6 = &_bigStatesMap[(_ctx6 ^ _c0) & _statesMask];
-       const int p6 = STATE_MAP[*_cp6];
 
        const int p7 = (_matchLen == 0) ? 0 : getMatchContextPred();
+       int p;
 
-       // Mix predictions using NN
-       int p = _mixer->get(p0, p1, p2, p3, p4, p5, p6, p7);
+       if (T == false) {
+          // Mix predictions using NN
+          p = _mixer->get(p0, p1, p2, p3, p4, p5, (p2 + p7) >> 1, p7);
+       } else {
+          // One more prediction
+          *_cp6 = table[*_cp6];
+          _cp6 = &_bigStatesMap[(_ctx6 + _c0) & _statesMask];
+          const int p6 = STATE_MAP[*_cp6];
 
-       // SSE (Secondary Symbol Estimation)
-       if (T == true) {
+          // Mix predictions using NN
+          p = _mixer->get(p0, p1, p2, p3, p4, p5, p6, p7);
+
+          // SSE (Secondary Symbol Estimation)
           if (_binCount < (_pos >> 3)) {
               p = _sse1.get(bit, p, _ctx0 + _c0);
           }
