@@ -58,8 +58,8 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     string strOverwrite = "false";
     string strChecksum = "false";
     string strSkip = "false";
-    string codec = "";
-    string transf = "";
+    string codec;
+    string transf;
     int verbose = 1;
     int ctx = -1;
     int level = -1;
@@ -169,6 +169,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         log.println("", true);
     }
 
+    outputName = "";
     ctx = -1;
 
     for (int i = 1; i < argc; i++) {
@@ -318,36 +319,78 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             }
         }
 
+        if ((arg.compare(0, 9, "--output=") == 0) || (ctx == ARG_IDX_OUTPUT)) {
+            string name = (arg.compare(0, 9, "--output=") == 0) ? arg.substr(9) : arg;
+            name = trim(name);
+
+            if (outputName != "") {
+                cerr << "Warning: ignoring duplicate output name: " << name << endl;                
+            } else {
+                outputName = name;
+            }
+
+            ctx = -1;
+            continue;
+        }
+
         if ((arg.compare(0, 8, "--input=") == 0) | (ctx == ARG_IDX_INPUT)) {
-            inputName = (arg.compare(0, 8, "--input=") == 0) ? arg.substr(8) : arg;
-            inputName = trim(inputName);
+            string name = (arg.compare(0, 8, "--input=") == 0) ? arg.substr(8) : arg;
+            name = trim(name);
+
+            if (inputName != "") {
+                cerr << "Warning: ignoring duplicate input name: " << name << endl;                
+            } else {
+                inputName = name;
+            }
+
             ctx = -1;
             continue;
         }
 
         if ((arg.compare(0, 10, "--entropy=") == 0) || (ctx == ARG_IDX_ENTROPY)) {
-            codec = (arg.compare(0, 10, "--entropy=") == 0) ? arg.substr(10) : arg;
-            codec = trim(codec);
-            transform(codec.begin(), codec.end(), codec.begin(), ::toupper);
+            string name = (arg.compare(0, 10, "--entropy=") == 0) ? arg.substr(10) : arg;
+            name = trim(name);
+
+            if (codec != "") {
+                cerr << "Warning: ignoring duplicate entropy: " << name << endl;                
+            } else {
+                codec = name;
+                transform(codec.begin(), codec.end(), codec.begin(), ::toupper);
+            }
+
             ctx = -1;
             continue;
         }
 
         if ((arg.compare(0, 12, "--transform=") == 0) || (ctx == ARG_IDX_TRANSFORM)) {
-            transf = (arg.compare(0, 12, "--transform=") == 0) ? arg.substr(12) : arg;
-            transf = trim(transf);
-            transform(transf.begin(), transf.end(), transf.begin(), ::toupper);
+            string name = (arg.compare(0, 12, "--transform=") == 0) ? arg.substr(12) : arg;
+            name = trim(name);
+
+            if (codec != "") {
+                cerr << "Warning: ignoring duplicate transform: " << name << endl;                
+            } else {
+                transf = name;
+                transform(transf.begin(), transf.end(), transf.begin(), ::toupper);
+            }
+
             ctx = -1;
             continue;
         }
 
         if ((arg.compare(0, 8, "--level=") == 0) || (ctx == ARG_IDX_LEVEL)) {
-            strLevel = (arg.compare(0, 8, "--level=") == 0) ? arg.substr(8) : arg;
-            level = atoi(strLevel.c_str());
+            string name = (arg.compare(0, 8, "--level=") == 0) ? arg.substr(8) : arg;
+            name = trim(name);
 
-            if (((level < 0) || (level > 8)) || ((level == 0) && (strLevel != "0"))) {
-                cerr << "Invalid compression level provided on command line: " << arg << endl;
-                return Error::ERR_INVALID_PARAM;
+            if (strLevel != "-1") {
+                cerr << "Warning: ignoring duplicate level: " << name << endl;                
+            } else {
+                strLevel = name;
+                level = atoi(strLevel.c_str());
+
+                if (((level < 0) || (level > 8)) || ((level == 0) && (strLevel != "0"))) {
+                    cerr << "Invalid compression level provided on command line: " << arg << endl;
+                    return Error::ERR_INVALID_PARAM;
+                }
             }
 
             ctx = -1;
@@ -355,27 +398,34 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg.compare(0, 8, "--block=") == 0) || (ctx == ARG_IDX_BLOCK)) {
-            string str = (arg.compare(0, 8, "--block=") == 0) ? arg.substr(8) : arg;
-            str = trim(str);
-            transform(str.begin(), str.end(), str.begin(), ::toupper);
-            char lastChar = (str.length() == 0) ? ' ' : str[str.length() - 1];
+            string name = (arg.compare(0, 8, "--block=") == 0) ? arg.substr(8) : arg;
+            name = trim(name);
+
+            if (strBlockSize != "") {
+                cerr << "Warning: ignoring duplicate block size: " << name << endl;                
+                ctx = -1;
+                continue;
+            } 
+
+            transform(name.begin(), name.end(), name.begin(), ::toupper);
+            char lastChar = (name.length() == 0) ? ' ' : name[name.length() - 1];
             int scale = 1;
 
             // Process K or M or G suffix
             if ('K' == lastChar) {
                 scale = 1024;
-                str = str.substr(0, str.length() - 1);
+                name = name.substr(0, name.length() - 1);
             }
             else if ('M' == lastChar) {
                 scale = 1024 * 1024;
-                str = str.substr(0, str.length() - 1);
+                name = name.substr(0, name.length() - 1);
             }
             else if ('G' == lastChar) {
                 scale = 1024 * 1024 * 1024;
-                str = str.substr(0, str.length() - 1);
+                name = name.substr(0, name.length() - 1);
             }
 
-            int bk = atoi(str.c_str());
+            int bk = atoi(name.c_str());
 
             if (bk <= 0) {
                 cerr << "Invalid block size provided on command line: " << arg << endl;
@@ -390,7 +440,16 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg.compare(0, 7, "--jobs=") == 0) || (ctx == ARG_IDX_JOBS)) {
-            strTasks = (arg.compare(0, 7, "--jobs=") == 0) ? arg.substr(7) : arg;
+            string name = (arg.compare(0, 7, "--jobs=") == 0) ? arg.substr(7) : arg;
+            name = trim(name);
+
+            if (strTasks != "0") {
+                cerr << "Warning: ignoring duplicate jobs: " << name << endl;                
+                ctx = -1;
+                continue;
+            } 
+
+            strTasks = name;
             int tasks = atoi(strTasks.c_str());
 
             if (tasks < 1) {
