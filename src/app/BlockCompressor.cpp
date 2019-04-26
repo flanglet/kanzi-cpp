@@ -337,7 +337,7 @@ int BlockCompressor::call()
     ctx["checksum"] = (_checksum == true) ? "TRUE" : "FALSE";
     ctx["codec"] = _codec;
     ctx["transform"] = _transform;
-    ctx["extra"] = (_codec == "TPAQX") ? "true" : "false";
+    ctx["extra"] = (_codec == "TPAQX") ? "TRUE" : "FALSE";
 
     // Run the task(s)
     if (nbFiles == 1) {

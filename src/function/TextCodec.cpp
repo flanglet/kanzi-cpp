@@ -875,7 +875,7 @@ TextCodec1::TextCodec1(map<string, string>& ctx)
 
 	if (ctx.find("extra") != ctx.end()) {
 		string strExtra = ctx["extra"];
-		extraMem = (strExtra.compare(0, 5, "true") == 0) ? 1 : 0;
+		extraMem = (strExtra.compare(0, 5, "TRUE") == 0) ? 1 : 0;
 	}
 
 	_logHashSize = log + extraMem;
@@ -1332,7 +1332,7 @@ TextCodec2::TextCodec2(map<string, string>& ctx)
 
 	if (ctx.find("extra") != ctx.end()) {
 		string strExtra = ctx["extra"];
-		extraMem = (strExtra.compare(0, 5, "true") == 0) ? 1 : 0;
+		extraMem = (strExtra.compare(0, 5, "TRUE") == 0) ? 1 : 0;
 	}
 
 	_logHashSize = log + extraMem;
