@@ -103,6 +103,13 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if ((arg.compare(0, 10, "--verbose=") == 0) || (ctx == ARG_IDX_VERBOSE)) {
             strVerbose = (arg.compare(0, 10, "--verbose=") == 0) ? arg.substr(10) : arg;
+            strVerbose = trim(strVerbose);
+            
+            if (strVerbose.length() != 1) {
+                cerr << "Invalid verbosity level provided on command line: " << arg << endl;
+                return Error::ERR_INVALID_PARAM;
+            }
+            
             verbose = atoi(strVerbose.c_str());
 
             if ((verbose < 0) || (verbose > 5)) {
@@ -366,7 +373,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             string name = (arg.compare(0, 12, "--transform=") == 0) ? arg.substr(12) : arg;
             name = trim(name);
 
-            if (codec != "") {
+            if (transf != "") {
                 cerr << "Warning: ignoring duplicate transform: " << name << endl;                
             } else {
                 transf = name;
@@ -384,6 +391,11 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             if (strLevel != "-1") {
                 cerr << "Warning: ignoring duplicate level: " << name << endl;                
             } else {
+                if (name.length() != 1) {
+                    cerr << "Invalid compression level provided on command line: " << arg << endl;
+                    return Error::ERR_INVALID_PARAM;
+                }
+
                 strLevel = name;
                 level = atoi(strLevel.c_str());
 
@@ -430,6 +442,18 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             if (bk <= 0) {
                 cerr << "Invalid block size provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
+            } else if (lastChar != ' ') {
+                // Check validity of input: atoi is not strict enough
+                while (name.length() > 0) {
+                    lastChar = name[name.length() - 1];
+
+                    if ((lastChar < '0') || (lastChar > '9')) {
+                        cerr << "Invalid block size provided on command line: " << arg << endl;
+                        return Error::ERR_INVALID_PARAM;
+                    }
+
+                    name = name.substr(0, name.length() - 1);
+                }
             }
 
             stringstream ss;
@@ -449,6 +473,11 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 continue;
             } 
 
+            if (name.length() != 1) {
+                cerr << "Invalid number of jobs provided on command line: " << arg << endl;
+                return Error::ERR_INVALID_PARAM;
+            }
+                 
             strTasks = name;
             int tasks = atoi(strTasks.c_str());
 
