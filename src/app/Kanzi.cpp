@@ -473,7 +473,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 continue;
             } 
 
-            if (name.length() != 1) {
+            if ((name.length() != 1) && (name.length() != 2)) {
                 cerr << "Invalid number of jobs provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
             }
