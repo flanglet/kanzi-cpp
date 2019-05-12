@@ -77,6 +77,8 @@ namespace kanzi
        static const int MASK_4F4FFFFF = 0x4F4FFFFF;
        static const int HASH = 0x7FEB352D;
 
+       #define SSE0_RATE(T) ((T == true) ? 6 : 7)
+
        int _pr; // next predicted value (0-4095)
        int32 _c0; // bitwise context: last 0-7 bits with a leading 1 (1-255)
        int32 _c4; // last 4 whole bytes, last is in low 8 bits
@@ -87,7 +89,7 @@ namespace kanzi
        int32 _matchLen;
        int32 _matchPos;
        int32 _hash;
-       LogisticAdaptiveProbMap<6> _sse0;
+       LogisticAdaptiveProbMap<SSE0_RATE(T)> _sse0;
        LogisticAdaptiveProbMap<7> _sse1;
        TPAQMixer* _mixers;
        TPAQMixer* _mixer; // current mixer
@@ -447,6 +449,11 @@ namespace kanzi
        if (T == false) {
           // Mix predictions using NN
           p = _mixer->get(p0, p1, p2, p3, p4, p5, (p2 + p7) >> 1, p7);
+
+          // SSE (Secondary Symbol Estimation)
+          if (_binCount < (_pos >> 3)) {
+              p = _sse0.get(bit, p, _c0);
+          }
        } else {
           // One more prediction
           *_cp6 = table[*_cp6];
@@ -490,7 +497,10 @@ namespace kanzi
                int r = _matchLen + 2;
 
                while (r <= MAX_LENGTH) {
-                   if (*(reinterpret_cast<uint16*>(&_buffer[(_pos - r - 1) & MASK_BUFFER])) != *(reinterpret_cast<uint16*>(&_buffer[(_matchPos - r - 1) & MASK_BUFFER])))
+                   if ((_buffer[(_pos - r) & MASK_BUFFER]) != (_buffer[(_matchPos - r) & MASK_BUFFER]))
+                       break;
+
+                   if ((_buffer[(_pos - r - 1) & MASK_BUFFER]) != (_buffer[(_matchPos - r - 1) & MASK_BUFFER]))
                        break;
 
                    r += 2;
