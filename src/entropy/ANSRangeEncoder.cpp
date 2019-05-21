@@ -64,7 +64,7 @@ ANSRangeEncoder::~ANSRangeEncoder()
     delete[] _symbols;
     delete[] _freqs;
     delete[] _alphabet;
-};
+}
 
 // Compute cumulated frequencies and encode header
 int ANSRangeEncoder::updateFrequencies(uint frequencies[], int lr)
