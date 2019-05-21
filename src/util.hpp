@@ -42,16 +42,16 @@ template <typename T>::string to_string(T value)
 
 inline string __trim(string& str, bool left, bool right)
 {
-    string::size_type begin=0;
-    string::size_type end=str.size()-1;
+    string::size_type begin = 0;
+    string::size_type end = str.size() - 1;
 
     if (left) {
-       while (begin<=end && (str[begin]<=0x20 || str[begin]==0x7F))
+       while (begin <= end && (str[begin] <= 0x20 || str[begin] == 0x7F))
            begin++;
     }
 
     if (right) {
-       while (end>begin && (str[end]<=0x20 || str[end]==0x7F))
+       while (end > begin && (str[end] <= 0x20 || str[end] == 0x7F))
          end--;
     }
 
