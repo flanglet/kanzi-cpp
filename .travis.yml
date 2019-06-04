@@ -1,9 +1,6 @@
 language: cpp
-sudo: true
 compiler: gcc
 
-before-install: 
-   - sudo apt-get install gcc-8
-
 install: 
-   - cd src && make clean && make
+   - cd src && sed -e "s/c++14/c++11/g" Makefile > Makefile.travis
+   - cd src && make clean && make -f Makefile.travis
