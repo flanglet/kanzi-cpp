@@ -2,5 +2,6 @@ language: cpp
 compiler: gcc
 
 install: 
-   - cd src && sed -e "s/c++14/c++11/g" Makefile > Makefile.travis
-   - cd src && make clean && make -f Makefile.travis
+   - cd src
+   - sed -e "s/c++14/c++11/g" Makefile > Makefile.travis
+   - make clean && make -f Makefile.travis
