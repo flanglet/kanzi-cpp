@@ -1,7 +1,9 @@
 language: cpp
-sudo: required
+sudo: true
 compiler: gcc
+
 before-install: 
-   - sudo apt-get install -qq gcc-8
-script: 
+   - sudo apt-get install gcc-8
+
+install: 
    - cd src && make clean && make
