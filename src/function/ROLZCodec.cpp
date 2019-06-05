@@ -491,7 +491,7 @@ int ROLZCodec1::emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, i
 
 int ROLZCodec1::getMaxEncodedLength(int srcLen) const 
 {
-   return (srcLen <= 512) ? srcLen+32 : srcLen;
+   return (srcLen <= 512) ? srcLen + 64 : srcLen;
 }
 
 ROLZPredictor::ROLZPredictor(uint logPosChecks)
@@ -837,5 +837,5 @@ int ROLZCodec2::getMaxEncodedLength(int srcLen) const
     if (srcLen >= ROLZCodec::CHUNK_SIZE)
         return srcLen;
          
-    return (srcLen <= 512) ? srcLen + 32 : srcLen + srcLen / 8;
+    return (srcLen <= 512) ? srcLen + 64 : srcLen + srcLen / 8;
 }
