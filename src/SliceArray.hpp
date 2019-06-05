@@ -57,7 +57,7 @@ namespace kanzi
       _array = sa._array;
       _length = sa._length;
       _index = sa._index;
-      return this;
+      return *this;
    }
 
 
