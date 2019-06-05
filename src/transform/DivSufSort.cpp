@@ -162,8 +162,9 @@ int DivSufSort::computeBWT(byte input[], int sa[], int start, int length)
     int* bucketB = new int[65536];
     memset(&bucketB[0], 0, sizeof(int) * 65536);
     const int m = sortTypeBstar(bucketA, bucketB, length);
-    return constructBWT(bucketA, bucketB, length, m);
-    delete []bucketB;
+    const int res = constructBWT(bucketA, bucketB, length, m);
+    delete[] bucketB;
+    return res;
 }
 
 int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m)

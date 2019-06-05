@@ -18,6 +18,8 @@ limitations under the License.
 
 #include "../types.hpp"
 
+using namespace std; // for C++17
+
 namespace kanzi
 {
 
