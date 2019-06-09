@@ -61,24 +61,26 @@ int testTransformsCorrectness(const string& name)
 
         if (ii == 0) {
             byte arr[] = {
-                0, 1, 2, 2, 2, 2, 7, 9, 9, 16, 16, 16, 1, 3, 3, 3,
-                3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+                byte(0), byte(1), byte(2), byte(2), byte(2), byte(2), byte(7), byte(9), 
+                byte(9), byte(16), byte(16), byte(16), byte(1), byte(3), byte(3), byte(3),
+                byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), 
+                byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3)
             };
             memcpy(values, &arr[0], size);
         }
         else if (ii == 1) {
             size = 80000;
             byte arr[80000];
-            arr[0] = 1;
+            arr[0] = byte(1);
 
             for (int i = 1; i < 80000; i++)
-                arr[i] = 8;
+                arr[i] = byte(8);
 
             memcpy(values, &arr[0], size);
         }
         else if (ii == 2) {
             size = 8;
-            byte arr[] = { 0, 0, 1, 1, 2, 2, 3, 3 };
+            byte arr[] = { byte(0), byte(0), byte(1), byte(1), byte(2), byte(2), byte(3), byte(3) };
             memcpy(values, &arr[0], size);
         }
         else if (ii == 3) {
@@ -112,7 +114,7 @@ int testTransformsCorrectness(const string& name)
         else if (ii == 5) {
             // Lots of zeros
             size = 2048;
-            int arr[2048];
+            byte arr[2048];
 
             for (int i = 0; i < size; i++) {
                 int val = rand() % 100;
@@ -175,13 +177,13 @@ int testTransformsCorrectness(const string& name)
         memset(reverse, 0xAA, size);
 
         for (int i = 0; i < size; i++)
-            input[i] = byte(values[i] & 255);
+            input[i] = values[i] & byte(255);
 
         cout << endl
              << "Original: " << endl;
 
         for (int i = 0; i < size; i++)
-            cout << (input[i] & 255) << " ";
+            cout << (int(input[i]) & 255) << " ";
 
         if (f->forward(iba1, iba2, size) == false) {
             if (iba1._index != size) {
@@ -201,7 +203,7 @@ int testTransformsCorrectness(const string& name)
         cout << "Coded: " << endl;
 
         for (int i = 0; i < iba2._index; i++)
-            cout << (output[i] & 255) << " ";
+            cout << (int(output[i]) & 255) << " ";
 
         cout << " (Compression ratio: " << (iba2._index * 100 / size) << "%)" << endl;
         f = getByteTransform(name);
@@ -219,14 +221,14 @@ int testTransformsCorrectness(const string& name)
         cout << "Decoded: " << endl;
 
         for (int i = 0; i < size; i++)
-            cout << (reverse[i] & 255) << " ";
+            cout << (int(reverse[i]) & 255) << " ";
 
         cout << endl;
 
         for (int i = 0; i < size; i++) {
             if (input[i] != reverse[i]) {
                 cout << "Different (index " << i << ": ";
-                cout << (input[i] & 255) << " - " << (reverse[i] & 255);
+                cout << (int(input[i]) & 255) << " - " << (int(reverse[i]) & 255);
                 cout << ")" << endl;
                 res = 1;
                 goto End;
