@@ -26,6 +26,7 @@ limitations under the License.
 
 using namespace kanzi;
 
+
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats. 
 HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) THROW : _bitstream(bitstream)
@@ -62,7 +63,7 @@ int HuffmanDecoder::readLengths() THROW
         return 0;
 
     ExpGolombDecoder egdec(_bitstream, true);
-    int prevSize = 2;
+    int8 prevSize = 2;
 
     // Read lengths
     for (int i = 0; i < count; i++) {
@@ -75,7 +76,7 @@ int HuffmanDecoder::readLengths() THROW
         }
 
         _codes[s] = 0;
-        int currSize = prevSize + int(egdec.decodeByte());
+        int8 currSize = prevSize + int8(egdec.decodeByte());
 
         if ((currSize <= 0) || (currSize > HuffmanCommon::MAX_SYMBOL_SIZE)) {
             stringstream ss;
