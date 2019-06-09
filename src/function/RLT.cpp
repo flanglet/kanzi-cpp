@@ -98,8 +98,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             dstIdx += dIdx;
         }
         else if (prev != escape) {
-            if (dstIdx+run >= dstEnd)
-            {
+            if (dstIdx+run >= dstEnd) {
                res = false;
                break;
             }
@@ -111,8 +110,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
                dst[dstIdx++] = prev;
         }
         else { // escape literal
-            if (dstIdx+2*run >= dstEnd)
-            {
+            if (dstIdx+2*run >= dstEnd) {
                res = false;
                break;
             }

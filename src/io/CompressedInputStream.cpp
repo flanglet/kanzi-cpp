@@ -317,8 +317,8 @@ int CompressedInputStream::processBlock() THROW
         readHeader();
 
     try {
-        // Add a padding area to manage any block with header (of size <= EXTRA_BUFFER_SIZE)
-        const int blkSize = _blockSize + EXTRA_BUFFER_SIZE;
+        // Add a padding area to manage any block with header or temporarily expanded
+        const int blkSize = max(_blockSize + EXTRA_BUFFER_SIZE, (_blockSize * 17) >> 4);
 
         // Protect against future concurrent modification of the list of block listeners
         vector<Listener*> blockListeners(_listeners);
