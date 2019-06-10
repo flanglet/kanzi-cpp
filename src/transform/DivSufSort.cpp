@@ -1629,8 +1629,8 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
             if (limit == -1) {
                 // tandem repeat partition
                 uint64 res = trPartition(isad - incr, first, first, last, last - 1);
-                const int a = (int)(res >> 32);
-                const int b = (int)res;
+                const int a = int(res >> 32);
+                const int b = int(res);
 
                 // update ranks
                 if (a < last) {
@@ -1844,8 +1844,8 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
 
         // partition
         uint64 res = trPartition(isad, first, first + 1, last, v);
-        const int a = (int)(res >> 32);
-        const int b = (int)(res & 0xFFFFFFFFL);
+        const int a = int(res >> 32);
+        const int b = int(res & 0xFFFFFFFFL);
 
         if (last - first != b - a) {
             const int next = (_sa[isa + _sa[a]] != v) ? trIlg(b - a) : -1;
