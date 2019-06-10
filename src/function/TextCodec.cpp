@@ -747,11 +747,14 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 	}
 
 	// Check CR+LF matches
-	if ((freqs0[CR] != 0) && (freqs0[CR] == freqs0[LF])) {
+        const int cr = int(CR);
+        const int lf = int(LF);
+
+	if ((freqs0[cr] != 0) && (freqs0[cr] == freqs0[lf])) {
 		res |= TextCodec::MASK_CRLF;
 
 		for (int i = 0; i < 256; i++) {
-			if ((i != LF) && (freqs[CR][i]) != 0) {
+			if ((i != lf) && (freqs[cr][i]) != 0) {
 				res &= ~TextCodec::MASK_CRLF;
 				break;
 			}
@@ -925,7 +928,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs);
 
 	// Not text ?
-	if ((mode & TextCodec::MASK_NOT_TEXT) != 0)
+	if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0))
 		return false;
 
 	reset();
@@ -959,11 +962,11 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			// h1 -> hash of word chars
 			// h2 -> hash of word chars with first char case flipped
 			const byte val = src[delimAnchor + 1];
-			const byte caseFlag = TextCodec::isUpperCase(val) ? 32 : -32;
+			const int32 caseFlag = TextCodec::isUpperCase(val) ? 32 : -32;
 			int32 h1 = TextCodec::HASH1;
 			int32 h2 = TextCodec::HASH1;
 			h1 = h1 * TextCodec::HASH1 ^ int32(val) * TextCodec::HASH2;
-			h2 = h2 * TextCodec::HASH1 ^ int32(val + caseFlag) * TextCodec::HASH2;
+			h2 = h2 * TextCodec::HASH1 ^ (int32(val) + caseFlag) * TextCodec::HASH2;
 
 			for (int i = delimAnchor + 2; i < srcIdx; i++) {
 				h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
@@ -1021,7 +1024,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			else {
 				// Word found in the dictionary
 				// Skip space if only delimiter between 2 word references
-				if ((emitAnchor != delimAnchor) || (src[delimAnchor] != ' ')) {
+				if ((emitAnchor != delimAnchor) || (src[delimAnchor] != byte(' '))) {
 					int dIdx = emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor + 1 - emitAnchor, dstEnd - dstIdx);
 
  					if (dIdx < 0) {
@@ -1224,15 +1227,15 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		if ((cur == TextCodec::ESCAPE_TOKEN1) || (cur == TextCodec::ESCAPE_TOKEN2)) {
 			// Word in dictionary
 			// Read word index (varint 5 bits + 7 bits + 7 bits)
-			int idx = src[srcIdx++] & 0xFF;
+			int idx = int(src[srcIdx++]) & 0xFF;
 
 			if ((idx & 0x80) != 0) {
 				idx &= 0x7F;
-				int idx2 = src[srcIdx++];
+				int idx2 = int(src[srcIdx++]);
 
 				if ((idx2 & 0x80) != 0) {
 					idx = ((idx & 0x1F) << 7) | (idx2 & 0x7F);
-					idx2 = src[srcIdx++];
+					idx2 = int(src[srcIdx++]);
 				}
 
 				idx = (idx << 7) | (idx2 & 0x7F);
@@ -1259,7 +1262,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			}
 			else {
 				// Flip case of first character
-				dst[dstIdx] = TextCodec::isUpperCase(*buf) ? *buf + 32 : *buf - 32;
+				dst[dstIdx] = TextCodec::isUpperCase(buf[0]) ? byte(uint8(buf[0]) + 32) : byte(uint8(buf[0]) - 32);
 			}
 
 			if (length > 1) {
@@ -1377,7 +1380,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs);
 
 	// Not text ?
-	if ((mode & TextCodec::MASK_NOT_TEXT) != 0)
+	if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0))
 		return false;
 
 	reset();
@@ -1388,7 +1391,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int words = _staticDictSize;
 
 	// DOS encoded end of line (CR+LF) ?
-	_isCRLF = (mode & TextCodec::MASK_CRLF) != 0;
+	_isCRLF = (mode & TextCodec::MASK_CRLF) != byte(0);
 	dst[dstIdx++] = mode;
 	bool res = true;
 
@@ -1412,11 +1415,11 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			// h1 -> hash of word chars
 			// h2 -> hash of word chars with first char case flipped
 			const byte val = src[delimAnchor + 1];
-			const byte caseFlag = TextCodec::isUpperCase(val) ? 32 : -32;
+			const int32 caseFlag = TextCodec::isUpperCase(val) ? 32 : -32;
 			int32 h1 = TextCodec::HASH1;
 			int32 h2 = TextCodec::HASH1;
 			h1 = h1 * TextCodec::HASH1 ^ int32(val) * TextCodec::HASH2;
-			h2 = h2 * TextCodec::HASH1 ^ int32(val + caseFlag) * TextCodec::HASH2;
+			h2 = h2 * TextCodec::HASH1 ^ (int32(val) + caseFlag) * TextCodec::HASH2;
 
 			for (int i = delimAnchor + 2; i < srcIdx; i++) {
 				h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
@@ -1563,7 +1566,7 @@ int TextCodec2::emitSymbols(byte src[], byte dst[], const int srcEnd, const int 
 			   break;
 
 		   default:
-			   if ((cur & 0x80) != 0)
+			   if ((cur & TextCodec::MASK_80) != byte(0))
 				   dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
 
 			   dst[dstIdx++] = cur;
@@ -1595,7 +1598,7 @@ int TextCodec2::emitSymbols(byte src[], byte dst[], const int srcEnd, const int 
 			   break;
 
 		   default:
-            if ((cur & 0x80) != 0) {
+            if ((cur & TextCodec::MASK_80) != byte(0)) {
 				   if (dstIdx >= dstEnd)
 				      return -1;
 
@@ -1652,7 +1655,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 	int words = _staticDictSize;
 	bool wordRun = false;
-	_isCRLF = (src[srcIdx++] & TextCodec::MASK_CRLF) != 0;
+	_isCRLF = (src[srcIdx++] & TextCodec::MASK_CRLF) != byte(0);
 
 	while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
 		byte cur = src[srcIdx];
@@ -1711,17 +1714,17 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 		srcIdx++;
 
-		if ((cur & 0x80) != 0) {
+		if ((cur & TextCodec::MASK_80) != byte(0)) {
 			// Word in dictionary
 			// Read word index (varint 5 bits + 7 bits + 7 bits)
-			int idx = cur & 0x1F;
+			int idx = int(cur & TextCodec::MASK_1F);
 
-			if ((cur & 0x40) != 0) {
-				int idx2 = src[srcIdx++];
+			if ((cur & TextCodec::MASK_40) != byte(0)) {
+				int idx2 = int(src[srcIdx++]);
 
 				if ((idx2 & 0x80) != 0) {
 					idx = (idx << 7) | (idx2 & 0x7F);
-					idx2 = src[srcIdx++];
+					idx2 = int(src[srcIdx++]);
 				}
 
  				idx = (idx << 7) | (idx2 & 0x7F);
@@ -1743,12 +1746,12 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 				dst[dstIdx++] = TextCodec::SP;
 
 			// Emit word
-			if ((cur & 0x20) == 0) {
+			if ((cur & TextCodec::MASK_20) == byte(0)) {
 				dst[dstIdx] = *buf;
 			}
 			else {
 				// Flip case of first character
-				dst[dstIdx] = TextCodec::isUpperCase(*buf) ? *buf + 32 : *buf - 32;
+				dst[dstIdx] = TextCodec::isUpperCase(buf[0]) ? byte(uint8(buf[0]) + 32) : byte(uint8(buf[0]) - 32);
 			}
 
 			if (length > 1) {

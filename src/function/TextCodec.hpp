@@ -124,6 +124,10 @@ namespace kanzi {
        static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB       
        static const byte ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
        static const byte ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
+       static const byte MASK_1F = byte(0x1F);
+       static const byte MASK_20 = byte(0x20);
+       static const byte MASK_40 = byte(0x40);
+       static const byte MASK_80 = byte(0x80);
 
        TextCodec();
 
