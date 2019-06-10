@@ -55,7 +55,7 @@ namespace kanzi {
 
        ~FileDecompressWorker() {}
 
-       R call();
+       R run();
 
    private:
        BoundedConcurrentQueue<T, R>* _queue;
@@ -71,7 +71,7 @@ namespace kanzi {
 
        ~FileDecompressTask();
 
-       T call();
+       T run();
 
        void dispose();
 
@@ -90,7 +90,7 @@ namespace kanzi {
 
        ~BlockDecompressor();
 
-       int call();
+       int decompress(uint64& read);
 
        bool addListener(Listener* bl);
 

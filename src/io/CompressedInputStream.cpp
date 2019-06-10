@@ -380,7 +380,7 @@ int CompressedInputStream::processBlock() THROW
             // Synchronous call
             DecodingTask<DecodingTaskResult>* task = tasks.back();
             tasks.pop_back();
-            DecodingTaskResult res = task->call();
+            DecodingTaskResult res = task->run();
 
             if (res._error != 0)
                 throw IOException(res._msg, res._error); // deallocate in catch block
@@ -548,7 +548,7 @@ DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
 //      | 0b00000000
 //      then 0byyyyyyyy => transform sequence skip flags (1 means skip)
 template <class T>
-T DecodingTask<T>::call() THROW
+T DecodingTask<T>::run() THROW
 {
     int taskId = _processedBlockId->load();
 

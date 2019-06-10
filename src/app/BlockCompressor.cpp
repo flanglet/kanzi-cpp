@@ -190,7 +190,7 @@ void BlockCompressor::dispose()
 {
 }
 
-int BlockCompressor::call()
+int BlockCompressor::compress(uint64& outputSize)
 {
     vector<FileData> files;
     Clock stopClock;
@@ -360,7 +360,7 @@ int BlockCompressor::call()
         ss << _jobs;
         ctx["jobs"] = ss.str();
         FileCompressTask<FileCompressResult> task(ctx, _listeners);
-        FileCompressResult fcr = task.call();
+        FileCompressResult fcr = task.run();
         res = fcr._code;
         read = fcr._read;
         written = fcr._written;
@@ -437,7 +437,7 @@ int BlockCompressor::call()
 
         if (!doConcurrent) {
             for (uint i = 0; i < tasks.size(); i++) {
-                FileCompressResult fcr = tasks[i]->call();
+                FileCompressResult fcr = tasks[i]->run();
                 res = fcr._code;
                 read += fcr._read;
                 written += fcr._written;
@@ -484,6 +484,7 @@ int BlockCompressor::call()
         }
     }
 
+    outputSize += written;
     return res;
 }
 
@@ -579,7 +580,7 @@ FileCompressTask<T>::FileCompressTask(map<string, string>& ctx, vector<Listener*
 }
 
 template <class T>
-T FileCompressTask<T>::call()
+T FileCompressTask<T>::run()
 {
     Printer log(&cout);
     map<string, string>::iterator it;
@@ -891,7 +892,7 @@ void FileCompressTask<T>::dispose()
 
 #ifdef CONCURRENCY_ENABLED
 template <class T, class R>
-R FileCompressWorker<T, R>::call()
+R FileCompressWorker<T, R>::run()
 {
     int res = 0;
     uint64 read = 0;
@@ -904,7 +905,7 @@ R FileCompressWorker<T, R>::call()
         if (task == nullptr)
             break;
 
-        R result = (*task)->call();
+        R result = (*task)->run();
         res = result._code;
         read += result._read;
         written += result._written;

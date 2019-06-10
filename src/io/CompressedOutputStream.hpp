@@ -85,7 +85,7 @@ namespace kanzi {
 
        ~EncodingTask(){};
 
-       T call() THROW;
+       T run() THROW;
    };
 
    class CompressedOutputStream : public OutputStream {

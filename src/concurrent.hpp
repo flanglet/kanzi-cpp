@@ -23,7 +23,7 @@ class Task {
 public:
     Task() {}
     virtual ~Task() {}
-    virtual T call() = 0;
+    virtual T run() = 0;
 };
 
 #if __cplusplus >= 201103L || _MSC_VER >= 1700

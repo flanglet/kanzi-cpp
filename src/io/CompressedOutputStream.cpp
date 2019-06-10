@@ -337,7 +337,7 @@ void CompressedOutputStream::processBlock(bool force) THROW
             // Synchronous call
             EncodingTask<EncodingTaskResult>* task = tasks.back();
             tasks.pop_back();
-            EncodingTaskResult res = task->call();
+            EncodingTaskResult res = task->run();
 
             if (res._error != 0)
                 throw IOException(res._msg, res._error); // deallocate in catch block
@@ -433,7 +433,7 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
 //      | 0b00000000
 //      then 0byyyyyyyy => transform sequence skip flags (1 means skip)
 template <class T>
-T EncodingTask<T>::call() THROW
+T EncodingTask<T>::run() THROW
 {
     EntropyEncoder* ee = nullptr;
 

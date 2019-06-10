@@ -103,7 +103,7 @@ namespace kanzi
 
        ~DecodingTask(){};
 
-       T call() THROW;
+       T run() THROW;
    };
 
    class CompressedInputStream : public InputStream {

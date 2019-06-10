@@ -570,7 +570,8 @@ int main(int argc, const char* argv[])
     if (mode == "c") {
         try {
             BlockCompressor bc(args);
-            int code = bc.call();
+            uint64 written = 0;
+            int code = bc.compress(written);
             exit(code);
         }
         catch (exception& e) {
@@ -582,7 +583,8 @@ int main(int argc, const char* argv[])
     if (mode == "d") {
         try {
             BlockDecompressor bd(args);
-            int code = bd.call();
+            uint64 read = 0;
+            int code = bd.decompress(read);
             exit(code);
         }
         catch (exception& e) {

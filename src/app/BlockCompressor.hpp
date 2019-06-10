@@ -59,7 +59,7 @@ namespace kanzi {
 
        ~FileCompressWorker() {}
 
-       R call();
+       R run();
 
    private:
        BoundedConcurrentQueue<T, R>* _queue;
@@ -75,7 +75,7 @@ namespace kanzi {
 
        ~FileCompressTask();
 
-       T call();
+       T run();
 
        void dispose();
 
@@ -94,7 +94,7 @@ namespace kanzi {
 
        ~BlockCompressor();
 
-       int call();
+       int compress(uint64& written);
 
        bool addListener(Listener* bl);
 
