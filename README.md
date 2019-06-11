@@ -25,6 +25,7 @@ Disclaimer
 
 Use at your own risk. Always keep a backup of your files.
 
+[![Build Status](https://travis-ci.org/flanglet/kanzi-cpp.svg?branch=master)](https://travis-ci.org/flanglet/kanzi-cpp)
 
 
 Silesia corpus benchmark
