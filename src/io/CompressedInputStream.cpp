@@ -557,7 +557,7 @@ T DecodingTask<T>::run() THROW
         taskId = _processedBlockId->load();
     }
 
-    // Skip, either all data have been processed or an error occured
+    // Skip, either all data have been processed or an error occurred
     if (taskId == CompressedInputStream::CANCEL_TASKS_ID) {
         return T(*_data, _blockId, 0, 0, 0, "");
     }
