@@ -260,7 +260,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
             }
 
-            return -1;
+            return 0;
         }
 
         if ((arg == "--compress") || (arg == "-c") || (arg == "--decompress") || (arg == "-d")) {
@@ -560,10 +560,16 @@ int main(int argc, const char* argv[])
     map<string, string> args;
     int status = processCommandLine(argc, argv, args);
 
+    // Command line processing error ?
     if (status != 0)
-       exit((status < 0) ? 0 : status);
+       exit(status);
 
     map<string, string>::iterator it = args.find("mode");
+
+    // Help mode only ?
+    if (it == args.end())
+       exit(0);
+
     string mode = it->second;
     args.erase(it);
 
