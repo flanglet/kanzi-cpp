@@ -348,7 +348,7 @@ void CompressedOutputStream::processBlock(bool force) THROW
 
             // Register task futures and launch tasks in parallel
             for (uint i = 0; i < tasks.size(); i++) {
-                futures.push_back(async(launch::async, &EncodingTask<EncodingTaskResult>::call, tasks[i]));
+                futures.push_back(async(launch::async, &EncodingTask<EncodingTaskResult>::run, tasks[i]));
             }
 
             // Wait for tasks completion and check results

@@ -377,7 +377,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
             InverseBigChunkTask<int>* task = new InverseBigChunkTask<int>(data, buckets, fastBits, dst, _primaryIndexes,
                 count, start, ckSize, c, c + jobsPerTask[j]);
             tasks.push_back(task);
-            futures.push_back(async(launch::async, &InverseBigChunkTask<int>::call, task));
+            futures.push_back(async(launch::async, &InverseBigChunkTask<int>::run, task));
             c += jobsPerTask[j];
         }
 
@@ -420,7 +420,7 @@ InverseBigChunkTask<T>::InverseBigChunkTask(uint* buf, uint* buckets, uint16* fa
 }
 
 template <class T>
-T InverseBigChunkTask<T>::call() THROW
+T InverseBigChunkTask<T>::run() THROW
 {
 	int shift = 0;
 

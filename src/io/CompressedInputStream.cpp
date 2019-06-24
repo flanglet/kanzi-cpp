@@ -415,7 +415,7 @@ int CompressedInputStream::processBlock() THROW
 
             // Register task futures and launch tasks in parallel
             for (uint i = 0; i < tasks.size(); i++) {
-                futures.push_back(async(&DecodingTask<DecodingTaskResult>::call, tasks[i]));
+                futures.push_back(async(&DecodingTask<DecodingTaskResult>::run, tasks[i]));
             }
 
             // Wait for tasks completion and check results

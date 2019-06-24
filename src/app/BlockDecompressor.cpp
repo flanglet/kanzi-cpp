@@ -305,7 +305,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
             // Create one worker per job and run it. A worker calls several tasks sequentially.
             for (int i = 0; i < _jobs; i++) {
                 workers.push_back(new FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>(&queue));
-                results.push_back(async(launch::async, &FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>::call, workers[i]));
+                results.push_back(async(launch::async, &FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>::run, workers[i]));
             }
 
             // Wait for results

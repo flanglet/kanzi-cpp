@@ -413,7 +413,7 @@ int BlockCompressor::compress(uint64& outputSize)
             // Create one worker per job and run it. A worker calls several tasks sequentially.
             for (int i = 0; i < _jobs; i++) {
                 workers.push_back(new FileCompressWorker<FileCompressTask<FileCompressResult>*, FileCompressResult>(&queue));
-                results.push_back(async(launch::async, &FileCompressWorker<FileCompressTask<FileCompressResult>*, FileCompressResult>::call, workers[i]));
+                results.push_back(async(launch::async, &FileCompressWorker<FileCompressTask<FileCompressResult>*, FileCompressResult>::run, workers[i]));
             }
 
             // Wait for results
