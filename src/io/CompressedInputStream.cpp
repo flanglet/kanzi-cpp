@@ -29,6 +29,39 @@ limitations under the License.
 
 using namespace kanzi;
 
+CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
+    : InputStream(is.rdbuf())
+    , _is(is)
+{
+#ifdef CONCURRENCY_ENABLED
+    if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
+        stringstream ss;
+        ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "]";
+        throw IllegalArgumentException(ss.str());
+    }
+#else
+    if ((tasks <= 0) || (tasks > 1))
+        throw IllegalArgumentException("The number of jobs is limited to 1 in this version");
+#endif
+
+    _blockId = 0;
+    _blockSize = 0;
+    _entropyType = EntropyCodecFactory::NONE_TYPE;
+    _transformType = FunctionFactory<byte>::NONE_TYPE;
+    _initialized = false;
+    _closed = false;
+    _maxIdx = 0;
+    _gcount = 0;
+    _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
+    _jobs = tasks;
+    _sa = new SliceArray<byte>(new byte[0], 0, 0);
+    _hasher = nullptr;
+    _buffers = new SliceArray<byte>*[2 * _jobs];
+
+    for (int i = 0; i < 2 * _jobs; i++)
+        _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+}
+
 CompressedInputStream::CompressedInputStream(InputStream& is, map<string, string>& ctx)
     : InputStream(is.rdbuf())
     , _is(is)

@@ -148,6 +148,8 @@ namespace kanzi
        static void notifyListeners(vector<Listener*>& listeners, const Event& evt);
 
    public:
+       CompressedInputStream(InputStream& is, int jobs);
+
        CompressedInputStream(InputStream& is, map<string, string>& ctx);
 
        ~CompressedInputStream();

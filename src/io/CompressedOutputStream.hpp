@@ -125,6 +125,8 @@ namespace kanzi {
        static void notifyListeners(vector<Listener*>& listeners, const Event& evt);
 
    public:
+       CompressedOutputStream(OutputStream& os, const string& codec, const string& transform, int blockSize, int jobs, bool checksum);
+       
        CompressedOutputStream(OutputStream& os, map<string, string>& ctx);
 
        ~CompressedOutputStream();

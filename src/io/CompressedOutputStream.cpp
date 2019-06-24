@@ -29,6 +29,68 @@ limitations under the License.
 
 using namespace kanzi;
 
+CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& entropyCodec, const string& transform, int bSize, int tasks, bool checksum)
+    : OutputStream(os.rdbuf())
+    , _os(os)
+{
+#ifdef CONCURRENCY_ENABLED
+    if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
+        stringstream ss;
+        ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "]";
+        throw IllegalArgumentException(ss.str());
+    }
+#else
+    if ((tasks <= 0) || (tasks > 1))
+        throw IllegalArgumentException("The number of jobs is limited to 1 in this version");
+#endif
+
+    if (bSize > MAX_BITSTREAM_BLOCK_SIZE) {
+        std::stringstream ss;
+        ss << "The block size must be at most " << (MAX_BITSTREAM_BLOCK_SIZE >> 20) << " MB";
+        throw IllegalArgumentException(ss.str());
+    }
+
+    if (bSize < MIN_BITSTREAM_BLOCK_SIZE) {
+        std::stringstream ss;
+        ss << "The block size must be at least " << MIN_BITSTREAM_BLOCK_SIZE;
+        throw IllegalArgumentException(ss.str());
+    }
+
+    if ((bSize & -16) != bSize)
+        throw IllegalArgumentException("The block size must be a multiple of 16");
+
+#ifdef CONCURRENCY_ENABLED
+    if (uint64(bSize) * uint64(tasks) >= uint64(1 << 31))
+        tasks = (1 << 31) / bSize;
+#endif
+
+    _blockId = 0;
+    _blockSize = bSize;
+
+    // Calculate the number of blocks in the input data else use 0.
+    // A value of 63 means '63 or more blocks'.
+    // This value is written to the bitstream header to let the decoder make
+    // better decisions about memory usage and job allocation in concurrent
+    // decompression scenario.
+
+    int64 fileSize = 0;
+    int nbBlocks = int(fileSize + (bSize - 1)) / bSize;
+    _nbInputBlocks = (nbBlocks > 63) ? 63 : nbBlocks;
+
+    _initialized = false;
+    _closed = false;
+    _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
+    _entropyType = EntropyCodecFactory::getType(entropyCodec.c_str());
+    _transformType = FunctionFactory<byte>::getType(transform.c_str());
+    _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
+    _jobs = tasks;
+    _sa = new SliceArray<byte>(new byte[_blockSize], _blockSize, 0); // initially 1 blockSize
+    _buffers = new SliceArray<byte>*[2 * _jobs];
+
+    for (int i = 0; i < 2 * _jobs; i++)
+        _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+}
+
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, map<string, string>& ctx)
     : OutputStream(os.rdbuf())
     , _os(os)
