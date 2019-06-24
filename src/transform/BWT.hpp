@@ -75,7 +75,7 @@ namespace kanzi {
            int* primaryIndexes, int total, int start, int ckSize, int firstChunk, int lastChunk);
        ~InverseBigChunkTask() {}
 
-       T call() THROW;
+       T run() THROW;
    };
 
    class BWT : public Transform<byte> {
