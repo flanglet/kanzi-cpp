@@ -366,7 +366,7 @@ int CompressedInputStream::processBlock() THROW
             // If the number of input blocks is available, use it to optimize
             // memory usage
             if (_nbInputBlocks != 0) {
-                // Limit the number of jobs if there are fewer blocks that this.jobs
+                // Limit the number of jobs if there are fewer blocks that _jobs
                 // It allows more jobs per task and reduces memory usage.
                 if (nbTasks > _nbInputBlocks) {
                     nbTasks = _nbInputBlocks;
