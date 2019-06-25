@@ -20,9 +20,7 @@ limitations under the License.
 
 namespace kanzi 
 {
-
    // Maps to ostream
    typedef std::ostream OutputStream;
-
 }
 #endif

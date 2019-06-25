@@ -212,7 +212,7 @@ void CompressedOutputStream::writeHeader() THROW
         throw IOException("Cannot write block size to header", Error::ERR_WRITE_FILE);
 
     if (_obs->writeBits(_nbInputBlocks, 6) != 6)
-        throw IOException("Cannot write  number of blocks to header", Error::ERR_WRITE_FILE);
+        throw IOException("Cannot write number of blocks to header", Error::ERR_WRITE_FILE);
 
     if (_obs->writeBits(uint64(0), 3) != 3)
         throw IOException("Cannot write reserved bits to header", Error::ERR_WRITE_FILE);
@@ -378,6 +378,7 @@ void CompressedOutputStream::processBlock(bool force) THROW
             _buffers[2 * jobId]->_index = 0;
             _buffers[2 * jobId + 1]->_index = 0;
 
+            // Grow encoding buffer if required
             if (_buffers[2 * jobId]->_length < sz) {
                 delete[] _buffers[2 * jobId]->_array;
                 _buffers[2 * jobId]->_array = new byte[sz];
@@ -595,7 +596,7 @@ T EncodingTask<T>::run() THROW
         uint64 written = _obs->written();
 
         if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != byte(0)) || (transform->getNbFunctions() <= 4)) {
-            mode |= byte(uint8(transform->getSkipFlags()) >> 4);
+            mode |= byte(transform->getSkipFlags() >> 4);
             _obs->writeBits(uint64(mode), 8);
         }
         else {
