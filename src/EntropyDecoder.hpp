@@ -24,15 +24,15 @@ namespace kanzi
    class EntropyDecoder 
    {
    public:
-       // Encode the array provided into the bitstream. Return the number of bytes
-       // written to the bitstream
+       // Decode the array provided from the bitstream. Return the number of bytes
+       // read from the bitstream
        virtual int decode(byte block[], uint blkptr, uint len) = 0;
 
        // Return the underlying bitstream
        virtual InputBitStream& getBitStream() const = 0;
 
-       // Must be called before getting rid of the entropy coder
-       // Trying to encode after a call to dispose gives undefined behavior
+       // Must be called before getting rid of the entropy decoder.
+       // Trying to decode after a call to dispose gives undefined behavior
        virtual void dispose() = 0;
 
        virtual ~EntropyDecoder(){};
