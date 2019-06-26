@@ -80,10 +80,14 @@ limitations under the License.
 	#endif
 
 	#ifndef THROW
-	   #ifdef __GNUG__
+	   #if __cplusplus >= 201103L
 	      #define THROW
-	   #else
-	      #define THROW throw(...)
+	   #else 
+          #if defined(__GNUC__)
+		     #define THROW
+          #else
+	         #define THROW throw(...)
+          #endif
 	   #endif
 	#endif
 
