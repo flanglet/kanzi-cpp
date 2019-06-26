@@ -103,11 +103,11 @@ The C++ code can be built on Windows with Visual Studio and Linux with g++ and c
 Porting to other operating systems should be straightforward.
 
 ### Visual Studio 2008
-This version of VS uses C++03 (AFAIK). Unzip the file "Kanzi_VS2008.zip" in place.
+Unzip the file "Kanzi_VS2008.zip" in place.
 The project generates a Windows 32 binary. Multithreading is not supported with this version.
 
-### Visual Studio 2015
-This version of VS uses C++11 (AFAIK). Unzip the file "Kanzi_VS2015.zip" in place.
+### Visual Studio 2017
+Unzip the file "Kanzi_VS2017.zip" in place.
 The project generates a Windows 64 binary. Multithreading is supported with this version.
 
 ### mingw-w64
@@ -115,6 +115,7 @@ Go to the source directory and run 'mingw32-make.exe'. The Makefile contains all
 targets. Tested successfully on Win64 with mingw-w64 g++ 8.1.0. Multithreading is supported.
 
 ### Linux
-Go to the source directory and run 'make'. The Makefile contains all the necessary
-targets. Tested successfully on Ubuntu 18.04 with g++ 7.3.0, clang++ 6.0.0
+Go to the source directory and run 'make clean && make'. The Makefile contains all the necessary
+targets. Build successfully on Ubuntu 18.04 with g++ 7.4.0 and g++ 8.3.0, clang++ 6.0.0
 and icc 19.0.0.117. Multithreading is supported with g++ version 5.0.0 or newer.
+Compiled successfully against C++03, C++11, C++14.
