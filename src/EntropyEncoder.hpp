@@ -31,7 +31,7 @@ namespace kanzi
        // Return the underlying bitstream
        virtual OutputBitStream& getBitStream() const = 0;
 
-       // Must be called before getting rid of the entropy coder
+       // Must be called before getting rid of the entropy encoder.
        // Trying to encode after a call to dispose gives undefined behavior
        virtual void dispose() = 0;
 

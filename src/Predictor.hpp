@@ -19,11 +19,16 @@ limitations under the License.
 namespace kanzi 
 {
 
+   // Predictor predicts the probability of the next bit being 1.
    class Predictor 
    {
    public:
+       // Updates the internal probability model based on the observed bit
        virtual void update(int bit) = 0;
 
+       // Returns the value representing the probability of the next bit being 1
+       // in the [0..4095] range.
+       // E.G. 410 represents roughly a probability of 10% for 1
        virtual int get() = 0;
 
        virtual ~Predictor(){};

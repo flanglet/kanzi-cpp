@@ -217,29 +217,3 @@ byte HuffmanDecoder::slowDecodeByte() THROW
         BitStreamException::INVALID_STREAM);
 }
 
-byte HuffmanDecoder::fastDecodeByte()
-{
-    if (_bits < DECODING_BATCH_SIZE) 
-        fetchBits();
-
-    // Use small table
-    int val = _table0[int(_state >> (_bits - DECODING_BATCH_SIZE)) & TABLE0_MASK];
-
-    if (val == 0) {
-        if (_bits < HuffmanCommon::MAX_SYMBOL_SIZE + 1) 
-            fetchBits();
-
-        // Fallback to big table
-        val = _table1[int(_state >> (_bits - (HuffmanCommon::MAX_SYMBOL_SIZE + 1))) & TABLE1_MASK];
-    }
-
-    _bits -= (val >> 8);
-    return byte(val);
-}
-
-void HuffmanDecoder::fetchBits()
-{
-    const uint64 mask = (uint64(1) << _bits) - 1; // for _bits = 0
-    _state = ((_state & mask) << (64 - _bits)) | _bitstream.readBits(64 - _bits);
-    _bits = 64;
-}
