@@ -211,7 +211,7 @@ namespace kanzi {
 		case SRT_TYPE:
 			return new SRT();
 
-      case MTFT_TYPE:
+		case MTFT_TYPE:
 			return new SBRT(SBRT::MODE_MTF);
 
 		case ZRLT_TYPE:
@@ -269,7 +269,7 @@ namespace kanzi {
 		case DICT_TYPE:
 			return "TEXT";
 
-      case BWT_TYPE:
+		case BWT_TYPE:
 			return "BWT";
 
 		case BWTS_TYPE:
@@ -299,7 +299,7 @@ namespace kanzi {
 		case LZ_TYPE:
 			return "LZ";
 
-      case X86_TYPE:
+		case X86_TYPE:
 			return "X86";
 
 		case NONE_TYPE:
