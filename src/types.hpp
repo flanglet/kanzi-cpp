@@ -79,15 +79,15 @@ limitations under the License.
 	//#define _GLIBCXX_USE_NOEXCEPT throw()
 	#endif
 
-	#ifndef THROW
-	   #if __cplusplus >= 201103L
+        #ifndef THROW
+	   #ifdef __GNUG__  
 	      #define THROW
-	   #else 
-          #if defined(__GNUC__)
-		     #define THROW
-          #else
+	   #else	
+              #if __cplusplus >= 201103L
+	         #define THROW
+              #else
 	         #define THROW throw(...)
-          #endif
+              #endif
 	   #endif
 	#endif
 
