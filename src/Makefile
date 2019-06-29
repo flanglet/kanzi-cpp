@@ -32,7 +32,7 @@ LIB_SOURCES=Global.cpp \
 	entropy/FPAQPredictor.cpp \
 	entropy/TPAQPredictor.cpp \
 	function/BWTBlockCodec.cpp \
-	function/LZ4Codec.cpp \
+	function/LZCodec.cpp \
 	function/ROLZCodec.cpp \
 	function/RLT.cpp \
 	function/SRT.cpp \

@@ -13,25 +13,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _LZ4Codec_
-#define _LZ4Codec_
+#ifndef _LZCodec_
+#define _LZCodec_
 
 #include "../Function.hpp"
 
 namespace kanzi 
 {
 
-   // LZ4 is a very fast lossless compression algorithm created by Yann Collet.
-   // See original code here: https://github.com/lz4/lz4
-   // More details on the algorithm are available here:
-   // http://fastcompression.blogspot.com/2011/05/lz4-explained.html
+   // Simple byte oriented LZ77 implementation.
+   // It is just LZ4 modified to use a bigger hash map.
 
-   class LZ4Codec : public Function<byte>
+   class LZCodec : public Function<byte>
    {
    public:
-       LZ4Codec();
+       LZCodec();
 
-       ~LZ4Codec() { delete[] _buffer; }
+       ~LZCodec() { delete[] _buffer; }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
@@ -47,15 +45,14 @@ namespace kanzi
        }
 
    private:
-      static const uint LZ4_HASH_SEED     = 0x9E3779B1;
-      static const uint HASH_LOG          = 12;
-      static const uint HASH_LOG_64K      = 13;
+      static const uint LZ_HASH_SEED      = 0x9E3779B1;
+      static const uint HASH_LOG_SMALL    = 12;
+      static const uint HASH_LOG_BIG      = 16;
       static const int MAX_DISTANCE       = (1 << 16) - 1;
       static const int SKIP_STRENGTH      = 6;
       static const int LAST_LITERALS      = 5;
       static const int MIN_MATCH          = 4;
       static const int MF_LIMIT           = 12;
-      static const int LZ4_64K_LIMIT      = MAX_DISTANCE + MF_LIMIT;
       static const int ML_BITS            = 4;
       static const int ML_MASK            = (1 << ML_BITS) - 1;
       static const int RUN_BITS           = 8 - ML_BITS;
@@ -63,15 +60,15 @@ namespace kanzi
       static const int COPY_LENGTH        = 8;
       static const int MIN_LENGTH         = 14;
       static const int MAX_LENGTH         = (32*1024*1024) - 4 - MIN_MATCH;
-      static const int ACCELERATION       = 1;
       static const int SKIP_TRIGGER       = 6;
-      static const int SEARCH_MATCH_NB    = ACCELERATION << SKIP_TRIGGER;
+      static const int SEARCH_MATCH_NB    = 1 << SKIP_TRIGGER;
 
       int* _buffer;
+      int _bufferSize;
 
-      static int writeLength(byte block[], int len);
+      static int emitLength(byte block[], int len);
 
-      static int writeLastLiterals(byte src[], byte dst[], int runLength);
+      static int emitLastLiterals(byte src[], byte dst[], int runLength);
 
       static bool differentInts(byte block[], int srcIdx, int dstIdx);
 

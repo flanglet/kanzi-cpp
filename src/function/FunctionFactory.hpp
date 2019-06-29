@@ -12,7 +12,7 @@
 #include "../transform/SBRT.hpp"
 #include "SRT.hpp"
 #include "BWTBlockCodec.hpp"
-#include "LZ4Codec.hpp"
+#include "LZCodec.hpp"
 #include "NullFunction.hpp"
 #include "ROLZCodec.hpp"
 #include "RLT.hpp"
@@ -221,7 +221,7 @@ namespace kanzi {
 			return new RLT();
 
 		case LZ_TYPE:
-			return new LZ4Codec();
+			return new LZCodec();
 
 		case X86_TYPE:
 			return new X86Codec();

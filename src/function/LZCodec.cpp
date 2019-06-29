@@ -14,18 +14,19 @@ limitations under the License.
 */
 
 #include <sstream>
-#include "LZ4Codec.hpp"
+#include "LZCodec.hpp"
 #include "../IllegalArgumentException.hpp"
 #include "../Memory.hpp"
 
 using namespace kanzi;
 
-LZ4Codec::LZ4Codec()
+LZCodec::LZCodec()
 {
-    _buffer = new int[1 << HASH_LOG_64K];
+    _buffer = new int[0];
+    _bufferSize = 0;
 }
 
-inline int LZ4Codec::writeLength(byte block[], int length)
+inline int LZCodec::emitLength(byte block[], int length)
 {
     int idx = 0;
 
@@ -46,13 +47,13 @@ inline int LZ4Codec::writeLength(byte block[], int length)
     return idx + 1;
 }
 
-int LZ4Codec::writeLastLiterals(byte src[], byte dst[], int runLength)
+int LZCodec::emitLastLiterals(byte src[], byte dst[], int runLength)
 {
     int dstIdx = 1;
 
     if (runLength >= RUN_MASK) {
         dst[0] = byte(RUN_MASK << ML_BITS);
-        dstIdx += writeLength(&dst[1], runLength - RUN_MASK);
+        dstIdx += emitLength(&dst[1], runLength - RUN_MASK);
     }
     else {
         dst[0] = byte(runLength << ML_BITS);
@@ -62,9 +63,7 @@ int LZ4Codec::writeLastLiterals(byte src[], byte dst[], int runLength)
     return dstIdx + runLength;
 }
 
-// Generates same byte output as LZ4_compress_generic in LZ4 r131 (7/15)
-// for a 32 bit architecture.
-bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -81,7 +80,7 @@ bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (output._length  < getMaxEncodedLength(count))
         return false;
 
-    const int hashLog = (count < LZ4_64K_LIMIT) ? HASH_LOG_64K : HASH_LOG;
+    const int hashLog = (count < MAX_DISTANCE) ? HASH_LOG_SMALL : HASH_LOG_BIG;
     const int hashShift = 32 - hashLog;
     const int matchLimit = count - LAST_LITERALS;
     const int mfLimit = count - MF_LIMIT;
@@ -91,16 +90,21 @@ bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int srcIdx = 0;
     int dstIdx = 0;
     int anchor = 0;
-    int* table = _buffer; // aliasing
 
     if (count > MIN_LENGTH) {
-        memset(table, 0, sizeof(int) * (size_t(1) << hashLog));
+        if (_bufferSize < (1 << hashLog)) {
+            _bufferSize = 1 << hashLog;
+            _buffer = new int[_bufferSize];
+        } 
+
+        memset(_buffer, 0, sizeof(int) * (size_t(1) << hashLog));
 
         // First byte
-        int h = (LittleEndian::readInt32(&src[srcIdx]) * LZ4_HASH_SEED) >> hashShift;
+        int* table = _buffer; // aliasing
+        int h = (LittleEndian::readInt32(&src[srcIdx]) * LZ_HASH_SEED) >> hashShift;
         table[h] = srcIdx;
         srcIdx++;
-        h = (LittleEndian::readInt32(&src[srcIdx]) * LZ4_HASH_SEED) >> hashShift;
+        h = (LittleEndian::readInt32(&src[srcIdx]) * LZ_HASH_SEED) >> hashShift;
 
         while (true) {
             int fwdIdx = srcIdx;
@@ -115,7 +119,7 @@ bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
                 if (fwdIdx > mfLimit) {
                     // Encode last literals
-                    dstIdx += writeLastLiterals(&src[anchor], &dst[dstIdx], srcEnd - anchor);
+                    dstIdx += emitLastLiterals(&src[anchor], &dst[dstIdx], srcEnd - anchor);
                     input._index = srcEnd;
                     output._index = dstIdx;
                     return true;
@@ -125,7 +129,7 @@ bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
                 searchMatchNb++;
                 match = table[h];
                 table[h] = srcIdx;
-                h = (LittleEndian::readInt32(&src[fwdIdx]) * LZ4_HASH_SEED) >> hashShift;
+                h = (LittleEndian::readInt32(&src[fwdIdx]) * LZ_HASH_SEED) >> hashShift;
             } while ((differentInts(src, match, srcIdx) == true) || (match <= srcIdx - MAX_DISTANCE));
 
             // Catch up
@@ -141,7 +145,7 @@ bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
             if (litLength >= RUN_MASK) {
                 dst[token] = byte(RUN_MASK << ML_BITS);
-                dstIdx += writeLength(&dst[dstIdx], litLength - RUN_MASK);
+                dstIdx += emitLength(&dst[dstIdx], litLength - RUN_MASK);
             }
             else {
                 dst[token] = byte(litLength << ML_BITS);
@@ -172,7 +176,7 @@ bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
                 // Encode match length
                 if (matchLength >= ML_MASK) {
                     dst[token] |= byte(ML_MASK);
-                    dstIdx += writeLength(&dst[dstIdx], matchLength - ML_MASK);
+                    dstIdx += emitLength(&dst[dstIdx], matchLength - ML_MASK);
                 }
                 else {
                     dst[token] |= byte(matchLength);
@@ -182,18 +186,18 @@ bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
                 if (srcIdx > mfLimit) {
                     // Encode last literals
-                    dstIdx += writeLastLiterals(&src[anchor], &dst[dstIdx], srcEnd - anchor);
+                    dstIdx += emitLastLiterals(&src[anchor], &dst[dstIdx], srcEnd - anchor);
                     input._index = srcEnd;
                     output._index = dstIdx;
                     return true;
                 }
 
                 // Fill table
-                h = (LittleEndian::readInt32(&src[srcIdx - 2]) * LZ4_HASH_SEED) >> hashShift;
+                h = (LittleEndian::readInt32(&src[srcIdx - 2]) * LZ_HASH_SEED) >> hashShift;
                 table[h] = srcIdx - 2;
 
                 // Test next position
-                h = (LittleEndian::readInt32(&src[srcIdx]) * LZ4_HASH_SEED) >> hashShift;
+                h = (LittleEndian::readInt32(&src[srcIdx]) * LZ_HASH_SEED) >> hashShift;
                 match = table[h];
                 table[h] = srcIdx;
 
@@ -207,20 +211,18 @@ bool LZ4Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
             // Prepare next loop
             srcIdx++;
-            h = (LittleEndian::readInt32(&src[srcIdx]) * LZ4_HASH_SEED) >> hashShift;
+            h = (LittleEndian::readInt32(&src[srcIdx]) * LZ_HASH_SEED) >> hashShift;
         }
     }
 
     // Encode last literals
-    dstIdx += writeLastLiterals(&src[anchor], &dst[dstIdx], srcEnd - anchor);
+    dstIdx += emitLastLiterals(&src[anchor], &dst[dstIdx], srcEnd - anchor);
     input._index = srcEnd;
     output._index = dstIdx;
     return true;
 }
 
-// Reads same byte input as LZ4_decompress_generic in LZ4 r131 (7/15)
-// for a 32 bit architecture.
-bool LZ4Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -352,13 +354,13 @@ bool LZ4Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return srcIdx == srcEnd;
 }
 
-inline void LZ4Codec::customArrayCopy(byte src[], byte dst[], int len)
+inline void LZCodec::customArrayCopy(byte src[], byte dst[], int len)
 {
     for (int i = 0; i < len; i += 8)
         memcpy(&dst[i], &src[i], 8);
 }
 
-inline bool LZ4Codec::differentInts(byte block[], int srcIdx, int dstIdx)
+inline bool LZCodec::differentInts(byte block[], int srcIdx, int dstIdx)
 {
     return *((int32*)&block[srcIdx]) != *((int32*)&block[dstIdx]);
 }

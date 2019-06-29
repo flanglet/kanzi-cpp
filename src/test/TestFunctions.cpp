@@ -24,7 +24,7 @@ limitations under the License.
 #include "../function/SRT.hpp"
 #include "../function/RLT.hpp"
 #include "../function/ZRLT.hpp"
-#include "../function/LZ4Codec.hpp"
+#include "../function/LZCodec.hpp"
 #include "../function/ROLZCodec.hpp"
 
 using namespace std;
@@ -42,7 +42,7 @@ static Function<byte>* getByteFunction(string name)
         return new ZRLT();
 
     if (name.compare("LZ") == 0)
-        return new LZ4Codec();
+        return new LZCodec();
 
     if (name.compare("ROLZ") == 0)
         return new ROLZCodec();
