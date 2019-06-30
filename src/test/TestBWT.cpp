@@ -27,13 +27,14 @@ limitations under the License.
 using namespace std;
 using namespace kanzi;
 
-void testBWTCorrectness(bool isBWT)
+int testBWTCorrectness(bool isBWT)
 {
     // Test behavior
     cout << endl
          << endl
          << (isBWT ? "BWT" : "BWTS") << " Correctness test" << endl;
     srand((uint)time(nullptr));
+    int res = 0;
 
     for (int ii = 1; ii <= 20; ii++) {
         byte buf1[128];
@@ -116,6 +117,7 @@ void testBWTCorrectness(bool isBWT)
         for (int j = 0; j < size; j++) {
             if (input[j] != reverse[j]) {
                 ok = false;
+                res = 1;
                 break;
             }
         }
@@ -126,6 +128,8 @@ void testBWTCorrectness(bool isBWT)
         delete[] transform;
         delete[] reverse;
     }
+
+    return res;
 }
 
 int testBWTSpeed(bool isBWT)
@@ -133,6 +137,8 @@ int testBWTSpeed(bool isBWT)
     // Test speed
     int iter = 2000;
     int size = 256 * 1024;
+    int res = 0;
+
     cout << endl
          << endl
          << (isBWT ? "BWT" : "BWTS") << " Speed test" << endl;    
@@ -186,6 +192,7 @@ int testBWTSpeed(bool isBWT)
 
                 if (idx >= 0) {
                     cout << "Failure at index " << i << " (" << int(input[i]) << "<->" << int(reverse[i]) << ")" << endl;
+                    res = 1;
                     break;
                 }
             }
@@ -204,7 +211,7 @@ int testBWTSpeed(bool isBWT)
         cout << endl;
     }
 
-    return 0;
+    return res;
 }
 
 #ifdef __GNUG__
@@ -213,9 +220,10 @@ int main()
 int TestBWT_main()
 #endif
 {
-    testBWTCorrectness(true);
-    testBWTCorrectness(false);
-    testBWTSpeed(true);
-    testBWTSpeed(false);
-    return 0;
+    int res = 0;
+    res |= testBWTCorrectness(true);
+    res |= testBWTCorrectness(false);
+    res |= testBWTSpeed(true);
+    res |= testBWTSpeed(false);
+    return res;
 }

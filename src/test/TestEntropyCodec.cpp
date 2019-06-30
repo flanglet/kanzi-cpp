@@ -130,11 +130,12 @@ static EntropyDecoder* getDecoder(string name, InputBitStream& ibs, Predictor* p
     return nullptr;
 }
 
-void testEntropyCodecCorrectness(const string& name)
+int testEntropyCodecCorrectness(const string& name)
 {
     // Test behavior
     cout << "Correctness test for " << name << endl;
     srand((uint)time(nullptr));
+    int res = 0;
 
     for (int ii = 1; ii < 20; ii++) {
         cout << endl
@@ -186,7 +187,7 @@ void testEntropyCodecCorrectness(const string& name)
         EntropyEncoder* ec = getEncoder(name, dbgobs, getPredictor(name));
 
         if (ec == nullptr)
-           exit(1);
+           return 1;
 
         ec->encode(values, 0, size);
         ec->dispose();
@@ -198,7 +199,7 @@ void testEntropyCodecCorrectness(const string& name)
         EntropyDecoder* ed = getDecoder(name, ibs, getPredictor(name));
         
         if (ec == nullptr)
-           exit(1);
+           return 1;
 
         cout << endl
              << endl
@@ -221,6 +222,8 @@ void testEntropyCodecCorrectness(const string& name)
         cout << ((ok) ? "Identical" : "Different") << endl;
         delete[] values2;
     }
+
+    return res;
 }
 
 int testEntropyCodecSpeed(const string& name)
@@ -232,6 +235,8 @@ int testEntropyCodecSpeed(const string& name)
     int repeats[] = { 3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3 };
     int size = 500000;
     int iter = 100;
+    int res = 0;
+
     srand((uint)time(nullptr));
     Predictor* predictor;
     byte values1[500000];
@@ -268,7 +273,7 @@ int testEntropyCodecSpeed(const string& name)
             EntropyEncoder* ec = getEncoder(name, obs, predictor);
             
             if (ec == nullptr)
-                 exit(1);
+                 return 1;
 
             clock_t before1 = clock();
 
@@ -294,7 +299,7 @@ int testEntropyCodecSpeed(const string& name)
             EntropyDecoder* ed = getDecoder(name, ibs, predictor);
             
             if (ed == nullptr)
-                 exit(1);
+                 return 1;
 
             clock_t before2 = clock();
 
@@ -317,6 +322,7 @@ int testEntropyCodecSpeed(const string& name)
             for (int i = 0; i < size; i++) {
                 if (values1[i] != values2[i]) {
                     cout << "Error at index " << i << " (" << (int)values1[i] << "<->" << (int)values2[i] << ")" << endl;
+                    res = 1;
                     break;
                 }
             }
@@ -332,7 +338,7 @@ int testEntropyCodecSpeed(const string& name)
         cout << "Throughput [KB/s] : " << (int)(prod * b2KB / d2_sec) << endl;
     }
 
-    return 0;
+    return res;
 }
 
 #ifdef __GNUG__
@@ -341,6 +347,8 @@ int main(int argc, const char* argv[])
 int TestEntropyCodec_main(int argc, const char* argv[])
 #endif
 {
+    int res = 0;
+
     try {
         string str;
 
@@ -360,60 +368,61 @@ int TestEntropyCodec_main(int argc, const char* argv[])
                 cout << endl
                      << endl
                      << "TestHuffmanCodec" << endl;
-                testEntropyCodecCorrectness("HUFFMAN");
-                testEntropyCodecSpeed("HUFFMAN");
+                res |= testEntropyCodecCorrectness("HUFFMAN");
+                res |= testEntropyCodecSpeed("HUFFMAN");
                 cout << endl
                      << endl
                      << "TestANS0Codec" << endl;
-                testEntropyCodecCorrectness("ANS0");
-                testEntropyCodecSpeed("ANS0");
+                res |= testEntropyCodecCorrectness("ANS0");
+                res |= testEntropyCodecSpeed("ANS0");
                 cout << endl
                      << endl
                      << "TestANS1Codec" << endl;
-                testEntropyCodecCorrectness("ANS1");
-                testEntropyCodecSpeed("ANS1");
+                res |= testEntropyCodecCorrectness("ANS1");
+                res |= testEntropyCodecSpeed("ANS1");
                 cout << endl
                      << endl
                      << "TestRangeCodec" << endl;
-                testEntropyCodecCorrectness("RANGE");
-                testEntropyCodecSpeed("RANGE");
+                res |= testEntropyCodecCorrectness("RANGE");
+                res |= testEntropyCodecSpeed("RANGE");
                 cout << endl
                      << endl
                      << "TestFPAQCodec" << endl;
-                testEntropyCodecCorrectness("FPAQ");
-                testEntropyCodecSpeed("FPAQ");
+                res |= testEntropyCodecCorrectness("FPAQ");
+                res |= testEntropyCodecSpeed("FPAQ");
                 cout << endl
                      << endl
                      << "TestCMCodec" << endl;
-                testEntropyCodecCorrectness("CM");
-                testEntropyCodecSpeed("CM");
+                res |= testEntropyCodecCorrectness("CM");
+                res |= testEntropyCodecSpeed("CM");
                 cout << endl
                      << endl
                      << "TestTPAQCodec" << endl;
-                testEntropyCodecCorrectness("TPAQ");
-                testEntropyCodecSpeed("TPAQ");
+                res |= testEntropyCodecCorrectness("TPAQ");
+                res |= testEntropyCodecSpeed("TPAQ");
                 cout << endl
                      << endl
                      << "TestExpGolombCodec" << endl;
-                testEntropyCodecCorrectness("EXPGOLOMB");
-                testEntropyCodecSpeed("EXPGOLOMB");
+                res |= testEntropyCodecCorrectness("EXPGOLOMB");
+                res |= testEntropyCodecSpeed("EXPGOLOMB");
                 cout << endl
                      << endl
                      << "TestRiceGolombCodec" << endl;
-                testEntropyCodecCorrectness("RICEGOLOMB");
-                testEntropyCodecSpeed("RICEGOLOMB");
+                res |= testEntropyCodecCorrectness("RICEGOLOMB");
+                res |= testEntropyCodecSpeed("RICEGOLOMB");
             }
             else {
                 cout << endl
                      << endl
                      << "Test" << str << "EntropyCodec" << endl;
-                testEntropyCodecCorrectness(str);
-                testEntropyCodecSpeed(str);
+                res |= testEntropyCodecCorrectness(str);
+                res |= testEntropyCodecSpeed(str);
             }
         }
     }
     catch (exception& e) {
         cout << e.what() << endl;
     }
-    return 0;
+
+    return res;
 }

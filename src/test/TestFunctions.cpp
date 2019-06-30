@@ -174,7 +174,7 @@ int testFunctionsCorrectness(const string& name)
         Function<byte>* f = getByteFunction(name);
         
         if (f == nullptr)
-            exit(1);
+            return 1;
 
         byte* input = new byte[size];
         byte* output = new byte[f->getMaxEncodedLength(size)];
@@ -271,6 +271,8 @@ int testFunctionsSpeed(const string& name)
     srand((uint)time(nullptr));
     int iter = (name.rfind("ROLZ", 0) == 0) ? 2000 : ((name == "SRT") ? 4000 : 50000);
     int size = 30000;
+    int res = 0;
+
     cout << endl
          << endl
          << "Speed test for " << name << endl;
@@ -282,7 +284,7 @@ int testFunctionsSpeed(const string& name)
     Function<byte>* f = getByteFunction(name);
     
     if (f == nullptr)
-       exit(1);
+       return 1;
 
     SliceArray<byte> iba1(input, size, 0);
     SliceArray<byte> iba2(output, f->getMaxEncodedLength(size), 0);
@@ -358,6 +360,7 @@ int testFunctionsSpeed(const string& name)
         if (idx >= 0) {
             cout << "Failure at index " << idx << " (" << (int)iba1._array[idx];
             cout << "<->" << (int)iba3._array[idx] << ")" << endl;
+            res = 1;
         }
 
         double prod = (double)iter * (double)size;
@@ -370,7 +373,7 @@ int testFunctionsSpeed(const string& name)
         cout << "Throughput [MB/s]: " << (int)(prod * b2MB / d2_sec) << endl;
     }
 
-    return 0;
+    return res;
 }
 
 #ifdef __GNUG__
@@ -389,6 +392,7 @@ int TestFunctions_main(int argc, const char* argv[])
     }
 
     transform(str.begin(), str.end(), str.begin(), ::toupper);
+    int res = 0;
 
     if (str.compare(0, 6, "-TYPE=") == 0) {
         str = str.substr(6);
@@ -397,35 +401,35 @@ int TestFunctions_main(int argc, const char* argv[])
             cout << endl
                  << endl
                  << "TestLZ" << endl;
-            testFunctionsCorrectness("LZ");
-            testFunctionsSpeed("LZ");
+            res |= testFunctionsCorrectness("LZ");
+            res |= testFunctionsSpeed("LZ");
             cout << endl
                  << endl
                  << "TestROLZ" << endl;
-            testFunctionsCorrectness("ROLZ");
-            testFunctionsSpeed("ROLZ");
+            res |= testFunctionsCorrectness("ROLZ");
+            res |= testFunctionsSpeed("ROLZ");
             cout << endl
                  << endl
                  << "TestSRT" << endl;
-            testFunctionsCorrectness("SRT");
-            testFunctionsSpeed("SRT");
+            res |= testFunctionsCorrectness("SRT");
+            res |= testFunctionsSpeed("SRT");
             cout << endl
                  << endl
                  << "TestRLT" << endl;
-            testFunctionsCorrectness("RLT");
-            testFunctionsSpeed("RLT");
+            res |= testFunctionsCorrectness("RLT");
+            res |= testFunctionsSpeed("RLT");
             cout << endl
                  << endl
                  << "TestZRLT" << endl;
-            testFunctionsCorrectness("ZRLT");
-            testFunctionsSpeed("ZRLT");
+            res |= testFunctionsCorrectness("ZRLT");
+            res |= testFunctionsSpeed("ZRLT");
         }
         else {
             cout << "Test" << str << endl;
-            testFunctionsCorrectness(str);
-            testFunctionsSpeed(str);
+            res |= testFunctionsCorrectness(str);
+            res |= testFunctionsSpeed(str);
         }
     }
 
-    return 0;
+    return res;
 }

@@ -26,12 +26,13 @@ limitations under the License.
 using namespace std;
 using namespace kanzi;
 
-void testBitStreamCorrectnessAligned1()
+int testBitStreamCorrectnessAligned1()
 {
     // Test correctness (byte aligned)
     cout << "Correctness Test - write long - byte aligned" << endl;
     const int length = 100;
     int* values = new int[length];
+    int res = 0;
     srand((uint)time(nullptr));
     cout << "\nInitial" << endl;
 
@@ -122,6 +123,7 @@ void testBitStreamCorrectnessAligned1()
 
         delete[] cvalues;
         ibs.close();
+        res = (ok == true) ? 0 : 1;
         cout << endl;
         cout << endl
              << "Bits written: " << dbs.written() << endl;
@@ -134,14 +136,16 @@ void testBitStreamCorrectnessAligned1()
     }
 
     delete[] values;
+    return res;
 }
 
-void testBitStreamCorrectnessMisaligned1()
+int testBitStreamCorrectnessMisaligned1()
 {
     // Test correctness (not byte aligned)
     cout << "Correctness Test - write long - not byte aligned" << endl;
     const int length = 100;
     int* values = new int[length];
+    int res = 0;
     srand((uint)time(nullptr));
     cout << "\nInitial" << endl;
 
@@ -236,6 +240,7 @@ void testBitStreamCorrectnessMisaligned1()
 
         delete[] cvalues;
         ibs.close();
+        res = (ok == true) ? 0 : 1;
         cout << endl;
         cout << endl
              << "Bits written: " << dbs.written() << endl;
@@ -248,9 +253,10 @@ void testBitStreamCorrectnessMisaligned1()
     }
 
     delete[] values;
+    return res;
 }
 
-void testBitStreamSpeed1(const string& fileName)
+int testBitStreamSpeed1(const string& fileName)
 {
     // Test speed
     cout << "\nSpeed Test1" << endl;
@@ -304,15 +310,17 @@ void testBitStreamSpeed1(const string& fileName)
     cout << "Throughput [MB/s] : " << (int)((double)written / d / (delta1 / CLOCKS_PER_SEC)) << endl;
     cout << "Read [ms]         : " << (int)(delta2 / CLOCKS_PER_SEC * 1000) << endl;
     cout << "Throughput [MB/s] : " << (int)((double)read / d / (delta2 / CLOCKS_PER_SEC)) << endl;
+    return 0;
 }
 
-void testBitStreamCorrectnessAligned2()
+int testBitStreamCorrectnessAligned2()
 {
     // Test correctness (byte aligned)
     cout << "Correctness Test - write array - byte aligned" << endl;
     const int length = 100;
     byte* input = new byte[length];
     byte* output = new byte[length];
+    int res = 0;
     srand((uint)time(nullptr));
     cout << "\nInitial" << endl;
 
@@ -371,6 +379,7 @@ void testBitStreamCorrectnessAligned2()
 
         delete[] cvalues;
         ibs.close();
+        res = (ok == true) ? 0 : 1;
         cout << endl;
         cout << endl
              << "Bits written: " << dbs.written() << endl;
@@ -384,15 +393,17 @@ void testBitStreamCorrectnessAligned2()
 
     delete[] input;
     delete[] output;
+    return res;
 }
 
-void testBitStreamCorrectnessMisaligned2()
+int testBitStreamCorrectnessMisaligned2()
 {
     // Test correctness (not byte aligned)
     cout << "Correctness Test - write array - not byte aligned" << endl;
     const int length = 100;
     byte* input = new byte[length];
     byte* output = new byte[length];
+    int res = 0;
     srand((uint)time(nullptr));
     cout << "\nInitial" << endl;
 
@@ -452,6 +463,7 @@ void testBitStreamCorrectnessMisaligned2()
 
         delete[] cvalues;
         ibs.close();
+        res = (ok == true) ? 0 : 1;
         cout << endl;
         cout << endl
              << "Bits written: " << dbs.written() << endl;
@@ -465,9 +477,10 @@ void testBitStreamCorrectnessMisaligned2()
 
     delete[] input;
     delete[] output;
+    return res;
 }
 
-void testBitStreamSpeed2(const string& fileName)
+int testBitStreamSpeed2(const string& fileName)
 {
     // Test speed
     cout << "\nSpeed Test2" << endl;
@@ -527,6 +540,7 @@ void testBitStreamSpeed2(const string& fileName)
 
     delete[] input;
     delete[] output;
+    return 0;
 }
 
 
@@ -536,14 +550,15 @@ int main(int argc, const char* argv[])
 int TestDefaultBitStream_main(int argc, const char* argv[])
 #endif
 {
-    testBitStreamCorrectnessAligned1();
-    testBitStreamCorrectnessAligned2();
-    testBitStreamCorrectnessMisaligned1();
-    testBitStreamCorrectnessMisaligned2();
+    int res = 0;
+    res |= testBitStreamCorrectnessAligned1();
+    res |= testBitStreamCorrectnessAligned2();
+    res |= testBitStreamCorrectnessMisaligned1();
+    res |= testBitStreamCorrectnessMisaligned2();
 
     string fileName;
     fileName = (argc > 1) ? argv[1] :  "r:\\output.bin";
-    testBitStreamSpeed1(fileName);
-    testBitStreamSpeed2(fileName);
-    return 0;
+    res |= testBitStreamSpeed1(fileName);
+    res |= testBitStreamSpeed2(fileName);
+    return res;
 }

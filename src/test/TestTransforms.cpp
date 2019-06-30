@@ -165,7 +165,7 @@ int testTransformsCorrectness(const string& name)
         Transform<byte>* f = getByteTransform(name);
         
         if (f == nullptr)
-            exit(1);
+            return 1;
 
         byte* input = new byte[size];
         byte* output = new byte[size];
@@ -255,6 +255,8 @@ int testTransformsSpeed(const string& name)
     srand((uint)time(nullptr));
     int iter = 4000;
     int size = 30000;
+    int res = 0;
+
     cout << endl
          << endl
          << "Speed test for " << name << endl;
@@ -266,7 +268,7 @@ int testTransformsSpeed(const string& name)
     Transform<byte>* f = getByteTransform(name);
     
     if (f == nullptr)
-       exit(1);
+       return 1;
 
     SliceArray<byte> iba1(input, size, 0);
     SliceArray<byte> iba2(output, size, 0);
@@ -341,6 +343,7 @@ int testTransformsSpeed(const string& name)
         if (idx >= 0) {
             cout << "Failure at index " << idx << " (" << (int)iba1._array[idx];
             cout << "<->" << (int)iba3._array[idx] << ")" << endl;
+            res = 1;
         }
 
         double prod = (double)iter * (double)size;
@@ -353,7 +356,7 @@ int testTransformsSpeed(const string& name)
         cout << "Throughput [MB/s]: " << (int)(prod * b2MB / d2_sec) << endl;
     }
 
-    return 0;
+    return res;
 }
 
 #ifdef __GNUG__
@@ -372,6 +375,7 @@ int TestTransforms_main(int argc, const char* argv[])
     }
 
     transform(str.begin(), str.end(), str.begin(), ::toupper);
+    int res = 0;
 
     if (str.compare(0, 6, "-TYPE=") == 0) {
         str = str.substr(6);
@@ -380,25 +384,25 @@ int TestTransforms_main(int argc, const char* argv[])
             cout << endl
                  << endl
                  << "TestRANK" << endl;
-            testTransformsCorrectness("RANK");
-            testTransformsSpeed("RANK");
+            res |= testTransformsCorrectness("RANK");
+            res |= testTransformsSpeed("RANK");
             cout << endl
                  << endl
                  << "TestMTFT" << endl;
-            testTransformsCorrectness("MTFT");
-            testTransformsSpeed("MTFT");
+            res |= testTransformsCorrectness("MTFT");
+            res |= testTransformsSpeed("MTFT");
             cout << endl
                  << endl
                  << "TestBWTS" << endl;
-            testTransformsCorrectness("BWTS");
-            testTransformsSpeed("BWTS");            
+            res |= testTransformsCorrectness("BWTS");
+            res |= testTransformsSpeed("BWTS");            
         }
         else {
             cout << "Test" << str << endl;
-            testTransformsCorrectness(str);
-            testTransformsSpeed(str);
+            res |= testTransformsCorrectness(str);
+            res |= testTransformsSpeed(str);
         }
     }
 
-    return 0;
+    return res;
 }
