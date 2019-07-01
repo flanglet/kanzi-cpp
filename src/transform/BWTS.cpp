@@ -145,7 +145,7 @@ int BWTS::moveLyndonWordHead(int sa[], int isa[], byte data[], int count, int st
         if ((k == size) && (rank < isa[nextStart]))
             break;
 
-        if ((k < size) && (nextStart < count) && ((data[start + k] & byte(0xFF)) < (data[nextStart] & byte(0xFF))))
+        if ((k < size) && (nextStart < count) && (int(data[start + k] & 0xFF)) < int(data[nextStart] & 0xFF))
             break;
 
         sa[rank] = nextStart0;
