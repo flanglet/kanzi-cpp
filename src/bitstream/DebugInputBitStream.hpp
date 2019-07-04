@@ -17,7 +17,6 @@ limitations under the License.
 #define _DebugInputBitStream_
 
 #include <ostream>
-#include "../IllegalArgumentException.hpp"
 #include "../io/IOException.hpp"
 #include "../InputBitStream.hpp"
 #include "../OutputStream.hpp"

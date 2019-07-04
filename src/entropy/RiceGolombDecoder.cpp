@@ -14,7 +14,6 @@ limitations under the License.
 */
 
 #include "RiceGolombDecoder.hpp"
-#include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
 
@@ -22,7 +21,7 @@ RiceGolombDecoder::RiceGolombDecoder(InputBitStream& bitstream, uint logBase, bo
     : _bitstream(bitstream)
 {
     if ((logBase < 1) || (logBase > 12))
-       throw IllegalArgumentException("Invalid logBase value (must be in [1..12])");
+       throw invalid_argument("Invalid logBase value (must be in [1..12])");
 
     _signed = sgn;
     _logBase = logBase;

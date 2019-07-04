@@ -19,7 +19,6 @@ limitations under the License.
 #include <cstring>
 #include "types.hpp"
 #include "util.hpp"
-#include "IllegalArgumentException.hpp"
 
 #if defined(_MSC_VER)
    #include <intrin.h>  

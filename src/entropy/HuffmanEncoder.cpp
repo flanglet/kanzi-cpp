@@ -21,7 +21,7 @@ limitations under the License.
 #include "EntropyUtils.hpp"
 #include "ExpGolombEncoder.hpp"
 #include "../BitStreamException.hpp"
-#include "../IllegalArgumentException.hpp"
+#include "../Global.hpp"
 
 using namespace kanzi;
 
@@ -32,12 +32,12 @@ using namespace kanzi;
 HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW : _bitstream(bitstream)
 {
     if (chunkSize < 1024)
-        throw IllegalArgumentException("Huffman codec: The chunk size must be at least 1024");
+        throw invalid_argument("Huffman codec: The chunk size must be at least 1024");
 
     if (chunkSize > HuffmanCommon::MAX_CHUNK_SIZE) {
         stringstream ss;
         ss << "Huffman codec: The chunk size must be at most " << HuffmanCommon::MAX_CHUNK_SIZE;
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     _chunkSize = chunkSize;
@@ -132,7 +132,7 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], short sizes[], int c
             ss << "Could not generate Huffman codes: max code length (";
             ss << HuffmanCommon::MAX_SYMBOL_SIZE;
             ss << " bits) exceeded";
-            throw IllegalArgumentException(ss.str());
+            throw invalid_argument(ss.str());
         }
 
         if (_maxCodeLength > codeLen)

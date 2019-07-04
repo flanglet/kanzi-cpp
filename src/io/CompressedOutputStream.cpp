@@ -17,7 +17,6 @@ limitations under the License.
 #include "CompressedOutputStream.hpp"
 #include "IOException.hpp"
 #include "../Error.hpp"
-#include "../IllegalArgumentException.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../entropy/EntropyCodecFactory.hpp"
 #include "../entropy/EntropyUtils.hpp"
@@ -37,27 +36,27 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
         stringstream ss;
         ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "]";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 #else
     if ((tasks <= 0) || (tasks > 1))
-        throw IllegalArgumentException("The number of jobs is limited to 1 in this version");
+        throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
     if (bSize > MAX_BITSTREAM_BLOCK_SIZE) {
         std::stringstream ss;
         ss << "The block size must be at most " << (MAX_BITSTREAM_BLOCK_SIZE >> 20) << " MB";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     if (bSize < MIN_BITSTREAM_BLOCK_SIZE) {
         std::stringstream ss;
         ss << "The block size must be at least " << MIN_BITSTREAM_BLOCK_SIZE;
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     if ((bSize & -16) != bSize)
-        throw IllegalArgumentException("The block size must be a multiple of 16");
+        throw invalid_argument("The block size must be a multiple of 16");
 
 #ifdef CONCURRENCY_ENABLED
     if (uint64(bSize) * uint64(tasks) >= uint64(1 << 31))
@@ -104,11 +103,11 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, map<string, str
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
         stringstream ss;
         ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "]";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 #else
     if ((tasks <= 0) || (tasks > 1))
-        throw IllegalArgumentException("The number of jobs is limited to 1 in this version");
+        throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
     it = ctx.find("codec");
@@ -121,17 +120,17 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, map<string, str
     if (bSize > MAX_BITSTREAM_BLOCK_SIZE) {
         std::stringstream ss;
         ss << "The block size must be at most " << (MAX_BITSTREAM_BLOCK_SIZE >> 20) << " MB";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     if (bSize < MIN_BITSTREAM_BLOCK_SIZE) {
         std::stringstream ss;
         ss << "The block size must be at least " << MIN_BITSTREAM_BLOCK_SIZE;
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     if ((bSize & -16) != bSize)
-        throw IllegalArgumentException("The block size must be a multiple of 16");
+        throw invalid_argument("The block size must be a multiple of 16");
 
 #ifdef CONCURRENCY_ENABLED
     if (uint64(bSize) * uint64(tasks) >= uint64(1 << 31))

@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <cstring>
 #include "../types.hpp"
-#include "../IllegalArgumentException.hpp"
 #include "../transform/BWT.hpp"
 #include "../transform/BWTS.hpp"
 #include "../transform/SBRT.hpp"
@@ -20,6 +19,8 @@
 #include "TransformSequence.hpp"
 #include "X86Codec.hpp"
 #include "ZRLT.hpp"
+
+using namespace std;
 
 namespace kanzi {
 
@@ -88,7 +89,7 @@ namespace kanzi {
 			if (n > 8) {
 				stringstream ss;
 				ss << "Only 8 transforms allowed: " << name;
-				throw IllegalArgumentException(ss.str());
+				throw invalid_argument(ss.str());
 			}
 
 			// Skip null transform
@@ -152,7 +153,7 @@ namespace kanzi {
 
 		stringstream ss;
 		ss << "Unknown transform type: " << name;
-		throw IllegalArgumentException(ss.str());
+		throw invalid_argument(ss.str());
 	}
 
 	template <class T>
@@ -232,7 +233,7 @@ namespace kanzi {
 		default:
 			stringstream ss;
 			ss << "Unknown transform type: " << functionType;
-			throw IllegalArgumentException(ss.str());
+			throw invalid_argument(ss.str());
 		}
 	}
 
@@ -308,7 +309,7 @@ namespace kanzi {
 		default:
 			stringstream ss;
 			ss << "Unknown transform type: " << functionType;
-			throw IllegalArgumentException(ss.str());
+			throw invalid_argument(ss.str());
 		}
 	}
 }

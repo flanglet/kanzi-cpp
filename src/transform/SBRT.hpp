@@ -18,6 +18,8 @@ limitations under the License.
 
 #include "../Transform.hpp"
 
+using namespace std;
+
 namespace kanzi 
 {
    // Sort by Rank Transform is a family of transforms typically used after

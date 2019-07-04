@@ -18,6 +18,8 @@ limitations under the License.
 
 #include "../Function.hpp"
 
+using namespace std;
+
 namespace kanzi
 {
 
@@ -47,10 +49,10 @@ namespace kanzi
            return true;
 
        if (!SliceArray<byte>::isValid(input))
-            throw IllegalArgumentException("Invalid input block");
+            throw invalid_argument("Invalid input block");
 
        if (!SliceArray<byte>::isValid(output))
-           throw IllegalArgumentException("Invalid output block");
+           throw invalid_argument("Invalid output block");
 
        if (input._index + length > input._length)
            return false;

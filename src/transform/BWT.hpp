@@ -20,6 +20,8 @@ limitations under the License.
 #include "../concurrent.hpp"
 #include "DivSufSort.hpp"
 
+using namespace std;
+
 namespace kanzi {
 // The Burrows-Wheeler Transform is a reversible transform based on
 // permutation of the data in the original message to reduce the entropy.

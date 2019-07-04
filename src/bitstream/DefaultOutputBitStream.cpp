@@ -14,7 +14,6 @@ limitations under the License.
 */
 
 #include "DefaultOutputBitStream.hpp"
-#include "../IllegalArgumentException.hpp"
 #include "../io/IOException.hpp"
 #include <fstream>
 
@@ -24,13 +23,13 @@ using namespace kanzi;
 DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize) THROW : _os(os)
 {
     if (bufferSize < 1024)
-        throw IllegalArgumentException("Invalid buffer size (must be at least 1024)");
+        throw invalid_argument("Invalid buffer size (must be at least 1024)");
 
     if (bufferSize > 1 << 29)
-        throw IllegalArgumentException("Invalid buffer size (must be at most 536870912)");
+        throw invalid_argument("Invalid buffer size (must be at most 536870912)");
 
     if ((bufferSize & 7) != 0)
-        throw IllegalArgumentException("Invalid buffer size (must be a multiple of 8)");
+        throw invalid_argument("Invalid buffer size (must be a multiple of 8)");
 
     _availBits = 64;
     _bufferSize = bufferSize;

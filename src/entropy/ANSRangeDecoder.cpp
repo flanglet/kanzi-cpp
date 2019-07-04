@@ -15,7 +15,6 @@ limitations under the License.
 
 #include <sstream>
 #include "ANSRangeDecoder.hpp"
-#include "../IllegalArgumentException.hpp"
 #include "EntropyUtils.hpp"
 
 using namespace kanzi;
@@ -26,15 +25,15 @@ using namespace kanzi;
 ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunkSize) THROW : _bitstream(bitstream)
 {
     if ((order != 0) && (order != 1))
-        throw IllegalArgumentException("ANS Codec: The order must be 0 or 1");
+        throw invalid_argument("ANS Codec: The order must be 0 or 1");
 
     if ((chunkSize != 0) && (chunkSize != -1) && (chunkSize < 1024))
-        throw IllegalArgumentException("ANS Codec: The chunk size must be at least 1024");
+        throw invalid_argument("ANS Codec: The chunk size must be at least 1024");
 
     if (chunkSize > MAX_CHUNK_SIZE) {
         stringstream ss;
         ss << "ANS Codec: The chunk size must be at most " << MAX_CHUNK_SIZE;
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     if (chunkSize == -1)
@@ -70,7 +69,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
     if ((_logRange < 8) || (_logRange > 16)) {
         stringstream ss;
         ss << "ANS Codec: Invalid range: " << _logRange << " (must be in [8..16])";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     int res = 0;

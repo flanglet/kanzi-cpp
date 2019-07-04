@@ -19,6 +19,8 @@ limitations under the License.
 #include "../Transform.hpp"
 #include "DivSufSort.hpp"
 
+using namespace std;
+
 namespace kanzi 
 {
 

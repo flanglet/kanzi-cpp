@@ -28,7 +28,6 @@ limitations under the License.
 #include "../util.hpp"
 #include "../SliceArray.hpp"
 #include "../Error.hpp"
-#include "../IllegalArgumentException.hpp"
 #include "../function/FunctionFactory.hpp"
 #include "../io/IOException.hpp"
 #include "../io/IOUtil.hpp"
@@ -111,7 +110,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         if (_blockSize > 1024 * 1024 * 1024) {
            stringstream sserr;
            sserr << "Maximum block size is 1 GB (1073741824 bytes), got " << _blockSize << " bytes";
-           throw IllegalArgumentException(sserr.str().c_str());
+           throw invalid_argument(sserr.str().c_str());
         }
     }
 
@@ -150,7 +149,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
 
 #ifndef CONCURRENCY_ENABLED
     if (concurrency > 1)
-        throw IllegalArgumentException("The number of jobs is limited to 1 in this version");
+        throw invalid_argument("The number of jobs is limited to 1 in this version");
 #else
     if (concurrency > MAX_CONCURRENCY) {
         stringstream ss;
@@ -669,7 +668,7 @@ T FileCompressTask<T>::run()
             for (uint i = 0; i < _listeners.size(); i++)
                 _cos->addListener(*_listeners[i]);
         }
-        catch (IllegalArgumentException& e) {
+        catch (invalid_argument& e) {
             stringstream sserr;
             sserr << "Cannot create compressed stream: " << e.what();
             return T(Error::ERR_CREATE_COMPRESSOR, 0, 0, sserr.str().c_str());

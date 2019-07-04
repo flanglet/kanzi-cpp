@@ -16,8 +16,8 @@ limitations under the License.
 #include <algorithm>
 #include <vector>
 #include <sstream>
-#include "../IllegalArgumentException.hpp"
 #include "EntropyUtils.hpp"
+#include "../Global.hpp"
 
 using namespace kanzi;
 
@@ -341,13 +341,13 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     if (length > 256) {
         stringstream ss;
         ss << "Invalid alphabet size parameter: " << scale << " (must be less than or equal to 256)";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     if ((scale < 256) || (scale > 65536)) {
         stringstream ss;
         ss << "Invalid scale parameter: " << scale << " (must be in [256..65536])";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     if ((length == 0) || (totalFreq == 0))

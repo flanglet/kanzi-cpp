@@ -18,7 +18,6 @@ limitations under the License.
 #include <sstream>
 #include <streambuf>
 #include "ROLZCodec.hpp"
-#include "../IllegalArgumentException.hpp"
 #include "../Memory.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
@@ -50,10 +49,10 @@ bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("ROLZ codec: Invalid input block");
+        throw invalid_argument("ROLZ codec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("ROLZ codec: Invalid output block");
+        throw invalid_argument("ROLZ codec: Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -63,7 +62,7 @@ bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
         // issue a fatal error.
         stringstream ss;
         ss << "The max ROLZ codec block size is " << MAX_BLOCK_SIZE << ", got " << count;
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
 	 }
 
     return _delegate->forward(input, output, count);
@@ -75,10 +74,10 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("ROLZ codec: Invalid input block");
+        throw invalid_argument("ROLZ codec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("ROLZ codec: Invalid output block");
+        throw invalid_argument("ROLZ codec: Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -88,7 +87,7 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
         // issue a fatal error.
         stringstream ss;
         ss << "The max ROLZ codec block size is " << MAX_BLOCK_SIZE << ", got " << count;
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
 	}
 
 	return _delegate->inverse(input, output, count);
@@ -99,7 +98,7 @@ ROLZCodec1::ROLZCodec1(uint logPosChecks) THROW
     if ((logPosChecks < 2) || (logPosChecks > 8)) {
         stringstream ss;
         ss << "ROLZ codec: Invalid logPosChecks parameter: " << logPosChecks << " (must be in [2..8])";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     _logPosChecks = logPosChecks;
@@ -577,7 +576,7 @@ ROLZCodec2::ROLZCodec2(uint logPosChecks) THROW
     if ((logPosChecks < 2) || (logPosChecks > 8)) {
         stringstream ss;
         ss << "ROLZX codec: Invalid logPosChecks parameter: " << logPosChecks << " (must be in [2..8])";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     _logPosChecks = logPosChecks;
@@ -645,10 +644,10 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("ROLZX codec: Invalid input block");
+        throw invalid_argument("ROLZX codec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("ROLZX codec: Invalid output block");
+        throw invalid_argument("ROLZX codec: Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -735,10 +734,10 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("ROLZX codec: Invalid input block");
+        throw invalid_argument("ROLZX codec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("ROLZX codec: Invalid output block");
+        throw invalid_argument("ROLZX codec: Invalid output block");
 
     if (input._array == output._array)
         return false;

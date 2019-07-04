@@ -15,7 +15,6 @@ limitations under the License.
 
 #include <sstream>
 #include "LZCodec.hpp"
-#include "../IllegalArgumentException.hpp"
 #include "../Memory.hpp"
 
 using namespace kanzi;
@@ -69,10 +68,10 @@ bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int cou
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -228,10 +227,10 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -262,7 +261,7 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
             if (length > MAX_LENGTH) {
                 stringstream ss;
                 ss << "Invalid length decoded: " << length;
-                throw IllegalArgumentException(ss.str());
+                throw invalid_argument(ss.str());
             }
         }
 
@@ -303,7 +302,7 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
             if ((length > MAX_LENGTH) || (srcIdx == srcEnd)) {
                 stringstream ss;
                 ss << "Invalid length decoded: " << length;
-                throw IllegalArgumentException(ss.str());
+                throw invalid_argument(ss.str());
             }
         }
 

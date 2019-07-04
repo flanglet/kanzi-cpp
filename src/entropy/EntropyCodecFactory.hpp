@@ -34,7 +34,8 @@ limitations under the License.
 #include "CMPredictor.hpp"
 #include "FPAQPredictor.hpp"
 #include "TPAQPredictor.hpp"
-#include "../IllegalArgumentException.hpp"
+
+using namespace std;
 
 namespace kanzi {
 
@@ -95,7 +96,7 @@ namespace kanzi {
        default:
            string msg = "Unknown entropy codec type: ";
            msg += char(entropyType);
-           throw IllegalArgumentException(msg);
+           throw invalid_argument(msg);
        }
    }
 
@@ -132,7 +133,7 @@ namespace kanzi {
        default:
            string msg = "Unknown entropy codec type: ";
            msg += char(entropyType);
-           throw IllegalArgumentException(msg);
+           throw invalid_argument(msg);
        }
    }
 
@@ -169,7 +170,7 @@ namespace kanzi {
        default:
            string msg = "Unknown entropy codec type: ";
            msg += char(entropyType);
-           throw IllegalArgumentException(msg);
+           throw invalid_argument(msg);
        }
    }
 
@@ -205,7 +206,7 @@ namespace kanzi {
        if (name == "NONE")
            return NONE_TYPE;
 
-       throw IllegalArgumentException("Unsupported entropy codec type: " + name);
+       throw invalid_argument("Unsupported entropy codec type: " + name);
    }
 }
 #endif

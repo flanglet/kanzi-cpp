@@ -15,7 +15,6 @@ limitations under the License.
 
 #include <stddef.h>
 #include "../Global.hpp"
-#include "../IllegalArgumentException.hpp"
 #include "ZRLT.hpp"
 
 using namespace kanzi;
@@ -26,10 +25,10 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(length))
         return false;
@@ -100,10 +99,10 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     uint8* src = (uint8*)&input._array[input._index];
     byte* dst = &output._array[output._index];

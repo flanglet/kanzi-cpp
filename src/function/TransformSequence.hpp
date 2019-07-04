@@ -17,7 +17,8 @@ limitations under the License.
 #define _TransformSequence_
 
 #include "../Function.hpp"
-#include "../IllegalArgumentException.hpp"
+
+using namespace std;
 
 namespace kanzi 
 {
@@ -67,7 +68,7 @@ namespace kanzi
        }
 
        if (_length == 0)
-           throw IllegalArgumentException("At least one transform required");
+           throw invalid_argument("At least one transform required");
    }
 
    template <class T>
@@ -88,10 +89,10 @@ namespace kanzi
            return true;
 
        if (!SliceArray<byte>::isValid(input))
-           throw IllegalArgumentException("Invalid input block");
+           throw invalid_argument("Invalid input block");
 
        if (!SliceArray<byte>::isValid(output))
-           throw IllegalArgumentException("Invalid output block");
+           throw invalid_argument("Invalid output block");
 
        if ((count < 0) || (count + input._index > input._length))
            return false;
@@ -153,10 +154,10 @@ namespace kanzi
            return true;
 
        if (!SliceArray<byte>::isValid(input))
-           throw IllegalArgumentException("Invalid input block");
+           throw invalid_argument("Invalid input block");
 
        if (!SliceArray<byte>::isValid(output))
-           throw IllegalArgumentException("Invalid output block");
+           throw invalid_argument("Invalid output block");
 
        if ((length < 0) || (length + input._index > input._length))
            return false;

@@ -13,8 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <stdexcept>
 #include "RLT.hpp"
-#include "../IllegalArgumentException.hpp"
+#include "../Global.hpp"
 
 using namespace kanzi;
 
@@ -25,10 +26,10 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(length))
         return false;
@@ -202,10 +203,10 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     uint8* src = (uint8*)&input._array[input._index];
     uint8* dst = (uint8*)&output._array[output._index];

@@ -26,7 +26,6 @@ limitations under the License.
 #include <sys/stat.h>
 #include "BlockDecompressor.hpp"
 #include "InfoPrinter.hpp"
-#include "../IllegalArgumentException.hpp"
 #include "../SliceArray.hpp"
 #include "../util.hpp"
 #include "../Error.hpp"
@@ -71,7 +70,7 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
 
 #ifndef CONCURRENCY_ENABLED
     if (concurrency > 1)
-        throw IllegalArgumentException("The number of jobs is limited to 1 in this version");
+        throw invalid_argument("The number of jobs is limited to 1 in this version");
 #else
     if (concurrency > MAX_CONCURRENCY) {
         stringstream ss;
@@ -557,7 +556,7 @@ T FileDecompressTask<T>::run()
             for (uint i = 0; i < _listeners.size(); i++)
                 _cis->addListener(*_listeners[i]);
         }
-        catch (IllegalArgumentException& e) {
+        catch (invalid_argument& e) {
             stringstream sserr;
             sserr << "Cannot create compressed stream: " << e.what();
             return T(Error::ERR_CREATE_DECOMPRESSOR, 0, sserr.str().c_str());

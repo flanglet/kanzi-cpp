@@ -18,7 +18,6 @@ limitations under the License.
 #include "CompressedInputStream.hpp"
 #include "IOException.hpp"
 #include "../Error.hpp"
-#include "../IllegalArgumentException.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../entropy/EntropyCodecFactory.hpp"
 #include "../function/FunctionFactory.hpp"
@@ -37,11 +36,11 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
         stringstream ss;
         ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "]";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 #else
     if ((tasks <= 0) || (tasks > 1))
-        throw IllegalArgumentException("The number of jobs is limited to 1 in this version");
+        throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
     _blockId = 0;
@@ -75,11 +74,11 @@ CompressedInputStream::CompressedInputStream(InputStream& is, map<string, string
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
         stringstream ss;
         ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "]";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 #else
     if ((tasks <= 0) || (tasks > 1))
-        throw IllegalArgumentException("The number of jobs is limited to 1 in this version");
+        throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
     _blockId = 0;
@@ -192,7 +191,7 @@ void CompressedInputStream::readHeader() THROW
 
             ss << "Using " << w1 << " entropy codec (stage 1)" << endl;
         }
-        catch (IllegalArgumentException&) {
+        catch (invalid_argument&) {
             stringstream err;
             err << "Invalid bitstream, unknown entropy codec type: " << _entropyType;
             throw IOException(err.str(), Error::ERR_INVALID_CODEC);
@@ -206,7 +205,7 @@ void CompressedInputStream::readHeader() THROW
 
             ss << "Using " << w2 << " transform (stage 2)" << endl;
         }
-        catch (IllegalArgumentException&) {
+        catch (invalid_argument&) {
             stringstream err;
             err << "Invalid bitstream, unknown transform type: " << _transformType;
             throw IOException(err.str(), Error::ERR_INVALID_CODEC);

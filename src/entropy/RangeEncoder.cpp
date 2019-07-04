@@ -16,7 +16,7 @@ limitations under the License.
 #include <sstream>
 #include "RangeEncoder.hpp"
 #include "EntropyUtils.hpp"
-#include "../IllegalArgumentException.hpp"
+#include "../Global.hpp"
 
 using namespace kanzi;
 
@@ -27,15 +27,15 @@ using namespace kanzi;
 RangeEncoder::RangeEncoder(OutputBitStream& bitstream, int chunkSize, int logRange) THROW : _bitstream(bitstream)
 {
     if ((chunkSize != 0) && (chunkSize < 1024))
-        throw IllegalArgumentException("The chunk size must be at least 1024");
+        throw invalid_argument("The chunk size must be at least 1024");
 
     if (chunkSize > 1 << 30)
-        throw IllegalArgumentException("The chunk size must be at most 2^30");
+        throw invalid_argument("The chunk size must be at most 2^30");
 
     if ((logRange < 8) || (logRange > 16)) {
         stringstream ss;
         ss << "Invalid range parameter: " << logRange << " (must be in [8..16])";
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     _logRange = logRange;

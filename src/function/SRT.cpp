@@ -13,8 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <cstring>
+#include <stdexcept>
 #include "SRT.hpp"
-#include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
 
@@ -24,10 +25,10 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(length))
         return false;
@@ -113,10 +114,10 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     int32 freqs[256];
     const int headerSize = decodeHeader(&input._array[input._index], freqs);

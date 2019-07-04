@@ -15,7 +15,6 @@ limitations under the License.
 
 #include "BinaryEntropyDecoder.hpp"
 #include "EntropyUtils.hpp"
-#include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
 
@@ -24,7 +23,7 @@ BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor*
       _sba(new byte[0], 0)
 {
     if (predictor == nullptr)
-        throw IllegalArgumentException("Invalid null predictor parameter");
+        throw invalid_argument("Invalid null predictor parameter");
 
     _predictor = predictor;
     _low = 0;
@@ -46,7 +45,7 @@ BinaryEntropyDecoder::~BinaryEntropyDecoder()
 int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
 {
     if (count >= 1 << 30)
-        throw IllegalArgumentException("Invalid block size parameter (max is 1<<30)");
+        throw invalid_argument("Invalid block size parameter (max is 1<<30)");
 
     int startChunk = blkptr;
     const int end = blkptr + count;

@@ -16,7 +16,6 @@ limitations under the License.
 #include <sstream>
 #include "RangeDecoder.hpp"
 #include "EntropyUtils.hpp"
-#include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
 
@@ -27,10 +26,10 @@ using namespace kanzi;
 RangeDecoder::RangeDecoder(InputBitStream& bitstream, int chunkSize) THROW : _bitstream(bitstream)
 {
     if ((chunkSize != 0) && (chunkSize < 1024))
-        throw IllegalArgumentException("The chunk size must be at least 1024");
+        throw invalid_argument("The chunk size must be at least 1024");
 
     if (chunkSize > 1 << 30)
-        throw IllegalArgumentException("The chunk size must be at most 2^30");
+        throw invalid_argument("The chunk size must be at most 2^30");
 
     _range = TOP_RANGE;
     _low = 0;

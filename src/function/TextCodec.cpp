@@ -14,9 +14,11 @@ limitations under the License.
 */
 
 #include <algorithm>
+#include <cstring>
+#include <stdexcept>
 #include <sstream>
 #include "TextCodec.hpp"
-#include "../IllegalArgumentException.hpp"
+#include "../Global.hpp"
 
 using namespace kanzi;
 
@@ -787,10 +789,10 @@ bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -800,7 +802,7 @@ bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
         // issue a fatal error.
         stringstream ss;
         ss << "The max text transform block size is " << MAX_BLOCK_SIZE << ", got " << count;
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     return _delegate->forward(input, output, count);
@@ -812,10 +814,10 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -825,7 +827,7 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
         // issue a fatal error.
         stringstream ss;
         ss << "The max text transform block size is " << MAX_BLOCK_SIZE << ", got " << count;
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     return _delegate->inverse(input, output, count);

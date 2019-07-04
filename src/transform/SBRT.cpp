@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #include <cstring>
+#include <stdexcept>
 #include "SBRT.hpp"
-#include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
 
@@ -25,7 +25,7 @@ SBRT::SBRT(int mode) :
 	, _shift((mode == MODE_RANK) ? 1 : 0)
 {
     if ((mode != MODE_MTF) && (mode != MODE_RANK) && (mode != MODE_TIMESTAMP))
-        throw IllegalArgumentException("Invalid mode parameter");
+        throw invalid_argument("Invalid mode parameter");
 }
 
 bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
@@ -34,10 +34,10 @@ bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     // Aliasing
     uint8* src = (uint8*) &input._array[input._index];
@@ -82,10 +82,10 @@ bool SBRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     // Aliasing
     uint8* src = (uint8*) &input._array[input._index];

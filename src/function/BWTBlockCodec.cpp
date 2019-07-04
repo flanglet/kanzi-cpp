@@ -15,7 +15,6 @@ limitations under the License.
 
 #include <cstring>
 #include "BWTBlockCodec.hpp"
-#include "../IllegalArgumentException.hpp"
 
 using namespace kanzi;
 
@@ -39,10 +38,10 @@ bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, i
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -117,10 +116,10 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     if (input._array == output._array)
         return false;

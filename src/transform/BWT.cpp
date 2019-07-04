@@ -17,7 +17,7 @@ limitations under the License.
 #include <map>
 #include <vector>
 #include "BWT.hpp"
-#include "../IllegalArgumentException.hpp"
+#include "../Global.hpp"
 
 #ifdef CONCURRENCY_ENABLED
 #include <future>
@@ -33,7 +33,7 @@ BWT::BWT(int jobs) THROW
 
 #ifndef CONCURRENCY_ENABLED
     if (jobs > 1)
-        throw IllegalArgumentException("The number of jobs is limited to 1 in this version");
+        throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
     _jobs = jobs;
@@ -64,17 +64,17 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     if (count > maxBlockSize()) {
         // Not a recoverable error: instead of silently fail the transform,
         // issue a fatal error.
         stringstream ss;
         ss << "The max BWT block size is " << maxBlockSize() << ", got " << count;
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     if (count < 2) {
@@ -155,17 +155,17 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw IllegalArgumentException("Invalid input block");
+        throw invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw IllegalArgumentException("Invalid output block");
+        throw invalid_argument("Invalid output block");
 
     if (count > maxBlockSize()) {
         // Not a recoverable error: instead of silently fail the transform,
         // issue a fatal error.
         stringstream ss;
         ss << "The max BWT block size is " << maxBlockSize() << ", got " << count;
-        throw IllegalArgumentException(ss.str());
+        throw invalid_argument(ss.str());
     }
 
     if (count < 2) {
