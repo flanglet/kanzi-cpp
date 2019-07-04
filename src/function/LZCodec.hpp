@@ -29,7 +29,7 @@ namespace kanzi
    public:
        LZCodec();
 
-       ~LZCodec() { delete[] _buffer; }
+       ~LZCodec() { delete[] _buffer; _bufferSize = 0; }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
@@ -75,5 +75,37 @@ namespace kanzi
       static void customArrayCopy(byte src[], byte dst[], int len);
    };
 
+
+   inline void LZCodec::customArrayCopy(byte src[], byte dst[], int len)
+   {
+       for (int i = 0; i < len; i += 8)
+           memcpy(&dst[i], &src[i], 8);
+   }
+
+   inline bool LZCodec::differentInts(byte block[], int srcIdx, int dstIdx)
+   {
+       return *((int32*)&block[srcIdx]) != *((int32*)&block[dstIdx]);
+   }
+
+   inline int LZCodec::emitLength(byte block[], int length)
+   {
+       int idx = 0;
+
+       while (length >= 0x1FE) {
+           block[idx] = byte(0xFF);
+           block[idx + 1] = byte(0xFF);
+           idx += 2;
+           length -= 0x1FE;
+       }
+
+       if (length >= 0xFF) {
+           block[idx] = byte(0xFF);
+           idx++;
+           length -= 0xFF;
+       }
+
+       block[idx] = byte(length);
+       return idx + 1;
+   }
 }
 #endif
