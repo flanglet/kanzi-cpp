@@ -17,6 +17,7 @@ limitations under the License.
 #define _LZCodec_
 
 #include "../Function.hpp"
+#include <cstring>
 
 namespace kanzi 
 {
