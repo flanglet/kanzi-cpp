@@ -101,7 +101,7 @@ bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, i
         blockMode = (blockMode << 6) | ((primaryIndex >> shift) & 0x3F);
         p0[idx++] = byte(blockMode);
 
-        for (int n = 1; n < pIndexSizeBytes; n++) {
+        while (shift >= 8) {
             shift -= 8;
             p0[idx++] = byte(primaryIndex >> shift);
         }
