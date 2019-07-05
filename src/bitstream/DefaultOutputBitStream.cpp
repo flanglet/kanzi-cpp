@@ -174,6 +174,12 @@ void DefaultOutputBitStream::flush() THROW
 
 DefaultOutputBitStream::~DefaultOutputBitStream()
 {
-    close();
+    try {
+        close();
+    }
+    catch (exception&) {
+        // Ignore and continue
+    }
+
     delete[] _buffer;
 }
