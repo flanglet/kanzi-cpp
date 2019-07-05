@@ -40,6 +40,8 @@ RangeEncoder::RangeEncoder(OutputBitStream& bitstream, int chunkSize, int logRan
 
     _logRange = logRange;
     _chunkSize = chunkSize;
+    _low = 0;
+    _range = TOP_RANGE;
     _shift = 0;
 }
 

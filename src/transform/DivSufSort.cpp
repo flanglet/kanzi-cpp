@@ -60,6 +60,7 @@ DivSufSort::DivSufSort()
     _trStack = new Stack(TR_STACKSIZE);
     _mergeStack = new Stack(SS_SMERGE_STACKSIZE);
     _sa = nullptr;
+    _buffer = nullptr;
 }
 
 DivSufSort::~DivSufSort()

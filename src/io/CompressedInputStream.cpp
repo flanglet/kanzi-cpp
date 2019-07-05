@@ -55,6 +55,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
     _jobs = tasks;
     _sa = new SliceArray<byte>(new byte[0], 0, 0);
     _hasher = nullptr;
+    _nbInputBlocks = 0;
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
     for (int i = 0; i < 2 * _jobs; i++)
@@ -93,6 +94,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, map<string, string
     _jobs = tasks;
     _sa = new SliceArray<byte>(new byte[0], 0, 0);
     _hasher = nullptr;
+    _nbInputBlocks = 0;
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
     for (int i = 0; i < 2 * _jobs; i++)
