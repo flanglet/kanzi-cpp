@@ -65,7 +65,7 @@ namespace kanzi
        {
           // Add 0 for positive and 1 for negative sign
           n++;
-          emit = (emit << 1) | (uint32(val) >> 31);
+          emit = (emit << 1) | int((val >> 7) & 1);
        }
 
        _bitstream.writeBits(emit, n);
