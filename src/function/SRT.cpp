@@ -58,7 +58,7 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     // init arrays
     uint8 symbols[256];
-    int32 buckets[256];
+    int32 buckets[256] = { 0 };
 
     const int nbSymbols = preprocess(freqs, symbols);
 
@@ -129,9 +129,9 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     // init arrays
     int nbSymbols = preprocess(freqs, symbols);
 
-    int32 buckets[256];
-    int32 bucketEnds[256];
-    uint8 r2s[256];
+    int32 buckets[256] = { 0 };
+    int32 bucketEnds[256] = { 0 };
+    uint8 r2s[256] = { 0 };
 
     for (int i = 0, bucketPos = 0; i < nbSymbols; i++) {
         const uint8 c = symbols[i];
