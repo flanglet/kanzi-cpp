@@ -193,28 +193,35 @@ int BlockCompressor::compress(uint64& outputSize)
 {
     vector<FileData> files;
     Clock stopClock;
-
-    try {
-        createFileList(_inputName, files);
-    }
-    catch (exception& e) {
-        cerr << e.what() << endl;
-        return Error::ERR_OPEN_FILE;
-    }
-
-    if (files.size() == 0) {
-        cerr << "Cannot access input file '" << _inputName << "'" << endl;
-        return Error::ERR_OPEN_FILE;
-    }
-
-    int nbFiles = int(files.size());
+    int nbFiles = 1;
     Printer log(&cout);
     bool printFlag = _verbosity > 2;
     stringstream ss;
-    string strFiles = (nbFiles > 1) ? " files" : " file";
-    ss << nbFiles << strFiles << " to compress\n";
-    log.println(ss.str().c_str(), _verbosity > 0);
-    ss.str(string());
+    string str = _inputName;
+    transform(str.begin(), str.end(), str.begin(), ::toupper);
+    bool isStdIn = str.compare(0, 5, "STDIN") == 0;
+
+    if (isStdIn == false) {
+       try {
+           createFileList(_inputName, files);
+       }
+       catch (exception& e) {
+           cerr << e.what() << endl;
+           return Error::ERR_OPEN_FILE;
+       }
+
+       if (files.size() == 0) {
+           cerr << "Cannot access input file '" << _inputName << "'" << endl;
+           return Error::ERR_OPEN_FILE;
+       }
+
+       nbFiles = int(files.size());
+       string strFiles = (nbFiles > 1) ? " files" : " file";
+       ss << nbFiles << strFiles << " to compress\n";
+       log.println(ss.str().c_str(), _verbosity > 0);
+       ss.str(string());
+    }
+
     ss << "Block size set to " << _blockSize << " bytes";
     log.println(ss.str().c_str(), printFlag);
     ss.str(string());
@@ -266,62 +273,63 @@ int BlockCompressor::compress(uint64& outputSize)
     uint64 read = 0;
     uint64 written = 0;
 
-    bool inputIsDir;
+    bool inputIsDir = false;
     string formattedOutName = _outputName;
     string formattedInName = _inputName;
     string upperOutputName = _outputName;
     transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), ::toupper);
     bool specialOutput = (upperOutputName.compare(0, 4, "NONE") == 0) || (upperOutputName.compare(0, 6, "STDOUT") == 0);
-    struct stat buffer;
 
-    // Need to strip path separator at the end to make 'stat()' happy
-    if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
-        formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
-    }
+    if (isStdIn == false) {
+       struct stat buffer;
 
-    if ((formattedOutName.size() != 0) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
-        formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
-    }
+       // Need to strip path separator at the end to make 'stat()' happy
+       if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
+           formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
+       }
 
-    if (stat(formattedInName.c_str(), &buffer) != 0) {
-        cerr << "Cannot access input file '" << formattedInName << "'" << endl;
-        return Error::ERR_OPEN_FILE;
-    }
+       if ((formattedOutName.size() != 0) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
+           formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
+       }
 
-    if ((buffer.st_mode & S_IFDIR) != 0) {
-        inputIsDir = true;
+       if (stat(formattedInName.c_str(), &buffer) != 0) {
+           cerr << "Cannot access input file '" << formattedInName << "'" << endl;
+           return Error::ERR_OPEN_FILE;
+       }
 
-        if (formattedInName[formattedInName.size() - 1] == '.') {
-            formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
-        }
+       if ((buffer.st_mode & S_IFDIR) != 0) {
+           inputIsDir = true;
 
-        if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] != PATH_SEPARATOR)) {
-            formattedInName += PATH_SEPARATOR;
-        }
+           if (formattedInName[formattedInName.size() - 1] == '.') {
+               formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
+           }
 
-        if ((formattedOutName.size() != 0) && (specialOutput == false)) {
-            if (stat(formattedOutName.c_str(), &buffer) != 0) {
-                cerr << "Output must be an existing directory (or 'NONE')" << endl;
-                return Error::ERR_OPEN_FILE;
-            }
+           if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] != PATH_SEPARATOR)) {
+               formattedInName += PATH_SEPARATOR;
+           }
 
-            if ((buffer.st_mode & S_IFDIR) == 0) {
-                cerr << "Output must be a directory (or 'NONE')" << endl;
-                return Error::ERR_CREATE_FILE;
-            }
+           if ((formattedOutName.size() != 0) && (specialOutput == false)) {
+               if (stat(formattedOutName.c_str(), &buffer) != 0) {
+                   cerr << "Output must be an existing directory (or 'NONE')" << endl;
+                   return Error::ERR_OPEN_FILE;
+               }
 
-            formattedOutName += PATH_SEPARATOR;
-        }
-    }
-    else {
-        inputIsDir = false;
+               if ((buffer.st_mode & S_IFDIR) == 0) {
+                   cerr << "Output must be a directory (or 'NONE')" << endl;
+                   return Error::ERR_CREATE_FILE;
+               }
 
-        if ((formattedOutName.size() != 0) && (specialOutput == false)) {
-            if ((stat(formattedOutName.c_str(), &buffer) != 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
-                cerr << "Output must be a file (or 'NONE')" << endl;
-                return Error::ERR_CREATE_FILE;
-            }
-        }
+               formattedOutName += PATH_SEPARATOR;
+           }
+       }
+       else {
+           if ((formattedOutName.size() != 0) && (specialOutput == false)) {
+               if ((stat(formattedOutName.c_str(), &buffer) != 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
+                   cerr << "Output must be a file (or 'NONE')" << endl;
+                   return Error::ERR_CREATE_FILE;
+               }
+           }
+       }
     }
 
     map<string, string> ctx;
@@ -341,18 +349,22 @@ int BlockCompressor::compress(uint64& outputSize)
     // Run the task(s)
     if (nbFiles == 1) {
         string oName = formattedOutName;
-        string iName = files[0]._path;
+        string iName = "STDIN";
+        
+        if (isStdIn == false) {
+           iName = files[0]._path;
+           ss.str(string());
+           ss << files[0]._size;
+           ctx["fileSize"] = ss.str();
 
-        if (oName.length() == 0) {
-            oName = iName + ".knz";
-        }
-        else if ((inputIsDir == true) && (specialOutput == false)) {
-            oName = formattedOutName + iName.substr(formattedInName.size()) + ".knz";
+           if (oName.length() == 0) {
+               oName = iName + ".knz";
+           }
+           else if ((inputIsDir == true) && (specialOutput == false)) {
+               oName = formattedOutName + iName.substr(formattedInName.size()) + ".knz";
+           }
         }
 
-        ss.str(string());
-        ss << files[0]._size;
-        ctx["fileSize"] = ss.str();
         ctx["inputName"] = iName;
         ctx["outputName"] = oName;
         ss.str(string());
