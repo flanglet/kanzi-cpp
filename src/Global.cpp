@@ -195,10 +195,13 @@ void Global::computeHistogram(byte block[], int length, uint freqs[], bool isOrd
 
 }
 
-void Global::computeJobsPerTask(int jobsPerTask[], int jobs, int tasks)
+void Global::computeJobsPerTask(int jobsPerTask[], int jobs, int tasks) THROW
 {
-	if ((jobs <= 0) || (tasks <= 0))
-		return;
+	if (jobs <= 0)
+		throw invalid_argument("Invalid number of jobs provided");
+
+	if (tasks <= 0)
+		throw invalid_argument("Invalid number of tasks provided");
 
 	int q = (jobs <= tasks) ? 1 : jobs / tasks;
 	int r = (jobs <= tasks) ? 0 : jobs - q * tasks;

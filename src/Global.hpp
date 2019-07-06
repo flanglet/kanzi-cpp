@@ -47,7 +47,7 @@ namespace kanzi {
 
        static int log2_1024(uint32 x) THROW; // slow, accurate to 1/1024th
        
-       static void computeJobsPerTask(int jobsPerTask[], int jobs, int tasks);
+       static void computeJobsPerTask(int jobsPerTask[], int jobs, int tasks) THROW;
 
        static void computeHistogram(byte block[], int end, uint freqs[], bool isOrder0, bool withTotal=false);
 
