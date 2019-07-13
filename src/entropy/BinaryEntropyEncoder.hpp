@@ -69,7 +69,7 @@ namespace kanzi
 
        // Update fields with new interval bounds
        if (bit == 0) 
-          _low = _low + split + 1;
+          _low += (split + 1);
        else 
           _high = _low + split;
 

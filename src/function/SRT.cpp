@@ -123,7 +123,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     const int headerSize = decodeHeader(&input._array[input._index], freqs);
     input._index += headerSize;
     length -= headerSize;
-    byte* src = &input._array[input._index];
+    uint8* src = (uint8*)&input._array[input._index];
     uint8 symbols[256];
 
     // init arrays
@@ -149,7 +149,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         dst[i] = c;
 
         if (buckets[c] < bucketEnds[c]) {
-            const int r = int(src[buckets[c]]) & 0xFF;
+            const uint8 r = src[buckets[c]];
             buckets[c]++;
 
             if (r == 0)
@@ -160,7 +160,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             c = r2s[0];
         }
         else {
-            if (nbSymbols == 0)
+            if (nbSymbols == 1)
                 continue;
             
             nbSymbols--;
