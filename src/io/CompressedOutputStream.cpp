@@ -65,17 +65,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
 
     _blockId = 0;
     _blockSize = bSize;
-
-    // Calculate the number of blocks in the input data else use 0.
-    // A value of 63 means '63 or more blocks'.
-    // This value is written to the bitstream header to let the decoder make
-    // better decisions about memory usage and job allocation in concurrent
-    // decompression scenario.
-
-    int64 fileSize = 0;
-    int nbBlocks = int(fileSize + (bSize - 1)) / bSize;
-    _nbInputBlocks = (nbBlocks > 63) ? 63 : nbBlocks;
-
+    _nbInputBlocks = 0;
     _initialized = false;
     _closed = false;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
@@ -140,9 +130,9 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     // This value is written to the bitstream header to let the decoder make
     // better decisions about memory usage and job allocation in concurrent
     // decompression scenario.
-    int64 fileSize = ctx.has("fileSize") ? ctx.getInt("fileSize") : 0;
-    int nbBlocks = int(fileSize + (bSize - 1)) / bSize;
-    _nbInputBlocks = (nbBlocks > 63) ? 63 : nbBlocks;
+    const int64 fileSize = ctx.getLong("fileSize", 0);
+    const int64 nbBlocks = (fileSize + int64(bSize - 1)) / int64(bSize);
+    _nbInputBlocks = (nbBlocks > 63) ? 63 : uint8(nbBlocks);
 
     _initialized = false;
     _closed = false;

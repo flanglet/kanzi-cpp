@@ -281,7 +281,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
             }
 
             Context taskCtx(ctx);
-            taskCtx.putInt("fileSize", int(files[i]._size));
+            taskCtx.putLong("fileSize", files[i]._size);
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
             taskCtx.putInt("jobs", jobsPerTask[n++]);
