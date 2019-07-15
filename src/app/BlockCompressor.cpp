@@ -419,7 +419,7 @@ int BlockCompressor::compress(uint64& outputSize)
         if (doConcurrent) {
             vector<FileCompressWorker<FileCompressTask<FileCompressResult>*, FileCompressResult>*> workers;
             vector<future<FileCompressResult> > results;
-            BoundedConcurrentQueue<FileCompressTask<FileCompressResult>*, FileCompressResult> queue(nbFiles, &tasks[0]);
+            BoundedConcurrentQueue<FileCompressTask<FileCompressResult>*> queue(nbFiles, &tasks[0]);
 
             // Create one worker per job and run it. A worker calls several tasks sequentially.
             for (int i = 0; i < _jobs; i++) {

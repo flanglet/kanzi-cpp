@@ -55,14 +55,14 @@ namespace kanzi {
    template <class T, class R>
    class FileCompressWorker : public Task<R> {
    public:
-       FileCompressWorker(BoundedConcurrentQueue<T, R>* queue) { _queue = queue; }
+       FileCompressWorker(BoundedConcurrentQueue<T>* queue) { _queue = queue; }
 
        ~FileCompressWorker() {}
 
        R run();
 
    private:
-       BoundedConcurrentQueue<T, R>* _queue;
+       BoundedConcurrentQueue<T>* _queue;
    };
 #endif
 

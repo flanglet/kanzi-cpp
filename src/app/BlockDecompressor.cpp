@@ -299,7 +299,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         if (doConcurrent) {
             vector<FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>*> workers;
             vector<future<FileDecompressResult> > results;
-            BoundedConcurrentQueue<FileDecompressTask<FileDecompressResult>*, FileDecompressResult> queue(nbFiles, &tasks[0]);
+            BoundedConcurrentQueue<FileDecompressTask<FileDecompressResult>*> queue(nbFiles, &tasks[0]);
 
             // Create one worker per job and run it. A worker calls several tasks sequentially.
             for (int i = 0; i < _jobs; i++) {

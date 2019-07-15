@@ -48,7 +48,7 @@ public:
 
 #ifdef CONCURRENCY_ENABLED
 
-	template<class T, class R>
+	template<class T>
 	class BoundedConcurrentQueue {
 	public:
 		BoundedConcurrentQueue(int nbItems, T* data) { _index = 0; _data = data; _size = nbItems; }
