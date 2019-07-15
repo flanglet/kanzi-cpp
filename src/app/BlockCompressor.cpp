@@ -370,7 +370,8 @@ int BlockCompressor::compress(uint64& outputSize)
         ss.str(string());
         ss << _jobs;
         ctx["jobs"] = ss.str();
-        FileCompressTask<FileCompressResult> task(Context(ctx), _listeners);
+        Context context(ctx);
+        FileCompressTask<FileCompressResult> task(context, _listeners);
         FileCompressResult fcr = task.run();
         res = fcr._code;
         read = fcr._read;

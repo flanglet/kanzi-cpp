@@ -251,7 +251,8 @@ int BlockDecompressor::decompress(uint64& inputSize)
         ss.str(string());
         ss << _jobs;
         ctx["jobs"] = ss.str();
-        FileDecompressTask<FileDecompressResult> task(Context(ctx), _listeners);
+        Context context(ctx);
+        FileDecompressTask<FileDecompressResult> task(context, _listeners);
         FileDecompressResult fdr = task.run();
         res = fdr._code;
         read = fdr._read;
@@ -280,7 +281,6 @@ int BlockDecompressor::decompress(uint64& inputSize)
             }
 
             Context taskCtx(ctx);
-
             taskCtx.putInt("fileSize", int(files[i]._size));
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
