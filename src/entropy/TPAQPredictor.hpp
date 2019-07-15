@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef _TPAQPredictor_
 #define _TPAQPredictor_
 
-#include <map>
+#include "../Context.hpp"
 #include "../Global.hpp"
 #include "../Predictor.hpp"
 #include "AdaptiveProbMap.hpp"
@@ -58,7 +58,7 @@ namespace kanzi
    class TPAQPredictor : public Predictor
    {
    public:
-       TPAQPredictor(map<string, string>* ctx = nullptr);
+       TPAQPredictor(Context* ctx = nullptr);
 
        ~TPAQPredictor();
 
@@ -274,7 +274,7 @@ namespace kanzi
    };
 
    template <bool T>
-   TPAQPredictor<T>::TPAQPredictor(map<string, string>* ctx)
+   TPAQPredictor<T>::TPAQPredictor(Context* ctx)
        : _sse0(256)
        , _sse1(65536)
    {
@@ -288,8 +288,7 @@ namespace kanzi
 
            // Block size requested by the user
            // The user can request a big block size to force more states
-           string strRBSZ = (*ctx)["blockSize"];
-           const int rbsz = atoi(strRBSZ.c_str());
+           const int rbsz = ctx->getInt("blockSize");
 
            if (rbsz >= 64 * 1024 * 1024)
                statesSize = 1 << 29;
@@ -301,8 +300,7 @@ namespace kanzi
            // Actual size of the current block
            // Too many mixers hurts compression for small blocks.
            // Too few mixers hurts compression for big blocks.
-           string strABSZ = (*ctx)["size"];
-           const int absz = atoi(strABSZ.c_str());
+           const int absz = ctx->getInt("size");
 
            if (absz >= 16 * 1024 * 1024)
                mixersSize = 1 << 16;

@@ -18,15 +18,9 @@ limitations under the License.
 
 using namespace kanzi;
 
-BWTBlockCodec::BWTBlockCodec(map<string, string>& ctx)
+BWTBlockCodec::BWTBlockCodec(Context& ctx)
 { 
-	int jobs = 1;
-	map<string, string>::iterator it = ctx.find("jobs");
-
-	if (it != ctx.end()) {
-		jobs = atoi(it->second.c_str());
-	}
-
+	int jobs = ctx.getInt("jobs", 1);
 	_pBWT = new BWT(jobs);
 }
 

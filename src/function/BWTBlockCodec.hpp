@@ -16,9 +16,9 @@ limitations under the License.
 #ifndef _BWTBlockCodec_
 #define _BWTBlockCodec_
 
-#include <map>
 #include <string>
 #include "../transform/BWT.hpp"
+#include "../Context.hpp"
 #include "../Function.hpp"
 
 using namespace std;
@@ -40,7 +40,7 @@ namespace kanzi {
 
    class BWTBlockCodec : public Function<byte> {
    public:
-       BWTBlockCodec(map<string, string>&);
+       BWTBlockCodec(Context& ctx);
 
        ~BWTBlockCodec() { delete _pBWT; }
 

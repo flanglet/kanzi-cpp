@@ -16,9 +16,9 @@ limitations under the License.
 #ifndef _BlockDecompressor_
 #define _BlockDecompressor_
 
-#include <map>
 #include <vector>
 #include "../concurrent.hpp"
+#include "../Context.hpp"
 #include "../OutputStream.hpp"
 #include "../Listener.hpp"
 #include "../io/CompressedInputStream.hpp"
@@ -67,7 +67,7 @@ namespace kanzi {
    public:
        static const int DEFAULT_BUFFER_SIZE = 65536;
 
-       FileDecompressTask(map<string, string>& ctx, vector<Listener*>& listeners);
+       FileDecompressTask(Context& ctx, vector<Listener*>& listeners);
 
        ~FileDecompressTask();
 
@@ -76,7 +76,7 @@ namespace kanzi {
        void dispose();
 
    private:
-       map<string, string> _ctx;
+       Context _ctx;
        OutputStream* _os;
        CompressedInputStream* _cis;
        vector<Listener*> _listeners;

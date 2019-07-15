@@ -90,14 +90,12 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
         _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
 }
 
-CompressedOutputStream::CompressedOutputStream(OutputStream& os, map<string, string>& ctx)
+CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     : OutputStream(os.rdbuf())
     , _os(os)
     , _ctx(ctx)
 {
-    map<string, string>::iterator it;
-    it = ctx.find("jobs");
-    int tasks = atoi(it->second.c_str());
+    int tasks = ctx.getInt("jobs");
 
 #ifdef CONCURRENCY_ENABLED
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
@@ -110,12 +108,9 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, map<string, str
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
-    it = ctx.find("codec");
-    string entropyCodec = it->second.c_str();
-    it = ctx.find("transform");
-    string transform = it->second.c_str();
-    it = ctx.find("blockSize");
-    int bSize = atoi(it->second.c_str());
+    string entropyCodec = ctx.getString("codec");
+    string transform = ctx.getString("transform");
+    int bSize = ctx.getInt("blockSize");
 
     if (bSize > MAX_BITSTREAM_BLOCK_SIZE) {
         std::stringstream ss;
@@ -145,8 +140,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, map<string, str
     // This value is written to the bitstream header to let the decoder make
     // better decisions about memory usage and job allocation in concurrent
     // decompression scenario.
-    it = ctx.find("fileSize");
-    int64 fileSize = (it == ctx.end()) ? 0 : atoi(it->second.c_str());
+    int64 fileSize = ctx.has("fileSize") ? ctx.getInt("fileSize") : 0;
     int nbBlocks = int(fileSize + (bSize - 1)) / bSize;
     _nbInputBlocks = (nbBlocks > 63) ? 63 : nbBlocks;
 
@@ -155,8 +149,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, map<string, str
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
     _entropyType = EntropyCodecFactory::getType(entropyCodec.c_str());
     _transformType = FunctionFactory<byte>::getType(transform.c_str());
-    it = ctx.find("checksum");
-    string str = it->second;
+    string str = ctx.getString("checksum");
     bool checksum = str == "TRUE";
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _jobs = tasks;
@@ -373,7 +366,7 @@ void CompressedOutputStream::processBlock(bool force) THROW
             if (sz == 0)
                 break;
 
-            map<string, string> copyCtx(_ctx);
+            Context copyCtx(_ctx);
             _buffers[2 * jobId]->_index = 0;
             _buffers[2 * jobId + 1]->_index = 0;
 
@@ -470,7 +463,7 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     uint64 transformType, uint32 entropyType, int blockId,
     OutputBitStream* obs, XXHash32* hasher,
     atomic_int* processedBlockId, vector<Listener*>& listeners,
-    map<string, string>& ctx)
+    Context& ctx)
     : _ctx(ctx)
 {
     _data = iBuffer;
@@ -522,16 +515,14 @@ T EncodingTask<T>::run() THROW
             mode |= CompressedOutputStream::COPY_BLOCK_MASK;
         }
         else {
-            map<string, string>::iterator it = _ctx.find("skipBlocks");
-
-            if (it != _ctx.end()) {
-                string str = it->second;
+            if (_ctx.has("skipBlocks")) {
+                string str = _ctx.getString("skipBlocks");
                 transform(str.begin(), str.end(), str.begin(), ::toupper);
 
                 if (str == "TRUE") {
                    uint histo[256];
                    const int entropy = EntropyUtils::computeFirstOrderEntropy1024(&_data->_array[_data->_index], _blockLength, histo);
-                   //_ctx["histo0"] = toString(histo, 256);
+                   //_ctx.putString("histo0", toString(histo, 256));
 
                    if (entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD) {
                        _transformType = FunctionFactory<byte>::NONE_TYPE;
@@ -542,9 +533,7 @@ T EncodingTask<T>::run() THROW
             }
         }
 
-        stringstream ss;
-        ss << _blockLength;
-        _ctx["size"] = ss.str();
+        _ctx.putInt("size", _blockLength);
         TransformSequence<byte>* transform = FunctionFactory<byte>::newFunction(_ctx, _transformType);
         int requiredSize = transform->getMaxEncodedLength(_blockLength);
 
@@ -563,9 +552,7 @@ T EncodingTask<T>::run() THROW
         if (postTransformLength < 0)
             return T(_blockId, Error::ERR_WRITE_FILE, "Invalid transform size");
 
-        ss.str(string());
-        ss << postTransformLength;
-        _ctx["size"] = ss.str();
+        _ctx.putInt("size", postTransformLength);
         int dataSize = 0;
 
         for (uint64 n = 0xFF; n < uint64(postTransformLength); n <<= 8)

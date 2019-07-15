@@ -16,7 +16,7 @@ limitations under the License.
 #ifndef _ROLZCodec_
 #define _ROLZCodec_
 
-#include <map>
+#include "../Context.hpp"
 #include "../Function.hpp"
 #include "../Memory.hpp"
 #include "../Predictor.hpp"
@@ -177,7 +177,7 @@ namespace kanzi {
 	public:
 		ROLZCodec(uint logPosChecks = LOG_POS_CHECKS2) THROW;
 
-		ROLZCodec(map<string, string>& ctx) THROW;
+		ROLZCodec(Context& ctx) THROW;
 
 		virtual ~ROLZCodec()
 		{

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cstring>
 #include "../types.hpp"
+#include "../Context.hpp"
 #include "../transform/BWT.hpp"
 #include "../transform/BWTS.hpp"
 #include "../transform/SBRT.hpp"
@@ -49,7 +50,7 @@ namespace kanzi {
 
 		static string getName(uint64 functionType) THROW;
 
-		static TransformSequence<T>* newFunction(map<string, string>& ctx, uint64 functionType) THROW;
+		static TransformSequence<T>* newFunction(Context& ctx, uint64 functionType) THROW;
 
 	private:
 		FunctionFactory() {}
@@ -60,7 +61,7 @@ namespace kanzi {
 		static const int MAX_SHIFT = (8 - 1) * ONE_SHIFT; // 8 transforms
 		static const int MASK = (1 << ONE_SHIFT) - 1;
 
-		static Transform<T>* newFunctionToken(map<string, string>& ctx, uint64 functionType) THROW;
+		static Transform<T>* newFunctionToken(Context& ctx, uint64 functionType) THROW;
 
 		static const char* getNameToken(uint64 functionType) THROW;
 	};
@@ -157,7 +158,7 @@ namespace kanzi {
 	}
 
 	template <class T>
-	TransformSequence<T>* FunctionFactory<T>::newFunction(map<string, string>& ctx, uint64 functionType) THROW
+	TransformSequence<T>* FunctionFactory<T>::newFunction(Context& ctx, uint64 functionType) THROW
 	{
 		Transform<T>* transforms[8];
 		int nbtr = 0;
@@ -174,14 +175,14 @@ namespace kanzi {
 	}
 
 	template <class T>
-	Transform<T>* FunctionFactory<T>::newFunctionToken(map<string, string>& ctx, uint64 functionType) THROW
+	Transform<T>* FunctionFactory<T>::newFunctionToken(Context& ctx, uint64 functionType) THROW
 	{
 		switch (functionType) {
 		case DICT_TYPE: {
 			string textCodecType = "1";
          
-			if (ctx.find("codec") != ctx.end()) {			
-				string entropyType = ctx["codec"];
+			if (ctx.has("codec")) {			
+				string entropyType = ctx.getString("codec");
 				transform(entropyType.begin(), entropyType.end(), entropyType.begin(), ::toupper);
             
 				// Select text encoding based on entropy codec.
@@ -190,7 +191,7 @@ namespace kanzi {
 				    textCodecType = "2";
 			}
          
-			ctx["textcodec"] = textCodecType;
+			ctx.putString("textcodec", textCodecType);
 			return new TextCodec(ctx);
 		}
 

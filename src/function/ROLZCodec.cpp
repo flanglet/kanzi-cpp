@@ -31,13 +31,9 @@ ROLZCodec::ROLZCodec(uint logPosChecks) THROW
     _delegate = new ROLZCodec1(logPosChecks);
 }
 
-ROLZCodec::ROLZCodec(map<string, string>& ctx) THROW
+ROLZCodec::ROLZCodec(Context& ctx) THROW
 {
-    string transform = "NONE";
-
-    if (ctx.find("transform") != ctx.end()) {
-        transform = ctx["transform"];
-    }
+    string transform = ctx.getString("transform", "NONE");
 
     _delegate = (transform.find("ROLZX") != string::npos) ? (Function<byte>*) new ROLZCodec2(LOG_POS_CHECKS2) : 
        (Function<byte>*) new ROLZCodec1(LOG_POS_CHECKS1);

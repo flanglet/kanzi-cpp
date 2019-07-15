@@ -251,7 +251,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         ss.str(string());
         ss << _jobs;
         ctx["jobs"] = ss.str();
-        FileDecompressTask<FileDecompressResult> task(ctx, _listeners);
+        FileDecompressTask<FileDecompressResult> task(Context(ctx), _listeners);
         FileDecompressResult fdr = task.run();
         res = fdr._code;
         read = fdr._read;
@@ -279,15 +279,12 @@ int BlockDecompressor::decompress(uint64& inputSize)
                 oName = formattedOutName + iName.substr(formattedInName.size()) + ".bak";
             }
 
-            map<string, string> taskCtx(ctx);
-            ss.str(string());
-            ss << files[i]._size;
-            taskCtx["fileSize"] = ss.str();
-            taskCtx["inputName"] = iName;
-            taskCtx["outputName"] = oName;
-            ss.str(string());
-            ss << jobsPerTask[n++];
-            taskCtx["jobs"] = ss.str();
+            Context taskCtx(ctx);
+
+            taskCtx.putInt("fileSize", int(files[i]._size));
+            taskCtx.putString("inputName", iName);
+            taskCtx.putString("outputName", oName);
+            taskCtx.putInt("jobs", jobsPerTask[n++]);
             ss.str(string());
             FileDecompressTask<FileDecompressResult>* task = new FileDecompressTask<FileDecompressResult>(taskCtx, _listeners);
             tasks.push_back(task);
@@ -401,7 +398,7 @@ void BlockDecompressor::notifyListeners(vector<Listener*>& listeners, const Even
 }
 
 template <class T>
-FileDecompressTask<T>::FileDecompressTask(map<string, string>& ctx, vector<Listener*>& listeners)
+FileDecompressTask<T>::FileDecompressTask(Context& ctx, vector<Listener*>& listeners)
     : _ctx(ctx)
 {
     _listeners = listeners;
@@ -434,13 +431,9 @@ template <class T>
 T FileDecompressTask<T>::run()
 {
     Printer log(&cout);
-    map<string, string>::iterator it;
-    it = _ctx.find("verbosity");
-    int verbosity = atoi(it->second.c_str());
-    it = _ctx.find("inputName");
-    string inputName = it->second.c_str();
-    it = _ctx.find("outputName");
-    string outputName = it->second.c_str();
+    int verbosity = _ctx.getInt("verbosity");
+    string inputName = _ctx.getString("inputName");
+    string outputName = _ctx.getString("outputName");
     bool printFlag = verbosity > 2;
     stringstream ss;
     ss << "Input file name set to '" << inputName << "'";
@@ -449,8 +442,7 @@ T FileDecompressTask<T>::run()
     ss << "Output file name set to '" << outputName << "'";
     log.println(ss.str().c_str(), printFlag);
     ss.str(string());
-    it = _ctx.find("overwrite");
-    string strOverwrite = it->second.c_str();
+    string strOverwrite = _ctx.getString("overwrite");
     bool overwrite = strOverwrite.compare(0, 4, "TRUE") == 0;
 
     int64 read = 0;

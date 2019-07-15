@@ -17,6 +17,7 @@ limitations under the License.
 #define _EntropyCodecFactory_
 
 #include <algorithm>
+#include "../Context.hpp"
 #include "ANSRangeDecoder.hpp"
 #include "ANSRangeEncoder.hpp"
 #include "BinaryEntropyDecoder.hpp"
@@ -52,16 +53,16 @@ namespace kanzi {
        static const short ANS1_TYPE = 8; // Asymmetric Numerical System order 1
        static const short TPAQX_TYPE = 9; // Tangelo PAQ Extra
 
-       static EntropyDecoder* newDecoder(InputBitStream& ibs, map<string, string>& ctx, short entropyType) THROW;
+       static EntropyDecoder* newDecoder(InputBitStream& ibs, Context& ctx, short entropyType) THROW;
 
-       static EntropyEncoder* newEncoder(OutputBitStream& obs, map<string, string>& ctx, short entropyType) THROW;
+       static EntropyEncoder* newEncoder(OutputBitStream& obs, Context& ctx, short entropyType) THROW;
 
        static const char* getName(short entropyType) THROW;
 
        static short getType(const char* name) THROW;
    };
 
-   inline EntropyDecoder* EntropyCodecFactory::newDecoder(InputBitStream& ibs, map<string, string>& ctx, short entropyType) THROW
+   inline EntropyDecoder* EntropyCodecFactory::newDecoder(InputBitStream& ibs, Context& ctx, short entropyType) THROW
    {
        switch (entropyType) {
        // Each block is decoded separately
@@ -100,7 +101,7 @@ namespace kanzi {
        }
    }
 
-   inline EntropyEncoder* EntropyCodecFactory::newEncoder(OutputBitStream& obs, map<string, string>& ctx, short entropyType) THROW
+   inline EntropyEncoder* EntropyCodecFactory::newEncoder(OutputBitStream& obs, Context& ctx, short entropyType) THROW
    {
        switch (entropyType) {
        case HUFFMAN_TYPE:

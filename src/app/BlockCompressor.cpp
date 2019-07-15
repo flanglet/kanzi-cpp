@@ -370,7 +370,7 @@ int BlockCompressor::compress(uint64& outputSize)
         ss.str(string());
         ss << _jobs;
         ctx["jobs"] = ss.str();
-        FileCompressTask<FileCompressResult> task(ctx, _listeners);
+        FileCompressTask<FileCompressResult> task(Context(ctx), _listeners);
         FileCompressResult fcr = task.run();
         res = fcr._code;
         read = fcr._read;
@@ -399,15 +399,11 @@ int BlockCompressor::compress(uint64& outputSize)
                 oName = formattedOutName + iName.substr(formattedInName.size()) + ".knz";
             }
 
-            map<string, string> taskCtx(ctx);
-            ss.str(string());
-            ss << files[i]._size;
-            taskCtx["fileSize"] = ss.str();
-            taskCtx["inputName"] = iName;
-            taskCtx["outputName"] = oName;
-            ss.str(string());
-            ss << jobsPerTask[n++];
-            taskCtx["jobs"] = ss.str();
+            Context taskCtx(ctx);
+            taskCtx.putInt("fileSize", int(files[i]._size));
+            taskCtx.putString("inputName", iName);
+            taskCtx.putString("outputName", oName);
+            taskCtx.putInt("jobs", jobsPerTask[n++]);
             ss.str(string());
             FileCompressTask<FileCompressResult>* task = new FileCompressTask<FileCompressResult>(taskCtx, _listeners);
             tasks.push_back(task);
@@ -582,7 +578,7 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
 }
 
 template <class T>
-FileCompressTask<T>::FileCompressTask(map<string, string>& ctx, vector<Listener*>& listeners)
+FileCompressTask<T>::FileCompressTask(Context& ctx, vector<Listener*>& listeners)
     : _ctx(ctx)
 {
     _listeners = listeners;
@@ -594,13 +590,9 @@ template <class T>
 T FileCompressTask<T>::run()
 {
     Printer log(&cout);
-    map<string, string>::iterator it;
-    it = _ctx.find("verbosity");
-    int verbosity = atoi(it->second.c_str());
-    it = _ctx.find("inputName");
-    string inputName = it->second.c_str();
-    it = _ctx.find("outputName");
-    string outputName = it->second.c_str();
+    int verbosity = _ctx.getInt("verbosity");
+    string inputName = _ctx.getString("inputName");
+    string outputName = _ctx.getString("outputName");
     bool printFlag = verbosity > 2;
     stringstream ss;
     ss << "Input file name set to '" << inputName << "'";
@@ -609,8 +601,7 @@ T FileCompressTask<T>::run()
     ss << "Output file name set to '" << outputName << "'";
     log.println(ss.str().c_str(), printFlag);
     ss.str(string());
-    it = _ctx.find("overwrite");
-    string strOverwrite = it->second.c_str();
+    string strOverwrite = _ctx.getString("overwrite");
     bool overwrite = strOverwrite.compare(0, 4, "TRUE") == 0;
 
     OutputStream* os = nullptr;

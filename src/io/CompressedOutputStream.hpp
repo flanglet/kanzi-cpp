@@ -16,10 +16,11 @@ limitations under the License.
 #ifndef _CompressedOutputStream_
 #define _CompressedOutputStream_
 
-#include <map>
+
 #include <string>
 #include <vector>
 #include "../concurrent.hpp"
+#include "../Context.hpp"
 #include "../Listener.hpp"
 #include "../OutputStream.hpp"
 #include "../OutputBitStream.hpp"
@@ -74,14 +75,14 @@ namespace kanzi {
        XXHash32* _hasher;
        atomic_int* _processedBlockId;
        vector<Listener*> _listeners;
-       map<string, string> _ctx;
+       Context _ctx;
 
    public:
        EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int length,
            uint64 transformType, uint32 entropyType, int blockId,
            OutputBitStream* obs, XXHash32* hasher,
            atomic_int* processedBlockId, vector<Listener*>& listeners,
-           map<string, string>& ctx);
+           Context& ctx);
 
        ~EncodingTask(){};
 
@@ -116,7 +117,7 @@ namespace kanzi {
        atomic_int _blockId;
        int _jobs;
        vector<Listener*> _listeners;
-       map<string, string> _ctx;
+       Context _ctx;
 
        void writeHeader() THROW;
 
@@ -127,7 +128,7 @@ namespace kanzi {
    public:
        CompressedOutputStream(OutputStream& os, const string& codec, const string& transform, int blockSize, int jobs, bool checksum);
        
-       CompressedOutputStream(OutputStream& os, map<string, string>& ctx);
+       CompressedOutputStream(OutputStream& os, Context& ctx);
 
        ~CompressedOutputStream();
 

@@ -771,15 +771,9 @@ TextCodec::TextCodec()
 	_delegate = new TextCodec1();
 }
 
-TextCodec::TextCodec(map<string, string>& ctx)
+TextCodec::TextCodec(Context& ctx)
 {
-	int encodingType = 1;
-
-	if (ctx.find("textcodec") != ctx.end()) {
-		string strType = ctx["textcodec"];
-		encodingType = atoi(strType.c_str());
-	}
-
+	int encodingType = ctx.getInt("textcodec", 1);
 	_delegate = (encodingType == 1) ? (Function<byte>*) new TextCodec1(ctx) : (Function<byte>*) new TextCodec2(ctx);
 }
 
@@ -854,15 +848,14 @@ TextCodec1::TextCodec1()
 	_isCRLF = false;
 }
 
-TextCodec1::TextCodec1(map<string, string>& ctx)
+TextCodec1::TextCodec1(Context& ctx)
 {
 	// Actual block size
 	int blockSize = 0;
 	int log = 13;
-	map<string, string>::iterator it = ctx.find("size");
 
-	if (it != ctx.end()) {
-		blockSize = atoi(it->second.c_str());
+	if (ctx.has("size")) {
+		blockSize = ctx.getInt("size");
 		
 		if (blockSize >= 4)		
 			log = max(min(Global::log2(blockSize / 4), 26), 13);
@@ -878,8 +871,8 @@ TextCodec1::TextCodec1(map<string, string>& ctx)
 
 	uint extraMem = 0;
 
-	if (ctx.find("extra") != ctx.end()) {
-		string strExtra = ctx["extra"];
+	if (ctx.has("extra")) {
+		string strExtra = ctx.getString("extra");
 		extraMem = (strExtra.compare(0, 5, "TRUE") == 0) ? 1 : 0;
 	}
 
@@ -1311,15 +1304,14 @@ TextCodec2::TextCodec2()
 	_isCRLF = false;
 }
 
-TextCodec2::TextCodec2(map<string, string>& ctx)
+TextCodec2::TextCodec2(Context& ctx)
 {
 	// Actual block size
 	int blockSize = 0;
 	int log = 13;
-	map<string, string>::iterator it = ctx.find("size");
 
-	if (it != ctx.end()) {
-		blockSize = atoi(it->second.c_str());
+	if (ctx.has("size")) {
+		blockSize = ctx.getInt("size");
 		
 		if (blockSize >= 4)
 			log = max(min(Global::log2(blockSize / 4), 26), 13);
@@ -1335,8 +1327,8 @@ TextCodec2::TextCodec2(map<string, string>& ctx)
 
 	uint extraMem = 0;
 
-	if (ctx.find("extra") != ctx.end()) {
-		string strExtra = ctx["extra"];
+	if (ctx.has("extra")) {
+		string strExtra = ctx.getString("extra");
 		extraMem = (strExtra.compare(0, 5, "TRUE") == 0) ? 1 : 0;
 	}
 
