@@ -73,6 +73,7 @@ bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     if (count > MIN_LENGTH) {
         if (_bufferSize < (1 << hashLog)) {
             _bufferSize = 1 << hashLog;
+            delete[] _buffer;
             _buffer = new int[_bufferSize];
         } 
 
