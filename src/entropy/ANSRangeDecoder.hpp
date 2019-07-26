@@ -49,7 +49,7 @@ namespace kanzi
 
    class ANSRangeDecoder : public EntropyDecoder {
    public:
-	   static const int ANS_TOP = 1 << 15;
+	   static const int ANS_TOP = 1 << 15; // max possible for ANS_TOP=1<23
 
 	   ANSRangeDecoder(InputBitStream& bitstream, int order = 0, int chunkSize = -1) THROW;
 
@@ -63,7 +63,7 @@ namespace kanzi
 
    private:
 	   static const int DEFAULT_ANS0_CHUNK_SIZE = 1 << 15; // 32 KB by default
-	   static const int DEFAULT_LOG_RANGE = 13;
+	   static const int DEFAULT_LOG_RANGE = 12;
 	   static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
 
 	   InputBitStream& _bitstream;
