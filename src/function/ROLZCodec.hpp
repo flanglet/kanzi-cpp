@@ -40,10 +40,7 @@ namespace kanzi {
 	public:
 		ROLZPredictor(uint logMaxSymbolSize);
 
-		~ROLZPredictor()
-		{
-			delete[] _probs;
-		};
+		~ROLZPredictor() { delete[] _probs; }
 
 		void reset();
 
@@ -179,10 +176,7 @@ namespace kanzi {
 
 		ROLZCodec(Context& ctx) THROW;
 
-		virtual ~ROLZCodec()
-		{
-		   delete _delegate;
-		}
+		virtual ~ROLZCodec() { delete _delegate; }
 
 		bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
@@ -203,7 +197,7 @@ namespace kanzi {
 		static const int CHUNK_SIZE = 1 << 26; // 64 MB
 		static const int32 HASH = 200002979;
 		static const int32 HASH_MASK = ~(CHUNK_SIZE - 1);
-		static const int MAX_BLOCK_SIZE = 1 << 27; // 128 MB
+		static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB
 
 		Function<byte>* _delegate;
 

@@ -84,9 +84,9 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
         stringstream ss;
         ss << "The max ROLZ codec block size is " << MAX_BLOCK_SIZE << ", got " << count;
         throw invalid_argument(ss.str());
-	}
+    }
 
-	return _delegate->inverse(input, output, count);
+    return _delegate->inverse(input, output, count);
 }
 
 ROLZCodec1::ROLZCodec1(uint logPosChecks) THROW
