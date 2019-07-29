@@ -46,7 +46,7 @@ namespace kanzi
        }
 
    private:
-      static const uint LZ_HASH_SEED      = 0x9E3779B1;
+      static const uint LZ_HASH_SEED      = 0x7FEB352D;
       static const uint HASH_LOG_SMALL    = 12;
       static const uint HASH_LOG_BIG      = 16;
       static const int MAX_DISTANCE       = (1 << 16) - 1;
@@ -61,8 +61,7 @@ namespace kanzi
       static const int COPY_LENGTH        = 8;
       static const int MIN_LENGTH         = 14;
       static const int MAX_LENGTH         = (32*1024*1024) - 4 - MIN_MATCH;
-      static const int SKIP_TRIGGER       = 6;
-      static const int SEARCH_MATCH_NB    = 1 << SKIP_TRIGGER;
+      static const int SEARCH_MATCH_NB    = 1 << 6;
 
       int* _buffer;
       int _bufferSize;
