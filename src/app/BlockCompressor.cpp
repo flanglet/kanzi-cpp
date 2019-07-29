@@ -352,7 +352,7 @@ int BlockCompressor::compress(uint64& outputSize)
         string iName = "STDIN";
         
         if (isStdIn == false) {
-           iName = files[0]._path;
+           iName = files[0]._fullPath;
            ss.str(string());
            ss << files[0]._size;
            ctx["fileSize"] = ss.str();
@@ -386,12 +386,12 @@ int BlockCompressor::compress(uint64& outputSize)
         int* jobsPerTask = new int[nbFiles];
         Global::computeJobsPerTask(jobsPerTask, _jobs, nbFiles);
         int n = 0;
-        sort(files.begin(), files.end());
+        sortFilesByPathAndSize(files, false);
 
         // Create one task per file
         for (int i = 0; i < nbFiles; i++) {
             string oName = formattedOutName;
-            string iName = files[i]._path;
+            string iName = files[i]._fullPath;
 
             if (oName.length() == 0) {
                 oName = iName + ".knz";

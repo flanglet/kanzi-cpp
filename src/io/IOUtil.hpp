@@ -33,15 +33,25 @@ using namespace std;
 
 class FileData {
    public:
+      string _fullPath;
       string _path;
+      string _name;
       int64 _size;
 
-      FileData(string& path, int64 size) : _path(path), _size(size) { }
-      ~FileData() {}
-      
-      bool operator < (const FileData& other) const {
-        return _path < other._path;
+      FileData(string& path, int64 size) : _fullPath(path), _size(size) 
+      { 
+         int idx = _fullPath.find_last_of(PATH_SEPARATOR);
+
+         if (idx > 0) {
+            _path = _fullPath.substr(0, idx+1);
+            _name = _fullPath.substr(idx+1);
+         } else {
+            _path = "";
+            _name = _fullPath;
+         }
       }
+
+      ~FileData() {}
 };
 
 
@@ -117,6 +127,34 @@ static void createFileList(string& target, vector<FileData>& files) THROW
         ss << "Cannot read directory '" << target << "'";
         throw IOException(ss.str(), Error::ERR_READ_FILE);
     }
+}
+
+
+struct FileDataComparator
+{
+    bool _sortBySize;
+
+    bool operator() (FileData f1, FileData f2) 
+    { 
+        if (_sortBySize == false)
+           return f1._fullPath < f2._fullPath;
+
+        // First, check parent directory path
+        int res = f1._path < f2._path;
+
+        if (res != 0)
+           return res < 0;
+
+        // Then check file size
+        return f1._size < f2._size;
+    }
+};
+
+
+static void sortFilesByPathAndSize(vector<FileData>& files, bool sortBySize=false)
+{
+    FileDataComparator c = { sortBySize };
+    sort(files.begin(), files.end(), c);
 }
 
 

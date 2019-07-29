@@ -234,7 +234,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     // Run the task(s)
     if (nbFiles == 1) {
         string oName = formattedOutName;
-        string iName = files[0]._path;
+        string iName = files[0]._fullPath;
 
         if (oName.length() == 0) {
             oName = iName + ".bak";
@@ -266,12 +266,12 @@ int BlockDecompressor::decompress(uint64& inputSize)
         int* jobsPerTask = new int[nbFiles];
         Global::computeJobsPerTask(jobsPerTask, _jobs, nbFiles);
         int n = 0;
-        sort(files.begin(), files.end());
+        sortFilesByPathAndSize(files, false);
 
         //  Create one task per file
         for (int i = 0; i < nbFiles; i++) {
             string oName = formattedOutName;
-            string iName = files[i]._path;
+            string iName = files[i]._fullPath;
 
             if (oName.length() == 0) {
                 oName = iName + ".bak";
