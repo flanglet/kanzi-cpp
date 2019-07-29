@@ -302,7 +302,10 @@ namespace kanzi
            // Too few mixers hurts compression for big blocks.
            const int absz = ctx->getInt("size");
 
-           if (absz >= 16 * 1024 * 1024)
+
+           if (absz >= 32 * 1024 * 1024)
+               mixersSize = 1 << 17;
+           else if (absz >= 16 * 1024 * 1024)
                mixersSize = 1 << 16;
            else if (absz >= 8 * 1024 * 1024)
                mixersSize = 1 << 14;
@@ -310,6 +313,7 @@ namespace kanzi
                mixersSize = 1 << 12;
            else
                mixersSize = (absz >= 1 * 1024 * 1024) ? 1 << 10 : 1 << 9;
+
        }
 
        mixersSize <<= extraMem;
@@ -391,17 +395,24 @@ namespace kanzi
 
            if (_binCount < (_pos >> 2)) {
                // Mostly text or mixed
-               const int h1 = ((_c4 & MASK_80808080) == 0) ? _c4 & MASK_4F4FFFFF : _c4 & MASK_80808080;
-               const int h2 = ((_c8 & MASK_80808080) == 0) ? _c8 & MASK_4F4FFFFF : _c8 & MASK_80808080;
                _ctx4 = createContext(_ctx1, _c4 ^ (_c8 & 0xFFFF));
                _ctx5 = (_c8 & MASK_F0F0F000) | ((_c4 & MASK_F0F0F000) >> 4);
-               _ctx6 = hash(h1 << 4, h2);
+
+               if (T == true) {
+                  const int h1 = ((_c4 & MASK_80808080) == 0) ? _c4 & MASK_4F4FFFFF : _c4 & MASK_80808080;
+                  const int h2 = ((_c8 & MASK_80808080) == 0) ? _c8 & MASK_4F4FFFFF : _c8 & MASK_80808080;
+                  _ctx6 = hash(h1 << 2, h2 >> 2);
+               }
            }
            else {
                // Mostly binary
+               if (T == true) {
+                  _ctx6 = hash(_c4 & 0xFFFF0000, _c8 >> 16);
+               }
+
                _ctx4 = createContext(HASH, _c4 ^ (_c4 & 0x000FFFFF));
                _ctx5 = _ctx0 | (_c8 << 16);
-               _ctx6 = hash(_c4 & 0xFFFF0000, _c8 >> 16);
+
            }
 
            findMatch();
@@ -446,7 +457,7 @@ namespace kanzi
 
        if (T == false) {
           // Mix predictions using NN
-          p = _mixer->get(p0, p1, p2, p3, p4, p5, (p2 + p7) >> 1, p7);
+          p = _mixer->get(p0, p1, p2, p3, p4, p5, p7, p7);
 
           // SSE (Secondary Symbol Estimation)
           if (_binCount < (_pos >> 3)) {
