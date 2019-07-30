@@ -54,11 +54,14 @@ struct FreqDataComparator {
 };
 
 // alphabet must be sorted in increasing order
-// length = alphabet array length
+// length = alphabet array length up to 256
 int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int length, int count)
 {
     // Alphabet length must be a power of 2
     if ((length & (length - 1)) != 0)
+        return -1;
+
+    if (count > 256)
         return -1;
 
     if (count > length)
@@ -79,7 +82,7 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
 
             // Write alphabet size
             obs.writeBit(ALPHABET_NOT_256);
-            obs.writeBits(log - 1, 5);
+            obs.writeBits(log - 1, 3);
             obs.writeBits(count, log);
         }
 
@@ -96,14 +99,15 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
         for (int i = 0; i < count; i++)
             masks[alphabet[i] >> 6] |= ((uint64(1)) << (alphabet[i] & 63));
 
-        for (int i = 0; i < 4; i++)
-            obs.writeBits(masks[i], 64);
-
+        obs.writeBits(masks[0], 64);
+        obs.writeBits(masks[1], 64);
+        obs.writeBits(masks[2], 64);
+        obs.writeBits(masks[3], 64);
         return count;
     }
 
     obs.writeBit(DELTA_ENCODED_ALPHABET);
-    int32* diffs = new int32[count];
+    int32 diffs[256];
 
     if (length - count < count) {
         // Encode all missing symbols
@@ -114,13 +118,11 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
             log++;
 
         // Write length
-        obs.writeBits(log - 1, 4);
+        obs.writeBits(log - 1, 3);
         obs.writeBits(count, log);
 
-        if (count == 0) {
-            delete[] diffs;
+        if (count == 0)
             return 0;
-        }
 
         obs.writeBit(ABSENT_SYMBOLS_MASK);
         log = 1;
@@ -129,7 +131,7 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
             log++;
 
         // Write log(alphabet size)
-        obs.writeBits(log - 1, 5);
+        obs.writeBits(log - 1, 4);
         int32 symbol = 0;
         int32 previous = 0;
 
@@ -157,13 +159,11 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
             log++;
 
         // Write length
-        obs.writeBits(log - 1, 4);
+        obs.writeBits(log - 1, 3);
         obs.writeBits(count, log);
 
-        if (count == 0) {
-            delete[] diffs;
+        if (count == 0) 
             return 0;
-        }
 
         obs.writeBit(PRESENT_SYMBOLS_MASK);
         int32 previous = 0;
@@ -175,7 +175,7 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
         }
     }
 
-    const int ckSize = (count <= 64) ? 8 : 16;
+    const int ckSize = (count + 3) >> 2;
 
     // Encode all deltas by chunks
     for (int i = 0; i < count; i += ckSize) {
@@ -192,15 +192,13 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
         while (1 << log <= max)
             log++;
 
-        obs.writeBits(log - 1, 4);
+        obs.writeBits(log - 1, 3);
 
         // Write deltas for this chunk
         for (int j = i; (j < count) && (j < i + ckSize); j++)
-            // Encode size
             obs.writeBits(diffs[j], log);
     }
 
-    delete[] diffs;
     return count;
 }
 
@@ -215,7 +213,7 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
         if (ibs.readBit() == ALPHABET_256)
             alphabetSize = 256;
         else {
-            int log = 1 + int(ibs.readBits(5));
+            int log = 1 + int(ibs.readBits(3));
             alphabetSize = int(ibs.readBits(log));
         }
 
@@ -252,18 +250,18 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
     }
 
     // DELTA_ENCODED_ALPHABET
-    uint log = 1 + uint(ibs.readBits(4));
+    uint log = 1 + uint(ibs.readBits(3));
     count = int(ibs.readBits(log));
 
     if (count == 0)
         return 0;
 
-    const int ckSize = (count <= 64) ? 8 : 16;
+    const int ckSize = (count + 3) >> 2;
     int n = 0;
     int symbol = 0;
 
     if (ibs.readBit() == ABSENT_SYMBOLS_MASK) {
-        const int alphabetSize = 1 << int(ibs.readBits(5));
+        const int alphabetSize = 1 << int(ibs.readBits(4));
         
         if (alphabetSize > 256) {
             stringstream ss;
@@ -273,7 +271,7 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
 
         // Read missing symbols
         for (int i = 0; i < count; i += ckSize) {
-            log = 1 + uint(ibs.readBits(4));
+            log = 1 + uint(ibs.readBits(3));
 
             // Read deltas for this chunk
             for (int j = i; (j < count) && (j < i + ckSize); j++) {
@@ -296,7 +294,7 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
     else {
         // Read present symbols
         for (int i = 0; i < count; i += ckSize) {
-            log = 1 + int(ibs.readBits(4));
+            log = 1 + int(ibs.readBits(3));
 
             // Read deltas for this chunk
             for (int j = i; (j < count) && (j < i + ckSize); j++) {
