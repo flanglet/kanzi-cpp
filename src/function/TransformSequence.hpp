@@ -225,7 +225,7 @@ namespace kanzi
            Function<T>* f = dynamic_cast<Function<T>*>(_transforms[i]);
 
            if (f != nullptr) {
-               int reqSize = f->getMaxEncodedLength(srcLength);
+               const int reqSize = f->getMaxEncodedLength(requiredSize);
 
                if (reqSize > requiredSize)
                    requiredSize = reqSize;
