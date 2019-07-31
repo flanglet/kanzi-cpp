@@ -379,23 +379,23 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         while (dstIdx < sizeChunk) {
             int litLen, matchLen;
             readLengths(lenBuf, litLen, matchLen);
-            emitLiterals(litBuf, buf, dstIdx, output._index, litLen);
+            emitLiterals(litBuf, buf, dstIdx, litLen);
             litBuf._index += litLen;
             dstIdx += litLen;
 
-            if (dstIdx >= endChunk) {
+            if (dstIdx >= sizeChunk) {
                   // Last chunk literals not followed by match
-                  if (dstIdx == endChunk)
+                  if (dstIdx == sizeChunk)
                         break;
 
-                  output._index = dstIdx;
+                  output._index += dstIdx;
                   success = false;
                   goto End;
             }
 
             // Sanity check
-            if (dstIdx + matchLen + 3 > dstEnd) {
-                  output._index = dstIdx;
+            if (output._index + dstIdx + matchLen + 3 > dstEnd) {
+                  output._index += dstIdx;
                   success = false;
                   goto End;
             }
@@ -404,11 +404,11 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             prefetchRead(&_counters[key]);
             const int matchIdx = int(mIdxBuf._array[mIdxBuf._index++]) & 0xFF;
             int32* matches = &_matches[key << _logPosChecks];
-            const int32 ref = output._index + matches[(_counters[key] - matchIdx) & _maskChecks];
+            const int32 ref = matches[(_counters[key] - matchIdx) & _maskChecks];
             const int32 savedIdx = dstIdx;
             dstIdx = ROLZCodec::emitCopy(buf, dstIdx, ref, matchLen);
             _counters[key]++;
-            matches[_counters[key] & _maskChecks] = savedIdx - output._index;
+            matches[_counters[key] & _maskChecks] = savedIdx;
         }
 
         startChunk = endChunk;
@@ -468,26 +468,20 @@ void ROLZCodec1::readLengths(SliceArray<byte>& lenBuf, int& litLen, int& mLen)
 }
 
 
-int ROLZCodec1::emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx, int litLen)
+int ROLZCodec1::emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int litLen)
 {
    memcpy(&dst[dstIdx], &litBuf._array[litBuf._index], litLen);
-   const int n0 = dstIdx - startIdx;
 
    for (int n = 0; n < litLen; n++) {
       const uint32 key = ROLZCodec::getKey(&dst[dstIdx + n - 2]);
       int32* matches = &_matches[key << _logPosChecks];
       _counters[key]++;
-      matches[_counters[key] & _maskChecks] = n0 + n;
+      matches[_counters[key] & _maskChecks] = dstIdx + n;
    }
 
    return litLen;
 }
 
-
-int ROLZCodec1::getMaxEncodedLength(int srcLen) const 
-{
-   return (srcLen <= 512) ? srcLen + 64 : srcLen;
-}
 
 ROLZPredictor::ROLZPredictor(uint logPosChecks)
 {

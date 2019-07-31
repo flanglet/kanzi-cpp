@@ -119,7 +119,10 @@ namespace kanzi {
 		bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
 		// Required encoding output buffer size
-		int getMaxEncodedLength(int srcLen) const;
+		int getMaxEncodedLength(int srcLen) const
+		{
+		   return (srcLen <= 512) ? srcLen + 64 : srcLen;
+		}
 
 	private:
 		int32* _matches;
@@ -134,7 +137,7 @@ namespace kanzi {
 
 		void readLengths(SliceArray<byte>& lenBuf, int& litLen, int& mLen);
 
-		int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int startIdx, int litLen);
+		int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int litLen);
 	};
 
 	// Use CM (ROLZEncoder/ROLZDecoder) to encode/decode literals and matches
