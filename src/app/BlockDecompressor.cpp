@@ -120,7 +120,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     try {
         createFileList(_inputName, files);
     }
-    catch (exception& e) {
+    catch (IOException& e) {
         cerr << e.what() << endl;
         return Error::ERR_OPEN_FILE;
     }
