@@ -48,8 +48,8 @@ namespace kanzi {
 
        virtual ~TextCodec1()
        {
-           delete[] _dictList;
-           delete[] _dictMap;
+           if (_dictList != nullptr) delete[] _dictList;
+           if (_dictMap != nullptr) delete[] _dictMap;
        }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
@@ -85,8 +85,8 @@ namespace kanzi {
 
        virtual ~TextCodec2()
        {
-           delete[] _dictList;
-           delete[] _dictMap;
+           if (_dictList != nullptr) delete[] _dictList;
+           if (_dictMap != nullptr) delete[] _dictMap;
        }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);

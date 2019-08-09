@@ -749,8 +749,8 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 	}
 
 	// Check CR+LF matches
-        const int cr = int(CR);
-        const int lf = int(LF);
+	const int cr = int(CR);
+	const int lf = int(LF);
 
 	if ((freqs0[cr] != 0) && (freqs0[cr] == freqs0[lf])) {
 		res |= TextCodec::MASK_CRLF;
@@ -832,19 +832,10 @@ TextCodec1::TextCodec1()
 {
 	_logHashSize = TextCodec::LOG_HASHES_SIZE;
 	_dictSize = TextCodec::THRESHOLD2 * 4;
-	const int32 mapSize = 1 << _logHashSize;
-	_dictMap = new DictEntry*[mapSize];
-	_dictList = new DictEntry[_dictSize];
-	_hashMask = mapSize - 1;
-	int nbWords = TextCodec::STATIC_DICT_WORDS;
-	memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], TextCodec::STATIC_DICT_WORDS * sizeof(DictEntry));
-
-	// Add special entries at start of map
-	_escapes[0] = TextCodec::ESCAPE_TOKEN2;
-	_escapes[1] = TextCodec::ESCAPE_TOKEN1;
-	_dictList[nbWords] = DictEntry(&_escapes[0], 0, nbWords, 1);
-	_dictList[nbWords + 1] = DictEntry(&_escapes[1], 0, nbWords + 1, 1);
-	_staticDictSize = nbWords + 2;
+	_dictMap = nullptr;
+	_dictList = nullptr;
+	_hashMask = (1 << _logHashSize) - 1;
+	_staticDictSize = TextCodec::STATIC_DICT_WORDS;
 	_isCRLF = false;
 }
 
@@ -878,28 +869,34 @@ TextCodec1::TextCodec1(Context& ctx)
 
 	_logHashSize = log + extraMem;
 	_dictSize = dSize;
-	const int32 mapSize = 1 << _logHashSize;
-	_dictMap = new DictEntry*[mapSize];
-	_dictList = new DictEntry[_dictSize];
-	_hashMask = mapSize - 1;
-	int nbWords = TextCodec::STATIC_DICT_WORDS;
-	memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], TextCodec::STATIC_DICT_WORDS * sizeof(DictEntry));
-
-	// Add special entries at start of map
-	_escapes[0] = TextCodec::ESCAPE_TOKEN2;
-	_escapes[1] = TextCodec::ESCAPE_TOKEN1;
-	_dictList[nbWords] = DictEntry(&_escapes[0], 0, nbWords, 1);
-	_dictList[nbWords + 1] = DictEntry(&_escapes[1], 0, nbWords + 1, 1);
-	_staticDictSize = nbWords + 2;
+	_dictMap = nullptr;
+	_dictList = nullptr;
+	_hashMask = (1 << _logHashSize) - 1;
+	_staticDictSize = TextCodec::STATIC_DICT_WORDS;
 	_isCRLF = false;
 }
 
 void TextCodec1::reset() {
-	// Clear and populate hash map
-	const int32 mapSize = 1 << _logHashSize;
+	if (_dictMap == nullptr) {
+		_dictMap = new DictEntry*[1 << _logHashSize]; 
+	} else {
+		for (int i = 0; i < mapSize; i++)
+			_dictMap[i] = nullptr;
+	}
 
-	for (int i = 0; i < mapSize; i++)
-		_dictMap[i] = nullptr;
+	if (_dictList == nullptr) {
+		_dictList = new DictEntry[_dictSize];
+		const int nbEntries = min(TextCodec::STATIC_DICT_WORDS, _dictSize);
+		memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], nbEntries * sizeof(DictEntry));
+
+		// Add special entries at start of map
+		_escapes[0] = TextCodec::ESCAPE_TOKEN2;
+		_escapes[1] = TextCodec::ESCAPE_TOKEN1;
+		const int nbWords = TextCodec::STATIC_DICT_WORDS;
+		_dictList[nbWords] = DictEntry(&_escapes[0], 0, nbWords, 1);
+		_dictList[nbWords + 1] = DictEntry(&_escapes[1], 0, nbWords + 1, 1);
+		_staticDictSize = nbWords + 2;
+	}
 
 	for (int i = 0; i < _staticDictSize; i++)
 		_dictMap[_dictList[i]._hash & _hashMask] = &_dictList[i];
@@ -1295,11 +1292,9 @@ TextCodec2::TextCodec2()
 {
 	_logHashSize = TextCodec::LOG_HASHES_SIZE;
 	_dictSize = TextCodec::THRESHOLD2 * 4;
-	const int32 mapSize = 1 << _logHashSize;
-	_dictMap = new DictEntry*[mapSize];
-	_dictList = new DictEntry[_dictSize];
-	_hashMask = mapSize - 1;
-	memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], TextCodec::STATIC_DICT_WORDS * sizeof(DictEntry));
+	_dictMap = nullptr;
+	_dictList = nullptr;
+	_hashMask = (1 << _logHashSize) - 1;
 	_staticDictSize = TextCodec::STATIC_DICT_WORDS;
 	_isCRLF = false;
 }
@@ -1334,22 +1329,27 @@ TextCodec2::TextCodec2(Context& ctx)
 
 	_logHashSize = log + extraMem;
 	_dictSize = dSize;
-	const int32 mapSize = 1 << _logHashSize;
-	_dictMap = new DictEntry*[mapSize];
-	_dictList = new DictEntry[_dictSize];
-	_hashMask = mapSize - 1;
-	memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], TextCodec::STATIC_DICT_WORDS * sizeof(DictEntry));
+	_dictMap = nullptr;
+	_dictList = nullptr;
+	_hashMask = (1 << _logHashSize) - 1;
 	_staticDictSize = TextCodec::STATIC_DICT_WORDS;
 	_isCRLF = false;
 }
 
 
 void TextCodec2::reset() {
-	// Clear and populate hash map
-	const int32 mapSize = 1 << _logHashSize;
+	if (_dictMap == nullptr) {
+		_dictMap = new DictEntry*[1 << _logHashSize]; 
+	} else {
+		for (int i = 0; i < mapSize; i++)
+			_dictMap[i] = nullptr;
+	}
 
-	for (int i = 0; i < mapSize; i++)
-		_dictMap[i] = nullptr;
+	if (_dictList == nullptr) {
+		_dictList = new DictEntry[_dictSize];
+		const int nbEntries = min(TextCodec::STATIC_DICT_WORDS, _dictSize);
+		memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], nbEntries * sizeof(DictEntry));
+	}
 
 	for (int i = 0; i < _staticDictSize; i++)
 		_dictMap[_dictList[i]._hash & _hashMask] = &_dictList[i];
