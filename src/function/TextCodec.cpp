@@ -710,11 +710,7 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 		nbBinChars += freqs0[i];
 
 	// Not text (crude threshold)
-	if (4 * nbBinChars > count)
-		return TextCodec::MASK_NOT_TEXT;
-
-	// Not text (crude threshold)
-	if (16 * freqs0[32] < count)
+	if ((4 * nbBinChars > count) ||  (16 * freqs0[32] < count))
 		return TextCodec::MASK_NOT_TEXT;
 
 	byte res = byte(0);
@@ -881,7 +877,7 @@ void TextCodec1::reset() {
    
 	if (_dictMap == nullptr) {
 		_dictMap = new DictEntry*[mapSize]; 
-	} else {
+
 		for (int i = 0; i < mapSize; i++)
 			_dictMap[i] = nullptr;
 	}
@@ -952,93 +948,96 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		}
 
 		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(src[srcIdx])) { // At least 2 letters
-			// Compute hashes
-			// h1 -> hash of word chars
-			// h2 -> hash of word chars with first char case flipped
 			const byte val = src[delimAnchor + 1];
-			const int32 caseFlag = TextCodec::isUpperCase(val) ? 32 : -32;
-			int32 h1 = TextCodec::HASH1;
-			int32 h2 = TextCodec::HASH1;
-			h1 = h1 * TextCodec::HASH1 ^ int32(val) * TextCodec::HASH2;
-			h2 = h2 * TextCodec::HASH1 ^ (int32(val) + caseFlag) * TextCodec::HASH2;
-
-			for (int i = delimAnchor + 2; i < srcIdx; i++) {
-				h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
-				h2 = h2 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
-			}
-
-			// Check word in dictionary
 			const int length = srcIdx - delimAnchor - 1;
-			prefetchRead(&_dictMap[h1 & _hashMask]);
-			DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
-			// Check for hash collisions
-			if ((pe1 != nullptr) && ((pe1->_hash != h1) || ((pe1->_data >> 24) != length)))
-				pe1 = nullptr;
+			if (length < TextCodec::MAX_WORD_LENGTH) {
+			   // Compute hashes
+			   // h1 -> hash of word chars
+			   // h2 -> hash of word chars with first char case flipped
+			   const int32 caseFlag = TextCodec::isUpperCase(val) ? 32 : -32;
+			   int32 h1 = TextCodec::HASH1;
+			   int32 h2 = TextCodec::HASH1;
+			   h1 = h1 * TextCodec::HASH1 ^ int32(val) * TextCodec::HASH2;
+			   h2 = h2 * TextCodec::HASH1 ^ (int32(val) + caseFlag) * TextCodec::HASH2;
 
-			DictEntry* pe = pe1;
+			   for (int i = delimAnchor + 2; i < srcIdx; i++) {
+				   h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
+				   h2 = h2 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
+			   }
 
-			if (pe == nullptr) {
-				prefetchRead(&_dictMap[h2 & _hashMask]);
-				DictEntry* pe2 = _dictMap[h2 & _hashMask];
+			   // Check word in dictionary
+			   prefetchRead(&_dictMap[h1 & _hashMask]);
+			   DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
-				if ((pe2 != nullptr) && ((pe2->_data >> 24) == length) && (pe2->_hash == h2))
-					pe = pe2;
-			}
+			   // Check for hash collisions
+			   if ((pe1 != nullptr) && ((pe1->_hash != h1) || ((pe1->_data >> 24) != length)))
+				   pe1 = nullptr;
 
-			if (pe != nullptr) {
-				if (!TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1))
-					pe = nullptr;
-			}
+			   DictEntry* pe = pe1;
 
-			if (pe == nullptr) {
-				// Word not found in the dictionary or hash collision: add or replace word
-				if (((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) && (length < TextCodec::MAX_WORD_LENGTH)) {
-					DictEntry* pe = &_dictList[words];
+			   if (pe == nullptr) {
+				   prefetchRead(&_dictMap[h2 & _hashMask]);
+				   DictEntry* pe2 = _dictMap[h2 & _hashMask];
 
-					if ((pe->_data & 0x00FFFFFF) >= _staticDictSize) {
-						// Reuse old entry
-						_dictMap[pe->_hash & _hashMask] = nullptr;
-						pe->_ptr = &src[delimAnchor + 1];
-						pe->_hash = h1;
-						pe->_data = (length << 24) | words;
-					}
+				   if ((pe2 != nullptr) && ((pe2->_data >> 24) == length) && (pe2->_hash == h2))
+					   pe = pe2;
+			   }
 
-					// Update hash map
-					_dictMap[h1 & _hashMask] = pe;
-					words++;
+			   if (pe != nullptr) {
+				   if (!TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1))
+					   pe = nullptr;
+			   }
 
-					// Dictionary full ? Expand or reset index to end of static dictionary
-					if (words >= _dictSize) {
-						if (expandDictionary() == false)
-							words = _staticDictSize;
-					}
-				}
-			}
-			else {
-				// Word found in the dictionary
-				// Skip space if only delimiter between 2 word references
-				if ((emitAnchor != delimAnchor) || (src[delimAnchor] != byte(' '))) {
-					int dIdx = emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor + 1 - emitAnchor, dstEnd - dstIdx);
+			   if (pe == nullptr) {
+				   // Word not found in the dictionary or hash collision: add or replace word
+				   if ((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) {
+					   DictEntry* pe = &_dictList[words];
 
- 					if (dIdx < 0) {
- 						res = false;
- 						break;
-					}
+					   if ((pe->_data & 0x00FFFFFF) >= _staticDictSize) {
+						   // Reuse old entry
+						   _dictMap[pe->_hash & _hashMask] = nullptr;
+						   pe->_ptr = &src[delimAnchor + 1];
+						   pe->_hash = h1;
+						   pe->_data = (length << 24) | words;
+					   }
 
-					dstIdx += dIdx;
-				}
+					   // Update hash map
+					   _dictMap[h1 & _hashMask] = pe;
+					   words++;
 
-				if (dstIdx >= dstEnd4){
-					res = false;
-					break;
-				}
+					   // Dictionary full ? Expand or reset index to end of static dictionary
+					   if (words >= _dictSize) {
+						   if (expandDictionary() == false)
+							   words = _staticDictSize;
+					   }
+				   }
+			   }
+			   else {
+				   // Word found in the dictionary
+				   // Skip space if only delimiter between 2 word references
+				   if ((emitAnchor != delimAnchor) || (src[delimAnchor] != byte(' '))) {
+					   int dIdx = emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor + 1 - emitAnchor, dstEnd - dstIdx);
 
-				dst[dstIdx++] = (pe == pe1) ? TextCodec::ESCAPE_TOKEN1 : TextCodec::ESCAPE_TOKEN2;
-				dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & 0x00FFFFFF);
-				emitAnchor = delimAnchor + 1 + int(pe->_data >> 24);
-			}
-		}
+ 					   if (dIdx < 0) {
+ 						   res = false;
+ 						   break;
+					   }
+
+					   dstIdx += dIdx;
+				   }
+
+				   if (dstIdx >= dstEnd4){
+					   res = false;
+					   break;
+				   }
+
+				   dst[dstIdx++] = (pe == pe1) ? TextCodec::ESCAPE_TOKEN1 : TextCodec::ESCAPE_TOKEN2;
+				   dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & 0x00FFFFFF);
+				   emitAnchor = delimAnchor + 1 + int(pe->_data >> 24);
+			   }
+		   }
+      }
 
 		// Reset delimiter position
 		delimAnchor = srcIdx;
@@ -1172,49 +1171,49 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		}
 
 		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(cur)) {
-			int32 h1 = TextCodec::HASH1;
-
-			for (int i = delimAnchor + 1; i < srcIdx; i++)
-				h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
-
-			// Lookup word in dictionary
 			const int length = srcIdx - delimAnchor - 1;
-			DictEntry* pe = _dictMap[h1 & _hashMask];
+         
+         if (length < TextCodec::MAX_WORD_LENGTH) {
+			   int32 h1 = TextCodec::HASH1;
 
-			// Check for hash collisions
-			if (pe != nullptr) {
-				if ((pe->_hash != h1) || ((pe->_data >> 24) != length)) {
-					pe = nullptr;
-				}
-				else if (!TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1)) {
-					pe = nullptr;
-				}
-			}
+			   for (int i = delimAnchor + 1; i < srcIdx; i++)
+				   h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
 
-			if (pe == nullptr) {
-				// Word not found in the dictionary or hash collision: add or replace word
-				if (((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) && (length < TextCodec::MAX_WORD_LENGTH)) {
-					DictEntry& e = _dictList[words];
+			   // Lookup word in dictionary
+			   DictEntry* pe = nullptr;
+			   DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
-					if ((e._data & 0x00FFFFFF) >= _staticDictSize) {
-						// Reuse old entry
-						_dictMap[e._hash & _hashMask] = nullptr;
-						e._ptr = &src[delimAnchor + 1];
-						e._hash = h1;
-						e._data = (length << 24) | words;
-					}
+			   // Check for hash collisions
+			   if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length)) {
+				   if (TextCodec::sameWords(pe1->_ptr + 1, &src[delimAnchor + 2], length - 1)) 
+					   pe = pe1;
+			   }
 
-					_dictMap[h1 & _hashMask] = &e;
-					words++;
+			   if (pe == nullptr) {
+				   // Word not found in the dictionary or hash collision: add or replace word
+				   if ((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) {
+					   DictEntry& e = _dictList[words];
 
-					// Dictionary full ? Expand or reset index to end of static dictionary
-					if (words >= _dictSize) {
-						if (expandDictionary() == false)
-							words = _staticDictSize;
-					}
-				}
-			}
-		}
+					   if ((e._data & 0x00FFFFFF) >= _staticDictSize) {
+						   // Reuse old entry
+						   _dictMap[e._hash & _hashMask] = nullptr;
+						   e._ptr = &src[delimAnchor + 1];
+						   e._hash = h1;
+						   e._data = (length << 24) | words;
+					   }
+
+					   _dictMap[h1 & _hashMask] = &e;
+					   words++;
+
+					   // Dictionary full ? Expand or reset index to end of static dictionary
+					   if (words >= _dictSize) {
+						   if (expandDictionary() == false)
+							   words = _staticDictSize;
+					   }
+				   }
+			   }
+		   }
+      }
 
 		srcIdx++;
 
@@ -1344,7 +1343,7 @@ void TextCodec2::reset() {
 
 	if (_dictMap == nullptr) {
 		_dictMap = new DictEntry*[mapSize]; 
-	} else {
+
 		for (int i = 0; i < mapSize; i++)
 			_dictMap[i] = nullptr;
 	}
@@ -1408,93 +1407,96 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		}
 
 		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(src[srcIdx])) {
-			// At least 2 letters
-			// Compute hashes
-			// h1 -> hash of word chars
-			// h2 -> hash of word chars with first char case flipped
 			const byte val = src[delimAnchor + 1];
-			const int32 caseFlag = TextCodec::isUpperCase(val) ? 32 : -32;
-			int32 h1 = TextCodec::HASH1;
-			int32 h2 = TextCodec::HASH1;
-			h1 = h1 * TextCodec::HASH1 ^ int32(val) * TextCodec::HASH2;
-			h2 = h2 * TextCodec::HASH1 ^ (int32(val) + caseFlag) * TextCodec::HASH2;
-
-			for (int i = delimAnchor + 2; i < srcIdx; i++) {
-				h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
-				h2 = h2 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
-			}
-
-			// Check word in dictionary
 			const int length = srcIdx - delimAnchor - 1;
-			prefetchRead(&_dictMap[h1 & _hashMask]);
-			DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
-			// Check for hash collisions
-			if ((pe1 != nullptr) && ((pe1->_hash != h1) || ((pe1->_data >> 24) != length)))
-				pe1 = nullptr;
+			if (length < TextCodec::MAX_WORD_LENGTH) {
+			   // Compute hashes
+			   // h1 -> hash of word chars
+			   // h2 -> hash of word chars with first char case flipped
+			   const int32 caseFlag = TextCodec::isUpperCase(val) ? 32 : -32;
+			   int32 h1 = TextCodec::HASH1;
+			   int32 h2 = TextCodec::HASH1;
+			   h1 = h1 * TextCodec::HASH1 ^ int32(val) * TextCodec::HASH2;
+			   h2 = h2 * TextCodec::HASH1 ^ (int32(val) + caseFlag) * TextCodec::HASH2;
 
-			DictEntry* pe = pe1;
+			   for (int i = delimAnchor + 2; i < srcIdx; i++) {
+				   h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
+				   h2 = h2 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
+			   }
 
-			if (pe == nullptr) {
-				prefetchRead(&_dictMap[h2 & _hashMask]);
-				DictEntry* pe2 = _dictMap[h2 & _hashMask];
+			   // Check word in dictionary
+			   DictEntry* pe = nullptr;
 
-				if ((pe2 != nullptr) && ((pe2->_data >> 24) == length) && (pe2->_hash == h2))
-					pe = pe2;
-			}
+			   prefetchRead(&_dictMap[h1 & _hashMask]);
+			   DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
-			if (pe != nullptr) {
-				if (!TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1))
-					pe = nullptr;
-			}
+			   // Check for hash collisions
+			   if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length))
+				   pe = pe1;
 
-			if (pe == nullptr) {
-				// Word not found in the dictionary or hash collision: add or replace word
-				if (((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) && (length < TextCodec::MAX_WORD_LENGTH)) {
-					DictEntry* pe = &_dictList[words];
+			   if (pe == nullptr) {
+				   prefetchRead(&_dictMap[h2 & _hashMask]);
+				   DictEntry* pe2 = _dictMap[h2 & _hashMask];
 
-					if ((pe->_data & 0x00FFFFFF) >= _staticDictSize) {
-						// Reuse old entry
-						_dictMap[pe->_hash & _hashMask] = nullptr;
-						pe->_ptr = &src[delimAnchor + 1];
-						pe->_hash = h1;
-						pe->_data = (length << 24) | words;
-					}
+				   if ((pe2 != nullptr) && (pe2->_hash == h2) && ((pe2->_data >> 24) == length))
+					   pe = pe2;
+			   }
 
-					// Update hash map
-					_dictMap[h1 & _hashMask] = pe;
-					words++;
+			   if (pe != nullptr) {
+				   if (!TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1))
+					   pe = nullptr;
+			   }
 
-					// Dictionary full ? Expand or reset index to end of static dictionary
-					if (words >= _dictSize) {
-						if (expandDictionary() == false)
-							words = _staticDictSize;
-					}
-				}
-			}
-			else {
-            // Word found in the dictionary
-            // Skip space if only delimiter between 2 word references
-            if ((emitAnchor != delimAnchor) || (src[delimAnchor] != TextCodec::SP)) {
-					int dIdx = emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor + 1 - emitAnchor, dstEnd - dstIdx);
+			   if (pe == nullptr) {
+				   // Word not found in the dictionary or hash collision (outside of
+				   // static dictionary) => replace entry
+				   if ((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) {
+					   DictEntry* pe = &_dictList[words];
 
- 					if (dIdx < 0) {
- 						res = false;
- 						break;
-					}
+					   if ((pe->_data & 0x00FFFFFF) >= _staticDictSize) {
+						   // Reuse old entry
+						   _dictMap[pe->_hash & _hashMask] = nullptr;
+						   pe->_ptr = &src[delimAnchor + 1];
+						   pe->_hash = h1;
+						   pe->_data = (length << 24) | words;
+					   }
 
-					dstIdx += dIdx;
-				}
+					   // Update hash map
+					   _dictMap[h1 & _hashMask] = pe;
+					   words++;
 
-				if (dstIdx >= dstEnd3){
-					res = false;
-					break;
-				}
+					   // Dictionary full ? Expand or reset index to end of static dictionary
+					   if (words >= _dictSize) {
+						   if (expandDictionary() == false)
+							   words = _staticDictSize;
+					   }
+				   }
+			   }
+			   else {
+               // Word found in the dictionary
+               // Skip space if only delimiter between 2 word references
+               if ((emitAnchor != delimAnchor) || (src[delimAnchor] != TextCodec::SP)) {
+					   int dIdx = emitSymbols(&src[emitAnchor], &dst[dstIdx], delimAnchor + 1 - emitAnchor, dstEnd - dstIdx);
 
-				dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & 0x00FFFFFF, (pe == pe1) ? 0 : 32);
-				emitAnchor = delimAnchor + 1 + int(pe->_data >> 24);
-			}
-		}
+ 					   if (dIdx < 0) {
+ 						   res = false;
+ 						   break;
+					   }
+
+					   dstIdx += dIdx;
+				   }
+
+				   if (dstIdx >= dstEnd3){
+					   res = false;
+					   break;
+				   }
+
+				   dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & 0x00FFFFFF, (pe == pe1) ? 0 : 32);
+				   emitAnchor = delimAnchor + 1 + int(pe->_data >> 24);
+			   }
+		   }
+      }
 
 		// Reset delimiter position
 		delimAnchor = srcIdx;
@@ -1666,49 +1668,50 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		}
 
 		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(cur)) {
-			int32 h1 = TextCodec::HASH1;
-
-			for (int i = delimAnchor + 1; i < srcIdx; i++)
-				h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
-
-			// Lookup word in dictionary
 			const int length = srcIdx - delimAnchor - 1;
-			DictEntry* pe = _dictMap[h1 & _hashMask];
 
-			// Check for hash collisions
-			if (pe != nullptr) {
-				if ((pe->_hash != h1) || ((pe->_data >> 24) != length)) {
-					pe = nullptr;
-				}
-				else if (!TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1)) {
-					pe = nullptr;
-				}
-			}
+         if (length < TextCodec::MAX_WORD_LENGTH) {
+            int32 h1 = TextCodec::HASH1;
 
-			if (pe == nullptr) {
-				// Word not found in the dictionary or hash collision: add or replace word
-				if (((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) && (length < TextCodec::MAX_WORD_LENGTH)) {
-					DictEntry& e = _dictList[words];
+			   for (int i = delimAnchor + 1; i < srcIdx; i++)
+				   h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
 
-					if ((e._data & 0x00FFFFFF) >= _staticDictSize) {
-						// Reuse old entry
-						_dictMap[e._hash & _hashMask] = nullptr;
-						e._ptr = &src[delimAnchor + 1];
-						e._hash = h1;
-						e._data = (length << 24) | words;
-					}
+			   // Lookup word in dictionary
+			   DictEntry* pe = nullptr;
+            DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
-					_dictMap[h1 & _hashMask] = &e;
-					words++;
+			   // Check for hash collisions
+			   if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length)) {
+				   if (TextCodec::sameWords(pe1->_ptr + 1, &src[delimAnchor + 2], length - 1)) 
+					   pe = pe1;
+			   }
 
-					// Dictionary full ? Expand or reset index to end of static dictionary
-					if (words >= _dictSize) {
-						if (expandDictionary() == false)
-							words = _staticDictSize;
-					}
-				}
-			}
-		}
+			   if (pe == nullptr) {
+				   // Word not found in the dictionary or hash collision (outside of
+				   // static dictionary) => replace entry
+				   if ((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) {
+					   DictEntry& e = _dictList[words];
+
+					   if ((e._data & 0x00FFFFFF) >= _staticDictSize) {
+						   // Reuse old entry
+						   _dictMap[e._hash & _hashMask] = nullptr;
+						   e._ptr = &src[delimAnchor + 1];
+						   e._hash = h1;
+						   e._data = (length << 24) | words;
+					   }
+
+					   _dictMap[h1 & _hashMask] = &e;
+					   words++;
+
+					   // Dictionary full ? Expand or reset index to end of static dictionary
+					   if (words >= _dictSize) {
+						   if (expandDictionary() == false)
+							   words = _staticDictSize;
+					   }
+				   }
+			   }
+		   }
+      }
 
 		srcIdx++;
 
