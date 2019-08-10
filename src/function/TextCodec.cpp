@@ -875,12 +875,11 @@ TextCodec1::TextCodec1(Context& ctx)
 void TextCodec1::reset() {
 	const int mapSize = 1 << _logHashSize;
    
-	if (_dictMap == nullptr) {
+	if (_dictMap == nullptr) 
 		_dictMap = new DictEntry*[mapSize]; 
 
-		for (int i = 0; i < mapSize; i++)
-			_dictMap[i] = nullptr;
-	}
+	for (int i = 0; i < mapSize; i++)
+		_dictMap[i] = nullptr;
 
 	if (_dictList == nullptr) {
 		_dictList = new DictEntry[_dictSize];
@@ -1341,12 +1340,11 @@ TextCodec2::TextCodec2(Context& ctx)
 void TextCodec2::reset() {
 	const int mapSize = 1 << _logHashSize;
 
-	if (_dictMap == nullptr) {
+	if (_dictMap == nullptr) 
 		_dictMap = new DictEntry*[mapSize]; 
 
-		for (int i = 0; i < mapSize; i++)
-			_dictMap[i] = nullptr;
-	}
+	for (int i = 0; i < mapSize; i++)
+		_dictMap[i] = nullptr;
 
 	if (_dictList == nullptr) {
 		_dictList = new DictEntry[_dictSize];
