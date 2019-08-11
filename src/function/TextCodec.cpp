@@ -840,20 +840,16 @@ TextCodec1::TextCodec1(Context& ctx)
 	// Actual block size
 	int blockSize = 0;
 	int log = 13;
-
-	if (ctx.has("size")) {
-		blockSize = ctx.getInt("size");
-		
-		if (blockSize >= 4)		
-			log = max(min(Global::log2(blockSize / 4), 26), 13);
-	}
-
-	// Select an appropriate initial dictionary size
 	int dSize = 1 << 12;
 
-	for (int i = 14; i <= 24; i += 2) {
-		if (blockSize >= 1 << i)
-			dSize <<= 1;
+	if (ctx.has("blockSize")) {
+		blockSize = ctx.getInt("blockSize");
+		
+		if (blockSize >= 8)		
+			log = max(min(Global::log2(blockSize / 8), 26), 13);
+
+		// Select an appropriate initial dictionary size
+		dSize = 1 << max(min(log - 4, 18), 12);
 	}
 
 	uint extraMem = 0;
@@ -966,20 +962,19 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			   }
 
 			   // Check word in dictionary
+			   DictEntry* pe = nullptr;
 			   prefetchRead(&_dictMap[h1 & _hashMask]);
 			   DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
 			   // Check for hash collisions
-			   if ((pe1 != nullptr) && ((pe1->_hash != h1) || ((pe1->_data >> 24) != length)))
-				   pe1 = nullptr;
-
-			   DictEntry* pe = pe1;
+			   if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length))
+				   pe = pe1;
 
 			   if (pe == nullptr) {
 				   prefetchRead(&_dictMap[h2 & _hashMask]);
 				   DictEntry* pe2 = _dictMap[h2 & _hashMask];
 
-				   if ((pe2 != nullptr) && ((pe2->_data >> 24) == length) && (pe2->_hash == h2))
+				   if ((pe2 != nullptr) && (pe2->_hash == h2) && ((pe2->_data >> 24) == length))
 					   pe = pe2;
 			   }
 
@@ -1304,20 +1299,16 @@ TextCodec2::TextCodec2(Context& ctx)
 	// Actual block size
 	int blockSize = 0;
 	int log = 13;
-
-	if (ctx.has("size")) {
-		blockSize = ctx.getInt("size");
-		
-		if (blockSize >= 4)
-			log = max(min(Global::log2(blockSize / 4), 26), 13);
-	}
-
-	// Select an appropriate initial dictionary size
 	int dSize = 1 << 12;
 
-	for (int i = 14; i <= 24; i += 2) {
-		if (blockSize >= 1 << i)
-			dSize <<= 1;
+	if (ctx.has("blockSize")) {
+		blockSize = ctx.getInt("blockSize");
+		
+		if (blockSize >= 8)		
+			log = max(min(Global::log2(blockSize / 8), 26), 13);
+
+		// Select an appropriate initial dictionary size
+		dSize = 1 << max(min(log - 4, 18), 12);
 	}
 
 	uint extraMem = 0;
@@ -1425,7 +1416,6 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 			   // Check word in dictionary
 			   DictEntry* pe = nullptr;
-
 			   prefetchRead(&_dictMap[h1 & _hashMask]);
 			   DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
