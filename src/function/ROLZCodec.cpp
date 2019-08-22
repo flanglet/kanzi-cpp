@@ -173,7 +173,10 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     SliceArray<byte> mIdxBuf(new byte[sizeChunk/2], sizeChunk/2);
     memset(&_counters[0], 0, sizeof(int32) * 65536);
     bool success = true;
-
+    const int litOrder = (count < 1<<17) ? 0 : 1;
+    dst[dstIdx++] = (byte) litOrder;
+         
+    // Main loop
     while (startChunk < srcEnd) {
         litBuf._index = 0;
         lenBuf._index = 0;
@@ -226,14 +229,14 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
            // Encode literal, match length and match index buffers
            DefaultOutputBitStream obs(ios, 65536);
            obs.writeBits(litBuf._index, 32);
-           ANSRangeEncoder litEnc(obs, 1);
+           obs.writeBits(lenBuf._index, 32);
+           obs.writeBits(mIdxBuf._index, 32);
+           ANSRangeEncoder litEnc(obs, litOrder);
            litEnc.encode(litBuf._array, 0, litBuf._index);
            litEnc.dispose();
-           obs.writeBits(lenBuf._index, 32);
            ANSRangeEncoder lenEnc(obs, 0);
            lenEnc.encode(lenBuf._array, 0, lenBuf._index);
            lenEnc.dispose();
-           obs.writeBits(mIdxBuf._index, 32);
            ANSRangeEncoder mIdxEnc(obs, 0);
            mIdxEnc.encode(mIdxBuf._array, 0, mIdxBuf._index);
            mIdxEnc.dispose();
@@ -322,7 +325,9 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     SliceArray<byte> mIdxBuf(new byte[sizeChunk/2], sizeChunk/2);
     memset(&_counters[0], 0, sizeof(int32) * 65536);
     bool success = true;
-
+    const int litOrder = src[srcIdx++];
+         
+    // Main loop
     while (startChunk < dstEnd) {
         litBuf._index = 0;
         lenBuf._index = 0;
@@ -336,32 +341,32 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             // Decode literal, length and match index buffers
             ios.rdbuf()->pubseekpos(srcIdx - 4);
             DefaultInputBitStream ibs(ios, 65536);
-            int length = int(ibs.readBits(32));
+            int litLen = int(ibs.readBits(32));
+            int mLenLen = int(ibs.readBits(32));
+            int mIdxLen = int(ibs.readBits(32));
 
-            if (length <= sizeChunk) {
-               ANSRangeDecoder litDec(ibs, 1);
-               litDec.decode(litBuf._array, 0, length);
+            if (litLen <= sizeChunk) {
+               ANSRangeDecoder litDec(ibs, litOrder);
+               litDec.decode(litBuf._array, 0, litLen);
                litDec.dispose();
-               length = int(ibs.readBits(32));
-            }
 
-            if (length <= sizeChunk) {
-               ANSRangeDecoder lenDec(ibs, 0);
-               lenDec.decode(lenBuf._array, 0, length);
-               lenDec.dispose();
-               length = int(ibs.readBits(32));
-            }
+               if (mLenLen <= sizeChunk) {
+                  ANSRangeDecoder lenDec(ibs, 0);
+                  lenDec.decode(lenBuf._array, 0, mLenLen);
+                  lenDec.dispose();
 
-            if (length <= sizeChunk) {
-               ANSRangeDecoder mIdxDec(ibs, 0);
-               mIdxDec.decode(mIdxBuf._array, 0, length);
-               mIdxDec.dispose();
+                  if (mIdxLen <= sizeChunk) {
+                     ANSRangeDecoder mIdxDec(ibs, 0);
+                     mIdxDec.decode(mIdxBuf._array, 0, mIdxLen);
+                     mIdxDec.dispose();
+                  }
+               }
             }
 
             srcIdx += int((ibs.read() + 7) >> 3);
             ibs.close();
 
-            if (length > sizeChunk) {
+            if ((litLen > sizeChunk) || (mLenLen > sizeChunk) || (mIdxLen > sizeChunk)) {
                input._index = srcIdx;
                output._index = startChunk;
                break;
