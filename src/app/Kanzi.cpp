@@ -380,6 +380,14 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 transform(transf.begin(), transf.end(), transf.begin(), ::toupper);
             }
 
+            while ((transf.length() > 0) && (transf[0] == '+')) {
+                transf = transf.substr(1);
+            }
+
+            while ((transf.length() > 0) && (transf[transf.length() - 1] == '+')) {
+                transf = transf.substr(0, transf.length() - 1);
+            }
+
             ctx = -1;
             continue;
         }

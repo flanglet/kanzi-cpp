@@ -153,7 +153,7 @@ namespace kanzi {
 			return NONE_TYPE;
 
 		stringstream ss;
-		ss << "Unknown transform type: " << name;
+		ss << "Unknown transform type: '" << name << "'";
 		throw invalid_argument(ss.str());
 	}
 
@@ -233,7 +233,7 @@ namespace kanzi {
 
 		default:
 			stringstream ss;
-			ss << "Unknown transform type: " << functionType;
+			ss << "Unknown transform type: '" << functionType << "'";
 			throw invalid_argument(ss.str());
 		}
 	}
@@ -309,7 +309,7 @@ namespace kanzi {
 
 		default:
 			stringstream ss;
-			ss << "Unknown transform type: " << functionType;
+			ss << "Unknown transform type: '" << functionType << "'";
 			throw invalid_argument(ss.str());
 		}
 	}
