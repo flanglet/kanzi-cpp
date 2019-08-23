@@ -35,9 +35,10 @@ int testBWTCorrectness(bool isBWT)
          << (isBWT ? "BWT" : "BWTS") << " Correctness test" << endl;
     srand((uint)time(nullptr));
     int res = 0;
+    byte* pBuf = new byte[8 * 1024 * 1024];
+    byte* buf1 = pBuf;
 
     for (int ii = 1; ii <= 20; ii++) {
-        byte buf1[128];
         int size = 128;
 
         if (ii == 1) {
@@ -59,60 +60,91 @@ int testBWTCorrectness(bool isBWT)
             size = int(str.length());
             memcpy(buf1, &val2[0], size);
         }
-        else {
+        else if (ii < 20) {
             for (int i = 0; i < size; i++)
                 buf1[i] = byte(65 + (rand() % (4 * ii)));
         }
+        else {
+            size = 8*1024*1024;
 
-        Transform<byte>* bwt;
+            for (int i = 0; i < size; i++)
+                buf1[i] = byte(i);
+        }
+
+        Transform<byte>* tf;
 
         if (isBWT) {
-            bwt = new BWT();
+            tf = new BWT();
         }
         else {
-            bwt = new BWTS();
+            tf = new BWTS();
         }
 
         byte* input = &buf1[0];
         byte* transform = new byte[size];
         byte* reverse = new byte[size];
         cout << endl
-             << "Test " << ii;
-        cout << endl
-             << "Input   : ";
+             << "Test " << ii << endl;
 
-        for (int i = 0; i < size; i++)
-            cout << char(input[i]);
+        if (size < 512) {
+             cout << "Input   : ";
+
+             for (int i = 0; i < size; i++)
+                cout << char(input[i]);
+        }
 
         SliceArray<byte> ia1(input, size, 0);
         SliceArray<byte> ia2(transform, size, 0);
-        bwt->forward(ia1, ia2, size);
+        tf->forward(ia1, ia2, size);
 
-        cout << endl
-             << "Encoded : ";
+        if (size < 512) {
+             cout << endl
+                  << "Encoded : ";
 
-        for (int i = 0; i < size; i++)
-            cout << char(transform[i]);
+             for (int i = 0; i < size; i++)
+                cout << char(transform[i]);
+
+             cout << "  ";
+        }
 
         if (isBWT) {
-            int primaryIndex = ((BWT*)bwt)->getPrimaryIndex(0);
-            cout << "  (Primary index=" << primaryIndex << ")" << endl;
+            BWT* bwt = (BWT*) tf;
+            int chunks = BWT::getBWTChunks(size);
+            int* pi = new int[chunks];
+
+            for (int i=0; i<chunks; i++) {
+                pi[i] = bwt->getPrimaryIndex(i);
+                cout << "(Primary index=" << pi[i] << ")" << endl;
+            }
+
+            delete tf;
+            tf = new BWT();
+            bwt = (BWT*) tf;
+
+            for (int i=0; i<chunks; i++) {
+                bwt->setPrimaryIndex(i, pi[i]);
+            }
+
+            delete[] pi;
         }
         else {
+            delete tf;
+            tf = new BWTS();
             cout << endl;
         }
 
         SliceArray<byte> ia3(reverse, size, 0);
         ia2._index = 0;
-        bwt->inverse(ia2, ia3, size);
+        tf->inverse(ia2, ia3, size);
 
         int idx = -1;
-        cout << "Reverse : ";
 
-        for (int i = 0; i < size; i++)
-            cout << char(reverse[i]);
+        if (size < 512) {
+            cout << "Reverse : ";
 
-        cout << endl;
+            for (int i = 0; i < size; i++)
+                cout << char(reverse[i]);
+        }
 
         for (int j = 0; j < size; j++) {
             if (input[j] != reverse[j]) {
@@ -125,15 +157,16 @@ int testBWTCorrectness(bool isBWT)
         cout << endl;
 
         if (idx == -1)
-           cout << "Identical" << endl;
+            cout << "Identical" << endl;
         else
-           cout << "Different at " << idx  << endl;
+            cout << "Different at index " << idx << " (" << int(input[idx]) << "<->" << int(reverse[idx]) << ")" << endl;
 
-        delete bwt;
+        delete tf;
         delete[] transform;
         delete[] reverse;
     }
 
+    delete pBuf;
     return res;
 }
 
@@ -146,7 +179,7 @@ int testBWTSpeed(bool isBWT)
 
     cout << endl
          << endl
-         << (isBWT ? "BWT" : "BWTS") << " Speed test" << endl;    
+         << (isBWT ? "BWT" : "BWTS") << " Speed test" << endl;
     cout << "Iterations: " << iter << endl;
     cout << "Transform size: " << size << endl;
     srand(uint(time(nullptr)));
