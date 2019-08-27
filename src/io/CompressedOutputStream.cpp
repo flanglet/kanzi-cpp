@@ -386,6 +386,8 @@ void CompressedOutputStream::processBlock(bool force) THROW
 
             if (res._error != 0)
                 throw IOException(res._msg, res._error); // deallocate in catch block
+
+            delete task;
         }
 #ifdef CONCURRENCY_ENABLED
         else {
@@ -404,19 +406,13 @@ void CompressedOutputStream::processBlock(bool force) THROW
                     throw IOException(status._msg, status._error); // deallocate in catch block
             }
         }
+
+        for (EncodingTask<EncodingTaskResult>* task : tasks)
+            delete task;
+
+        tasks.clear();
 #endif
-        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
-            delete *it;
-
-        tasks.clear();
         _sa->_index = 0;
-    }
-    catch (BitStreamException& e) {
-        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
-            delete *it;
-
-        tasks.clear();
-        throw IOException(e.what(), e.error());
     }
     catch (IOException& e) {
         for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
@@ -424,6 +420,13 @@ void CompressedOutputStream::processBlock(bool force) THROW
 
         tasks.clear();
         throw e;
+    }
+    catch (BitStreamException& e) {
+        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+            delete *it;
+
+        tasks.clear();
+        throw IOException(e.what(), e.error());
     }
     catch (exception& e) {
         for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)

@@ -413,6 +413,7 @@ int CompressedInputStream::processBlock() THROW
             if (res._error != 0)
                 throw IOException(res._msg, res._error); // deallocate in catch block
 
+            delete task;
             decoded += res._decoded;
             const int size = _sa->_index + decoded;
 
@@ -481,11 +482,11 @@ int CompressedInputStream::processBlock() THROW
                 }
             }
         }
-#endif
-        for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
-            delete *it;
+        for (DecodingTask<DecodingTaskResult>* task : tasks)
+            delete task;
 
         tasks.clear();
+#endif
         _sa->_index = 0;
         return decoded;
     }
@@ -532,7 +533,6 @@ void CompressedInputStream::close() THROW
 }
 
 // Return the number of bytes read so far
-// Return the number of bytes written so far
 uint64 CompressedInputStream::getRead()
 {
     return (_ibs->read() + 7) >> 3;

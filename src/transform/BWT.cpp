@@ -382,13 +382,12 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
 
         // Wait for completion of all concurrent tasks
-        for (int j = 0; j < nbTasks; j++) {
+        for (int j = 0; j < nbTasks; j++)
             futures[j].get();
-        }
 
         // Cleanup
-        for (vector<InverseBigChunkTask<int>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
-            delete *it;
+        for (InverseBigChunkTask<int>* task : tasks)
+            delete task;
 
         tasks.clear();
         delete[] jobsPerTask;
