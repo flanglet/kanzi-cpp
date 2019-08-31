@@ -482,6 +482,7 @@ int CompressedInputStream::processBlock() THROW
                 }
             }
         }
+
         for (DecodingTask<DecodingTaskResult>* task : tasks)
             delete task;
 

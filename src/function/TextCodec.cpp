@@ -1660,15 +1660,15 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(cur)) {
 			const int length = srcIdx - delimAnchor - 1;
 
-         if (length < TextCodec::MAX_WORD_LENGTH) {
-            int32 h1 = TextCodec::HASH1;
+			if (length < TextCodec::MAX_WORD_LENGTH) {
+			   int32 h1 = TextCodec::HASH1;
 
 			   for (int i = delimAnchor + 1; i < srcIdx; i++)
 				   h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
 
 			   // Lookup word in dictionary
 			   DictEntry* pe = nullptr;
-            DictEntry* pe1 = _dictMap[h1 & _hashMask];
+			   DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
 			   // Check for hash collisions
 			   if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length)) {
@@ -1701,7 +1701,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 				   }
 			   }
 		   }
-      }
+		}
 
 		srcIdx++;
 
