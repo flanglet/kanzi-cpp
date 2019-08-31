@@ -323,7 +323,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     SliceArray<byte> mIdxBuf(new byte[sizeChunk/2], sizeChunk/2);
     memset(&_counters[0], 0, sizeof(int32) * 65536);
     bool success = true;
-    const int litOrder = src[srcIdx++];
+    const int litOrder = int(src[srcIdx++]);
 
     // Main loop
     while (startChunk < dstEnd) {

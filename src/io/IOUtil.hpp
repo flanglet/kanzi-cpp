@@ -40,7 +40,7 @@ class FileData {
 
       FileData(string& path, int64 size) : _fullPath(path), _size(size) 
       { 
-         int idx = _fullPath.find_last_of(PATH_SEPARATOR);
+         int idx = int(_fullPath.find_last_of(PATH_SEPARATOR));
 
          if (idx > 0) {
             _path = _fullPath.substr(0, idx+1);
