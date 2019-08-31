@@ -159,8 +159,8 @@ namespace kanzi {
 		int getMaxEncodedLength(int srcLen) const;
 
 	private:
-		static const int LITERAL_FLAG = 0;
-		static const int MATCH_FLAG = 1;
+		static const int MATCH_FLAG = 0;
+		static const int LITERAL_FLAG = 1;
 		static const int MIN_MATCH = 3;
 		static const int MAX_MATCH = MIN_MATCH + 255;
 
@@ -275,7 +275,7 @@ namespace kanzi {
 
        // Update fields with new interval bounds
        _high -= (-bit & (_high - _low - split));
-       _low += (~ - bit & (split + 1));
+       _low += (~ -bit & (split + 1));
 
        // Update predictor
        _predictor->update(bit);
