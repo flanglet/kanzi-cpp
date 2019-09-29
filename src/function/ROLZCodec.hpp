@@ -136,7 +136,7 @@ namespace kanzi {
 
 		int findMatch(const byte buf[], const int pos, const int end);
 
-		void emitLengths(SliceArray<byte>& lenBuf, int litLen, int mLen);
+		void emitToken(SliceArray<byte>& lenBuf, int litLen, int mLen);
 
 		void readLengths(SliceArray<byte>& lenBuf, int& litLen, int& mLen);
 

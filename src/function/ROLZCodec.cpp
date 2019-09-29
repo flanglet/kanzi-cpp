@@ -202,7 +202,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             }
 
             const int litLen = srcIdx - firstLitIdx;
-            ROLZCodec1::emitLengths(lenBuf, litLen, match & 0xFFFF);
+            ROLZCodec1::emitToken(lenBuf, litLen, match & 0xFFFF);
 
             // Emit literals
             if (litLen > 0) {
@@ -218,7 +218,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         // Emit last chunk literals
         const int litLen = srcIdx - firstLitIdx;
-        ROLZCodec1::emitLengths(lenBuf, litLen, 0);
+        ROLZCodec1::emitToken(lenBuf, litLen, 0);
         memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], litLen);
         litBuf._index += litLen;
         stringbuf buffer;
@@ -274,7 +274,7 @@ End:
     return input._index == count;
 }
 
-void ROLZCodec1::emitLengths(SliceArray<byte>& sba, int litLen, int mLen)
+void ROLZCodec1::emitToken(SliceArray<byte>& sba, int litLen, int mLen)
 {
    // mode LLLLLMMM -> L lit length, M match length
    const int mode = (litLen<31) ? (litLen<<3) : 0xF8;
@@ -293,12 +293,12 @@ void ROLZCodec1::emitLengths(SliceArray<byte>& sba, int litLen, int mLen)
         if (litLen >= 1<<7) {
             if (litLen >= 1<<14) {
                if (litLen >= 1<<21)
-                  sba._array[sba._index++] = byte(0x80|((litLen>>21)&0x7F));
+                  sba._array[sba._index++] = byte(0x80|(litLen>>21));
 
-               sba._array[sba._index++] = byte(0x80|((litLen>>14)&0x7F));
+               sba._array[sba._index++] = byte(0x80|(litLen>>14));
             }
 
-            sba._array[sba._index++] = byte(0x80|((litLen>>7)&0x7F));
+            sba._array[sba._index++] = byte(0x80|(litLen>>7));
         }
 
         sba._array[sba._index++] = byte(litLen&0x7F);

@@ -17,6 +17,7 @@ limitations under the License.
 #include "LZCodec.hpp"
 #include "../Memory.hpp"
 
+
 using namespace kanzi;
 
 LZCodec::LZCodec()
