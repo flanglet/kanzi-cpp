@@ -76,8 +76,8 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     it = args.find("outputName");
     _outputName = it->second;
     args.erase(it);
-    string strTransf;
     string strCodec;
+    string strTransf;
 
     it = args.find("entropy");
 
@@ -177,12 +177,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
 BlockCompressor::~BlockCompressor()
 {
     dispose();
-
-    while (_listeners.size() > 0) {
-        vector<Listener*>::iterator it = _listeners.begin();
-        delete *it;
-        _listeners.erase(it);
-    }
+    _listeners.clear();
 }
 
 void BlockCompressor::dispose()
@@ -266,8 +261,10 @@ int BlockCompressor::compress(uint64& outputSize)
         _verbosity = 1;
     }
 
+    InfoPrinter listener(_verbosity, InfoPrinter::ENCODING, cout);
+
     if (_verbosity > 2)
-        addListener(new InfoPrinter(_verbosity, InfoPrinter::ENCODING, cout));
+        addListener(listener);
 
     int res = 0;
     uint64 read = 0;
@@ -492,22 +489,22 @@ int BlockCompressor::compress(uint64& outputSize)
         }
     }
 
+    if (_verbosity > 2)
+        removeListener(listener);
+
     outputSize += written;
     return res;
 }
 
-bool BlockCompressor::addListener(Listener* bl)
+bool BlockCompressor::addListener(Listener& bl)
 {
-    if (bl == nullptr)
-        return false;
-
-    _listeners.push_back(bl);
+    _listeners.push_back(&bl);
     return true;
 }
 
-bool BlockCompressor::removeListener(Listener* bl)
+bool BlockCompressor::removeListener(Listener& bl)
 {
-    std::vector<Listener*>::iterator it = find(_listeners.begin(), _listeners.end(), bl);
+    std::vector<Listener*>::iterator it = find(_listeners.begin(), _listeners.end(), &bl);
 
     if (it == _listeners.end())
         return false;

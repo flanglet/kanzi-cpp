@@ -159,8 +159,10 @@ CompressedOutputStream::~CompressedOutputStream()
         // Ignore and continue
     }
 
-    for (int i = 0; i < 2 * _jobs; i++)
+    for (int i = 0; i < 2 * _jobs; i++) {
         delete[] _buffers[i]->_array;
+        delete _buffers[i];
+    }
 
     delete[] _buffers;
     delete _obs;

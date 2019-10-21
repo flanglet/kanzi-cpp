@@ -96,9 +96,9 @@ namespace kanzi {
 
        int compress(uint64& written);
 
-       bool addListener(Listener* bl);
+       bool addListener(Listener& bl);
 
-       bool removeListener(Listener* bl);
+       bool removeListener(Listener& bl);
 
        void dispose();
 

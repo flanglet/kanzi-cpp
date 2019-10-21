@@ -99,12 +99,7 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
 BlockDecompressor::~BlockDecompressor()
 {
     dispose();
-
-    while (_listeners.size() > 0) {
-        vector<Listener*>::iterator it = _listeners.begin();
-        delete *it;
-        _listeners.erase(it);
-    }
+    _listeners.clear();
 }
 
 void BlockDecompressor::dispose()
@@ -162,11 +157,12 @@ int BlockDecompressor::decompress(uint64& inputSize)
         _verbosity = 1;
     }
 
+    InfoPrinter listener(_verbosity, InfoPrinter::DECODING, cout);
+    
     if (_verbosity > 2)
-        addListener(new InfoPrinter(_verbosity, InfoPrinter::DECODING, cout));
+        addListener(listener);
 
     int res = 0;
-
     bool inputIsDir;
     string formattedOutName = _outputName;
     string formattedInName = _inputName;
@@ -365,22 +361,22 @@ int BlockDecompressor::decompress(uint64& inputSize)
         ss.str(string());
     }
 
+    if (_verbosity > 2)
+        removeListener(listener);
+
     inputSize += read;
     return res;
 }
 
-bool BlockDecompressor::addListener(Listener* bl)
+bool BlockDecompressor::addListener(Listener& bl)
 {
-    if (bl == nullptr)
-        return false;
-
-    _listeners.push_back(bl);
+    _listeners.push_back(&bl);
     return true;
 }
 
-bool BlockDecompressor::removeListener(Listener* bl)
+bool BlockDecompressor::removeListener(Listener& bl)
 {
-    std::vector<Listener*>::iterator it = find(_listeners.begin(), _listeners.end(), bl);
+    std::vector<Listener*>::iterator it = find(_listeners.begin(), _listeners.end(), &bl);
 
     if (it == _listeners.end())
         return false;

@@ -92,9 +92,9 @@ namespace kanzi {
 
        int decompress(uint64& read);
 
-       bool addListener(Listener* bl);
+       bool addListener(Listener& bl);
 
-       bool removeListener(Listener* bl);
+       bool removeListener(Listener& bl);
 
        void dispose();
 

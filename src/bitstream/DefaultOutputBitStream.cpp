@@ -38,6 +38,7 @@ DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize
     _current = 0;
     _written = 0;
     _closed = false;
+    memset(&_buffer[0], 0, _bufferSize);
 }
 
 uint DefaultOutputBitStream::writeBits(byte bits[], uint count) THROW
@@ -146,6 +147,7 @@ void DefaultOutputBitStream::close() THROW
     delete[] _buffer;
     _bufferSize = 8;
     _buffer = new byte[_bufferSize];
+    memset(&_buffer[0], 0, _bufferSize);
     _written -= 64; // adjust for method written()
 }
 
