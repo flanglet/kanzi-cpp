@@ -1167,7 +1167,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(cur)) {
 			const int length = srcIdx - delimAnchor - 1;
          
-         if (length < TextCodec::MAX_WORD_LENGTH) {
+			if (length < TextCodec::MAX_WORD_LENGTH) {
 			   int32 h1 = TextCodec::HASH1;
 
 			   for (int i = delimAnchor + 1; i < srcIdx; i++)
@@ -1208,7 +1208,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 				   }
 			   }
 		   }
-      }
+		}
 
 		srcIdx++;
 
@@ -1250,7 +1250,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			}
 			else {
 				// Flip case of first character
-				dst[dstIdx] = buf[0] ^ 0x20;
+				dst[dstIdx] = buf[0] ^ byte(0x20);
 			}
 
 			if (length > 1) {
@@ -1740,7 +1740,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			}
 			else {
 				// Flip case of first character
-				dst[dstIdx] = buf[0] ^ 0x20;
+				dst[dstIdx] = buf[0] ^ byte(0x20);
 			}
 
 			if (length > 1) {
