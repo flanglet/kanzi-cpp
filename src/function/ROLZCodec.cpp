@@ -805,5 +805,5 @@ int ROLZCodec2::getMaxEncodedLength(int srcLen) const
 {
     // Since we do not check the dst index for each byte (for speed purpose)
     // allocate some extra buffer for incompressible data.
-    return (srcLen <= 1024) ? srcLen + 64 : srcLen + (srcLen / 16);
+    return (srcLen <= 16384) ? srcLen + 512 : srcLen + (srcLen / 32);
 }
