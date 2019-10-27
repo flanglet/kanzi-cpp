@@ -39,10 +39,7 @@ namespace kanzi
        // Required encoding output buffer size
        int getMaxEncodedLength(int srcLen) const 
        { 
-           if (srcLen >= 1<<30)
-               return srcLen;
-
-           return srcLen + (srcLen / 255) + 16; 
+           return (srcLen <= 1024) ? srcLen + 16 : srcLen + (srcLen / 64);
        }
 
    private:
