@@ -624,18 +624,6 @@ int ROLZCodec2::findMatch(const byte buf[], const int pos, const int end)
 
 bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if (count == 0)
-        return true;
-
-    if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("ROLZX codec: Invalid input block");
-
-    if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("ROLZX codec: Invalid output block");
-
-    if (input._array == output._array)
-        return false;
-
     if (output._length < getMaxEncodedLength(count))
         return false;
 
@@ -720,12 +708,6 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 {
     if (count == 0)
         return true;
-
-    if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("ROLZX codec: Invalid input block");
-
-    if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("ROLZX codec: Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -823,8 +805,5 @@ int ROLZCodec2::getMaxEncodedLength(int srcLen) const
 {
     // Since we do not check the dst index for each byte (for speed purpose)
     // allocate some extra buffer for incompressible data.
-    if (srcLen >= ROLZCodec::CHUNK_SIZE)
-        return srcLen;
-
-    return (srcLen <= 512) ? srcLen + 64 : srcLen + srcLen / 8;
+    return (srcLen <= 1024) ? srcLen + 64 : srcLen + (srcLen / 16);
 }
