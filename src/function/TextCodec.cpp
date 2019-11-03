@@ -662,7 +662,7 @@ byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
 	int32 f1[256] = { 0 };
 	int32 f3[256] = { 0 };
 	int32 f2[256] = { 0 };
-	uint8* data = (uint8*)&block[0];
+	uint8* data = reinterpret_cast<uint8*>(&block[0]);
 	uint8 prv = 0;
 	const int count4 = count & -4;
 
@@ -770,7 +770,7 @@ TextCodec::TextCodec()
 TextCodec::TextCodec(Context& ctx)
 {
 	int encodingType = ctx.getInt("textcodec", 1);
-	_delegate = (encodingType == 1) ? (Function<byte>*) new TextCodec1(ctx) : (Function<byte>*) new TextCodec2(ctx);
+	_delegate = (encodingType == 1) ? reinterpret_cast<Function<byte>*>(new TextCodec1(ctx)) :reinterpret_cast<Function<byte>*>(new TextCodec2(ctx));
 }
 
 bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW

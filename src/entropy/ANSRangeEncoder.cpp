@@ -176,7 +176,7 @@ int ANSRangeEncoder::encode(byte block[], uint blkptr, uint len)
 void ANSRangeEncoder::encodeChunk(byte block[], int end)
 {
     int st = ANS_TOP;
-    const uint8* data = (uint8*) &block[0];
+    const uint8* data = reinterpret_cast<uint8*>(&block[0]);
     byte* p0 = &_buffer[_bufferSize - 1];
     byte* p = p0;
 

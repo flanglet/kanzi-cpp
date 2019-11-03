@@ -184,9 +184,6 @@ bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         return true;
     }
 
-    uint8* src = (uint8*) &input._array[input._index];
-    uint8* dst = (uint8*) &output._array[output._index];
-
     // Lazy dynamic memory allocation
     if (_bufferSize < count) {
         _bufferSize = count;
@@ -206,6 +203,8 @@ bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 
     // Aliasing
     int* lf = _buffer1;
+    uint8* src = reinterpret_cast<uint8*>(&input._array[input._index]);
+    uint8* dst = reinterpret_cast<uint8*>(&output._array[output._index]);
 
     for (int i = 0; i < count; i++)
         lf[i] = buckets[src[i]]++;

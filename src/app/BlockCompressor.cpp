@@ -726,7 +726,7 @@ T FileCompressTask<T>::run()
     try {
         while (true) {
             try {
-                _is->read((char*)&sa._array[0], sa._length);
+                _is->read(reinterpret_cast<char*>(&sa._array[0]), sa._length);
                 len = (*_is) ? sa._length : int(_is->gcount());
             }
             catch (exception& e) {
@@ -741,7 +741,7 @@ T FileCompressTask<T>::run()
 
             // Just write block to the compressed output stream !
             read += len;
-            _cos->write((const char*)&sa._array[0], len);
+            _cos->write(reinterpret_cast<const char*>(&sa._array[0]), len);
         }
     }
     catch (IOException& ioe) {

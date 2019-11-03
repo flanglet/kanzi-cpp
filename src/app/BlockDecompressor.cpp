@@ -565,7 +565,7 @@ T FileDecompressTask<T>::run()
 
         // Decode next block
         do {
-            _cis->read((char*)&sa._array[0], sa._length);
+            _cis->read(reinterpret_cast<char*>(&sa._array[0]), sa._length);
             decoded = int(_cis->gcount());
 
             if (decoded < 0) {
@@ -577,7 +577,7 @@ T FileDecompressTask<T>::run()
 
             try {
                 if (decoded > 0) {
-                    _os->write((const char*)&sa._array[0], decoded);
+                    _os->write(reinterpret_cast<const char*>(&sa._array[0]), decoded);
                     read += decoded;
                 }
             }

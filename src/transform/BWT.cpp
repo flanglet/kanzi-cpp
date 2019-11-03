@@ -194,9 +194,6 @@ bool BWT::inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, i
         _buffer = new uint[_bufferSize];
     }
 
-    uint8* src = (uint8*)&input._array[input._index];
-    byte* dst = &output._array[output._index];
-
     const int pIdx = getPrimaryIndex(0);
 
     if ((pIdx < 0) || (pIdx > count))
@@ -204,7 +201,6 @@ bool BWT::inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, i
 
     // Build array of packed index + value (assumes block size < 2^24)
     uint buckets[256] = { 0 };
-    uint* data = _buffer;
     Global::computeHistogram(&input._array[input._index], count, buckets, true);
 
     for (int i = 0, sum = 0; i < 256; i++) {
@@ -212,6 +208,10 @@ bool BWT::inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, i
         buckets[i] = sum;
         sum += tmp;
     }
+
+    uint8* src = reinterpret_cast<uint8*>(&input._array[input._index]);
+    byte* dst = &output._array[output._index];
+    uint* data = _buffer;
 
     for (int i = 0; i < pIdx; i++) {
         const uint8 val = src[i];
@@ -249,7 +249,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
         _buffer = new uint[_bufferSize];
     }
 
-    uint8* src = (uint8*)&input._array[input._index];
+    uint8* src = reinterpret_cast<uint8*>(&input._array[input._index]);
     byte* dst = &output._array[output._index];
     const int pIdx = getPrimaryIndex(0);
 

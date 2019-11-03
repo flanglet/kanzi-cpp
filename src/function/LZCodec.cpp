@@ -219,7 +219,7 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
 
     byte* src = &input._array[input._index];
     byte* dst = &output._array[ output._index];
-    uint8* usrc = (uint8*) src;
+    uint8* usrc = reinterpret_cast<uint8*>(src);
     const int srcEnd = count;
     const int dstEnd = output._length;
     const int srcEnd2 = srcEnd - COPY_LENGTH;

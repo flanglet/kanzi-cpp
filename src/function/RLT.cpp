@@ -208,8 +208,8 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("Invalid output block");
 
-    uint8* src = (uint8*)&input._array[input._index];
-    uint8* dst = (uint8*)&output._array[output._index];
+    uint8* src = reinterpret_cast<uint8*>(&input._array[input._index]);
+    uint8* dst = reinterpret_cast<uint8*>(&output._array[output._index]);
     int srcIdx = 0;
     int dstIdx = 0;
     const int srcEnd = srcIdx + length;

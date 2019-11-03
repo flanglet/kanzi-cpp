@@ -79,7 +79,7 @@ void DivSufSort::reset()
 
 void DivSufSort::computeSuffixArray(byte input[], int sa[], int start, int length)
 {
-    _buffer = (uint8*)&input[start];
+    _buffer = reinterpret_cast<uint8*>(&input[start]);
     _sa = sa;
     reset();
     int bucketA[256] = { 0 };
@@ -156,7 +156,7 @@ void DivSufSort::constructSuffixArray(int bucketA[], int bucketB[], int n, int m
 
 int DivSufSort::computeBWT(byte input[], int sa[], int start, int length)
 {
-    _buffer = (uint8*)&input[start];
+    _buffer = reinterpret_cast<uint8*>(&input[start]);
     _sa = sa;
     reset();
     int bucketA[256] = { 0 };

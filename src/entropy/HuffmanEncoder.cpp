@@ -200,7 +200,7 @@ int HuffmanEncoder::encode(byte block[], uint blkptr, uint count)
 
     const int end = blkptr + count;
     int startChunk = blkptr;
-    uint8* data = (uint8*)&block[0];
+    uint8* data = reinterpret_cast<uint8*>(&block[0]);
 
     while (startChunk < end) {
         const int endChunk = (startChunk + _chunkSize < end) ? startChunk + _chunkSize : end;

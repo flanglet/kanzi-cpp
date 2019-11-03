@@ -81,7 +81,7 @@ namespace kanzi
 
    inline bool LZCodec::differentInts(byte block[], int srcIdx, int dstIdx)
    {
-       return *((int32*)&block[srcIdx]) != *((int32*)&block[dstIdx]);
+       return *(reinterpret_cast<int32*>(&block[srcIdx])) != *(reinterpret_cast<int32*>(&block[dstIdx]));
    }
 
    inline int LZCodec::emitLength(byte block[], int length)
