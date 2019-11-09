@@ -120,7 +120,7 @@ namespace kanzi {
 
    public:
        static const int MAX_DICT_SIZE = 1 << 19; // must be less than 1<<24
-       static const int MAX_WORD_LENGTH = 32; // must be less than 128
+       static const int MAX_WORD_LENGTH = 31; // must be less than 128
        static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB       
        static const byte ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
        static const byte ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
@@ -179,9 +179,9 @@ namespace kanzi {
 
        static SliceArray<byte> unpackDictionary32(const byte dict[], int dictSize);
 
-       static bool sameWords(const byte src[], byte dst[], const int length);
+       static bool sameWords(const byte src[], const byte dst[], const int length);
 
-       static byte computeStats(byte block[], int count, int32 freqs[]);
+       static byte computeStats(const byte block[], int count, int32 freqs[]);
 
        // Default dictionary
        static const byte DICT_EN_1024[];
@@ -224,11 +224,11 @@ namespace kanzi {
    }
 
 
-   inline bool TextCodec::sameWords(const byte src[], byte dst[], const int length)
+   inline bool TextCodec::sameWords(const byte src[], const byte dst[], const int length)
    {
 	   if (length >= 4) {
-		   int32* p1 = (int32*)&dst[0];
-		   int32* p2 = (int32*)&src[0];
+		   const int32* p1 = reinterpret_cast<const int32*>((const byte*)&src[0]);
+		   const int32* p2 = reinterpret_cast<const int32*>((const byte*)&dst[0]);
 		   int n = length;
 
 		   while (n >= 4) {

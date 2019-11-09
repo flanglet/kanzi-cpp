@@ -655,14 +655,14 @@ SliceArray<byte> TextCodec::unpackDictionary32(const byte dict[], int dictSize)
 }
 
 // return 8-bit status (see MASK flags constants)
-byte TextCodec::computeStats(byte block[], int count, int32 freqs0[])
+byte TextCodec::computeStats(const byte block[], int count, int32 freqs0[])
 {
 	int32 freqs[256][256] = { { 0 } };
 	int32 f0[256] = { 0 };
 	int32 f1[256] = { 0 };
 	int32 f3[256] = { 0 };
 	int32 f2[256] = { 0 };
-	uint8* data = reinterpret_cast<uint8*>(&block[0]);
+	const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
 	uint8 prv = 0;
 	const int count4 = count & -4;
 
@@ -946,7 +946,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			const byte val = src[delimAnchor + 1];
 			const int length = srcIdx - delimAnchor - 1;
 
-			if (length < TextCodec::MAX_WORD_LENGTH) {
+			if (length <= TextCodec::MAX_WORD_LENGTH) {
 			   // Compute hashes
 			   // h1 -> hash of word chars
 			   // h2 -> hash of word chars with first char case flipped
@@ -1167,7 +1167,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(cur)) {
 			const int length = srcIdx - delimAnchor - 1;
          
-			if (length < TextCodec::MAX_WORD_LENGTH) {
+			if (length <= TextCodec::MAX_WORD_LENGTH) {
 			   int32 h1 = TextCodec::HASH1;
 
 			   for (int i = delimAnchor + 1; i < srcIdx; i++)
@@ -1237,7 +1237,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			const byte* buf = e._ptr;
 
 			// Sanity check
-			if ((buf == nullptr) || (dstIdx + length >= dstEnd))
+			if ((buf == nullptr) || (length > TextCodec::MAX_WORD_LENGTH) || (dstIdx + length >= dstEnd))
 				break;
 
 			// Add space if only delimiter between 2 words (not an escaped delimiter)
@@ -1400,7 +1400,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			const byte val = src[delimAnchor + 1];
 			const int length = srcIdx - delimAnchor - 1;
 
-			if (length < TextCodec::MAX_WORD_LENGTH) {
+			if (length <= TextCodec::MAX_WORD_LENGTH) {
 			   // Compute hashes
 			   // h1 -> hash of word chars
 			   // h2 -> hash of word chars with first char case flipped
@@ -1658,7 +1658,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 		if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(cur)) {
 			const int length = srcIdx - delimAnchor - 1;
 
-			if (length < TextCodec::MAX_WORD_LENGTH) {
+			if (length <= TextCodec::MAX_WORD_LENGTH) {
 			   int32 h1 = TextCodec::HASH1;
 
 			   for (int i = delimAnchor + 1; i < srcIdx; i++)
@@ -1727,7 +1727,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			const byte* buf = e._ptr;
 
 			// Sanity check
-			if ((buf == nullptr) || (dstIdx + length >= dstEnd))
+			if ((buf == nullptr) || (length > TextCodec::MAX_WORD_LENGTH) || (dstIdx + length >= dstEnd))
 				break;
 
 			// Add space if only delimiter between 2 words (not an escaped delimiter)
@@ -1759,7 +1759,6 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 			dstIdx += length;
 		}
 		else {
-			// Escape token followed by symbol > 0x80 ?
 			if (cur == TextCodec::ESCAPE_TOKEN1) {
 				dst[dstIdx++] = src[srcIdx++];
 			}
