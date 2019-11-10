@@ -543,19 +543,18 @@ const byte TextCodec::DICT_EN_1024[] = {
 };
 
 DictEntry TextCodec::STATIC_DICTIONARY[1024] = {};
-const bool* TextCodec::DELIMITER_CHARS = TextCodec::initDelimiterChars();
-const bool* TextCodec::TEXT_CHARS = TextCodec::initTextChars();
+bool TextCodec::DELIMITER_CHARS[256] = {};
+bool TextCodec::TEXT_CHARS[256] = {};
+const bool TextCodec::INIT = TextCodec::init(TextCodec::DELIMITER_CHARS, TextCodec::TEXT_CHARS);
 const int TextCodec::STATIC_DICT_WORDS = TextCodec::createDictionary(TextCodec::unpackDictionary32(DICT_EN_1024, sizeof(DICT_EN_1024)), STATIC_DICTIONARY, 1024, 0);
 
-bool* TextCodec::initDelimiterChars()
+bool TextCodec::init(bool delims[256], bool text[256])
 {
-	bool* res = new bool[256];
-
 	for (int i = 0; i < 256; i++) {
 		if ((i >= ' ') && (i <= '/')) // [ !"#$%&'()*+,-./]
-			res[i] = true;
+			delims[i] = true;
 		else if ((i >= ':') && (i <= '?')) // [:;<=>?]
-			res[i] = true;
+			delims[i] = true;
 		else {
 			switch (i) {
 			case '\n':
@@ -567,26 +566,17 @@ bool* TextCodec::initDelimiterChars()
 			case '}':
 			case '[':
 			case ']':
-				res[i] = true;
+				delims[i] = true;
 				break;
 			default:
-				res[i] = false;
+				delims[i] = false;
 			}
 		}
+
+		text[i] = isUpperCase(byte(i)) | isLowerCase(byte(i));
 	}
 
-	return res;
-}
-
-bool* TextCodec::initTextChars()
-{
-	bool* res = new bool[256];
-
-	for (int i = 0; i < 256; i++) {
-		res[i] = isUpperCase(byte(i)) | isLowerCase(byte(i));
-	}
-
-	return res;
+	return true;
 }
 
 // Create dictionary from array of words

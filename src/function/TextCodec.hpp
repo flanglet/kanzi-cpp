@@ -172,10 +172,10 @@ namespace kanzi {
        static const byte MASK_XML_HTML = byte(0x02);
        static const byte MASK_CRLF = byte(0x01);
 
-       static bool* initDelimiterChars();
-       static const bool* DELIMITER_CHARS;
-       static bool* initTextChars();
-       static const bool* TEXT_CHARS;
+       static bool init(bool delims[256], bool text[256]);
+       static bool DELIMITER_CHARS[256];
+       static bool TEXT_CHARS[256];
+       static const bool INIT;
 
        static SliceArray<byte> unpackDictionary32(const byte dict[], int dictSize);
 
