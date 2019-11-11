@@ -537,9 +537,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
     map["verbose"] = strVerbose;
     map["mode"] = mode;
-
-    if (mode == "c")
-        map["level"] = strLevel;
+    map["level"] = strLevel;
 
     if (strOverwrite == "true")
         map["overwrite"] = strOverwrite;

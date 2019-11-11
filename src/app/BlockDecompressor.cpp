@@ -67,6 +67,7 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
     args.erase(it);
     it = args.find("jobs");
     int concurrency = atoi(it->second.c_str());
+    args.erase(it);
 
 #ifndef CONCURRENCY_ENABLED
     if (concurrency > 1)
@@ -77,13 +78,11 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
         ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY << endl;
         Printer log(&cerr);
         log.println(ss.str().c_str(), _verbosity > 0);
+        concurrency = MAX_CONCURRENCY;
     }
 #endif
 
     _jobs = (concurrency == 0) ? DEFAULT_CONCURRENCY : concurrency;
-    args.erase(it);
-    _cis = nullptr;
-    _os = nullptr;
 
     if ((_verbosity > 0) && (args.size() > 0)) {
         Printer log(&cout);
