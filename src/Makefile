@@ -1,6 +1,5 @@
 CXX=g++
-CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -DNDEBUG -pedantic -march=native
-#CFLAGS=-c  -Wall -DNDEBUG -O3 -fomit-frame-pointer -msse2 -std=c++0x -D_FILE_OFFSET_BITS=64 
+CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native
 LDFLAGS=-lpthread
 LIB_SOURCES=Global.cpp \
 	Event.cpp \
@@ -66,20 +65,18 @@ APP=kanzi
 STATIC_LIB_SUFFIX := .a
 SHARED_LIB_SUFFIX := .so
 PROG_SUFFIX       := 
-SHARED_LIB_CFLAGS := -fPIC
 
 # Compiling for Windows with MinGW?
 ifeq ($(OS),Windows_NT)
     STATIC_LIB_SUFFIX := .lib
     SHARED_LIB_SUFFIX := .dll
     PROG_SUFFIX       := .exe
-    SHARED_LIB_CFLAGS := 
 endif
 
 STATIC_LIB := lib$(APP)$(STATIC_LIB_SUFFIX)
 SHARED_LIB := lib$(APP)$(SHARED_LIB_SUFFIX)
 
-all: $(TESTS) $(APP) $(STATIC_LIB)
+all: $(STATIC_LIB) $(SHARED_LIB) $(APP) $(TESTS)
 
 # Create static library
 $(STATIC_LIB):$(LIB_OBJECTS)
@@ -87,7 +84,7 @@ $(STATIC_LIB):$(LIB_OBJECTS)
 
 # Create shared library
 $(SHARED_LIB):$(LIB_OBJECTS)
-	$(CXX) -o ../lib/$@ $(LDFLAGS) $(SHARED_LIB_CFLAGS) -shared $+
+	$(CXX) -o ../lib/$@ $(LDFLAGS) -shared $+
 
 
 testBWT: $(LIB_OBJECTS) test/TestBWT.o
