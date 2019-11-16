@@ -111,8 +111,6 @@ namespace kanzi {
        string _transform;
        int _blockSize;
        int _jobs;
-       OutputStream* _os;
-       CompressedInputStream* _cis;
        vector<Listener*> _listeners;
 
        static void notifyListeners(vector<Listener*>& listeners, const Event& evt);
