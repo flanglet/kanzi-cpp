@@ -779,7 +779,7 @@ T FileCompressTask<T>::run()
         delete[] buf;
         stringstream sserr;
         sserr << "Input file " << inputName << " is empty ... nothing to do";
-        log.println(ss.str().c_str(), verbosity > 0);
+        log.println(sserr.str().c_str(), verbosity > 0);
         return T(0, read, _cos->getWritten(), sserr.str().c_str());
     }
 
