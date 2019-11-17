@@ -141,18 +141,25 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         log.println(APP_HEADER, true);
         stringstream extraHeader;
         
-#ifdef __GNUC__  
-        extraHeader << "\nCompiled with gcc version ";
-        extraHeader << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__;
-#endif
-#ifdef _clang_major__
-        extraHeader << "\nCompiled with clang version ";
-        extraHeader << __clang_major__ << "." << __clang_minor__;
-#endif
-#ifdef _MSC_VER 
-        extraHeader << "\nCompiled with Visual Studio";
-   #ifdef _MSC_VER_STR // see types.h 
-        extraHeader << " " << _MSC_VER_STR;
+#ifdef __clang__
+       extraHeader << "\nCompiled with clang version ";
+       extraHeader << __clang_major__ << "." << __clang_minor__;
+#else
+   #ifdef _MSC_VER
+         extraHeader << "\nCompiled with Visual Studio";
+      #ifdef _MSC_VER_STR // see types.h
+         extraHeader << " " << _MSC_VER_STR;
+      #endif
+   #else
+      #ifdef  __INTEL_COMPILER
+         extraHeader << "\nCompiled with Intel compiler ";
+         extraHeader << "(" << __INTEL_COMPILER_BUILD_DATE << ")";
+      #else
+         #ifdef  __GNUC__
+            extraHeader << "\nCompiled with gcc version ";
+            extraHeader << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__;
+         #endif
+      #endif
    #endif
 #endif
 
