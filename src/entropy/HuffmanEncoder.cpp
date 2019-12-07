@@ -203,7 +203,7 @@ int HuffmanEncoder::encode(byte block[], uint blkptr, uint count)
     uint8* data = reinterpret_cast<uint8*>(&block[0]);
 
     while (startChunk < end) {
-        const int endChunk = (startChunk + _chunkSize < end) ? startChunk + _chunkSize : end;
+        const int endChunk = min(startChunk + _chunkSize, end);
         Global::computeHistogram(&block[startChunk], endChunk - startChunk, _freqs, true);
 
         // Rebuild Huffman codes

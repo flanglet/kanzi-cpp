@@ -103,7 +103,7 @@ namespace kanzi {
 
        BWT(int jobs = 1);
 
-       virtual ~BWT();
+       ~BWT();
 
        bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 

@@ -112,7 +112,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
                 throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
             }
 
-            const int endj = (i + chkSize < alphabetSize) ? i + chkSize : alphabetSize;
+            const int endj = min(i + chkSize, alphabetSize);
 
             // Read frequencies
             for (int j = i; j < endj; j++) {
@@ -185,7 +185,7 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint len)
         if (decodeHeader(_freqs) == 0)
             return startChunk - blkptr;
 
-        const int sizeChunk = (startChunk + sz < end) ? sz : end - startChunk;
+        const int sizeChunk = min(sz, end - startChunk);
         decodeChunk(&block[startChunk], sizeChunk);
         startChunk += sizeChunk;
     }

@@ -67,7 +67,7 @@ int RangeDecoder::decodeHeader(uint frequencies[])
     // Decode all frequencies (but the first one) by chunks of size 'inc'
     for (int i = 1; i < alphabetSize; i += chkSize) {
         const int logMax = int(1 + _bitstream.readBits(llr));
-        const int endj = (i + chkSize < alphabetSize) ? i + chkSize : alphabetSize;
+        const int endj = min(i + chkSize, alphabetSize);
 
         // Read frequencies
         for (int j = i; j < endj; j++) {
@@ -134,7 +134,7 @@ int RangeDecoder::decode(byte block[], uint blkptr, uint len)
         _range = TOP_RANGE;
         _low = 0;
         _code = _bitstream.readBits(60);
-        const int endChunk = (startChunk + sz < end) ? startChunk + sz : end;
+        const int endChunk = min(startChunk + sz, end);
 
         for (int i = startChunk; i < endChunk; i++)
             block[i] = decodeByte();

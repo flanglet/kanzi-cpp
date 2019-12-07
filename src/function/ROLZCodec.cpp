@@ -117,7 +117,7 @@ int ROLZCodec1::findMatch(const byte buf[], const int pos, const int end)
     int bestIdx = -1;
 
     if  (matches[counter & _maskChecks] != 0) {
-        const int maxMatch = (end - pos >= ROLZCodec1::MAX_MATCH) ? ROLZCodec1::MAX_MATCH : end - pos;
+        const int maxMatch = min(ROLZCodec1::MAX_MATCH, end - pos);
 
         // Check all recorded positions
         for (int i = counter ; i > counter - _posChecks; i--) {
@@ -312,7 +312,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte* dst = &output._array[output._index];
     const int dstEnd = BigEndian::readInt32(&src[0]) - 4;
     int srcIdx = 4;
-    int sizeChunk = (dstEnd < ROLZCodec::CHUNK_SIZE) ? dstEnd : ROLZCodec::CHUNK_SIZE;
+    int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
     stringbuf buffer;
     iostream ios(&buffer);
@@ -331,7 +331,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         lenBuf._index = 0;
         mIdxBuf._index = 0;
         memset(&_matches[0], 0, sizeof(int32) * (ROLZCodec::HASH_SIZE << _logPosChecks));
-        const int endChunk = (startChunk + sizeChunk < dstEnd) ? startChunk + sizeChunk : dstEnd;
+        const int endChunk = min(startChunk + sizeChunk, dstEnd);
         sizeChunk = endChunk - startChunk;
 
         // Scope to deallocate resources early
@@ -583,7 +583,7 @@ int ROLZCodec2::findMatch(const byte buf[], const int pos, const int end)
     int bestIdx = -1;
 
     if  (matches[counter & _maskChecks] != 0) {
-        const int maxMatch = (end - pos >= ROLZCodec2::MAX_MATCH) ? ROLZCodec2::MAX_MATCH : end - pos;
+        const int maxMatch = min(ROLZCodec2::MAX_MATCH, end - pos);
 
         // Check all recorded positions
         for (int i = counter ; i > counter - _posChecks; i--) {
@@ -633,7 +633,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     BigEndian::writeInt32(&dst[0], count);
     int srcIdx = 0;
     int dstIdx = 4;
-    int sizeChunk = (count <= ROLZCodec::CHUNK_SIZE) ? count : ROLZCodec::CHUNK_SIZE;
+    int sizeChunk = min(count, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
     _litPredictor.reset();
     _matchPredictor.reset();
@@ -643,7 +643,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     while (startChunk < srcEnd) {
         memset(&_matches[0], 0, sizeof(int32) * (ROLZCodec::HASH_SIZE << _logPosChecks));
-        const int endChunk = (startChunk + sizeChunk < srcEnd) ? startChunk + sizeChunk : srcEnd;
+        const int endChunk = min(startChunk + sizeChunk, srcEnd);
         sizeChunk = endChunk - startChunk;
         src = &input._array[startChunk];
         srcIdx = 0;
@@ -717,7 +717,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int srcIdx = 0;
     const int dstEnd = BigEndian::readInt32(&src[srcIdx]);
     srcIdx += 4;
-    int sizeChunk = (dstEnd < ROLZCodec::CHUNK_SIZE) ? dstEnd : ROLZCodec::CHUNK_SIZE;
+    int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
     _litPredictor.reset();
     _matchPredictor.reset();
@@ -727,7 +727,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     while (startChunk < dstEnd) {
         memset(&_matches[0], 0, sizeof(int32) * (ROLZCodec::HASH_SIZE << _logPosChecks));
-        const int endChunk = (startChunk + sizeChunk < dstEnd) ? startChunk + sizeChunk : dstEnd;
+        const int endChunk = min(startChunk + sizeChunk, dstEnd);
         sizeChunk = endChunk - startChunk;
         dst = &output._array[output._index];
         int dstIdx = 0;
@@ -754,6 +754,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             break;
         }
 
+        // Next chunk
         while (dstIdx < sizeChunk) {
             const int savedIdx = dstIdx;
             const uint32 key = ROLZCodec::getKey(&dst[dstIdx - 2]);

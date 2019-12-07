@@ -60,7 +60,7 @@ int BinaryEntropyEncoder::encode(byte block[], uint blkptr, uint count) THROW
    // Split block into chunks, encode chunk and write bit array to bitstream
    while (startChunk < end)
    {
-      const int chunkSize = startChunk+length < end ? length : end-startChunk;
+      const int chunkSize = min(length, end - startChunk);
      
       if (_sba._length < (chunkSize * 9) >> 3) {
          delete[] _sba._array;

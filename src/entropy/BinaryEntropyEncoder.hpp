@@ -29,7 +29,6 @@ namespace kanzi
    {
    private:
        static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
-       static const uint64 MASK_24_56 = 0x00FFFFFFFF000000;
        static const uint64 MASK_0_24 = 0x0000000000FFFFFF;
        static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
 
@@ -77,7 +76,7 @@ namespace kanzi
        _predictor->update(bit);
 
        // Write unchanged first 32 bits to bitstream
-       while (((_low ^ _high) & MASK_24_56) == 0)
+       while (((_low ^ _high) >> 24) == 0)
            flush();
    }
 

@@ -111,7 +111,7 @@ int RangeEncoder::encode(byte block[], uint blkptr, uint len)
     int startChunk = blkptr;
 
     while (startChunk < end) {
-        const int endChunk = (startChunk + sz < end) ? startChunk + sz : end;
+        const int endChunk = min(startChunk + sz, end);
         _range = TOP_RANGE;
         _low = 0;
         int lr = _logRange;

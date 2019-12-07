@@ -164,7 +164,7 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
         if (_minCodeLen * endPaddingSize != 64)
             endPaddingSize++;
 
-        const int endChunk = (startChunk + _chunkSize < end) ? startChunk + _chunkSize : end;
+        const int endChunk = min(startChunk + _chunkSize, end);
         const int endChunk8 = startChunk + max((endChunk - startChunk - endPaddingSize) & -8, 0);
         int i = startChunk;
 

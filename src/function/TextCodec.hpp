@@ -46,7 +46,7 @@ namespace kanzi {
 
        TextCodec1(Context& ctx);
 
-       virtual ~TextCodec1()
+       ~TextCodec1()
        {
            if (_dictList != nullptr) delete[] _dictList;
            if (_dictMap != nullptr) delete[] _dictMap;
@@ -83,7 +83,7 @@ namespace kanzi {
 
        TextCodec2(Context& ctx);
 
-       virtual ~TextCodec2()
+       ~TextCodec2()
        {
            if (_dictList != nullptr) delete[] _dictList;
            if (_dictMap != nullptr) delete[] _dictMap;

@@ -17,7 +17,6 @@ limitations under the License.
 #define _TPAQPredictor_
 
 #include "../Context.hpp"
-#include "../Global.hpp"
 #include "../Predictor.hpp"
 #include "AdaptiveProbMap.hpp"
 
