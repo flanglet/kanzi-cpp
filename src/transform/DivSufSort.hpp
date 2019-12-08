@@ -18,6 +18,12 @@ limitations under the License.
 
 #include "../types.hpp"
 
+#if __cplusplus >= 201103L
+   #include <utility>
+#else
+   #include <algorithm>
+#endif
+
 using namespace std; // for C++17
 
 namespace kanzi
@@ -59,10 +65,23 @@ namespace kanzi
 
        int size() const { return _index; }
 
-       inline void push(int a, int b, int c, int d, int e);
+       void push(int a, int b, int c, int d, int e);
 
-       inline StackElement* pop();
+       StackElement* pop() { return (_index == 0) ? nullptr : &_arr[--_index]; }
    };
+
+   inline void Stack::push(int a, int b, int c, int d, int e)
+   {
+       StackElement* elt = &_arr[_index];
+       elt->_a = a;
+       elt->_b = b;
+       elt->_c = c;
+       elt->_d = d;
+       elt->_e = e;
+       _index++;
+   }
+
+
 
    class TRBudget
    {
@@ -78,8 +97,28 @@ namespace kanzi
 
        ~TRBudget() {}
 
-       inline bool check(int size);
+       bool check(int size);
    };
+
+
+   inline bool TRBudget::check(int size)
+   {
+       if (size <= _remain) {
+           _remain -= size;
+           return true;
+       }
+
+       if (_chance == 0) {
+           _count += size;
+           return false;
+       }
+
+       _remain += (_incVal - size);
+       _chance--;
+       return true;
+   }
+
+
 
    class DivSufSort
    {
@@ -109,15 +148,15 @@ namespace kanzi
        void ssSort(int pa, int first, int last, int buf, int bufSize,
            int depth, int n, bool lastSuffix);
 
-       inline int ssCompare(int pa, int pb, int p2, int depth);
+       int ssCompare(int pa, int pb, int p2, int depth);
 
-       inline int ssCompare(int p1, int p2, int depth);
+       int ssCompare(int p1, int p2, int depth);
 
        void ssInplaceMerge(int pa, int first, int middle, int last, int depth);
 
        void ssRotate(int first, int middle, int last);
 
-       inline void ssBlockSwap(int a, int b, int n);
+       void ssBlockSwap(int a, int b, int n);
 
        static int getIndex(int a) { return (a >= 0) ? a : ~a; }
 
@@ -132,15 +171,15 @@ namespace kanzi
 
        void ssInsertionSort(int pa, int first, int last, int depth);
 
-       inline int ssIsqrt(int x);
+       int ssIsqrt(int x);
 
        void ssMultiKeyIntroSort(const int pa, int first, int last, int depth);
 
-       inline int ssPivot(int td, int pa, int first, int last);
+       int ssPivot(int td, int pa, int first, int last);
 
-       inline int ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5);
+       int ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5);
 
-       inline int ssMedian3(int idx, int pa, int v1, int v2, int v3);
+       int ssMedian3(int idx, int pa, int v1, int v2, int v3);
 
        int ssPartition(int pa, int first, int last, int depth);
 
@@ -148,9 +187,7 @@ namespace kanzi
 
        void ssFixDown(int idx, int pa, int saIdx, int i, int size);
 
-       inline int ssIlg(int n);
-
-       inline void swapInSA(int a, int b);
+       int ssIlg(int n);
 
        void trSort(int n, int depth);
 
@@ -158,11 +195,11 @@ namespace kanzi
 
        void trIntroSort(int isa, int isad, int first, int last, TRBudget& budget);
 
-       inline int trPivot(int arr[], int isad, int first, int last);
+       int trPivot(int arr[], int isad, int first, int last);
 
-       inline int trMedian5(int arr[], int isad, int v1, int v2, int v3, int v4, int v5);
+       int trMedian5(int arr[], int isad, int v1, int v2, int v3, int v4, int v5);
 
-       inline int trMedian3(int arr[], int isad, int v1, int v2, int v3);
+       int trMedian3(int arr[], int isad, int v1, int v2, int v3);
 
        void trHeapSort(int isad, int saIdx, int size);
 
@@ -174,9 +211,9 @@ namespace kanzi
 
        void trCopy(int isa, int first, int a, int b, int last, int depth);
 
-       inline void reset();
+       void reset();
 
-       inline int trIlg(int n);
+       int trIlg(int n);
 
    public:
        DivSufSort();
@@ -187,6 +224,105 @@ namespace kanzi
 
        int computeBWT(byte input[], int sa[], int start, int length);
    };
+
+
+   inline int DivSufSort::ssIlg(int n)
+   {
+       return ((n & 0xFF00) != 0) ? 8 + LOG_TABLE[(n >> 8) & 0xFF]
+                                  : LOG_TABLE[n & 0xFF];
+   }
+
+
+   inline int DivSufSort::trIlg(int n)
+   {
+       return ((n & 0xFFFF0000) != 0) ? (((n & 0xFF000000) != 0) ? 24 + LOG_TABLE[(n >> 24) & 0xFF]
+                                                                 : 16 + LOG_TABLE[(n >> 16) & 0xFF])
+                                      : (((n & 0x0000FF00) != 0) ? 8 + LOG_TABLE[(n >> 8) & 0xFF]
+                                                                 : LOG_TABLE[n & 0xFF]);
+   }
+   
+
+
+   inline int DivSufSort::trMedian5(int _sa[], int isad, int v1, int v2, int v3, int v4, int v5)
+   {
+       if (_sa[isad + _sa[v2]] > _sa[isad + _sa[v3]]) {
+           swap(v2, v3);
+       }
+
+       if (_sa[isad + _sa[v4]] > _sa[isad + _sa[v5]]) {
+           const int t = v4;
+           v4 = v5;
+           v5 = t;
+       }
+
+       if (_sa[isad + _sa[v2]] > _sa[isad + _sa[v4]]) {
+           swap(v2, v4);
+           swap(v3, v5);
+       }
+
+       if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v3]]) {
+           swap(v1, v3);
+       }
+
+       if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v4]]) {
+           swap(v1, v4);
+           swap(v3, v5);
+       }
+
+       if (_sa[isad + _sa[v3]] > _sa[isad + _sa[v4]])
+           return v4;
+
+       return v3;
+   }
+
+
+   inline int DivSufSort::trMedian3(int _sa[], int isad, int v1, int v2, int v3)
+   {
+       if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v2]]) {
+           swap(v1, v2);
+       }
+
+       if (_sa[isad + _sa[v2]] > _sa[isad + _sa[v3]]) {
+           if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v3]])
+               return v1;
+
+           return v3;
+       }
+
+       return v2;
+   }
+
+
+   inline int DivSufSort::ssIsqrt(int x)
+   {
+       if (x >= (SS_BLOCKSIZE * SS_BLOCKSIZE))
+           return SS_BLOCKSIZE;
+
+       const int e = ((x & 0xFFFF0000) != 0) ? (((x & 0xFF000000) != 0) ? 24 + LOG_TABLE[(x >> 24) & 0xFF]
+                                                                        : 16 + LOG_TABLE[(x >> 16) & 0xFF])
+                                             : (((x & 0x0000FF00) != 0) ? 8 + LOG_TABLE[(x >> 8) & 0xFF]
+                                                                        : LOG_TABLE[x & 0xFF]);
+
+       if (e < 8)
+           return SQQ_TABLE[x] >> 4;
+
+       int y;
+
+       if (e >= 16) {
+           y = SQQ_TABLE[x >> ((e - 6) - (e & 1))] << ((e >> 1) - 7);
+
+           if (e >= 24) {
+               y = (y + 1 + x / y) >> 1;
+           }
+
+           y = (y + 1 + x / y) >> 1;
+       }
+       else {
+           y = (SQQ_TABLE[x >> ((e - 6) - (e & 1))] >> (7 - (e >> 1))) + 1;
+       }
+
+       return (x < y * y) ? y - 1 : y;
+   }
 
 }
 #endif

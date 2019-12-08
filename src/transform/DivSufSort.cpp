@@ -490,6 +490,16 @@ void DivSufSort::ssSort(const int pa, int first, int last, int buf, int bufSize,
     }
 }
 
+
+void DivSufSort::ssBlockSwap(int a, int b, int n)
+{
+    while (n-- > 0) {
+        swap(_sa[a], _sa[b]);
+        a++;
+        b++;
+    }
+}
+
 int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
 {
     int u1 = depth + pa;
@@ -513,6 +523,7 @@ int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
     return (u1 < u1n) ? ((u2 < u2n) ? _buffer[u1] - _buffer[u2] : 1) : ((u2 < u2n) ? -1 : 0);
 }
 
+
 int DivSufSort::ssCompare(int p1, int p2, int depth)
 {
     int u1 = depth + _sa[p1];
@@ -535,6 +546,7 @@ int DivSufSort::ssCompare(int p1, int p2, int depth)
 
     return (u1 < u1n) ? ((u2 < u2n) ? _buffer[u1] - _buffer[u2] : 1) : ((u2 < u2n) ? -1 : 0);
 }
+
 
 void DivSufSort::ssInplaceMerge(int pa, int first, int middle, int last, int depth)
 {
@@ -651,14 +663,6 @@ void DivSufSort::ssRotate(int first, int middle, int last)
     }
 }
 
-void DivSufSort::ssBlockSwap(int a, int b, int n)
-{
-    while (n-- > 0) {
-        std::swap(_sa[a], _sa[b]);
-        a++;
-        b++;
-    }
-}
 
 void DivSufSort::ssSwapMerge(int pa, int first, int middle, int last, int buf,
     int bufSize, int depth)
@@ -1055,36 +1059,6 @@ void DivSufSort::ssInsertionSort(int pa, int first, int last, int depth)
     }
 }
 
-int DivSufSort::ssIsqrt(int x)
-{
-    if (x >= (SS_BLOCKSIZE * SS_BLOCKSIZE))
-        return SS_BLOCKSIZE;
-
-    const int e = ((x & 0xFFFF0000) != 0) ? (((x & 0xFF000000) != 0) ? 24 + LOG_TABLE[(x >> 24) & 0xFF]
-                                                                     : 16 + LOG_TABLE[(x >> 16) & 0xFF])
-                                          : (((x & 0x0000FF00) != 0) ? 8 + LOG_TABLE[(x >> 8) & 0xFF]
-                                                                     : LOG_TABLE[x & 0xFF]);
-
-    if (e < 8)
-        return SQQ_TABLE[x] >> 4;
-
-    int y;
-
-    if (e >= 16) {
-        y = SQQ_TABLE[x >> ((e - 6) - (e & 1))] << ((e >> 1) - 7);
-
-        if (e >= 24) {
-            y = (y + 1 + x / y) >> 1;
-        }
-
-        y = (y + 1 + x / y) >> 1;
-    }
-    else {
-        y = (SQQ_TABLE[x >> ((e - 6) - (e & 1))] >> (7 - (e >> 1))) + 1;
-    }
-
-    return (x < y * y) ? y - 1 : y;
-}
 
 void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int depth)
 {
@@ -1163,7 +1137,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
         // choose pivot
         a = ssPivot(idx, pa, first, last);
         const int v = _buffer[idx + _sa[pa + _sa[a]]];
-        swapInSA(first, a);
+        swap(_sa[first], _sa[a]);
         int b = first;
 
         // partition
@@ -1180,7 +1154,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
                     break;
 
                 if (x == v) {
-                    swapInSA(b, a);
+                    swap(_sa[b], _sa[a]);
                     a++;
                 }
             }
@@ -1201,21 +1175,21 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
                     break;
 
                 if (x == v) {
-                    swapInSA(c, d);
+                    swap(_sa[c], _sa[d]);
                     d--;
                 }
             }
         }
 
         while (b < c) {
-            swapInSA(b, c);
+            swap(_sa[b], _sa[c]);
 
             while (++b < c) {
                 if ((x = _buffer[idx + _sa[pa + _sa[b]]]) > v)
                     break;
 
                 if (x == v) {
-                    swapInSA(b, a);
+                    swap(_sa[b], _sa[a]);
                     a++;
                 }
             }
@@ -1225,7 +1199,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
                     break;
 
                 if (x == v) {
-                    swapInSA(c, d);
+                    swap(_sa[c], _sa[d]);
                     d--;
                 }
             }
@@ -1236,12 +1210,12 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
             int s = (a - first > b - a) ? b - a : a - first;
 
             for (int e = first, f = b - s; s > 0; s--, e++, f++)
-                swapInSA(e, f);
+                swap(_sa[e], _sa[f]);
 
             s = (d - c > last - d - 1) ? last - d - 1 : d - c;
 
             for (int e = b, f = last - s; s > 0; s--, e++, f++)
-                swapInSA(e, f);
+                swap(_sa[e], _sa[f]);
 
             a = first + (b - a);
             c = last - (d - c);
@@ -1422,14 +1396,14 @@ void DivSufSort::ssHeapSort(int idx, int pa, int saIdx, int size)
         m--;
 
         if (_buffer[idx + _sa[pa + _sa[saIdx + (m >> 1)]]] < _buffer[idx + _sa[pa + _sa[saIdx + m]]])
-            swapInSA(saIdx + m, saIdx + (m >> 1));
+            swap(_sa[saIdx + m], _sa[saIdx + (m >> 1)]);
     }
 
     for (int i = (m >> 1) - 1; i >= 0; i--)
         ssFixDown(idx, pa, saIdx, i, m);
 
     if ((size & 1) == 0) {
-        swapInSA(saIdx, saIdx + m);
+        swap(_sa[saIdx], _sa[saIdx + m]);
         ssFixDown(idx, pa, saIdx, 0, m);
     }
 
@@ -1469,16 +1443,7 @@ void DivSufSort::ssFixDown(int idx, int pa, int saIdx, int i, int size)
     _sa[i + saIdx] = v;
 }
 
-int DivSufSort::ssIlg(int n)
-{
-    return ((n & 0xFF00) != 0) ? 8 + LOG_TABLE[(n >> 8) & 0xFF]
-                               : LOG_TABLE[n & 0xFF];
-}
 
-void DivSufSort::swapInSA(int a, int b)
-{
-   std::swap(_sa[a], _sa[b]);
-}
 
 // Tandem Repeat Sort
 void DivSufSort::trSort(int n, int depth)
@@ -1548,7 +1513,7 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
     if ((a < last) && (x < v)) {
         while ((++b < last) && ((x = _sa[isad + _sa[b]]) <= v)) {
             if (x == v) {
-                swapInSA(a, b);
+                swap(_sa[a], _sa[b]);
                 a++;
             }
         }
@@ -1570,25 +1535,25 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
     if ((b < d) && (x > v)) {
         while ((--c > b) && ((x = _sa[isad + _sa[c]]) >= v)) {
             if (x == v) {
-                swapInSA(c, d);
+                swap(_sa[c], _sa[d]);
                 d--;
             }
         }
     }
 
     while (b < c) {
-        swapInSA(c, b);
+        swap(_sa[c], _sa[b]);
 
         while ((++b < c) && ((x = _sa[isad + _sa[b]]) <= v)) {
             if (x == v) {
-                swapInSA(a, b);
+                swap(_sa[a], _sa[b]);
                 a++;
             }
         }
 
         while ((--c > b) && ((x = _sa[isad + _sa[c]]) >= v)) {
             if (x == v) {
-                swapInSA(c, d);
+                swap(_sa[c], _sa[d]);
                 d--;
             }
         }
@@ -1602,7 +1567,7 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
             s = b - a;
 
         for (int e = first, f = b - s; s > 0; s--, e++, f++)
-            swapInSA(e, f);
+            swap(_sa[e], _sa[f]);
 
         s = d - c;
 
@@ -1610,7 +1575,7 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
             s = last - d - 1;
 
         for (int e = b, f = last - s; s > 0; s--, e++, f++)
-            swapInSA(e, f);
+            swap(_sa[e], _sa[f]);
 
         first += (b - a);
         last -= (d - c);
@@ -1840,7 +1805,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
         limit--;
 
         // choose pivot
-        swapInSA(first, trPivot(_sa, isad, first, last));
+        swap(_sa[first], _sa[trPivot(_sa, isad, first, last)]);
         int v = _sa[isad + _sa[first]];
 
         // partition
@@ -2040,67 +2005,6 @@ int DivSufSort::trPivot(int arr[], int isad, int first, int last)
     return trMedian3(arr, isad, first, middle, last);
 }
 
-int DivSufSort::trMedian5(int _sa[], int isad, int v1, int v2, int v3, int v4, int v5)
-{
-    if (_sa[isad + _sa[v2]] > _sa[isad + _sa[v3]]) {
-        int t = v2;
-        v2 = v3;
-        v3 = t;
-    }
-
-    if (_sa[isad + _sa[v4]] > _sa[isad + _sa[v5]]) {
-        const int t = v4;
-        v4 = v5;
-        v5 = t;
-    }
-
-    if (_sa[isad + _sa[v2]] > _sa[isad + _sa[v4]]) {
-        const int t1 = v2;
-        v2 = v4;
-        v4 = t1;
-        const int t2 = v3;
-        v3 = v5;
-        v5 = t2;
-    }
-
-    if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v3]]) {
-        const int t = v1;
-        v1 = v3;
-        v3 = t;
-    }
-
-    if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v4]]) {
-        const int t1 = v1;
-        v1 = v4;
-        v4 = t1;
-        const int t2 = v3;
-        v3 = v5;
-        v5 = t2;
-    }
-
-    if (_sa[isad + _sa[v3]] > _sa[isad + _sa[v4]])
-        return v4;
-
-    return v3;
-}
-
-int DivSufSort::trMedian3(int _sa[], int isad, int v1, int v2, int v3)
-{
-    if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v2]]) {
-        const int t = v1;
-        v1 = v2;
-        v2 = t;
-    }
-
-    if (_sa[isad + _sa[v2]] > _sa[isad + _sa[v3]]) {
-        if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v3]])
-            return v1;
-
-        return v3;
-    }
-
-    return v2;
-}
 
 void DivSufSort::trHeapSort(int isad, int saIdx, int size)
 {
@@ -2110,14 +2014,14 @@ void DivSufSort::trHeapSort(int isad, int saIdx, int size)
         m--;
 
         if (_sa[isad + _sa[saIdx + (m >> 1)]] < _sa[isad + _sa[saIdx + m]])
-            swapInSA(saIdx + m, saIdx + (m >> 1));
+            swap(_sa[saIdx + m], _sa[saIdx + (m >> 1)]);
     }
 
     for (int i = (m >> 1) - 1; i >= 0; i--)
         trFixDown(isad, saIdx, i, m);
 
     if ((size & 1) == 0) {
-        swapInSA(saIdx, saIdx + m);
+        swap(_sa[saIdx], _sa[saIdx + m]);
         trFixDown(isad, saIdx, 0, m);
     }
 
@@ -2273,13 +2177,6 @@ void DivSufSort::trCopy(int isa, int first, int a, int b, int last, int depth)
     }
 }
 
-int DivSufSort::trIlg(int n)
-{
-    return ((n & 0xFFFF0000) != 0) ? (((n & 0xFF000000) != 0) ? 24 + LOG_TABLE[(n >> 24) & 0xFF]
-                                                              : 16 + LOG_TABLE[(n >> 16) & 0xFF])
-                                   : (((n & 0x0000FF00) != 0) ? 8 + LOG_TABLE[(n >> 8) & 0xFF]
-                                                              : LOG_TABLE[n & 0xFF]);
-}
 
 StackElement::StackElement()
 {
@@ -2302,21 +2199,6 @@ Stack::~Stack()
     delete[] _arr;
 }
 
-void Stack::push(int a, int b, int c, int d, int e)
-{
-    StackElement* elt = &_arr[_index];
-    elt->_a = a;
-    elt->_b = b;
-    elt->_c = c;
-    elt->_d = d;
-    elt->_e = e;
-    _index++;
-}
-
-StackElement* Stack::pop()
-{
-    return (_index == 0) ? nullptr : &_arr[--_index];
-}
 
 TRBudget::TRBudget(int chance, int incval)
 {
@@ -2324,21 +2206,4 @@ TRBudget::TRBudget(int chance, int incval)
     _remain = incval;
     _incVal = incval;
     _count = 0;
-}
-
-bool TRBudget::check(int size)
-{
-    if (size <= _remain) {
-        _remain -= size;
-        return true;
-    }
-
-    if (_chance == 0) {
-        _count += size;
-        return false;
-    }
-
-    _remain += (_incVal - size);
-    _chance--;
-    return true;
 }
