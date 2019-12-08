@@ -62,14 +62,14 @@ int BinaryEntropyEncoder::encode(byte block[], uint blkptr, uint count) THROW
    {
       const int chunkSize = min(length, end - startChunk);
      
-      if (_sba._length < (chunkSize * 9) >> 3) {
+      if (_sba._length < (chunkSize + (chunkSize >> 3))) {
          delete[] _sba._array;
-         _sba._array = new byte[(chunkSize * 9) >> 3];
+         _sba._array = new byte[chunkSize + (chunkSize >> 3)];
       }
       
       _sba._index = 0;
 
-      for (int i=startChunk; i<startChunk+chunkSize; i++)
+      for (int i = startChunk; i< startChunk + chunkSize; i++)
          encodeByte(block[i]);
 
       EntropyUtils::writeVarInt(_bitstream, uint32(_sba._index));
