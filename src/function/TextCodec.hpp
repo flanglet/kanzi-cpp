@@ -112,8 +112,8 @@ namespace kanzi {
        inline int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
 
-   // Simple one-pass text codec. Uses a default (small) static dictionary
-   // or potentially larger custom one. Generates a dynamic dictionary.
+   // Simple one-pass text codec that replaces words with indexes.
+   // Generates a dynamic dictionary.
    class TextCodec : public Function<byte> {
        friend class TextCodec1;
        friend class TextCodec2;
@@ -171,24 +171,23 @@ namespace kanzi {
        static const byte MASK_FULL_ASCII = byte(0x04);
        static const byte MASK_XML_HTML = byte(0x02);
        static const byte MASK_CRLF = byte(0x01);
+       static const int MASK_LENGTH = 0x0007FFFF; // 19 bits
 
        static bool init(bool delims[256], bool text[256]);
        static bool DELIMITER_CHARS[256];
        static bool TEXT_CHARS[256];
        static const bool INIT;
 
-       static SliceArray<byte> unpackDictionary32(const byte dict[], int dictSize);
-
        static bool sameWords(const byte src[], const byte dst[], const int length);
 
        static byte computeStats(const byte block[], int count, int32 freqs[]);
 
-       // Default dictionary
-       static const byte DICT_EN_1024[];
-
+       // Common English words.
+       static byte DICT_EN_1024[];
+       
        // Static dictionary of 1024 entries.
        static DictEntry STATIC_DICTIONARY[1024];
-       static int createDictionary(SliceArray<byte> words, DictEntry dict[], int maxWords, int startWord);
+       static int createDictionary(byte words[], int dictSize, DictEntry dict[], int maxWords, int startWord);
        static const int STATIC_DICT_WORDS;
 
        Function<byte>* _delegate;
@@ -205,7 +204,7 @@ namespace kanzi {
    {
        _ptr = ptr;
        _hash = hash;
-       _data = ((length & 0xFF) << 24) | (idx & 0x00FFFFFF);
+       _data = (length << 24) | idx;
    }
 
    inline DictEntry::DictEntry(const DictEntry& de)
