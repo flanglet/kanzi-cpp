@@ -157,6 +157,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         res = srcIdx == srcEnd;
     }
 
+    res &= (dstIdx < srcIdx);
     input._index += srcIdx;
     output._index += dstIdx;
     return res;
