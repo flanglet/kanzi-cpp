@@ -208,7 +208,7 @@ int testFunctionsCorrectness(const string& name)
             goto End;
         }
 
-        if (iba1._index != size) {
+        if ((iba1._index != size) || (iba1._index < iba2._index)) {
             cout << endl
                  << "No compression (ratio > 1.0), skip reverse" << endl;
             continue;
