@@ -50,9 +50,7 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
         _overwrite = false;
     }
     else {
-        string str = it->second;
-        transform(str.begin(), str.end(), str.begin(), ::toupper);
-        _overwrite = str == "TRUE";
+        _overwrite = it->second == STR_TRUE;
         args.erase(it);
     }
 
@@ -224,7 +222,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     ss.str(string());
     ss << _verbosity;
     ctx["verbosity"] = ss.str();
-    ctx["overwrite"] = (_overwrite == true) ? "TRUE" : "FALSE";
+    ctx["overwrite"] = (_overwrite == true) ? STR_TRUE : STR_FALSE;
 
     // Run the task(s)
     if (nbFiles == 1) {
@@ -438,7 +436,7 @@ T FileDecompressTask<T>::run()
     log.println(ss.str().c_str(), printFlag);
     ss.str(string());
     string strOverwrite = _ctx.getString("overwrite");
-    bool overwrite = strOverwrite.compare(0, 4, "TRUE") == 0;
+    bool overwrite = strOverwrite == STR_TRUE;
 
     int64 read = 0;
     printFlag = verbosity > 1;

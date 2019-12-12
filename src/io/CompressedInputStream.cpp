@@ -152,7 +152,7 @@ void CompressedInputStream::readHeader() THROW
     // Read entropy codec
     _entropyType = uint32(_ibs->readBits(5));
     _ctx.putString("codec", EntropyCodecFactory::getName(_entropyType));
-    _ctx.putString("extra", _entropyType == EntropyCodecFactory::TPAQX_TYPE ? "TRUE" : "FALSE");
+    _ctx.putString("extra", _entropyType == EntropyCodecFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
 
     // Read transform: 8*6 bits
     _transformType = _ibs->readBits(48);

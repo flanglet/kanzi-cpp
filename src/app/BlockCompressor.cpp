@@ -52,9 +52,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         _overwrite = false;
     }
     else {
-        string str = it->second;
-        transform(str.begin(), str.end(), str.begin(), ::toupper);
-        _overwrite = str == "TRUE";
+        _overwrite = it->second == STR_TRUE;
         args.erase(it);
     }
 
@@ -64,9 +62,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         _skipBlocks = false;
     }
     else {
-        string str = it->second;
-        transform(str.begin(), str.end(), str.begin(), ::toupper);
-        _skipBlocks = str == "TRUE";
+        _skipBlocks = it->second == STR_TRUE;
         args.erase(it);
     }
 
@@ -137,7 +133,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     else {
         string str = it->second;
         transform(str.begin(), str.end(), str.begin(), ::toupper);
-        _checksum = str == "TRUE";
+        _checksum = str == STR_TRUE;
         args.erase(it);
     }
 
@@ -333,15 +329,15 @@ int BlockCompressor::compress(uint64& outputSize)
     ss.str(string());
     ss << _verbosity;
     ctx["verbosity"] = ss.str();
-    ctx["overwrite"] = (_overwrite == true) ? "TRUE" : "FALSE";
+    ctx["overwrite"] = (_overwrite == true) ? STR_TRUE : STR_FALSE;
     ss.str(string());
     ss << _blockSize;
     ctx["blockSize"] = ss.str();
-    ctx["skipBlocks"] = (_skipBlocks == true) ? "TRUE" : "FALSE";
-    ctx["checksum"] = (_checksum == true) ? "TRUE" : "FALSE";
+    ctx["skipBlocks"] = (_skipBlocks == true) ? STR_TRUE : STR_FALSE;
+    ctx["checksum"] = (_checksum == true) ? STR_TRUE : STR_FALSE;
     ctx["codec"] = _codec;
     ctx["transform"] = _transform;
-    ctx["extra"] = (_codec == "TPAQX") ? "TRUE" : "FALSE";
+    ctx["extra"] = (_codec == "TPAQX") ? STR_TRUE : STR_FALSE;
 
     // Run the task(s)
     if (nbFiles == 1) {
@@ -600,7 +596,7 @@ T FileCompressTask<T>::run()
     log.println(ss.str().c_str(), printFlag);
     ss.str(string());
     string strOverwrite = _ctx.getString("overwrite");
-    bool overwrite = strOverwrite.compare(0, 4, "TRUE") == 0;
+    bool overwrite = strOverwrite == STR_TRUE;
 
     OutputStream* os = nullptr;
 

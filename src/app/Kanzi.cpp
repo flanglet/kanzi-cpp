@@ -55,9 +55,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     string strVerbose = "1";
     string strTasks = "0";
     string strBlockSize = "";
-    string strOverwrite = "false";
-    string strChecksum = "false";
-    string strSkip = "false";
+    string strOverwrite = STR_FALSE;
+    string strChecksum = STR_FALSE;
+    string strSkip = STR_FALSE;
     string codec;
     string transf;
     int verbose = 1;
@@ -288,7 +288,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println(ss.str().c_str(), verbose > 0);
             }
 
-            strOverwrite = "true";
+            strOverwrite = STR_TRUE;
             ctx = -1;
             continue;
         }
@@ -300,7 +300,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println(ss.str().c_str(), verbose > 0);
             }
 
-            strSkip = "true";
+            strSkip = STR_TRUE;
             ctx = -1;
             continue;
         }
@@ -312,7 +312,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println(ss.str().c_str(), verbose > 0);
             }
 
-            strChecksum = "true";
+            strChecksum = STR_TRUE;
             ctx = -1;
             continue;
         }
@@ -548,7 +548,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     if ((mode == "c") || (strLevel != "-1"))
         map["level"] = strLevel;
 
-    if (strOverwrite == "true")
+    if (strOverwrite == STR_TRUE)
         map["overwrite"] = strOverwrite;
 
     map["inputName"] = inputName;
@@ -560,10 +560,10 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     if (transf.length() > 0)
         map["transform"] = transf;
 
-    if (strChecksum == "true")
+    if (strChecksum == STR_TRUE)
         map["checksum"] = strChecksum;
 
-    if (strSkip == "true")
+    if (strSkip == STR_TRUE)
         map["skipBlocks"] = strSkip;
 
     map["jobs"] = strTasks;

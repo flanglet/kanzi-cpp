@@ -140,7 +140,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     _entropyType = EntropyCodecFactory::getType(entropyCodec.c_str());
     _transformType = FunctionFactory<byte>::getType(transform.c_str());
     string str = ctx.getString("checksum");
-    bool checksum = str == "TRUE";
+    bool checksum = str == STR_TRUE;
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _jobs = tasks;
     _sa = new SliceArray<byte>(new byte[_blockSize], _blockSize, 0); // initially 1 blockSize
@@ -514,7 +514,7 @@ T EncodingTask<T>::run() THROW
                 string str = _ctx.getString("skipBlocks");
                 transform(str.begin(), str.end(), str.begin(), ::toupper);
 
-                if (str == "TRUE") {
+                if (str == STR_TRUE) {
                    uint histo[256];
                    const int entropy = EntropyUtils::computeFirstOrderEntropy1024(&_data->_array[_data->_index], _blockLength, histo);
                    //_ctx.putString("histo0", toString(histo, 256));

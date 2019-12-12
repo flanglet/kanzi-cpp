@@ -382,7 +382,7 @@ TextCodec1::TextCodec1(Context& ctx)
 
     if (ctx.has("extra")) {
         string strExtra = ctx.getString("extra");
-        extraMem = (strExtra.compare(0, 5, "TRUE") == 0) ? 1 : 0;
+        extraMem = (strExtra == STR_TRUE) ? 1 : 0;
     }
 
     _logHashSize = log + extraMem;
@@ -840,7 +840,7 @@ TextCodec2::TextCodec2(Context& ctx)
 
     if (ctx.has("extra")) {
         string strExtra = ctx.getString("extra");
-        extraMem = (strExtra.compare(0, 5, "TRUE") == 0) ? 1 : 0;
+        extraMem = (strExtra == STR_TRUE) ? 1 : 0;
     }
 
     _logHashSize = log + extraMem;
