@@ -541,7 +541,9 @@ T EncodingTask<T>::run() THROW
         // Forward transform (ignore error, encode skipFlags)
         _buffer->_index = 0;
         _data->_length = _blockLength;
+        const int nbFunctions = transform->getNbFunctions();
         transform->forward(*_data, *_buffer, _data->_length);
+        delete transform;
         postTransformLength = _buffer->_index;
 
         if (postTransformLength < 0)
@@ -576,7 +578,7 @@ T EncodingTask<T>::run() THROW
         // Write block 'header' (mode + compressed length);
         uint64 written = _obs->written();
 
-        if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != byte(0)) || (transform->getNbFunctions() <= 4)) {
+        if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != byte(0)) || (nbFunctions <= 4)) {
             mode |= byte(uint8(transform->getSkipFlags()) >> 4);
             _obs->writeBits(uint64(mode), 8);
         }
@@ -586,7 +588,6 @@ T EncodingTask<T>::run() THROW
             _obs->writeBits(uint64(transform->getSkipFlags()), 8);
         }
 
-        delete transform;
         _obs->writeBits(postTransformLength, 8 * dataSize);
 
         // Write checksum
