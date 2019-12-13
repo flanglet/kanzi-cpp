@@ -297,7 +297,8 @@ TextCodec::TextCodec()
 TextCodec::TextCodec(Context& ctx)
 {
     int encodingType = ctx.getInt("textcodec", 1);
-    _delegate = (encodingType == 1) ? reinterpret_cast<Function<byte>*>(new TextCodec1(ctx)) : reinterpret_cast<Function<byte>*>(new TextCodec2(ctx));
+    _delegate = (encodingType == 1) ? reinterpret_cast<Function<byte>*>(new TextCodec1(ctx)) : 
+        reinterpret_cast<Function<byte>*>(new TextCodec2(ctx));
 }
 
 bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW

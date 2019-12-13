@@ -119,7 +119,7 @@ const int* Global::initStretch()
 int Global::log2_1024(uint32 x) THROW
 {
     if (x == 0)
-        throw std::invalid_argument("Cannot calculate log of a negative or null value");
+        throw invalid_argument("Cannot calculate log of a negative or null value");
 
     if (x < 256)
         return (Global::LOG2_4096[x]+2) >> 2;
@@ -136,7 +136,7 @@ int Global::log2_1024(uint32 x) THROW
 int Global::log2(uint32 x) THROW
 {
     if (x == 0)
-        throw std::invalid_argument("Cannot calculate log of a negative or null value");
+        throw invalid_argument("Cannot calculate log of a negative or null value");
 
     return _log2(x);
 }

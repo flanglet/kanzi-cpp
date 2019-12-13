@@ -83,8 +83,6 @@ namespace kanzi {
 		name += '+';
 
 		while (pos != string::npos) {
-			string token = name.substr(prv, pos - prv);
-			uint64 typeTk = getTypeToken(token.c_str());
 			n++;
 
 			if (n > 8) {
@@ -93,15 +91,17 @@ namespace kanzi {
 				throw invalid_argument(ss.str());
 			}
 
+			string token = name.substr(prv, pos - prv);
+			uint64 typeTk = getTypeToken(token.c_str());
+
 			// Skip null transform
 			if (typeTk != NONE_TYPE) {
 				res |= (typeTk << shift);
 				shift -= ONE_SHIFT;
 			}
 
-			pos++;
-			prv = pos;
-			pos = name.find('+', pos);
+			prv = pos + 1;
+			pos = name.find('+', prv);
 		}
 
 		return res;
@@ -113,43 +113,43 @@ namespace kanzi {
 		string name(cname);
 		transform(name.begin(), name.end(), name.begin(), ::toupper);
 
-		if (name.compare("TEXT") == 0)
+		if (name == "TEXT")
 			return DICT_TYPE;
 
-		if (name.compare("BWT") == 0)
+		if (name == "BWT")
 			return BWT_TYPE;
 
-		if (name.compare("BWTS") == 0)
+		if (name == "BWTS")
 			return BWTS_TYPE;
 
-		if (name.compare("ROLZ") == 0)
+		if (name == "ROLZ")
 			return ROLZ_TYPE;
 
-		if (name.compare("ROLZX") == 0)
+		if (name == "ROLZX")
 			return ROLZX_TYPE;
 
-		if (name.compare("MTFT") == 0)
+		if (name == "MTFT")
 			return MTFT_TYPE;
 
-		if (name.compare("ZRLT") == 0)
+		if (name == "ZRLT")
 			return ZRLT_TYPE;
 
-		if (name.compare("RLT") == 0)
+		if (name == "RLT")
 			return RLT_TYPE;
 
-		if (name.compare("SRT") == 0)
+		if (name == "SRT")
 			return SRT_TYPE;
 
-		if (name.compare("RANK") == 0)
+		if (name == "RANK")
 			return RANK_TYPE;
 
-		if (name.compare("LZ") == 0)
+		if (name == "LZ")
 			return LZ_TYPE;
 
-		if (name.compare("X86") == 0)
+		if (name == "X86")
 			return X86_TYPE;
 
-		if (name.compare("NONE") == 0)
+		if (name == "NONE")
 			return NONE_TYPE;
 
 		stringstream ss;
@@ -179,19 +179,19 @@ namespace kanzi {
 	{
 		switch (functionType) {
 		case DICT_TYPE: {
-			string textCodecType = "1";
+			int textCodecType = 1;
          
 			if (ctx.has("codec")) {			
 				string entropyType = ctx.getString("codec");
 				transform(entropyType.begin(), entropyType.end(), entropyType.begin(), ::toupper);
             
 				// Select text encoding based on entropy codec.
-				if ((entropyType.compare(0, 4, "NONE") == 0) || (entropyType.compare(0, 4, "ANS0") == 0) ||
-				   (entropyType.compare(0, 7, "HUFFMAN") == 0) || (entropyType.compare(0, 5, "RANGE") == 0))
-				    textCodecType = "2";
+				if ((entropyType == "NONE") || (entropyType == "ANS0") ||
+				   (entropyType == "HUFFMAN") || (entropyType == "RANGE"))
+				    textCodecType = 2;
 			}
          
-			ctx.putString("textcodec", textCodecType);
+			ctx.putInt("textcodec", textCodecType);
 			return new TextCodec(ctx);
 		}
 
