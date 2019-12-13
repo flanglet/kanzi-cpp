@@ -25,6 +25,8 @@ namespace kanzi
    class Function : public Transform<T>
    {
    public:
+       Function(){};
+
        virtual int getMaxEncodedLength(int srcLen) const = 0;
 
        virtual ~Function(){};

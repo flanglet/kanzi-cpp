@@ -39,11 +39,11 @@ namespace kanzi
               AFTER_HEADER_DECODING
           };
 
-          Event(Event::Type type, int id, const string& msg, clock_t evtTime);
+          Event(Type type, int id, const string& msg, clock_t evtTime);
 
-          Event(Event::Type type, int id, int64 size, clock_t evtTime);
+          Event(Type type, int id, int64 size, clock_t evtTime);
 
-          Event(Event::Type type, int id, int64 size, int hash, bool hashing, clock_t evtTime);
+          Event(Type type, int id, int64 size, int hash, bool hashing, clock_t evtTime);
 
           ~Event() {}
 

@@ -23,6 +23,8 @@ namespace kanzi
    class Predictor 
    {
    public:
+       Predictor(){};
+
        // Updates the internal probability model based on the observed bit
        virtual void update(int bit) = 0;
 

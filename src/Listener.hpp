@@ -24,6 +24,8 @@ namespace kanzi
    class Listener 
    {
    public:
+       Listener(){};
+      
        virtual void processEvent(const Event& evt) = 0;
 
        virtual ~Listener(){};

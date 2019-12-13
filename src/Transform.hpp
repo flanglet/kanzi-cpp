@@ -28,6 +28,8 @@ namespace kanzi
    class Transform 
    {
    public:
+       Transform(){};
+
        virtual bool forward(SliceArray<T>& src, SliceArray<T>& dst, int length) = 0;
 
        virtual bool inverse(SliceArray<T>& src, SliceArray<T>& dst, int length) = 0;

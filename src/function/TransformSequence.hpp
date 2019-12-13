@@ -42,7 +42,7 @@ namespace kanzi
 
        void setSkipFlags(byte flags) { _skipFlags = flags; }
 
-       int getNbFunctions() { return _length; }
+       int getNbFunctions() const { return _length; }
 
    private:
        static const byte SKIP_MASK = byte(0xFF);
