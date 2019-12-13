@@ -149,7 +149,12 @@ limitations under the License.
       #endif
    #endif
 
-static const char* STR_TRUE = "TRUE";
-static const char* STR_FALSE = "FALSE";
+#ifndef STR_TRUE
+   #define STR_TRUE "TRUE"
+#endif
+
+#ifndef STR_FALSE
+   #define STR_FALSE "FALSE"
+#endif
 
 #endif
