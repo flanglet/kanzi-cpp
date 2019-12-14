@@ -542,6 +542,7 @@ T EncodingTask<T>::run() THROW
         _buffer->_index = 0;
         _data->_length = _blockLength;
         const int nbFunctions = transform->getNbFunctions();
+        const byte skipFlags = transform->getSkipFlags();
         transform->forward(*_data, *_buffer, _data->_length);
         delete transform;
         postTransformLength = _buffer->_index;
@@ -579,13 +580,13 @@ T EncodingTask<T>::run() THROW
         uint64 written = _obs->written();
 
         if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != byte(0)) || (nbFunctions <= 4)) {
-            mode |= byte(uint8(transform->getSkipFlags()) >> 4);
+            mode |= byte(uint8(skipFlags) >> 4);
             _obs->writeBits(uint64(mode), 8);
         }
         else {
             mode |= CompressedOutputStream::TRANSFORMS_MASK;
             _obs->writeBits(uint64(mode), 8);
-            _obs->writeBits(uint64(transform->getSkipFlags()), 8);
+            _obs->writeBits(uint64(skipFlags), 8);
         }
 
         _obs->writeBits(postTransformLength, 8 * dataSize);
