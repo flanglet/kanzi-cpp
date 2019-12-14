@@ -29,7 +29,7 @@ namespace kanzi {
 	class FunctionFactory {
 	public:
 		// Up to 64 transforms can be declared (6 bit index)
-		static const uint64 NONE_TYPE = 0; // copy
+		static const uint64 NONE_TYPE = 0; // Copy
 		static const uint64 BWT_TYPE = 1; // Burrows Wheeler
 		static const uint64 BWTS_TYPE = 2; // Burrows Wheeler Scott
 		static const uint64 LZ_TYPE = 3; // Lempel Ziv
@@ -205,31 +205,31 @@ namespace kanzi {
 			return new BWTBlockCodec(ctx);
 
 		case BWTS_TYPE:
-			return new BWTS();
+			return new BWTS(ctx);
 
 		case RANK_TYPE:
-			return new SBRT(SBRT::MODE_RANK);
+			return new SBRT(SBRT::MODE_RANK, ctx);
 
 		case SRT_TYPE:
-			return new SRT();
+			return new SRT(ctx);
 
 		case MTFT_TYPE:
-			return new SBRT(SBRT::MODE_MTF);
+			return new SBRT(SBRT::MODE_MTF, ctx);
 
 		case ZRLT_TYPE:
-			return new ZRLT();
+			return new ZRLT(ctx);
 
 		case RLT_TYPE:
-			return new RLT();
+			return new RLT(ctx);
 
 		case LZ_TYPE:
-			return new LZCodec();
+			return new LZCodec(ctx);
 
 		case X86_TYPE:
-			return new X86Codec();
+			return new X86Codec(ctx);
 
 		case NONE_TYPE:
-			return new NullFunction<T>();
+			return new NullFunction<T>(ctx);
 
 		default:
 			stringstream ss;

@@ -20,11 +20,6 @@ limitations under the License.
 
 using namespace kanzi;
 
-LZCodec::LZCodec()
-{
-    _buffer = new int[0];
-    _bufferSize = 0;
-}
 
 
 int LZCodec::emitLastLiterals(byte src[], byte dst[], int runLength)
@@ -111,7 +106,7 @@ bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int cou
                 match = table[h];
                 table[h] = srcIdx;
                 h = (LittleEndian::readInt32(&src[fwdIdx]) * LZ_HASH_SEED) >> hashShift;
-            } while ((differentInts(src, match, srcIdx) == true) || (match <= srcIdx - MAX_DISTANCE));
+            } while ((sameInts(src, match, srcIdx) == false) || (match <= srcIdx - MAX_DISTANCE));
 
             // Catch up
             while ((match > 0) && (srcIdx > anchor) && (src[match - 1] == src[srcIdx - 1])) {
@@ -182,7 +177,7 @@ bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int cou
                 match = table[h];
                 table[h] = srcIdx;
 
-                if ((differentInts(src, match, srcIdx) == true) || (match <= srcIdx - MAX_DISTANCE))
+                if ((sameInts(src, match, srcIdx) == false) || (match <= srcIdx - MAX_DISTANCE))
                     break;
 
                 token = dstIdx;
@@ -334,4 +329,3 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     output._index = dstIdx;
     return srcIdx == srcEnd;
 }
-

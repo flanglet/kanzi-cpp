@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef _SRT_
 #define _SRT_
 
+#include "../Context.hpp"
 #include "../Function.hpp"
 
 namespace kanzi {
@@ -26,7 +27,7 @@ namespace kanzi {
    class SRT : public Function<byte> {
    public:
        SRT() {}
-
+       SRT(Context&) {}
        ~SRT() {}
 
        bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;

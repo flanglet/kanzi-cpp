@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef _SBRT_
 #define _SBRT_
 
+#include "../Context.hpp"
 #include "../Transform.hpp"
 
 using namespace std;
@@ -39,7 +40,7 @@ namespace kanzi
        static const int MODE_TIMESTAMP = 3; // alpha = 1
 
        SBRT(int mode);
-
+       SBRT(int mode, Context&);
        ~SBRT() {}
 
        bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;

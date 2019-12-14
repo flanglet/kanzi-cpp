@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef _BWTS_
 #define _BWTS_
 
+#include "../Context.hpp"
 #include "../Transform.hpp"
 #include "DivSufSort.hpp"
 
@@ -44,6 +45,13 @@ namespace kanzi
 
    public:
        BWTS()
+       {
+           _buffer1 = new int[0];
+           _buffer2 = new int[0];
+           _bufferSize = 0;
+       }
+
+       BWTS(Context&)
        {
            _buffer1 = new int[0];
            _buffer2 = new int[0];

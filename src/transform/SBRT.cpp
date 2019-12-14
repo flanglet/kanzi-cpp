@@ -13,13 +13,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <cstring>
 #include <stdexcept>
 #include "SBRT.hpp"
 
 using namespace kanzi;
 
 SBRT::SBRT(int mode) :
+	  _mask1((mode == MODE_TIMESTAMP) ? 0 : -1)
+	, _mask2((mode == MODE_MTF) ? 0 : -1)
+	, _shift((mode == MODE_RANK) ? 1 : 0)
+{
+    if ((mode != MODE_MTF) && (mode != MODE_RANK) && (mode != MODE_TIMESTAMP))
+        throw invalid_argument("Invalid mode parameter");
+}
+
+SBRT::SBRT(int mode, Context&) :
 	  _mask1((mode == MODE_TIMESTAMP) ? 0 : -1)
 	, _mask2((mode == MODE_MTF) ? 0 : -1)
 	, _shift((mode == MODE_RANK) ? 1 : 0)
