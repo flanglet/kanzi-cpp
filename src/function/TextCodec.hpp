@@ -183,11 +183,11 @@ namespace kanzi {
        static byte computeStats(const byte block[], int count, int32 freqs[]);
 
        // Common English words.
-       static byte DICT_EN_1024[];
+       static char DICT_EN_1024[];
        
        // Static dictionary of 1024 entries.
        static DictEntry STATIC_DICTIONARY[1024];
-       static int createDictionary(byte words[], int dictSize, DictEntry dict[], int maxWords, int startWord);
+       static int createDictionary(char words[], int dictSize, DictEntry dict[], int maxWords, int startWord);
        static const int STATIC_DICT_WORDS;
 
        Function<byte>* _delegate;

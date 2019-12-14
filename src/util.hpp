@@ -33,6 +33,12 @@ limitations under the License.
 
 using namespace std;
 
+#ifdef _MSC_VER
+   // Ahem ... Visual Studio 
+   #define min(a, b) (((a) < (b)) ? (a) : (b))
+   #define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+
 template <typename T>::string to_string(T value)
 {
 	ostringstream os;

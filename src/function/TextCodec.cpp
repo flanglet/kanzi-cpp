@@ -23,7 +23,7 @@ limitations under the License.
 using namespace kanzi;
 
 // 1024 of the most common English words with at least 2 chars.
-byte TextCodec::DICT_EN_1024[] = 
+char TextCodec::DICT_EN_1024[] = 
 "TheBeAndOfInToWithItThatForYouHeHaveOnSaidSayAtButWeByHadTheyAsW\
 ouldWhoOrCanMayDoThisWasIsMuchAnyFromNotSheWhatTheirWhichGetGive\
 HasAreHimHerComeMyOurWereWillSomeBecauseThereThroughTellWhenWork\
@@ -149,19 +149,21 @@ bool TextCodec::init(bool delims[256], bool text[256])
 }
 
 // Create dictionary from array of words
-int TextCodec::createDictionary(byte words[], int dictSize, DictEntry dict[], int maxWords, int startWord)
+int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], int maxWords, int startWord)
 {
     int delimAnchor = 0;
     int32 h = HASH1;
     int nbWords = startWord;
 
     for (int i = 0; ((i < dictSize) && (nbWords < maxWords)); i++) {
-        if (isText(words[i]) == false)
+        const byte b = byte(words[i]);
+        
+        if (isText(b) == false)
             continue;
 
-        if (isUpperCase(words[i])) {
+        if (isUpperCase(b)) {
             if (i > delimAnchor) {
-                dict[nbWords] = DictEntry(&words[delimAnchor], h, nbWords, i - delimAnchor);
+                dict[nbWords] = DictEntry(reinterpret_cast<byte*>(&words[delimAnchor]), h, nbWords, i - delimAnchor);
                 nbWords++;
                 delimAnchor = i;
                 h = HASH1;
@@ -174,7 +176,7 @@ int TextCodec::createDictionary(byte words[], int dictSize, DictEntry dict[], in
     }
 
     if (nbWords < maxWords) {
-        dict[nbWords] = DictEntry(&words[delimAnchor], h, nbWords, dictSize - 1 - delimAnchor);
+        dict[nbWords] = DictEntry(reinterpret_cast<byte*>(&words[delimAnchor]), h, nbWords, dictSize - 1 - delimAnchor);
         nbWords++;
     }
 
