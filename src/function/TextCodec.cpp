@@ -767,21 +767,13 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             if ((buf == nullptr) || (length > TextCodec::MAX_WORD_LENGTH) || (dstIdx + length >= dstEnd))
                 break;
 
-            // Add space if only delimiter between 2 words (not an escaped delimiter)
-            if ((wordRun == true) && (length > 1))
-                dst[dstIdx++] = TextCodec::SP;
-
             // Emit word
-            if (cur != TextCodec::ESCAPE_TOKEN2) {
-                dst[dstIdx] = buf[0];
-            }
-            else {
-                // Flip case of first character
-                dst[dstIdx] = buf[0] ^ byte(0x20);
-            }
-
             if (length > 1) {
-                memcpy(&dst[dstIdx + 1], &buf[1], length - 1);
+                // Add space if only delimiter between 2 words (not an escaped delimiter)
+                if (wordRun == true)
+                    dst[dstIdx++] = TextCodec::SP;
+
+                memcpy(&dst[dstIdx], &buf[0], length);
 
                 // Regular word entry
                 wordRun = true;
@@ -792,6 +784,10 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 wordRun = false;
                 delimAnchor = srcIdx - 1;
             }
+
+            // Flip case of first character ?
+            if (cur == TextCodec::ESCAPE_TOKEN2)
+               dst[dstIdx] ^= byte(0x20);
 
             dstIdx += length;
         }
@@ -1250,21 +1246,14 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             if ((buf == nullptr) || (length > TextCodec::MAX_WORD_LENGTH) || (dstIdx + length >= dstEnd))
                 break;
 
-            // Add space if only delimiter between 2 words (not an escaped delimiter)
-            if ((wordRun == true) && (length > 1))
-                dst[dstIdx++] = TextCodec::SP;
 
             // Emit word
-            if ((cur & TextCodec::MASK_20) == byte(0)) {
-                dst[dstIdx] = buf[0];
-            }
-            else {
-                // Flip case of first character
-                dst[dstIdx] = buf[0] ^ byte(0x20);
-            }
-
             if (length > 1) {
-                memcpy(&dst[dstIdx + 1], &buf[1], length - 1);
+                // Add space if only delimiter between 2 words (not an escaped delimiter)
+                if (wordRun == true)
+                    dst[dstIdx++] = TextCodec::SP;
+
+                memcpy(&dst[dstIdx], &buf[0], length);
 
                 // Regular word entry
                 wordRun = true;
@@ -1275,6 +1264,10 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 wordRun = false;
                 delimAnchor = srcIdx - 1;
             }
+
+            // Flip case of first character ?
+            if ((cur & TextCodec::MASK_20) != byte(0))
+               dst[dstIdx] ^= byte(0x20);
 
             dstIdx += length;
         }
