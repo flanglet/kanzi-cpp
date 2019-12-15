@@ -541,9 +541,9 @@ T EncodingTask<T>::run() THROW
         // Forward transform (ignore error, encode skipFlags)
         _buffer->_index = 0;
         _data->_length = _blockLength;
+        transform->forward(*_data, *_buffer, _data->_length);
         const int nbFunctions = transform->getNbFunctions();
         const byte skipFlags = transform->getSkipFlags();
-        transform->forward(*_data, *_buffer, _data->_length);
         delete transform;
         postTransformLength = _buffer->_index;
 
