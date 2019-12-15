@@ -330,11 +330,11 @@ void CompressedOutputStream::processBlock(bool force) THROW
 
     if (!force && (_sa->_length < _jobs * _blockSize)) {
         // Grow byte array until max allowed
-        byte* buf = new byte[_sa->_length + _blockSize];
+        byte* buf = new byte[ _jobs * _blockSize];
         memcpy(buf, _sa->_array, _sa->_length);
         delete[] _sa->_array;
         _sa->_array = buf;
-        _sa->_length = _sa->_length + _blockSize;
+        _sa->_length = _jobs * _blockSize;
         return;
     }
 
