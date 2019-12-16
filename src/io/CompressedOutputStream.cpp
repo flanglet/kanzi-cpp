@@ -73,7 +73,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _transformType = FunctionFactory<byte>::getType(transform.c_str());
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _jobs = tasks;
-    _sa = new SliceArray<byte>(new byte[_blockSize], _blockSize, 0); // initially 1 blockSize
+    _sa = new SliceArray<byte>(new byte[0], 0);
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
     for (int i = 0; i < 2 * _jobs; i++)
@@ -143,7 +143,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     bool checksum = str == STR_TRUE;
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _jobs = tasks;
-    _sa = new SliceArray<byte>(new byte[_blockSize], _blockSize, 0); // initially 1 blockSize
+    _sa = new SliceArray<byte>(new byte[0], 0);
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
     for (int i = 0; i < 2 * _jobs; i++)
@@ -262,7 +262,7 @@ ostream& CompressedOutputStream::put(char c) THROW
         if (_sa->_index >= _sa->_length)
             processBlock(false);
 
-        _sa->_array[_sa->_index++] = (byte)c;
+        _sa->_array[_sa->_index++] = byte(c);
         return *this;
     }
     catch (exception& e) {
@@ -325,9 +325,6 @@ ostream& CompressedOutputStream::seekp(streampos) THROW
 
 void CompressedOutputStream::processBlock(bool force) THROW
 {
-    if (_sa->_index == 0)
-        return;
-
     if (!force && (_sa->_length < _jobs * _blockSize)) {
         // Grow byte array until max allowed
         byte* buf = new byte[ _jobs * _blockSize];
@@ -337,6 +334,9 @@ void CompressedOutputStream::processBlock(bool force) THROW
         _sa->_length = _jobs * _blockSize;
         return;
     }
+
+    if (_sa->_index == 0)
+        return;
 
     if (!_initialized.exchange(true, memory_order_acquire))
         writeHeader();
