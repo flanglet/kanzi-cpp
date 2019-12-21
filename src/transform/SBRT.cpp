@@ -52,17 +52,17 @@ bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     byte* dst = &output._array[output._index];
     int p[256] = { 0 };
     int q[256] = { 0 };
-    int s2r[256];
-    int r2s[256];
+    uint8 s2r[256];
+    uint8 r2s[256];
 
     for (int i = 0; i < 256; i++) {
-        s2r[i] = i;
-        r2s[i] = i;
+        s2r[i] = uint8(i);
+        r2s[i] = uint8(i);
     }
 
     for (int i = 0; i < count; i++) {
         const uint8 c = src[i];
-        int r = s2r[c];
+        uint8 r = s2r[c];
         dst[i] = byte(r);
         const int qc = ((i & _mask1) + (p[c] & _mask2)) >> _shift;
         p[c] = i;
@@ -100,10 +100,10 @@ bool SBRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     byte* dst = &output._array[output._index];
     int p[256] = { 0 };
     int q[256] = { 0 };
-    int r2s[256];
+    uint8 r2s[256];
 
     for (int i = 0; i < 256; i++)
-        r2s[i] = i;
+        r2s[i] = uint8(i);
 
     for (int i = 0; i < count; i++) {
         uint8 r = src[i];
