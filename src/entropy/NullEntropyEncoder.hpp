@@ -16,7 +16,9 @@ limitations under the License.
 #ifndef _NullEntropyEncoder_
 #define _NullEntropyEncoder_
 
+#include "../EntropyEncoder.hpp"
 #include "../Memory.hpp"
+#include "../OutputBitStream.hpp"
 
 namespace kanzi {
 
