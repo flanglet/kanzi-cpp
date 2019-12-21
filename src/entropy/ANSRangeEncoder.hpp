@@ -99,6 +99,33 @@ namespace kanzi
    };
 
 
+   inline void ANSEncSymbol::reset(int cumFreq, int freq, int logRange)
+   {
+      // Make sure xMax is a positive int32. Compatibility with Java implementation
+      if (freq >= 1 << logRange)
+         freq = (1 << logRange) - 1;
+
+      _xMax = ((ANSRangeEncoder::ANS_TOP >> logRange) << 16) * freq;
+      _cmplFreq = (1 << logRange) - freq;
+
+      if (freq < 2) {
+         _invFreq = uint64(0xFFFFFFFF);
+         _invShift = 32;
+         _bias = cumFreq + (1 << logRange) - 1;
+      }
+      else {
+         int shift = 0;
+
+         while (freq > (1 << shift))
+               shift++;
+
+         // Alverson, "Integer Division using reciprocals"
+         _invFreq = (((uint64(1) << (shift + 31)) + freq - 1) / freq) & uint64(0xFFFFFFFF);
+         _invShift = 32 + shift - 1;
+         _bias = cumFreq;
+      }
+   }
+
    inline int ANSRangeEncoder::encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym)
    {
       while (st >= sym._xMax) {
