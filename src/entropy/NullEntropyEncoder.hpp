@@ -31,7 +31,7 @@ namespace kanzi {
 
        ~NullEntropyEncoder() { dispose(); }
 
-       int encode(byte arr[], uint blkptr, uint len);
+       int encode(const byte block[], uint blkptr, uint len);
 
        void encodeByte(byte val);
 
@@ -45,7 +45,7 @@ namespace kanzi {
    {
    }
 
-   inline int NullEntropyEncoder::encode(byte block[], uint blkptr, uint count)
+   inline int NullEntropyEncoder::encode(const byte block[], uint blkptr, uint count)
    {
       int res = 0;
 

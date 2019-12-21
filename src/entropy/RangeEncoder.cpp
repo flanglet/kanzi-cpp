@@ -101,7 +101,7 @@ bool RangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequenc
 }
 
 // Reset frequency stats for each chunk of data in the block
-int RangeEncoder::encode(byte block[], uint blkptr, uint len)
+int RangeEncoder::encode(const byte block[], uint blkptr, uint len)
 {
     if (len == 0)
         return 0;
@@ -163,7 +163,7 @@ void RangeEncoder::encodeByte(byte b)
 }
 
 // Compute chunk frequencies, cumulated frequencies and encode chunk header
-int RangeEncoder::rebuildStatistics(byte block[], int start, int end, int lr)
+int RangeEncoder::rebuildStatistics(const byte block[], int start, int end, int lr)
 {
     Global::computeHistogram(&block[start], end - start, _freqs, true);
 

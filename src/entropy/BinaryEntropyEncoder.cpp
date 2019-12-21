@@ -41,7 +41,7 @@ BinaryEntropyEncoder::~BinaryEntropyEncoder()
        delete _predictor;
 }
 
-int BinaryEntropyEncoder::encode(byte block[], uint blkptr, uint count) THROW
+int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) THROW
 {
    if (count >= 1<<30)
       throw invalid_argument("Invalid block size parameter (max is 1<<30)");

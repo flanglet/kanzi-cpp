@@ -26,7 +26,7 @@ namespace kanzi
    public:
        // Encode the array provided into the bitstream. Return the number of bytes
        // written to the bitstream
-       virtual int encode(byte block[], uint blkptr, uint len) = 0;
+       virtual int encode(const byte block[], uint blkptr, uint len) = 0;
 
        // Return the underlying bitstream
        virtual OutputBitStream& getBitStream() const = 0;

@@ -130,7 +130,7 @@ int DebugOutputBitStream::writeBits(uint64 bits, uint count) THROW
     return res;
 }
 
-uint DebugOutputBitStream::writeBits(byte bits[], uint count) THROW
+uint DebugOutputBitStream::writeBits(const byte bits[], uint count) THROW
 {
     int res = _delegate.writeBits(bits, count);
     const int end = int(count >> 3);

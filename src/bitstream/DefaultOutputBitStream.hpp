@@ -50,7 +50,7 @@ namespace kanzi
 
        int writeBits(uint64 bits, uint length) THROW;
        
-       uint writeBits(byte bits[], uint length) THROW;
+       uint writeBits(const byte bits[], uint length) THROW;
 
        void close() THROW;
 

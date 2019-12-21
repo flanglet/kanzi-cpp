@@ -49,7 +49,7 @@ namespace kanzi
 
        int updateFrequencies(uint frequencies[]) THROW;
 
-       int encode(byte block[], uint blkptr, uint len);
+       int encode(const byte block[], uint blkptr, uint len);
 
        OutputBitStream& getBitStream() const { return _bitstream; }
 

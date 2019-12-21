@@ -66,7 +66,7 @@ namespace kanzi
 
 	   int updateFrequencies(uint frequencies[], int lr);
 
-	   int encode(byte block[], uint blkptr, uint len);
+	   int encode(const byte block[], uint blkptr, uint len);
 
 	   OutputBitStream& getBitStream() const { return _bitstream; }
 
@@ -89,9 +89,9 @@ namespace kanzi
 	   uint _order;
 
 
-	   int rebuildStatistics(byte block[], int end, int lr);
+	   int rebuildStatistics(const byte block[], int end, int lr);
 
-	   void encodeChunk(byte block[], int end);
+	   void encodeChunk(const byte block[], int end);
 
 	   int encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym);
 

@@ -35,7 +35,7 @@ namespace kanzi
 
        ~RangeEncoder() { dispose(); };
 
-       int encode(byte block[], uint blkptr, uint len);
+       int encode(const byte block[], uint blkptr, uint len);
 
        OutputBitStream& getBitStream() const { return _bitstream; }
 
@@ -58,7 +58,7 @@ namespace kanzi
        uint _logRange;
        uint _shift;
 
-       int rebuildStatistics(byte block[], int start, int end, int lr);
+       int rebuildStatistics(const byte block[], int start, int end, int lr);
 
        int updateFrequencies(uint frequencies[], int size, int lr);
 

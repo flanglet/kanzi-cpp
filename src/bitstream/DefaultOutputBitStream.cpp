@@ -41,7 +41,7 @@ DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize
     memset(&_buffer[0], 0, _bufferSize);
 }
 
-uint DefaultOutputBitStream::writeBits(byte bits[], uint count) THROW
+uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
 {
     if (isClosed() == true)
         throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);
