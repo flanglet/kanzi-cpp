@@ -106,7 +106,7 @@ ROLZCodec1::ROLZCodec1(uint logPosChecks) THROW
 // return position index (_logPosChecks bits) + length (16 bits) or -1
 int ROLZCodec1::findMatch(const byte buf[], const int pos, const int end)
 {
-    const uint32 key = ROLZCodec::getKey(&buf[pos - 2]);
+    const uint16 key = ROLZCodec::getKey(&buf[pos - 2]);
     prefetchRead(&_counters[key]);
     const int32 counter = _counters[key];
     int32* matches = &_matches[key << _logPosChecks];
@@ -572,7 +572,7 @@ ROLZCodec2::ROLZCodec2(uint logPosChecks) THROW
 // return position index (_logPosChecks bits) + length (16 bits) or -1
 int ROLZCodec2::findMatch(const byte buf[], const int pos, const int end)
 {
-    const uint32 key = ROLZCodec::getKey(&buf[pos - 2]);
+    const uint16 key = ROLZCodec::getKey(&buf[pos - 2]);
     prefetchRead(&_counters[key]);
     const int32 counter = _counters[key];
     int32* matches = &_matches[key << _logPosChecks];
