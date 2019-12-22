@@ -69,7 +69,7 @@ int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) TH
       
       _sba._index = 0;
 
-      for (int i = startChunk; i< startChunk + chunkSize; i++)
+      for (int i = startChunk; i < startChunk + chunkSize; i++)
          encodeByte(block[i]);
 
       EntropyUtils::writeVarInt(_bitstream, uint32(_sba._index));
