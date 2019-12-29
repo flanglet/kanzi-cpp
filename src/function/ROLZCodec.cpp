@@ -169,8 +169,8 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int sizeChunk = (count <= ROLZCodec::CHUNK_SIZE) ? count : ROLZCodec::CHUNK_SIZE;
     int startChunk = 0;
     SliceArray<byte> litBuf(new byte[getMaxEncodedLength(sizeChunk)], getMaxEncodedLength(sizeChunk));
-    SliceArray<byte> lenBuf(new byte[sizeChunk/2], sizeChunk/2);
-    SliceArray<byte> mIdxBuf(new byte[sizeChunk/2], sizeChunk/2);
+    SliceArray<byte> lenBuf(new byte[sizeChunk/4], sizeChunk/4);
+    SliceArray<byte> mIdxBuf(new byte[sizeChunk/4], sizeChunk/4);
     memset(&_counters[0], 0, sizeof(int32) * 65536);
     bool success = true;
     const int litOrder = (count < 1<<17) ? 0 : 1;
