@@ -71,7 +71,7 @@ namespace kanzi {
        bool _isCRLF; // EOL = CR + LF
 
        bool expandDictionary();
-       inline void reset();
+       inline void reset(int count);
        inline int emitWordIndex(byte dst[], int val);
        inline int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
@@ -107,7 +107,7 @@ namespace kanzi {
        bool _isCRLF; // EOL = CR + LF
 
        bool expandDictionary();
-       inline void reset();
+       inline void reset(int count);
        inline int emitWordIndex(byte dst[], int val, int mask);
        inline int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };

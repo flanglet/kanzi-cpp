@@ -356,7 +356,7 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
 TextCodec1::TextCodec1()
 {
     _logHashSize = TextCodec::LOG_HASHES_SIZE;
-    _dictSize = TextCodec::THRESHOLD2 * 4;
+    _dictSize = 1 << 13;
     _dictMap = nullptr;
     _dictList = nullptr;
     _hashMask = (1 << _logHashSize) - 1;
@@ -369,27 +369,21 @@ TextCodec1::TextCodec1(Context& ctx)
     // Actual block size
     int blockSize = 0;
     int log = 13;
-    int dSize = 1 << 12;
 
     if (ctx.has("blockSize")) {
         blockSize = ctx.getInt("blockSize");
 
         if (blockSize >= 8)
             log = max(min(Global::log2(blockSize / 8), 26), 13);
-
-        // Select an appropriate initial dictionary size
-        dSize = 1 << max(min(log - 4, 18), 12);
     }
-
-    uint extraMem = 0;
 
     if (ctx.has("extra")) {
         string strExtra = ctx.getString("extra");
-        extraMem = (strExtra == STR_TRUE) ? 1 : 0;
+        log += (strExtra == STR_TRUE) ? 1 : 0;
     }
 
-    _logHashSize = log + extraMem;
-    _dictSize = dSize;
+    _logHashSize = log;
+    _dictSize = 1 << 13;
     _dictMap = nullptr;
     _dictList = nullptr;
     _hashMask = (1 << _logHashSize) - 1;
@@ -397,8 +391,11 @@ TextCodec1::TextCodec1(Context& ctx)
     _isCRLF = false;
 }
 
-void TextCodec1::reset()
+void TextCodec1::reset(int count)
 {
+    // Select an appropriate initial dictionary size
+    const int log = (count < 8) ? 13 : max(min(Global::log2(count / 8), 22), 17);
+    _dictSize = 1 << (log - 4);
     const int mapSize = 1 << _logHashSize;
 
     if (_dictMap == nullptr)
@@ -446,7 +443,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0))
         return false;
 
-    reset();
+    reset(count);
     const int srcEnd = count;
     const int dstEnd = getMaxEncodedLength(count);
     const int dstEnd4 = dstEnd - 4;
@@ -674,7 +671,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;
-    reset();
+    reset(output._length);
     const int srcEnd = count;
     const int dstEnd = output._length;
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
@@ -810,7 +807,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 TextCodec2::TextCodec2()
 {
     _logHashSize = TextCodec::LOG_HASHES_SIZE;
-    _dictSize = TextCodec::THRESHOLD2 * 4;
+    _dictSize = 1 << 13;
     _dictMap = nullptr;
     _dictList = nullptr;
     _hashMask = (1 << _logHashSize) - 1;
@@ -823,27 +820,21 @@ TextCodec2::TextCodec2(Context& ctx)
     // Actual block size
     int blockSize = 0;
     int log = 13;
-    int dSize = 1 << 12;
 
     if (ctx.has("blockSize")) {
         blockSize = ctx.getInt("blockSize");
 
         if (blockSize >= 8)
             log = max(min(Global::log2(blockSize / 8), 26), 13);
-
-        // Select an appropriate initial dictionary size
-        dSize = 1 << max(min(log - 4, 18), 12);
     }
-
-    uint extraMem = 0;
 
     if (ctx.has("extra")) {
         string strExtra = ctx.getString("extra");
-        extraMem = (strExtra == STR_TRUE) ? 1 : 0;
+        log += (strExtra == STR_TRUE) ? 1 : 0;
     }
 
-    _logHashSize = log + extraMem;
-    _dictSize = dSize;
+    _logHashSize = log;
+    _dictSize = 1 << 13;
     _dictMap = nullptr;
     _dictList = nullptr;
     _hashMask = (1 << _logHashSize) - 1;
@@ -851,8 +842,11 @@ TextCodec2::TextCodec2(Context& ctx)
     _isCRLF = false;
 }
 
-void TextCodec2::reset()
+void TextCodec2::reset(int count)
 {
+    // Select an appropriate initial dictionary size
+    const int log = (count < 8) ? 13 : max(min(Global::log2(count / 8), 22), 17);
+    _dictSize = 1 << (log - 4);
     const int mapSize = 1 << _logHashSize;
 
     if (_dictMap == nullptr)
@@ -892,7 +886,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0))
         return false;
 
-    reset();
+    reset(count);
     const int srcEnd = count;
     const int dstEnd = getMaxEncodedLength(count);
     const int dstEnd3 = dstEnd - 3;
@@ -1154,7 +1148,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;
-    reset();
+    reset(output._length);
     const int srcEnd = count;
     const int dstEnd = output._length;
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
