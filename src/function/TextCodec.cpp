@@ -773,8 +773,6 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 if (wordRun == true)
                     dst[dstIdx++] = TextCodec::SP;
 
-                memcpy(&dst[dstIdx], &buf[0], length);
-
                 // Regular word entry
                 wordRun = true;
                 delimAnchor = srcIdx;
@@ -784,6 +782,8 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 wordRun = false;
                 delimAnchor = srcIdx - 1;
             }
+
+            memcpy(&dst[dstIdx], &buf[0], length);
 
             // Flip case of first character ?
             if (cur == TextCodec::ESCAPE_TOKEN2)
@@ -1253,8 +1253,6 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 if (wordRun == true)
                     dst[dstIdx++] = TextCodec::SP;
 
-                memcpy(&dst[dstIdx], &buf[0], length);
-
                 // Regular word entry
                 wordRun = true;
                 delimAnchor = srcIdx;
@@ -1264,6 +1262,8 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 wordRun = false;
                 delimAnchor = srcIdx - 1;
             }
+
+            memcpy(&dst[dstIdx], &buf[0], length);
 
             // Flip case of first character ?
             if ((cur & TextCodec::MASK_20) != byte(0))
