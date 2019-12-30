@@ -193,14 +193,14 @@ void HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
 }
 
 // Dynamically compute the frequencies for every chunk of data in the block
-int HuffmanEncoder::encode(byte block[], uint blkptr, uint count)
+int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
 {
     if (count == 0)
         return 0;
 
     const int end = blkptr + count;
     int startChunk = blkptr;
-    uint8* data = reinterpret_cast<uint8*>(&block[0]);
+    const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
 
     while (startChunk < end) {
         const int endChunk = min(startChunk + _chunkSize, end);

@@ -22,9 +22,9 @@ ExpGolombEncoder::ExpGolombEncoder(OutputBitStream& bitstream, bool sgn)
 {
 }
 
-int ExpGolombEncoder::encode(byte block[], uint blkptr, uint len)
+int ExpGolombEncoder::encode(const byte block[], uint blkptr, uint len)
 {
-    byte* buf = &block[blkptr];
+    const byte* buf = &block[blkptr];
     const uint len8 = len & uint(-8);
 
     for (uint i = 0; i < len8; i+=8) {

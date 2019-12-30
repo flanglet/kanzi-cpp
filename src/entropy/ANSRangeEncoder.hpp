@@ -66,7 +66,7 @@ namespace kanzi
 
 	   int updateFrequencies(uint frequencies[], int lr);
 
-	   int encode(byte block[], uint blkptr, uint len);
+	   int encode(const byte block[], uint blkptr, uint len);
 
 	   OutputBitStream& getBitStream() const { return _bitstream; }
 
@@ -89,15 +89,42 @@ namespace kanzi
 	   uint _order;
 
 
-	   int rebuildStatistics(byte block[], int end, int lr);
+	   int rebuildStatistics(const byte block[], int end, int lr);
 
-	   void encodeChunk(byte block[], int end);
+	   void encodeChunk(const byte block[], int end);
 
 	   int encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym);
 
 	   bool encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], int lr);
    };
 
+
+   inline void ANSEncSymbol::reset(int cumFreq, int freq, int logRange)
+   {
+      // Make sure xMax is a positive int32. Compatibility with Java implementation
+      if (freq >= 1 << logRange)
+         freq = (1 << logRange) - 1;
+
+      _xMax = ((ANSRangeEncoder::ANS_TOP >> logRange) << 16) * freq;
+      _cmplFreq = (1 << logRange) - freq;
+
+      if (freq < 2) {
+         _invFreq = uint64(0xFFFFFFFF);
+         _invShift = 32;
+         _bias = cumFreq + (1 << logRange) - 1;
+      }
+      else {
+         int shift = 0;
+
+         while (freq > (1 << shift))
+               shift++;
+
+         // Alverson, "Integer Division using reciprocals"
+         _invFreq = (((uint64(1) << (shift + 31)) + freq - 1) / freq) & uint64(0xFFFFFFFF);
+         _invShift = 32 + shift - 1;
+         _bias = cumFreq;
+      }
+   }
 
    inline int ANSRangeEncoder::encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym)
    {

@@ -48,7 +48,7 @@ namespace kanzi
 
        virtual ~BinaryEntropyEncoder();
 
-       int encode(byte block[], uint blkptr, uint count) THROW;
+       int encode(const byte block[], uint blkptr, uint count) THROW;
 
        OutputBitStream& getBitStream() const { return _bitstream; };
 

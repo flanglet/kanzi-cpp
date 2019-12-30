@@ -138,7 +138,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
 }
 
 // Dynamically compute the frequencies for every chunk of data in the block
-int ANSRangeEncoder::encode(byte block[], uint blkptr, uint len)
+int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint len)
 {
     if (len == 0)
         return 0;
@@ -173,10 +173,10 @@ int ANSRangeEncoder::encode(byte block[], uint blkptr, uint len)
     return len;
 }
 
-void ANSRangeEncoder::encodeChunk(byte block[], int end)
+void ANSRangeEncoder::encodeChunk(const byte block[], int end)
 {
     int st = ANS_TOP;
-    const uint8* data = reinterpret_cast<uint8*>(&block[0]);
+    const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
     byte* p0 = &_buffer[_bufferSize - 1];
     byte* p = p0;
 
@@ -211,35 +211,9 @@ void ANSRangeEncoder::encodeChunk(byte block[], int end)
 }
 
 // Compute chunk frequencies, cumulated frequencies and encode chunk header
-int ANSRangeEncoder::rebuildStatistics(byte block[], int end, int lr)
+int ANSRangeEncoder::rebuildStatistics(const byte block[], int end, int lr)
 {
     Global::computeHistogram(block, end, _freqs, _order == 0, true);
     return updateFrequencies(_freqs, lr);
 }
 
-void ANSEncSymbol::reset(int cumFreq, int freq, int logRange)
-{
-    // Make sure xMax is a positive int32. Compatibility with Java implementation
-    if (freq >= 1 << logRange)
-        freq = (1 << logRange) - 1;
-
-    _xMax = ((ANSRangeEncoder::ANS_TOP >> logRange) << 16) * freq;
-    _cmplFreq = (1 << logRange) - freq;
-
-    if (freq < 2) {
-        _invFreq = uint64(0xFFFFFFFF);
-        _invShift = 32;
-        _bias = cumFreq + (1 << logRange) - 1;
-    }
-    else {
-        int shift = 0;
-
-        while (freq > (1 << shift))
-            shift++;
-
-        // Alverson, "Integer Division using reciprocals"
-        _invFreq = (((uint64(1) << (shift + 31)) + freq - 1) / freq) & uint64(0xFFFFFFFF);
-        _invShift = 32 + shift - 1;
-        _bias = cumFreq;
-    }
-}

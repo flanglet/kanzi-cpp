@@ -137,7 +137,7 @@ int Global::log2(uint32 x) THROW
 }
 
 // If withTotal is true, the last spot in each frequencies order 0 array is for the total
-void Global::computeHistogram(byte block[], int length, uint freqs[], bool isOrder0, bool withTotal)
+void Global::computeHistogram(const byte block[], int length, uint freqs[], bool isOrder0, bool withTotal)
 {
     const int mult = (withTotal == true) ? 257 : 256;
 

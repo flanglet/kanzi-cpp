@@ -325,14 +325,18 @@ ostream& CompressedOutputStream::seekp(streampos) THROW
 
 void CompressedOutputStream::processBlock(bool force) THROW
 {
-    if (!force && (_sa->_length < _jobs * _blockSize)) {
-        // Grow byte array until max allowed
-        byte* buf = new byte[ _jobs * _blockSize];
-        memcpy(buf, _sa->_array, _sa->_length);
-        delete[] _sa->_array;
-        _sa->_array = buf;
-        _sa->_length = _jobs * _blockSize;
-        return;
+    if (force == false) { 
+        const int bufSize = min(_jobs, max(int(_nbInputBlocks), 1)) * _blockSize;
+
+        if (_sa->_length < bufSize) {
+            // Grow byte array until max allowed
+            byte* buf = new byte[bufSize];
+            memcpy(buf, _sa->_array, _sa->_length);
+            delete[] _sa->_array;
+            _sa->_array = buf;
+            _sa->_length = bufSize;
+            return;
+        }
     }
 
     if (_sa->_index == 0)
@@ -409,8 +413,8 @@ void CompressedOutputStream::processBlock(bool force) THROW
             }
         }
 
-        for (EncodingTask<EncodingTaskResult>* task : tasks)
-            delete task;
+        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+            delete *it;
 
         tasks.clear();
 #endif

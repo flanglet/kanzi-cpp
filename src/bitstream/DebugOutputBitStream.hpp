@@ -52,7 +52,7 @@ namespace kanzi
 
        int writeBits(uint64 bits, uint length) THROW;
 
-       uint writeBits(byte bits[], uint length) THROW;
+       uint writeBits(const byte bits[], uint length) THROW;
 
        // Return number of bits written so far
        uint64 written() const { return _delegate.written(); }

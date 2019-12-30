@@ -28,12 +28,12 @@ RiceGolombEncoder::RiceGolombEncoder(OutputBitStream& bitstream, uint logBase, b
     _base = 1 << _logBase;
 }
 
-int RiceGolombEncoder::encode(byte arr[], uint blkptr, uint len)
+int RiceGolombEncoder::encode(const byte block[], uint blkptr, uint len)
 {
     const int end = blkptr + len;
 
     for (int i = blkptr; i < end; i++)
-        encodeByte(arr[i]);
+        encodeByte(block[i]);
 
     return len;
 }

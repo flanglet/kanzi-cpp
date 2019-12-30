@@ -58,7 +58,7 @@ namespace kanzi
 
        bool isInitialized() const { return _initialized; };
 
-       virtual void dispose();
+       virtual void dispose() {};
 
        virtual byte decodeByte();
 

@@ -41,7 +41,7 @@ BinaryEntropyEncoder::~BinaryEntropyEncoder()
        delete _predictor;
 }
 
-int BinaryEntropyEncoder::encode(byte block[], uint blkptr, uint count) THROW
+int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) THROW
 {
    if (count >= 1<<30)
       throw invalid_argument("Invalid block size parameter (max is 1<<30)");
@@ -63,13 +63,15 @@ int BinaryEntropyEncoder::encode(byte block[], uint blkptr, uint count) THROW
       const int chunkSize = min(length, end - startChunk);
      
       if (_sba._length < (chunkSize + (chunkSize >> 3))) {
+         const int length = chunkSize + (chunkSize >> 3);
          delete[] _sba._array;
-         _sba._array = new byte[chunkSize + (chunkSize >> 3)];
+         _sba._array = new byte[length];
+         _sba._length = length;
       }
       
       _sba._index = 0;
 
-      for (int i = startChunk; i< startChunk + chunkSize; i++)
+      for (int i = startChunk; i < startChunk + chunkSize; i++)
          encodeByte(block[i]);
 
       EntropyUtils::writeVarInt(_bitstream, uint32(_sba._index));
