@@ -85,9 +85,6 @@ namespace kanzi
    template <class T>
    bool TransformSequence<T>::forward(SliceArray<T>& input, SliceArray<T>& output, int count) THROW
    {
-       if (count == 0)
-           return true;
-
        if (!SliceArray<byte>::isValid(input))
            throw invalid_argument("Invalid input block");
 
@@ -97,122 +94,116 @@ namespace kanzi
        if ((count < 0) || (count + input._index > input._length))
            return false;
 
+       _skipFlags = byte(SKIP_MASK);
+
+       if (count == 0)
+           return true;
+
+       SliceArray<T>* in = &input;
+       SliceArray<T>* out = &output;
        const int blockSize = count;
-       SliceArray<T>* sa[2] = { &input, &output };
-       int saIdx = 0;
-       const int requiredSize = getMaxEncodedLength(count);
-       _skipFlags = byte(0);
+       const int requiredSize = getMaxEncodedLength(blockSize);
+       int swaps = 0;
 
        // Process transforms sequentially
        for (int i = 0; i < _length; i++) {
-           SliceArray<T>* sa1 = sa[saIdx];
-           saIdx ^= 1;
-           SliceArray<T>* sa2 = sa[saIdx];
+            // Check that the output buffer has enough room. If not, allocate a new one.
+            if (out->_length < requiredSize) {
+                delete[] out->_array;
+                out->_array = new byte[requiredSize];
+                out->_length = requiredSize; 
+            }
 
-           // Check that the output buffer has enough room. If not, allocate a new one.
-           if (sa2->_length < requiredSize) {
-               delete[] sa2->_array;
-               sa2->_array = new byte[requiredSize];
-               sa2->_length = requiredSize;
-           }
+            const int savedIIdx = in->_index;
+            const int savedOIdx = out->_index;
 
-           const int savedIIdx = sa1->_index;
-           const int savedOIdx = sa2->_index;
-           Transform<T>* transform = _transforms[i];
+            // Apply forward transform
+            if (_transforms[i]->forward(*in, *out, count) == false) {
+                // Transform failed. Either it does not apply to this type
+                // of data or a recoverable error occured => revert
+                in->_index = savedIIdx;
+                out->_index = savedOIdx;
+                continue;
+            }
 
-           // Apply forward transform
-           if (transform->forward(*sa1, *sa2, count) == false) {
-               // Transform failed. Either it does not apply to this type
-               // of data or a recoverable error occured => revert
-               if (sa1->_array != sa2->_array)  
-                   memmove(&sa2->_array[savedOIdx], &sa1->_array[savedIIdx], count);
-
-               sa2->_index = savedOIdx + count;
-               _skipFlags |= byte(1 << (7 - i));
-           }
-
-           count = sa2->_index - savedOIdx;
-           sa1->_index = savedIIdx;
-           sa2->_index = savedOIdx;
+            _skipFlags &= ~byte(1 << (7 - i));
+            count = out->_index - savedOIdx;
+            in->_index = savedIIdx;
+            out->_index = savedOIdx;
+            swap(in, out);
+            swaps++;
        }
 
-       for (int i = _length; i < 8; i++)
-           _skipFlags |= byte(1 << (7 - i));
-
-       if (saIdx != 1)
-           memmove(&sa[1]->_array[sa[1]->_index], &sa[0]->_array[sa[0]->_index], count);
-
+       if ((swaps & 1) == 0)
+           memcpy(&output._array[output._index], &in->_array[in->_index], count);
+      
        input._index += blockSize;
        output._index += count;
        return _skipFlags != SKIP_MASK;
    }
 
    template <class T>
-   bool TransformSequence<T>::inverse(SliceArray<T>& input, SliceArray<T>& output, int length) THROW
+   bool TransformSequence<T>::inverse(SliceArray<T>& input, SliceArray<T>& output, int count) THROW
    {
-       if (length == 0)
-           return true;
-
        if (!SliceArray<byte>::isValid(input))
            throw invalid_argument("Invalid input block");
 
        if (!SliceArray<byte>::isValid(output))
            throw invalid_argument("Invalid output block");
 
-       if ((length < 0) || (length + input._index > input._length))
+       if ((count < 0) || (count + input._index > input._length))
            return false;
 
-       if (_skipFlags == SKIP_MASK) {
-           if (&(input._array) != &(output._array))
-               memmove(&output._array[output._index], &input._array[input._index], length);
+       if (count == 0)
+           return true;
 
-           input._index += length;
-           output._index += length;
+       if (_skipFlags == SKIP_MASK) {
+           memcpy(&output._array[output._index], &input._array[input._index], count);
+           input._index += count;
+           output._index += count;
            return true;
        }
 
-       const int blockSize = length;
-       const int count = output._length;
+       const int blockSize = count;
        bool res = true;
-       SliceArray<T>* sa[2] = { &input, &output };
-       int saIdx = 0;
+       SliceArray<T>* in = &input;
+       SliceArray<T>* out = &output;
+       int swaps = 0;
 
        // Process transforms sequentially in reverse order
        for (int i = _length - 1; i >= 0; i--) {
            if ((_skipFlags & byte(1 << (7 - i))) != byte(0))
                continue;
 
-           SliceArray<T>* sa1 = sa[saIdx];
-           saIdx ^= 1;
-           SliceArray<T>* sa2 = sa[saIdx];
-           const int savedIIdx = sa1->_index;
-           const int savedOIdx = sa2->_index;
-           Transform<T>* transform = _transforms[i];
-
-           // Apply inverse transform
-           if (sa2->_length < output._length) {
-              delete[] sa2->_array;
-              sa2->_array = new byte[output._length];
+           // Check that the output buffer has enough room. If not, allocate a new one.
+           if (out->_length < output._length) {
+              delete[] out->_array;
+              out->_array = new byte[output._length];
+              out->_length = output._length;
            }
 
-           sa1->_length = length;
-           sa2->_length = count;
+           const int savedIIdx = in->_index;
+           const int savedOIdx = out->_index;
 
-           res = transform->inverse(*sa1, *sa2, length);
-           length = sa2->_index - savedOIdx;
-           sa1->_index = savedIIdx;
-           sa2->_index = savedOIdx;
+           // Apply inverse transform
+           res = _transforms[i]->inverse(*in, *out, count);
 
            // All inverse transforms must succeed
            if (res == false)
                break;
+
+           count = out->_index - savedOIdx;
+           in->_index = savedIIdx;
+           out->_index = savedOIdx;
+           swap(in, out);
+           swaps++;
        }
 
-       if (saIdx != 1)
-           memmove(&sa[1]->_array[sa[1]->_index], &sa[0]->_array[sa[0]->_index], length);
+       if ((res == true) && ((swaps & 1) == 0))
+           memcpy(&output._array[output._index], &input._array[input._index], count);
 
        input._index += blockSize;
-       output._index += length;
+       output._index += count;
        return res;
    }
 
