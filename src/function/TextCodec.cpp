@@ -613,6 +613,14 @@ int TextCodec1::emitSymbols(byte src[], byte dst[], const int srcEnd, const int 
         if (dstIdx >= dstEnd)
             return -1;
 
+// Work around incorrect warning by GCC 7.x.x with C++17
+#ifdef __GNUC__
+    #if (__GNUC__ == 7) && (__cplusplus > 201402L)
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wswitch"
+    #endif
+#endif
+
         const byte cur = src[i];
 
         switch (cur) {
@@ -643,6 +651,13 @@ int TextCodec1::emitSymbols(byte src[], byte dst[], const int srcEnd, const int 
             dst[dstIdx++] = cur;
         }
     }
+
+// Work around incorrect warning by GCC 7.x.x with C++17
+#ifdef __GNUC__
+    #if (__GNUC__ == 7) && (__cplusplus > 201402L)
+        #pragma GCC diagnostic pop
+    #endif
+#endif
 
     return dstIdx;
 }
@@ -761,7 +776,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const byte* buf = _dictList[idx]._ptr;
 
             // Sanity check
-            if ((buf == nullptr) || (length > TextCodec::MAX_WORD_LENGTH) || (dstIdx + length >= dstEnd))
+            if ((buf == nullptr) || (dstIdx + length >= dstEnd))
                 break;
 
             // Emit word
@@ -1049,6 +1064,14 @@ bool TextCodec2::expandDictionary()
 
 int TextCodec2::emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd)
 {
+// Work around incorrect warning by GCC 7.x.x with C++17
+#ifdef __GNUC__
+    #if (__GNUC__ == 7) && (__cplusplus > 201402L)
+        #pragma GCC diagnostic push
+        #pragma GCC diagnostic ignored "-Wswitch"
+    #endif
+#endif
+
     int dstIdx = 0;
 
     if (2 * srcEnd < dstEnd) {
@@ -1113,6 +1136,13 @@ int TextCodec2::emitSymbols(byte src[], byte dst[], const int srcEnd, const int 
             }
         }
     }
+
+// Work around incorrect warning by GCC 7.x.x with C++17
+#ifdef __GNUC__
+    #if (__GNUC__ == 7) && (__cplusplus > 201402L)
+        #pragma GCC diagnostic pop
+    #endif
+#endif
 
     return dstIdx;
 }
@@ -1237,7 +1267,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const byte* buf = _dictList[idx]._ptr;
 
             // Sanity check
-            if ((buf == nullptr) || (length > TextCodec::MAX_WORD_LENGTH) || (dstIdx + length >= dstEnd))
+            if ((buf == nullptr) || (dstIdx + length >= dstEnd))
                 break;
 
 
