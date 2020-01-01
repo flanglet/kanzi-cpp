@@ -33,20 +33,35 @@ limitations under the License.
 	#endif
 
    /*
-   MSVC++ 14.1 _MSC_VER == 1912 (Visual Studio 2017)
-   MSVC++ 14.1 _MSC_VER == 1911 (Visual Studio 2017)
-   MSVC++ 14.1 _MSC_VER == 1910 (Visual Studio 2017)
-   MSVC++ 14.0 _MSC_VER == 1900 (Visual Studio 2015)
-   MSVC++ 12.0 _MSC_VER == 1800 (Visual Studio 2013)
-   MSVC++ 11.0 _MSC_VER == 1700 (Visual Studio 2012)
-   MSVC++ 10.0 _MSC_VER == 1600 (Visual Studio 2010)
-   MSVC++ 9.0  _MSC_VER == 1500 (Visual Studio 2008)
-   MSVC++ 8.0  _MSC_VER == 1400 (Visual Studio 2005)
-   MSVC++ 7.1  _MSC_VER == 1310 (Visual Studio 2003)
-   MSVC++ 7.0  _MSC_VER == 1300
-   MSVC++ 6.0  _MSC_VER == 1200
-   MSVC++ 5.0  _MSC_VER == 1100
+   Visual Studio 2019 Update 4   MSVC++ 14.24 _MSC_VER == 1924
+   Visual Studio 2019 Update 3   MSVC++ 14.21 _MSC_VER == 1923
+   Visual Studio 2019 Update 2   MSVC++ 14.21 _MSC_VER == 1922
+   Visual Studio 2019 Update 1   MSVC++ 14.21 _MSC_VER == 1921
+   Visual Studio 2019            MSVC++ 14.20 _MSC_VER == 1920
+   Visual Studio 2017 Update 9   MSVC++ 14.16 _MSC_VER == 1916
+   Visual Studio 2017 Update 8   MSVC++ 14.15 _MSC_VER == 1915
+   Visual Studio 2017 Update 7   MSVC++ 14.14 _MSC_VER == 1914
+   Visual Studio 2017 Update 6   MSVC++ 14.13 _MSC_VER == 1913
+   Visual Studio 2017 Update 5   MSVC++ 14.12 _MSC_VER == 1912
+   Visual Studio 2017 Update 3&4 MSVC++ 14.11 _MSC_VER == 1911
+   Visual Studio 2017            MSVC++ 14.10 _MSC_VER == 1910
+   Visual Studio 2015            MSVC++ 14    _MSC_VER == 1900
+   Visual Studio 2013            MSVC++ 12    _MSC_VER == 1800
+   Visual Studio 2012            MSVC++ 11    _MSC_VER == 1700
+   Visual Studio 2010            MSVC++ 10    _MSC_VER == 1600
+   Visual Studio 2008            MSVC++ 9     _MSC_VER == 1500
+   Visual Studio 2005            MSVC++ 8     _MSC_VER == 1400
+   Visual Studio 2003 Beta       MSVC++ 7.1   _MSC_VER == 1310
+   Visual Studio 2002            MSVC++ 7     _MSC_VER == 1300
+   Visual Studio                 MSVC++ 6.0   _MSC_VER == 1200
+   Visual Studio                 MSVC++ 5     _MSC_VER == 1100
+   Visual Studio                 MSVC++ 4.2   _MSC_VER == 1020
+   Visual Studio                 MSVC++ 4.1   _MSC_VER == 1010
+   Visual Studio                 MSVC++ 4     _MSC_VER == 1000
+   Visual Studio                 MSVC++ 2     _MSC_VER == 900
+   Visual Studio                 MSVC++ 1     _MSC_VER == 800
    */
+       
    #ifdef _MSC_VER
       #if _MSC_VER == 1300
          #define _MSC_VER_STR 2003
@@ -69,8 +84,11 @@ limitations under the License.
       #if _MSC_VER == 1900
          #define _MSC_VER_STR 2015
       #endif 
-      #if _MSC_VER >= 1910 && _MSC_VER <= 1912 
+      #if _MSC_VER >= 1910 && _MSC_VER <= 1916 
          #define _MSC_VER_STR 2017
+      #endif
+      #if _MSC_VER >= 1920
+         #define _MSC_VER_STR 2019
       #endif
    #endif
 
