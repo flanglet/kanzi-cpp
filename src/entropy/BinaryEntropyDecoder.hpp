@@ -62,15 +62,15 @@ namespace kanzi
 
        virtual byte decodeByte();
 
-       int decodeBit();
+       int decodeBit(int pred = 2048);
    };
 
    
-   inline int BinaryEntropyDecoder::decodeBit()
+   inline int BinaryEntropyDecoder::decodeBit(int pred)
    {
        // Calculate interval split
        // Written in a way to maximize accuracy of multiplication/division
-       const uint64 split = ((((_high - _low) >> 4) * uint64(_predictor->get())) >> 8) + _low;
+       const uint64 split = ((((_high - _low) >> 4) * uint64(pred)) >> 8) + _low;
        int bit;
 
        // Update predictor

@@ -89,14 +89,14 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
 
 byte BinaryEntropyDecoder::decodeByte()
 {
-    return byte((decodeBit() << 7)
-        | (decodeBit() << 6)
-        | (decodeBit() << 5)
-        | (decodeBit() << 4)
-        | (decodeBit() << 3)
-        | (decodeBit() << 2)
-        | (decodeBit() << 1)
-        | decodeBit());
+    return byte((decodeBit(_predictor->get()) << 7)
+        | (decodeBit(_predictor->get()) << 6)
+        | (decodeBit(_predictor->get()) << 5)
+        | (decodeBit(_predictor->get()) << 4)
+        | (decodeBit(_predictor->get()) << 3)
+        | (decodeBit(_predictor->get()) << 2)
+        | (decodeBit(_predictor->get()) << 1)
+        | decodeBit(_predictor->get()));
 }
 
 void BinaryEntropyDecoder::initialize()

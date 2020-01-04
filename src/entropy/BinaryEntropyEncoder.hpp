@@ -56,15 +56,15 @@ namespace kanzi
 
        virtual void encodeByte(byte val);
 
-       inline void encodeBit(int bit);
+       void encodeBit(int bit, int pred = 2048);
    };
 
 
-   inline void BinaryEntropyEncoder::encodeBit(int bit)
+   inline void BinaryEntropyEncoder::encodeBit(int bit, int pred)
    {
        // Calculate interval split
        // Written in a way to maximize accuracy of multiplication/division
-       const uint64 split = (((_high - _low) >> 4) * uint64(_predictor->get())) >> 8;
+       const uint64 split = (((_high - _low) >> 4) * uint64(pred)) >> 8;
 
        // Update fields with new interval bounds
        if (bit == 0) 

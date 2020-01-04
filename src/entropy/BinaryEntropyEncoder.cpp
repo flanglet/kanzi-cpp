@@ -87,14 +87,14 @@ int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) TH
 
 void BinaryEntropyEncoder::encodeByte(byte val)
 {
-    encodeBit(int(val >> 7) & 1);
-    encodeBit(int(val >> 6) & 1);
-    encodeBit(int(val >> 5) & 1);
-    encodeBit(int(val >> 4) & 1);
-    encodeBit(int(val >> 3) & 1);
-    encodeBit(int(val >> 2) & 1);
-    encodeBit(int(val >> 1) & 1);
-    encodeBit(int(val) & 1);
+    encodeBit(int(val >> 7) & 1, _predictor->get());
+    encodeBit(int(val >> 6) & 1, _predictor->get());
+    encodeBit(int(val >> 5) & 1, _predictor->get());
+    encodeBit(int(val >> 4) & 1, _predictor->get());
+    encodeBit(int(val >> 3) & 1, _predictor->get());
+    encodeBit(int(val >> 2) & 1, _predictor->get());
+    encodeBit(int(val >> 1) & 1, _predictor->get());
+    encodeBit(int(val) & 1, _predictor->get());
 }
 
 void BinaryEntropyEncoder::dispose()
