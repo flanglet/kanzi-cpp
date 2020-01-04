@@ -31,58 +31,42 @@ namespace kanzi
    public:
        HuffmanDecoder(InputBitStream& bitstream, int chunkSize=HuffmanCommon::MAX_CHUNK_SIZE) THROW;
 
-       ~HuffmanDecoder() { dispose(); delete[] _table1; };
-
-       int readLengths() THROW;
+       ~HuffmanDecoder() { dispose(); }
 
        int decode(byte block[], uint blkptr, uint len);
 
        InputBitStream& getBitStream() const { return _bitstream; }
 
-       virtual void dispose() {};
+       void dispose() {};
 
    private:
-       static const int DECODING_BATCH_SIZE = 12; // in bits
-       static const int TABLE0_MASK = (1 << DECODING_BATCH_SIZE) - 1;
-       static const int TABLE1_MASK = (1 << (HuffmanCommon::MAX_SYMBOL_SIZE + 1)) - 1;
+       static const int DECODING_BATCH_SIZE = 15; // ensures decoding table fits in L1 cache
+       static const int TABLE_MASK = (1 << DECODING_BATCH_SIZE) - 1;
 
        InputBitStream& _bitstream;
        uint _codes[256];
+       uint16 _sizes[256];
        uint _alphabet[256];
-       uint16 _table0[TABLE0_MASK + 1]; // small decoding table: code -> size, symbol
-       uint16* _table1; // big decoding table: code -> size, symbol
-       short _sizes[256];
-       int _chunkSize;
+       uint16 _table[TABLE_MASK + 1]; // decoding table: code -> size, symbol
        uint64 _state; // holds bits read from bitstream
        uint _bits; // hold number of unused bits in 'state'
-       int _minCodeLen;
+       int _chunkSize;
 
-       void buildDecodingTables(int count);
+       int readLengths() THROW;
+
+       void buildDecodingTable(int count);
 
        byte slowDecodeByte() THROW;
 
-       inline byte fastDecodeByte();
+       byte decodeByte();
 
-       inline void fetchBits();
+       void fetchBits();
    };
 
 
-   inline byte HuffmanDecoder::fastDecodeByte()
+   inline byte HuffmanDecoder::decodeByte()
    {
-      if (_bits < DECODING_BATCH_SIZE) 
-         fetchBits();
-
-      // Use small table
-      int val = _table0[int(_state >> (_bits - DECODING_BATCH_SIZE)) & TABLE0_MASK];
-
-      if (val == 0) {
-         if (_bits < HuffmanCommon::MAX_SYMBOL_SIZE + 1) 
-            fetchBits();
-
-         // Fallback to big table
-         val = _table1[int(_state >> (_bits - (HuffmanCommon::MAX_SYMBOL_SIZE + 1))) & TABLE1_MASK];
-      }
-
+      const uint val = uint(_table[(_state >> (_bits - DECODING_BATCH_SIZE)) & TABLE_MASK]);
       _bits -= (val >> 8);
       return byte(val);
    }

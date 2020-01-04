@@ -13,30 +13,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-
 #include "HuffmanCommon.hpp"
 
 using namespace kanzi;
 
 // Return the number of codes generated
-int HuffmanCommon::generateCanonicalCodes(short sizes[], uint codes[], uint symbols[], int count)
+int HuffmanCommon::generateCanonicalCodes(uint16 sizes[], uint codes[], uint symbols[], int count)
 {
     // Sort by increasing size (first key) and increasing value (second key)
     if (count > 1) {
         byte buf[BUFFER_SIZE] = { byte(0) };
-         
-        for (int i=0; i<count; i++)
-            buf[((sizes[symbols[i]] - 1) << 8) | symbols[i]] = byte(1);
-         
+
+        for (int i = 0; i < count; i++) {
+            const uint s = symbols[i];
+
+            if (s > 255)
+                return -1;
+
+            buf[((sizes[s] - 1) << 8) | s] = byte(1);
+        }
+
         int n = 0;
-         
-        for (int i=0; i<BUFFER_SIZE; i++) {
-            if (buf[i] != byte(0)) {
-               symbols[n++] = i & 0xFF;
-               
-               if (n == count)
-                  break;
-            }
+
+        for (int i = 0; i < BUFFER_SIZE; i++) {
+            if (buf[i] == byte(0))
+                continue;
+
+            symbols[n++] = i & 0xFF;
+
+            if (n == count)
+                break;
         }
     }
 
@@ -51,7 +57,7 @@ int HuffmanCommon::generateCanonicalCodes(short sizes[], uint codes[], uint symb
             len = sizes[s];
 
             // Max length reached
-            if (len > HuffmanCommon::MAX_SYMBOL_SIZE)
+            if (len > MAX_SYMBOL_SIZE)
                 return -1;
         }
 

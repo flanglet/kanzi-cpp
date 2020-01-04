@@ -34,9 +34,9 @@ namespace kanzi
        uint _alphabet[256];
        uint _sranks[256]; // sorted ranks
        int _chunkSize;
-       int _maxCodeLength;
+       uint _maxCodeLen;
 
-       void computeCodeLengths(uint frequencies[], short sizes[], int count) THROW;
+       void computeCodeLengths(uint frequencies[], uint16 sizes[], int count) THROW;
 
        static void computeInPlaceSizesPhase1(uint data[], int n);
 
