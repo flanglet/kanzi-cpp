@@ -167,12 +167,13 @@ limitations under the License.
       #endif
    #endif
 
-#ifndef STR_TRUE
-   #define STR_TRUE "TRUE"
-#endif
 
-#ifndef STR_FALSE
-   #define STR_FALSE "FALSE"
-#endif
+   #ifndef STR_TRUE
+      #define STR_TRUE "TRUE"
+   #endif
+
+   #ifndef STR_FALSE
+      #define STR_FALSE "FALSE"
+   #endif
 
 #endif

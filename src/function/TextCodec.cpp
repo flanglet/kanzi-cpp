@@ -1270,7 +1270,6 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             if ((buf == nullptr) || (dstIdx + length >= dstEnd))
                 break;
 
-
             // Emit word
             if (length > 1) {
                 // Add space if only delimiter between 2 words (not an escaped delimiter)
