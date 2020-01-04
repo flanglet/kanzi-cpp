@@ -58,14 +58,14 @@ namespace kanzi
        uint _freqs[256];
        uint64 _cumFreqs[257];
        short* _f2s;
-       int _f2s_length;
+       int _lenF2S;
        InputBitStream& _bitstream;
        uint _chunkSize;
        uint _shift;
 
        int decodeHeader(uint frequencies[]);
 
-       inline byte decodeByte();
+       byte decodeByte();
    };
 
 }

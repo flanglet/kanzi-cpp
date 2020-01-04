@@ -33,7 +33,7 @@ namespace kanzi
    public:
        RangeEncoder(OutputBitStream& bitstream, int chunkSize=DEFAULT_CHUNK_SIZE, int logRange=DEFAULT_LOG_RANGE) THROW;
 
-       ~RangeEncoder() { dispose(); };
+       ~RangeEncoder() { dispose(); }
 
        int encode(const byte block[], uint blkptr, uint len);
 
@@ -62,7 +62,7 @@ namespace kanzi
 
        int updateFrequencies(uint frequencies[], int size, int lr);
 
-       inline void encodeByte(byte b);
+       void encodeByte(byte b);
 
        bool encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], int lr);
    };

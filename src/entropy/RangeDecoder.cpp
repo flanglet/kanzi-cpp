@@ -34,8 +34,8 @@ RangeDecoder::RangeDecoder(InputBitStream& bitstream, int chunkSize) THROW : _bi
     _range = TOP_RANGE;
     _low = 0;
     _code = 0;
-    _f2s_length = 0;
-    _f2s = new short[_f2s_length];
+    _lenF2S = 0;
+    _f2s = new short[_lenF2S];
     _chunkSize = chunkSize;
     _shift = 0;
     memset(_alphabet, 0, sizeof(uint) * 256);
@@ -98,10 +98,10 @@ int RangeDecoder::decodeHeader(uint frequencies[])
     frequencies[_alphabet[0]] = uint(scale - sum);
     _cumFreqs[0] = 0;
 
-    if (_f2s_length < scale) {
+    if (_lenF2S < scale) {
         delete[] _f2s;
-        _f2s_length = scale;
-        _f2s = new short[_f2s_length];
+        _lenF2S = scale;
+        _f2s = new short[_lenF2S];
     }
 
     // Create histogram of frequencies scaled to 'range' and reverse mapping

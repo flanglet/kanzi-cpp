@@ -153,7 +153,7 @@ void RangeEncoder::encodeByte(byte b)
                   break;
 
             // Normalize
-            _range = ~(_low-1) & BOTTOM_RANGE;
+            _range = ~(_low - 1) & BOTTOM_RANGE;
         }
 
         _bitstream.writeBits(_low >> 32, 28);
