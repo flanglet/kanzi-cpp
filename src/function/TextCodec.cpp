@@ -230,7 +230,7 @@ byte TextCodec::computeStats(const byte block[], int count, int32 freqs0[])
     }
 
     // Not text (crude threshold)
-    if (2 * nbTextChars < count)
+    if ((nbTextChars < (count >> 1)) || (freqs0[32] < (count >> 4)))
         return TextCodec::MASK_NOT_TEXT;
 
     int nbBinChars = 0;
@@ -239,7 +239,7 @@ byte TextCodec::computeStats(const byte block[], int count, int32 freqs0[])
         nbBinChars += freqs0[i];
 
     // Not text (crude threshold)
-    if ((4 * nbBinChars > count) || (16 * freqs0[32] < count))
+    if (nbBinChars > (count >> 2))
         return TextCodec::MASK_NOT_TEXT;
 
     byte res = byte(0);
