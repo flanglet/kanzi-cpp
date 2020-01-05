@@ -111,7 +111,7 @@ void HuffmanDecoder::buildDecodingTable(int count)
             length = _sizes[s];
 
         // code -> size, symbol
-        const uint16 val = (_sizes[s] << 8) | s;
+        const uint16 val = (s << 8) | _sizes[s];
         const int code = int(_codes[s]);
 
         // All DECODING_BATCH_SIZE bit values read from the bit stream and
@@ -172,7 +172,7 @@ byte HuffmanDecoder::slowDecodeByte() THROW
 {
     int code = 0;
 
-    for (int codeLen = uint16(1); codeLen < HuffmanCommon::MAX_SYMBOL_SIZE; codeLen++) {
+    for (uint8 codeLen = 1; codeLen < HuffmanCommon::MAX_SYMBOL_SIZE; codeLen++) {
         if (_bits == 0) {
             code = (code << 1) | _bitstream.readBit();
         }
@@ -183,8 +183,8 @@ byte HuffmanDecoder::slowDecodeByte() THROW
 
         const int idx = code << (DECODING_BATCH_SIZE - codeLen);
 
-        if ((_table[idx] >> 8) == codeLen)
-            return byte(_table[idx]);
+        if (uint8(_table[idx]) == codeLen)
+            return byte(_table[idx] >> 8);
     }
 
     throw BitStreamException("Invalid bitstream: incorrect Huffman code",
