@@ -93,7 +93,7 @@ namespace kanzi
            return;
        }
 
-       const int emit = CACHE[_signed][val & 0xFF];
+       const int emit = CACHE[_signed][uint8(val)];
        _bitstream.writeBits(emit & 0x1FF, emit >> 9);
    }
 }
