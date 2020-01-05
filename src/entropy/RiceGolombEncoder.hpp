@@ -50,22 +50,23 @@ namespace kanzi
    {
        if (val == byte(0))
        {
+          // shortcut when input is 0
           _bitstream.writeBits(_base, _logBase+1);
           return;
        }
 
-       int32 iVal = int32(val);
-       iVal = (iVal + (iVal >> 31)) ^ (iVal >> 31); // abs(val2)
+       const int sgn = int(val >> 7) & 1;
+       const uint iVal = uint((int(val) - sgn) ^ -sgn) & 0xFF;
 
-        // quotient is unary encoded, remainder is binary encoded
-       int emit = _base | (iVal & (_base-1));
-       int n = int(1 + (iVal >> _logBase)) + _logBase;
+       // quotient is unary encoded, remainder is binary encoded
+       uint emit = _base | (iVal & (_base - 1));
+       uint n = uint(1 + (iVal >> _logBase)) + _logBase;
 
        if (_signed == true)
        {
           // Add 0 for positive and 1 for negative sign
           n++;
-          emit = (emit << 1) | (int(val >> 7) & 1);
+          emit = (emit << 1) | sgn;
        }
 
        _bitstream.writeBits(emit, n);

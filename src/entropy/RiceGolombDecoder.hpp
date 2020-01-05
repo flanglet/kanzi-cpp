@@ -54,15 +54,15 @@ namespace kanzi
           q++;
 
        // remainder is binary encoded
-       const uint64 res = (q << _logBase) | _bitstream.readBits(_logBase);
+       const byte res = byte((q << _logBase) | _bitstream.readBits(_logBase));
 
-       if ((res != 0) && (_signed == true))
+       if ((_signed == true) && (res != 0))
        {
           if (_bitstream.readBit() == 1)
-             return byte(~res+1);
+             return -res;
        }
 
-       return byte(res);
+       return res;
    }
 }
 #endif
