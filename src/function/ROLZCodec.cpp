@@ -169,8 +169,8 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int sizeChunk = (count <= ROLZCodec::CHUNK_SIZE) ? count : ROLZCodec::CHUNK_SIZE;
     int startChunk = 0;
     SliceArray<byte> litBuf(new byte[getMaxEncodedLength(sizeChunk)], getMaxEncodedLength(sizeChunk));
-    SliceArray<byte> lenBuf(new byte[sizeChunk/4], sizeChunk/4);
-    SliceArray<byte> mIdxBuf(new byte[sizeChunk/4], sizeChunk/4);
+    SliceArray<byte> lenBuf(new byte[sizeChunk / 4], sizeChunk / 4);
+    SliceArray<byte> mIdxBuf(new byte[sizeChunk / 4], sizeChunk / 4);
     memset(&_counters[0], 0, sizeof(int32) * 65536);
     bool success = true;
     const int litOrder = (count < 1<<17) ? 0 : 1;
@@ -188,7 +188,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         int srcIdx = 0;
         litBuf._array[litBuf._index++] = buf[srcIdx++];
 
-        if (startChunk+1 < srcEnd)
+        if (startChunk + 1 < srcEnd)
             litBuf._array[litBuf._index++] = buf[srcIdx++];
 
         int firstLitIdx = srcIdx;
@@ -319,8 +319,8 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     ios.rdbuf()->sputn(reinterpret_cast<char*>(&src[4]), count - 4);
     ios.rdbuf()->pubseekpos(0);
     SliceArray<byte> litBuf(new byte[getMaxEncodedLength(sizeChunk)], getMaxEncodedLength(sizeChunk));
-    SliceArray<byte> lenBuf(new byte[sizeChunk/2], sizeChunk/2);
-    SliceArray<byte> mIdxBuf(new byte[sizeChunk/2], sizeChunk/2);
+    SliceArray<byte> lenBuf(new byte[sizeChunk / 4], sizeChunk / 4);
+    SliceArray<byte> mIdxBuf(new byte[sizeChunk / 4], sizeChunk / 4);
     memset(&_counters[0], 0, sizeof(int32) * 65536);
     bool success = true;
     const int litOrder = int(src[srcIdx++]);
@@ -366,7 +366,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         int dstIdx = 0;
         buf[dstIdx++] = litBuf._array[litBuf._index++];
 
-        if (output._index+1 < dstEnd)
+        if (output._index + 1 < dstEnd)
             buf[dstIdx++] = litBuf._array[litBuf._index++];
 
         // Next chunk
