@@ -139,8 +139,6 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
         if (alphabetSize <= 0)
             return startChunk - blkptr;
 
-        const int endChunk = min(startChunk + _chunkSize, end);
-
         // Compute minimum number of bits required in bitstream for fast decoding
         const int minCodeLen = int(_sizes[_alphabet[0]]); // not 0
         int padding = 64 / minCodeLen;
@@ -148,6 +146,7 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
         if (minCodeLen * padding != 64)
             padding++;
 
+        const int endChunk = min(startChunk + _chunkSize, end);
         const int endChunk4 = startChunk + max(((endChunk - startChunk - padding) & -4), 0);
 
         for (int i = startChunk; i < endChunk4; i += 4) {
@@ -171,8 +170,11 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
 byte HuffmanDecoder::slowDecodeByte() THROW
 {
     int code = 0;
+    uint8 codeLen = 0;
 
-    for (uint8 codeLen = 1; codeLen < HuffmanCommon::MAX_SYMBOL_SIZE; codeLen++) {
+    while (codeLen < HuffmanCommon::MAX_SYMBOL_SIZE) {
+        codeLen++;
+
         if (_bits == 0) {
             code = (code << 1) | _bitstream.readBit();
         }

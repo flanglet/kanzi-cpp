@@ -27,7 +27,7 @@ int HuffmanCommon::generateCanonicalCodes(uint16 sizes[], uint codes[], uint sym
         for (int i = 0; i < count; i++) {
             const uint s = symbols[i];
 
-            if (s > 255)
+            if ((s > 255) || (sizes[s] > MAX_SYMBOL_SIZE))
                 return -1;
 
             buf[((sizes[s] - 1) << 8) | s] = byte(1);
@@ -47,18 +47,14 @@ int HuffmanCommon::generateCanonicalCodes(uint16 sizes[], uint codes[], uint sym
     }
 
     int code = 0;
-    int len = sizes[symbols[0]];
+    int curLen = sizes[symbols[0]];
 
     for (int i = 0; i < count; i++) {
         const int s = symbols[i];
 
-        if (sizes[s] > len) {
-            code <<= (sizes[s] - len);
-            len = sizes[s];
-
-            // Max length reached
-            if (len > MAX_SYMBOL_SIZE)
-                return -1;
+        if (sizes[s] > curLen) {
+            code <<= (sizes[s] - curLen);
+            curLen = sizes[s];
         }
 
         codes[s] = code;

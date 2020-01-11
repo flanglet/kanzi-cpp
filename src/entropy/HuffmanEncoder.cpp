@@ -68,32 +68,50 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
     }
 
     EntropyUtils::encodeAlphabet(_bitstream, _alphabet, 256, count);
-    computeCodeLengths(frequencies, sizes, count);
+    int retries = 0;
+
+    while (true) {
+        computeCodeLengths(frequencies, sizes, count);
+
+        if (_maxCodeLen <= HuffmanCommon::MAX_SYMBOL_SIZE) {
+            // Usual case
+            HuffmanCommon::generateCanonicalCodes(sizes, _codes, _sranks, count);
+            break;
+        }
+
+        // Rare: some codes exceed the budget for the max code length => normalize
+        // frequencies (it boosts the smallest frequencies) and try once more.
+        if (retries > 1) {
+            stringstream ss;
+            ss << "Could not generate Huffman codes: max code length (";
+            ss << HuffmanCommon::MAX_SYMBOL_SIZE;
+            ss << " bits) exceeded";
+            throw invalid_argument(ss.str());
+        }
+
+        uint totalFreq = 0;
+
+        for (int i = 0; i < count; i++)
+            totalFreq += frequencies[_alphabet[i]];
+
+        // Copy alphabet (modified by normalizeFrequencies)
+        uint alphabet[256];
+        memcpy(alphabet, _alphabet, sizeof(alphabet));
+        EntropyUtils::normalizeFrequencies(frequencies, alphabet, count, totalFreq, 1 << 12);
+        retries++;
+    }
 
     // Transmit code lengths only, frequencies and codes do not matter
-    // Unary encode the length difference
     ExpGolombEncoder egenc(_bitstream, true);
-    int8 prevSize = 2;
-
-    for (int i = 0; i < count; i++) {
-        const int8 currSize = int8(sizes[_alphabet[i]]);
-        egenc.encodeByte(byte(currSize - prevSize));
-        prevSize = currSize;
-    }
-
-    // Create canonical codes
-    if (HuffmanCommon::generateCanonicalCodes(sizes, _codes, _sranks, count) < 0) {
-        stringstream ss;
-        ss << "Could not generate Huffman codes: max code length (";
-        ss << HuffmanCommon::MAX_SYMBOL_SIZE;
-        ss << " bits) exceeded";
-        throw invalid_argument(ss.str());
-    }
+    uint16 prevSize = 2;
 
     // Pack size and code (size <= MAX_SYMBOL_SIZE bits)
+    // Unary encode the code length differences
     for (int i = 0; i < count; i++) {
         const int s = _alphabet[i];
         _codes[s] |= (sizes[s] << 24);
+        egenc.encodeByte(byte(sizes[s] - prevSize));
+        prevSize = sizes[s];
     }
 
     return count;
@@ -104,6 +122,7 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], int 
     if (count == 1) {
         _sranks[0] = _alphabet[0];
         sizes[_alphabet[0]] = 1;
+        _maxCodeLen = 1;
         return;
     }
 
@@ -132,14 +151,6 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], int 
 
         if (codeLen == 0)
             throw invalid_argument("Could not generate Huffman codes: invalid code length 0");
-
-        if (codeLen > HuffmanCommon::MAX_SYMBOL_SIZE) {
-            stringstream ss;
-            ss << "Could not generate Huffman codes: max code length (";
-            ss << HuffmanCommon::MAX_SYMBOL_SIZE;
-            ss << " bits) exceeded";
-            throw invalid_argument(ss.str());
-        }
 
         if (_maxCodeLen < codeLen)
             _maxCodeLen = codeLen;
