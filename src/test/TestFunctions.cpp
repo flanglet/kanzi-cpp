@@ -67,12 +67,14 @@ int testFunctionsCorrectness(const string& name)
         byte values[80000];
 
         if (ii == 0) {
+           size = 15;
             byte arr[] = {
-                (byte)0, (byte)1, (byte)2, (byte)2, (byte)2, (byte)2, (byte)7, (byte)9, 
+                (byte)0, (byte)1, (byte)2, (byte)2, (byte)2, (byte)2, (byte)7, (byte)9,
                 (byte)9, (byte)16, (byte)16, (byte)16, (byte)1, (byte)3, (byte)3, (byte)3,
-                (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, 
+                (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3,
                 (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3
             };
+
             memcpy(values, &arr[0], size);
         }
         else if (ii == 1) {
@@ -95,7 +97,7 @@ int testFunctionsCorrectness(const string& name)
             size = 512;
             byte arr[512];
 
-            for (int i = 0; i < 256; i++) {              
+            for (int i = 0; i < 256; i++) {
                 arr[2 * i] = byte(i);
                 arr[2 * i + 1] = byte(i);
             }
@@ -172,7 +174,7 @@ int testFunctionsCorrectness(const string& name)
         }
 
         Function<byte>* f = getByteFunction(name);
-        
+
         if (f == nullptr)
             return 1;
 
@@ -192,8 +194,13 @@ int testFunctionsCorrectness(const string& name)
         cout << endl
              << "Original: " << endl;
 
-        for (int i = 0; i < size; i++)
-            cout << (int(input[i]) & 0xFF) << " ";
+        if (ii == 1) {
+            cout << "1 8 (" << size << " times)";
+        }
+        else {
+            for (int i = 0; i < size; i++)
+                cout << (int(input[i]) & 0xFF) << " ";
+        }
 
         if (f->forward(iba1, iba2, size) == false) {
             if (iba1._index != size) {
@@ -236,8 +243,13 @@ int testFunctionsCorrectness(const string& name)
 
         cout << "Decoded: " << endl;
 
-        for (int i = 0; i < size; i++)
-            cout << (int(reverse[i]) & 0xFF) << " ";
+        if (ii == 1) {
+            cout << "1 8 (" << size << " times)";
+        }
+        else {
+            for (int i = 0; i < size; i++)
+                cout << (int(reverse[i]) & 0xFF) << " ";
+        }
 
         cout << endl;
 
@@ -255,7 +267,7 @@ int testFunctionsCorrectness(const string& name)
              << "Identical" << endl
              << endl;
 
-End:
+    End:
         delete f;
         delete[] input;
         delete[] output;
@@ -282,9 +294,9 @@ int testFunctionsSpeed(const string& name)
     byte output[50000];
     byte reverse[50000];
     Function<byte>* f = getByteFunction(name);
-    
+
     if (f == nullptr)
-       return 1;
+        return 1;
 
     SliceArray<byte> iba1(input, size, 0);
     SliceArray<byte> iba2(output, f->getMaxEncodedLength(size), 0);
