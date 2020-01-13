@@ -15,27 +15,23 @@ limitations under the License.
 
 #include <sstream>
 #include "LZCodec.hpp"
-#include "../Memory.hpp"
-
 
 using namespace kanzi;
 
-
-
-int LZCodec::emitLastLiterals(byte src[], byte dst[], int runLength)
+int LZCodec::emitLastLiterals(const byte src[], byte dst[], int litLen)
 {
     int dstIdx = 1;
 
-    if (runLength >= RUN_MASK) {
-        dst[0] = byte(RUN_MASK << ML_BITS);
-        dstIdx += emitLength(&dst[1], runLength - RUN_MASK);
+    if (litLen >= 7) {
+        dst[0] = byte(7 << 5);
+        dstIdx += emitLength(&dst[1], litLen - 7);
     }
     else {
-        dst[0] = byte(runLength << ML_BITS);
+        dst[0] = byte(litLen << 5);
     }
 
-    memcpy(&dst[dstIdx], src, runLength);
-    return dstIdx + runLength;
+    memcpy(&dst[dstIdx], src, litLen);
+    return dstIdx + litLen;
 }
 
 bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
@@ -52,148 +48,110 @@ bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     if (input._array == output._array)
         return false;
 
-    if (output._length  < getMaxEncodedLength(count))
+    if (output._length < getMaxEncodedLength(count))
         return false;
 
-    const int hashLog = (count < MAX_DISTANCE) ? HASH_LOG_SMALL : HASH_LOG_BIG;
-    const int hashShift = 32 - hashLog;
-    const int matchLimit = count - LAST_LITERALS;
-    const int mfLimit = count - MF_LIMIT;
-    const int srcEnd = count;
+    // If too small, skip
+    if (count < MIN_LENGTH)
+        return false;
+
+    const int srcEnd = count - 8;
+    byte* dst = &output._array[output._index];
     byte* src = &input._array[input._index];
-    byte* dst = &output._array[ output._index];
-    int srcIdx = 0;
     int dstIdx = 0;
+
+    if (_bufferSize == 0) {
+        _bufferSize = 1 << HASH_LOG;
+        delete[] _hashes;
+        _hashes = new int32[_bufferSize];
+    }
+
+    memset(_hashes, 0, sizeof(int32) * _bufferSize);
+    const int maxDist = (srcEnd < 4 * MAX_DISTANCE1) ? MAX_DISTANCE1 : MAX_DISTANCE2;
+    dst[dstIdx++] = (maxDist == MAX_DISTANCE1) ? byte(0) : byte(1);
+    int srcIdx = 0;
     int anchor = 0;
 
-    if (count > MIN_LENGTH) {
-        if (_bufferSize < (1 << hashLog)) {
-            _bufferSize = 1 << hashLog;
-            delete[] _buffer;
-            _buffer = new int[_bufferSize];
-        } 
+    while (srcIdx < srcEnd) {
+        const int minRef = max(srcIdx - maxDist, 0);
+        const int32 h = hash(&src[srcIdx]);
+        const int ref = _hashes[h];
+        int bestLen = 0;
 
-        memset(_buffer, 0, sizeof(int) * (size_t(1) << hashLog));
+        // Find a match
+        if ((ref > minRef) && (sameInts(src, ref, srcIdx) == true)) {
+            const int maxMatch = srcEnd - srcIdx;
+            bestLen = 4;
 
-        // First byte
-        int* table = _buffer; // aliasing
-        int h = (LittleEndian::readInt32(&src[srcIdx]) * LZ_HASH_SEED) >> hashShift;
-        table[h] = srcIdx;
-        srcIdx++;
-        h = (LittleEndian::readInt32(&src[srcIdx]) * LZ_HASH_SEED) >> hashShift;
+            while ((bestLen + 4 < maxMatch) && (sameInts(src, ref + bestLen, srcIdx + bestLen) == true))
+                bestLen += 4;
 
-        while (true) {
-            int fwdIdx = srcIdx;
-            int step = 1;
-            int searchMatchNb = SEARCH_MATCH_NB;
-            int match;
+            while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))
+                bestLen++;
+        }
 
-            // Find a match
-            do {
-                srcIdx = fwdIdx;
-                fwdIdx += step;
+        // No good match ?
+        if (bestLen < MIN_MATCH) {
+            _hashes[h] = srcIdx;
+            srcIdx++;
+            continue;
+        }
 
-                if (fwdIdx > mfLimit) {
-                    // Encode last literals
-                    dstIdx += emitLastLiterals(&src[anchor], &dst[dstIdx], srcEnd - anchor);
-                    input._index = srcEnd;
-                    output._index = dstIdx;
-                    return true;
-                }
+        // Emit token
+        // Token: 3 bits litLen + 1 bit flag + 4 bits mLen
+        // flag = if maxDist = (1<<17)-1, then highest bit of distance
+        //        else 1 if dist needs 3 bytes (> 0xFFFF) and 0 otherwise
+        const int mLen = bestLen - MIN_MATCH;
+        const int dist = srcIdx - ref;
+        const int token = ((dist > 0xFFFF) ? 0x10 : 0) | min(mLen, 0x0F);
 
-                step = searchMatchNb >> SKIP_STRENGTH;
-                searchMatchNb++;
-                match = table[h];
-                table[h] = srcIdx;
-                h = (LittleEndian::readInt32(&src[fwdIdx]) * LZ_HASH_SEED) >> hashShift;
-            } while ((sameInts(src, match, srcIdx) == false) || (match <= srcIdx - MAX_DISTANCE));
+        // Literals to process ?
+        if (anchor == srcIdx) {
+            dst[dstIdx++] = byte(token);
+        }
+        else {
+            // Process match
+            const int litLen = srcIdx - anchor;
 
-            // Catch up
-            while ((match > 0) && (srcIdx > anchor) && (src[match - 1] == src[srcIdx - 1])) {
-                match--;
-                srcIdx--;
-            }
-
-            // Encode literal length
-            const int litLength = srcIdx - anchor;
-            int token = dstIdx;
-            dstIdx++;
-
-            if (litLength >= RUN_MASK) {
-                dst[token] = byte(RUN_MASK << ML_BITS);
-                dstIdx += emitLength(&dst[dstIdx], litLength - RUN_MASK);
+            // Emit literal length
+            if (litLen >= 7) {
+                dst[dstIdx++] = byte((7 << 5) | token);
+                dstIdx += emitLength(&dst[dstIdx], litLen - 7);
             }
             else {
-                dst[token] = byte(litLength << ML_BITS);
+                dst[dstIdx++] = byte((litLen << 5) | token);
             }
 
-            // Copy literals
-            customArrayCopy(&src[anchor], &dst[dstIdx], litLength);
-            dstIdx += litLength;
+            // Emit literals
+            emitLiterals(&src[anchor], &dst[dstIdx], litLen);
+            dstIdx += litLen;
+        }
 
-            // Next match
-            do {
-                // Encode offset
-                dst[dstIdx++] = byte(srcIdx - match);
-                dst[dstIdx++] = byte((srcIdx - match) >> 8);
+        // Emit match length
+        if (mLen >= 0x0F)
+            dstIdx += emitLength(&dst[dstIdx], mLen - 0x0F);
 
-                // Encode match length
-                srcIdx += MIN_MATCH;
-                match += MIN_MATCH;
-                anchor = srcIdx;
+        // Emit distance
+        if ((maxDist == MAX_DISTANCE2) && (dist > 0xFFFF))
+            dst[dstIdx++] = byte(dist >> 16);
 
-                while ((srcIdx < matchLimit) && (src[srcIdx] == src[match])) {
-                    srcIdx++;
-                    match++;
-                }
+        dst[dstIdx++] = byte(dist >> 8);
+        dst[dstIdx++] = byte(dist);
 
-                const int matchLength = srcIdx - anchor;
+        // Fill _hashes and update positions
+        anchor = srcIdx + bestLen;
+        _hashes[h] = srcIdx;
+        srcIdx++;
 
-                // Encode match length
-                if (matchLength >= ML_MASK) {
-                    dst[token] |= byte(ML_MASK);
-                    dstIdx += emitLength(&dst[dstIdx], matchLength - ML_MASK);
-                }
-                else {
-                    dst[token] |= byte(matchLength);
-                }
-
-                anchor = srcIdx;
-
-                if (srcIdx > mfLimit) {
-                    // Encode last literals
-                    dstIdx += emitLastLiterals(&src[anchor], &dst[dstIdx], srcEnd - anchor);
-                    input._index = srcEnd;
-                    output._index = dstIdx;
-                    return true;
-                }
-
-                // Fill table
-                h = (LittleEndian::readInt32(&src[srcIdx - 2]) * LZ_HASH_SEED) >> hashShift;
-                table[h] = srcIdx - 2;
-
-                // Test next position
-                h = (LittleEndian::readInt32(&src[srcIdx]) * LZ_HASH_SEED) >> hashShift;
-                match = table[h];
-                table[h] = srcIdx;
-
-                if ((sameInts(src, match, srcIdx) == false) || (match <= srcIdx - MAX_DISTANCE))
-                    break;
-
-                token = dstIdx;
-                dstIdx++;
-                dst[token] = byte(0);
-            } while (true);
-
-            // Prepare next loop
+        while (srcIdx < anchor) {
+            _hashes[hash(&src[srcIdx])] = srcIdx;
             srcIdx++;
-            h = (LittleEndian::readInt32(&src[srcIdx]) * LZ_HASH_SEED) >> hashShift;
         }
     }
 
-    // Encode last literals
-    dstIdx += emitLastLiterals(&src[anchor], &dst[dstIdx], srcEnd - anchor);
-    input._index = srcEnd;
+    // Emit last literals
+    dstIdx += emitLastLiterals(&src[anchor], &dst[dstIdx], srcEnd + 8 - anchor);
+    input._index = srcEnd + 8;
     output._index = dstIdx;
     return true;
 }
@@ -212,120 +170,111 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     if (input._array == output._array)
         return false;
 
-    byte* src = &input._array[input._index];
-    byte* dst = &output._array[ output._index];
-    uint8* usrc = reinterpret_cast<uint8*>(src);
-    const int srcEnd = count;
-    const int dstEnd = output._length;
-    const int srcEnd2 = srcEnd - COPY_LENGTH;
-    const int dstEnd2 = dstEnd - COPY_LENGTH;
-    int srcIdx = 0;
+    const int srcEnd = count - 8;
+    const int dstEnd = output._length - 8;
+    byte* dst = &output._array[output._index];
+    uint8* src = reinterpret_cast<uint8*>(&input._array[input._index]);
     int dstIdx = 0;
+    const int maxDist = (src[0] == 1) ? MAX_DISTANCE2 : MAX_DISTANCE1;
+    int srcIdx = 1;
 
     while (true) {
-        // Get literal length
-        const int token = usrc[srcIdx++];
-        int length = token >> ML_BITS;
+        const uint8 token = src[srcIdx++];
 
-        if (length == RUN_MASK) {
-            uint8 len;
+        if (token >= 32) {
+            // Get literal length
+            int litLen = token >> 5;
 
-            while (((len = usrc[srcIdx++]) == uint8(0xFF)) && (srcIdx <= srcEnd))
-                length += 0xFF;
+            if (litLen == 7) {
+                while ((src[srcIdx] == 0xFF) && (srcIdx < srcEnd)) {
+                    srcIdx++;
+                    litLen += 0xFF;
+                }
 
-            length += len;
+                if (srcIdx >= srcEnd + 8) {
+                    input._index += srcIdx;
+                    output._index += dstIdx;
+                    return false;
+                }
 
-            if (length > MAX_LENGTH) {
-                stringstream ss;
-                ss << "Invalid length decoded: " << length;
-                throw invalid_argument(ss.str());
+                litLen += int(src[srcIdx++]);
             }
+
+            // Copy literals and exit ?
+            if ((dstIdx + litLen > dstEnd) || (srcIdx + litLen > srcEnd)) {
+                memcpy(&dst[dstIdx], &src[srcIdx], litLen);
+                srcIdx += litLen;
+                dstIdx += litLen;
+                break;
+            }
+
+            // Emit literals
+            emitLiterals(reinterpret_cast<byte*>(&src[srcIdx]), &dst[dstIdx], litLen);
+            srcIdx += litLen;
+            dstIdx += litLen;
         }
-
-        // Copy literals
-        if ((dstIdx + length > dstEnd2) || (srcIdx + length > srcEnd2)) {
-            memcpy(&dst[dstIdx], &src[srcIdx], length);
-            srcIdx += length;
-            dstIdx += length;
-            break;
-        }
-
-        customArrayCopy(&src[srcIdx], &dst[dstIdx], length);
-        srcIdx += length;
-        dstIdx += length;
-
-        if ((dstIdx > dstEnd2) || (srcIdx > srcEnd2))
-            break;
-
-        // Get offset
-        const int delta = usrc[srcIdx] | (usrc[srcIdx + 1] << 8);
-        srcIdx += 2;
-
-        if (dstIdx < delta)
-            break;
-
-        length = token & ML_MASK;
 
         // Get match length
-        if (length == ML_MASK) {
-            while (((src[srcIdx]) == byte(0xFF)) && (srcIdx < srcEnd)) {
+        int mLen = token & 0x0F;
+
+        if (mLen == 15) {
+            while ((srcIdx < srcEnd) && (src[srcIdx] == 0xFF)) {
                 srcIdx++;
-                length += 0xFF;
+                mLen += 0xFF;
             }
 
             if (srcIdx < srcEnd)
-                length += usrc[srcIdx++];
-
-            if ((length > MAX_LENGTH) || (srcIdx == srcEnd)) {
-                stringstream ss;
-                ss << "Invalid length decoded: " << length;
-                throw invalid_argument(ss.str());
-            }
+                mLen += int(src[srcIdx++]);
         }
 
-        length += MIN_MATCH;
-        int match = dstIdx - delta;
-        const int cpy = dstIdx + length;
+        mLen += MIN_MATCH;
+        const int mEnd = dstIdx + mLen;
 
-        // Copy repeated sequence
-        if (cpy > dstEnd2) {
-            byte* p1 = &dst[dstIdx];
-            byte* p2 = &dst[match];
+        // Sanity check
+        if (mEnd > dstEnd + 8) {
+            input._index += srcIdx;
+            output._index += dstIdx;
+            return false;
+        }
 
-            for (int i = 0; i < length; i++)
-                p1[i] = p2[i];
+        // Get distance
+        int dist = (int(src[srcIdx]) << 8) | int(src[srcIdx + 1]);
+        srcIdx += 2;
+
+        if ((token & 0x10) != 0) {
+            dist = (maxDist == MAX_DISTANCE1) ? dist + 65536 : (dist << 8) | int(src[srcIdx++]);
+        }
+
+        // Sanity check
+        if ((dstIdx < dist) || (dist > maxDist)) {
+            input._index += srcIdx;
+            output._index += dstIdx;
+            return false;
+        }
+
+        // Copy match
+        if (dist > 8) {
+            int ref = dstIdx - dist;
+
+            do {
+                // No overlap
+                memcpy(&dst[dstIdx], &dst[ref], 8);
+                ref += 8;
+                dstIdx += 8;
+            } while (dstIdx < mEnd);
         }
         else {
-            if (dstIdx >= match + 8) {
-                do {
-                    memcpy(&dst[dstIdx], &dst[match], 8);
-                    match += 8;
-                    dstIdx += 8;
-                } while (dstIdx < cpy);
-            }
-            else {
-                do {
-                    byte* p1 = &dst[dstIdx];
-                    byte* p2 = &dst[match];
-                    p1[0] = p2[0];
-                    p1[1] = p2[1];
-                    p1[2] = p2[2];
-                    p1[3] = p2[3];
-                    p1[4] = p2[4];
-                    p1[5] = p2[5];
-                    p1[6] = p2[6];
-                    p1[7] = p2[7];
-                    match += 8;
-                    dstIdx += 8;
-                } while (dstIdx < cpy);
-            }
+            const int ref = dstIdx - dist;
+
+            for (int i = 0; i < mLen; i++)
+                dst[dstIdx + i] = dst[ref + i];
         }
 
-        // Correction
-        dstIdx = cpy;
+        dstIdx = mEnd;
     }
 
-    input._index = srcIdx;
+    // Emit last  literals
     output._index = dstIdx;
-    return srcIdx == srcEnd;
+    input._index = srcIdx;
+    return srcIdx == srcEnd + 8;
 }
