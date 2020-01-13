@@ -81,7 +81,7 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
 
         // Rare: some codes exceed the budget for the max code length => normalize
         // frequencies (it boosts the smallest frequencies) and try once more.
-        if (retries > 1) {
+        if (retries > 2) {
             stringstream ss;
             ss << "Could not generate Huffman codes: max code length (";
             ss << HuffmanCommon::MAX_SYMBOL_SIZE;
@@ -97,8 +97,9 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
         // Copy alphabet (modified by normalizeFrequencies)
         uint alphabet[256];
         memcpy(alphabet, _alphabet, sizeof(alphabet));
-        EntropyUtils::normalizeFrequencies(frequencies, alphabet, count, totalFreq, 1 << 12);
         retries++;
+        EntropyUtils::normalizeFrequencies(frequencies, alphabet, count, totalFreq, 
+           HuffmanCommon::MAX_CHUNK_SIZE >> (2 * retries));
     }
 
     // Transmit code lengths only, frequencies and codes do not matter
