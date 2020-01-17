@@ -40,13 +40,13 @@ namespace kanzi
        void dispose() {};
 
    private:
-       static const int DECODING_BATCH_SIZE = 15; // ensures decoding table fits in L1 cache
+       static const int DECODING_BATCH_SIZE = 14; // ensures decoding table fits in L1 cache
        static const int TABLE_MASK = (1 << DECODING_BATCH_SIZE) - 1;
 
        InputBitStream& _bitstream;
        uint _codes[256];
-       uint16 _sizes[256];
        uint _alphabet[256];
+       uint16 _sizes[256];
        uint16 _table[TABLE_MASK + 1]; // decoding table: code -> size, symbol
        uint64 _state; // holds bits read from bitstream
        uint8 _bits; // hold number of unused bits in 'state'
