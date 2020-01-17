@@ -30,10 +30,6 @@ namespace kanzi
        static const int PARTIAL_ALPHABET = 1;
        static const int ALPHABET_256 = 0;
        static const int ALPHABET_NOT_256 = 1;
-       static const int DELTA_ENCODED_ALPHABET = 0;
-       static const int BIT_ENCODED_ALPHABET_256 = 1;
-       static const int PRESENT_SYMBOLS_MASK = 0;
-       static const int ABSENT_SYMBOLS_MASK = 1;
 
    public:
        static const int INCOMPRESSIBLE_THRESHOLD = 973; // 0.95*1024
