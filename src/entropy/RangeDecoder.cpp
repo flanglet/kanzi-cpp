@@ -58,7 +58,7 @@ int RangeDecoder::decodeHeader(uint frequencies[])
     const int scale = 1 << logRange;
     _shift = logRange;
     int sum = 0;
-    const int chkSize = (alphabetSize >= 64) ? 12 : 6;
+    const int chkSize = (alphabetSize >= 64) ? 8 : 6;
     int llr = 3;
 
     while (uint(1 << llr) <= logRange)
@@ -71,7 +71,7 @@ int RangeDecoder::decodeHeader(uint frequencies[])
 
         // Read frequencies
         for (int j = i; j < endj; j++) {
-            int val = int(_bitstream.readBits(logMax));
+            int val = int(_bitstream.readBits(logMax) + 1);
 
             if ((val <= 0) || (val >= scale)) {
                 stringstream ss;

@@ -101,12 +101,15 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], int lr)
 // Encode alphabet and frequencies
 bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], int lr)
 {
-    EntropyUtils::encodeAlphabet(_bitstream, alphabet, 256, alphabetSize);
+    const int encoded = EntropyUtils::encodeAlphabet(_bitstream, alphabet, 256, alphabetSize);
 
-    if (alphabetSize == 0)
+    if (encoded < 0)
+        return false;
+
+    if (encoded == 0)
         return true;
 
-    const int chkSize = (alphabetSize >= 64) ? 12 : 6;
+    const int chkSize = (alphabetSize >= 64) ? 8 : 6;
     int llr = 3;
 
     while (1 << llr <= lr)
@@ -114,14 +117,14 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
 
     // Encode all frequencies (but the first one) by chunks
     for (int i = 1; i < alphabetSize; i += chkSize) {
-        uint max = 0;
+        uint max = frequencies[alphabet[i]] - 1;
         uint logMax = 1;
-        const int endj = (i + chkSize < alphabetSize) ? i + chkSize : alphabetSize;
+        const int endj = min(i + chkSize, alphabetSize);
 
         // Search for max frequency log size in next chunk
-        for (int j = i; j < endj; j++) {
-            if (frequencies[alphabet[j]] > max)
-                max = frequencies[alphabet[j]];
+        for (int j = i + 1; j < endj; j++) {
+            if (frequencies[alphabet[j]] - 1 > max)
+                max = frequencies[alphabet[j]] - 1;
         }
 
         while (uint(1 << logMax) <= max)
@@ -131,7 +134,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
 
         // Write frequencies
         for (int j = i; j < endj; j++)
-            _bitstream.writeBits(frequencies[alphabet[j]], logMax);
+            _bitstream.writeBits(frequencies[alphabet[j]] - 1, logMax);
     }
 
     return true;

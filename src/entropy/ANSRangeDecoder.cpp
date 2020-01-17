@@ -93,7 +93,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
         if (alphabetSize != 256)
             memset(f, 0, sizeof(uint) * 256);
 
-        const int chkSize = (alphabetSize >= 64) ? 12 : 6;
+        const int chkSize = (alphabetSize >= 64) ? 8 : 6;
         int sum = 0;
         int llr = 3;
 
@@ -116,7 +116,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
 
             // Read frequencies
             for (int j = i; j < endj; j++) {
-                const int freq = int(_bitstream.readBits(logMax));
+                const int freq = int(_bitstream.readBits(logMax) + 1);
 
                 if ((freq < 0) || (freq >= scale)) {
                     stringstream ss;
