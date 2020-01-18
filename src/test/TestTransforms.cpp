@@ -66,6 +66,7 @@ int testTransformsCorrectness(const string& name)
                 byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), 
                 byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3)
             };
+
             memcpy(values, &arr[0], size);
         }
         else if (ii == 1) {
@@ -182,8 +183,13 @@ int testTransformsCorrectness(const string& name)
         cout << endl
              << "Original: " << endl;
 
-        for (int i = 0; i < size; i++)
-            cout << (int(input[i]) & 255) << " ";
+        if (ii == 1) {
+            cout << "1 8 (" << size << " times)";
+        }
+        else {
+            for (int i = 0; i < size; i++)
+                cout << (int(input[i]) & 0xFF) << " ";
+        }
 
         if (f->forward(iba1, iba2, size) == false) {
             if (iba1._index != size) {
@@ -220,8 +226,13 @@ int testTransformsCorrectness(const string& name)
 
         cout << "Decoded: " << endl;
 
-        for (int i = 0; i < size; i++)
-            cout << (int(reverse[i]) & 255) << " ";
+        if (ii == 1) {
+            cout << "1 8 (" << size << " times)";
+        }
+        else {
+            for (int i = 0; i < size; i++)
+                cout << (int(reverse[i]) & 0xFF) << " ";
+        }
 
         cout << endl;
 

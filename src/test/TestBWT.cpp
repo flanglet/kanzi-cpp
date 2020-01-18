@@ -166,7 +166,7 @@ int testBWTCorrectness(bool isBWT)
         delete[] reverse;
     }
 
-    delete pBuf;
+    delete[] pBuf;
     return res;
 }
 
