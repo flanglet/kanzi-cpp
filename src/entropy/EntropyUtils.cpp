@@ -57,9 +57,6 @@ struct FreqDataComparator {
 // length = alphabet array length up to 256
 int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int length, int count)
 {
-    if (count == 0)
-        return 0;
-
     // Alphabet length must be a power of 2
     if ((length & (length - 1)) != 0)
         return -1;
@@ -67,7 +64,7 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
     if ((length > 256) || (count > length))
         return -1;
 
-    if (count == length) {
+    if ((count == 0) || (count == length)) {
         // uint64 alphabet
         obs.writeBit(FULL_ALPHABET);
 
