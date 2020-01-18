@@ -186,7 +186,7 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
             int litLen = token >> 5;
 
             if (litLen == 7) {
-                while ((src[srcIdx] == 0xFF) && (srcIdx < srcEnd)) {
+                while ((srcIdx < srcEnd) && (src[srcIdx] == 0xFF)) {
                     srcIdx++;
                     litLen += 0xFF;
                 }
@@ -273,7 +273,6 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
         dstIdx = mEnd;
     }
 
-    // Emit last  literals
     output._index = dstIdx;
     input._index = srcIdx;
     return srcIdx == srcEnd + 8;
