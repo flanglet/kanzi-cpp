@@ -142,7 +142,7 @@ int RangeEncoder::encode(const byte block[], uint blkptr, uint len)
 void RangeEncoder::encodeByte(byte b)
 {
     // Compute next low and range
-    const int symbol = int(b) & 0xFF;
+    const int symbol = int(b);
     const uint64 cumFreq = _cumFreqs[symbol];
     const uint64 freq = _cumFreqs[symbol + 1] - cumFreq;
     _range >>= _shift;

@@ -585,7 +585,7 @@ T EncodingTask<T>::run() THROW
         uint64 written = _obs->written();
 
         if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != byte(0)) || (nbFunctions <= 4)) {
-            mode |= byte(uint8(skipFlags) >> 4);
+            mode |= byte(skipFlags >> 4);
             _obs->writeBits(uint64(mode), 8);
         }
         else {

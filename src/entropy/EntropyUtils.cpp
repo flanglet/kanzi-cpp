@@ -85,16 +85,16 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
     else {
         // Partial alphabet
         obs.writeBit(PARTIAL_ALPHABET);
-        uint8 masks[32];
+        byte masks[32];
         memset(masks, 0, 32);
 
         for (int i = 0; i < count; i++)
-            masks[alphabet[i] >> 3] |= ((uint8(1)) << (alphabet[i] & 7));
+            masks[alphabet[i] >> 3] |= byte(1 << (alphabet[i] & 7));
 
         int lastMask = 31;
 
         while (lastMask > 0) {
-            if (masks[lastMask] != 0)
+            if (masks[lastMask] != byte(0))
                 break;
 
             lastMask--;
@@ -103,7 +103,7 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
         obs.writeBits(lastMask, 5);
 
         for (int i = 0; i <= lastMask; i++)
-            obs.writeBits(masks[i], 8);
+            obs.writeBits(uint64(masks[i]), 8);
     }
 
     return count;
@@ -143,10 +143,10 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
 
     // Decode presence flags
     for (int i = 0; i <= lastMask; i++) {
-        const uint8 mask = uint8(ibs.readBits(8));
+        const byte mask = byte(ibs.readBits(8));
 
         for (int j = 0; j < 8; j++) {
-            if ((mask & (1 << j)) != 0) {
+            if ((mask & byte(1 << j)) != byte(0)) {
                 alphabet[count++] = (i << 3) + j;
             }
         }

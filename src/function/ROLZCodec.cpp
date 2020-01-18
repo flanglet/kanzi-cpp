@@ -396,7 +396,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             const uint32 key = ROLZCodec::getKey(&buf[dstIdx - 2]);
             prefetchRead(&_counters[key]);
-            const int matchIdx = int(mIdxBuf._array[mIdxBuf._index++]) & 0xFF;
+            const int matchIdx = int(mIdxBuf._array[mIdxBuf._index++]);
             int32* matches = &_matches[key << _logPosChecks];
             const int32 ref = matches[(_counters[key] - matchIdx) & _maskChecks];
             const int32 savedIdx = dstIdx;
@@ -429,11 +429,11 @@ End:
 void ROLZCodec1::readLengths(SliceArray<byte>& lenBuf, int& litLen, int& mLen)
 {
     // mode LLLLLMMM -> L lit length, M match length
-    const int mode = int(lenBuf._array[lenBuf._index++]) & 0xFF;
+    const int mode = int(lenBuf._array[lenBuf._index++]);
     mLen = mode & 0x07;
 
     if (mLen == 7)
-        mLen += (int(lenBuf._array[lenBuf._index++]) & 0xFF);
+        mLen += int(lenBuf._array[lenBuf._index++]);
 
     if (mode < 0xF8) {
         litLen = mode >> 3;
@@ -765,7 +765,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             if (rd.decodeBit() == MATCH_FLAG) {
                 // Read one match length and index
-                const int matchLen = int(rd.decodeByte()) & 0xFF;
+                const int matchLen = int(rd.decodeByte());
 
                 // Sanity check
                 if (dstIdx + matchLen + 3 > dstEnd) {

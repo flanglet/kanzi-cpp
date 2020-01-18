@@ -209,20 +209,20 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("Invalid output block");
 
-    uint8* src = reinterpret_cast<uint8*>(&input._array[input._index]);
-    uint8* dst = reinterpret_cast<uint8*>(&output._array[output._index]);
+    byte* src = &input._array[input._index];
+    byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;
     const int srcEnd = srcIdx + length;
     const int dstEnd = output._length;
     bool res = true;
-    uint8 escape = src[srcIdx++];
+    byte escape = src[srcIdx++];
 
     if (src[srcIdx] == escape) {
         srcIdx++;
 
         // The data cannot start with a run but may start with an escape literal
-        if ((srcIdx < srcEnd) && (src[srcIdx] != 0))
+        if ((srcIdx < srcEnd) && (src[srcIdx] != byte(0)))
             return false;
 
         dst[dstIdx++] = escape;
@@ -249,8 +249,8 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             break;
         }
 
-        const uint8 val = dst[dstIdx-1];
-        int run = src[srcIdx++];
+        const byte val = dst[dstIdx-1];
+        int run = int(src[srcIdx++]);
 
         if (run == 0) {
             // Just an escape symbol, not a run
@@ -270,7 +270,7 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
                   break;
             }
 
-            run = (uint8(src[srcIdx]) << 8) | uint8(src[srcIdx + 1]);
+            run = (int(src[srcIdx]) << 8) | int(src[srcIdx + 1]);
             srcIdx += 2;
             run += RUN_LEN_ENCODE2;
         }
@@ -280,7 +280,7 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
                   break;
             }
 
-            run = ((run - RUN_LEN_ENCODE1) << 8) | uint8(src[srcIdx++]);
+            run = ((run - RUN_LEN_ENCODE1) << 8) | int(src[srcIdx++]);
             run += RUN_LEN_ENCODE1;
         }
 

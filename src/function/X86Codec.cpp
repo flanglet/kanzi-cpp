@@ -74,7 +74,7 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             continue;
         }
 
-        const int sgn = int(src[srcIdx + 3]) & 0xFF;
+        const int sgn = int(src[srcIdx + 3]);
 
         // Invalid sign of jump address difference => false positive ?
         if ((sgn != 0) && (sgn != 0xFF))

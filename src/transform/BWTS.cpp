@@ -145,7 +145,7 @@ int BWTS::moveLyndonWordHead(int sa[], int isa[], byte data[], int count, int st
         if ((k == size) && (rank < isa[nextStart]))
             break;
 
-        if ((k < size) && (nextStart < count) && ((int(data[start + k]) & 0xFF)) < (int(data[nextStart]) & 0xFF))
+        if ((k < size) && (nextStart < count) && (data[start + k] < data[nextStart]))
             break;
 
         sa[rank] = nextStart0;
@@ -203,11 +203,11 @@ bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 
     // Aliasing
     int* lf = _buffer1;
-    uint8* src = reinterpret_cast<uint8*>(&input._array[input._index]);
-    uint8* dst = reinterpret_cast<uint8*>(&output._array[output._index]);
+    byte* src = &input._array[input._index];
+    byte* dst = &output._array[output._index];
 
     for (int i = 0; i < count; i++)
-        lf[i] = buckets[src[i]]++;
+        lf[i] = buckets[int(src[i])]++;
 
     // Build inverse
     for (int i = 0, j = count - 1; j >= 0; i++) {

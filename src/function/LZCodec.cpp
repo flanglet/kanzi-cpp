@@ -173,20 +173,20 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     const int srcEnd = count - 8;
     const int dstEnd = output._length - 8;
     byte* dst = &output._array[output._index];
-    uint8* src = reinterpret_cast<uint8*>(&input._array[input._index]);
+    byte* src = &input._array[input._index];
     int dstIdx = 0;
-    const int maxDist = (src[0] == 1) ? MAX_DISTANCE2 : MAX_DISTANCE1;
+    const int maxDist = (src[0] == byte(1)) ? MAX_DISTANCE2 : MAX_DISTANCE1;
     int srcIdx = 1;
 
     while (true) {
-        const uint8 token = src[srcIdx++];
+        const int token = int(src[srcIdx++]);
 
         if (token >= 32) {
             // Get literal length
             int litLen = token >> 5;
 
             if (litLen == 7) {
-                while ((srcIdx < srcEnd) && (src[srcIdx] == 0xFF)) {
+                while ((srcIdx < srcEnd) && (src[srcIdx] == byte(0xFF))) {
                     srcIdx++;
                     litLen += 0xFF;
                 }
@@ -209,7 +209,7 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
             }
 
             // Emit literals
-            emitLiterals(reinterpret_cast<byte*>(&src[srcIdx]), &dst[dstIdx], litLen);
+            emitLiterals(&src[srcIdx], &dst[dstIdx], litLen);
             srcIdx += litLen;
             dstIdx += litLen;
         }
@@ -218,7 +218,7 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
         int mLen = token & 0x0F;
 
         if (mLen == 15) {
-            while ((srcIdx < srcEnd) && (src[srcIdx] == 0xFF)) {
+            while ((srcIdx < srcEnd) && (src[srcIdx] == byte(0xFF))) {
                 srcIdx++;
                 mLen += 0xFF;
             }

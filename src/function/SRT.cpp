@@ -35,15 +35,15 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     int32 freqs[256] = { 0 };
     uint8 s2r[256] = { 0 };
-    int32 r2s[256] = { 0 };
-    uint8* src = reinterpret_cast<uint8*>(&input._array[input._index]);
+    uint8 r2s[256] = { 0 };
+    byte* src = &input._array[input._index];
 
     // find first symbols and count occurrences
     for (int i = 0, b = 0; i < length;) {
-        uint8 c = src[i];
+        uint8 c = uint8(src[i]);
         int j = i + 1;
 
-        while ((j < length) && (src[j] == c))
+        while ((j < length) && (src[j] == byte(c)))
             j++;
 
         if (freqs[c] == 0) {
@@ -63,7 +63,7 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     const int nbSymbols = preprocess(freqs, symbols);
 
     for (int i = 0, bucketPos = 0; i < nbSymbols; i++) {
-        const int c = symbols[i] & 0xFF;
+        const uint8 c = symbols[i];
         buckets[c] = bucketPos;
         bucketPos += freqs[c];
     }
@@ -74,7 +74,7 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     // encoding
     for (int i = 0; i < length;) {
-        uint8 c = src[i];
+        uint8 c = uint8(src[i]);
         int r = s2r[c];
         int p = buckets[c];
         dst[p] = byte(r);
@@ -93,7 +93,7 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
         int j = i + 1;
 
-        while ((j < length) && (src[j] == c)) {
+        while ((j < length) && (src[j] == byte(c))) {
             dst[p] = byte(0);
             p++;
             j++;
@@ -123,7 +123,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     const int headerSize = decodeHeader(&input._array[input._index], freqs);
     input._index += headerSize;
     length -= headerSize;
-    uint8* src = reinterpret_cast<uint8*>(&input._array[input._index]);
+    byte* src = &input._array[input._index];
     uint8 symbols[256];
 
     // init arrays
@@ -135,7 +135,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     for (int i = 0, bucketPos = 0; i < nbSymbols; i++) {
         const uint8 c = symbols[i];
-        r2s[int(src[bucketPos]) & 0xFF] = c;
+        r2s[int(src[bucketPos])] = c;
         buckets[c] = bucketPos + 1;
         bucketPos += freqs[c];
         bucketEnds[c] = bucketPos;
@@ -143,13 +143,13 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     // decoding
     uint8 c = r2s[0];
-    uint8* dst = reinterpret_cast<uint8*>(&output._array[output._index]);
+    byte* dst = &output._array[output._index];
 
     for (int i = 0; i < length; i++) {
-        dst[i] = c;
+        dst[i] = byte(c);
 
         if (buckets[c] < bucketEnds[c]) {
-            const uint8 r = src[buckets[c]];
+            const uint8 r = uint8(src[buckets[c]]);
             buckets[c]++;
 
             if (r == 0)
@@ -225,10 +225,10 @@ int SRT::encodeHeader(int32 freqs[], byte dst[])
 int SRT::decodeHeader(byte src[], int32 freqs[])
 {
     for (int i = 0, j = 0; i < 1024; i += 4, j++) {
-        const int f1 = int(src[i]) & 0xFF;
-        const int f2 = int(src[i + 1]) & 0xFF;
-        const int f3 = int(src[i + 2]) & 0xFF;
-        const int f4 = int(src[i + 3]) & 0xFF;
+        const int f1 = int(src[i]);
+        const int f2 = int(src[i + 1]);
+        const int f3 = int(src[i + 2]);
+        const int f4 = int(src[i + 3]);
         freqs[j] = int32((f1 << 24) | (f2 << 16) | (f3 << 8) | f4);
     }
 

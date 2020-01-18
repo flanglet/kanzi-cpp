@@ -179,20 +179,19 @@ int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint len)
 void ANSRangeEncoder::encodeChunk(const byte block[], int end)
 {
     int st = ANS_TOP;
-    const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
     byte* p0 = &_buffer[_bufferSize - 1];
     byte* p = p0;
 
     if (_order == 0) {
         for (int i = end - 1; i >= 0; i--) {
-            st = encodeSymbol(p, st, _symbols[data[i]]);
+            st = encodeSymbol(p, st, _symbols[int(block[i])]);
         }
     }
     else { // order 1
-        int prv = int(block[end - 1]) & 0xFF;
+        int prv = int(block[end - 1]);
 
         for (int i = end - 2; i >= 0; i--) {
-            const int cur = int(data[i]);
+            const int cur = int(block[i]);
             st = encodeSymbol(p, st, _symbols[(cur << 8) | prv]);
             prv = cur;
         }

@@ -191,8 +191,8 @@ byte TextCodec::computeStats(const byte block[], int count, int32 freqs0[])
     int32 f1[256] = { 0 };
     int32 f3[256] = { 0 };
     int32 f2[256] = { 0 };
-    const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
     uint8 prv = 0;
+    const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
     const int count4 = count & -4;
 
     // Unroll loop
@@ -755,7 +755,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         if ((cur == TextCodec::ESCAPE_TOKEN1) || (cur == TextCodec::ESCAPE_TOKEN2)) {
             // Word in dictionary
             // Read word index (varint 5 bits + 7 bits + 7 bits)
-            int idx = int(src[srcIdx++]) & 0xFF;
+            int idx = int(src[srcIdx++]);
 
             if ((idx & 0x80) != 0) {
                 idx &= 0x7F;

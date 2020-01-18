@@ -143,7 +143,6 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
 
     if (isOrder0 == true) {
         memset(freqs, 0, mult * sizeof(uint));
-        const uint8* end4 = (uint8*)&block[length & -4];
 
         if (withTotal == true)
             freqs[256] = length;
@@ -152,7 +151,8 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
         uint f1[256] = { 0 };
         uint f2[256] = { 0 };
         uint f3[256] = { 0 };
-        uint8* p = (uint8*)&block[0];
+        const uint8* p = reinterpret_cast<const uint8*>(&block[0]);
+        const uint8* end4 = reinterpret_cast<const uint8*>(&block[length & -4]);
 
         while (p < end4) {
             f0[*p++]++;
@@ -161,7 +161,7 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
             f3[*p++]++;
         }
 
-        const uint8* end = (uint8*)&block[length];
+        const uint8* end = reinterpret_cast<const uint8*>(&block[length]);
 
         while (p < end)
             freqs[*p++]++;
@@ -172,7 +172,7 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
     else { // Order 1
         memset(freqs, 0, 256 * mult * sizeof(uint));
         uint prv = 0;
-        uint8* p = (uint8*)&block[0];
+        const uint8* p = reinterpret_cast<const uint8*>(&block[0]);
 
         if (withTotal == true) {
             for (int i = 0; i < length; i++) {

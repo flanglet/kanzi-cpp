@@ -205,7 +205,7 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     if (sz != 0) 
         _bitstream.readBits(&_buffer[0], 8 * sz);
 
-    uint8* p = reinterpret_cast<uint8*>(&_buffer[0]);
+    byte* p = &_buffer[0];
     const int mask = (1 << _logRange) - 1;
 
     if (_order == 0) {

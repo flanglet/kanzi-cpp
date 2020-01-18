@@ -249,7 +249,7 @@ int CompressedInputStream::peek() THROW
             }
         }
 
-        return int(_sa->_array[_sa->_index]) & 0xFF;
+        return int(_sa->_array[_sa->_index]);
     }
     catch (IOException& e) {
         setstate(ios::badbit);

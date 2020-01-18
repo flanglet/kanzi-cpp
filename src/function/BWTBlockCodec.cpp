@@ -122,7 +122,7 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
 
     for (int i = 0; i < chunks; i++) {
         // Read block header (mode + primary index). See top of file for format
-        const int blockMode = int(input._array[input._index++]) & 0xFF;
+        const int blockMode = int(input._array[input._index++]);
         const int pIndexSizeBytes = 1 + ((blockMode >> 6) & 0x03);
 
         if (blockSize < pIndexSizeBytes)
@@ -135,7 +135,7 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
         // Extract BWT primary index
         for (int n = 1; n < pIndexSizeBytes; n++) {
             shift -= 8;
-            primaryIndex |= ((int(input._array[input._index++]) & 0xFF) << shift);
+            primaryIndex |= (int(input._array[input._index++]) << shift);
         }
 
         if (_pBWT->setPrimaryIndex(i, primaryIndex) == false)
