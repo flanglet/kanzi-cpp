@@ -14,6 +14,7 @@ limitations under the License.
 */
 
 #include <sstream>
+#include "../util.hpp" // Visual Studio min/max
 #include "LZCodec.hpp"
 
 using namespace kanzi;
