@@ -134,7 +134,7 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], int 
     vector<uint> v(_sranks, _sranks + count);
     sort(v.begin(), v.end());
     memcpy(_sranks, &v[0], count * sizeof(uint));
-    uint buffer[256];
+    uint buffer[256]= { 0 };
 
     for (int i = 0; i < count; i++) {
         buffer[i] = _sranks[i] >> 8;
