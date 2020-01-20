@@ -62,18 +62,14 @@ namespace kanzi
 
    inline void BinaryEntropyEncoder::encodeBit(int bit, int pred)
    {
-       // Calculate interval split
-       // Written in a way to maximize accuracy of multiplication/division
-       const uint64 split = (((_high - _low) >> 4) * uint64(pred)) >> 8;
-
-       // Update fields with new interval bounds
-       if (bit == 0) 
-          _low += (split + 1);
-       else 
-          _high = _low + split;
-
-       // Update predictor
-       _predictor->update(bit);
+       // Update fields with new interval bounds and predictor
+       if (bit == 0) {
+          _low = _low + ((((_high - _low) >> 4) * uint64(pred)) >> 8) + 1;
+          _predictor->update(0);
+       } else  {
+          _high = _low + ((((_high - _low) >> 4) * uint64(pred)) >> 8);
+          _predictor->update(1);
+       }
 
        // Write unchanged first 32 bits to bitstream
        while (((_low ^ _high) >> 24) == 0)
