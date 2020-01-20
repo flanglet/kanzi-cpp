@@ -93,8 +93,11 @@ namespace kanzi
            const uint remaining = count - _availBits;
            _current |= ((value & ((uint64(1) << count) - 1)) >> remaining);
            pushCurrent();
-           _current = value << (64 - remaining);
-           _availBits -= int(remaining);
+
+           if (_remaining != 0) {
+               _current = value << (64 - remaining);
+               _availBits -= int(remaining);
+           }
        }
 
        return count;
