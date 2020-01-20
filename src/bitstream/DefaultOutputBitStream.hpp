@@ -94,7 +94,7 @@ namespace kanzi
            _current |= ((value & ((uint64(1) << count) - 1)) >> remaining);
            pushCurrent();
 
-           if (_remaining != 0) {
+           if (remaining != 0) {
                _current = value << (64 - remaining);
                _availBits -= int(remaining);
            }
