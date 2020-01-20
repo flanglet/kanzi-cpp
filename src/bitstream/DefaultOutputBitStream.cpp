@@ -19,7 +19,6 @@ limitations under the License.
 
 using namespace kanzi;
 
-
 DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize) THROW : _os(os)
 {
     if (bufferSize < 1024)
@@ -84,7 +83,7 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
             const uint64 value = uint64(BigEndian::readLong64(&bits[start]));
             _current |= (value >> r);
             pushCurrent();
-            _current = (value << (64-r));
+            _current = (value << (64 - r));
             _availBits -= r;
             start += 8;
             remaining -= 64;
@@ -150,7 +149,6 @@ void DefaultOutputBitStream::close() THROW
     memset(&_buffer[0], 0, _bufferSize);
     _written -= 64; // adjust for method written()
 }
-
 
 // Write buffer to underlying stream
 void DefaultOutputBitStream::flush() THROW
