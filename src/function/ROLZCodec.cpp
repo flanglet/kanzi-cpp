@@ -175,6 +175,9 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     bool success = true;
     const int litOrder = (count < 1<<17) ? 0 : 1;
     dst[dstIdx++] = (byte) litOrder;
+    stringbuf buffer;
+    iostream ios(&buffer);
+    ios.rdbuf()->pubseekpos(0);
 
     // Main loop
     while (startChunk < srcEnd) {
@@ -196,7 +199,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         while (srcIdx < sizeChunk) {
             const int match = findMatch(buf, srcIdx, sizeChunk);
 
-            if (match == -1) {
+            if (match < 0) {
                 srcIdx++;
                 continue;
             }
@@ -221,8 +224,6 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         ROLZCodec1::emitToken(lenBuf, litLen, 0);
         memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], litLen);
         litBuf._index += litLen;
-        stringbuf buffer;
-        iostream ios(&buffer);
 
         // Scope to deallocate resources early
         {
@@ -650,7 +651,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         // First literals
         _litPredictor.setContext(byte(0));
-        re.setContext(LITERAL_FLAG);
+        re.setMode(LITERAL_FLAG);
         re.encodeBit(LITERAL_FLAG);
         re.encodeByte(src[srcIdx++]);
 
@@ -661,10 +662,10 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         while (srcIdx < sizeChunk) {
             _litPredictor.setContext(src[srcIdx - 1]);
-            re.setContext(LITERAL_FLAG);
+            re.setMode(LITERAL_FLAG);
             const int match = findMatch(src, srcIdx, sizeChunk);
 
-            if (match == -1) {
+            if (match < 0) {
                 // Emit one literal
                 re.encodeBit(LITERAL_FLAG);
                 re.encodeByte(src[srcIdx]);
@@ -677,7 +678,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 re.encodeByte(byte(matchLen));
                 const int matchIdx = match >> 16;
                 _matchPredictor.setContext(src[srcIdx - 1]);
-                re.setContext(MATCH_FLAG);
+                re.setMode(MATCH_FLAG);
 
                 for (int shift = _logPosChecks - 1; shift >= 0; shift--)
                     re.encodeBit((matchIdx >> shift) & 1);
@@ -690,7 +691,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     }
 
     // Emit last literals
-    re.setContext(LITERAL_FLAG);
+    re.setMode(LITERAL_FLAG);
 
     for (int i = 0; i < 4; i++, srcIdx++) {
         _litPredictor.setContext(src[srcIdx - 1]);
@@ -734,7 +735,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         // First literals
         _litPredictor.setContext(byte(0));
-        rd.setContext(LITERAL_FLAG);
+        rd.setMode(LITERAL_FLAG);
         int bit = rd.decodeBit();
 
         if (bit == LITERAL_FLAG) {
@@ -760,7 +761,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const uint32 key = ROLZCodec::getKey(&dst[dstIdx - 2]);
             int32* matches = &_matches[key << _logPosChecks];
             _litPredictor.setContext(dst[dstIdx - 1]);
-            rd.setContext(LITERAL_FLAG);
+            rd.setMode(LITERAL_FLAG);
             prefetchRead(&_counters[key]);
 
             if (rd.decodeBit() == MATCH_FLAG) {
@@ -774,7 +775,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 }
 
                 _matchPredictor.setContext(dst[dstIdx - 1]);
-                rd.setContext(MATCH_FLAG);
+                rd.setMode(MATCH_FLAG);
                 int32 matchIdx = 0;
 
                 for (int shift = _logPosChecks - 1; shift >= 0; shift--)

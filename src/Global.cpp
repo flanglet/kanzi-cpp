@@ -77,37 +77,36 @@ const int Global::INV_EXP[] = {
     65536
 };
 
-const int* Global::SQUASH = Global::initSquash();
+const Global Global::_singleton;
 
-const int* Global::initSquash()
+const int* Global::SQUASH = Global::initSquash(_singleton.SQUASH_BUFFER);
+
+const int* Global::initSquash(int data[])
 {
-    int* res = new int[4096];
-
     for (int x = -2047; x <= 2047; x++) {
         int w = x & 127;
         int y = (x >> 7) + 16;
-        res[x + 2047] = (INV_EXP[y] * (128 - w) + INV_EXP[y + 1] * w) >> 11;
+        data[x + 2047] = (INV_EXP[y] * (128 - w) + INV_EXP[y + 1] * w) >> 11;
     }
 
-    return res;
+    return data;
 }
 
-const int* Global::STRETCH = Global::initStretch();
+const int* Global::STRETCH = Global::initStretch(_singleton.STRETCH_BUFFER);
 
-const int* Global::initStretch()
+const int* Global::initStretch(int data[])
 {
-    int* res = new int[4096];
     int n = 0;
 
     for (int x = -2047; (x <= 2047) && (n < 4096); x++) {
         const int sq = squash(x);
 
         while (n <= sq)
-            res[n++] = x;
+            data[n++] = x;
     }
 
-    res[4095] = 2047;
-    return res;
+    data[4095] = 2047;
+    return data;
 }
 
 // Return 1024 * log2(x)

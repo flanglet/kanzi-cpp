@@ -75,7 +75,7 @@ namespace kanzi {
 
 		void dispose();
 
-		void setContext(int n) { _predictor = _predictors[n]; }
+		void setMode(int n) { _predictor = _predictors[n]; }
 	};
 
 	class ROLZDecoder {
@@ -103,7 +103,7 @@ namespace kanzi {
 
 		void dispose() {}
 
-		void setContext(int n) { _predictor = _predictors[n]; }
+		void setMode(int n) { _predictor = _predictors[n]; }
 	};
 
 	// Use ANS to encode/decode literals and matches

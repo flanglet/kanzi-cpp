@@ -107,8 +107,6 @@ namespace kanzi {
        bool _overwrite;
        string _inputName;
        string _outputName;
-       string _codec;
-       string _transform;
        int _blockSize;
        int _jobs;
        vector<Listener*> _listeners;

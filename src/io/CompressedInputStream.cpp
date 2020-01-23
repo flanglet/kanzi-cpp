@@ -39,7 +39,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
         throw invalid_argument(ss.str());
     }
 #else
-    if ((tasks <= 0) || (tasks > 1))
+    if (tasks != 1)
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 

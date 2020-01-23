@@ -52,8 +52,14 @@ namespace kanzi {
        static void computeHistogram(const byte block[], int end, uint freqs[], bool isOrder0, bool withTotal=false);
 
    private:
-       static const int* initStretch();
-       static const int* initSquash();
+       Global() { STRETCH_BUFFER = new int[4096]; SQUASH_BUFFER = new int[4096]; }
+       ~Global() { delete[] STRETCH_BUFFER; delete[] SQUASH_BUFFER; }
+
+       int* STRETCH_BUFFER;
+       int* SQUASH_BUFFER;
+       static const Global _singleton;
+       static const int* initStretch(int data[]);
+       static const int* initSquash(int data[]);
    };
 
 
