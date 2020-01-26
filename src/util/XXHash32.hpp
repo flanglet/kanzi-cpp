@@ -37,7 +37,7 @@ namespace kanzi
 
        int _seed;
 
-       int round(int acc, int val);
+       int round(uint32 acc, uint32 val);
 
    public:
        XXHash32() { _seed = (int)time(nullptr); }
@@ -53,15 +53,15 @@ namespace kanzi
 
    inline int XXHash32::hash(byte data[], int length)
    {
-       int h32;
+       uint32 h32;
        int idx = 0;
 
        if (length >= 16) {
            const int end16 = length - 16;
-           int v1 = _seed + PRIME32_1 + PRIME32_2;
-           int v2 = _seed + PRIME32_2;
-           int v3 = _seed;
-           int v4 = _seed - PRIME32_1;
+           uint32 v1 = _seed + PRIME32_1 + PRIME32_2;
+           uint32 v2 = _seed + PRIME32_2;
+           uint32 v3 = _seed;
+           uint32 v4 = _seed - PRIME32_1;
 
            do {
                v1 = round(v1, LittleEndian::readInt32(&data[idx]));
@@ -101,7 +101,7 @@ namespace kanzi
        return h32 ^ (h32 >> 16);
    }
 
-   inline int XXHash32::round(int acc, int val)
+   inline int XXHash32::round(uint32 acc, uint32 val)
    {
        acc += (val * PRIME32_2);
        return ((acc << 13) | (acc >> 19)) * PRIME32_1;
