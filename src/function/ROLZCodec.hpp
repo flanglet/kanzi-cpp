@@ -22,262 +22,250 @@ limitations under the License.
 #include "../Predictor.hpp"
 #include "../util.hpp"
 
-
 using namespace std;
 
 // Implementation of a Reduced Offset Lempel Ziv transform
 // More information about ROLZ at http://ezcodesample.com/rolz/rolz_article.html
 
 namespace kanzi {
-	class ROLZPredictor : public Predictor {
-	private:
-		uint16* _probs;
-		uint _logSize;
-		int32 _size;
-		int32 _c1;
-		int32 _ctx;
 
-	public:
-		ROLZPredictor(uint logMaxSymbolSize);
+   class ROLZEncoder {
+   private:
+       static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
+       static const uint64 MASK_0_24 = 0x0000000000FFFFFF;
+       static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
+       static const int MATCH_FLAG = 0;
+       static const int LITERAL_FLAG = 1;
 
-		~ROLZPredictor() { delete[] _probs; }
+       uint16* _probs[2];
+       uint _logSizes[2];
+       int& _idx;
+       uint64 _low;
+       uint64 _high;
+       byte* _buf;
+       int32 _c1;
+       int32 _ctx;
+       int _pIdx;
 
-		void reset();
+       void encodeBit(int bit);
 
-		void update(int bit);
+   public:
+       ROLZEncoder(uint litLogSize, uint mLogSize, byte buf[], int& idx);
 
-		int get();
+       ~ROLZEncoder()
+       {
+           delete[] _probs[LITERAL_FLAG];
+           delete[] _probs[MATCH_FLAG];
+       }
 
-		void setContext(byte ctx) { _ctx = int32(ctx) << _logSize; }
-	};
+       void encodeBits(int val, int n);
 
-	class ROLZEncoder {
-	private:
-		static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
-		static const uint64 MASK_0_24 = 0x0000000000FFFFFF;
-		static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
+       void dispose();
 
-		Predictor* _predictors[2];
-		Predictor* _predictor;
-		byte* _buf;
-		int& _idx;
-		uint64 _low;
-		uint64 _high;
+       void reset();
 
-	public:
-		ROLZEncoder(Predictor* predictors[2], byte buf[], int& idx);
+       void setMode(int n) { _pIdx = n; }
 
-		~ROLZEncoder() {}
-
-		void encodeByte(byte val);
-
-		void encodeBit(int bit);
-
-		void dispose();
-
-		void setMode(int n) { _predictor = _predictors[n]; }
-	};
-
-	class ROLZDecoder {
-	private:
-		static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
-		static const uint64 MASK_0_56 = 0x00FFFFFFFFFFFFFF;
-		static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
-
-		Predictor* _predictors[2];
-		Predictor* _predictor;
-		byte* _buf;
-		int& _idx;
-		uint64 _low;
-		uint64 _high;
-		uint64 _current;
-
-	public:
-		ROLZDecoder(Predictor* predictors[2], byte buf[], int& idx);
-
-		~ROLZDecoder() {}
-
-		byte decodeByte();
-
-		int decodeBit();
-
-		void dispose() {}
-
-		void setMode(int n) { _predictor = _predictors[n]; }
-	};
-
-	// Use ANS to encode/decode literals and matches
-	class ROLZCodec1 : public Function<byte> {
-	public:
-		ROLZCodec1(uint logPosChecks) THROW;
-
-		~ROLZCodec1() { delete[] _matches; }
-
-		bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
-
-		bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
-
-		// Required encoding output buffer size
-		int getMaxEncodedLength(int srcLen) const
-		{
-		   return (srcLen <= 512) ? srcLen + 64 : srcLen;
-		}
-
-	private:
-		static const int MIN_MATCH = 3;
-		static const int MAX_MATCH = MIN_MATCH + 255 + 7;
-
-		int32* _matches;
-		int32 _counters[65536];
-		int _logPosChecks;
-		int _maskChecks;
-		int _posChecks;
-
-		int findMatch(const byte buf[], const int pos, const int end);
-
-		void emitToken(SliceArray<byte>& lenBuf, int litLen, int mLen);
-
-		void readLengths(SliceArray<byte>& lenBuf, int& litLen, int& mLen);
-
-		int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int litLen);
-	};
-
-	// Use CM (ROLZEncoder/ROLZDecoder) to encode/decode literals and matches
-	// Code loosely based on 'balz' by Ilya Muravyov
-	class ROLZCodec2 : public Function<byte> {
-	public:
-		ROLZCodec2(uint logPosChecks) THROW;
-
-		~ROLZCodec2() { delete[] _matches; }
-
-		bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
-
-		bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
-
-		// Required encoding output buffer size
-		int getMaxEncodedLength(int srcLen) const;
-
-	private:
-		static const int MATCH_FLAG = 0;
-		static const int LITERAL_FLAG = 1;
-		static const int MIN_MATCH = 3;
-		static const int MAX_MATCH = MIN_MATCH + 255;
-
-		int32* _matches;
-		int32 _counters[65536];
-		int _logPosChecks;
-		int _maskChecks;
-		int _posChecks;
-		ROLZPredictor _litPredictor;
-		ROLZPredictor _matchPredictor;
-
-		int findMatch(const byte buf[], const int pos, const int end);
-	};
-
-	class ROLZCodec : public Function<byte> {
-		friend class ROLZCodec1;
-		friend class ROLZCodec2;
-
-	public:
-		ROLZCodec(uint logPosChecks = LOG_POS_CHECKS2) THROW;
-
-		ROLZCodec(Context& ctx) THROW;
-
-		virtual ~ROLZCodec() { delete _delegate; }
-
-		bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
-
-		bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
-
-		// Required encoding output buffer size
-		int getMaxEncodedLength(int srcLen) const
-		{
-		   return _delegate->getMaxEncodedLength(srcLen);
-		}
-
-	private:
-		static const int HASH_SIZE = 1 << 16;
-		static const int LOG_POS_CHECKS1 = 4;
-		static const int LOG_POS_CHECKS2 = 5;
-		static const int CHUNK_SIZE = 1 << 26; // 64 MB
-		static const int32 HASH = 200002979;
-		static const int32 HASH_MASK = ~(CHUNK_SIZE - 1);
-		static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB
-
-		Function<byte>* _delegate;
-
-		static uint16 getKey(const byte* p)
-		{
-			return uint16(LittleEndian::readInt16(p));
-		}
-
-		static int32 hash(const byte* p)
-		{
-			return ((LittleEndian::readInt32(p) & 0x00FFFFFF) * HASH) & HASH_MASK;
-		}
-
-		static int emitCopy(byte dst[], int dstIdx, int ref, int matchLen);
+       void setContext(byte ctx) { _ctx = int32(ctx) << _logSizes[_pIdx]; }
    };
 
+   class ROLZDecoder {
+   private:
+       static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
+       static const uint64 MASK_0_56 = 0x00FFFFFFFFFFFFFF;
+       static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
+       static const int MATCH_FLAG = 0;
+       static const int LITERAL_FLAG = 1;
 
-   inline void ROLZPredictor::update(int bit)
-   {
-	   _probs[_ctx + _c1] -= (((_probs[_ctx + _c1] - uint16(-bit)) >> 5) + bit);
-	   _c1 = (_c1 << 1) + bit;
+       uint16* _probs[2];
+       uint _logSizes[2];
+       int& _idx;
+       uint64 _low;
+       uint64 _high;
+       uint64 _current;
+       byte* _buf;
+       int32 _c1;
+       int32 _ctx;
+       int _pIdx;
 
-	   if (_c1 >= _size)
-	      _c1 = 1;
-   }
+       int decodeBit();
 
+   public:
+       ROLZDecoder(uint litLogSize, uint mLogSize, byte buf[], int& idx);
 
-   inline int ROLZPredictor::get()
-   {
-	   return int(_probs[_ctx + _c1]) >> 4;
-   }
+       ~ROLZDecoder()
+       {
+           delete[] _probs[LITERAL_FLAG];
+           delete[] _probs[MATCH_FLAG];
+       }
 
+       int decodeBits(int n);
+
+       void dispose() {}
+
+       void reset();
+
+       void setMode(int n) { _pIdx = n; }
+
+       void setContext(byte ctx) { _ctx = int32(ctx) << _logSizes[_pIdx]; }
+   };
+
+   // Use ANS to encode/decode literals and matches
+   class ROLZCodec1 : public Function<byte> {
+   public:
+       ROLZCodec1(uint logPosChecks) THROW;
+
+       ~ROLZCodec1() { delete[] _matches; }
+
+       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+
+       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+
+       // Required encoding output buffer size
+       int getMaxEncodedLength(int srcLen) const
+       {
+           return (srcLen <= 512) ? srcLen + 64 : srcLen;
+       }
+
+   private:
+       static const int MIN_MATCH = 3;
+       static const int MAX_MATCH = MIN_MATCH + 255 + 7;
+
+       int32* _matches;
+       int32 _counters[65536];
+       int _logPosChecks;
+       int _maskChecks;
+       int _posChecks;
+
+       int findMatch(const byte buf[], const int pos, const int end);
+
+       void emitToken(byte block[], int& idx, int litLen, int mLen);
+
+       void readLengths(byte block[], int& idx, int& litLen, int& mLen);
+
+       int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int litLen);
+   };
+
+   // Use CM (ROLZEncoder/ROLZDecoder) to encode/decode literals and matches
+   // Code loosely based on 'balz' by Ilya Muravyov
+   class ROLZCodec2 : public Function<byte> {
+   public:
+       ROLZCodec2(uint logPosChecks) THROW;
+
+       ~ROLZCodec2() { delete[] _matches; }
+
+       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+
+       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+
+       // Required encoding output buffer size
+       int getMaxEncodedLength(int srcLen) const;
+
+   private:
+       static const int MATCH_FLAG = 0;
+       static const int LITERAL_FLAG = 1;
+       static const int MIN_MATCH = 3;
+       static const int MAX_MATCH = MIN_MATCH + 255;
+
+       int32* _matches;
+       int32 _counters[65536];
+       int _logPosChecks;
+       int _maskChecks;
+       int _posChecks;
+
+       int findMatch(const byte buf[], const int pos, const int end);
+   };
+
+   class ROLZCodec : public Function<byte> {
+       friend class ROLZCodec1;
+       friend class ROLZCodec2;
+
+   public:
+       ROLZCodec(uint logPosChecks = LOG_POS_CHECKS2) THROW;
+
+       ROLZCodec(Context& ctx) THROW;
+
+       virtual ~ROLZCodec() { delete _delegate; }
+
+       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+
+       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+
+       // Required encoding output buffer size
+       int getMaxEncodedLength(int srcLen) const
+       {
+           return _delegate->getMaxEncodedLength(srcLen);
+       }
+
+   private:
+       static const int HASH_SIZE = 1 << 16;
+       static const int LOG_POS_CHECKS1 = 4;
+       static const int LOG_POS_CHECKS2 = 5;
+       static const int CHUNK_SIZE = 1 << 26; // 64 MB
+       static const int32 HASH = 200002979;
+       static const int32 HASH_MASK = ~(CHUNK_SIZE - 1);
+       static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB
+
+       Function<byte>* _delegate;
+
+       static uint16 getKey(const byte* p)
+       {
+           return uint16(LittleEndian::readInt16(p));
+       }
+
+       static int32 hash(const byte* p)
+       {
+           return ((LittleEndian::readInt32(p) & 0x00FFFFFF) * HASH) & HASH_MASK;
+       }
+
+       static int emitCopy(byte dst[], int dstIdx, int ref, int matchLen);
+   };
 
    inline int ROLZCodec::emitCopy(byte dst[], int dstIdx, int ref, int matchLen)
    {
-	   dst[dstIdx] = dst[ref];
-	   dst[dstIdx + 1] = dst[ref + 1];
-	   dst[dstIdx + 2] = dst[ref + 2];
-	   dstIdx += 3;
-	   ref += 3;
+       dst[dstIdx] = dst[ref];
+       dst[dstIdx + 1] = dst[ref + 1];
+       dst[dstIdx + 2] = dst[ref + 2];
+       dstIdx += 3;
+       ref += 3;
 
-	   while (matchLen >= 8) {
-	      dst[dstIdx] = dst[ref];
-	      dst[dstIdx + 1] = dst[ref + 1];
-	      dst[dstIdx + 2] = dst[ref + 2];
- 	      dst[dstIdx + 3] = dst[ref + 3];
- 	      dst[dstIdx + 4] = dst[ref + 4];
- 	      dst[dstIdx + 5] = dst[ref + 5];
- 	      dst[dstIdx + 6] = dst[ref + 6];
- 	      dst[dstIdx + 7] = dst[ref + 7];
-	      dstIdx += 8;
-	      ref += 8;
-	      matchLen -= 8;
-	   }
+       while (matchLen >= 8) {
+           dst[dstIdx] = dst[ref];
+           dst[dstIdx + 1] = dst[ref + 1];
+           dst[dstIdx + 2] = dst[ref + 2];
+           dst[dstIdx + 3] = dst[ref + 3];
+           dst[dstIdx + 4] = dst[ref + 4];
+           dst[dstIdx + 5] = dst[ref + 5];
+           dst[dstIdx + 6] = dst[ref + 6];
+           dst[dstIdx + 7] = dst[ref + 7];
+           dstIdx += 8;
+           ref += 8;
+           matchLen -= 8;
+       }
 
-	   while (matchLen != 0) {
-	      dst[dstIdx++] = dst[ref++];
-	      matchLen--;
-	   }
+       while (matchLen != 0) {
+           dst[dstIdx++] = dst[ref++];
+           matchLen--;
+       }
 
-	   return dstIdx;
+       return dstIdx;
    }
-
 
    inline void ROLZEncoder::encodeBit(int bit)
    {
-       // Calculate interval split
-       const uint64 split = (((_high - _low) >> 4) * uint64(_predictor->get())) >> 8;
+       const uint64 split = ((_high - _low) >> 4) * uint64((_probs[_pIdx][_ctx + _c1]) >> 4) >> 8;
 
        // Update fields with new interval bounds
-       _high -= (-bit & (_high - _low - split));
-       _low += (~-bit & (split + 1));
-
-       // Update predictor
-       _predictor->update(bit);
+       if (bit == 0) {
+           _low += (split + 1);
+           _probs[_pIdx][_ctx + _c1] -= (_probs[_pIdx][_ctx + _c1] >> 5);
+           _c1 += _c1;
+       }
+       else {
+           _high = _low + split;
+           _probs[_pIdx][_ctx + _c1] -= (((_probs[_pIdx][_ctx + _c1] - 0xFFFF) >> 5) + 1);
+           _c1 += (_c1 + 1);
+       }
 
        // Emit unchanged first 32 bits
        while (((_low ^ _high) >> 24) == 0) {
@@ -288,23 +276,23 @@ namespace kanzi {
        }
    }
 
-
    inline int ROLZDecoder::decodeBit()
    {
-       // Calculate interval split
-       const uint64 mid = _low + ((((_high - _low) >> 4) * uint64(_predictor->get())) >> 8);
+       const uint64 mid = _low + (((_high - _low) >> 4) * uint64((_probs[_pIdx][_ctx + _c1]) >> 4) >> 8);
        int bit;
 
-       // Update predictor
+       // Update bounds and predictor
        if (mid >= _current) {
            bit = 1;
            _high = mid;
-           _predictor->update(1);
+           _probs[_pIdx][_ctx + _c1] -= (((_probs[_pIdx][_ctx + _c1] - 0xFFFF) >> 5) + 1);
+           _c1 += (_c1 + 1);
        }
        else {
            bit = 0;
            _low = mid + 1;
-           _predictor->update(0);
+           _probs[_pIdx][_ctx + _c1] -= (_probs[_pIdx][_ctx + _c1] >> 5);
+           _c1 += _c1;
        }
 
        // Read 32 bits
