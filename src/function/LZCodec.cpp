@@ -15,11 +15,58 @@ limitations under the License.
 
 #include <sstream>
 #include "../util.hpp" // Visual Studio min/max
+#include "FunctionFactory.hpp"
 #include "LZCodec.hpp"
 
 using namespace kanzi;
 
-int LZCodec::emitLastLiterals(const byte src[], byte dst[], int litLen)
+LZCodec::LZCodec() THROW
+{
+    _delegate = new LZXCodec();
+}
+
+LZCodec::LZCodec(Context& ctx) THROW
+{
+   int lzpType = ctx.getInt("lz", FunctionFactory<byte>::LZ_TYPE);
+    _delegate = (lzpType == FunctionFactory<byte>::LZP_TYPE) ? (Function<byte>*)new LZPCodec() : 
+       (Function<byte>*)new LZXCodec();
+}
+
+bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+{
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw invalid_argument("ROLZ codec: Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw invalid_argument("ROLZ codec: Invalid output block");
+
+    if (input._array == output._array)
+        return false;
+
+    return _delegate->forward(input, output, count);
+}
+
+bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+{
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw invalid_argument("ROLZ codec: Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw invalid_argument("ROLZ codec: Invalid output block");
+
+    if (input._array == output._array)
+        return false;
+
+    return _delegate->inverse(input, output, count);
+}
+
+int LZXCodec::emitLastLiterals(const byte src[], byte dst[], int litLen)
 {
     int dstIdx = 1;
 
@@ -35,7 +82,7 @@ int LZCodec::emitLastLiterals(const byte src[], byte dst[], int litLen)
     return dstIdx + litLen;
 }
 
-bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -80,11 +127,11 @@ bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int cou
         int bestLen = 0;
 
         // Find a match
-        if ((ref > minRef) && (sameInts(src, ref, srcIdx) == true)) {
+        if ((ref > minRef) && (LZCodec::sameInts(src, ref, srcIdx) == true)) {
             const int maxMatch = srcEnd - srcIdx;
             bestLen = 4;
 
-            while ((bestLen + 4 < maxMatch) && (sameInts(src, ref + bestLen, srcIdx + bestLen) == true))
+            while ((bestLen + 4 < maxMatch) && (LZCodec::sameInts(src, ref + bestLen, srcIdx + bestLen) == true))
                 bestLen += 4;
 
             while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))
@@ -157,7 +204,7 @@ bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     return true;
 }
 
-bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -277,4 +324,200 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     output._index = dstIdx;
     input._index = srcIdx;
     return srcIdx == srcEnd + 8;
+}
+
+
+bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+{
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw invalid_argument("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw invalid_argument("Invalid output block");
+
+    if (input._array == output._array)
+        return false;
+
+    if (output._length < getMaxEncodedLength(count))
+        return false;
+
+    // If too small, skip
+    if (count < MIN_LENGTH)
+        return false;
+
+    byte* dst = &output._array[output._index];
+    byte* src = &input._array[input._index];
+    const int srcEnd = count - 8;
+    const int dstEnd = output._length - 4;
+
+    if (_bufferSize == 0) {
+        _bufferSize = 1 << HASH_LOG;
+        delete[] _hashes;
+        _hashes = new int32[_bufferSize];
+    }
+
+    memset(_hashes, 0, sizeof(int32) * _bufferSize);
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[3] = src[3];
+    int32 ctx = LittleEndian::readInt32(&src[0]);
+    int srcIdx = 4;
+    int dstIdx = 4;
+    int minRef = 4;
+
+    while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
+        const int32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+        const int32 ref = _hashes[h];
+        _hashes[h] = srcIdx;
+        int bestLen = 0;
+
+        // Find a match
+        if ((ref > minRef) && (LZCodec::sameInts(src, ref, srcIdx) == true)) {
+            const int maxMatch = srcEnd - srcIdx;
+            bestLen = 4;
+
+            while ((bestLen < maxMatch) && (LZCodec::sameInts(src, ref + bestLen, srcIdx + bestLen) == true))
+                bestLen += 4;
+
+            while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))
+                bestLen++;
+        }
+
+        // No good match ?
+        if (bestLen < MIN_MATCH) {
+            const int val = int32(src[srcIdx]);
+            ctx = (ctx << 8) | val;
+            dst[dstIdx++] = src[srcIdx++];
+
+            if (ref != 0) {
+                if (val == MATCH_FLAG)
+                    dst[dstIdx++] = byte(0xFF);
+
+                if (minRef < bestLen)
+                    minRef = srcIdx + bestLen;
+            }
+
+            continue;
+        }
+
+        srcIdx += bestLen;
+        ctx = LittleEndian::readInt32(&src[srcIdx - 4]);
+        dst[dstIdx++] = MATCH_FLAG;
+        bestLen -= MIN_MATCH;
+
+        // Emit match length
+        while (bestLen >= 254) {
+            bestLen -= 254;
+            dst[dstIdx++] = byte(0xFE);
+
+            if (dstIdx >= dstEnd)
+                break;
+        }
+
+        dst[dstIdx++] = byte(bestLen);
+    }
+
+    while ((srcIdx < srcEnd + 8) && (dstIdx < dstEnd)) {
+        const int32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+        const int ref = _hashes[h];
+        _hashes[h] = srcIdx;
+        const int val = int32(src[srcIdx]);
+        ctx = (ctx << 8) | val;
+        dst[dstIdx++] = src[srcIdx++];
+
+        if ((ref != 0) && (val == MATCH_FLAG) && (dstIdx < dstEnd))
+            dst[dstIdx++] = byte(0xFF);
+    }
+
+    input._index = srcIdx;
+    output._index = dstIdx;
+    return (srcIdx == count) && (dstIdx < (count - (count >> 6)));
+}
+
+
+bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+{
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw invalid_argument("Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw invalid_argument("Invalid output block");
+
+    if (input._array == output._array)
+        return false;
+   
+    if (count < 4)
+        return false;
+
+    const int srcEnd = count;
+    byte* dst = &output._array[output._index];
+    byte* src = &input._array[input._index];
+
+    if (_bufferSize == 0) {
+        _bufferSize = 1 << HASH_LOG;
+        delete[] _hashes;
+        _hashes = new int32[_bufferSize];
+    }
+
+    memset(_hashes, 0, sizeof(int32) * _bufferSize);
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[3] = src[3];
+    int32 ctx = LittleEndian::readInt32(&dst[0]);
+    int srcIdx = 4;
+    int dstIdx = 4;
+
+    while (srcIdx < srcEnd) {
+        const int32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+        const int32 ref = _hashes[h];
+        _hashes[h] = dstIdx;
+
+        if ((ref == 0) || (src[srcIdx] != MATCH_FLAG)) {
+           dst[dstIdx] = src[srcIdx];
+           ctx = (ctx << 8) | int32(dst[dstIdx]);
+           srcIdx++;
+           dstIdx++;
+           continue;
+        }
+
+        srcIdx++;
+
+        if (src[srcIdx] == byte(0xFF)) {
+           dst[dstIdx] = byte(MATCH_FLAG);
+           ctx = (ctx << 8) | int32(MATCH_FLAG);
+           srcIdx++;
+           dstIdx++;
+           continue;
+        }
+
+        int mLen = MIN_MATCH;
+
+        while ((srcIdx < srcEnd) && (src[srcIdx] == byte(0xFE))) {
+           srcIdx++;
+           mLen += 254;
+        }
+        
+        if (srcIdx >= srcEnd)
+           break;
+        
+        mLen += int(src[srcIdx++]);
+
+        for (int i = 0; i < mLen; i++)
+           dst[dstIdx + i] = dst[ref + i];
+
+        dstIdx += mLen;
+        ctx = LittleEndian::readInt32(&dst[dstIdx - 4]);
+    }
+
+    input._index = srcIdx;
+    output._index = dstIdx;
+    return srcIdx == srcEnd;
 }

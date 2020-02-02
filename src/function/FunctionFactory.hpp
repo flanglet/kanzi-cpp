@@ -43,6 +43,7 @@ namespace kanzi {
 		static const uint64 ROLZ_TYPE = 11; // ROLZ codec
 		static const uint64 ROLZX_TYPE = 12; // ROLZ Extra codec
 		static const uint64 SRT_TYPE = 13; // Sorted Rank
+		static const uint64 LZP_TYPE = 14; // Lempel Ziv Predict
 
 		static uint64 getType(const char* name) THROW;
 
@@ -146,6 +147,9 @@ namespace kanzi {
 		if (name == "LZ")
 			return LZ_TYPE;
 
+		if (name == "LZP")
+			return LZP_TYPE;
+
 		if (name == "X86")
 			return X86_TYPE;
 
@@ -223,6 +227,11 @@ namespace kanzi {
 			return new RLT(ctx);
 
 		case LZ_TYPE:
+			ctx.putInt("lz", LZ_TYPE);
+			return new LZCodec(ctx);
+
+		case LZP_TYPE:
+			ctx.putInt("lz", LZP_TYPE);
 			return new LZCodec(ctx);
 
 		case X86_TYPE:
@@ -300,6 +309,9 @@ namespace kanzi {
 
 		case LZ_TYPE:
 			return "LZ";
+
+		case LZP_TYPE:
+			return "LZP";
 
 		case X86_TYPE:
 			return "X86";

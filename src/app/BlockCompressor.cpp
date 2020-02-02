@@ -551,7 +551,7 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         return;
 
     case 6:
-        tranformAndCodec[0] = "BWT";
+        tranformAndCodec[0] = "LZP+TEXT+BWT";
         tranformAndCodec[1] = "CM";
         return;
 
