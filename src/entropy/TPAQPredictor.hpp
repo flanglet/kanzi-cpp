@@ -301,7 +301,6 @@ namespace kanzi
            // Too few mixers hurts compression for big blocks.
            const int absz = ctx->getInt("size");
 
-
            if (absz >= 32 * 1024 * 1024)
                mixersSize = 1 << 17;
            else if (absz >= 16 * 1024 * 1024)
@@ -312,7 +311,6 @@ namespace kanzi
                mixersSize = 1 << 12;
            else
                mixersSize = (absz >= 1 * 1024 * 1024) ? 1 << 10 : 1 << 9;
-
        }
 
        mixersSize <<= extraMem;
@@ -411,7 +409,6 @@ namespace kanzi
 
                _ctx4 = createContext(HASH, _c4 ^ (_c4 & 0x000FFFFF));
                _ctx5 = _ctx0 | (_c8 << 16);
-
            }
 
            findMatch();
@@ -423,7 +420,7 @@ namespace kanzi
        // Get initial predictions
        // It has been observed that accessing memory via [ctx ^ c] is significantly faster
        // on SandyBridge/Windows and slower on SkyLake/Linux except when [ctx & 255 == 0]
-       // (with c < 256). Hence, use XOR for _ctx5 which is the only context that fullfills
+       // (with c < 256). Hence, use XOR for _ctx5 which is the only context that fulfills
        // the condition.
        prefetchRead(&_bigStatesMap[(_ctx2 + _c0) & _statesMask]);
        prefetchRead(&_bigStatesMap[(_ctx3 + _c0) & _statesMask]);

@@ -23,8 +23,7 @@ limitations under the License.
 
 using namespace std;
 
-namespace kanzi 
-{
+namespace kanzi {
 
    class DefaultInputBitStream : public InputBitStream 
    {
@@ -64,16 +63,15 @@ namespace kanzi
 
        bool isClosed() const { return _closed; }
 
-       DefaultInputBitStream(InputStream& is, uint bufferSize=65536) THROW;
+       DefaultInputBitStream(InputStream& is, uint bufferSize = 65536) THROW;
 
        ~DefaultInputBitStream();
    };
 
-
    // Returns 1 or 0
    inline int DefaultInputBitStream::readBit() THROW
    {
-       if (_availBits  == 0)
+       if (_availBits == 0)
            pullCurrent(); // Triggers an exception if stream is closed
 
        _availBits--;
@@ -102,28 +100,30 @@ namespace kanzi
    // Pull 64 bits of current value from buffer.
    inline void DefaultInputBitStream::pullCurrent()
    {
-       if (_position > _maxPosition)
-           readFromInputStream(_bufferSize);
-
        if (_position + 7 > _maxPosition) {
-           // End of stream: overshoot max position => adjust bit index
-           uint shift = (_maxPosition - _position) << 3;
-           _availBits = shift + 8;
-           uint64 val = 0;
+           if (_position > _maxPosition)
+               readFromInputStream(_bufferSize);
 
-           while (_position <= _maxPosition) {
-               val |= ((uint64(_buffer[_position++]) & 0xFF) << shift);
-               shift -= 8;
+           if (_position + 7 > _maxPosition) {
+               // End of stream: overshoot max position => adjust bit index
+               uint shift = (_maxPosition - _position) << 3;
+               _availBits = shift + 8;
+               uint64 val = 0;
+
+               while (_position <= _maxPosition) {
+                   val |= ((uint64(_buffer[_position++]) & 0xFF) << shift);
+                   shift -= 8;
+               }
+
+               _current = val;
+               return;
            }
+       }
 
-           _current = val;
-       }
-       else {
-           // Regular processing, buffer length is multiple of 8
-           _current = BigEndian::readLong64(&_buffer[_position]);
-           _availBits = 64;
-           _position += 8;
-       }
+       // Regular processing, buffer length is multiple of 8
+       _current = BigEndian::readLong64(&_buffer[_position]);
+       _availBits = 64;
+       _position += 8;
    }
 }
 #endif

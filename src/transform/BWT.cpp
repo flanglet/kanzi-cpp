@@ -1,4 +1,3 @@
-
 /*
 Copyright 2011-2017 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -268,12 +267,12 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         if (f != sum) {
             uint* ptr = &buckets[c << 8];
-            const int hi = (sum < pIdx) ? sum : pIdx;
+            const int hi = min(sum, pIdx);
 
             for (int i = f; i < hi; i++)
                 ptr[int(src[i])]++;
 
-            const int lo = (f - 1 > pIdx) ? f - 1 : pIdx;
+            const int lo = max(f - 1, pIdx);
 
             for (int i = lo; i < sum - 1; i++)
                 ptr[int(src[i])]++;
@@ -299,10 +298,11 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
             sum += ptr[d << 8];
             ptr[d << 8] = s;
 
-            if (s != sum) {
-                for (; v <= ((sum - 1) >> shift); v++)
-                    fastBits[v] = uint16((c << 8) | d);
-            }
+            if (s == sum)
+                continue;
+
+            for (; v <= ((sum - 1) >> shift); v++)
+                fastBits[v] = uint16((c << 8) | d);
         }
     }
 
@@ -332,7 +332,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     for (int c = 0; c < 256; c++) {
         const int c256 = c << 8;
-        
+
         for (int d = 0; d < c; d++) {
             const int tmp = buckets[(d << 8) | c];
             buckets[(d << 8) | c] = buckets[c256 | d];
@@ -421,19 +421,19 @@ InverseBigChunkTask<T>::InverseBigChunkTask(uint* buf, uint* buckets, uint16* fa
 template <class T>
 T InverseBigChunkTask<T>::run() THROW
 {
-	int shift = 0;
+    int shift = 0;
 
-	while ((_total >> shift) > BWT::MASK_FASTBITS)
-		shift++;
+    while ((_total >> shift) > BWT::MASK_FASTBITS)
+        shift++;
 
-	for (int c = _firstChunk; c < _lastChunk; c++) {
-		int end = (_start + _ckSize) > _total - 1 ? _total - 1 : _start + _ckSize;
-		uint p = _primaryIndexes[c];
+    for (int c = _firstChunk; c < _lastChunk; c++) {
+        const int end = min(_start + _ckSize, _total - 1);
+        uint p = _primaryIndexes[c];
 
-        for (int i = _start+1; i <= end; i += 2) {
+        for (int i = _start + 1; i <= end; i += 2) {
             uint16 s = _fastBits[p >> shift];
 
-            while (_buckets[s] <= p)
+            while (_buckets[s] <= (const uint) p)
                 s++;
 
             _dst[i - 1] = byte(s >> 8);
@@ -442,9 +442,9 @@ T InverseBigChunkTask<T>::run() THROW
         }
 
         _start = end;
-	}
+    }
 
-	return T(0);
+    return T(0);
 }
 
 int BWT::getBWTChunks(int size)

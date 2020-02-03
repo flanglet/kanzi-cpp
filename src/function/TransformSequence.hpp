@@ -136,7 +136,7 @@ namespace kanzi
 
        if ((swaps & 1) == 0)
            memcpy(&output._array[output._index], &in->_array[in->_index], count);
-      
+     
        input._index += blockSize;
        output._index += count;
        return _skipFlags != SKIP_MASK;
