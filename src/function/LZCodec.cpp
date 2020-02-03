@@ -406,7 +406,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         srcIdx += bestLen;
         ctx = LittleEndian::readInt32(&src[srcIdx - 4]);
-        dst[dstIdx++] = MATCH_FLAG;
+        dst[dstIdx++] = byte(MATCH_FLAG);
         bestLen -= MIN_MATCH;
 
         // Emit match length
@@ -480,7 +480,7 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         const int32 ref = _hashes[h];
         _hashes[h] = dstIdx;
 
-        if ((ref == 0) || (src[srcIdx] != MATCH_FLAG)) {
+        if ((ref == 0) || (src[srcIdx] != byte(MATCH_FLAG))) {
            dst[dstIdx] = src[srcIdx];
            ctx = (ctx << 8) | int32(dst[dstIdx]);
            srcIdx++;
