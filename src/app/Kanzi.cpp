@@ -192,6 +192,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if ((arg == "--help") || (arg == "-h")) {
             log.println("", true);
+            log.println("Credits: Matt Mahoney, Yann Collet, Jan Ondrus, Yuta Mori, Ilya Muravyov,", true);
+            log.println("         Neal Burns, Fabian Giesen, Jarek Duda, Ilya Grebnov", true);
+            log.println("", true);
             log.println("   -h, --help", true);
             log.println("        display this message\n", true);
             log.println("   -v, --verbose=<level>", true);
