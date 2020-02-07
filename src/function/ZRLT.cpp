@@ -41,53 +41,51 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
     const int dstEnd = output._length;
     int runLength = 0;
 
-    if (dstIdx < dstEnd) {
-        while (srcIdx < srcEnd) {
-            if (src[srcIdx] == byte(0)) {
-                runLength = 1;
+    while (srcIdx < srcEnd) {
+        if (src[srcIdx] == byte(0)) {
+            runLength = 1;
 
-                while ((srcIdx + runLength < srcEnd) && src[srcIdx + runLength] == src[srcIdx])
-                    runLength++;
-
-                srcIdx += runLength;
-
-                // Encode length
+            while ((srcIdx + runLength < srcEnd) && src[srcIdx + runLength] == src[srcIdx])
                 runLength++;
-                int log = Global::_log2(runLength);
 
-                if (dstIdx >= dstEnd - log)
-                    break;
+            srcIdx += runLength;
 
-                // Write every bit as a byte except the most significant one
-                while (log > 0) {
-                    log--;
-                    dst[dstIdx++] = byte((runLength >> log) & 1);
-                }
+            // Encode length
+            runLength++;
+            int log = Global::_log2(runLength);
 
-                runLength = 0;
-                continue;
+            if (dstIdx >= dstEnd - log)
+                break;
+
+            // Write every bit as a byte except the most significant one
+            while (log > 0) {
+                log--;
+                dst[dstIdx++] = byte((runLength >> log) & 1);
             }
 
-            const int val = int(src[srcIdx]);
-
-            if (val >= 0xFE) {
-                if (dstIdx >= dstEnd - 1)
-                    break;
-
-                dst[dstIdx] = byte(0xFF);
-                dstIdx++;
-                dst[dstIdx] = byte(val - 0xFE);
-            }
-            else {
-                if (dstIdx >= dstEnd)
-                    break;
-
-                dst[dstIdx] = byte(val + 1);
-            }
-
-            srcIdx++;
-            dstIdx++;
+            runLength = 0;
+            continue;
         }
+
+        const int val = int(src[srcIdx]);
+
+        if (val >= 0xFE) {
+            if (dstIdx >= dstEnd - 1)
+                break;
+
+            dst[dstIdx] = byte(0xFF);
+            dstIdx++;
+            dst[dstIdx] = byte(val - 0xFE);
+        }
+        else {
+            if (dstIdx >= dstEnd)
+                break;
+
+            dst[dstIdx] = byte(val + 1);
+        }
+
+        srcIdx++;
+        dstIdx++;
     }
 
     input._index = srcIdx;
@@ -114,55 +112,53 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
     const int dstEnd = output._length;
     int runLength = 1;
 
-    if (srcIdx < srcEnd) {
-        while (dstIdx < dstEnd) {
-            if (runLength > 1) {
-                runLength--;
-                dst[dstIdx++] = byte(0);
-                continue;
-            }
+    while (dstIdx < dstEnd) {
+        if (runLength > 1) {
+            runLength--;
+            dst[dstIdx++] = byte(0);
+            continue;
+        }
 
-            int val = int(src[srcIdx]);
+        int val = int(src[srcIdx]);
 
-            if (val <= 1) {
-                // Generate the run length bit by bit (but force MSB)
-                runLength = 1;
+        if (val <= 1) {
+            // Generate the run length bit by bit (but force MSB)
+            runLength = 1;
 
-                do {
-                    runLength = (runLength << 1) | val;
-                    srcIdx++;
-
-                    if (srcIdx >= srcEnd)
-                        goto End;
-
-                    val = int(src[srcIdx]);
-                } while (val <= 1);
-
-                continue;
-            }
-
-            // Regular data processing
-            if (val == 0xFF) {
+            do {
+                runLength = (runLength << 1) | val;
                 srcIdx++;
 
                 if (srcIdx >= srcEnd)
-                    break;
+                    goto End;
 
-                dst[dstIdx] = byte(0xFE + int(src[srcIdx]));
-            }
-            else {
-                dst[dstIdx] = byte(val - 1);
-            }
+                val = int(src[srcIdx]);
+            } while (val <= 1);
 
+            continue;
+        }
+
+        // Regular data processing
+        if (val == 0xFF) {
             srcIdx++;
-            dstIdx++;
 
             if (srcIdx >= srcEnd)
                 break;
+
+            dst[dstIdx] = byte(0xFE + int(src[srcIdx]));
         }
+        else {
+            dst[dstIdx] = byte(val - 1);
+        }
+
+        srcIdx++;
+        dstIdx++;
+
+        if (srcIdx >= srcEnd)
+            break;
     }
 
-End:    
+End:
     // If runLength is not 1, add trailing 0s
     const int end = dstIdx + runLength - 1;
     input._index = srcIdx;

@@ -27,7 +27,7 @@ LZCodec::LZCodec() THROW
 
 LZCodec::LZCodec(Context& ctx) THROW
 {
-   int lzpType = ctx.getInt("lz", FunctionFactory<byte>::LZ_TYPE);
+    int lzpType = ctx.getInt("lz", FunctionFactory<byte>::LZ_TYPE);
     _delegate = (lzpType == FunctionFactory<byte>::LZP_TYPE) ? (Function<byte>*)new LZPCodec() : 
        (Function<byte>*)new LZXCodec();
 }
