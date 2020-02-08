@@ -386,13 +386,13 @@ int CompressedInputStream::processBlock() THROW
             _buffers[2 * jobId]->_index = 0;
             _buffers[2 * jobId + 1]->_index = 0;
 
-            if (_buffers[2 * jobId]->_length < blkSize) {
+            if (_buffers[2 * jobId]->_length < blkSize + 1024) {
                 // Lazy instantiation of input buffers this.buffers[2*jobId]
                 // Output buffers this.buffers[2*jobId+1] are lazily instantiated
                 // by the decoding tasks.
                 delete[] _buffers[2 * jobId]->_array;
-                _buffers[2 * jobId]->_array = new byte[blkSize];
-                _buffers[2 * jobId]->_length = blkSize;
+                _buffers[2 * jobId]->_array = new byte[blkSize + 1024];
+                _buffers[2 * jobId]->_length = blkSize + 1024;
             }
 
             Context copyCtx(_ctx);
