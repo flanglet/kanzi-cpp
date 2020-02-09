@@ -288,6 +288,11 @@ byte TextCodec::computeStats(const byte block[], int count, int32 freqs0[])
                 res &= ~TextCodec::MASK_CRLF;
                 break;
             }
+
+            if ((i != cr) && (freqs[i][lf]) != 0) {
+                res &= ~TextCodec::MASK_CRLF;
+                break;
+            }
         }
     }
 
