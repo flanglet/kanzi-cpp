@@ -261,7 +261,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 End:
     if (success == true) {
         if (dstIdx + 4 > output._length) {
-            input._index = srcIdx;
+            input._index = srcEnd;
         } else {
             // Emit last literals
             dst[dstIdx++] = src[srcEnd];
