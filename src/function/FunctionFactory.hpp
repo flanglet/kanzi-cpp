@@ -250,27 +250,21 @@ namespace kanzi {
 	template <class T>
 	string FunctionFactory<T>::getName(uint64 functionType) THROW
 	{
-		stringstream ss;
+		string res;
 
 		for (int i = 0; i < 8; i++) {
-			uint64 t = (functionType >> (MAX_SHIFT - ONE_SHIFT * i)) & MASK;
+			const uint64 t = (functionType >> (MAX_SHIFT - ONE_SHIFT * i)) & MASK;
 
 			if (t == NONE_TYPE)
 				continue;
 
-			string name = getNameToken(t);
+			if (res.length() > 0)
+				res += "+";
 
-			if (ss.str().length() != 0)
-				ss << "+";
-
-			ss << name;
+			res += getNameToken(t);
 		}
 
-		if (ss.str().length() == 0) {
-			ss << getNameToken(NONE_TYPE);
-		}
-
-		return ss.str();
+		return (res.length() == 0) ? getNameToken(NONE_TYPE) : res;
 	}
 
 	template <class T>

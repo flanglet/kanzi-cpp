@@ -116,7 +116,6 @@ namespace kanzi
    private:
       static const uint HASH_SEED         = 0x7FEB352D;
       static const uint HASH_LOG          = 16;
-      static const uint HASH_MASK         = (1 << HASH_LOG) - 1;
       static const uint HASH_SHIFT        = 32 - HASH_LOG;
       static const int MIN_MATCH          = 64;
       static const int MIN_LENGTH         = 128;
