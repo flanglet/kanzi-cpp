@@ -91,7 +91,7 @@ namespace kanzi
        else {
            // Not enough spots available in 'current'
            const uint remaining = count - _availBits;
-           _current |= ((value >> remaining) & ((uint64(1) << _availBits) - 1)); // 0 < count <= 64
+           _current |= ((value & (uint64(-1) >> (64 - count))) >> remaining); // 0 < count <= 64
            pushCurrent();
 
            if (remaining != 0) {
