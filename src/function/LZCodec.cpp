@@ -370,7 +370,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int minRef = 4;
 
     while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
-        const int32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+        const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
         const int32 ref = _hashes[h];
         _hashes[h] = srcIdx;
         int bestLen = 0;
@@ -422,7 +422,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     }
 
     while ((srcIdx < srcEnd + 8) && (dstIdx < dstEnd)) {
-        const int32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+        const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
         const int ref = _hashes[h];
         _hashes[h] = srcIdx;
         const int val = int32(src[srcIdx]);
