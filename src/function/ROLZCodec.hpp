@@ -32,7 +32,6 @@ namespace kanzi {
    class ROLZEncoder {
    private:
        static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
-       static const uint64 MASK_0_24 = 0x0000000000FFFFFF;
        static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
        static const int MATCH_FLAG = 0;
        static const int LITERAL_FLAG = 1;
@@ -253,7 +252,7 @@ namespace kanzi {
 
    inline void ROLZEncoder::encodeBit(int bit)
    {
-       const uint64 split = ((_high - _low) >> 4) * uint64((_probs[_pIdx][_ctx + _c1]) >> 4) >> 8;
+       const uint64 split = ((_high - _low) >> 4) * uint64(_probs[_pIdx][_ctx + _c1] >> 4) >> 8;
 
        // Update fields with new interval bounds
        if (bit == 0) {
@@ -278,7 +277,7 @@ namespace kanzi {
 
    inline int ROLZDecoder::decodeBit()
    {
-       const uint64 mid = _low + (((_high - _low) >> 4) * uint64((_probs[_pIdx][_ctx + _c1]) >> 4) >> 8);
+       const uint64 mid = _low + (((_high - _low) >> 4) * uint64(_probs[_pIdx][_ctx + _c1] >> 4) >> 8);
        int bit;
 
        // Update bounds and predictor

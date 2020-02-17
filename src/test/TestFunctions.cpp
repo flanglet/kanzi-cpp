@@ -47,6 +47,12 @@ static Function<byte>* getByteFunction(string name)
     if (name.compare("ROLZ") == 0)
         return new ROLZCodec();
 
+    if (name.compare("ROLZX") == 0) {
+        Context ctx;
+        ctx.putString("transform", "ROLZX");
+        return new ROLZCodec(ctx);
+    }
+
     cout << "No such byte function: " << name << endl;
     return nullptr;
 }
@@ -67,7 +73,6 @@ int testFunctionsCorrectness(const string& name)
         byte values[80000];
 
         if (ii == 0) {
-           size = 15;
             byte arr[] = {
                 (byte)0, (byte)1, (byte)2, (byte)2, (byte)2, (byte)2, (byte)7, (byte)9,
                 (byte)9, (byte)16, (byte)16, (byte)16, (byte)1, (byte)3, (byte)3, (byte)3,
@@ -203,7 +208,7 @@ int testFunctionsCorrectness(const string& name)
         }
 
         if (f->forward(iba1, iba2, size) == false) {
-            if (iba1._index != size) {
+            if ((iba1._index != size) || (iba2._index >= iba1._index)) {
                 cout << endl
                      << "No compression (ratio > 1.0), skip reverse" << endl;
                 continue;
@@ -330,7 +335,12 @@ int testFunctionsSpeed(const string& name)
             before = clock();
 
             if (f->forward(iba1, iba2, size) == false) {
-                // ZRLT may fail if the input data has too few 0s
+                if ((iba1._index != size) || (iba2._index >= iba1._index)) {
+                   cout << endl
+                        << "No compression (ratio > 1.0), skip reverse" << endl;
+                   continue;
+                }
+
                 cout << "Encoding error" << endl;
                 delete f;
                 continue;
