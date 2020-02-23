@@ -25,10 +25,11 @@ LIB_SOURCES=Global.cpp \
 	entropy/HuffmanEncoder.cpp \
 	entropy/RangeDecoder.cpp \
 	entropy/RangeEncoder.cpp \
-	entropy/RiceGolombEncoder.cpp \
 	entropy/RiceGolombDecoder.cpp \
+	entropy/RiceGolombEncoder.cpp \
+	entropy/FPAQDecoder.cpp \
+	entropy/FPAQEncoder.cpp \
 	entropy/CMPredictor.cpp \
-	entropy/FPAQPredictor.cpp \
 	entropy/TPAQPredictor.cpp \
 	function/BWTBlockCodec.cpp \
 	function/LZCodec.cpp \

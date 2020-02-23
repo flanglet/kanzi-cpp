@@ -26,6 +26,7 @@ limitations under the License.
 #include "../entropy/BinaryEntropyEncoder.hpp"
 #include "../entropy/ExpGolombEncoder.hpp"
 #include "../entropy/RiceGolombEncoder.hpp"
+#include "../entropy/FPAQEncoder.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../bitstream/DebugOutputBitStream.hpp"
@@ -36,7 +37,7 @@ limitations under the License.
 #include "../entropy/BinaryEntropyDecoder.hpp"
 #include "../entropy/ExpGolombDecoder.hpp"
 #include "../entropy/RiceGolombDecoder.hpp"
-#include "../entropy/FPAQPredictor.hpp"
+#include "../entropy/FPAQDecoder.hpp"
 #include "../entropy/CMPredictor.hpp"
 #include "../entropy/TPAQPredictor.hpp"
 
@@ -49,9 +50,6 @@ static Predictor* getPredictor(string type)
 
     if (type.compare("TPAQX") == 0)
         return new TPAQPredictor<true>();
-
-    if (type.compare("FPAQ") == 0)
-        return new FPAQPredictor();
 
     if (type.compare("CM") == 0)
         return new CMPredictor();
@@ -79,11 +77,11 @@ static EntropyEncoder* getEncoder(string name, OutputBitStream& obs, Predictor* 
     if (name.compare("RICEGOLOMB") == 0)
         return new RiceGolombEncoder(obs, 4);
 
+    if (name.compare("FPAQ") == 0)
+        return new FPAQEncoder(obs);
+
     if (predictor != nullptr) {
        if (name.compare("TPAQ") == 0)
-           return new BinaryEntropyEncoder(obs, predictor, false);
-
-       if (name.compare("FPAQ") == 0)
            return new BinaryEntropyEncoder(obs, predictor, false);
 
        if (name.compare("CM") == 0)
@@ -111,10 +109,10 @@ static EntropyDecoder* getDecoder(string name, InputBitStream& ibs, Predictor* p
     if (name.compare("TPAQ") == 0)
         return new BinaryEntropyDecoder(ibs, predictor, false);
 
-    if (name.compare("TPAQX") == 0)
-        return new BinaryEntropyDecoder(ibs, predictor, false);
-
     if (name.compare("FPAQ") == 0)
+        return new FPAQDecoder(ibs);
+
+    if (name.compare("TPAQX") == 0)
         return new BinaryEntropyDecoder(ibs, predictor, false);
 
     if (name.compare("CM") == 0)

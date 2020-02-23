@@ -33,7 +33,8 @@ limitations under the License.
 #include "RiceGolombDecoder.hpp"
 #include "RiceGolombEncoder.hpp"
 #include "CMPredictor.hpp"
-#include "FPAQPredictor.hpp"
+#include "FPAQDecoder.hpp"
+#include "FPAQEncoder.hpp"
 #include "TPAQPredictor.hpp"
 
 using namespace std;
@@ -80,7 +81,7 @@ namespace kanzi {
            return new RangeDecoder(ibs);
 
        case FPAQ_TYPE:
-           return new BinaryEntropyDecoder(ibs, new FPAQPredictor());
+           return new FPAQDecoder(ibs);
 
        case CM_TYPE:
            return new BinaryEntropyDecoder(ibs, new CMPredictor());
@@ -118,7 +119,7 @@ namespace kanzi {
            return new RangeEncoder(obs);
 
        case FPAQ_TYPE:
-           return new BinaryEntropyEncoder(obs, new FPAQPredictor());
+           return new FPAQEncoder(obs);
 
        case CM_TYPE:
            return new BinaryEntropyEncoder(obs, new CMPredictor());
