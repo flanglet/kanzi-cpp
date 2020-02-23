@@ -511,8 +511,10 @@ void ROLZEncoder::encodeBits(int val, int n)
 {
     _c1 = 1;
 
-    for (int shift = n - 1; shift >= 0; shift--)
-        encodeBit((val >> shift) & 1);
+    while (n != 0) {
+        n--;
+        encodeBit(val & (1 << n));
+    }
 }
 
 void ROLZEncoder::dispose()
@@ -562,12 +564,14 @@ void ROLZDecoder::reset()
 int ROLZDecoder::decodeBits(int n)
 {
     _c1 = 1;
-    int res = 0;
+    const int mask = (1 << n) - 1;
 
-    for (int shift = n - 1; shift >= 0; shift--)
-        res |= (decodeBit() << shift);
+    while (n > 0) {
+        decodeBit();
+        n--;
+    }
 
-    return res;
+    return _c1 & mask;
 }
 
 ROLZCodec2::ROLZCodec2(uint logPosChecks) THROW
