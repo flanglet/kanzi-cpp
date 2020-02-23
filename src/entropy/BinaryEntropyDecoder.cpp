@@ -62,8 +62,8 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
         const int chunkSize = min(length, end - startChunk);
 
         if (_sba._length < chunkSize + (chunkSize >> 3)) {
-           const int length = chunkSize + (chunkSize >> 3);
-           delete[] _sba._array;
+            const int length = chunkSize + (chunkSize >> 3);
+            delete[] _sba._array;
             _sba._array = new byte[length];
             _sba._length = length;
         }
@@ -71,7 +71,7 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
         const int szBytes = int(EntropyUtils::readVarInt(_bitstream));
         _current = _bitstream.readBits(56);
         _initialized = true;
-        
+
         if (szBytes != 0)
             _bitstream.readBits(&_sba._array[0], 8 * szBytes);
 
@@ -107,4 +107,3 @@ void BinaryEntropyDecoder::initialize()
     _current = _bitstream.readBits(56);
     _initialized = true;
 }
-

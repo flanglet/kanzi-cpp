@@ -19,8 +19,8 @@ limitations under the License.
 using namespace kanzi;
 
 FPAQEncoder::FPAQEncoder(OutputBitStream& bitstream) THROW
-: _bitstream(bitstream),
-  _sba(new byte[0], 0)
+    : _bitstream(bitstream),
+      _sba(new byte[0], 0)
 {
     _low = 0;
     _high = TOP;
@@ -38,46 +38,44 @@ FPAQEncoder::~FPAQEncoder()
 
 int FPAQEncoder::encode(const byte block[], uint blkptr, uint count) THROW
 {
-   if (count >= 1<<30)
-      throw invalid_argument("Invalid block size parameter (max is 1<<30)");
+    if (count >= 1 << 30)
+        throw invalid_argument("Invalid block size parameter (max is 1<<30)");
 
-   int startChunk = blkptr;
-   const int end = blkptr + count;
-   int length = (count < 64) ? 64 : count;
+    int startChunk = blkptr;
+    const int end = blkptr + count;
+    int length = (count < 64) ? 64 : count;
 
-   if (count >= 1 << 26)
-   {
-      // If the block is big (>=64MB), split the encoding to avoid allocating
-      // too much memory.
-      length = (count < (1 << 29)) ? count >> 3 : count >> 4;
-   }  
+    if (count >= 1 << 26) {
+        // If the block is big (>=64MB), split the encoding to avoid allocating
+        // too much memory.
+        length = (count < (1 << 29)) ? count >> 3 : count >> 4;
+    }
 
-   // Split block into chunks, encode chunk and write bit array to bitstream
-   while (startChunk < end)
-   {
-      const int chunkSize = min(length, end - startChunk);
-     
-      if (_sba._length < (chunkSize + (chunkSize >> 3))) {
-         const int length = chunkSize + (chunkSize >> 3);
-         delete[] _sba._array;
-         _sba._array = new byte[length];
-         _sba._length = length;
-      }
-      
-      _sba._index = 0;
+    // Split block into chunks, encode chunk and write bit array to bitstream
+    while (startChunk < end) {
+        const int chunkSize = min(length, end - startChunk);
 
-      for (int i = startChunk; i < startChunk + chunkSize; i++)
-         encodeByte(block[i]);
+        if (_sba._length < (chunkSize + (chunkSize >> 3))) {
+            const int length = chunkSize + (chunkSize >> 3);
+            delete[] _sba._array;
+            _sba._array = new byte[length];
+            _sba._length = length;
+        }
 
-      EntropyUtils::writeVarInt(_bitstream, uint32(_sba._index));
-      _bitstream.writeBits(&_sba._array[0], 8 * _sba._index);
-      startChunk += chunkSize;
+        _sba._index = 0;
 
-      if (startChunk < end)         
-         _bitstream.writeBits(_low | MASK_0_24, 56);
-   }
+        for (int i = startChunk; i < startChunk + chunkSize; i++)
+            encodeByte(block[i]);
 
-   return count;
+        EntropyUtils::writeVarInt(_bitstream, uint32(_sba._index));
+        _bitstream.writeBits(&_sba._array[0], 8 * _sba._index);
+        startChunk += chunkSize;
+
+        if (startChunk < end)
+            _bitstream.writeBits(_low | MASK_0_24, 56);
+    }
+
+    return count;
 }
 
 void FPAQEncoder::encodeByte(byte val)

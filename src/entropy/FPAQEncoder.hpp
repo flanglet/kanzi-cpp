@@ -72,7 +72,7 @@ namespace kanzi
        } else  {
           _high = _low + ((((_high - _low) >> 4) * uint64(_probs[pIdx] >> 4)) >> 8);
           _probs[pIdx] -= (((_probs[pIdx] - PSCALE) >> 6) + 1);
-      }
+       }
 
        // Write unchanged first 32 bits to bitstream
        while (((_low ^ _high) >> 24) == 0)
