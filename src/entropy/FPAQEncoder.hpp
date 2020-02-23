@@ -41,7 +41,6 @@ namespace kanzi
        bool _deallocate;
        SliceArray<byte> _sba;
        uint16 _probs[256]; // probability of bit=1
-       int _ctxIdx; // previous bits
 
 
        void encodeByte(byte val);
@@ -64,17 +63,15 @@ namespace kanzi
    };
 
 
-   inline void FPAQEncoder::encodeBit(int bit, int pred)
+   inline void FPAQEncoder::encodeBit(int bit, int pIdx)
    {
        // Update probabilities
        if (bit == 0) {
-          _low = _low + ((((_high - _low) >> 4) * uint64(pred)) >> 8) + 1;
-          _probs[_ctxIdx] -= (_probs[_ctxIdx] >> 6);
-         _ctxIdx += _ctxIdx;
+          _low = _low + ((((_high - _low) >> 4) * uint64(_probs[pIdx] >> 4)) >> 8) + 1;
+          _probs[pIdx] -= (_probs[pIdx] >> 6);
        } else  {
-          _high = _low + ((((_high - _low) >> 4) * uint64(pred)) >> 8);
-          _probs[_ctxIdx] -= (((_probs[_ctxIdx] - PSCALE) >> 6) + 1);
-          _ctxIdx += (_ctxIdx + 1);
+          _high = _low + ((((_high - _low) >> 4) * uint64(_probs[pIdx] >> 4)) >> 8);
+          _probs[pIdx] -= (((_probs[pIdx] - PSCALE) >> 6) + 1);
       }
 
        // Write unchanged first 32 bits to bitstream

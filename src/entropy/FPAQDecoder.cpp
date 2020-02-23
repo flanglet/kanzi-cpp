@@ -26,7 +26,7 @@ FPAQDecoder::FPAQDecoder(InputBitStream& bitstream) THROW
     _high = TOP;
     _current = 0;
     _initialized = false;
-    _ctxIdx = 1;
+    _ctx = 1;
 
     for (int i = 0; i < 256; i++)
         _probs[i] = PSCALE >> 1;
@@ -85,16 +85,16 @@ int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
 
 byte FPAQDecoder::decodeByte()
 {
-    _ctxIdx = 1;
-    
-    return byte((decodeBit(int(_probs[_ctxIdx] >> 4)) << 7)
-        | (decodeBit(int(_probs[_ctxIdx] >> 4)) << 6)
-        | (decodeBit(int(_probs[_ctxIdx] >> 4)) << 5)
-        | (decodeBit(int(_probs[_ctxIdx] >> 4)) << 4)
-        | (decodeBit(int(_probs[_ctxIdx] >> 4)) << 3)
-        | (decodeBit(int(_probs[_ctxIdx] >> 4)) << 2)
-        | (decodeBit(int(_probs[_ctxIdx] >> 4)) << 1)
-        | decodeBit(int(_probs[_ctxIdx] >> 4)));
+    _ctx = 1;
+    decodeBit(int(_probs[_ctx] >> 4));
+    decodeBit(int(_probs[_ctx] >> 4));
+    decodeBit(int(_probs[_ctx] >> 4));
+    decodeBit(int(_probs[_ctx] >> 4));
+    decodeBit(int(_probs[_ctx] >> 4));
+    decodeBit(int(_probs[_ctx] >> 4));
+    decodeBit(int(_probs[_ctx] >> 4));
+    decodeBit(int(_probs[_ctx] >> 4));
+    return byte(_ctx);
 }
 
 void FPAQDecoder::initialize()

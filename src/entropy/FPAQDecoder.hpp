@@ -39,7 +39,7 @@ namespace kanzi
        bool _initialized;
        SliceArray<byte> _sba;
        uint16 _probs[256]; // probability of bit=1
-       int _ctxIdx; // previous bits
+       int _ctx; // previous bits
 
        void dispose() {};
 
@@ -76,14 +76,14 @@ namespace kanzi
        if (split >= _current) {
            bit = 1;
            _high = split;
-           _probs[_ctxIdx] -= (((_probs[_ctxIdx] - PSCALE) >> 6) + 1);
-           _ctxIdx += (_ctxIdx + 1);
+           _probs[_ctx] -= (((_probs[_ctx] - PSCALE) >> 6) + 1);
+           _ctx += (_ctx + 1);
        }
        else {
            bit = 0;
            _low = split + 1;
-           _probs[_ctxIdx] -= (_probs[_ctxIdx] >> 6);
-           _ctxIdx += _ctxIdx;
+           _probs[_ctx] -= (_probs[_ctx] >> 6);
+           _ctx += _ctx;
        }
 
        // Read 32 bits from bitstream

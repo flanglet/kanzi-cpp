@@ -25,7 +25,6 @@ FPAQEncoder::FPAQEncoder(OutputBitStream& bitstream) THROW
     _low = 0;
     _high = TOP;
     _disposed = false;
-    _ctxIdx = 1;
 
     for (int i = 0; i < 256; i++)
         _probs[i] = PSCALE >> 1;
@@ -83,15 +82,15 @@ int FPAQEncoder::encode(const byte block[], uint blkptr, uint count) THROW
 
 void FPAQEncoder::encodeByte(byte val)
 {
-    _ctxIdx = 1;
-    encodeBit(int(val >> 7) & 1, int(_probs[_ctxIdx] >> 4));
-    encodeBit(int(val >> 6) & 1, int(_probs[_ctxIdx] >> 4));
-    encodeBit(int(val >> 5) & 1, int(_probs[_ctxIdx] >> 4));
-    encodeBit(int(val >> 4) & 1, int(_probs[_ctxIdx] >> 4));
-    encodeBit(int(val >> 3) & 1, int(_probs[_ctxIdx] >> 4));
-    encodeBit(int(val >> 2) & 1, int(_probs[_ctxIdx] >> 4));
-    encodeBit(int(val >> 1) & 1, int(_probs[_ctxIdx] >> 4));
-    encodeBit(int(val) & 1, int(_probs[_ctxIdx] >> 4));
+    const int bits = int(val) + 256;
+    encodeBit(int(val) & 0x80, 1);
+    encodeBit(int(val) & 0x40, bits >> 7);
+    encodeBit(int(val) & 0x20, bits >> 6);
+    encodeBit(int(val) & 0x10, bits >> 5);
+    encodeBit(int(val) & 0x08, bits >> 4);
+    encodeBit(int(val) & 0x04, bits >> 3);
+    encodeBit(int(val) & 0x02, bits >> 2);
+    encodeBit(int(val) & 0x01, bits >> 1);
 }
 
 void FPAQEncoder::dispose()
