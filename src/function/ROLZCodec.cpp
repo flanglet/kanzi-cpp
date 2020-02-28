@@ -499,22 +499,22 @@ void ROLZEncoder::reset()
     const int mLogSize = _logSizes[MATCH_FLAG];
 
     for (int i = 0; i < (256 << mLogSize); i++)
-        _probs[MATCH_FLAG][i] = 32768;
+        _probs[MATCH_FLAG][i] = PSCALE >> 1;
 
     const int litLogSize = _logSizes[LITERAL_FLAG];
 
     for (int i = 0; i < (256 << litLogSize); i++)
-        _probs[LITERAL_FLAG][i] = 32768;
+        _probs[LITERAL_FLAG][i] = PSCALE >> 1;
 }
 
 void ROLZEncoder::encodeBits(int val, int n)
 {
     _c1 = 1;
 
-    while (n != 0) {
+    do {
         n--;
         encodeBit(val & (1 << n));
-    }
+    } while (n != 0);
 }
 
 void ROLZEncoder::dispose()
@@ -553,12 +553,12 @@ void ROLZDecoder::reset()
     const int mLogSize = _logSizes[MATCH_FLAG];
 
     for (int i = 0; i < (256 << mLogSize); i++)
-        _probs[MATCH_FLAG][i] = 32768;
+        _probs[MATCH_FLAG][i] = PSCALE >> 1;
 
     const int litLogSize = _logSizes[LITERAL_FLAG];
 
     for (int i = 0; i < (256 << litLogSize); i++)
-        _probs[LITERAL_FLAG][i] = 32768;
+        _probs[LITERAL_FLAG][i] = PSCALE >> 1;
 }
 
 int ROLZDecoder::decodeBits(int n)
@@ -566,10 +566,10 @@ int ROLZDecoder::decodeBits(int n)
     _c1 = 1;
     const int mask = (1 << n) - 1;
 
-    while (n > 0) {
+    do {
         decodeBit();
         n--;
-    }
+    } while (n != 0);
 
     return _c1 & mask;
 }

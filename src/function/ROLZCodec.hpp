@@ -35,6 +35,7 @@ namespace kanzi {
        static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
        static const int MATCH_FLAG = 0;
        static const int LITERAL_FLAG = 1;
+       static const int PSCALE = 0xFFFF;
 
        uint16* _probs[2];
        uint _logSizes[2];
@@ -75,6 +76,7 @@ namespace kanzi {
        static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
        static const int MATCH_FLAG = 0;
        static const int LITERAL_FLAG = 1;
+       static const int PSCALE = 0xFFFF;
 
        uint16* _probs[2];
        uint _logSizes[2];
@@ -262,7 +264,7 @@ namespace kanzi {
        }
        else {
            _high = _low + split;
-           _probs[_pIdx][_ctx + _c1] -= (((_probs[_pIdx][_ctx + _c1] - 0xFFFF) >> 5) + 1);
+           _probs[_pIdx][_ctx + _c1] -= (((_probs[_pIdx][_ctx + _c1] - PSCALE + 32) >> 5));
            _c1 += (_c1 + 1);
        }
 
@@ -284,7 +286,7 @@ namespace kanzi {
        if (mid >= _current) {
            bit = 1;
            _high = mid;
-           _probs[_pIdx][_ctx + _c1] -= (((_probs[_pIdx][_ctx + _c1] - 0xFFFF) >> 5) + 1);
+           _probs[_pIdx][_ctx + _c1] -= ((_probs[_pIdx][_ctx + _c1] - PSCALE + 32) >> 5);
            _c1 += (_c1 + 1);
        }
        else {

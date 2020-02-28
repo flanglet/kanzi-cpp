@@ -45,7 +45,7 @@ namespace kanzi
 
        void encodeByte(byte val);
 
-       void encodeBit(int bit, int pred = 2048);
+       void encodeBit(int bit, int pIdx);
 
    protected:
        virtual void flush();
@@ -71,7 +71,7 @@ namespace kanzi
           _probs[pIdx] -= (_probs[pIdx] >> 6);
        } else  {
           _high = _low + ((((_high - _low) >> 4) * uint64(_probs[pIdx] >> 4)) >> 8);
-          _probs[pIdx] -= (((_probs[pIdx] - PSCALE) >> 6) + 1);
+          _probs[pIdx] -= ((_probs[pIdx] - PSCALE + 64) >> 6);
        }
 
        // Write unchanged first 32 bits to bitstream

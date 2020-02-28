@@ -76,7 +76,7 @@ namespace kanzi
        if (split >= _current) {
            bit = 1;
            _high = split;
-           _probs[_ctx] -= (((_probs[_ctx] - PSCALE) >> 6) + 1);
+           _probs[_ctx] -= ((_probs[_ctx] - PSCALE + 64) >> 6);
            _ctx += (_ctx + 1);
        }
        else {
