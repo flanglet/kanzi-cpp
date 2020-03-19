@@ -29,6 +29,9 @@ limitations under the License.
 #include <dirent.h>
 #endif
 
+
+using namespace kanzi;
+
 class FileData {
    public:
       string _fullPath;

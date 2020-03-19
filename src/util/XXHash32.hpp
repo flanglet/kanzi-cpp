@@ -19,7 +19,6 @@ limitations under the License.
 #include <ctime>
 #include "../Memory.hpp"
 
-using namespace kanzi;
 
 namespace kanzi 
 {
