@@ -18,11 +18,9 @@ limitations under the License.
 
 #include <string>
 #include <stdexcept>
-#include "../util.hpp"
 #include "../Error.hpp"
 #include "../Global.hpp"
 
-using namespace std;
 
 namespace kanzi 
 {

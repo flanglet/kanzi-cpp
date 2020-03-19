@@ -21,8 +21,6 @@ limitations under the License.
 #include <string>
 #include "types.hpp"
 
-using namespace std;
-
 namespace kanzi 
 {
 
@@ -31,19 +29,19 @@ namespace kanzi
    public:
        Context() {};
        Context(Context& ctx);
-       Context(map<string, string>& ctx);
+       Context(std::map<std::string, std::string>& ctx);
        ~Context() {};
 
-       bool has(const string& key);
-       int getInt(const string& key, int defValue=0);
-       int64 getLong(const string& key, int64 defValue=0);
-       const char* getString(const string& key, const string& defValue="");
-       void putInt(const string& key, int value);
-       void putLong(const string& key, int64 value);
-       void putString(const string& key, const string& value);
+       bool has(const std::string& key);
+       int getInt(const std::string& key, int defValue=0);
+       int64 getLong(const std::string& key, int64 defValue=0);
+       const char* getString(const std::string& key, const std::string& defValue="");
+       void putInt(const std::string& key, int value);
+       void putLong(const std::string& key, int64 value);
+       void putString(const std::string& key, const std::string& value);
 
    private:
-       map<string, string> _map;
+       std::map<std::string, std::string> _map;
 
    };
 
@@ -54,26 +52,26 @@ namespace kanzi
    }
 
 
-   inline Context::Context(map<string, string>& ctx)
+   inline Context::Context(std::map<std::string, std::string>& ctx)
       : _map(ctx)
    {
    }
 
 
-   inline bool Context::has(const string& key) 
+   inline bool Context::has(const std::string& key) 
    {
       return _map.find(key) != _map.end();
    }
 
 
-   inline int Context::getInt(const string& key, int defValue) 
+   inline int Context::getInt(const std::string& key, int defValue) 
    {
-      map<string, string>::iterator it = _map.find(key);
+      std::map<std::string, std::string>::iterator it = _map.find(key);
 
       if (it == _map.end())
           return defValue;
 
-      stringstream ss;
+      std::stringstream ss;
       int res;
       ss << it->second.c_str();
       ss >> res;
@@ -81,14 +79,14 @@ namespace kanzi
    }
 
 
-   inline int64 Context::getLong(const string& key, int64 defValue) 
+   inline int64 Context::getLong(const std::string& key, int64 defValue) 
    {
-      map<string, string>::iterator it = _map.find(key);
+      std::map<std::string, std::string>::iterator it = _map.find(key);
 
       if (it == _map.end())
           return defValue;
 
-      stringstream ss;
+      std::stringstream ss;
       int64 res;
       ss << it->second.c_str();
       ss >> res;
@@ -96,30 +94,30 @@ namespace kanzi
    }
 
 
-   inline const char* Context::getString(const string& key, const string& defValue) 
+   inline const char* Context::getString(const std::string& key, const std::string& defValue) 
    {
-      map<string, string>::iterator it = _map.find(key);
+      std::map<std::string, std::string>::iterator it = _map.find(key);
       return (it == _map.end()) ? defValue.c_str() : it->second.c_str();
    }
 
 
-   inline void Context::putInt(const string& key, int value) 
+   inline void Context::putInt(const std::string& key, int value) 
    {
-      stringstream ss;
+      std::stringstream ss;
       ss << value;
       _map[key] = ss.str();
    }
 
 
-   inline void Context::putLong(const string& key, int64 value) 
+   inline void Context::putLong(const std::string& key, int64 value) 
    {
-      stringstream ss;
+      std::stringstream ss;
       ss << value;
       _map[key] = ss.str();
    }
 
 
-   inline void Context::putString(const string& key, const string& value)
+   inline void Context::putString(const std::string& key, const std::string& value)
    {
       _map[key] = value;
    }

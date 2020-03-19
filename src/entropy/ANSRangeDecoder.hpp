@@ -19,8 +19,6 @@ limitations under the License.
 #include "../EntropyDecoder.hpp"
 
 
-using namespace std;
-
 // Implementation of an Asymmetric Numeral System decoder.
 // See "Asymmetric Numeral System" by Jarek Duda at http://arxiv.org/abs/0902.0271
 // Some code has been ported from https://github.com/rygorous/ryg_rans

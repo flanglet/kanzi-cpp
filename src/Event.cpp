@@ -31,7 +31,7 @@ Event::Event(Event::Type type, int id, int64 size, clock_t evtTime)
     _hashing = false;
 }
 
-Event::Event(Event::Type type, int id, const string& msg, clock_t evtTime)
+Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
     : _type(type)
     , _time(evtTime)
     , _msg(msg)
@@ -53,7 +53,7 @@ Event::Event(Event::Type type, int id, int64 size, int hash, bool hashing, clock
     _hashing = hashing;
 }
 
-string Event::toString() const
+std::string Event::toString() const
 {
     if (_msg.size() > 0)
         return _msg;
@@ -77,7 +77,7 @@ string Event::toString() const
     return ss.str();
 }
 
-string Event::getTypeAsString() const
+std::string Event::getTypeAsString() const
 {
     switch (_type) {
     case COMPRESSION_START:

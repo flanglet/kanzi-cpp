@@ -24,7 +24,7 @@ SBRT::SBRT(int mode) :
 	, _shift((mode == MODE_RANK) ? 1 : 0)
 {
     if ((mode != MODE_MTF) && (mode != MODE_RANK) && (mode != MODE_TIMESTAMP))
-        throw invalid_argument("Invalid mode parameter");
+        throw std::invalid_argument("Invalid mode parameter");
 }
 
 SBRT::SBRT(int mode, Context&) :
@@ -33,7 +33,7 @@ SBRT::SBRT(int mode, Context&) :
 	, _shift((mode == MODE_RANK) ? 1 : 0)
 {
     if ((mode != MODE_MTF) && (mode != MODE_RANK) && (mode != MODE_TIMESTAMP))
-        throw invalid_argument("Invalid mode parameter");
+        throw std::invalid_argument("Invalid mode parameter");
 }
 
 bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
@@ -42,10 +42,10 @@ bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+        throw std::invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw std::invalid_argument("Invalid output block");
 
     // Aliasing
     byte* src = &input._array[input._index];
@@ -90,10 +90,10 @@ bool SBRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+        throw std::invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw std::invalid_argument("Invalid output block");
 
     // Aliasing
     byte* src = &input._array[input._index];

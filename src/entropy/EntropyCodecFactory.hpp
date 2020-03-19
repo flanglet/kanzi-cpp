@@ -37,7 +37,6 @@ limitations under the License.
 #include "FPAQEncoder.hpp"
 #include "TPAQPredictor.hpp"
 
-using namespace std;
 
 namespace kanzi {
 

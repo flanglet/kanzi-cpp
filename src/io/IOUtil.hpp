@@ -29,8 +29,6 @@ limitations under the License.
 #include <dirent.h>
 #endif
 
-using namespace std;
-
 class FileData {
    public:
       string _fullPath;

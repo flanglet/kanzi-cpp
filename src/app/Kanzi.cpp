@@ -22,7 +22,6 @@ limitations under the License.
 #include "../util.hpp"
 #include "../Error.hpp"
 
-using namespace kanzi;
 
 static const string CMD_LINE_ARGS[14] = {
     "-c", "-d", "-i", "-o", "-b", "-t", "-e", "-j", "-v", "-l", "-s", "-x", "-f", "-h"

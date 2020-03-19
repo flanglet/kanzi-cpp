@@ -18,7 +18,6 @@ limitations under the License.
 
 #include "../Function.hpp"
 
-using namespace std;
 
 namespace kanzi 
 {

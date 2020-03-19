@@ -137,6 +137,7 @@ limitations under the License.
 #if __cplusplus >= 201703L
 	// byte is defined in C++17 and above
 	#include <cstddef>
+	typedef std::byte byte;
 #else
 	typedef uint8_t byte;
 #endif

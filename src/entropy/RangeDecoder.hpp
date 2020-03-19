@@ -19,7 +19,6 @@ limitations under the License.
 
 #include "../EntropyDecoder.hpp"
 
-using namespace std;
 
 namespace kanzi
 {

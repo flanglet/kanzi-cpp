@@ -24,10 +24,10 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+        throw std::invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw std::invalid_argument("Invalid output block");
 
     // Aliasing
     byte* src = &input._array[input._index];
@@ -106,10 +106,10 @@ bool X86Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+        throw std::invalid_argument("Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw std::invalid_argument("Invalid output block");
 
     // Aliasing
     byte* src = &input._array[input._index];

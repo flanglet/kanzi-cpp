@@ -27,7 +27,7 @@ limitations under the License.
 #include <mutex>
 #endif
 
-using namespace std;
+
 
 namespace kanzi 
 {

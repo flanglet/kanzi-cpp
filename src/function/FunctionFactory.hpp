@@ -21,7 +21,6 @@
 #include "X86Codec.hpp"
 #include "ZRLT.hpp"
 
-using namespace std;
 
 namespace kanzi {
 

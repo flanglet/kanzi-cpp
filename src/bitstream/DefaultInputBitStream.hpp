@@ -21,7 +21,6 @@ limitations under the License.
 #include "../InputStream.hpp"
 #include "../Memory.hpp"
 
-using namespace std;
 
 namespace kanzi {
 

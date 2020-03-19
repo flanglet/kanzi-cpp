@@ -18,9 +18,6 @@ limitations under the License.
 
 #include <time.h>
 #include "types.hpp"
-#include "concurrent.hpp"
-
-using namespace std;
 
 namespace kanzi 
 {
@@ -39,7 +36,7 @@ namespace kanzi
               AFTER_HEADER_DECODING
           };
 
-          Event(Type type, int id, const string& msg, clock_t evtTime);
+          Event(Type type, int id, const std::string& msg, clock_t evtTime);
 
           Event(Type type, int id, int64 size, clock_t evtTime);
 
@@ -53,13 +50,13 @@ namespace kanzi
 
           Event::Type getType() const { return _type; }
 
-          string getTypeAsString() const;
+          std::string getTypeAsString() const;
 
           clock_t getTime() const { return _time; }
 
           int getHash() const { return (_hashing) ? _hash : 0; }
 
-          string toString() const;
+          std::string toString() const;
 
       private:
           int _id;
@@ -68,7 +65,7 @@ namespace kanzi
           Event::Type _type;
           bool _hashing;
           clock_t _time;
-          string _msg;
+          std::string _msg;
       };
 }
 #endif

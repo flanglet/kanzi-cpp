@@ -18,7 +18,6 @@ limitations under the License.
 
 #include "../EntropyEncoder.hpp"
 
-using namespace std;
 
 // Implementation of an Asymmetric Numeral System encoder.
 // See "Asymmetric Numeral System" by Jarek Duda at http://arxiv.org/abs/0902.0271

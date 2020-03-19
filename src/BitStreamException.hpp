@@ -21,7 +21,6 @@ limitations under the License.
 #include "types.hpp"
 #include "util.hpp"
 
-using namespace std;
 
 namespace kanzi 
 {

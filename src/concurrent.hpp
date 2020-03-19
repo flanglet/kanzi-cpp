@@ -16,8 +16,6 @@ limitations under the License.
 #ifndef _concurrent_
 #define _concurrent_
 
-using namespace std;
-
 template <class T>
 class Task {
 public:
@@ -29,6 +27,7 @@ public:
 #if __cplusplus >= 201103L || _MSC_VER >= 1700
 	// C++ 11 (or partial)
 	#include <atomic>
+	typedef std::atomic_int atomic_int;
 
 	#ifndef CONCURRENCY_ENABLED
 		#ifdef __clang__

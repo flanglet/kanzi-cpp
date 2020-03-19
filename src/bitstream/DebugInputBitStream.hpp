@@ -21,7 +21,6 @@ limitations under the License.
 #include "../InputBitStream.hpp"
 #include "../OutputStream.hpp"
 
-using namespace std;
 
 namespace kanzi 
 {

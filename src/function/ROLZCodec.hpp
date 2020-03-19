@@ -22,7 +22,6 @@ limitations under the License.
 #include "../Predictor.hpp"
 #include "../util.hpp"
 
-using namespace std;
 
 // Implementation of a Reduced Offset Lempel Ziv transform
 // More information about ROLZ at http://ezcodesample.com/rolz/rolz_article.html

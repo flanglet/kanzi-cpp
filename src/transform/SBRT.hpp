@@ -19,7 +19,6 @@ limitations under the License.
 #include "../Context.hpp"
 #include "../Transform.hpp"
 
-using namespace std;
 
 namespace kanzi 
 {

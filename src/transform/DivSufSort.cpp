@@ -494,7 +494,7 @@ void DivSufSort::ssSort(const int pa, int first, int last, int buf, int bufSize,
 void DivSufSort::ssBlockSwap(int a, int b, int n)
 {
     while (n-- > 0) {
-        swap(_sa[a], _sa[b]);
+        std::swap(_sa[a], _sa[b]);
         a++;
         b++;
     }
@@ -1137,7 +1137,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
         // choose pivot
         a = ssPivot(idx, pa, first, last);
         const int v = _buffer[idx + _sa[pa + _sa[a]]];
-        swap(_sa[first], _sa[a]);
+        std::swap(_sa[first], _sa[a]);
         int b = first;
 
         // partition
@@ -1154,7 +1154,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
                     break;
 
                 if (x == v) {
-                    swap(_sa[b], _sa[a]);
+                    std::swap(_sa[b], _sa[a]);
                     a++;
                 }
             }
@@ -1175,21 +1175,21 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
                     break;
 
                 if (x == v) {
-                    swap(_sa[c], _sa[d]);
+                    std::swap(_sa[c], _sa[d]);
                     d--;
                 }
             }
         }
 
         while (b < c) {
-            swap(_sa[b], _sa[c]);
+            std::swap(_sa[b], _sa[c]);
 
             while (++b < c) {
                 if ((x = _buffer[idx + _sa[pa + _sa[b]]]) > v)
                     break;
 
                 if (x == v) {
-                    swap(_sa[b], _sa[a]);
+                    std::swap(_sa[b], _sa[a]);
                     a++;
                 }
             }
@@ -1199,7 +1199,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
                     break;
 
                 if (x == v) {
-                    swap(_sa[c], _sa[d]);
+                    std::swap(_sa[c], _sa[d]);
                     d--;
                 }
             }
@@ -1210,12 +1210,12 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
             int s = (a - first > b - a) ? b - a : a - first;
 
             for (int e = first, f = b - s; s > 0; s--, e++, f++)
-                swap(_sa[e], _sa[f]);
+                std::swap(_sa[e], _sa[f]);
 
             s = (d - c > last - d - 1) ? last - d - 1 : d - c;
 
             for (int e = b, f = last - s; s > 0; s--, e++, f++)
-                swap(_sa[e], _sa[f]);
+                std::swap(_sa[e], _sa[f]);
 
             a = first + (b - a);
             c = last - (d - c);
@@ -1396,14 +1396,14 @@ void DivSufSort::ssHeapSort(int idx, int pa, int saIdx, int size)
         m--;
 
         if (_buffer[idx + _sa[pa + _sa[saIdx + (m >> 1)]]] < _buffer[idx + _sa[pa + _sa[saIdx + m]]])
-            swap(_sa[saIdx + m], _sa[saIdx + (m >> 1)]);
+            std::swap(_sa[saIdx + m], _sa[saIdx + (m >> 1)]);
     }
 
     for (int i = (m >> 1) - 1; i >= 0; i--)
         ssFixDown(idx, pa, saIdx, i, m);
 
     if ((size & 1) == 0) {
-        swap(_sa[saIdx], _sa[saIdx + m]);
+        std::swap(_sa[saIdx], _sa[saIdx + m]);
         ssFixDown(idx, pa, saIdx, 0, m);
     }
 
@@ -1513,7 +1513,7 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
     if ((a < last) && (x < v)) {
         while ((++b < last) && ((x = _sa[isad + _sa[b]]) <= v)) {
             if (x == v) {
-                swap(_sa[a], _sa[b]);
+                std::swap(_sa[a], _sa[b]);
                 a++;
             }
         }
@@ -1535,25 +1535,25 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
     if ((b < d) && (x > v)) {
         while ((--c > b) && ((x = _sa[isad + _sa[c]]) >= v)) {
             if (x == v) {
-                swap(_sa[c], _sa[d]);
+                std::swap(_sa[c], _sa[d]);
                 d--;
             }
         }
     }
 
     while (b < c) {
-        swap(_sa[c], _sa[b]);
+        std::swap(_sa[c], _sa[b]);
 
         while ((++b < c) && ((x = _sa[isad + _sa[b]]) <= v)) {
             if (x == v) {
-                swap(_sa[a], _sa[b]);
+                std::swap(_sa[a], _sa[b]);
                 a++;
             }
         }
 
         while ((--c > b) && ((x = _sa[isad + _sa[c]]) >= v)) {
             if (x == v) {
-                swap(_sa[c], _sa[d]);
+                std::swap(_sa[c], _sa[d]);
                 d--;
             }
         }
@@ -1567,7 +1567,7 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
             s = b - a;
 
         for (int e = first, f = b - s; s > 0; s--, e++, f++)
-            swap(_sa[e], _sa[f]);
+            std::swap(_sa[e], _sa[f]);
 
         s = d - c;
 
@@ -1575,7 +1575,7 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
             s = last - d - 1;
 
         for (int e = b, f = last - s; s > 0; s--, e++, f++)
-            swap(_sa[e], _sa[f]);
+            std::swap(_sa[e], _sa[f]);
 
         first += (b - a);
         last -= (d - c);
@@ -1805,7 +1805,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
         limit--;
 
         // choose pivot
-        swap(_sa[first], _sa[trPivot(_sa, isad, first, last)]);
+        std::swap(_sa[first], _sa[trPivot(_sa, isad, first, last)]);
         int v = _sa[isad + _sa[first]];
 
         // partition
@@ -2014,14 +2014,14 @@ void DivSufSort::trHeapSort(int isad, int saIdx, int size)
         m--;
 
         if (_sa[isad + _sa[saIdx + (m >> 1)]] < _sa[isad + _sa[saIdx + m]])
-            swap(_sa[saIdx + m], _sa[saIdx + (m >> 1)]);
+            std::swap(_sa[saIdx + m], _sa[saIdx + (m >> 1)]);
     }
 
     for (int i = (m >> 1) - 1; i >= 0; i--)
         trFixDown(isad, saIdx, i, m);
 
     if ((size & 1) == 0) {
-        swap(_sa[saIdx], _sa[saIdx + m]);
+        std::swap(_sa[saIdx], _sa[saIdx + m]);
         trFixDown(isad, saIdx, 0, m);
     }
 

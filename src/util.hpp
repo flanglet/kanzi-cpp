@@ -17,9 +17,6 @@ limitations under the License.
 #define _util_
 
 
-#ifdef CONCURRENCY_ENABLED
-#include <mutex>
-#endif
 #include <string>
 #include <sstream>
 #include <iostream>

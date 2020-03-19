@@ -19,7 +19,6 @@ limitations under the License.
 #include "HuffmanCommon.hpp"
 #include "../EntropyEncoder.hpp"
 
-using namespace std;
 
 namespace kanzi 
 {
