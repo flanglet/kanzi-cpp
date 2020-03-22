@@ -109,7 +109,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
     if (encoded == 0)
         return true;
 
-    const int chkSize = (alphabetSize >= 64) ? 8 : 6;
+    const int chkSize = (alphabetSize >= 64) ? 6 : 4;
     int llr = 3;
 
     while (1 << llr <= lr)

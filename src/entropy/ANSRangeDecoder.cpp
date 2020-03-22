@@ -93,7 +93,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
         if (alphabetSize != 256)
             memset(f, 0, sizeof(uint) * 256);
 
-        const int chkSize = (alphabetSize >= 64) ? 8 : 6;
+        const int chkSize = (alphabetSize >= 64) ? 6 : 4;
         int sum = 0;
         int llr = 3;
 
@@ -105,7 +105,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
             // Read frequencies size for current chunk
             const int logMax = int(1 + _bitstream.readBits(llr));
 
-            if (1 << logMax > scale) {
+            if ((1 << logMax) > scale) {
                 stringstream ss;
                 ss << "Invalid bitstream: incorrect frequency size ";
                 ss << logMax << " in ANS range decoder";
@@ -175,9 +175,9 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint len)
 
     int startChunk = blkptr;
 
-    if (_bufferSize < uint(sz + (sz >> 3))) {
+    if (_bufferSize < uint(sz + max(sz >> 3, 16))) {
         delete[] _buffer;
-        _bufferSize = uint(sz + (sz >> 3));
+        _bufferSize = uint(sz + max(sz >> 3, 16));
         _buffer = new byte[_bufferSize];
     }
 
