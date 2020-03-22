@@ -177,13 +177,14 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     dst[dstIdx++] = byte(litOrder);
     stringbuf buffer;
     iostream ios(&buffer);
-    ios.rdbuf()->pubseekpos(0);
 
     // Main loop
     while (startChunk < srcEnd) {
+        ios.rdbuf()->pubseekpos(0);
         litBuf._index = 0;
         lenBuf._index = 0;
         mIdxBuf._index = 0;
+
         memset(&_matches[0], 0, sizeof(int32) * (ROLZCodec::HASH_SIZE << _logPosChecks));
         const int endChunk = (startChunk + sizeChunk < srcEnd) ? startChunk + sizeChunk : srcEnd;
         sizeChunk = endChunk - startChunk;
