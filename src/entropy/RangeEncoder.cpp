@@ -81,7 +81,7 @@ bool RangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequenc
     // Encode all frequencies (but the first one) by chunks
     for (int i = 1; i < alphabetSize; i += chkSize) {
         uint max = frequencies[alphabet[i]] - 1;
-        uint logMax = 1;
+        uint logMax = 0;
         int endj = min(i + chkSize, alphabetSize);
 
         // Search for max frequency log size in next chunk
@@ -93,7 +93,10 @@ bool RangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequenc
         while (uint(1 << logMax) <= max)
             logMax++;
 
-        _bitstream.writeBits(logMax - 1, llr);
+        _bitstream.writeBits(logMax, llr);
+
+        if (logMax == 0) // all frequencies equal one in this chunk
+            continue;
 
         // Write frequencies
         for (int j = i; j < endj; j++)

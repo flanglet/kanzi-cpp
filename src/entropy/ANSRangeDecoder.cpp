@@ -37,9 +37,9 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
     }
 
     if (chunkSize == -1)
-        chunkSize = DEFAULT_ANS0_CHUNK_SIZE << (8 * order);
+        chunkSize = DEFAULT_ANS0_CHUNK_SIZE;
 
-    _chunkSize = chunkSize;
+    _chunkSize = chunkSize << (8 * order);
     _order = order;
     const int dim = 255 * order + 1;
     _alphabet = new uint[dim * 256];
@@ -93,7 +93,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
         if (alphabetSize != 256)
             memset(f, 0, sizeof(uint) * 256);
 
-        const int chkSize = (alphabetSize >= 64) ? 6 : 4;
+        const int chkSize = (alphabetSize >= 64) ? 8 : 6;
         int sum = 0;
         int llr = 3;
 
@@ -103,7 +103,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
         // Decode all frequencies (but the first one) by chunks
         for (int i = 1; i < alphabetSize; i += chkSize) {
             // Read frequencies size for current chunk
-            const int logMax = int(1 + _bitstream.readBits(llr));
+            const int logMax = int(_bitstream.readBits(llr));
 
             if ((1 << logMax) > scale) {
                 stringstream ss;
@@ -116,7 +116,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
 
             // Read frequencies
             for (int j = i; j < endj; j++) {
-                const int freq = int(_bitstream.readBits(logMax) + 1);
+                const int freq = (logMax == 0) ? 1 : int(_bitstream.readBits(logMax) + 1);
 
                 if ((freq < 0) || (freq >= scale)) {
                     stringstream ss;

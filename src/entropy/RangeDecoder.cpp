@@ -66,23 +66,31 @@ int RangeDecoder::decodeHeader(uint frequencies[])
 
     // Decode all frequencies (but the first one) by chunks of size 'inc'
     for (int i = 1; i < alphabetSize; i += chkSize) {
-        const int logMax = int(1 + _bitstream.readBits(llr));
+        const int logMax = int(_bitstream.readBits(llr));
+
+        if ((1 << logMax) > scale) {
+            stringstream ss;
+            ss << "Invalid bitstream: incorrect frequency size ";
+            ss << logMax << " in ANS range decoder";
+            throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
+        }
+
         const int endj = min(i + chkSize, alphabetSize);
 
         // Read frequencies
         for (int j = i; j < endj; j++) {
-            int val = int(_bitstream.readBits(logMax) + 1);
+            const int freq = (logMax == 0) ? 1 : int(_bitstream.readBits(logMax) + 1);
 
-            if ((val <= 0) || (val >= scale)) {
+            if ((freq <= 0) || (freq >= scale)) {
                 stringstream ss;
-                ss << "Invalid bitstream: incorrect frequency " << val;
+                ss << "Invalid bitstream: incorrect frequency " << freq;
                 ss << " for symbol '" << _alphabet[j] << "' in range decoder";
                 throw BitStreamException(ss.str(),
                     BitStreamException::INVALID_STREAM);
             }
 
-            frequencies[_alphabet[j]] = (uint)val;
-            sum += val;
+            frequencies[_alphabet[j]] = uint(freq);
+            sum += freq;
         }
     }
 

@@ -44,8 +44,9 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
     }
 
     if (chunkSize == -1)
-        chunkSize = DEFAULT_ANS0_CHUNK_SIZE << (8 * order);
+        chunkSize = DEFAULT_ANS0_CHUNK_SIZE;
 
+    _chunkSize = chunkSize << (8 * order);
     _order = order;
     const int32 dim = 255 * order + 1;
     _alphabet = new uint[dim * 256];
@@ -54,7 +55,6 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
     _buffer = new byte[0];
     _bufferSize = 0;
     _logRange = logRange;
-    _chunkSize = chunkSize;
 }
 
 ANSRangeEncoder::~ANSRangeEncoder()
@@ -109,7 +109,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
     if (encoded == 0)
         return true;
 
-    const int chkSize = (alphabetSize >= 64) ? 6 : 4;
+    const int chkSize = (alphabetSize >= 64) ? 8 : 6;
     int llr = 3;
 
     while (1 << llr <= lr)
@@ -118,7 +118,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
     // Encode all frequencies (but the first one) by chunks
     for (int i = 1; i < alphabetSize; i += chkSize) {
         uint max = frequencies[alphabet[i]] - 1;
-        uint logMax = 1;
+        uint logMax = 0;
         const int endj = min(i + chkSize, alphabetSize);
 
         // Search for max frequency log size in next chunk
@@ -130,7 +130,10 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
         while (uint(1 << logMax) <= max)
             logMax++;
 
-        _bitstream.writeBits(logMax - 1, llr);
+        _bitstream.writeBits(logMax, llr);
+
+        if (logMax == 0) // all frequencies equal one in this chunk
+            continue;
 
         // Write frequencies
         for (int j = i; j < endj; j++)
