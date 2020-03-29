@@ -36,13 +36,14 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int jumps = 0;
 
     for (int i = 0; i < end; i++) {
-        if ((src[i] & INSTRUCTION_MASK) == INSTRUCTION_JUMP) {
-           // Count valid relative jumps (E8/E9 .. .. .. 00/FF)
-           if ((src[i+4] == byte(0)) || ((src[i+4] & MASK_FF) == MASK_FF)) {
-              // No encoding conflict ?
-              if ((src[i] != byte(0)) && (src[i] != byte(1)) && (src[i] != ESCAPE))
-                 jumps++;
+        if ((src[i] & MASK_JUMP) == INSTRUCTION_JUMP) {
+           if ((src[i+4] == byte(0)) || (src[i+4] == byte(0xFF))) {
+              // Count relative jumps (E8/E9 .. .. .. 00/FF)
+              jumps++;
            }
+        } else if (((src[i+1] & MASK_JCC) == INSTRUCTION_JCC) && (src[i] == PREFIX_JCC)) {
+           // Count relative conditional jumps (0x0F 0x8.)
+           jumps++;
         }
     }
 
@@ -60,7 +61,7 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         dst[dstIdx++] = src[srcIdx++];
 
         // Relative jump ?
-        if ((src[srcIdx - 1] & INSTRUCTION_MASK) != INSTRUCTION_JUMP)
+        if ((src[srcIdx - 1] & MASK_JUMP) != INSTRUCTION_JUMP)
             continue;
 
         const byte cur = src[srcIdx];
@@ -85,9 +86,9 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         addr += srcIdx;
         dst[dstIdx] = byte(sgn + 1);
-        dst[dstIdx + 1] = ADDRESS_MASK ^ byte(0xFF & (addr >> 16));
-        dst[dstIdx + 2] = ADDRESS_MASK ^ byte(0xFF & (addr >> 8));
-        dst[dstIdx + 3] = ADDRESS_MASK ^ byte(0xFF & addr);
+        dst[dstIdx + 1] = MASK_ADDRESS ^ byte(0xFF & (addr >> 16));
+        dst[dstIdx + 2] = MASK_ADDRESS ^ byte(0xFF & (addr >> 8));
+        dst[dstIdx + 3] = MASK_ADDRESS ^ byte(0xFF & addr);
         srcIdx += 4;
         dstIdx += 4;
     }
@@ -122,33 +123,31 @@ bool X86Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         dst[dstIdx++] = src[srcIdx++];
 
         // Relative jump ?
-        if ((src[srcIdx - 1] & INSTRUCTION_MASK) != INSTRUCTION_JUMP)
+        if ((src[srcIdx - 1] & MASK_JUMP) != INSTRUCTION_JUMP)
             continue;
 
-        const byte flag = src[srcIdx];
-
-        if (flag == ESCAPE) {
+        if (src[srcIdx] == ESCAPE) {
             // Not an encoded address. Skip escape symbol
             srcIdx++;
             continue;
         }
 
-        const int sgn = int(flag);
+        const int sgn = int(src[srcIdx]) - 1;
 
         // Invalid sign of jump address difference => false positive ?
-        if ((sgn != 1) && (sgn != 0))
+        if ((sgn != 0) && (sgn != -1))
             continue;
 
-        int addr =  (0xFF & int(ADDRESS_MASK ^ src[srcIdx+3]))        | 
-                   ((0xFF & int(ADDRESS_MASK ^ src[srcIdx+2])) <<  8) |
-                   ((0xFF & int(ADDRESS_MASK ^ src[srcIdx+1])) << 16) | 
-                   ((0xFF & (sgn-1)) << 24);
+        int addr =  (0xFF & int(MASK_ADDRESS ^ src[srcIdx+3]))        | 
+                   ((0xFF & int(MASK_ADDRESS ^ src[srcIdx+2])) <<  8) |
+                   ((0xFF & int(MASK_ADDRESS ^ src[srcIdx+1])) << 16) | 
+                   ((0xFF & sgn) << 24);
 
         addr -= dstIdx;
         dst[dstIdx] = byte(addr);
         dst[dstIdx + 1] = byte(addr >> 8);
         dst[dstIdx + 2] = byte(addr >> 16);
-        dst[dstIdx + 3] = byte(sgn - 1);
+        dst[dstIdx + 3] = byte(sgn);
         srcIdx += 4;
         dstIdx += 4;
     }

@@ -36,11 +36,13 @@ namespace kanzi
 
    private:
 
-      static const byte INSTRUCTION_MASK = byte(0xFE);
+      static const byte MASK_JUMP = byte(0xFE);
       static const byte INSTRUCTION_JUMP = byte(0xE8);
-      static const byte ADDRESS_MASK = byte(0xD5); 
-      static const byte ESCAPE = byte(0x02);
-      static const byte MASK_FF = byte(0xff);
+      static const byte INSTRUCTION_JCC = byte(0x80);
+      static const byte PREFIX_JCC = byte(0x0F);
+      static const byte MASK_JCC = byte(0xF0);
+      static const byte MASK_ADDRESS = byte(0xD5); 
+      static const byte ESCAPE = byte(0xF5);
    };
 
 }
