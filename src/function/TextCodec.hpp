@@ -179,7 +179,7 @@ namespace kanzi {
 
        static bool sameWords(const byte src[], const byte dst[], const int length);
 
-       static byte computeStats(const byte block[], int count, int32 freqs[]);
+       static byte computeStats(const byte block[], int count, int32 freqs[], bool strict);
 
        // Common English words.
        static char DICT_EN_1024[];

@@ -184,7 +184,7 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
 }
 
 // return 8-bit status (see MASK flags constants)
-byte TextCodec::computeStats(const byte block[], int count, int32 freqs0[])
+byte TextCodec::computeStats(const byte block[], int count, int32 freqs0[], bool strict)
 {
     int32 freqs[256][256] = { { 0 } };
     int32 f0[256] = { 0 };
@@ -222,16 +222,27 @@ byte TextCodec::computeStats(const byte block[], int count, int32 freqs0[])
         freqs0[i] += (f0[i] + f1[i] + f2[i] + f3[i]);
     }
 
-    int nbTextChars = 0;
+    const int cr = int(CR);
+    const int lf = int(LF);
+    int nbTextChars = freqs0[cr] + freqs0[lf];
+    int nbASCII = 0;
+    int nbZeros = freqs0[0];
 
-    for (int i = 32; i < 128; i++) {
+    for (int i = 0; i < 128; i++) {
         if (isText(byte(i)) == true)
             nbTextChars += freqs0[i];
+
+        nbASCII += freqs0[i];
     }
 
-    // Not text (crude threshold)
-    if ((nbTextChars < (count >> 1)) || (freqs0[32] < (count >> 5)))
-        return TextCodec::MASK_NOT_TEXT;
+    // Not text (crude thresholds)
+    if (strict == true) {
+        if ((nbZeros >= (count / 100)) || (nbTextChars < (count >> 1)) || (freqs0[32] < (count >> 4)))
+            return TextCodec::MASK_NOT_TEXT;
+    } else {
+        if ((nbASCII / 95) < (count / 100))
+            return TextCodec::MASK_NOT_TEXT;
+    }
 
     int nbBinChars = 0;
 
@@ -274,9 +285,6 @@ byte TextCodec::computeStats(const byte block[], int count, int32 freqs0[])
     }
 
     // Check CR+LF matches
-    const int cr = int(CR);
-    const int lf = int(LF);
-
     if ((freqs0[cr] != 0) && (freqs0[cr] == freqs0[lf])) {
         res |= TextCodec::MASK_CRLF;
 
@@ -442,7 +450,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int dstIdx = 0;
 
     int32 freqs[256] = { 0 };
-    byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs);
+    byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, true);
 
     // Not text ?
     if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0))
@@ -900,7 +908,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int dstIdx = 0;
 
     int32 freqs[256] = { 0 };
-    byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs);
+    byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, false);
 
     // Not text ?
     if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0))
@@ -1176,7 +1184,7 @@ int TextCodec2::emitWordIndex(byte dst[], int val, int mask)
     dst[0] = byte(0x80 | mask | val);
     return 1;
 }
-static bool debug = false;
+
 bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     byte* src = &input._array[input._index];
@@ -1313,12 +1321,6 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             wordRun = false;
             delimAnchor = srcIdx - 1;
         }
-    }
-
-    if (debug) {
-       for (int i=0; i<dstIdx; i++)
-          cout << (char) dst[i];
-    cout <<endl;
     }
 
     output._index += dstIdx;
