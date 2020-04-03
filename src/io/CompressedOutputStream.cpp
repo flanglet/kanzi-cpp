@@ -613,8 +613,10 @@ T EncodingTask<T>::run() THROW
         ee = EntropyCodecFactory::newEncoder(*_obs, _ctx, _entropyType);
 
         // Entropy encode block
-        if (ee->encode(_buffer->_array, 0, postTransformLength) != postTransformLength)
+        if (ee->encode(_buffer->_array, 0, postTransformLength) != postTransformLength) {
+            delete ee;
             return T(_blockId, Error::ERR_PROCESS_BLOCK, "Entropy coding failed");
+        }
 
         // Dispose before processing statistics. Dispose may write to the bitstream
         delete ee;

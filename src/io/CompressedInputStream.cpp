@@ -661,6 +661,7 @@ T DecodingTask<T>::run() THROW
         // Block entropy decode
         if (ed->decode(_buffer->_array, 0, preTransformLength) != preTransformLength) {
             // Error => cancel concurrent decoding tasks
+            delete ed;
             _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID);
             return T(*_data, _blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
                 "Entropy decoding failed");
