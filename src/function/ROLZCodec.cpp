@@ -175,12 +175,12 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     bool success = true;
     const int litOrder = (count < (1 << 17)) ? 0 : 1;
     dst[dstIdx++] = byte(litOrder);
-    stringbuf buffer;
-    iostream ios(&buffer);
+    stringbuf buf;
+    buf.pubsetbuf(reinterpret_cast<char*>(&dst[dstIdx]), output._length);
+    iostream ios(&buf);
 
     // Main loop
     while (startChunk < srcEnd) {
-        ios.rdbuf()->pubseekpos(0);
         litBuf._index = 0;
         lenBuf._index = 0;
         mIdxBuf._index = 0;
@@ -244,22 +244,13 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             ios.flush();
         }
 
-        // Copy bitstream array to output
-        const int bufSize = int(ios.tellp());
-
-        if (dstIdx + bufSize > output._length) {
-            input._index = startChunk + srcIdx;
-            success = false;
-            goto End;
-        }
-
-        ios.seekg(0);
-        ios.read(reinterpret_cast<char*>(&dst[dstIdx]), bufSize);
-        dstIdx += bufSize;
         startChunk = endChunk;
     }
 
-End:
+    const int bufSize = int(ios.tellp());
+    ios.read(reinterpret_cast<char*>(&dst[dstIdx]), bufSize);
+    dstIdx += bufSize;
+
     if (success == true) {
         if (dstIdx + 4 > output._length) {
             input._index = srcEnd;
@@ -319,10 +310,10 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int srcIdx = 4;
     int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
-    stringbuf buffer;
-    iostream ios(&buffer);
-    ios.rdbuf()->sputn(reinterpret_cast<char*>(&src[4]), count - 4);
-    ios.rdbuf()->pubseekpos(0);
+    stringbuf buf;
+    buf.pubsetbuf(reinterpret_cast<char*>(&src[4]), count - 4);
+    iostream ios(&buf);
+    ios.write(reinterpret_cast<char*>(&src[4]), count - 4);
     SliceArray<byte> litBuf(new byte[getMaxEncodedLength(sizeChunk)], getMaxEncodedLength(sizeChunk));
     SliceArray<byte> lenBuf(new byte[sizeChunk / 4], sizeChunk / 4);
     SliceArray<byte> mIdxBuf(new byte[sizeChunk / 4], sizeChunk / 4);
@@ -344,9 +335,9 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             // Decode literal, length and match index buffers
             ios.rdbuf()->pubseekpos(srcIdx - 4);
             DefaultInputBitStream ibs(ios, 65536);
-            int litLen = int(ibs.readBits(32));
-            int mLenLen = int(ibs.readBits(32));
-            int mIdxLen = int(ibs.readBits(32));
+            const int litLen = int(ibs.readBits(32));
+            const int mLenLen = int(ibs.readBits(32));
+            const int mIdxLen = int(ibs.readBits(32));
 
             if ((litLen > sizeChunk) || (mLenLen > sizeChunk) || (mIdxLen > sizeChunk)) {
                 input._index = srcIdx;
