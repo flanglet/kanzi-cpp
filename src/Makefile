@@ -1,5 +1,13 @@
-CXX=g++
-CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native
+ARCH    := $(shell uname -m)
+
+ifeq ($(ARCH),x86_64)
+   CXX=g++
+   CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native
+else
+   CXX=clang++
+   CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic
+endif
+
 LDFLAGS=-lpthread
 LIB_SOURCES=Global.cpp \
 	Event.cpp \
