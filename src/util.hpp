@@ -17,9 +17,9 @@ limitations under the License.
 #define _util_
 
 
-#include <string>
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <sys/stat.h>
 #include "types.hpp"
 
@@ -31,16 +31,36 @@ limitations under the License.
 using namespace std;
 
 #ifdef _MSC_VER
-   // Ahem ... Visual Studio 
+   // Ahem ... Visual Studio
    #define min(a, b) (((a) < (b)) ? (a) : (b))
    #define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif
 
+
+// Ahem ... Visual Studio the sequel
+// This ostreambuf class is required because Microsoft cannot bother to implement
+// streambuf::pubsetbuf().
+template <typename char_type>
+struct ostreambuf : public basic_streambuf<char_type, char_traits<char_type> >
+{
+    ostreambuf(char_type* buffer, streamsize bufferLength) {
+       setp(buffer, buffer + bufferLength);
+    }
+};
+
+template <typename char_type>
+struct istreambuf : public basic_streambuf<char_type, char_traits<char_type> >
+{
+    istreambuf(char_type* buffer, streamsize length) {
+       setg(buffer, buffer, &buffer[length]);
+    }
+};
+
 template <typename T>::string to_string(T value)
 {
-	ostringstream os;
-	os << value;
-	return os.str();
+    ostringstream os;
+    os << value;
+    return os.str();
 }
 
 inline string __trim(string& str, bool left, bool right)
@@ -75,7 +95,7 @@ inline bool samePaths(string& f1, string& f2)
    struct stat buf2;
    int s2 = stat(f2.c_str(), &buf2);
 
-   if (s1 != s2)   
+   if (s1 != s2)
       return false;
 
    if (buf1.st_dev != buf2.st_dev)
@@ -114,7 +134,6 @@ inline bool samePaths(string& f1, string& f2)
    return true;
 }
 
-
 inline string toString(int data[], int length) {
    stringstream ss;
 
@@ -147,86 +166,86 @@ using namespace chrono;
 
 class Clock {
 private:
-	steady_clock::time_point _start;
-	steady_clock::time_point _stop;
+        steady_clock::time_point _start;
+        steady_clock::time_point _stop;
 
 public:
-	Clock()
-	{
-		start();
-		_stop = _start;
-	}
+        Clock()
+        {
+                start();
+                _stop = _start;
+        }
 
-	void start()
-	{
-		_start = steady_clock::now();
-	}
+        void start()
+        {
+                _start = steady_clock::now();
+        }
 
-	void stop()
-	{
-		_stop = steady_clock::now();
-	}
+        void stop()
+        {
+                _stop = steady_clock::now();
+        }
 
-	double elapsed() const
-	{
-		// In millisec
-		return double(duration_cast<std::chrono::milliseconds>(_stop - _start).count());
-	}
+        double elapsed() const
+        {
+                // In millisec
+                return double(duration_cast<std::chrono::milliseconds>(_stop - _start).count());
+        }
 };
 #else
 #include <ctime>
 
 class Clock {
 private:
-	clock_t _start;
-	clock_t _stop;
+        clock_t _start;
+        clock_t _stop;
 
 public:
-	Clock()
-	{
-		start();
-		_stop = _start;
-	}
+        Clock()
+        {
+                start();
+                _stop = _start;
+        }
 
-	void start()
-	{
-		_start = clock();
-	}
+        void start()
+        {
+                _start = clock();
+        }
 
-	void stop()
-	{
-		_stop = clock();
-	}
+        void stop()
+        {
+                _stop = clock();
+        }
 
-	double elapsed() const
-	{
-		// In millisec
-		return double(_stop - _start) / CLOCKS_PER_SEC * 1000.0;
-	}
+        double elapsed() const
+        {
+                // In millisec
+                return double(_stop - _start) / CLOCKS_PER_SEC * 1000.0;
+        }
 };
 #endif
 
 
 //Prefetch
 static inline void prefetchRead(const void* ptr) {
-#if defined(__GNUG__) || defined(__clang__) 
-	__builtin_prefetch(ptr, 0, 1);
+#if defined(__GNUG__) || defined(__clang__)
+        __builtin_prefetch(ptr, 0, 1);
 #elif defined(__x86_64__)
-	_mm_prefetch((char*) ptr, _MM_HINT_T0);
+        _mm_prefetch((char*) ptr, _MM_HINT_T0);
 #endif
 }
 
 static inline void prefetchWrite(const void* ptr) {
-#if defined(__GNUG__) || defined(__clang__) 
-	__builtin_prefetch(ptr, 1, 1);
+#if defined(__GNUG__) || defined(__clang__)
+        __builtin_prefetch(ptr, 1, 1);
 #elif defined(__x86_64__)
-	_mm_prefetch((char*) ptr, _MM_HINT_T0);
+        _mm_prefetch((char*) ptr, _MM_HINT_T0);
 #endif
 }
 
 
 // Thread safe printer
-class Printer 
+class Printer
 {
    public:
       Printer(ostream* os) { _os = os; }
@@ -249,3 +268,5 @@ class Printer
 };
 
 #endif
+
+
