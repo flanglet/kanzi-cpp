@@ -40,19 +40,19 @@ using namespace std;
 // Ahem ... Visual Studio the sequel
 // This ostreambuf class is required because Microsoft cannot bother to implement
 // streambuf::pubsetbuf().
-template <typename char_type>
-struct ostreambuf : public basic_streambuf<char_type, char_traits<char_type> >
+template <typename T>
+struct ostreambuf : public basic_streambuf<T, char_traits<T> >
 {
-    ostreambuf(char_type* buffer, streamsize bufferLength) {
-       setp(buffer, buffer + bufferLength);
+    ostreambuf(T* buffer, streamsize length) {
+       this->setp(buffer, &buffer[length]);
     }
 };
 
-template <typename char_type>
-struct istreambuf : public basic_streambuf<char_type, char_traits<char_type> >
+template <typename T>
+struct istreambuf : public basic_streambuf<T, char_traits<T> >
 {
-    istreambuf(char_type* buffer, streamsize length) {
-       setg(buffer, buffer, &buffer[length]);
+    istreambuf(T* buffer, streamsize length) {
+       this->setg(buffer, buffer, &buffer[length]);
     }
 };
 
