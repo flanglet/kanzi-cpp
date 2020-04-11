@@ -37,12 +37,6 @@ bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     if (count == 0)
         return true;
 
-    if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("ROLZ codec: Invalid input block");
-
-    if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("ROLZ codec: Invalid output block");
-
     if (input._array == output._array)
         return false;
 
@@ -53,12 +47,6 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
 {
     if (count == 0)
         return true;
-
-    if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("ROLZ codec: Invalid input block");
-
-    if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("ROLZ codec: Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -88,10 +76,10 @@ bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+        throw invalid_argument("LZ codec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw invalid_argument("LZ codec: Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -210,10 +198,10 @@ bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+        throw invalid_argument("LZ codec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw invalid_argument("LZ codec: Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -333,10 +321,10 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+        throw invalid_argument("LZP codec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw invalid_argument("LZP codec: Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -445,10 +433,10 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+        throw invalid_argument("LZP codec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw invalid_argument("LZP codec: Invalid output block");
 
     if (input._array == output._array)
         return false;
