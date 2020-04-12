@@ -17,8 +17,8 @@ limitations under the License.
 
 using namespace kanzi;
 
-// array with 256 elements: int(Math.log2(x-1))
-const int Global::LOG2[] = {
+// int(Math.log2(x-1))
+const int Global::LOG2[256] = {
     0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5,
     5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
@@ -37,8 +37,8 @@ const int Global::LOG2[] = {
     7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8,
 };
 
-// array with 256 elements: 4096*Math.log2(x)
-const int Global::LOG2_4096[] = {
+// 4096*Math.log2(x)
+const int Global::LOG2_4096[257] = {
         0,     0,  4096,  6492,  8192,  9511, 10588, 11499, 12288, 12984,
     13607, 14170, 14684, 15157, 15595, 16003, 16384, 16742, 17080, 17400,
     17703, 17991, 18266, 18529, 18780, 19021, 19253, 19476, 19691, 19898,
@@ -67,9 +67,8 @@ const int Global::LOG2_4096[] = {
     32628, 32651, 32675, 32698, 32722, 32745, 32768
 };
 
-//  65536/(1 + exp(-alpha*x))
-const int Global::INV_EXP[] = {
-    // alpha = 0.54
+//  65536 /(1 + exp(-alpha*x)) with alpha = 0.54
+const int Global::INV_EXP[33] = {
         0,     8,    22,    47,    88,   160,   283,   492,
       848,  1451,  2459,  4117,  6766, 10819, 16608, 24127,
     32768, 41409, 48928, 54717, 58770, 61419, 63077, 64085,
@@ -109,8 +108,7 @@ const int* Global::initStretch(int data[])
     return data;
 }
 
-// Return 1024 * log2(x)
-// Max error is around 0.1%
+// Return 1024 * log2(x). Max error is around 0.1%
 int Global::log2_1024(uint32 x) THROW
 {
     if (x == 0)
@@ -139,6 +137,7 @@ int Global::log2(uint32 x) THROW
 void Global::computeHistogram(const byte block[], int length, uint freqs[], bool isOrder0, bool withTotal)
 {
     const int mult = (withTotal == true) ? 257 : 256;
+    const uint8* p = reinterpret_cast<const uint8*>(&block[0]);
 
     if (isOrder0 == true) {
         memset(freqs, 0, mult * sizeof(uint));
@@ -150,7 +149,6 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
         uint f1[256] = { 0 };
         uint f2[256] = { 0 };
         uint f3[256] = { 0 };
-        const uint8* p = reinterpret_cast<const uint8*>(&block[0]);
         const uint8* end4 = reinterpret_cast<const uint8*>(&block[length & -4]);
 
         while (p < end4) {
@@ -171,7 +169,6 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
     else { // Order 1
         memset(freqs, 0, 256 * mult * sizeof(uint));
         uint prv = 0;
-        const uint8* p = reinterpret_cast<const uint8*>(&block[0]);
 
         if (withTotal == true) {
             for (int i = 0; i < length; i++) {
