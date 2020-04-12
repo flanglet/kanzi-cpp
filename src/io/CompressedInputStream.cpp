@@ -382,25 +382,25 @@ int CompressedInputStream::processBlock() THROW
         }
 
         // Create as many tasks as required
-        for (int jobId = 0; jobId < nbTasks; jobId++) {
-            _buffers[2 * jobId]->_index = 0;
-            _buffers[2 * jobId + 1]->_index = 0;
+        for (int taskId = 0; taskId < nbTasks; taskId++) {
+            _buffers[2 * taskId]->_index = 0;
+            _buffers[2 * taskId + 1]->_index = 0;
 
-            if (_buffers[2 * jobId]->_length < blkSize + 1024) {
-                // Lazy instantiation of input buffers this.buffers[2*jobId]
-                // Output buffers this.buffers[2*jobId+1] are lazily instantiated
+            if (_buffers[2 * taskId]->_length < blkSize + 1024) {
+                // Lazy instantiation of input buffers this.buffers[2*taskId]
+                // Output buffers this.buffers[2*taskId+1] are lazily instantiated
                 // by the decoding tasks.
-                delete[] _buffers[2 * jobId]->_array;
-                _buffers[2 * jobId]->_array = new byte[blkSize + 1024];
-                _buffers[2 * jobId]->_length = blkSize + 1024;
+                delete[] _buffers[2 * taskId]->_array;
+                _buffers[2 * taskId]->_array = new byte[blkSize + 1024];
+                _buffers[2 * taskId]->_length = blkSize + 1024;
             }
 
             Context copyCtx(_ctx);
-            copyCtx.putInt("jobs", jobsPerTask[jobId]);
+            copyCtx.putInt("jobs", jobsPerTask[taskId]);
 
-            DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(_buffers[2 * jobId],
-                _buffers[2 * jobId + 1], blkSize, _transformType,
-                _entropyType, firstBlockId + jobId + 1, _ibs, _hasher, &_blockId,
+            DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(_buffers[2 * taskId],
+                _buffers[2 * taskId + 1], blkSize, _transformType,
+                _entropyType, firstBlockId + taskId + 1, _ibs, _hasher, &_blockId,
                 blockListeners, copyCtx);
             tasks.push_back(task);
         }
@@ -591,16 +591,55 @@ T DecodingTask<T>::run() THROW
 
     // Skip, either all data have been processed or an error occurred
     if (taskId == CompressedInputStream::CANCEL_TASKS_ID) {
+        (*_processedBlockId)++;
         return T(*_data, _blockId, 0, 0, 0, "");
     }
 
+    // Read shared bitstream sequentially (each task is gated by _processedBlockId)
+    const uint lr = (_blockLength >= 1 << 28) ? 40 : 32;
+    uint64 read = _ibs->readBits(lr);
+
+    if (read == 0) {
+        (*_processedBlockId)++;
+        return T(*_data, _blockId, 0, 0, 0, "");
+    }
+
+    if (read > (uint64(1) << 34)) {
+        _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID);
+        return T(*_data, _blockId, 0, 0, Error::ERR_BLOCK_SIZE, "Invalid block size");
+    }
+
+    const int r = int((read + 7) >> 3);
+
+    if (_data->_length < max(_blockLength, r)) {
+        _data->_length = max(_blockLength, r);
+        delete[] _data->_array;
+        _data->_array = new byte[_data->_length];
+    }
+
+    const uint chkSize = (read < (uint(1) << 31)) ? uint(read) : uint(1) << 31;
+    int n = 0;
+
+    while (read > 0) {
+        _ibs->readBits(&_data->_array[n], chkSize);
+        n += chkSize;
+        read -= uint64(chkSize);
+    }
+
+    // After completion of the bitstream reading, increment the block id.
+    // It unblocks the task processing the next block (if any)
+    (*_processedBlockId)++;
+
+    // Create an InputBitstream local to the task
+    istreambuf<char> buf(reinterpret_cast<char*>(&_data->_array[0]), streamsize(r));
+    iostream is(&buf);
+    DefaultInputBitStream ibs(is);
     int checksum1 = 0;
     EntropyDecoder* ed = nullptr;
 
     try {
-        // Extract block header directly from bitstream
-        uint64 read = _ibs->read();
-        byte mode = byte(_ibs->readBits(8));
+        // Extract block header from bitstream
+        byte mode = byte(ibs.readBits(8));
         byte skipFlags = byte(0);
 
         if ((mode & CompressedInputStream::COPY_BLOCK_MASK) != byte(0)) {
@@ -609,15 +648,15 @@ T DecodingTask<T>::run() THROW
         }
         else {
             if ((mode & CompressedInputStream::TRANSFORMS_MASK) != byte(0))
-                skipFlags = byte(_ibs->readBits(8));
+                skipFlags = byte(ibs.readBits(8));
             else
                 skipFlags = (mode << 4) | byte(0x0F);
         }
 
-        int dataSize = 1 + (int(mode >> 5) & 0x03);
-        int length = dataSize << 3;
-        uint64 mask = (uint64(1) << length) - 1;
-        int preTransformLength = int(_ibs->readBits(length) & mask);
+        const int dataSize = 1 + (int(mode >> 5) & 0x03);
+        const int length = dataSize << 3;
+        const uint64 mask = (uint64(1) << length) - 1;
+        const int preTransformLength = int(ibs.readBits(length) & mask);
 
         if (preTransformLength == 0) {
             // Last block is empty, return success and cancel pending tasks
@@ -633,9 +672,9 @@ T DecodingTask<T>::run() THROW
             return T(*_data, _blockId, 0, checksum1, Error::ERR_READ_FILE, ss.str());
         }
 
-        // Extract checksum from bit stream (if any)
+        // Extract checksum from bitstream (if any)
         if (_hasher != nullptr)
-            checksum1 = int(_ibs->readBits(32));
+            checksum1 = int(ibs.readBits(32));
 
         if (_listeners.size() > 0) {
             // Notify before entropy (block size in bitstream is unknown)
@@ -656,7 +695,7 @@ T DecodingTask<T>::run() THROW
 
         // Each block is decoded separately
         // Rebuild the entropy decoder to reset block statistics
-        ed = EntropyCodecFactory::newDecoder(*_ibs, _ctx, _entropyType);
+        ed = EntropyCodecFactory::newDecoder(ibs, _ctx, _entropyType);
 
         // Block entropy decode
         if (ed->decode(_buffer->_array, 0, preTransformLength) != preTransformLength) {
@@ -673,14 +712,10 @@ T DecodingTask<T>::run() THROW
         if (_listeners.size() > 0) {
             // Notify after entropy (block size set to size in bitstream)
             Event evt(Event::AFTER_ENTROPY, _blockId,
-                int64((_ibs->read() - read) / 8), checksum1, _hasher != nullptr, clock());
+                int64(ibs.read() >> 3), checksum1, _hasher != nullptr, clock());
 
             CompressedInputStream::notifyListeners(_listeners, evt);
         }
-
-        // After completion of the entropy decoding, increment the block id.
-        // It unfreezes the task processing the next block (if any)
-        (*_processedBlockId)++;
 
         if (_listeners.size() > 0) {
             // Notify before transform (block size after entropy decoding)

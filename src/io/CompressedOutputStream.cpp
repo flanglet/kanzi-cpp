@@ -287,8 +287,8 @@ void CompressedOutputStream::close() THROW
 
     try {
         // Write end block of size 0
-        _obs->writeBits(uint64(COPY_BLOCK_MASK), 8);
-        _obs->writeBits(uint64(0), 8);
+        const uint lw = (_blockSize >= 1 << 28) ? 40 : 32;
+        _obs->writeBits(uint64(0), lw);
         _obs->close();
     }
     catch (exception& e) {
@@ -325,7 +325,7 @@ ostream& CompressedOutputStream::seekp(streampos) THROW
 
 void CompressedOutputStream::processBlock(bool force) THROW
 {
-    if (force == false) { 
+    if (force == false) {
         const int bufSize = min(_jobs, max(int(_nbInputBlocks), 1)) * _blockSize;
 
         if (_sa->_length < bufSize) {
@@ -356,28 +356,28 @@ void CompressedOutputStream::processBlock(bool force) THROW
         int firstBlockId = _blockId.load();
 
         // Create as many tasks as required
-        for (int jobId = 0; jobId < _jobs; jobId++) {
+        for (int taskId = 0; taskId < _jobs; taskId++) {
             const int sz = (_sa->_index + _blockSize > dataLength) ? dataLength - _sa->_index : _blockSize;
 
             if (sz == 0)
                 break;
 
             Context copyCtx(_ctx);
-            _buffers[2 * jobId]->_index = 0;
-            _buffers[2 * jobId + 1]->_index = 0;
+            _buffers[2 * taskId]->_index = 0;
+            _buffers[2 * taskId + 1]->_index = 0;
 
             // Grow encoding buffer if required
-            if (_buffers[2 * jobId]->_length < sz) {
-                delete[] _buffers[2 * jobId]->_array;
-                _buffers[2 * jobId]->_array = new byte[sz];
-                _buffers[2 * jobId]->_length = sz;
+            if (_buffers[2 * taskId]->_length < sz) {
+                delete[] _buffers[2 * taskId]->_array;
+                _buffers[2 * taskId]->_array = new byte[sz];
+                _buffers[2 * taskId]->_length = sz;
             }
 
-            memcpy(&_buffers[2 * jobId]->_array[0], &_sa->_array[_sa->_index], sz);
+            memcpy(&_buffers[2 * taskId]->_array[0], &_sa->_array[_sa->_index], sz);
 
-            EncodingTask<EncodingTaskResult>* task = new EncodingTask<EncodingTaskResult>(_buffers[2 * jobId],
-                _buffers[2 * jobId + 1], sz, _transformType,
-                _entropyType, firstBlockId + jobId + 1,
+            EncodingTask<EncodingTaskResult>* task = new EncodingTask<EncodingTaskResult>(_buffers[2 * taskId],
+                _buffers[2 * taskId + 1], sz, _transformType,
+                _entropyType, firstBlockId + taskId + 1,
                 _obs, _hasher, &_blockId,
                 blockListeners, copyCtx);
             tasks.push_back(task);
@@ -463,7 +463,8 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     OutputBitStream* obs, XXHash32* hasher,
     atomic_int* processedBlockId, vector<Listener*>& listeners,
     Context& ctx)
-    : _ctx(ctx)
+    : _obs(obs)
+    , _ctx(ctx)
 {
     _data = iBuffer;
     _buffer = oBuffer;
@@ -471,7 +472,6 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     _transformType = transformType;
     _entropyType = entropyType;
     _blockId = blockId;
-    _obs = obs;
     _hasher = hasher;
     _listeners = listeners;
     _processedBlockId = processedBlockId;
@@ -492,6 +492,11 @@ T EncodingTask<T>::run() THROW
     EntropyEncoder* ee = nullptr;
 
     try {
+        if (_blockLength == 0) {
+            (*_processedBlockId)++;
+            return T(_blockId, 0, "Success");
+        }
+
         byte mode = byte(0);
         int postTransformLength = _blockLength;
         int checksum = 0;
@@ -519,15 +524,15 @@ T EncodingTask<T>::run() THROW
                 transform(str.begin(), str.end(), str.begin(), ::toupper);
 
                 if (str == STR_TRUE) {
-                   uint histo[256];
-                   const int entropy = EntropyUtils::computeFirstOrderEntropy1024(&_data->_array[_data->_index], _blockLength, histo);
-                   //_ctx.putString("histo0", toString(histo, 256));
+                    uint histo[256];
+                    const int entropy = EntropyUtils::computeFirstOrderEntropy1024(&_data->_array[_data->_index], _blockLength, histo);
+                    //_ctx.putString("histo0", toString(histo, 256));
 
-                   if (entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD) {
-                       _transformType = FunctionFactory<byte>::NONE_TYPE;
-                       _entropyType = EntropyCodecFactory::NONE_TYPE;
-                       mode |= CompressedOutputStream::COPY_BLOCK_MASK;
-                   }
+                    if (entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD) {
+                        _transformType = FunctionFactory<byte>::NONE_TYPE;
+                        _entropyType = EntropyCodecFactory::NONE_TYPE;
+                        mode |= CompressedOutputStream::COPY_BLOCK_MASK;
+                    }
                 }
             }
         }
@@ -576,29 +581,27 @@ T EncodingTask<T>::run() THROW
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
-        // Lock free synchronization
-        while (_processedBlockId->load() != _blockId - 1) {
-            // Busy loop
-        }
+        _data->_index = 0;
+        ostreambuf<char> buf(reinterpret_cast<char*>(&_data->_array[_data->_index]), streamsize(_data->_length));
+        ostream os(&buf);
+        DefaultOutputBitStream obs(os);
 
         // Write block 'header' (mode + compressed length);
-        uint64 written = _obs->written();
-
         if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != byte(0)) || (nbFunctions <= 4)) {
             mode |= byte(skipFlags >> 4);
-            _obs->writeBits(uint64(mode), 8);
+            obs.writeBits(uint64(mode), 8);
         }
         else {
             mode |= CompressedOutputStream::TRANSFORMS_MASK;
-            _obs->writeBits(uint64(mode), 8);
-            _obs->writeBits(uint64(skipFlags), 8);
+            obs.writeBits(uint64(mode), 8);
+            obs.writeBits(uint64(skipFlags), 8);
         }
 
-        _obs->writeBits(postTransformLength, 8 * dataSize);
+        obs.writeBits(postTransformLength, 8 * dataSize);
 
         // Write checksum
         if (_hasher != nullptr)
-            _obs->writeBits(checksum, 32);
+            obs.writeBits(checksum, 32);
 
         if (_listeners.size() > 0) {
             // Notify before entropy
@@ -610,7 +613,7 @@ T EncodingTask<T>::run() THROW
 
         // Each block is encoded separately
         // Rebuild the entropy encoder to reset block statistics
-        ee = EntropyCodecFactory::newEncoder(*_obs, _ctx, _entropyType);
+        ee = EntropyCodecFactory::newEncoder(obs, _ctx, _entropyType);
 
         // Entropy encode block
         if (ee->encode(_buffer->_array, 0, postTransformLength) != postTransformLength) {
@@ -621,25 +624,42 @@ T EncodingTask<T>::run() THROW
         // Dispose before processing statistics. Dispose may write to the bitstream
         delete ee;
         ee = nullptr;
+        obs.close();
+        uint64 written = obs.written();
 
-        // After completion of the entropy coding, increment the block id.
-        // It unfreezes the task processing the next block (if any)
-        (*_processedBlockId)++;
+        // Lock free synchronization
+        while (_processedBlockId->load() != _blockId - 1) {
+            // Busy loop
+        }
 
         if (_listeners.size() > 0) {
             // Notify after entropy
-            const int w = int((_obs->written() - written) / 8);
-
             Event evt(Event::AFTER_ENTROPY,
-                int64(_blockId), w, checksum, _hasher != nullptr, clock());
+                int64(_blockId), int((written + 7) >> 3), checksum, _hasher != nullptr, clock());
 
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
+        // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
+        const uint lw = (_blockLength >= 1 << 28) ? 40 : 32;
+        _obs->writeBits(written, lw);
+        int n = 0;
+
+        // Emit data to shared bitstream
+        while (written > 0) {
+            const uint chkSize = (written < (uint(1) << 31)) ? uint(written) : uint(1) << 31;
+            _obs->writeBits(&_data->_array[n], chkSize);
+            n += chkSize;
+            written -= uint64(chkSize);
+        }
+
+        // After completion of the entropy coding, increment the block id.
+        // It unblocks the task processing the next block (if any).
+        (*_processedBlockId)++;
+
         return T(_blockId, 0, "Success");
     }
     catch (exception& e) {
-        // Make sure to unfreeze next block
         if (_processedBlockId->load() == _blockId - 1)
             (*_processedBlockId)++;
 
