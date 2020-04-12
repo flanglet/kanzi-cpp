@@ -309,7 +309,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
     uint* data = &_buffer[0];
 
     for (int i = 0; i < pIdx; i++) {
-        const uint8 c = uint8(src[i]);
+        const int c = int(src[i]);
         const int p = freqs[c];
         freqs[c]++;
 
@@ -320,7 +320,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
     }
 
     for (int i = pIdx; i < count; i++) {
-        const uint8 c = uint8(src[i]);
+        const int c = int(src[i]);
         const int p = freqs[c];
         freqs[c]++;
 
