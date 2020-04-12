@@ -1,12 +1,17 @@
-ARCH    := $(shell uname -m)
-
-ifeq ($(ARCH),x86_64)
+ifeq ($(OS),Windows_NT)
    CXX=g++
    CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native
 else
-   CXX=clang++
-   CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic
-endif
+	ARCH := $(shell uname -m)
+
+	ifeq ($(ARCH),x86_64)
+		CXX=g++
+		CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native
+	else
+		CXX=clang++
+		CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic
+	endif
+endif	
 
 LDFLAGS=-lpthread
 LIB_SOURCES=Global.cpp \
