@@ -387,11 +387,14 @@ void CompressedOutputStream::processBlock(bool force) THROW
             _buffers[2 * taskId]->_index = 0;
             _buffers[2 * taskId + 1]->_index = 0;
 
+            // Add padding for incompressible data
+            const int length = max(sz + (sz >> 6), sz + 1024);
+
             // Grow encoding buffer if required
-            if (_buffers[2 * taskId]->_length < sz) {
+            if (_buffers[2 * taskId]->_length < length) {
                 delete[] _buffers[2 * taskId]->_array;
-                _buffers[2 * taskId]->_array = new byte[sz];
-                _buffers[2 * taskId]->_length = sz;
+                _buffers[2 * taskId]->_array = new byte[length];
+                _buffers[2 * taskId]->_length = length;
             }
 
             Context copyCtx(_ctx);
@@ -562,7 +565,7 @@ T EncodingTask<T>::run() THROW
 
         _ctx.putInt("size", _blockLength);
         TransformSequence<byte>* transform = FunctionFactory<byte>::newFunction(_ctx, _transformType);
-        int requiredSize = transform->getMaxEncodedLength(_blockLength);
+        const int requiredSize = transform->getMaxEncodedLength(_blockLength);
 
         if (_buffer->_length < requiredSize) {
             _buffer->_length = requiredSize;
