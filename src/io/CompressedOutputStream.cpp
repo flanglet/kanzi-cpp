@@ -354,6 +354,28 @@ void CompressedOutputStream::processBlock(bool force) THROW
         const int dataLength = _sa->_index;
         _sa->_index = 0;
         int firstBlockId = _blockId.load();
+        int nbTasks = _jobs;
+        int* jobsPerTask;
+
+        // Assign optimal number of tasks and jobs per task
+        if (nbTasks > 1) {
+            // If the number of input blocks is available, use it to optimize
+            // memory usage
+            if (_nbInputBlocks != 0) {
+                // Limit the number of jobs if there are fewer blocks that _jobs
+                // It allows more jobs per task and reduces memory usage.
+                if (nbTasks > _nbInputBlocks) {
+                    nbTasks = _nbInputBlocks;
+                }
+            }
+
+            jobsPerTask = new int[nbTasks];
+            Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
+        }
+        else {
+            jobsPerTask = new int[1];
+            jobsPerTask[0] = _jobs;
+        }
 
         // Create as many tasks as required
         for (int taskId = 0; taskId < _jobs; taskId++) {
@@ -362,7 +384,6 @@ void CompressedOutputStream::processBlock(bool force) THROW
             if (sz == 0)
                 break;
 
-            Context copyCtx(_ctx);
             _buffers[2 * taskId]->_index = 0;
             _buffers[2 * taskId + 1]->_index = 0;
 
@@ -373,6 +394,8 @@ void CompressedOutputStream::processBlock(bool force) THROW
                 _buffers[2 * taskId]->_length = sz;
             }
 
+            Context copyCtx(_ctx);
+            copyCtx.putInt("jobs", jobsPerTask[taskId]);
             memcpy(&_buffers[2 * taskId]->_array[0], &_sa->_array[_sa->_index], sz);
 
             EncodingTask<EncodingTaskResult>* task = new EncodingTask<EncodingTaskResult>(_buffers[2 * taskId],
@@ -557,8 +580,10 @@ T EncodingTask<T>::run() THROW
         delete transform;
         postTransformLength = _buffer->_index;
 
-        if (postTransformLength < 0)
+        if (postTransformLength < 0) {
+            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID);
             return T(_blockId, Error::ERR_WRITE_FILE, "Invalid transform size");
+        }
 
         _ctx.putInt("size", postTransformLength);
         int dataSize = 0;
@@ -566,8 +591,10 @@ T EncodingTask<T>::run() THROW
         for (uint64 n = 0xFF; n < uint64(postTransformLength); n <<= 8)
             dataSize++;
 
-        if (dataSize > 3)
+        if (dataSize > 3) {
+            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID);
             return T(_blockId, Error::ERR_WRITE_FILE, "Invalid block data length");
+        }
 
         // Record size of 'block size' - 1 in bytes
         mode |= byte((dataSize & 0x03) << 5);
@@ -618,6 +645,7 @@ T EncodingTask<T>::run() THROW
         // Entropy encode block
         if (ee->encode(_buffer->_array, 0, postTransformLength) != postTransformLength) {
             delete ee;
+            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID);
             return T(_blockId, Error::ERR_PROCESS_BLOCK, "Entropy coding failed");
         }
 
@@ -630,6 +658,8 @@ T EncodingTask<T>::run() THROW
         // Lock free synchronization
         while (_processedBlockId->load() != _blockId - 1) {
             // Busy loop
+            if (_processedBlockId->load() == CompressedOutputStream::CANCEL_TASKS_ID)
+                return T(_blockId, 0, "Canceled");
         }
 
         if (_listeners.size() > 0) {

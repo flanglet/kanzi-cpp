@@ -101,6 +101,7 @@ namespace kanzi {
        static const int MIN_BITSTREAM_BLOCK_SIZE = 1024;
        static const int MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
        static const int SMALL_BLOCK_SIZE = 15;
+       static const int CANCEL_TASKS_ID = -1;
        static const int MAX_CONCURRENCY = 64;
 
        int _blockSize;

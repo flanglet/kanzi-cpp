@@ -186,11 +186,7 @@ void CompressedInputStream::readHeader() THROW
 
         try {
             string w1 = EntropyCodecFactory::getName(_entropyType);
-
-            if (w1 == "NONE")
-                w1 = "no";
-
-            ss << "Using " << w1 << " entropy codec (stage 1)" << endl;
+            ss << "Using " << ((w1 == "NONE") ? "no" : w1) << " entropy codec (stage 1)" << endl;
         }
         catch (invalid_argument&) {
             stringstream err;
@@ -200,11 +196,7 @@ void CompressedInputStream::readHeader() THROW
 
         try {
             string w2 = FunctionFactory<byte>::getName(_transformType);
-
-            if (w2 == "NONE")
-                w2 = "no";
-
-            ss << "Using " << w2 << " transform (stage 2)" << endl;
+            ss << "Using " << ((w2 == "NONE") ? "no" : w2) << " transform (stage 2)" << endl;
         }
         catch (invalid_argument&) {
             stringstream err;
@@ -585,15 +577,14 @@ T DecodingTask<T>::run() THROW
     int taskId = _processedBlockId->load();
 
     // Lock free synchronization
-    while ((taskId != CompressedInputStream::CANCEL_TASKS_ID) && (taskId != _blockId - 1)) {
-        taskId = _processedBlockId->load();
-    }
+    while (taskId != _blockId - 1) {
+        if (taskId == CompressedInputStream::CANCEL_TASKS_ID) {
+            // Skip, an error occurred
+            return T(*_data, _blockId, 0, 0, 0, "Canceled");
+        }
 
-    // Skip, either all data have been processed or an error occurred
-    if (taskId == CompressedInputStream::CANCEL_TASKS_ID) {
-        (*_processedBlockId)++;
-        return T(*_data, _blockId, 0, 0, 0, "");
-    }
+        taskId = _processedBlockId->load();
+    } 
 
     // Read shared bitstream sequentially (each task is gated by _processedBlockId)
     const uint lr = (_blockLength >= 1 << 28) ? 40 : 32;
@@ -601,7 +592,7 @@ T DecodingTask<T>::run() THROW
 
     if (read == 0) {
         (*_processedBlockId)++;
-        return T(*_data, _blockId, 0, 0, 0, "");
+        return T(*_data, _blockId, 0, 0, 0, "Success");
     }
 
     if (read > (uint64(1) << 34)) {
@@ -659,9 +650,9 @@ T DecodingTask<T>::run() THROW
         const int preTransformLength = int(ibs.readBits(length) & mask);
 
         if (preTransformLength == 0) {
-            // Last block is empty, return success and cancel pending tasks
+            // Error => cancel concurrent decoding tasks
             _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID);
-            return T(*_data, _blockId, 0, checksum1, 0, "");
+            return T(*_data, _blockId, 0, checksum1, 0, "Invalid transform block size");
         }
 
         if ((preTransformLength < 0) || (preTransformLength > CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE)) {
@@ -752,7 +743,7 @@ T DecodingTask<T>::run() THROW
             }
         }
 
-        return T(*_data, _blockId, decoded, checksum1, 0, "");
+        return T(*_data, _blockId, decoded, checksum1, 0, "Success");
     }
     catch (exception& e) {
         // Make sure to unfreeze next block
