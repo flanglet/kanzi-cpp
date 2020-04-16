@@ -159,7 +159,12 @@ namespace kanzi {
        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
        // Required encoding output buffer size
-       int getMaxEncodedLength(int srcLen) const;
+       int getMaxEncodedLength(int srcLen) const
+       {
+           // Since we do not check the dst index for each byte (for speed purpose)
+           // allocate some extra buffer for incompressible data.
+           return srcLen + max(srcLen >> 5, 1024);
+       }
 
    private:
        static const int MATCH_FLAG = 0;

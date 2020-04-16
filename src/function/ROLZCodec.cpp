@@ -175,11 +175,12 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     bool success = true;
     const int litOrder = (count < (1 << 17)) ? 0 : 1;
     dst[dstIdx++] = byte(litOrder);
-    ostreambuf<char> buf(reinterpret_cast<char*>(&dst[dstIdx]), output._length);
-    iostream os(&buf);
+    stringbuf buffer;
+    iostream os(&buffer);
 
     // Main loop
     while (startChunk < srcEnd) {
+        buffer.pubseekpos(0);
         litBuf._index = 0;
         lenBuf._index = 0;
         mIdxBuf._index = 0;
@@ -241,12 +242,24 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             mEnc.dispose();
             obs.close();
             os.flush();
-            dstIdx += int((obs.written() + 7) >> 3);
-        }
+        } 
 
+        // Copy bitstream array to output	
+        const int bufSize = int(os.tellp());	
+
+        if (dstIdx + bufSize > output._length) {	
+            input._index = startChunk + srcIdx;	
+            success = false;	
+            goto End;	
+        }	
+
+        os.seekg(0);	
+        os.read(reinterpret_cast<char*>(&dst[dstIdx]), bufSize);	
+        dstIdx += bufSize;
         startChunk = endChunk;
     }
 
+End:
     if (success == true) {
         if (dstIdx + 4 > output._length) {
             input._index = srcEnd;
@@ -264,7 +277,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     delete[] litBuf._array;
     delete[] lenBuf._array;
     delete[] mIdxBuf._array;
-    return input._index == count;
+    return (input._index == count) && (output._index < count);
 }
 
 void ROLZCodec1::emitToken(byte block[], int& idx, int litLen, int mLen)
@@ -795,9 +808,3 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     return srcIdx == count;
 }
 
-int ROLZCodec2::getMaxEncodedLength(int srcLen) const
-{
-    // Since we do not check the dst index for each byte (for speed purpose)
-    // allocate some extra buffer for incompressible data.
-    return (srcLen <= 16384) ? srcLen + 1024 : srcLen + (srcLen / 32);
-}
