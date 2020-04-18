@@ -114,9 +114,14 @@ void DefaultOutputBitStream::close() THROW
 
     try {
         // Push last bytes (the very last byte may be incomplete)
-        int size = ((64 - _availBits) + 7) >> 3;
-        pushCurrent();
-        _position -= (8 - size);
+        uint shift = 56;
+
+        while (_availBits > 0) {
+            _buffer[_position++] = byte(_current >> shift);
+            shift -= 8;
+            _availBits -= 8;
+        }
+
         flush();
     }
     catch (BitStreamException& e) {
