@@ -122,6 +122,7 @@ void DefaultOutputBitStream::close() THROW
             _availBits -= 8;
         }
 
+        _availBits = 0;
         flush();
     }
     catch (BitStreamException& e) {
@@ -147,7 +148,6 @@ void DefaultOutputBitStream::close() THROW
 
     // Reset fields to force a flush() and trigger an exception
     // on writeBit() or writeBits()
-    _availBits = 0;
     delete[] _buffer;
     _bufferSize = 8;
     _buffer = new byte[_bufferSize];

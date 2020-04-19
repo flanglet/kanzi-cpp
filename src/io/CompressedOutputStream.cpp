@@ -378,7 +378,7 @@ void CompressedOutputStream::processBlock(bool force) THROW
         }
 
         // Create as many tasks as required
-        for (int taskId = 0; taskId < _jobs; taskId++) {
+        for (int taskId = 0; taskId < nbTasks; taskId++) {
             const int sz = (_sa->_index + _blockSize > dataLength) ? dataLength - _sa->_index : _blockSize;
 
             if (sz == 0)
