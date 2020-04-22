@@ -53,9 +53,14 @@ namespace kanzi {
 
       while (count > 0) {
 	      const int ckSize = (count < 1<<23) ? count : 1<<23;
-	      res += (_bitstream.writeBits(&block[blkptr], 8 * ckSize) >> 3);
-	      blkptr += ckSize;
-	      count -= ckSize;
+	      const int w = (_bitstream.writeBits(&block[blkptr], 8 * ckSize) >> 3);
+
+	      if (w == 0)
+	         break;
+
+	      res += w;
+	      blkptr += w;
+	      count -= w;
       }
 
       return res;
