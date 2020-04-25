@@ -116,13 +116,14 @@ void DefaultOutputBitStream::close() THROW
         // Push last bytes (the very last byte may be incomplete)
         uint shift = 56;
 
-        while (_availBits > 0) {
+        while (_availBits < 64) {
             _buffer[_position++] = byte(_current >> shift);
             shift -= 8;
-            _availBits -= 8;
+            _availBits += 8;
         }
 
-        _availBits = 0;
+        _written -= (_availBits - 64);
+        _availBits = 64;
         flush();
     }
     catch (BitStreamException& e) {
@@ -145,6 +146,8 @@ void DefaultOutputBitStream::close() THROW
 
     _closed = true;
     _position = 0;
+    _availBits = 0;
+    _written -= 64; // adjust because _availBits = 0
 
     // Reset fields to force a flush() and trigger an exception
     // on writeBit() or writeBits()
@@ -152,7 +155,6 @@ void DefaultOutputBitStream::close() THROW
     _bufferSize = 8;
     _buffer = new byte[_bufferSize];
     memset(&_buffer[0], 0, _bufferSize);
-    _written -= 64; // adjust for method written()
 }
 
 // Write buffer to underlying stream
