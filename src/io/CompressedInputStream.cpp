@@ -574,16 +574,18 @@ DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
 template <class T>
 T DecodingTask<T>::run() THROW
 {
-    int taskId = _processedBlockId->load();
-
     // Lock free synchronization
-    while (taskId != _blockId - 1) {
+    while (true) {
+        //Busy loop
+        const int taskId = _processedBlockId->load();
+
+        if (taskId == _blockId - 1)
+            break;
+        
         if (taskId == CompressedInputStream::CANCEL_TASKS_ID) {
             // Skip, an error occurred
             return T(*_data, _blockId, 0, 0, 0, "Canceled");
         }
-
-        taskId = _processedBlockId->load();
     } 
 
     // Read shared bitstream sequentially (each task is gated by _processedBlockId)
@@ -608,12 +610,10 @@ T DecodingTask<T>::run() THROW
         _data->_array = new byte[_data->_length];
     }
 
-    const uint chkSize = (read < (uint(1) << 31)) ? uint(read) : uint(1) << 31;
-    int n = 0;
-
-    while (read > 0) {
+    for (int n = 0; read > 0; ) {
+        const uint chkSize = (read < (uint(1) << 31)) ? uint(read) : uint(1) << 31;
         _ibs->readBits(&_data->_array[n], chkSize);
-        n += chkSize;
+        n += ((chkSize + 7) >> 3);
         read -= uint64(chkSize);
     }
 
@@ -747,8 +747,8 @@ T DecodingTask<T>::run() THROW
     }
     catch (exception& e) {
         // Make sure to unfreeze next block
-        if (_processedBlockId->load() == _blockId - 1)
-            (*_processedBlockId)++;
+        int prvBlockId = _blockId - 1;
+        _processedBlockId->compare_exchange_strong(prvBlockId, _blockId);
 
         if (ed != nullptr)
             delete ed;

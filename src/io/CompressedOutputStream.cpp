@@ -659,9 +659,14 @@ T EncodingTask<T>::run() THROW
         uint64 written = obs.written();
 
         // Lock free synchronization
-        while (_processedBlockId->load() != _blockId - 1) {
-            // Busy loop
-            if (_processedBlockId->load() == CompressedOutputStream::CANCEL_TASKS_ID)
+        while (true) {
+            //Busy loop
+            const int taskId = _processedBlockId->load();
+
+            if (taskId == _blockId - 1)
+                break;
+        
+            if (taskId == CompressedOutputStream::CANCEL_TASKS_ID)
                 return T(_blockId, 0, "Canceled");
         }
 
@@ -676,13 +681,12 @@ T EncodingTask<T>::run() THROW
         // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
         const uint lw = (_blockLength >= 1 << 28) ? 40 : 32;
         _obs->writeBits(written, lw);
-        int n = 0;
 
         // Emit data to shared bitstream
-        while (written > 0) {
+        for (int n = 0; written > 0; ) {
             const uint chkSize = (written < (uint(1) << 31)) ? uint(written) : uint(1) << 31;
             _obs->writeBits(&_data->_array[n], chkSize);
-            n += chkSize;
+            n += ((chkSize + 7) >> 3);
             written -= uint64(chkSize);
         }
 
@@ -693,8 +697,9 @@ T EncodingTask<T>::run() THROW
         return T(_blockId, 0, "Success");
     }
     catch (exception& e) {
-        if (_processedBlockId->load() == _blockId - 1)
-            (*_processedBlockId)++;
+        // Make sure to unfreeze next block
+        int prvBlockId = _blockId - 1;
+        _processedBlockId->compare_exchange_strong(prvBlockId, _blockId);
 
         if (ee != nullptr)
             delete ee;
