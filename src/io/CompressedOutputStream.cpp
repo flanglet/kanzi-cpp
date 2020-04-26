@@ -652,7 +652,8 @@ T EncodingTask<T>::run() THROW
             return T(_blockId, Error::ERR_PROCESS_BLOCK, "Entropy coding failed");
         }
 
-        // Dispose before processing statistics. Dispose may write to the bitstream
+        // Dispose before processing statistics( may write to the bitstream)
+        ee->dispose();
         delete ee;
         ee = nullptr;
         obs.close();
@@ -660,7 +661,6 @@ T EncodingTask<T>::run() THROW
 
         // Lock free synchronization
         while (true) {
-            //Busy loop
             const int taskId = _processedBlockId->load();
 
             if (taskId == _blockId - 1)
@@ -668,6 +668,9 @@ T EncodingTask<T>::run() THROW
         
             if (taskId == CompressedOutputStream::CANCEL_TASKS_ID)
                 return T(_blockId, 0, "Canceled");
+
+            // Back-off improves performance
+            CPU_PAUSE();
         }
 
         if (_listeners.size() > 0) {
@@ -698,8 +701,8 @@ T EncodingTask<T>::run() THROW
     }
     catch (exception& e) {
         // Make sure to unfreeze next block
-        int prvBlockId = _blockId - 1;
-        _processedBlockId->compare_exchange_strong(prvBlockId, _blockId);
+        if (_processedBlockId->load() == _blockId - 1)
+            (*_processedBlockId)++;
 
         if (ee != nullptr)
             delete ee;

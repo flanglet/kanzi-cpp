@@ -576,7 +576,6 @@ T DecodingTask<T>::run() THROW
 {
     // Lock free synchronization
     while (true) {
-        //Busy loop
         const int taskId = _processedBlockId->load();
 
         if (taskId == _blockId - 1)
@@ -586,6 +585,9 @@ T DecodingTask<T>::run() THROW
             // Skip, an error occurred
             return T(*_data, _blockId, 0, 0, 0, "Canceled");
         }
+
+        // Back-off improves performance
+        CPU_PAUSE();
     } 
 
     // Read shared bitstream sequentially (each task is gated by _processedBlockId)
@@ -747,8 +749,8 @@ T DecodingTask<T>::run() THROW
     }
     catch (exception& e) {
         // Make sure to unfreeze next block
-        int prvBlockId = _blockId - 1;
-        _processedBlockId->compare_exchange_strong(prvBlockId, _blockId);
+        if (_processedBlockId->load() == _blockId - 1)
+            (*_processedBlockId)++;
 
         if (ed != nullptr)
             delete ed;

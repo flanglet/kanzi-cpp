@@ -16,6 +16,8 @@ limitations under the License.
 #ifndef _concurrent_
 #define _concurrent_
 
+#include "types.hpp"
+
 template <class T>
 class Task {
 public:
@@ -43,6 +45,24 @@ public:
 		#endif
 	#endif
 #endif
+
+
+
+
+#ifdef __x86_64__
+   #ifdef __clang__
+	   #define CPU_PAUSE() __builtin_ia32_pause()
+   #elif __GNUC__
+	   #define CPU_PAUSE() __builtin_ia32_pause()
+   #elif _MSC_VER
+	   #define CPU_PAUSE() _mm_pause()
+   #else
+      #define CPU_PAUSE()
+   #endif
+#else
+   #define CPU_PAUSE()
+#endif
+
 
 
 #ifdef CONCURRENCY_ENABLED
@@ -90,6 +110,14 @@ public:
 		atomic_int fetch_add(atomic_int arg) {
 		   _n++;
 		   return atomic_int(_n-1);
+		}
+		bool compare_exchange_strong(int& expected, int desired) {
+		   if (_n == expected) {
+			   _n = desired;
+			   return true;
+		   }
+
+		   return false;
 		}
 	};
 
