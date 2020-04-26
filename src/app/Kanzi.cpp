@@ -168,9 +168,11 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             extraHeader << " - AVX2";
 #elif defined(__AVX__)   
             extraHeader << " - AVX";
+#elif defined(__AVX512F__)   
+            extraHeader << " - AVX512";
 #elif defined(__SSE4_1__)   
             extraHeader << " - SSE4.1";
-#elif  defined(__SSSE3__)
+#elif defined(__SSE3__)
             extraHeader << " - SSE3";
 #elif defined(__SSE2__) 
             extraHeader << " - SSE2";
