@@ -663,12 +663,12 @@ T EncodingTask<T>::run() THROW
         while (true) {
             const int taskId = _processedBlockId->load();
 
-            if (taskId == _blockId - 1)
-                break;
-        
             if (taskId == CompressedOutputStream::CANCEL_TASKS_ID)
                 return T(_blockId, 0, "Canceled");
 
+            if (taskId == _blockId - 1)
+                break;
+        
             // Back-off improves performance
             CPU_PAUSE();
         }

@@ -578,14 +578,14 @@ T DecodingTask<T>::run() THROW
     while (true) {
         const int taskId = _processedBlockId->load();
 
-        if (taskId == _blockId - 1)
-            break;
-        
         if (taskId == CompressedInputStream::CANCEL_TASKS_ID) {
             // Skip, an error occurred
             return T(*_data, _blockId, 0, 0, 0, "Canceled");
         }
 
+        if (taskId == _blockId - 1)
+            break;
+        
         // Back-off improves performance
         CPU_PAUSE();
     } 
