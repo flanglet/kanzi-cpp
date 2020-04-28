@@ -339,7 +339,7 @@ namespace kanzi
        _buffer = new byte[BUFFER_SIZE];
        memset(_buffer, 0, BUFFER_SIZE);
        _statesMask = statesSize - 1;
-       _mixersMask = mixersSize - 1;
+       _mixersMask = (mixersSize - 1) & ~1;
        _hashMask = hashSize - 1;
        _cp0 = &_smallStatesMap0[0];
        _cp1 = &_smallStatesMap1[0];
@@ -382,7 +382,7 @@ namespace kanzi
            _binCount += ((_c4 >> 7) & 1);
 
            // Select Neural Net
-           _mixer = &_mixers[_c4 & _mixersMask];
+           _mixer = &_mixers[(_c4 & _mixersMask) | ((_matchLen != 0) ? 1 : 0)];
 
            // Add contexts to NN
            _ctx0 = (_c4 & 0xFF) << 8;
