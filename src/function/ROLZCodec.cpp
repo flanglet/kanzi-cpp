@@ -320,8 +320,6 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
     const int litOrder = int(src[srcIdx++]);
-    istreambuf<char> buf(reinterpret_cast<char*>(&src[srcIdx]), count - srcIdx);
-    istream is(&buf);
     SliceArray<byte> litBuf(new byte[getMaxEncodedLength(sizeChunk)], getMaxEncodedLength(sizeChunk));
     SliceArray<byte> lenBuf(new byte[sizeChunk / 4], sizeChunk / 4);
     SliceArray<byte> mIdxBuf(new byte[sizeChunk / 4], sizeChunk / 4);
@@ -336,10 +334,11 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         memset(&_matches[0], 0, sizeof(int32) * (ROLZCodec::HASH_SIZE << _logPosChecks));
         const int endChunk = min(startChunk + sizeChunk, dstEnd);
         sizeChunk = endChunk - startChunk;
-
         // Scope to deallocate resources early
         {
             // Decode literal, length and match index buffers
+            istreambuf<char> buffer(reinterpret_cast<char*>(&src[srcIdx]), count - srcIdx);
+            istream is(&buffer);
             DefaultInputBitStream ibs(is, 65536);
             const int litLen = int(ibs.readBits(32));
             const int mLenLen = int(ibs.readBits(32));
