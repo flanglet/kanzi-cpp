@@ -23,13 +23,13 @@ limitations under the License.
 namespace kanzi {
    class DictEntry {
    public:
-       int32 _hash; // full word hash
-       int32 _data; // packed word length (8 MSB) + index in dictionary (24 LSB)
+       int _hash; // full word hash
+       int _data; // packed word length (8 MSB) + index in dictionary (24 LSB)
        const byte* _ptr; // text data
 
        DictEntry();
 
-       DictEntry(const byte* ptr, int32 hash, int idx, int length);
+       DictEntry(const byte* ptr, int hash, int idx, int length);
 
        DictEntry(const DictEntry& de);
 
@@ -66,7 +66,7 @@ namespace kanzi {
        int _staticDictSize;
        int _dictSize;
        int _logHashSize;
-       int32 _hashMask;
+       int _hashMask;
        bool _isCRLF; // EOL = CR + LF
 
        bool expandDictionary();
@@ -102,7 +102,7 @@ namespace kanzi {
        int _staticDictSize;
        int _dictSize;
        int _logHashSize;
-       int32 _hashMask;
+       int _hashMask;
        bool _isCRLF; // EOL = CR + LF
 
        bool expandDictionary();
@@ -155,8 +155,8 @@ namespace kanzi {
        static bool isDelimiter(byte val) { return DELIMITER_CHARS[uint8(val)]; }
 
    private:
-       static const int32 HASH1 = 0x7FEB352D;
-       static const int32 HASH2 = 0x846CA68B;
+       static const int HASH1 = 0x7FEB352D;
+       static const int HASH2 = 0x846CA68B;
        static const byte CR = byte(0x0D);
        static const byte LF = byte(0x0A);
        static const byte SP = byte(0x20);
@@ -179,7 +179,7 @@ namespace kanzi {
 
        static bool sameWords(const byte src[], const byte dst[], const int length);
 
-       static byte computeStats(const byte block[], int count, int32 freqs[], bool strict);
+       static byte computeStats(const byte block[], int count, int freqs[], bool strict);
 
        // Common English words.
        static char DICT_EN_1024[];
@@ -199,7 +199,7 @@ namespace kanzi {
        _data = 0;
    }
 
-   inline DictEntry::DictEntry(const byte* ptr, int32 hash, int idx, int length)
+   inline DictEntry::DictEntry(const byte* ptr, int hash, int idx, int length)
    {
        _ptr = ptr;
        _hash = hash;
@@ -225,8 +225,8 @@ namespace kanzi {
    inline bool TextCodec::sameWords(const byte src[], const byte dst[], const int length)
    {
 	   if (length >= 4) {
-		   const int32* p1 = reinterpret_cast<const int32*>((const byte*)&src[0]);
-		   const int32* p2 = reinterpret_cast<const int32*>((const byte*)&dst[0]);
+		   const int* p1 = reinterpret_cast<const int*>((const byte*)&src[0]);
+		   const int* p2 = reinterpret_cast<const int*>((const byte*)&dst[0]);
 		   int n = length;
 
 		   while (n >= 4) {

@@ -138,11 +138,11 @@ namespace kanzi
        Stack* _trStack;
        Stack* _mergeStack;
 
-       void constructSuffixArray(int32 bucketA[], int32 bucketB[], int n, int m);
+       void constructSuffixArray(int bucketA[], int bucketB[], int n, int m);
 
-       int constructBWT(int32 bucketA[], int32 bucketB[], int n, int m);
+       int constructBWT(int bucketA[], int bucketB[], int n, int m);
 
-       int sortTypeBstar(int32 bucketA[], int32 bucketB[], int n);
+       int sortTypeBstar(int bucketA[], int bucketB[], int n);
 
        void ssSort(int pa, int first, int last, int buf, int bufSize,
            int depth, int n, bool lastSuffix);

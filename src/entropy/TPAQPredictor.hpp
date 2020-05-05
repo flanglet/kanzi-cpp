@@ -39,17 +39,17 @@ namespace kanzi
 
        void update(int bit);
 
-       int get(int32 p0, int32 p1, int32 p2, int32 p3, int32 p4, int32 p5, int32 p6, int32 p7);
+       int get(int p0, int p1, int p2, int p3, int p4, int p5, int p6, int p7);
 
    private:
        static const int BEGIN_LEARN_RATE = 60 << 7;
        static const int END_LEARN_RATE = 11 << 7;
 
-       int32 _w0, _w1, _w2, _w3, _w4, _w5, _w6, _w7;
-       int32 _p0, _p1, _p2, _p3, _p4, _p5, _p6, _p7;
+       int _w0, _w1, _w2, _w3, _w4, _w5, _w6, _w7;
+       int _p0, _p1, _p2, _p3, _p4, _p5, _p6, _p7;
        int _pr;
-       int32 _skew;
-       int32 _learnRate;
+       int _skew;
+       int _learnRate;
    };
 
 
@@ -79,27 +79,27 @@ namespace kanzi
        #define SSE0_RATE(T) ((T == true) ? 6 : 7)
 
        int _pr; // next predicted value (0-4095)
-       int32 _c0; // bitwise context: last 0-7 bits with a leading 1 (1-255)
-       int32 _c4; // last 4 whole bytes, last is in low 8 bits
-       int32 _c8; // last 8 to 4 whole bytes, last is in low 8 bits
+       int _c0; // bitwise context: last 0-7 bits with a leading 1 (1-255)
+       int _c4; // last 4 whole bytes, last is in low 8 bits
+       int _c8; // last 8 to 4 whole bytes, last is in low 8 bits
        int _bpos; // number of bits in c0 (0-7)
-       int32 _pos;
-       int32 _binCount;
-       int32 _matchLen;
-       int32 _matchPos;
-       int32 _hash;
+       int _pos;
+       int _binCount;
+       int _matchLen;
+       int _matchPos;
+       int _hash;
        LogisticAdaptiveProbMap<false, SSE0_RATE(T)> _sse0;
        LogisticAdaptiveProbMap<false, 7> _sse1;
        TPAQMixer* _mixers;
        TPAQMixer* _mixer; // current mixer
        byte* _buffer;
-       int32* _hashes; // hash table(context, buffer position)
+       int* _hashes; // hash table(context, buffer position)
        uint8* _bigStatesMap;// hash table(context, prediction)
        uint8* _smallStatesMap0; // hash table(context, prediction)
        uint8* _smallStatesMap1; // hash table(context, prediction)
-       int32 _statesMask;
-       int32 _mixersMask;
-       int32 _hashMask;
+       int _statesMask;
+       int _mixersMask;
+       int _hashMask;
        uint8* _cp0; // context pointers
        uint8* _cp1;
        uint8* _cp2;
@@ -107,28 +107,28 @@ namespace kanzi
        uint8* _cp4;
        uint8* _cp5;
        uint8* _cp6;
-       int32 _ctx0; // contexts
-       int32 _ctx1;
-       int32 _ctx2;
-       int32 _ctx3;
-       int32 _ctx4;
-       int32 _ctx5;
-       int32 _ctx6;
+       int _ctx0; // contexts
+       int _ctx1;
+       int _ctx2;
+       int _ctx3;
+       int _ctx4;
+       int _ctx5;
+       int _ctx6;
 
-       inline int32 hash(int32 x, int32 y);
+       int hash(int x, int y);
 
-       inline int32 createContext(uint32 ctxId, uint32 cx);
+       int createContext(uint ctxId, uint cx);
 
-       inline int getMatchContextPred();
+       int getMatchContextPred();
 
-       inline void findMatch();
+       void findMatch();
   };
 
 
    // Adjust weights to minimize coding cost of last prediction
    inline void TPAQMixer::update(int bit)
    {
-       const int32 err = (((bit << 12) - _pr) * _learnRate) >> 10;
+       const int err = (((bit << 12) - _pr) * _learnRate) >> 10;
 
        if (err == 0)
            return;
@@ -148,7 +148,7 @@ namespace kanzi
        _w7 += ((_p7 * err + 0) >> 12);
    }
 
-   inline int TPAQMixer::get(int32 p0, int32 p1, int32 p2, int32 p3, int32 p4, int32 p5, int32 p6, int32 p7)
+   inline int TPAQMixer::get(int p0, int p1, int p2, int p3, int p4, int p5, int p6, int p7)
    {
        _p0 = p0;
        _p1 = p1;
@@ -237,7 +237,7 @@ namespace kanzi
            0, 0, 0, 0, 0, 0 }
    };
 
-   const int32 STATE_MAP[] = {
+   const int STATE_MAP[] = {
       -31,  -400,   406,  -547,  -642,  -743,  -827,  -901,
      -901,  -974,  -945,  -955, -1060, -1031, -1044,  -956,
      -994, -1035, -1147, -1069, -1111, -1145, -1096, -1084,
@@ -334,8 +334,8 @@ namespace kanzi
        memset(_smallStatesMap0, 0, 1 << 16);
        _smallStatesMap1 = new uint8[1 << 24];
        memset(_smallStatesMap1, 0, 1 << 24);
-       _hashes = new int32[hashSize];
-       memset(_hashes, 0, sizeof(int32) * hashSize);
+       _hashes = new int[hashSize];
+       memset(_hashes, 0, sizeof(int) * hashSize);
        _buffer = new byte[BUFFER_SIZE];
        memset(_buffer, 0, BUFFER_SIZE);
        _statesMask = statesSize - 1;
@@ -480,7 +480,7 @@ namespace kanzi
           }
        }
 
-       _pr = p + (uint32(p - 2048) >> 31);
+       _pr = p + (uint(p - 2048) >> 31);
    }
 
    template <bool T>
@@ -517,14 +517,14 @@ namespace kanzi
    }
 
    template <bool T>
-   inline int32 TPAQPredictor<T>::hash(int32 x, int32 y)
+   inline int TPAQPredictor<T>::hash(int x, int y)
    {
-       const int32 h = x * HASH ^ y * HASH;
+       const int h = x * HASH ^ y * HASH;
        return (h >> 1) ^ (h >> 9) ^ (x >> 2) ^ (y >> 3) ^ HASH;
    }
 
    template <bool T>
-   inline int32 TPAQPredictor<T>::createContext(uint32 ctxId, uint32 cx)
+   inline int TPAQPredictor<T>::createContext(uint ctxId, uint cx)
    {
        cx = cx * 987654323 + ctxId;
        cx = (cx << 16) | (cx >> 16);

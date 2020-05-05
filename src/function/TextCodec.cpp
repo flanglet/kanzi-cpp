@@ -152,7 +152,7 @@ bool TextCodec::init(bool delims[256], bool text[256])
 int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], int maxWords, int startWord)
 {
     int delimAnchor = 0;
-    int32 h = HASH1;
+    int h = HASH1;
     int nbWords = startWord;
 
     for (int i = 0; ((i < dictSize) && (nbWords < maxWords)); i++) {
@@ -172,7 +172,7 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
             words[i] ^= 0x20;
         }
 
-        h = h * HASH1 ^ int32(words[i]) * HASH2;
+        h = h * HASH1 ^ int(words[i]) * HASH2;
     }
 
     if (nbWords < maxWords) {
@@ -184,13 +184,13 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
 }
 
 // return 8-bit status (see MASK flags constants)
-byte TextCodec::computeStats(const byte block[], int count, int32 freqs0[], bool strict)
+byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool strict)
 {
-    int32 freqs[256][256] = { { 0 } };
-    int32 f0[256] = { 0 };
-    int32 f1[256] = { 0 };
-    int32 f3[256] = { 0 };
-    int32 f2[256] = { 0 };
+    int freqs[256][256] = { { 0 } };
+    int f0[256] = { 0 };
+    int f1[256] = { 0 };
+    int f3[256] = { 0 };
+    int f2[256] = { 0 };
     uint8 prv = 0;
     const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
     const int count4 = count & -4;
@@ -265,10 +265,10 @@ byte TextCodec::computeStats(const byte block[], int count, int32 freqs0[], bool
         // Another crude test: check that the frequencies of < and > are similar
         // and 'high enough'. Also check it is worth to attempt replacing ampersand sequences.
         // Getting this flag wrong results in a very small compression speed degradation.
-        const int32 f1 = freqs0[60]; // '<'
-        const int32 f2 = freqs0[62]; // '>'
-        const int32 f3 = freqs[38][97] + freqs[38][103] + freqs[38][108] + freqs[38][113]; // '&a', '&g', '&l', '&q'
-        const int32 minFreq = (((count - nbBinChars) >> 9) < 2) ? 2 : (count - nbBinChars) >> 9;
+        const int f1 = freqs0[60]; // '<'
+        const int f2 = freqs0[62]; // '>'
+        const int f3 = freqs[38][97] + freqs[38][103] + freqs[38][108] + freqs[38][113]; // '&a', '&g', '&l', '&q'
+        const int minFreq = (((count - nbBinChars) >> 9) < 2) ? 2 : (count - nbBinChars) >> 9;
 
         if ((f1 >= minFreq) && (f2 >= minFreq) && (f3 > 0)) {
             if (f1 < f2) {
@@ -449,7 +449,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int srcIdx = 0;
     int dstIdx = 0;
 
-    int32 freqs[256] = { 0 };
+    int freqs[256] = { 0 };
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, true);
 
     // Not text ?
@@ -490,14 +490,14 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 // Compute hashes
                 // h1 -> hash of word chars
                 // h2 -> hash of word chars with first char case flipped
-                int32 h1 = TextCodec::HASH1;
-                h1 = h1 * TextCodec::HASH1 ^ int32(val) * TextCodec::HASH2;
-                int32 h2 = TextCodec::HASH1;
-                h2 = h2 * TextCodec::HASH1 ^ (int32(val) ^ 0x20) * TextCodec::HASH2;
+                int h1 = TextCodec::HASH1;
+                h1 = h1 * TextCodec::HASH1 ^ int(val) * TextCodec::HASH2;
+                int h2 = TextCodec::HASH1;
+                h2 = h2 * TextCodec::HASH1 ^ (int(val) ^ 0x20) * TextCodec::HASH2;
 
                 for (int i = delimAnchor + 2; i < srcIdx; i++) {
-                    h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
-                    h2 = h2 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
+                    h1 = h1 * TextCodec::HASH1 ^ int(src[i]) * TextCodec::HASH2;
+                    h2 = h2 * TextCodec::HASH1 ^ int(src[i]) * TextCodec::HASH2;
                 }
 
                 // Check word in dictionary
@@ -721,10 +721,10 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const int length = srcIdx - delimAnchor - 1;
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
-                int32 h1 = TextCodec::HASH1;
+                int h1 = TextCodec::HASH1;
 
                 for (int i = delimAnchor + 1; i < srcIdx; i++)
-                    h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
+                    h1 = h1 * TextCodec::HASH1 ^ int(src[i]) * TextCodec::HASH2;
 
                 // Lookup word in dictionary
                 DictEntry* pe = nullptr;
@@ -907,7 +907,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int srcIdx = 0;
     int dstIdx = 0;
 
-    int32 freqs[256] = { 0 };
+    int freqs[256] = { 0 };
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, false);
 
     // Not text ?
@@ -948,14 +948,14 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 // Compute hashes
                 // h1 -> hash of word chars
                 // h2 -> hash of word chars with first char case flipped
-                int32 h1 = TextCodec::HASH1;
-                h1 = h1 * TextCodec::HASH1 ^ int32(val) * TextCodec::HASH2;
-                int32 h2 = TextCodec::HASH1;
-                h2 = h2 * TextCodec::HASH1 ^ (int32(val) ^ 0x20) * TextCodec::HASH2;
+                int h1 = TextCodec::HASH1;
+                h1 = h1 * TextCodec::HASH1 ^ int(val) * TextCodec::HASH2;
+                int h2 = TextCodec::HASH1;
+                h2 = h2 * TextCodec::HASH1 ^ (int(val) ^ 0x20) * TextCodec::HASH2;
 
                 for (int i = delimAnchor + 2; i < srcIdx; i++) {
-                    h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
-                    h2 = h2 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
+                    h1 = h1 * TextCodec::HASH1 ^ int(src[i]) * TextCodec::HASH2;
+                    h2 = h2 * TextCodec::HASH1 ^ int(src[i]) * TextCodec::HASH2;
                 }
 
                 // Check word in dictionary
@@ -1213,10 +1213,10 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const int length = srcIdx - delimAnchor - 1;
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
-                int32 h1 = TextCodec::HASH1;
+                int h1 = TextCodec::HASH1;
 
                 for (int i = delimAnchor + 1; i < srcIdx; i++)
-                    h1 = h1 * TextCodec::HASH1 ^ int32(src[i]) * TextCodec::HASH2;
+                    h1 = h1 * TextCodec::HASH1 ^ int(src[i]) * TextCodec::HASH2;
 
                 // Lookup word in dictionary
                 DictEntry* pe = nullptr;

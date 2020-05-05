@@ -39,11 +39,11 @@ namespace kanzi {
    private:
        static const int MAX_HEADER_SIZE = 4 * 256;
 
-       static int preprocess(int32 freqs[], uint8 symbols[]);
+       static int preprocess(int freqs[], uint8 symbols[]);
 
-       static int encodeHeader(int32 freqs[], byte dst[]);
+       static int encodeHeader(int freqs[], byte dst[]);
 
-       static int decodeHeader(byte src[], int32 freqs[]);
+       static int decodeHeader(byte src[], int freqs[]);
    };
 }
 #endif
