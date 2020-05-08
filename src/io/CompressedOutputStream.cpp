@@ -355,7 +355,7 @@ void CompressedOutputStream::processBlock(bool force) THROW
         _sa->_index = 0;
         int firstBlockId = _blockId.load();
         int nbTasks = _jobs;
-        int* jobsPerTask;
+        int jobsPerTask[MAX_CONCURRENCY];
 
         // Assign optimal number of tasks and jobs per task
         if (nbTasks > 1) {
@@ -369,11 +369,9 @@ void CompressedOutputStream::processBlock(bool force) THROW
                 }
             }
 
-            jobsPerTask = new int[nbTasks];
             Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
         }
         else {
-            jobsPerTask = new int[1];
             jobsPerTask[0] = _jobs;
         }
 

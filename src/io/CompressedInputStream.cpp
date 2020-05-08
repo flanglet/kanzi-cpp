@@ -351,7 +351,7 @@ int CompressedInputStream::processBlock() THROW
         _sa->_index = 0;
         const int firstBlockId = _blockId.load();
         int nbTasks = _jobs;
-        int* jobsPerTask;
+        int jobsPerTask[MAX_CONCURRENCY];
 
         // Assign optimal number of tasks and jobs per task
         if (nbTasks > 1) {
@@ -365,11 +365,9 @@ int CompressedInputStream::processBlock() THROW
                 }
             }
 
-            jobsPerTask = new int[nbTasks];
             Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
         }
         else {
-            jobsPerTask = new int[1];
             jobsPerTask[0] = _jobs;
         }
 
@@ -396,8 +394,6 @@ int CompressedInputStream::processBlock() THROW
                 blockListeners, copyCtx);
             tasks.push_back(task);
         }
-
-        delete[] jobsPerTask;
 
         if (tasks.size() == 1) {
             // Synchronous call

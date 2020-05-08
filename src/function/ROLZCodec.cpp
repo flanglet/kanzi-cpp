@@ -334,6 +334,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         memset(&_matches[0], 0, sizeof(int32) * (ROLZCodec::HASH_SIZE << _logPosChecks));
         const int endChunk = min(startChunk + sizeChunk, dstEnd);
         sizeChunk = endChunk - startChunk;
+
         // Scope to deallocate resources early
         {
             // Decode literal, length and match index buffers
