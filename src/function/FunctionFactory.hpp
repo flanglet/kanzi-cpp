@@ -258,7 +258,7 @@ namespace kanzi {
 				continue;
 
 			if (res.length() > 0)
-				res += "+";
+				res += '+';
 
 			res += getNameToken(t);
 		}
