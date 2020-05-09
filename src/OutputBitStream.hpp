@@ -31,7 +31,7 @@ namespace kanzi
 
        // Length is the number of bits in [1..64]. Return the number of bits written.
        // Throws if the stream is closed.
-       virtual int writeBits(uint64 bits, uint length) THROW = 0;
+       virtual uint writeBits(uint64 bits, uint length) THROW = 0;
 
        // Write bits ouf of the byte array. Length is the number of bits. 
        // Return the number of bits written.

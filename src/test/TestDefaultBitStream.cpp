@@ -550,15 +550,17 @@ int main(int argc, const char* argv[])
 int TestDefaultBitStream_main(int argc, const char* argv[])
 #endif
 {
+    if (argc <= 1) {
+        cout << "Missing temp output file" << endl;
+        exit(1);
+    }
+
     int res = 0;
     res |= testBitStreamCorrectnessAligned1();
     res |= testBitStreamCorrectnessAligned2();
     res |= testBitStreamCorrectnessMisaligned1();
     res |= testBitStreamCorrectnessMisaligned2();
-
-    string fileName;
-    fileName = (argc > 1) ? argv[1] :  "r:\\output.bin";
-    res |= testBitStreamSpeed1(fileName);
-    res |= testBitStreamSpeed2(fileName);
+    res |= testBitStreamSpeed1(argv[1]);
+    res |= testBitStreamSpeed2(argv[1]);
     return res;
 }

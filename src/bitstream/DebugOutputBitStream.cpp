@@ -90,11 +90,11 @@ void DebugOutputBitStream::writeBit(int bit) THROW
     _delegate.writeBit(bit);
 }
 
-int DebugOutputBitStream::writeBits(uint64 bits, uint count) THROW
+uint DebugOutputBitStream::writeBits(uint64 bits, uint count) THROW
 {
-    int res = _delegate.writeBits(bits, count);
+    uint res = _delegate.writeBits(bits, count);
 
-    for (int i = 1; i <= res; i++) {
+    for (uint i = 1; i <= res; i++) {
         uint64 bit = (bits >> (res - i)) & 1;
         _current <<= 1;
         _current |= byte(bit);

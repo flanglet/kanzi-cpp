@@ -32,7 +32,7 @@ namespace kanzi
        bool _closed;
        uint _bufferSize;
        uint _position; // index of current byte in buffer
-       int _availBits; // bits not consumed in _current
+       uint _availBits; // bits not consumed in _current
        uint64 _written;
        uint64 _current; // cached bits
 
@@ -47,7 +47,7 @@ namespace kanzi
 
        void writeBit(int bit) THROW;
 
-       int writeBits(uint64 bits, uint length) THROW;
+       uint writeBits(uint64 bits, uint length) THROW;
        
        uint writeBits(const byte bits[], uint length) THROW;
 
@@ -67,7 +67,7 @@ namespace kanzi
    inline void DefaultOutputBitStream::writeBit(int bit) THROW
    {
        if (_availBits <= 1) { // _availBits = 0 if stream is closed => force pushCurrent()
-           _current |= (bit & 1);
+           _current |= (uint64(bit) & 1);
            pushCurrent();
        }
        else {
@@ -77,28 +77,24 @@ namespace kanzi
    }
 
    // Write 'count' (in [1..64]) bits. Trigger exception if stream is closed
-   inline int DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
+   inline uint DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
    {
        if (count > 64)
            throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
 
-       if (int(count) < _availBits) {
-           // Enough spots available in 'current'
-           _availBits -= int(count);
-           _current |= ((value & ((uint64(1) << count) - 1)) << _availBits); // 0 <= count < _availBits <= 64
-       }
-       else {
+       _current |= ((value << (64 - count)) >> (64 - _availBits));
+       uint remaining = count;
+
+       if (count >= _availBits) {
            // Not enough spots available in 'current'
-           const uint remaining = count - _availBits;
-           _current |= ((value & (uint64(-1) >> (64 - count))) >> remaining); // 0 < count <= 64
+           remaining -= _availBits;
            pushCurrent();
 
-           if (remaining != 0) {
+           if (count != 0)
                _current = value << (64 - remaining);
-               _availBits -= int(remaining);
-           }
        }
 
+       _availBits -= remaining;
        return count;
    }
 
