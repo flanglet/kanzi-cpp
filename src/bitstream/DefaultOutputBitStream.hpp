@@ -90,7 +90,7 @@ namespace kanzi
            remaining -= _availBits;
            pushCurrent();
 
-           if (count != 0)
+           if (remaining != 0)
                _current = value << (64 - remaining);
        }
 
