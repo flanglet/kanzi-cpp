@@ -43,6 +43,7 @@ RangeEncoder::RangeEncoder(OutputBitStream& bitstream, int chunkSize, int logRan
     _low = 0;
     _range = TOP_RANGE;
     _shift = 0;
+    memset(_cumFreqs, 0, 257 * sizeof(uint64));
 }
 
 int RangeEncoder::updateFrequencies(uint frequencies[], int size, int lr)

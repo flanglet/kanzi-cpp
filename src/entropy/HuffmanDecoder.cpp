@@ -49,6 +49,7 @@ HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) THROW :
     }
 
     memset(_alphabet, 0, sizeof(_alphabet));
+    memset(_table, 0, sizeof(_table));
 }
 
 int HuffmanDecoder::readLengths() THROW
