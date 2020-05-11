@@ -853,21 +853,18 @@ closedir(
     DIR *dirp)
 {
     int ok;
-    if (dirp) {
 
+    if (dirp) {
         /* Close wide-character directory stream */
         ok = _wclosedir (dirp->wdirp);
         dirp->wdirp = NULL;
 
         /* Release multi-byte character version */
         free (dirp);
-
     } else {
-
         /* Invalid directory stream */
         dirent_set_errno (EBADF);
         ok = /*failure*/-1;
-
     }
     return ok;
 }
@@ -900,7 +897,6 @@ scandir(
     DIR *dir = NULL;
     struct dirent *entry;
     struct dirent *tmp = NULL;
-    size_t i;
     int result = 0;
 
     /* Open directory stream */
@@ -1004,7 +1000,7 @@ scandir(
 
     /* Release allocated memory on error */
     if (files && (result < 0)) {
-        for (i = 0; i < size; i++) {
+        for (size_t i = 0; i < size; i++) {
             free (files[i]);
         }
         free (files);

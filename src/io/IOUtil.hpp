@@ -98,9 +98,10 @@ static void createFileList(string& target, vector<FileData>& files) THROW
     }
 
     DIR* dir = opendir(target.c_str());
-    struct dirent* ent;
 
     if (dir != nullptr) {
+        struct dirent* ent;
+
         while ((ent = readdir(dir)) != nullptr) {
             string fullpath = target + ent->d_name;
 

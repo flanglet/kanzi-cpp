@@ -845,12 +845,11 @@ TextCodec2::TextCodec2()
 
 TextCodec2::TextCodec2(Context& ctx)
 {
-    // Actual block size
-    int blockSize = 0;
     int log = 13;
 
     if (ctx.has("blockSize")) {
-        blockSize = ctx.getInt("blockSize");
+        // Actual block size
+        int blockSize = ctx.getInt("blockSize");
 
         if (blockSize >= 8)
             log = max(min(Global::log2(blockSize / 8), 26), 13);

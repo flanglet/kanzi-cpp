@@ -710,7 +710,6 @@ T FileCompressTask<T>::run()
     int64 read = 0;
     byte* buf = new byte[DEFAULT_BUFFER_SIZE];
     SliceArray<byte> sa(buf, DEFAULT_BUFFER_SIZE, 0);
-    int len;
 
     if (_listeners.size() > 0) {
         Event evt(Event::COMPRESSION_START, -1, int64(0), clock());
@@ -721,6 +720,8 @@ T FileCompressTask<T>::run()
 
     try {
         while (true) {
+            int len;
+
             try {
                 _is->read(reinterpret_cast<char*>(&sa._array[0]), sa._length);
                 len = (*_is) ? sa._length : int(_is->gcount());
