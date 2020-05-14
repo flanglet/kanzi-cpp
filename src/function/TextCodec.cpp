@@ -183,7 +183,8 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
     return nbWords;
 }
 
-// return 8-bit status (see MASK flags constants)
+// Analyze the block and return an 8-bit status (see MASK flags constants)
+// The goal is to detect test data amenable to pre-processing.
 byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool strict)
 {
     int freqs[256][256] = { { 0 } };
@@ -226,7 +227,6 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
     const int lf = int(LF);
     int nbTextChars = freqs0[cr] + freqs0[lf];
     int nbASCII = 0;
-    int nbZeros = freqs0[0];
 
     for (int i = 0; i < 128; i++) {
         if (isText(byte(i)) == true)
@@ -236,18 +236,15 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
     }
 
     // Not text (crude thresholds)
+    if((nbTextChars < (count >> 1)) || (freqs0[32] < (count >> 5)))
+        return TextCodec::MASK_NOT_TEXT;
+
     if (strict == true) {
-        if ((nbZeros >= (count / 100)) || (nbTextChars < (count >> 1)) || (freqs0[32] < (count >> 4)))
-            return TextCodec::MASK_NOT_TEXT;
-    } else {
-        if ((nbASCII / 95) < (count / 100))
+        if ((nbTextChars < (count >> 2)) || (freqs0[0] >= (count / 100)) || ((nbASCII / 95) < (count / 100)))
             return TextCodec::MASK_NOT_TEXT;
     }
 
-    int nbBinChars = 0;
-
-    for (int i = 128; i < 256; i++)
-        nbBinChars += freqs0[i];
+    const int nbBinChars = count - nbASCII;
 
     // Not text (crude threshold)
     if (nbBinChars > (count >> 2))
