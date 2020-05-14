@@ -482,12 +482,12 @@ int CompressedInputStream::processBlock() THROW
         _sa->_index = 0;
         return decoded;
     }
-    catch (IOException& e) {
+    catch (IOException&) {
         for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
             delete *it;
 
         tasks.clear();
-        throw e;
+        throw;
     }
     catch (exception& e) {
         for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
