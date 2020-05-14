@@ -127,7 +127,7 @@ bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
 
         // No good match ?
-        if (bestLen < MIN_MATCH) {
+        if ((bestLen < MIN_MATCH) || ((bestLen == MIN_MATCH) && (srcIdx - ref >= MIN_MATCH_MIN_DIST))) {
             _hashes[h] = srcIdx;
             srcIdx++;
             continue;

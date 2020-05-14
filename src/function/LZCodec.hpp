@@ -80,6 +80,7 @@ namespace kanzi
       static const int MAX_DISTANCE2      = (1 << 24) - 1;
       static const int MIN_MATCH          = 4;
       static const int MIN_LENGTH         = 16;
+      static const int MIN_MATCH_MIN_DIST = 1 << 16;
 
       int32* _hashes;
       int _bufferSize;
