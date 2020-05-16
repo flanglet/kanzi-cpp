@@ -137,7 +137,7 @@ int Global::log2(uint32 x) THROW
 void Global::computeHistogram(const byte block[], int length, uint freqs[], bool isOrder0, bool withTotal)
 {
     const int mult = (withTotal == true) ? 257 : 256;
-    const byte* p = &block[0];
+    const uint8* p = reinterpret_cast<const uint8*>(&block[0]);
 
     if (isOrder0 == true) {
         memset(freqs, 0, mult * sizeof(uint));
@@ -149,7 +149,7 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
         uint f1[256] = { 0 };
         uint f2[256] = { 0 };
         uint f3[256] = { 0 };
-        const byte* end16 = &block[length & -16];
+        const uint8* end16 = reinterpret_cast<const uint8*>(&block[length & -16]);
 
         while (p < end16) {
             f0[p[0]]++;
@@ -174,7 +174,7 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
             p += 4;
         }
 
-        const byte* end = &block[length];
+        const uint8* end = reinterpret_cast<const uint8*>(&block[length]);
 
         while (p < end)
             freqs[*p++]++;
