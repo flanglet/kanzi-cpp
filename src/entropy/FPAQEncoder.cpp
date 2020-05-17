@@ -81,14 +81,14 @@ int FPAQEncoder::encode(const byte block[], uint blkptr, uint count) THROW
 void FPAQEncoder::encodeByte(byte val)
 {
     const int bits = int(val) + 256;
-    encodeBit(int(val) & 0x80, 1);
-    encodeBit(int(val) & 0x40, bits >> 7);
-    encodeBit(int(val) & 0x20, bits >> 6);
-    encodeBit(int(val) & 0x10, bits >> 5);
-    encodeBit(int(val) & 0x08, bits >> 4);
-    encodeBit(int(val) & 0x04, bits >> 3);
-    encodeBit(int(val) & 0x02, bits >> 2);
-    encodeBit(int(val) & 0x01, bits >> 1);
+    encodeBit(int(val) & 0x80, _probs[1]);
+    encodeBit(int(val) & 0x40, _probs[bits >> 7]);
+    encodeBit(int(val) & 0x20, _probs[bits >> 6]);
+    encodeBit(int(val) & 0x10, _probs[bits >> 5]);
+    encodeBit(int(val) & 0x08, _probs[bits >> 4]);
+    encodeBit(int(val) & 0x04, _probs[bits >> 3]);
+    encodeBit(int(val) & 0x02, _probs[bits >> 2]);
+    encodeBit(int(val) & 0x01, _probs[bits >> 1]);
 }
 
 void FPAQEncoder::dispose()

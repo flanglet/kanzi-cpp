@@ -20,13 +20,13 @@ limitations under the License.
 #include "../Memory.hpp"
 #include "../SliceArray.hpp"
 
-namespace kanzi 
+namespace kanzi
 {
 
    // Derived from fpaq0r by Matt Mahoney & Alexander Ratushnyak.
    // See http://mattmahoney.net/dc/#fpaq0.
    // Simple (and fast) adaptive order 0 entropy coder predictor
-   class FPAQEncoder : public EntropyEncoder 
+   class FPAQEncoder : public EntropyEncoder
    {
    private:
        static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
@@ -44,7 +44,7 @@ namespace kanzi
 
        void encodeByte(byte val);
 
-       void encodeBit(int bit, int pIdx);
+       void encodeBit(int bit, uint16& prob);
 
    protected:
        virtual void flush();
@@ -62,15 +62,15 @@ namespace kanzi
    };
 
 
-   inline void FPAQEncoder::encodeBit(int bit, int pIdx)
+   inline void FPAQEncoder::encodeBit(int bit, uint16& prob)
    {
        // Update probabilities
        if (bit == 0) {
-          _low = _low + ((((_high - _low) >> 4) * uint64(_probs[pIdx] >> 4)) >> 8) + 1;
-          _probs[pIdx] -= (_probs[pIdx] >> 6);
+          _low = _low + ((((_high - _low) >> 4) * uint64(prob >> 4)) >> 8) + 1;
+          prob -= (prob >> 6);
        } else  {
-          _high = _low + ((((_high - _low) >> 4) * uint64(_probs[pIdx] >> 4)) >> 8);
-          _probs[pIdx] -= ((_probs[pIdx] - PSCALE + 64) >> 6);
+          _high = _low + ((((_high - _low) >> 4) * uint64(prob >> 4)) >> 8);
+          prob -= ((prob - PSCALE + 64) >> 6);
        }
 
        // Write unchanged first 32 bits to bitstream
