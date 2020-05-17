@@ -75,10 +75,11 @@ namespace kanzi
    private:
       static const uint HASH_SEED         = 0x7FEB352D;
       static const uint HASH_LOG          = 18;
-      static const uint HASH_SHIFT        = 32 - HASH_LOG;
+      static const uint HASH_SHIFT        = 40 - HASH_LOG;
+      static const uint HASH_MASK         = (1 << HASH_LOG) - 1;
       static const int MAX_DISTANCE1      = (1 << 17) - 1;
       static const int MAX_DISTANCE2      = (1 << 24) - 1;
-      static const int MIN_MATCH          = 4;
+      static const int MIN_MATCH          = 5;
       static const int MIN_LENGTH         = 16;
       static const int MIN_MATCH_MIN_DIST = 1 << 16;
 
@@ -142,7 +143,7 @@ namespace kanzi
 
    inline int32 LZXCodec::hash(const byte* p)
    {
-       return (LittleEndian::readInt32(p) * HASH_SEED) >> HASH_SHIFT;
+       return ((LittleEndian::readLong64(p) * HASH_SEED) >> HASH_SHIFT) & HASH_MASK;
    }
 
    inline int LZXCodec::emitLength(byte block[], int length)
