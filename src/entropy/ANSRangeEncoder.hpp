@@ -58,7 +58,7 @@ namespace kanzi
 
 	   ANSRangeEncoder(OutputBitStream& bitstream,
                       int order = 0,
-                      int chunkSize = -1,
+                      int chunkSize = DEFAULT_ANS0_CHUNK_SIZE,
                       int logRange = DEFAULT_LOG_RANGE) THROW;
 
 	   ~ANSRangeEncoder();

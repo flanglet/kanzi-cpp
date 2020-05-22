@@ -49,7 +49,9 @@ namespace kanzi
    public:
 	   static const int ANS_TOP = 1 << 15; // max possible for ANS_TOP=1<23
 
-	   ANSRangeDecoder(InputBitStream& bitstream, int order = 0, int chunkSize = -1) THROW;
+	   ANSRangeDecoder(InputBitStream& bitstream, 
+                      int order = 0, 
+                      int chunkSize = DEFAULT_ANS0_CHUNK_SIZE) THROW;
 
 	   ~ANSRangeDecoder();
 

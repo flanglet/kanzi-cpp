@@ -21,14 +21,13 @@ limitations under the License.
 using namespace kanzi;
 
 // The chunk size indicates how many bytes are encoded (per block) before
-// resetting the frequency stats. 0 means that frequencies calculated at the
-// beginning of the block apply to the whole block.
+// resetting the frequency stats.
 ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chunkSize, int logRange) THROW : _bitstream(bitstream)
 {
     if ((order != 0) && (order != 1))
         throw invalid_argument("ANS Codec: The order must be 0 or 1");
 
-    if ((chunkSize != 0) && (chunkSize != -1) && (chunkSize < 1024))
+    if (chunkSize < 1024)
         throw invalid_argument("ANS Codec: The chunk size must be at least 1024");
 
     if (chunkSize > MAX_CHUNK_SIZE) {
@@ -42,9 +41,6 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
         ss << "ANS Codec: Invalid range: " << logRange << " (must be in [8..16])";
         throw invalid_argument(ss.str());
     }
-
-    if (chunkSize == -1)
-        chunkSize = DEFAULT_ANS0_CHUNK_SIZE;
 
     _chunkSize = chunkSize << (8 * order);
     _order = order;
@@ -150,7 +146,7 @@ int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint len)
         return 0;
 
     const int end = blkptr + len;
-    int sz = (_chunkSize == 0) ? len : _chunkSize;
+    int sz = _chunkSize;
 
     if (sz > MAX_CHUNK_SIZE)
         sz = MAX_CHUNK_SIZE;

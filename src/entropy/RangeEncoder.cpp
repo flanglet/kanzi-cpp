@@ -21,12 +21,10 @@ limitations under the License.
 using namespace kanzi;
 
 // The chunk size indicates how many bytes are encoded (per block) before
-// resetting the frequency stats. 0 means that frequencies calculated at the
-// beginning of the block apply to the whole block.
-// The default chunk size is 65536 bytes.
+// resetting the frequency stats. 
 RangeEncoder::RangeEncoder(OutputBitStream& bitstream, int chunkSize, int logRange) THROW : _bitstream(bitstream)
 {
-    if ((chunkSize != 0) && (chunkSize < 1024))
+    if (chunkSize < 1024)
         throw invalid_argument("The chunk size must be at least 1024");
 
     if (chunkSize > 1 << 30)
@@ -114,7 +112,7 @@ int RangeEncoder::encode(const byte block[], uint blkptr, uint len)
         return 0;
 
     const int end = blkptr + len;
-    const int sz = (_chunkSize == 0) ? len : _chunkSize;
+    const int sz = _chunkSize;
     int startChunk = blkptr;
 
     while (startChunk < end) {
