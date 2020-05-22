@@ -74,7 +74,7 @@ namespace kanzi
 
    private:
       static const uint HASH_SEED         = 0x7FEB352D;
-      static const uint HASH_LOG          = 18;
+      static const uint HASH_LOG          = 19; // 512K
       static const uint HASH_SHIFT        = 40 - HASH_LOG;
       static const uint HASH_MASK         = (1 << HASH_LOG) - 1;
       static const int MAX_DISTANCE1      = (1 << 17) - 1;

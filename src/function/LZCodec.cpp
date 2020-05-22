@@ -134,7 +134,7 @@ bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
 
         // Emit token
-        // Token: 3 bits litLen + 1 bit flag + 4 bits mLen
+        // Token: 3 bits litLen + 1 bit flag + 4 bits mLen (LLLFMMMM)
         // flag = if maxDist = (1<<17)-1, then highest bit of distance
         //        else 1 if dist needs 3 bytes (> 0xFFFF) and 0 otherwise
         const int mLen = bestLen - MIN_MATCH;
