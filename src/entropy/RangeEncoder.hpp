@@ -46,6 +46,7 @@ namespace kanzi
        static const uint64 RANGE_MASK   = 0x0FFFFFFF00000000;
        static const int DEFAULT_CHUNK_SIZE = 1 << 15; // 32 KB by default
        static const int DEFAULT_LOG_RANGE = 12;
+       static const int MAX_CHUNK_SIZE = 1 << 30;
 
        uint64 _low;
        uint64 _range;

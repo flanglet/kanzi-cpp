@@ -27,7 +27,7 @@ RangeEncoder::RangeEncoder(OutputBitStream& bitstream, int chunkSize, int logRan
     if (chunkSize < 1024)
         throw invalid_argument("The chunk size must be at least 1024");
 
-    if (chunkSize > 1 << 30)
+    if (chunkSize > MAX_CHUNK_SIZE)
         throw invalid_argument("The chunk size must be at most 2^30");
 
     if ((logRange < 8) || (logRange > 16)) {

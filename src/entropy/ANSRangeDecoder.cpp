@@ -165,10 +165,6 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint len)
 
     const int end = blkptr + len;
     int sz = _chunkSize;
-
-    if (sz > MAX_CHUNK_SIZE)
-        sz = MAX_CHUNK_SIZE;
-
     int startChunk = blkptr;
 
     if (_bufferSize < uint(sz + max(sz >> 3, 16))) {
