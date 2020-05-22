@@ -1165,13 +1165,13 @@ int TextCodec2::emitWordIndex(byte dst[], int val, int mask)
         if (val >= TextCodec::THRESHOLD4) {
             // 5 + 7 + 7 => 2^19
             dst[0] = byte(0xC0 | mask | ((val >> 14) & 0x1F));
-            dst[1] = byte(0x80 | ((val >> 7) & 0x7F));
+            dst[1] = byte(0x80 | (val >> 7));
             dst[2] = byte(val & 0x7F);
             return 3;
         }
 
         // 5 + 7 => 2^12 = 32*128
-        dst[0] = byte(0xC0 | mask | ((val >> 7) & 0x1F));
+        dst[0] = byte(0xC0 | mask | (val >> 7));
         dst[1] = byte(val & 0x7F);
         return 2;
     }
@@ -1253,7 +1253,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         srcIdx++;
 
-        if ((cur & TextCodec::MASK_80) != byte(0)) {
+        if (cur >= byte(128)) {
             // Word in dictionary
             // Read word index (varint 5 bits + 7 bits + 7 bits)
             int idx = int(cur & TextCodec::MASK_1F);
@@ -1261,7 +1261,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             if ((cur & TextCodec::MASK_40) != byte(0)) {
                 int idx2 = int(src[srcIdx++]);
 
-                if ((idx2 & 0x80) != 0) {
+                if (idx2 >= 128) {
                     idx = (idx << 7) | (idx2 & 0x7F);
                     idx2 = int(src[srcIdx++]);
                 }
