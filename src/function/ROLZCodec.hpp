@@ -220,7 +220,7 @@ namespace kanzi {
 
        static int32 hash(const byte* p)
        {
-           return ((LittleEndian::readInt32(p) & 0x00FFFFFF) * HASH) & HASH_MASK;
+           return ((LittleEndian::readInt32(p) << 8) * HASH) & HASH_MASK;
        }
 
        static int emitCopy(byte dst[], int dstIdx, int ref, int matchLen);

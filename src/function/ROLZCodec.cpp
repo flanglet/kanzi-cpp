@@ -445,15 +445,15 @@ void ROLZCodec1::readLengths(byte block[], int& idx, int& litLen, int& mLen)
     int next = int(block[idx++]);
     litLen = (next & 0x7F);
 
-    if ((next & 0x80) != 0) {
+    if (next >= 128) {
         next = int(block[idx++]);
         litLen = (litLen << 7) | (next & 0x7F);
 
-        if ((next & 0x80) != 0) {
+        if (next >= 128) {
             next = int(block[idx++]);
             litLen = (litLen << 7) | (next & 0x7F);
 
-            if ((next & 0x80) != 0) {
+            if (next >= 128) {
                 next = int(block[idx++]);
                 litLen = (litLen << 7) | (next & 0x7F);
             }
