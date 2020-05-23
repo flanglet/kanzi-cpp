@@ -91,7 +91,7 @@ bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (count < MIN_LENGTH)
         return false;
 
-    const int srcEnd = count - 8;
+    const int srcEnd = count - 16;
     byte* dst = &output._array[output._index];
     byte* src = &input._array[input._index];
     int dstIdx = 0;
@@ -186,8 +186,8 @@ bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     }
 
     // Emit last literals
-    dstIdx += emitLastLiterals(&src[anchor], &dst[dstIdx], srcEnd + 8 - anchor);
-    input._index = srcEnd + 8;
+    dstIdx += emitLastLiterals(&src[anchor], &dst[dstIdx], srcEnd + 16 - anchor);
+    input._index = srcEnd + 16;
     output._index = dstIdx;
     return true;
 }
@@ -206,8 +206,8 @@ bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (input._array == output._array)
         return false;
 
-    const int srcEnd = count - 8;
-    const int dstEnd = output._length - 8;
+    const int srcEnd = count - 16;
+    const int dstEnd = output._length - 16;
     byte* dst = &output._array[output._index];
     byte* src = &input._array[input._index];
     int dstIdx = 0;
@@ -227,7 +227,7 @@ bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
                     litLen += 0xFF;
                 }
 
-                if (srcIdx >= srcEnd + 8) {
+                if (srcIdx >= srcEnd + 16) {
                     input._index += srcIdx;
                     output._index += dstIdx;
                     return false;
@@ -267,7 +267,7 @@ bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         const int mEnd = dstIdx + mLen;
 
         // Sanity check
-        if (mEnd > dstEnd + 8) {
+        if (mEnd > dstEnd + 16) {
             input._index += srcIdx;
             output._index += dstIdx;
             return false;
@@ -289,14 +289,14 @@ bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
 
         // Copy match
-        if (dist > 8) {
+        if (dist >= 16) {
             int ref = dstIdx - dist;
 
             do {
                 // No overlap
-                memcpy(&dst[dstIdx], &dst[ref], 8);
-                ref += 8;
-                dstIdx += 8;
+                memcpy(&dst[dstIdx], &dst[ref], 16);
+                ref += 16;
+                dstIdx += 16;
             } while (dstIdx < mEnd);
         }
         else {
@@ -311,7 +311,7 @@ bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     output._index = dstIdx;
     input._index = srcIdx;
-    return srcIdx == srcEnd + 8;
+    return srcIdx == srcEnd + 16;
 }
 
 
