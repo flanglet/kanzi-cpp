@@ -224,24 +224,27 @@ namespace kanzi {
 
    inline bool TextCodec::sameWords(const byte src[], const byte dst[], const int length)
    {
-	   int n = length;
-
 	   if (length >= 4) {
 		   const int* p1 = reinterpret_cast<const int*>((const byte*)&src[0]);
 		   const int* p2 = reinterpret_cast<const int*>((const byte*)&dst[0]);
+		   int n = length;
 
-		   while (true) {
+		   while (n >= 4) {
 			   if (*p1++ != *p2++)
 				   return false;
 
-			   if (n < 4)
-				   break;
-            
 			   n -= 4;
 		   }
+
+		   for (int i = length - n; i < length; i++) {
+			   if (dst[i] != src[i])
+				   return false;
+		   }
+
+		   return true;
 	   }
 
-	   for (int i = length - n; i < length; i++) {
+	   for (int i = 0; i < length; i++) {
 		   if (dst[i] != src[i])
 			   return false;
 	   }
