@@ -767,16 +767,16 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             // Read word index (varint 5 bits + 7 bits + 7 bits)
             int idx = int(src[srcIdx++]);
 
-            if ((idx & 0x80) != 0) {
+            if (idx >= 128) {
                 idx &= 0x7F;
                 int idx2 = int(src[srcIdx++]);
 
-                if ((idx2 & 0x80) != 0) {
+                if (idx2 >= 128) {
                     idx = ((idx & 0x1F) << 7) | (idx2 & 0x7F);
-                    idx2 = int(src[srcIdx++]);
+                    idx2 = int(src[srcIdx++]) & 0x7F;
                 }
 
-                idx = (idx << 7) | (idx2 & 0x7F);
+                idx = (idx << 7) | idx2;
 
                 if (idx >= _dictSize)
                     break;
@@ -921,7 +921,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     _isCRLF = (mode & TextCodec::MASK_CRLF) != byte(0);
     dst[dstIdx++] = mode;
     bool res = true;
-
+int nn =0;
     while ((srcIdx < srcEnd) && (src[srcIdx] == TextCodec::SP)) {
         dst[dstIdx++] = TextCodec::SP;
         srcIdx++;
@@ -1020,7 +1020,10 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                         break;
                     }
 
-                    dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & TextCodec::MASK_LENGTH, (pe == pe1) ? 0 : 32);
+                    int dIdx = emitWordIndex(&dst[dstIdx], pe->_data & TextCodec::MASK_LENGTH, (pe == pe1) ? 0 : 32);
+                    nn += dIdx;
+                    dstIdx += dIdx;
+
                     emitAnchor = delimAnchor + 1 + int(pe->_data >> 24);
                 }
             }
@@ -1042,7 +1045,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         res &= (srcIdx == srcEnd);
     }
-
+                    cout << nn << " bytes to encode word indexes" << endl;
     output._index += dstIdx;
     input._index += srcIdx;
     return res;
@@ -1253,7 +1256,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         srcIdx++;
 
-        if (cur >= byte(128)) {
+        if (cur >= TextCodec::MASK_80) {
             // Word in dictionary
             // Read word index (varint 5 bits + 7 bits + 7 bits)
             int idx = int(cur & TextCodec::MASK_1F);
@@ -1263,10 +1266,10 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
                 if (idx2 >= 128) {
                     idx = (idx << 7) | (idx2 & 0x7F);
-                    idx2 = int(src[srcIdx++]);
+                    idx2 = int(src[srcIdx++]) & 0x7F;
                 }
 
-                idx = (idx << 7) | (idx2 & 0x7F);
+                idx = (idx << 7) | idx2;
 
                 if (idx >= _dictSize)
                     break;
@@ -1298,9 +1301,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             memcpy(&dst[dstIdx], &buf[0], length);
 
             // Flip case of first character ?
-            if ((cur & TextCodec::MASK_20) != byte(0))
-               dst[dstIdx] ^= byte(0x20);
-
+            dst[dstIdx] ^= (cur & TextCodec::MASK_20);
             dstIdx += length;
         }
         else {
