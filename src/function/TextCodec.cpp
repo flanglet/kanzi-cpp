@@ -921,7 +921,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     _isCRLF = (mode & TextCodec::MASK_CRLF) != byte(0);
     dst[dstIdx++] = mode;
     bool res = true;
-int nn =0;
+
     while ((srcIdx < srcEnd) && (src[srcIdx] == TextCodec::SP)) {
         dst[dstIdx++] = TextCodec::SP;
         srcIdx++;
@@ -1020,10 +1020,7 @@ int nn =0;
                         break;
                     }
 
-                    int dIdx = emitWordIndex(&dst[dstIdx], pe->_data & TextCodec::MASK_LENGTH, (pe == pe1) ? 0 : 32);
-                    nn += dIdx;
-                    dstIdx += dIdx;
-
+                    dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & TextCodec::MASK_LENGTH, (pe == pe1) ? 0 : 32);
                     emitAnchor = delimAnchor + 1 + int(pe->_data >> 24);
                 }
             }
@@ -1045,7 +1042,7 @@ int nn =0;
 
         res &= (srcIdx == srcEnd);
     }
-                    cout << nn << " bytes to encode word indexes" << endl;
+      
     output._index += dstIdx;
     input._index += srcIdx;
     return res;
