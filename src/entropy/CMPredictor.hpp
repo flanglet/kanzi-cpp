@@ -33,7 +33,6 @@ namespace kanzi
        int _c1;
        int _c2;
        int _ctx;
-       int _run;
        int _runMask;
        int _counter1[256][257];
        int _counter2[512][17];
@@ -59,13 +58,11 @@ namespace kanzi
            _pc1[256] -= (_pc1[256] >> FAST_RATE);
            _pc1[_c1] -= (_pc1[_c1] >> MEDIUM_RATE);
            _pc2[0] -= (_pc2[0]>> SLOW_RATE);
-           _pc2[1] -= (_pc2[1]>> SLOW_RATE);
        }
        else {
            _pc1[256] += ((0xFFFF - _pc1[256]) >> FAST_RATE);
            _pc1[_c1] += ((0xFFFF - _pc1[_c1]) >> MEDIUM_RATE);
            _pc2[0] += ((0xFFFF - _pc2[0]) >> SLOW_RATE);
-           _pc2[1] += ((0xFFFF - _pc2[1]) >> SLOW_RATE);
            _ctx++;
        }
 
@@ -73,15 +70,7 @@ namespace kanzi
            _c2 = _c1;
            _c1 = _ctx & 0xFF;
            _ctx = 1;
-
-           if (_c1 == _c2) {
-               _run++;
-               _runMask = (_run > 2) ? 256 : 0;
-           }
-           else {
-               _run = 0;
-               _runMask = 0;
-           }
+           _runMask = (_c1 == _c2) ? 0x100 : 0;
        }
    }
 
@@ -91,10 +80,7 @@ namespace kanzi
        _pc1 = _counter1[_ctx];
        const int p = (13 * _pc1[256] + 14 * _pc1[_c1] + 5 * _pc1[_c2]) >> 5;
        _pc2 = &_counter2[_ctx | _runMask][p >> 12];
-       const int x1 = _pc2[0];
-       const int x2 = _pc2[1];
-       const int ssep = x1 + (((x2 - x1) * (p & 4095)) >> 12);
-       return (p + 3*ssep + 32) >> 6; // rescale to [0..4095]
+       return (p + 3*_pc2[0] + 32) >> 6; // rescale to [0..4095]
    }
 }
 #endif

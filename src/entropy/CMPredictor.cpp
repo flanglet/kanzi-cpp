@@ -22,7 +22,6 @@ using namespace kanzi;
 CMPredictor::CMPredictor()
 {
     _ctx = 1;
-    _run = 1;
     _runMask = 0;
     _c1 = 0;
     _c2 = 0;
