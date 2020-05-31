@@ -724,37 +724,34 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     h1 = h1 * TextCodec::HASH1 ^ int(src[i]) * TextCodec::HASH2;
 
                 // Lookup word in dictionary
-                DictEntry* pe = nullptr;
-                DictEntry* pe1 = _dictMap[h1 & _hashMask];
+                DictEntry* pe = _dictMap[h1 & _hashMask];
 
                 // Check for hash collisions
-                if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length)) {
-                    if (TextCodec::sameWords(pe1->_ptr + 1, &src[delimAnchor + 2], length - 1))
-                        pe = pe1;
+                if ((pe != nullptr) && (pe->_hash == h1) && ((pe->_data >> 24) == length)) {
+                    if (TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1) == false)
+                        pe = nullptr;
                 }
 
-                if (pe == nullptr) {
-                    // Word not found in the dictionary or hash collision.
-                    // Replace entry if not in static dictionary
-                    if (((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) && (pe1 == nullptr)) {
-                        DictEntry& e = _dictList[words];
+                // Word not found in the dictionary or hash collision.
+                // Replace entry if not in static dictionary
+                if ((pe == nullptr) && ((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2)))) {
+                    DictEntry& e = _dictList[words];
 
-                        if ((e._data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
-                            // Reuse old entry
-                            _dictMap[e._hash & _hashMask] = nullptr;
-                            e._ptr = &src[delimAnchor + 1];
-                            e._hash = h1;
-                            e._data = (length << 24) | words;
-                        }
+                    if ((e._data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
+                        // Reuse old entry
+                        _dictMap[e._hash & _hashMask] = nullptr;
+                        e._ptr = &src[delimAnchor + 1];
+                        e._hash = h1;
+                        e._data = (length << 24) | words;
+                    }
 
-                        _dictMap[h1 & _hashMask] = &e;
-                        words++;
+                    _dictMap[h1 & _hashMask] = &e;
+                    words++;
 
-                        // Dictionary full ? Expand or reset index to end of static dictionary
-                        if (words >= _dictSize) {
-                            if (expandDictionary() == false)
-                                words = _staticDictSize;
-                        }
+                    // Dictionary full ? Expand or reset index to end of static dictionary
+                    if (words >= _dictSize) {
+                        if (expandDictionary() == false)
+                            words = _staticDictSize;
                     }
                 }
             }
@@ -848,8 +845,8 @@ TextCodec2::TextCodec2(Context& ctx)
         // Actual block size
         int blockSize = ctx.getInt("blockSize");
 
-        if (blockSize >= 8)
-            log = max(min(Global::log2(blockSize / 8), 26), 13);
+        if (blockSize >= 32)
+            log = max(min(Global::log2(blockSize / 32), 24), 13);
     }
 
     if (ctx.has("extra")) {
@@ -1215,37 +1212,34 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     h1 = h1 * TextCodec::HASH1 ^ int(src[i]) * TextCodec::HASH2;
 
                 // Lookup word in dictionary
-                DictEntry* pe = nullptr;
-                DictEntry* pe1 = _dictMap[h1 & _hashMask];
+                DictEntry* pe = _dictMap[h1 & _hashMask];
 
                 // Check for hash collisions
-                if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length)) {
-                    if (TextCodec::sameWords(pe1->_ptr + 1, &src[delimAnchor + 2], length - 1))
-                        pe = pe1;
+                if ((pe != nullptr) && (pe->_hash == h1) && ((pe->_data >> 24) == length)) {
+                    if ((TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1)) == false)
+                        pe = nullptr;
                 }
 
-                if (pe == nullptr) {
-                    // Word not found in the dictionary or hash collision.
-                    // Replace entry if not in static dictionary
-                    if (((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) && (pe1 == nullptr)) {
-                        DictEntry& e = _dictList[words];
+                // Word not found in the dictionary or hash collision.
+                // Replace entry if not in static dictionary
+                if ((pe == nullptr) && ((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2)))) {
+                    DictEntry& e = _dictList[words];
 
-                        if ((e._data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
-                            // Reuse old entry
-                            _dictMap[e._hash & _hashMask] = nullptr;
-                            e._ptr = &src[delimAnchor + 1];
-                            e._hash = h1;
-                            e._data = (length << 24) | words;
-                        }
+                    if ((e._data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
+                        // Reuse old entry
+                        _dictMap[e._hash & _hashMask] = nullptr;
+                        e._ptr = &src[delimAnchor + 1];
+                        e._hash = h1;
+                        e._data = (length << 24) | words;
+                    }
 
-                        _dictMap[h1 & _hashMask] = &e;
-                        words++;
+                    _dictMap[h1 & _hashMask] = &e;
+                    words++;
 
-                        // Dictionary full ? Expand or reset index to end of static dictionary
-                        if (words >= _dictSize) {
-                            if (expandDictionary() == false)
-                                words = _staticDictSize;
-                        }
+                    // Dictionary full ? Expand or reset index to end of static dictionary
+                    if (words >= _dictSize) {
+                        if (expandDictionary() == false)
+                            words = _staticDictSize;
                     }
                 }
             }
