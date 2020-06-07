@@ -38,6 +38,7 @@ namespace kanzi
        int _error; // 0 = OK
        string _msg;
        int _checksum;
+       bool _skipped;
        clock_t _completionTime;
 
        DecodingTaskResult()
@@ -49,9 +50,11 @@ namespace kanzi
           _decoded = 0;
           _error = 0;
           _checksum = 0;
+          _skipped = false;
        }
 
-       DecodingTaskResult(SliceArray<byte>& data, int blockId, int decoded, int checksum, int error, const string& msg)
+       DecodingTaskResult(SliceArray<byte>& data, int blockId, int decoded, int checksum, 
+          int error, const string& msg, bool skipped = false)
            : _msg(msg)
            , _completionTime(clock())
        {
@@ -60,6 +63,7 @@ namespace kanzi
            _error = error;
            _decoded = decoded;
            _checksum = checksum;
+           _skipped = skipped;
        }
 
        DecodingTaskResult(const DecodingTaskResult& result)
@@ -71,6 +75,7 @@ namespace kanzi
            _decoded = result._decoded;
            _checksum = result._checksum;
            _completionTime = result._completionTime;
+           _skipped = result._skipped;
        }
 
        ~DecodingTaskResult() {}
@@ -120,6 +125,7 @@ namespace kanzi
        static const int MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
        static const int CANCEL_TASKS_ID = -1;
        static const int MAX_CONCURRENCY = 64;
+       static const int MAX_BLOCK_ID = int((uint(1) << 31) - 1);
 
        int _blockSize;
        uint8 _nbInputBlocks;

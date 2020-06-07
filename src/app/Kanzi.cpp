@@ -38,6 +38,8 @@ static const int ARG_IDX_ENTROPY = 6;
 static const int ARG_IDX_JOBS = 7;
 static const int ARG_IDX_VERBOSE = 8;
 static const int ARG_IDX_LEVEL = 9;
+static const int ARG_IDX_FROM = 10;
+static const int ARG_IDX_TO = 11;
 
 static const char* APP_HEADER = "Kanzi 1.7 (C) 2020,  Frederic Langlet";
 
@@ -55,6 +57,8 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     string strVerbose = "1";
     string strTasks = "0";
     string strBlockSize = "";
+    string strFrom = "";
+    string strTo = "";
     string strOverwrite = STR_FALSE;
     string strChecksum = STR_FALSE;
     string strSkip = STR_FALSE;
@@ -63,6 +67,8 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     int verbose = 1;
     int ctx = -1;
     int level = -1;
+    int from = -1;
+    int to = -1;
     string mode = " ";
     Printer log(&cout);
 
@@ -510,6 +516,44 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             continue;
         }
 
+        if ((arg.compare(0, 7, "--from=") == 0) && (ctx == -1)) {
+            string name = (arg.compare(0, 7, "--from=") == 0) ? arg.substr(7) : arg;
+            name = trim(name);
+
+            if (strFrom != "") {
+                cerr << "Warning: ignoring duplicate start block: " << name << endl;                
+            } else {
+                strFrom = name;
+                from = atoi(strFrom.c_str());
+
+                if ((from < 0) || ((from == 0) && (strFrom != "0"))) {
+                    cerr << "Invalid start block provided on command line: " << arg << endl;
+                    return Error::ERR_INVALID_PARAM;
+                }
+            }
+
+            continue;
+        }
+
+        if ((arg.compare(0, 5, "--to=") == 0) && (ctx == -1)) {
+            string name = (arg.compare(0, 5, "--to=") == 0) ? arg.substr(5) : arg;
+            name = trim(name);
+
+            if (strTo != "") {
+                cerr << "Warning: ignoring duplicate end block: " << name << endl;                
+            } else {
+                strTo = name;
+                to = atoi(strTo.c_str());
+
+                if (to <= 0) { // Must be > 0 (0 means nothing to do)
+                    cerr << "Invalid end block provided on command line: " << arg << endl;
+                    return Error::ERR_INVALID_PARAM;
+                }
+            }
+
+            continue;
+        }
+
         if ((arg.compare(0, 10, "--verbose=") != 0) && (ctx == -1) && (arg.compare(0, 9, "--output=") != 0)) {
             stringstream ss;
             ss << "Warning: ignoring unknown option [" << arg << "]";
@@ -544,6 +588,14 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
     }
 
+    if ((strFrom != "") || (strTo != "")) {
+        if (mode != "d"){
+            log.println("Warning: ignoring start end block (only valid for decompression)", verbose > 0);
+            from = -1;
+            to = -1;
+        }
+    }
+
     if (strBlockSize.length() > 0)
         map["block"] = strBlockSize;
 
@@ -570,6 +622,12 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
     if (strSkip == STR_TRUE)
         map["skipBlocks"] = strSkip;
+
+    if (from >= 0)
+        map["from"] = strFrom;
+
+    if (to >= 0)
+        map["to"] = strTo;
 
     map["jobs"] = strTasks;
     return 0;

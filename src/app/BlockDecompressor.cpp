@@ -63,6 +63,24 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
     it = args.find("verbose");
     _verbosity = atoi(it->second.c_str());
     args.erase(it);
+    it = args.find("from");
+
+    if (it == args.end()) {
+        _from = -1;
+    } else {
+        _from = atoi(it->second.c_str());
+        args.erase(it);
+    }
+
+    it = args.find("to");
+
+    if (it == args.end()) {
+        _to = -1;
+    } else {
+        _to = atoi(it->second.c_str());
+        args.erase(it);
+    }
+
     it = args.find("jobs");
     int concurrency = atoi(it->second.c_str());
     args.erase(it);
@@ -218,11 +236,16 @@ int BlockDecompressor::decompress(uint64& inputSize)
         }
     }
 
-    map<string, string> ctx;
-    ss.str(string());
-    ss << _verbosity;
-    ctx["verbosity"] = ss.str();
-    ctx["overwrite"] = (_overwrite == true) ? STR_TRUE : STR_FALSE;
+    map<string, string> ctxMap;
+    Context ctx(ctxMap);
+    ctx.putInt("verbosity", _verbosity);
+    ctx.putInt("overwrite", (_overwrite == true) ? 1 : 0);
+
+    if (_from >= 0)
+       ctx.putInt("from", _from);
+
+    if (_to >= 0)
+       ctx.putInt("to", _to);
 
     // Run the task(s)
     if (nbFiles == 1) {
@@ -236,16 +259,11 @@ int BlockDecompressor::decompress(uint64& inputSize)
             oName = formattedOutName + iName.substr(formattedInName.size()) + ".bak";
         }
 
-        ss.str(string());
-        ss << files[0]._size;
-        ctx["fileSize"] = ss.str();
-        ctx["inputName"] = iName;
-        ctx["outputName"] = oName;
-        ss.str(string());
-        ss << _jobs;
-        ctx["jobs"] = ss.str();
-        Context context(ctx);
-        FileDecompressTask<FileDecompressResult> task(context, _listeners);
+        ctx.putLong("fileSize", files[0]._size);
+        ctx.putString("inputName", iName);
+        ctx.putString("outputName", oName);
+        ctx.putInt("jobs", _jobs); 
+        FileDecompressTask<FileDecompressResult> task(ctx, _listeners);
         FileDecompressResult fdr = task.run();
         res = fdr._code;
         read = fdr._read;
@@ -278,7 +296,6 @@ int BlockDecompressor::decompress(uint64& inputSize)
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
             taskCtx.putInt("jobs", jobsPerTask[n++]);
-            ss.str(string());
             FileDecompressTask<FileDecompressResult>* task = new FileDecompressTask<FileDecompressResult>(taskCtx, _listeners);
             tasks.push_back(task);
         }
@@ -435,8 +452,7 @@ T FileDecompressTask<T>::run()
     ss << "Output file name set to '" << outputName << "'";
     log.println(ss.str().c_str(), printFlag);
     ss.str(string());
-    string strOverwrite = _ctx.getString("overwrite");
-    bool overwrite = strOverwrite == STR_TRUE;
+    bool overwrite = _ctx.getInt("overwrite") != 0;
 
     int64 read = 0;
     printFlag = verbosity > 1;

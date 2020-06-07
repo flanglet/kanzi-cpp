@@ -344,123 +344,86 @@ int CompressedInputStream::processBlock() THROW
     try {
         // Add a padding area to manage any block with header or temporarily expanded
         const int blkSize = max(_blockSize + EXTRA_BUFFER_SIZE, _blockSize + (_blockSize >> 4));
-
+        
         // Protect against future concurrent modification of the list of block listeners
         vector<Listener*> blockListeners(_listeners);
         int decoded = 0;
-        _sa->_index = 0;
-        const int firstBlockId = _blockId.load();
-        int nbTasks = _jobs;
-        int jobsPerTask[MAX_CONCURRENCY];
 
-        // Assign optimal number of tasks and jobs per task
-        if (nbTasks > 1) {
-            // If the number of input blocks is available, use it to optimize
-            // memory usage
-            if (_nbInputBlocks != 0) {
-                // Limit the number of jobs if there are fewer blocks that _jobs
-                // It allows more jobs per task and reduces memory usage.
-                if (nbTasks > _nbInputBlocks) {
-                    nbTasks = _nbInputBlocks;
+        while (true) {
+            _sa->_index = 0;
+            const int firstBlockId = _blockId.load();
+            int nbTasks = _jobs;
+            int jobsPerTask[MAX_CONCURRENCY];
+
+            // Assign optimal number of tasks and jobs per task
+            if (nbTasks > 1) {
+                // If the number of input blocks is available, use it to optimize
+                // memory usage
+                if (_nbInputBlocks != 0) {
+                    // Limit the number of jobs if there are fewer blocks that _jobs
+                    // It allows more jobs per task and reduces memory usage.
+                    if (nbTasks > _nbInputBlocks) {
+                        nbTasks = _nbInputBlocks;
+                    }
                 }
+
+                Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
+            }
+            else {
+                jobsPerTask[0] = _jobs;
             }
 
-            Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
-        }
-        else {
-            jobsPerTask[0] = _jobs;
-        }
+            // Create as many tasks as required
+            for (int taskId = 0; taskId < nbTasks; taskId++) {
+                _buffers[2 * taskId]->_index = 0;
+                _buffers[2 * taskId + 1]->_index = 0;
 
-        // Create as many tasks as required
-        for (int taskId = 0; taskId < nbTasks; taskId++) {
-            _buffers[2 * taskId]->_index = 0;
-            _buffers[2 * taskId + 1]->_index = 0;
+                if (_buffers[2 * taskId]->_length < blkSize + 1024) {
+                    // Lazy instantiation of input buffers this.buffers[2*taskId]
+                    // Output buffers this.buffers[2*taskId+1] are lazily instantiated
+                    // by the decoding tasks.
+                    delete[] _buffers[2 * taskId]->_array;
+                    _buffers[2 * taskId]->_array = new byte[blkSize + 1024];
+                    _buffers[2 * taskId]->_length = blkSize + 1024;
+                }
 
-            if (_buffers[2 * taskId]->_length < blkSize + 1024) {
-                // Lazy instantiation of input buffers this.buffers[2*taskId]
-                // Output buffers this.buffers[2*taskId+1] are lazily instantiated
-                // by the decoding tasks.
-                delete[] _buffers[2 * taskId]->_array;
-                _buffers[2 * taskId]->_array = new byte[blkSize + 1024];
-                _buffers[2 * taskId]->_length = blkSize + 1024;
+                Context copyCtx(_ctx);
+                copyCtx.putInt("jobs", jobsPerTask[taskId]);
+
+                DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(_buffers[2 * taskId],
+                    _buffers[2 * taskId + 1], blkSize, _transformType,
+                    _entropyType, firstBlockId + taskId + 1, _ibs, _hasher, &_blockId,
+                    blockListeners, copyCtx);
+                tasks.push_back(task);
             }
 
-            Context copyCtx(_ctx);
-            copyCtx.putInt("jobs", jobsPerTask[taskId]);
+            int skipped = 0;
 
-            DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(_buffers[2 * taskId],
-                _buffers[2 * taskId + 1], blkSize, _transformType,
-                _entropyType, firstBlockId + taskId + 1, _ibs, _hasher, &_blockId,
-                blockListeners, copyCtx);
-            tasks.push_back(task);
-        }
+            if (tasks.size() == 1) {
+                // Synchronous call
+                DecodingTask<DecodingTaskResult>* task = tasks.back();
+                tasks.pop_back();
+                DecodingTaskResult res = task->run();
+                delete task;
+                decoded += res._decoded;
 
-        if (tasks.size() == 1) {
-            // Synchronous call
-            DecodingTask<DecodingTaskResult>* task = tasks.back();
-            tasks.pop_back();
-            DecodingTaskResult res = task->run();
+                if (res._error != 0)
+                    throw IOException(res._msg, res._error); // deallocate in catch block
 
-            if (res._error != 0)
-                throw IOException(res._msg, res._error); // deallocate in catch block
+                if (res._skipped == true)
+                    skipped++;
 
-            delete task;
-            decoded += res._decoded;
-            const int size = _sa->_index + decoded;
+                const int size = _sa->_index + decoded;
 
-            if (size > nbTasks * _blockSize)
-                throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
+                if (size > nbTasks * _blockSize)
+                    throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
 
-            if (_sa->_length < size) {
-                _sa->_length = size;
-                delete[] _sa->_array;
-                _sa->_array = new byte[_sa->_length];
-            }
+                if (_sa->_length < size) {
+                    _sa->_length = size;
+                    delete[] _sa->_array;
+                    _sa->_array = new byte[_sa->_length];
+                }
 
-            memcpy(&_sa->_array[_sa->_index], &res._data[0], res._decoded);
-            _sa->_index += res._decoded;
-
-            if (blockListeners.size() > 0) {
-                // Notify after transform ... in block order !
-                Event evt(Event::AFTER_TRANSFORM, res._blockId,
-                    int64(res._decoded), res._checksum, _hasher != nullptr, res._completionTime);
-
-                CompressedInputStream::notifyListeners(blockListeners, evt);
-            }
-        }
-#ifdef CONCURRENCY_ENABLED
-        else {
-            vector<future<DecodingTaskResult> > futures;
-            vector<DecodingTaskResult> results;
-
-            // Register task futures and launch tasks in parallel
-            for (uint i = 0; i < tasks.size(); i++) {
-                futures.push_back(async(&DecodingTask<DecodingTaskResult>::run, tasks[i]));
-            }
-
-            // Wait for tasks completion and check results
-            for (uint i = 0; i < futures.size(); i++) {
-                DecodingTaskResult status = futures[i].get();
-                results.push_back(status);
-                decoded += status._decoded;
-
-                if (status._error != 0)
-                    throw IOException(status._msg, status._error); // deallocate in catch block
-            }
-
-            const int size = _sa->_index + decoded;
-
-            if (size > nbTasks * _blockSize)
-                throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
-
-            if (_sa->_length < size) {
-                _sa->_length = size;
-                delete[] _sa->_array;
-                _sa->_array = new byte[_sa->_length];
-            }
-
-            for (uint i = 0; i < results.size(); i++) {
-                DecodingTaskResult res = results[i];
                 memcpy(&_sa->_array[_sa->_index], &res._data[0], res._decoded);
                 _sa->_index += res._decoded;
 
@@ -468,17 +431,68 @@ int CompressedInputStream::processBlock() THROW
                     // Notify after transform ... in block order !
                     Event evt(Event::AFTER_TRANSFORM, res._blockId,
                         int64(res._decoded), res._checksum, _hasher != nullptr, res._completionTime);
-
                     CompressedInputStream::notifyListeners(blockListeners, evt);
                 }
             }
+#ifdef CONCURRENCY_ENABLED
+            else {
+                vector<future<DecodingTaskResult> > futures;
+                vector<DecodingTaskResult> results;
+
+                // Register task futures and launch tasks in parallel
+                for (uint i = 0; i < tasks.size(); i++) {
+                    futures.push_back(async(&DecodingTask<DecodingTaskResult>::run, tasks[i]));
+                }
+
+                // Wait for tasks completion and check results
+                for (uint i = 0; i < futures.size(); i++) {
+                    DecodingTaskResult status = futures[i].get();
+                    results.push_back(status);
+                    decoded += status._decoded;
+
+                    if (status._error != 0)
+                        throw IOException(status._msg, status._error); // deallocate in catch block
+
+                    if (status._skipped == true)
+                        skipped++;
+                }
+
+                const int size = _sa->_index + decoded;
+
+                if (size > nbTasks * _blockSize)
+                    throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
+
+                if (_sa->_length < size) {
+                    _sa->_length = size;
+                    delete[] _sa->_array;
+                    _sa->_array = new byte[_sa->_length];
+                }
+
+                for (uint i = 0; i < results.size(); i++) {
+                    DecodingTaskResult res = results[i];
+                    memcpy(&_sa->_array[_sa->_index], &res._data[0], res._decoded);
+                    _sa->_index += res._decoded;
+
+                    if (blockListeners.size() > 0) {
+                        // Notify after transform ... in block order !
+                        Event evt(Event::AFTER_TRANSFORM, res._blockId,
+                            int64(res._decoded), res._checksum, _hasher != nullptr, res._completionTime);
+                        CompressedInputStream::notifyListeners(blockListeners, evt);
+                    }
+                }
+            }
+
+            for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+                delete *it;
+
+            tasks.clear();
+#endif
+
+            // Unless all blocks were skipped, exit the loop (usual case)
+            if (skipped != nbTasks)
+                break;
         }
 
-        for (DecodingTask<DecodingTaskResult>* task : tasks)
-            delete task;
-
-        tasks.clear();
-#endif
         _sa->_index = 0;
         return decoded;
     }
@@ -581,10 +595,10 @@ T DecodingTask<T>::run() THROW
 
         if (taskId == _blockId - 1)
             break;
-        
+
         // Back-off improves performance
         CPU_PAUSE();
-    } 
+    }
 
     // Read shared bitstream sequentially (each task is gated by _processedBlockId)
     const uint lr = (_blockLength >= 1 << 28) ? 40 : 32;
@@ -608,7 +622,7 @@ T DecodingTask<T>::run() THROW
         _data->_array = new byte[_data->_length];
     }
 
-    for (int n = 0; read > 0; ) {
+    for (int n = 0; read > 0;) {
         const uint chkSize = (read < (uint(1) << 31)) ? uint(read) : uint(1) << 31;
         _ibs->readBits(&_data->_array[n], chkSize);
         n += ((chkSize + 7) >> 3);
@@ -618,6 +632,14 @@ T DecodingTask<T>::run() THROW
     // After completion of the bitstream reading, increment the block id.
     // It unblocks the task processing the next block (if any)
     (*_processedBlockId)++;
+
+    const int from = _ctx.getInt("from", 0);
+    const int to = _ctx.getInt("to", CompressedInputStream::MAX_BLOCK_ID);
+
+    // Check if the block must be skipped
+    if ((_blockId < from) || (_blockId >= to)) {
+        return T(*_data, _blockId, 0, 0, 0, "Skipped", true);
+    }
 
     // Create an InputBitstream local to the task
     istreambuf<char> buf(reinterpret_cast<char*>(&_data->_array[0]), streamsize(r));

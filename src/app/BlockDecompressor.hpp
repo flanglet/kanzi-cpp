@@ -109,6 +109,8 @@ namespace kanzi {
        string _outputName;
        int _blockSize;
        int _jobs;
+       int _from; // start block
+       int _to; // end block
        vector<Listener*> _listeners;
 
        static void notifyListeners(vector<Listener*>& listeners, const Event& evt);
