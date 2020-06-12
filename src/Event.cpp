@@ -14,8 +14,6 @@ limitations under the License.
 */
 
 #include <sstream>
-#include <ctime>
-#include <cstdio>
 #include "Event.hpp"
 
 using namespace kanzi;
