@@ -54,7 +54,7 @@ namespace kanzi
    class ANSRangeEncoder : public EntropyEncoder
    {
    public:
-	   static const int ANS_TOP = 1 << 15; // max possible for ANS_TOP=1<23
+	   static const int ANS_TOP = 1 << 15; // max possible for ANS_TOP=1<<23
 
 	   ANSRangeEncoder(OutputBitStream& bitstream,
                       int order = 0,
@@ -137,7 +137,7 @@ namespace kanzi
       // Compute next ANS state
       // C(s,x) = M floor(x/q_s) + mod(x,q_s) + b_s where b_s = q_0 + ... + q_{s-1}
       // st = ((st / freq) << lr) + (st % freq) + cumFreq[prv];
-      const uint64 q = ((st * sym._invFreq) >> sym._invShift);
+      const uint64 q = (st * sym._invFreq) >> sym._invShift;
       return int(st + sym._bias + q * sym._cmplFreq);
    }
 }
