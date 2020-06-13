@@ -590,7 +590,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
     if ((strFrom != "") || (strTo != "")) {
         if (mode != "d"){
-            log.println("Warning: ignoring start end block (only valid for decompression)", verbose > 0);
+            log.println("Warning: ignoring start/end block (only valid for decompression)", verbose > 0);
             from = -1;
             to = -1;
         }
