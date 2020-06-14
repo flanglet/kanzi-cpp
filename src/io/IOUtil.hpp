@@ -141,17 +141,17 @@ struct FileDataComparator
         if (_sortBySize == false)
            return f1._fullPath < f2._fullPath;
 
-        // First, check parent directory path
+        // First, compare parent directory paths
         if (f1._path != f2._path)
            return f1._path < f2._path;
 
-        // Then check file size
-        return f1._size < f2._size;
+        // Then compare file sizes (decreasing order)
+        return f1._size > f2._size;
     }
 };
 
 
-static void sortFilesByPathAndSize(vector<FileData>& files, bool sortBySize=false)
+static void sortFilesByPathAndSize(vector<FileData>& files, bool sortBySize = false)
 {
     FileDataComparator c = { sortBySize };
     sort(files.begin(), files.end(), c);

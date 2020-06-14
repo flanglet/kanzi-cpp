@@ -277,7 +277,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         int* jobsPerTask = new int[nbFiles];
         Global::computeJobsPerTask(jobsPerTask, _jobs, nbFiles);
         int n = 0;
-        sortFilesByPathAndSize(files, false);
+        sortFilesByPathAndSize(files, true);
 
         //  Create one task per file
         for (int i = 0; i < nbFiles; i++) {
