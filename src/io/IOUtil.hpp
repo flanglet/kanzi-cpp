@@ -136,16 +136,14 @@ struct FileDataComparator
 {
     bool _sortBySize;
 
-    bool operator() (FileData f1, FileData f2) 
+    bool operator() (const FileData& f1, const FileData& f2) 
     { 
         if (_sortBySize == false)
            return f1._fullPath < f2._fullPath;
 
         // First, check parent directory path
-        int res = f1._path < f2._path;
-
-        if (res != 0)
-           return res < 0;
+        if (f1._path != f2._path)
+           return f1._path < f2._path;
 
         // Then check file size
         return f1._size < f2._size;
