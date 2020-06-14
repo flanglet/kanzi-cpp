@@ -68,9 +68,9 @@ namespace kanzi {
 
 	// The returned type contains 8 transform values
 	template <class T>
-	uint64 FunctionFactory<T>::getType(const char* cname) THROW
+	uint64 FunctionFactory<T>::getType(const char* tName) THROW
 	{
-		string name(cname);
+		string name(tName);
 		size_t pos = name.find('+');
 
 		if (pos == string::npos)
@@ -108,9 +108,9 @@ namespace kanzi {
 	}
 
 	template <class T>
-	uint64 FunctionFactory<T>::getTypeToken(const char* cname) THROW
+	uint64 FunctionFactory<T>::getTypeToken(const char* tName) THROW
 	{
-		string name(cname);
+		string name(tName);
 		transform(name.begin(), name.end(), name.begin(), ::toupper);
 
 		if (name == "TEXT")
