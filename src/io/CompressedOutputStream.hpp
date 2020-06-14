@@ -56,6 +56,14 @@ namespace kanzi {
            _error = result._error;
        }
 
+       EncodingTaskResult& operator = (const EncodingTaskResult& result)
+       {
+           _msg = result._msg;
+           _blockId = result._blockId;
+           _error = result._error;
+           return *this;
+       }
+
        ~EncodingTaskResult() {}
    };
 
