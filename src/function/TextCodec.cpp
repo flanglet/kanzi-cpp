@@ -372,6 +372,8 @@ TextCodec1::TextCodec1()
     _hashMask = (1 << _logHashSize) - 1;
     _staticDictSize = TextCodec::STATIC_DICT_WORDS;
     _isCRLF = false;
+    _escapes[0] = TextCodec::ESCAPE_TOKEN2;
+    _escapes[1] = TextCodec::ESCAPE_TOKEN1;
 }
 
 TextCodec1::TextCodec1(Context& ctx)
@@ -399,6 +401,8 @@ TextCodec1::TextCodec1(Context& ctx)
     _hashMask = (1 << _logHashSize) - 1;
     _staticDictSize = TextCodec::STATIC_DICT_WORDS;
     _isCRLF = false;
+    _escapes[0] = TextCodec::ESCAPE_TOKEN2;
+    _escapes[1] = TextCodec::ESCAPE_TOKEN1;
 }
 
 void TextCodec1::reset(int count)
@@ -420,8 +424,6 @@ void TextCodec1::reset(int count)
         memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], nbEntries * sizeof(DictEntry));
 
         // Add special entries at start of map
-        _escapes[0] = TextCodec::ESCAPE_TOKEN2;
-        _escapes[1] = TextCodec::ESCAPE_TOKEN1;
         const int nbWords = TextCodec::STATIC_DICT_WORDS;
         _dictList[nbWords] = DictEntry(&_escapes[0], 0, nbWords, 1);
         _dictList[nbWords + 1] = DictEntry(&_escapes[1], 0, nbWords + 1, 1);
@@ -522,7 +524,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 if (pe == nullptr) {
                     // Word not found in the dictionary or hash collision.
                     // Replace entry if not in static dictionary
-                    if (((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) && (pe1 == nullptr)) {
+                    if (((length > 3) || ((length == 3) && (words < TextCodec::THRESHOLD2))) && (pe1 == nullptr)) {
                         DictEntry* pe = &_dictList[words];
 
                         if ((pe->_data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
@@ -714,8 +716,8 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             continue;
         }
 
-        if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(cur)) {
-            const int length = srcIdx - delimAnchor - 1;
+        if ((srcIdx > delimAnchor + 3) && TextCodec::isDelimiter(cur)) {
+            const int length = srcIdx - delimAnchor - 1; // length > 2
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
                 int h1 = TextCodec::HASH1;
@@ -736,7 +738,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 if (pe == nullptr) {
                     // Word not found in the dictionary or hash collision.
                     // Replace entry if not in static dictionary
-                    if (((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) && (pe1 == nullptr)) {
+                    if (((length > 3) || (words < TextCodec::THRESHOLD2)) && (pe1 == nullptr)) {
                         DictEntry& e = _dictList[words];
 
                         if ((e._data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
@@ -979,7 +981,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 if (pe == nullptr) {
                     // Word not found in the dictionary or hash collision.
                     // Replace entry if not in static dictionary
-                    if (((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) && (pe1 == nullptr)) {
+                    if (((length > 3) || ((length == 3) && (words < TextCodec::THRESHOLD2))) && (pe1 == nullptr)) {
                         DictEntry* pe = &_dictList[words];
 
                         if ((pe->_data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
@@ -1205,8 +1207,8 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             continue;
         }
 
-        if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(cur)) {
-            const int length = srcIdx - delimAnchor - 1;
+        if ((srcIdx > delimAnchor + 3) && TextCodec::isDelimiter(cur)) {
+            const int length = srcIdx - delimAnchor - 1; // length > 2
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
                 int h1 = TextCodec::HASH1;
@@ -1227,7 +1229,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 if (pe == nullptr) {
                     // Word not found in the dictionary or hash collision.
                     // Replace entry if not in static dictionary
-                    if (((length > 3) || ((length > 2) && (words < TextCodec::THRESHOLD2))) && (pe1 == nullptr)) {
+                    if (((length > 3) || (words < TextCodec::THRESHOLD2)) && (pe1 == nullptr)) {
                         DictEntry& e = _dictList[words];
 
                         if ((e._data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
