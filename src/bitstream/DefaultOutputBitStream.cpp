@@ -84,10 +84,11 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
             _current |= (value >> r);
             pushCurrent();
             _current = (value << (64 - r));
-            _availBits -= r;
             start += 8;
             remaining -= 64;
         }
+
+        _availBits -= r;
     }
 
     // Last bytes

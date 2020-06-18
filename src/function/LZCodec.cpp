@@ -213,6 +213,7 @@ bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int dstIdx = 0;
     const int maxDist = (src[0] == byte(1)) ? MAX_DISTANCE2 : MAX_DISTANCE1;
     int srcIdx = 1;
+    bool res = true;
 
     while (true) {
         const int token = int(src[srcIdx++]);
@@ -227,27 +228,16 @@ bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
                     litLen += 0xFF;
                 }
 
-                if (srcIdx >= srcEnd + 16) {
-                    input._index += srcIdx;
-                    output._index += dstIdx;
-                    return false;
-                }
-
                 litLen += int(src[srcIdx++]);
-            }
-
-            // Copy literals and exit ?
-            if ((dstIdx + litLen > dstEnd) || (srcIdx + litLen > srcEnd)) {
-                memcpy(&dst[dstIdx], &src[srcIdx], litLen);
-                srcIdx += litLen;
-                dstIdx += litLen;
-                break;
             }
 
             // Emit literals
             emitLiterals(&src[srcIdx], &dst[dstIdx], litLen);
             srcIdx += litLen;
             dstIdx += litLen;
+
+            if ((dstIdx > dstEnd) || (srcIdx > srcEnd))
+                break;
         }
 
         // Get match length
@@ -268,9 +258,8 @@ bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         // Sanity check
         if (mEnd > dstEnd + 16) {
-            input._index += srcIdx;
-            output._index += dstIdx;
-            return false;
+            res = false;
+            goto exit;
         }
 
         // Get distance
@@ -309,9 +298,10 @@ bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         dstIdx = mEnd;
     }
 
+exit:
     output._index = dstIdx;
     input._index = srcIdx;
-    return srcIdx == srcEnd + 16;
+    return res && (srcIdx == srcEnd + 16);
 }
 
 

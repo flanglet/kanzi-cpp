@@ -36,6 +36,12 @@ namespace kanzi {
        DictEntry& operator=(const DictEntry& de);
 
        ~DictEntry() {}
+
+#if __cplusplus >= 201103L
+       DictEntry(DictEntry&& de) = default;
+
+       DictEntry& operator=(DictEntry&& de) = default;
+#endif
    };
 
    // Encode word indexes using a token

@@ -91,26 +91,15 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
     }
     else {
         // Not byte aligned
-        if (_availBits == 0) {
-            while (remaining >= 64) {
-                pullCurrent();
-                _availBits -= 64;
-                BigEndian::writeLong64(&bits[start], _current >> _availBits);
-                start += 8;
-                remaining -= 64;
-            }
-        }
-        else {
-            const int r = 64 - _availBits;
+        const int r = 64 - _availBits;
 
-            while (remaining >= 64) {
-                const uint64 v = _current & (uint64(-1) >> (64 - _availBits));
-                pullCurrent();
-                _availBits -= r;
-                BigEndian::writeLong64(&bits[start], (v << r) | (_current >> _availBits));
-                start += 8;
-                remaining -= 64;
-            }
+        while (remaining >= 64) {
+            const uint64 v = _current & (uint64(-1) >> (64 - _availBits));
+            pullCurrent();
+            _availBits -= r;
+            BigEndian::writeLong64(&bits[start], (v << r) | (_current >> _availBits));
+            start += 8;
+            remaining -= 64;
         }
     }
 

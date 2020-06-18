@@ -44,9 +44,9 @@ namespace kanzi {
 		static const uint64 SRT_TYPE = 13; // Sorted Rank
 		static const uint64 LZP_TYPE = 14; // Lempel Ziv Predict
 
-		static uint64 getType(const char* name) THROW;
+		static uint64 getType(const char* tName) THROW;
 
-		static uint64 getTypeToken(const char* name) THROW;
+		static uint64 getTypeToken(const char* tName) THROW;
 
 		static string getName(uint64 functionType) THROW;
 
