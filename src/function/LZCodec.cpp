@@ -164,8 +164,8 @@ bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
 
         // Emit match length
-        if (mLen >= 0x0F)
-            dstIdx += emitLength(&dst[dstIdx], mLen - 0x0F);
+        if (mLen >= 15)
+            dstIdx += emitLength(&dst[dstIdx], mLen - 15);
 
         // Emit distance
         if ((maxDist == MAX_DISTANCE2) && (dist > 0xFFFF))
