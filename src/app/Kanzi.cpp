@@ -41,7 +41,7 @@ static const int ARG_IDX_LEVEL = 9;
 static const int ARG_IDX_FROM = 10;
 static const int ARG_IDX_TO = 11;
 
-static const char* APP_HEADER = "Kanzi 1.7 (C) 2020,  Frederic Langlet";
+static const char* APP_HEADER = "Kanzi 1.8 (C) 2020,  Frederic Langlet";
 
 
 #ifdef CONCURRENCY_ENABLED
