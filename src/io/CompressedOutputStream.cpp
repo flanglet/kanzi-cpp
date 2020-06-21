@@ -650,7 +650,7 @@ T EncodingTask<T>::run() THROW
             return T(_blockId, Error::ERR_PROCESS_BLOCK, "Entropy coding failed");
         }
 
-        // Dispose before processing statistics( may write to the bitstream)
+        // Dispose before processing statistics (may write to the bitstream)
         ee->dispose();
         delete ee;
         ee = nullptr;

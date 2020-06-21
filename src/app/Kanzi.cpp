@@ -38,8 +38,8 @@ static const int ARG_IDX_ENTROPY = 6;
 static const int ARG_IDX_JOBS = 7;
 static const int ARG_IDX_VERBOSE = 8;
 static const int ARG_IDX_LEVEL = 9;
-static const int ARG_IDX_FROM = 10;
-static const int ARG_IDX_TO = 11;
+//static const int ARG_IDX_FROM = 10;
+//static const int ARG_IDX_TO = 11;
 
 static const char* APP_HEADER = "Kanzi 1.8 (C) 2020,  Frederic Langlet";
 
