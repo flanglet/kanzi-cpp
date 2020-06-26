@@ -277,9 +277,9 @@ namespace kanzi
        : _sse0(256)
        , _sse1(65536)
    {
-       int statesSize = 1 << 28;
-       int mixersSize = 1 << 12;
-       int hashSize = HASH_SIZE;
+       uint statesSize = 1 << 28;
+       uint mixersSize = 1 << 12;
+       uint hashSize = HASH_SIZE;
        uint extraMem = 0;
 
        if (ctx != nullptr) {
