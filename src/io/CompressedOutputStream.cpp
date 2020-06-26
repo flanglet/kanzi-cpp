@@ -549,7 +549,7 @@ T EncodingTask<T>::run() THROW
 
                 if (str == STR_TRUE) {
                     uint histo[256];
-                    const int entropy = EntropyUtils::computeFirstOrderEntropy1024(&_data->_array[_data->_index], _blockLength, histo);
+                    const int entropy = Global::computeFirstOrderEntropy1024(&_data->_array[_data->_index], _blockLength, histo);
                     //_ctx.putString("histo0", toString(histo, 256));
 
                     if (entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD) {
