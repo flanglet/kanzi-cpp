@@ -1102,7 +1102,7 @@ int TextCodec2::emitSymbols(byte src[], byte dst[], const int srcEnd, const int 
                 break;
 
             default:
-                if ((cur & TextCodec::MASK_80) != byte(0))
+                if (cur >= byte(128))
                     dst[dstIdx++] = TextCodec::ESCAPE_TOKEN1;
 
                 dst[dstIdx++] = cur;
@@ -1133,7 +1133,7 @@ int TextCodec2::emitSymbols(byte src[], byte dst[], const int srcEnd, const int 
                 break;
 
             default:
-                if ((cur & TextCodec::MASK_80) != byte(0)) {
+                if (cur >= byte(128)) {
                     if (dstIdx >= dstEnd)
                         return -1;
 
