@@ -96,13 +96,13 @@ bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     byte* src = &input._array[input._index];
     int dstIdx = 0;
 
-    if (_bufferSize == 0) {
-        _bufferSize = 1 << HASH_LOG;
+    if (_hashSize == 0) {
+        _hashSize = 1 << HASH_LOG;
         delete[] _hashes;
-        _hashes = new int32[_bufferSize];
+        _hashes = new int32[_hashSize];
     }
 
-    memset(_hashes, 0, sizeof(int32) * _bufferSize);
+    memset(_hashes, 0, sizeof(int32) * _hashSize);
     const int maxDist = (srcEnd < 4 * MAX_DISTANCE1) ? MAX_DISTANCE1 : MAX_DISTANCE2;
     dst[dstIdx++] = (maxDist == MAX_DISTANCE1) ? byte(0) : byte(1);
     int srcIdx = 0;
@@ -331,13 +331,13 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     const int srcEnd = count - 8;
     const int dstEnd = output._length - 4;
 
-    if (_bufferSize == 0) {
-        _bufferSize = 1 << HASH_LOG;
+    if (_hashSize == 0) {
+        _hashSize = 1 << HASH_LOG;
         delete[] _hashes;
-        _hashes = new int32[_bufferSize];
+        _hashes = new int32[_hashSize];
     }
 
-    memset(_hashes, 0, sizeof(int32) * _bufferSize);
+    memset(_hashes, 0, sizeof(int32) * _hashSize);
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
@@ -438,13 +438,13 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     byte* dst = &output._array[output._index];
     byte* src = &input._array[input._index];
 
-    if (_bufferSize == 0) {
-        _bufferSize = 1 << HASH_LOG;
+    if (_hashSize == 0) {
+        _hashSize = 1 << HASH_LOG;
         delete[] _hashes;
-        _hashes = new int32[_bufferSize];
+        _hashes = new int32[_hashSize];
     }
 
-    memset(_hashes, 0, sizeof(int32) * _bufferSize);
+    memset(_hashes, 0, sizeof(int32) * _hashSize);
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];

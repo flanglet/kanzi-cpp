@@ -58,9 +58,9 @@ namespace kanzi
    class LZXCodec : public Function<byte>
    {
    public:
-       LZXCodec() { _hashes = new int[0]; _bufferSize = 0; }
-       LZXCodec(Context&) { _hashes = new int[0]; _bufferSize = 0; }
-       ~LZXCodec() { delete[] _hashes; _bufferSize = 0; }
+       LZXCodec() { _hashes = new int32[0]; _hashSize = 0; }
+       LZXCodec(Context&) { _hashes = new int32[0]; _hashSize = 0; }
+       ~LZXCodec() { delete[] _hashes; _hashSize = 0; }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
@@ -84,7 +84,7 @@ namespace kanzi
       static const int MIN_MATCH_MIN_DIST = 1 << 16;
 
       int32* _hashes;
-      int _bufferSize;
+      int _hashSize;
 
       static int emitLength(byte block[], int len);
 
@@ -99,11 +99,11 @@ namespace kanzi
    class LZPCodec : public Function<byte>
    {
    public:
-       LZPCodec() { _hashes = new int[0]; _bufferSize = 0; }
+       LZPCodec() { _hashes = new int32[0]; _hashSize = 0; }
        
-       LZPCodec(Context&) { _hashes = new int[0]; _bufferSize = 0; }
+       LZPCodec(Context&) { _hashes = new int32[0]; _hashSize = 0; }
        
-       virtual ~LZPCodec() { delete[] _hashes; _bufferSize = 0; }
+       virtual ~LZPCodec() { delete[] _hashes; _hashSize = 0; }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
@@ -124,7 +124,7 @@ namespace kanzi
       static const int MATCH_FLAG         = 0xFC;
 
       int32* _hashes;
-      int _bufferSize;
+      int _hashSize;
   };
 
 
