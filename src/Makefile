@@ -119,7 +119,12 @@ kanzi: $(OBJECTS) app/Kanzi.o
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
 clean: 
+ifeq ($(OS),Windows_NT)
+	del /S *.o *.obj ..\bin\$(APP)$(PROG_SUFFIX) ..\lib\$(STATIC_LIB) ..\lib\$(SHARED_LIB)
+else
 	rm -f ../bin/test*$(PROG_SUFFIX) $(OBJECTS) $(RPTS) $(TEST_OBJECTS) \
         ../bin/$(APP)$(PROG_SUFFIX) ../lib/$(STATIC_LIB) ../lib/$(SHARED_LIB)
+endif
+
 .cpp.o:
 	$(CXX) $(CFLAGS) $< -o $@
