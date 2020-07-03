@@ -682,13 +682,21 @@ T EncodingTask<T>::run() THROW
         // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
         const uint lw = (_blockLength >= 1 << 28) ? 40 : 32;
         _obs->writeBits(written, lw);
+        int chkSize = int(min(written, uint64(1) << 30));
+            
+        // Protect against pathological cases 
+        if (_data->_length < chkSize) {
+            _data->_length = chkSize;
+            delete[] _data->_array;
+            _data->_array = new byte[_data->_length];
+        }
 
         // Emit data to shared bitstream
         for (int n = 0; written > 0; ) {
-            const uint chkSize = (written < (uint(1) << 31)) ? uint(written) : uint(1) << 31;
             _obs->writeBits(&_data->_array[n], chkSize);
             n += ((chkSize + 7) >> 3);
             written -= uint64(chkSize);
+            chkSize = int(min(written, uint64(1) << 30));
         }
 
         // After completion of the entropy coding, increment the block id.
