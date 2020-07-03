@@ -174,7 +174,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     SliceArray<byte> mIdxBuf(new byte[sizeChunk / 4], sizeChunk / 4);
     memset(&_counters[0], 0, sizeof(int32) * 65536);
     bool success = true;
-    const int litOrder = (count < (1 << 17)) ? 0 : 1;
+    const int litOrder = 0;
     dst[dstIdx++] = byte(litOrder);
     stringbuf buffer;
     iostream os(&buffer);

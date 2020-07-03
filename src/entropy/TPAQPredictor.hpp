@@ -293,8 +293,9 @@ namespace kanzi
                statesSize = 1 << 29;
            else if (rbsz >= 16 * 1024 * 1024)
                statesSize = 1 << 28;
-           else
-               statesSize = (rbsz >= 1024 * 1024) ? 1 << 27 : 1 << 26;
+           else if (rbsz >= 4 * 1024 * 1024)
+               statesSize = 1 << 26;   
+           else statesSize = (rbsz >= 1024 * 1024) ? 1 << 24 : 1 << 22; 
 
            // Actual size of the current block
            // Too many mixers hurts compression for small blocks.
