@@ -622,8 +622,8 @@ T DecodingTask<T>::run() THROW
         _data->_array = new byte[_data->_length];
     }
 
-    for (int n = 0; read > 0;) {
-        const uint chkSize = (read < (uint(1) << 31)) ? uint(read) : uint(1) << 31;
+    for (int n = 0; read > 0; ) {
+        const uint chkSize = uint(min(read, uint64(1) << 30));
         _ibs->readBits(&_data->_array[n], chkSize);
         n += ((chkSize + 7) >> 3);
         read -= uint64(chkSize);

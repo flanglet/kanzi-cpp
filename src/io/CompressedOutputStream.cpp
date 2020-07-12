@@ -587,19 +587,15 @@ T EncodingTask<T>::run() THROW
         }
 
         _ctx.putInt("size", postTransformLength);
-        int dataSize = 0;
+        int dataSize = (postTransformLength < 2) ? 1 : (Global::_log2(postTransformLength) + 7) >> 3;
 
-        for (uint64 n = 0xFF; n < uint64(postTransformLength); n <<= 8)
-            dataSize++;
-
-        if (dataSize > 3) {
+        if (dataSize > 4) {
             _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID);
             return T(_blockId, Error::ERR_WRITE_FILE, "Invalid block data length");
         }
 
         // Record size of 'block size' - 1 in bytes
-        mode |= byte((dataSize & 0x03) << 5);
-        dataSize++;
+        mode |= byte(((dataSize - 1) & 0x03) << 5);
 
         if (_listeners.size() > 0) {
             // Notify after transform
@@ -682,21 +678,21 @@ T EncodingTask<T>::run() THROW
         // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
         const uint lw = (_blockLength >= 1 << 28) ? 40 : 32;
         _obs->writeBits(written, lw);
-        int chkSize = int(min(written, uint64(1) << 30));
+        uint chkSize = uint(min(written, uint64(1) << 30));
             
         // Protect against pathological cases 
-        if (_data->_length < chkSize) {
-            _data->_length = chkSize;
+        if (_data->_length < int(chkSize >> 3)) {
+            _data->_length = chkSize >> 3;
             delete[] _data->_array;
             _data->_array = new byte[_data->_length];
         }
 
         // Emit data to shared bitstream
         for (int n = 0; written > 0; ) {
+            chkSize = uint(min(written, uint64(1) << 30));
             _obs->writeBits(&_data->_array[n], chkSize);
             n += ((chkSize + 7) >> 3);
             written -= uint64(chkSize);
-            chkSize = int(min(written, uint64(1) << 30));
         }
 
         // After completion of the entropy coding, increment the block id.
