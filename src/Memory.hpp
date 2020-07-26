@@ -31,7 +31,7 @@ namespace kanzi {
 		__asm__ volatile("bswap %0" : "=r"(swapped_bytes) : "0"(x));
 		return swapped_bytes;
    #else // fallback
-		return (x >> 24) | ((x >> 8) & 0xFF00) | ((x << 8) & 0xFF0000) | (x << 24);
+		return uint32((x >> 24) | ((x >> 8) & 0xFF00) | ((x << 8) & 0xFF0000) | (x << 24));
    #endif
 	}
 
@@ -42,7 +42,7 @@ namespace kanzi {
    #elif defined(_MSC_VER)
 		return _byteswap_ushort(x);
    #else // fallback
-		return (x >> 8) | ((x & 0xFF) << 8);
+		return uint16((x >> 8) | ((x & 0xFF) << 8));
    #endif
 	}
 
@@ -108,11 +108,11 @@ namespace kanzi {
 
 	inline int64 BigEndian::readLong64(const byte* p)
 	{
-      int64 val;
+      uint64 val;
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data
-		val = *(const int64*)p;
+		val = *(const uint64*)p;
    #else
 		memcpy(&val, p, 8);
    #endif
@@ -120,17 +120,17 @@ namespace kanzi {
    #if (!IS_BIG_ENDIAN)
       val = bswap64(val);
    #endif 
-      return val;
+      return int64(val);
 	}
 
 
 	inline int32 BigEndian::readInt32(const byte* p)
 	{
-      int32 val;
+      uint32 val;
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data
-		val = *(const int32*)p;
+		val = *(const uint32*)p;
    #else
 		memcpy(&val, p, 4);
    #endif
@@ -138,17 +138,17 @@ namespace kanzi {
    #if (!IS_BIG_ENDIAN)
       val = bswap32(val);
    #endif 
-      return val;
+      return int32(val);
 	}
 
 
 	inline int16 BigEndian::readInt16(const byte* p)
 	{
-      int16 val;
+      uint16 val;
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data
-		val = *(const int16*)p;
+		val = *(const uint16*)p;
    #else
 		memcpy(&val, p, 2);
    #endif
@@ -156,14 +156,14 @@ namespace kanzi {
    #if (!IS_BIG_ENDIAN)
       val = bswap16(val);
    #endif 
-      return val;
+      return int16(val);
 	}
 
 
 	inline void BigEndian::writeLong64(byte* p, int64 val)
 	{
    #if (!IS_BIG_ENDIAN)
-      val = bswap64(val);
+      val = int64(bswap64(uint64(val)));
    #endif 
 
    #ifdef AGGRESSIVE_OPTIMIZATION
@@ -178,7 +178,7 @@ namespace kanzi {
 	inline void BigEndian::writeInt32(byte* p, int32 val)
 	{
    #if (!IS_BIG_ENDIAN)
-      val = bswap32(val);
+      val = int32(bswap32(uint32(val)));
    #endif 
 
    #ifdef AGGRESSIVE_OPTIMIZATION
@@ -193,7 +193,7 @@ namespace kanzi {
 	inline void BigEndian::writeInt16(byte* p, int16 val)
 	{
    #if (!IS_BIG_ENDIAN)
-      val = bswap16  (val);
+      val = int16(bswap16(uint16(val)));
    #endif 
 
    #ifdef AGGRESSIVE_OPTIMIZATION
@@ -207,11 +207,11 @@ namespace kanzi {
 
 	inline int64 LittleEndian::readLong64(const byte* p)
 	{
-      int64 val;
+      uint64 val;
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data
-		val = *(const int64*)p;
+		val = *(const uint64*)p;
    #else
 		memcpy(&val, p, 8);
    #endif
@@ -219,17 +219,17 @@ namespace kanzi {
    #if (IS_BIG_ENDIAN)
       val = bswap64(val);
    #endif 
-      return val;
+      return int64(val);
 	}
 
 
 	inline int32 LittleEndian::readInt32(const byte* p)
 	{
-      int32 val;
+      uint32 val;
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data
-		val = *(const int32*)p;
+		val = *(const uint32*)p;
    #else
 		memcpy(&val, p, 4);
    #endif
@@ -237,17 +237,17 @@ namespace kanzi {
    #if (IS_BIG_ENDIAN)
       val = bswap32(val);
    #endif 
-      return val;
+      return int32(val);
 	}
 
 
 	inline int16 LittleEndian::readInt16(const byte* p)
 	{
-      int16 val;
+      uint16 val;
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data
-		val = *(const int16*)p;
+		val = *(const uint16*)p;
    #else
 		memcpy(&val, p, 2);
    #endif
@@ -255,14 +255,14 @@ namespace kanzi {
    #if (IS_BIG_ENDIAN)
       val = bswap16(val);
    #endif 
-      return val;
+      return int16(val);
 	}
 
 
 	inline void LittleEndian::writeLong64(byte* p, int64 val)
 	{
    #if (IS_BIG_ENDIAN)
-      val = bswap64(val);
+      val = int64(bswap64(uint64(val)));
    #endif 
 
    #ifdef AGGRESSIVE_OPTIMIZATION
@@ -277,7 +277,7 @@ namespace kanzi {
 	inline void LittleEndian::writeInt32(byte* p, int32 val)
 	{
    #if (IS_BIG_ENDIAN)
-      val = bswap32(val);
+      val = int32(bswap32(uint32(val)));
    #endif 
 
    #ifdef AGGRESSIVE_OPTIMIZATION
@@ -292,7 +292,7 @@ namespace kanzi {
 	inline void LittleEndian::writeInt16(byte* p, int16 val)
 	{
    #if (IS_BIG_ENDIAN)
-      val = bswap16(val);
+      val = int16(bswap16(uint16(val)));
    #endif 
 
    #ifdef AGGRESSIVE_OPTIMIZATION
