@@ -119,7 +119,7 @@ bool SBRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
             r--;
         }
 
-        r2s[r] = c;
+        r2s[r] = uint8(c);
     }
 
     input._index += count;
