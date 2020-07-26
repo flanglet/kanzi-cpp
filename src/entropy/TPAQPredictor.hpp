@@ -481,7 +481,7 @@ namespace kanzi
           }
        }
 
-       _pr = p + (uint(p - 2048) >> 31);
+       _pr = p + ((p < 2048) ? 1 : 0);
    }
 
    template <bool T>
