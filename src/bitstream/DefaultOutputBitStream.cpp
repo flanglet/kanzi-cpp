@@ -125,7 +125,7 @@ void DefaultOutputBitStream::close() THROW
             _availBits += 8;
         }
 
-        _written -= (_availBits - 64);
+        _written -= int64(_availBits - 64); // can be negative
         _availBits = 64;
         flush();
     }
@@ -173,7 +173,7 @@ void DefaultOutputBitStream::flush() THROW
             if (!_os.good())
                 throw BitStreamException("Write to bitstream failed", BitStreamException::INPUT_OUTPUT);
 
-            _written += (uint64(_position) << 3);
+            _written += (int64(_position) << 3);
             _position = 0;
         }
     }

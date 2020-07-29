@@ -181,7 +181,7 @@ byte HuffmanDecoder::slowDecodeByte() THROW
         }
         else {
             _bits--;
-            code = (code << 1) | ((_state >> _bits) & 1);
+            code = (code << 1) | int((_state >> _bits) & 1);
         }
 
         const int idx = code << (DECODING_BATCH_SIZE - codeLen);

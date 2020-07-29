@@ -386,7 +386,7 @@ void CompressedOutputStream::processBlock(bool force) THROW
             _buffers[2 * taskId + 1]->_index = 0;
 
             // Add padding for incompressible data
-            const int length = max(sz + (sz >> 6), sz + 1024);
+            const int length = max(sz + (sz >> 6), 32768);
 
             // Grow encoding buffer if required
             if (_buffers[2 * taskId]->_length < length) {
@@ -679,13 +679,6 @@ T EncodingTask<T>::run() THROW
         const uint lw = (_blockLength >= 1 << 28) ? 40 : 32;
         _obs->writeBits(written, lw);
         uint chkSize = uint(min(written, uint64(1) << 30));
-            
-        // Protect against pathological cases 
-        if (_data->_length < int(chkSize >> 3)) {
-            _data->_length = chkSize >> 3;
-            delete[] _data->_array;
-            _data->_array = new byte[_data->_length];
-        }
 
         // Emit data to shared bitstream
         for (int n = 0; written > 0; ) {
