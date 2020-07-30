@@ -31,7 +31,7 @@ namespace kanzi {
        byte* _buffer;
        int _position; // index of current byte (consumed if bitIndex == -1)
        int _availBits; // bits not consumed in _current
-       uint64 _read;
+       int64 _read;
        uint64 _current;
        bool _closed;
        int _maxPosition;
@@ -54,7 +54,7 @@ namespace kanzi {
        // Number of bits read
        uint64 read() const
        {
-           return _read + (uint64(_position) << 3) - _availBits;
+           return uint64(_read + (int64(_position) << 3) - int64(_availBits));
        }
 
        // Return false when the bitstream is closed or the End-Of-Stream has been reached

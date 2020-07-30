@@ -125,6 +125,7 @@ void DefaultInputBitStream::close() THROW
 
     // Reset fields to force a readFromInputStream() and trigger an exception
     // on readBit() or readBits()
+    _read -= int64(_availBits); // can be negative
     _availBits = 0;
     _maxPosition = -1;
 }
@@ -137,7 +138,7 @@ int DefaultInputBitStream::readFromInputStream(uint count) THROW
     int size = -1;
 
     try {
-        _read += (uint64(_maxPosition + 1) << 3);
+        _read += (int64(_maxPosition + 1) << 3);
         _is.read(reinterpret_cast<char*>(_buffer), count);
 
         if (_is.good()) {
