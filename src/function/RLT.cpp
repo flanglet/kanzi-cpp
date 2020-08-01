@@ -25,6 +25,9 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     if (length == 0)
         return true;
 
+    if (length < 16)
+        return false;
+
     if (!SliceArray<byte>::isValid(input))
         throw invalid_argument("Invalid input block");
 
@@ -43,7 +46,6 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     const int dstEnd = output._length;
     uint freqs[256] = { 0 };
     Global::computeHistogram(&src[srcIdx], srcEnd, freqs, true, false);
-
     int minIdx = 0;
 
     if (freqs[minIdx] > 0) {
@@ -68,7 +70,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         dst[dstIdx++] = byte(0);
 
     // Main loop
-    while (srcIdx < srcEnd4) {
+    while (true) {
         if (prev == src[srcIdx]) {
             srcIdx++; run++;
 
@@ -76,12 +78,12 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
                 srcIdx++; run++;
 
                 if (prev == src[srcIdx]) {
-                    srcIdx++; run++; ;
+                    srcIdx++; run++;
 
                     if (prev == src[srcIdx]) {
                         srcIdx++; run++;
 
-                        if (run < MAX_RUN4)
+                        if ((run < MAX_RUN4) && (srcIdx < srcEnd4))
                             continue;
                     }
                 }
@@ -125,6 +127,9 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         prev = src[srcIdx];
         srcIdx++;
         run = 1;
+
+        if (srcIdx >= srcEnd4)
+            break;
     }
 
     if (res == true) {
@@ -150,11 +155,24 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             }
         }
 
-        // Copy the last few bytes
-        while ((srcIdx < srcEnd) && (dstIdx < dstEnd))
-            dst[dstIdx++] = src[srcIdx++];
+        // Emit the last few bytes
+        while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
+            if (src[srcIdx] == escape) {
+               if (dstIdx + 2 >= dstEnd) {
+                  res = false;
+                  break;
+               }
 
-        res = srcIdx == srcEnd;
+               dst[dstIdx++] = escape; 
+               dst[dstIdx++] = 0;
+               srcIdx++;
+               continue;
+            }
+            
+            dst[dstIdx++] = src[srcIdx++];
+        }
+
+        res &= (srcIdx == srcEnd);
     }
 
     res &= (dstIdx < srcIdx);
@@ -307,7 +325,7 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         }
     }
 
-    res &= srcIdx == srcEnd;
+    res &= (srcIdx == srcEnd);
     input._index += srcIdx;
     output._index += dstIdx;
     return res;
