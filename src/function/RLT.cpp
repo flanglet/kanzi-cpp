@@ -164,7 +164,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
                }
 
                dst[dstIdx++] = escape; 
-               dst[dstIdx++] = 0;
+               dst[dstIdx++] = byte(0);
                srcIdx++;
                continue;
             }
