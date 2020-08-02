@@ -386,7 +386,7 @@ void CompressedOutputStream::processBlock(bool force) THROW
             _buffers[2 * taskId + 1]->_index = 0;
 
             // Add padding for incompressible data
-            const int length = max(sz + (sz >> 6), 32768);
+            const int length = max(sz + (sz >> 6), 65536);
 
             // Grow encoding buffer if required
             if (_buffers[2 * taskId]->_length < length) {
