@@ -163,13 +163,14 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint len)
     if (len == 0)
         return 0;
 
-    const int end = blkptr + len;
-    int sz = _chunkSize;
-    int startChunk = blkptr;
+    const uint end = blkptr + len;
+    uint startChunk = blkptr;
+    uint sz = uint(_chunkSize);
+    const uint size = max(min(sz + (sz >> 3), 2 * len), uint(65536));
 
-    if (_bufferSize < uint(sz + max(sz >> 3, 16))) {
+    if (_bufferSize < size) {
         delete[] _buffer;
-        _bufferSize = uint(sz + max(sz >> 3, 16));
+        _bufferSize = size;
         _buffer = new byte[_bufferSize];
     }
 
@@ -177,7 +178,7 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint len)
         if (decodeHeader(_freqs) == 0)
             return startChunk - blkptr;
 
-        const int sizeChunk = min(sz, end - startChunk);
+        const uint sizeChunk = min(sz, end - startChunk);
         decodeChunk(&block[startChunk], sizeChunk);
         startChunk += sizeChunk;
     }

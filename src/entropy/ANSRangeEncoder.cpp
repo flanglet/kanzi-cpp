@@ -145,22 +145,23 @@ int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint len)
     if (len == 0)
         return 0;
 
-    const int end = blkptr + len;
-    int sz = _chunkSize;
-    int startChunk = blkptr;
+    const uint end = blkptr + len;
+    uint startChunk = blkptr;
+    uint sz = uint(_chunkSize);
+    const uint size = max(min(sz + (sz >> 3), 2 * len), uint(65536));
 
-    if (_bufferSize < uint(sz + (sz >> 3))) {
+    if (_bufferSize < size) {
         delete[] _buffer;
-        _bufferSize = uint(sz + (sz >> 3));
+        _bufferSize = size;
         _buffer = new byte[_bufferSize];
     }
 
     while (startChunk < end) {
-        const int sizeChunk = min(sz, end - startChunk);
-        int lr = _logRange;
+        const uint sizeChunk = min(sz, end - startChunk);
+        uint lr = _logRange;
 
         // Lower log range if the size of the data chunk is small
-        while ((lr > 8) && (1 << lr > sizeChunk))
+        while ((lr > 8) && (uint(1 << lr) > sizeChunk))
             lr--;
 
         rebuildStatistics(&block[startChunk], sizeChunk, lr);
