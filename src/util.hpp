@@ -162,12 +162,11 @@ inline void fromString(string s, int data[], int length) {
 
 #include <chrono>
 
-using namespace chrono;
 
 class Clock {
 private:
-        steady_clock::time_point _start;
-        steady_clock::time_point _stop;
+        chrono::steady_clock::time_point _start;
+        chrono::steady_clock::time_point _stop;
 
 public:
         Clock()
@@ -178,18 +177,18 @@ public:
 
         void start()
         {
-                _start = steady_clock::now();
+                _start = chrono::steady_clock::now();
         }
 
         void stop()
         {
-                _stop = steady_clock::now();
+                _stop = chrono::steady_clock::now();
         }
 
         double elapsed() const
         {
                 // In millisec
-                return double(duration_cast<std::chrono::milliseconds>(_stop - _start).count());
+                return double(chrono::duration_cast<chrono::milliseconds>(_stop - _start).count());
         }
 };
 #else
@@ -268,5 +267,3 @@ class Printer
 };
 
 #endif
-
-
