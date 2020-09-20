@@ -357,42 +357,53 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
             p = data[p];
         }
     }
-#ifdef CONCURRENCY_ENABLED
     else {
-        // Several chunks may be decoded concurrently (depending on the availability
-        // of jobs per block).
         const int st = count / chunks;
         const int ckSize = (chunks * st == count) ? st : st + 1;
         const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
-        int* jobsPerTask = new int[nbTasks];
-        Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
-        vector<future<int> > futures;
-        vector<InverseBigChunkTask<int>*> tasks;
 
-        // Create one task per job
-        for (int j = 0, c = 0; j < nbTasks; j++) {
-            // Each task decodes jobsPerTask[j] chunks
-            const int start = c * ckSize;
-
-            InverseBigChunkTask<int>* task = new InverseBigChunkTask<int>(data, buckets, fastBits, dst, _primaryIndexes,
-                count, start, ckSize, c, c + jobsPerTask[j]);
-            tasks.push_back(task);
-            futures.push_back(async(launch::async, &InverseBigChunkTask<int>::run, task));
-            c += jobsPerTask[j];
+        if (nbTasks == 1) {
+            InverseBigChunkTask<int> task(data, buckets, fastBits, dst, _primaryIndexes,
+                count, 0, ckSize, 0, chunks);
+            task.run();
         }
+        else {
+#ifdef CONCURRENCY_ENABLED
+            // Several chunks may be decoded concurrently (depending on the availability
+            // of jobs per block).
+            int* jobsPerTask = new int[nbTasks];
+            Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
+            vector<future<int> > futures;
+            vector<InverseBigChunkTask<int>*> tasks;
 
-        // Wait for completion of all concurrent tasks
-        for (int j = 0; j < nbTasks; j++)
-            futures[j].get();
+            // Create one task per job
+            for (int j = 0, c = 0; j < nbTasks; j++) {
+                // Each task decodes jobsPerTask[j] chunks
+                const int start = c * ckSize;
 
-        // Cleanup
-        for (InverseBigChunkTask<int>* task : tasks)
-            delete task;
+                InverseBigChunkTask<int>* task = new InverseBigChunkTask<int>(data, buckets, fastBits, dst, _primaryIndexes,
+                    count, start, ckSize, c, c + jobsPerTask[j]);
+                tasks.push_back(task);
+                futures.push_back(async(launch::async, &InverseBigChunkTask<int>::run, task));
+                c += jobsPerTask[j];
+            }
 
-        tasks.clear();
-        delete[] jobsPerTask;
-    }
+            // Wait for completion of all concurrent tasks
+            for (int j = 0; j < nbTasks; j++)
+                futures[j].get();
+
+            // Cleanup
+            for (InverseBigChunkTask<int>* task : tasks)
+                delete task;
+
+            tasks.clear();
+            delete[] jobsPerTask;
+#else
+            // nbTasks > 1 but concurrency is not enabled (should never happen)
+            throw invalid_argument("Error during BWT inverse: concurrency not supported");
 #endif
+        }
+    }
 
     dst[count - 1] = byte(lastc);
     delete[] fastBits;
