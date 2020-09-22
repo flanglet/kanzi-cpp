@@ -287,8 +287,8 @@ void CompressedOutputStream::close() THROW
 
     try {
         // Write end block of size 0
-        const uint lw = (_blockSize >= 1 << 28) ? 40 : 32;
-        _obs->writeBits(uint64(0), lw);
+        _obs->writeBits(uint64(0), 5); // write length-3 (5 bits max)
+        _obs->writeBits(uint64(0), 3); // write 0 (3 bits)
         _obs->close();
     }
     catch (exception& e) {
@@ -676,7 +676,8 @@ T EncodingTask<T>::run() THROW
         }
 
         // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
-        const uint lw = (_blockLength >= 1 << 28) ? 40 : 32;
+        const uint lw = (written < 8) ? 3 : uint(Global::log2(uint32(written >> 3)) + 4);
+        _obs->writeBits(lw - 3, 5); // write length-3 (5 bits max)
         _obs->writeBits(written, lw);
         uint chkSize = uint(min(written, uint64(1) << 30));
 

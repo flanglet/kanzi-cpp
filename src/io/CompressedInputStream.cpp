@@ -601,7 +601,7 @@ T DecodingTask<T>::run() THROW
     }
 
     // Read shared bitstream sequentially (each task is gated by _processedBlockId)
-    const uint lr = (_blockLength >= 1 << 28) ? 40 : 32;
+    const uint lr = 3 + uint(_ibs->readBits(5));
     uint64 read = _ibs->readBits(lr);
 
     if (read == 0) {
