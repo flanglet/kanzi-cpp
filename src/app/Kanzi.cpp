@@ -243,7 +243,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println("   -b, --block=<size>", true);
                 log.println("        size of blocks, multiple of 16 (default 1 MB, max 1 GB, min 1 KB).\n", true);
                 log.println("   -l, --level=<compression>", true);
-                log.println("        set the compression level [0..6]", true);
+                log.println("        set the compression level [0..8]", true);
                 log.println("        Providing this option forces entropy and transform.", true);
                 log.println("        0=None&None (store), 1=TEXT+LZ&HUFFMAN, 2=TEXT+ROLZ", true);
                 log.println("        3=TEXT+ROLZX, 4=TEXT+BWT+RANK+ZRLT&ANS0, 5=TEXT+BWT+SRT+ZRLT&FPAQ", true);
