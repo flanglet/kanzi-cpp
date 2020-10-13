@@ -396,7 +396,6 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
             for (InverseBigChunkTask<int>* task : tasks)
                 delete task;
 
-            tasks.clear();
             delete[] jobsPerTask;
 #else
             // nbTasks > 1 but concurrency is not enabled (should never happen)

@@ -31,13 +31,13 @@ namespace kanzi {
 
        DictEntry(const byte* ptr, int hash, int idx, int length);
 
+       ~DictEntry() {}
+
+#if __cplusplus < 201103L
        DictEntry(const DictEntry& de);
 
        DictEntry& operator=(const DictEntry& de);
-
-       ~DictEntry() {}
-
-#if __cplusplus >= 201103L
+#else
        DictEntry(DictEntry&& de) = default;
 
        DictEntry& operator=(DictEntry&& de) = default;
@@ -76,8 +76,11 @@ namespace kanzi {
        bool _isCRLF; // EOL = CR + LF
 
        bool expandDictionary();
+
        inline void reset(int count);
+
        inline int emitWordIndex(byte dst[], int val);
+
        inline int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
 
@@ -112,8 +115,11 @@ namespace kanzi {
        bool _isCRLF; // EOL = CR + LF
 
        bool expandDictionary();
+
        inline void reset(int count);
+
        inline int emitWordIndex(byte dst[], int val, int mask);
+
        inline int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
 
@@ -212,6 +218,7 @@ namespace kanzi {
        _data = (length << 24) | idx;
    }
 
+#if __cplusplus < 201103L
    inline DictEntry::DictEntry(const DictEntry& de)
    {
        _ptr = de._ptr;
@@ -226,7 +233,7 @@ namespace kanzi {
        _data = de._data;
        return *this;
    }
-
+#endif
 
    inline bool TextCodec::sameWords(const byte src[], const byte dst[], const int length)
    {
