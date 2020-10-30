@@ -20,8 +20,8 @@ limitations under the License.
 
 namespace kanzi 
 {
-   template <class T, class traits = char_traits<T> >
-   class basic_nullbuf : public basic_streambuf<T, traits> 
+   template <class T, class traits = std::char_traits<T> >
+   class basic_nullbuf : public std::basic_streambuf<T, traits> 
    {
 	   typename traits::int_type overflow(typename traits::int_type c)
 	   {
@@ -31,8 +31,8 @@ namespace kanzi
 	   void close() {}
    };
 
-   template <class T, class traits = char_traits<T> >
-   class basic_onullstream : public basic_ostream<T, traits> 
+   template <class T, class traits = std::char_traits<T> >
+   class basic_onullstream : public std::basic_ostream<T, traits> 
    {
    public:
 	   basic_onullstream() :

@@ -54,10 +54,10 @@ namespace kanzi
        void processEvent(const Event& evt);
 
    private:
-       ostream& _os;
-       map<int, BlockInfo*> _map;
+       std::ostream& _os;
+       std::map<int, BlockInfo*> _map;
    #ifdef CONCURRENCY_ENABLED
-       mutex _mutex;
+       std::mutex _mutex;
    #endif
        Event::Type _thresholds[6];
        InfoPrinter::Type _type;

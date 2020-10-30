@@ -23,11 +23,11 @@ limitations under the License.
 namespace kanzi 
 {
 
-   class NullPointerException : public runtime_error
+   class NullPointerException : public std::runtime_error
    {
       public:
 
-        NullPointerException(const string& msg) : runtime_error(msg) {}
+        NullPointerException(const std::string& msg) : std::runtime_error(msg) {}
 
         virtual ~NullPointerException() _GLIBCXX_USE_NOEXCEPT {};
    };

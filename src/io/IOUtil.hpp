@@ -34,12 +34,12 @@ using namespace kanzi;
 
 class FileData {
    public:
-      string _fullPath;
-      string _path;
-      string _name;
+      std::string _fullPath;
+      std::string _path;
+      std::string _name;
       int64 _size;
 
-      FileData(string& path, int64 size) : _fullPath(path), _size(size) 
+      FileData(std::string& path, int64 size) : _fullPath(path), _size(size) 
       { 
          int idx = int(_fullPath.find_last_of(PATH_SEPARATOR));
 
@@ -56,7 +56,7 @@ class FileData {
 };
 
 
-static void createFileList(string& target, vector<FileData>& files) THROW
+static void createFileList(std::string& target, std::vector<FileData>& files) THROW
 {
     struct stat buffer;
 
@@ -64,7 +64,7 @@ static void createFileList(string& target, vector<FileData>& files) THROW
         target = target.substr(0, target.size()-1);
 
     if (stat(target.c_str(), &buffer) != 0) {
-        stringstream ss;
+        std::stringstream ss;
         ss << "Cannot access input file '" << target << "'";
         throw IOException(ss.str(), Error::ERR_OPEN_FILE);
     }
@@ -79,7 +79,7 @@ static void createFileList(string& target, vector<FileData>& files) THROW
 
     if ((buffer.st_mode & S_IFDIR) == 0) {
         // Target is neither regular file nor directory
-        stringstream ss;
+        std::stringstream ss;
         ss << "Invalid file type '" << target << "'";
         throw IOException(ss.str(), Error::ERR_OPEN_FILE);
     }
@@ -89,7 +89,7 @@ static void createFileList(string& target, vector<FileData>& files) THROW
 
     if (isRecursive) {
        if (target[target.size()-1] != PATH_SEPARATOR) {
-          stringstream ss;
+          std::stringstream ss;
           ss << target << PATH_SEPARATOR;
           target = ss.str();
        }
@@ -103,10 +103,10 @@ static void createFileList(string& target, vector<FileData>& files) THROW
         struct dirent* ent;
 
         while ((ent = readdir(dir)) != nullptr) {
-            string fullpath = target + ent->d_name;
+            std::string fullpath = target + ent->d_name;
 
             if (stat(fullpath.c_str(), &buffer) != 0) {
-                stringstream ss;
+                std::stringstream ss;
                 ss << "Cannot access input file '" << target << ent->d_name << "'";
                 throw IOException(ss.str(), Error::ERR_OPEN_FILE);
             }
@@ -125,7 +125,7 @@ static void createFileList(string& target, vector<FileData>& files) THROW
         closedir(dir);
     }
     else {
-        stringstream ss;
+        std::stringstream ss;
         ss << "Cannot read directory '" << target << "'";
         throw IOException(ss.str(), Error::ERR_READ_FILE);
     }
@@ -151,20 +151,20 @@ struct FileDataComparator
 };
 
 
-static void sortFilesByPathAndSize(vector<FileData>& files, bool sortBySize = false)
+static void sortFilesByPathAndSize(std::vector<FileData>& files, bool sortBySize = false)
 {
     FileDataComparator c = { sortBySize };
     sort(files.begin(), files.end(), c);
 }
 
 
-static int mkdirAll(const string& path) {
+static int mkdirAll(const std::string& path) {
     errno = 0;
 
     // Scan path, ignoring potential PATH_SEPARATOR at position 0
     for (uint i=1; i<path.size(); i++) {
         if (path[i] == PATH_SEPARATOR) {
-            string curPath = path.substr(0, i);
+            std::string curPath = path.substr(0, i);
 
 #if defined(_MSC_VER)
             if (_mkdir(curPath.c_str()) != 0) {

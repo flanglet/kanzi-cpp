@@ -85,10 +85,10 @@ namespace kanzi
    bool TransformSequence<T>::forward(SliceArray<T>& input, SliceArray<T>& output, int count) THROW
    {
        if (!SliceArray<byte>::isValid(input))
-           throw invalid_argument("Invalid input block");
+           throw std::invalid_argument("Invalid input block");
 
        if (!SliceArray<byte>::isValid(output))
-           throw invalid_argument("Invalid output block");
+           throw std::invalid_argument("Invalid output block");
 
        if ((count < 0) || (count + input._index > input._length))
            return false;
@@ -129,7 +129,7 @@ namespace kanzi
             count = out->_index - savedOIdx;
             in->_index = savedIIdx;
             out->_index = savedOIdx;
-            swap(in, out);
+            std::swap(in, out);
             swaps++;
        }
 
@@ -145,10 +145,10 @@ namespace kanzi
    bool TransformSequence<T>::inverse(SliceArray<T>& input, SliceArray<T>& output, int count) THROW
    {
        if (!SliceArray<byte>::isValid(input))
-           throw invalid_argument("Invalid input block");
+           throw std::invalid_argument("Invalid input block");
 
        if (!SliceArray<byte>::isValid(output))
-           throw invalid_argument("Invalid output block");
+           throw std::invalid_argument("Invalid output block");
 
        if ((count < 0) || (count + input._index > input._length))
            return false;

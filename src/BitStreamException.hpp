@@ -25,7 +25,7 @@ limitations under the License.
 namespace kanzi 
 {
 
-   class BitStreamException : public runtime_error 
+   class BitStreamException : public std::runtime_error 
    {
    private:
        int _code;
@@ -37,12 +37,12 @@ namespace kanzi
        static const int INVALID_STREAM = 3;
        static const int STREAM_CLOSED = 4;
 
-       BitStreamException(const string& msg) : runtime_error(msg)
+       BitStreamException(const std::string& msg) : std::runtime_error(msg)
        {
            _code = UNDEFINED;
        }
 
-       BitStreamException(const string& msg, int code) : runtime_error(string(msg))
+       BitStreamException(const std::string& msg, int code) : std::runtime_error(std::string(msg))
        {
            _code = code;
        }

@@ -25,18 +25,18 @@ limitations under the License.
 namespace kanzi 
 {
 
-   class IOException : public runtime_error 
+   class IOException : public std::runtime_error 
    {
    private:
        int _code;
 
    public:
-       IOException(const string& msg) : runtime_error(msg+". Error code: "+to_string(Error::ERR_UNKNOWN))
+       IOException(const std::string& msg) : std::runtime_error(msg+". Error code: "+to_string(Error::ERR_UNKNOWN))
        {
            _code = Error::ERR_UNKNOWN;
        }
 
-       IOException(const string& msg, int error) : runtime_error(msg+". Error code: "+to_string(error))
+       IOException(const std::string& msg, int error) : std::runtime_error(msg+". Error code: "+to_string(error))
        {
            _code = error;
        }

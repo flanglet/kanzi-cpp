@@ -41,32 +41,33 @@ using namespace std;
 // This ostreambuf class is required because Microsoft cannot bother to implement
 // streambuf::pubsetbuf().
 template <typename T>
-struct ostreambuf : public basic_streambuf<T, char_traits<T> >
+struct ostreambuf : public std::basic_streambuf<T, std::char_traits<T> >
 {
-    ostreambuf(T* buffer, streamsize length) {
+    ostreambuf(T* buffer, std::streamsize length) {
        this->setp(buffer, &buffer[length]);
     }
 };
 
 template <typename T>
-struct istreambuf : public basic_streambuf<T, char_traits<T> >
+struct istreambuf : public std::basic_streambuf<T, std::char_traits<T> >
 {
-    istreambuf(T* buffer, streamsize length) {
+    istreambuf(T* buffer, std::streamsize length) {
        this->setg(buffer, buffer, &buffer[length]);
     }
 };
 
-template <typename T>::string to_string(T value)
+template <typename T>
+std::string to_string(T value)
 {
-    ostringstream os;
+    std::ostringstream os;
     os << value;
     return os.str();
 }
 
-inline string __trim(string& str, bool left, bool right)
+inline std::string __trim(std::string& str, bool left, bool right)
 {
-    string::size_type begin = 0;
-    string::size_type end = str.size() - 1;
+    std::string::size_type begin = 0;
+    std::string::size_type end = str.size() - 1;
 
     if (left) {
        while (begin <= end && (str[begin] <= 0x20 || str[begin] == 0x7F))
@@ -81,11 +82,11 @@ inline string __trim(string& str, bool left, bool right)
     return str.substr(begin, end - begin + 1);
 }
 
-inline string trim(string& str)  { return __trim(str, true, true); }
-inline string ltrim(string& str) { return __trim(str, true, false); }
-inline string rtrim(string& str) { return __trim(str, false, true); }
+inline std::string trim(std::string& str)  { return __trim(str, true, true); }
+inline std::string ltrim(std::string& str) { return __trim(str, true, false); }
+inline std::string rtrim(std::string& str) { return __trim(str, false, true); }
 
-inline bool samePaths(string& f1, string& f2)
+inline bool samePaths(std::string& f1, std::string& f2)
 {
    if (f1.compare(f2) == 0)
       return true;
@@ -134,8 +135,8 @@ inline bool samePaths(string& f1, string& f2)
    return true;
 }
 
-inline string toString(int data[], int length) {
-   stringstream ss;
+inline std::string toString(int data[], int length) {
+   std::stringstream ss;
 
    for (int i = 0; i < length; i++) {
        ss << data[i] << " ";
@@ -144,7 +145,7 @@ inline string toString(int data[], int length) {
    return ss.str();
 }
 
-inline void fromString(string s, int data[], int length) {
+inline void fromString(std::string s, int data[], int length) {
    int n = 0;
    int idx = 0;
 
@@ -247,7 +248,7 @@ static inline void prefetchWrite(const void* ptr) {
 class Printer
 {
    public:
-      Printer(ostream* os) { _os = os; }
+      Printer(std::ostream* os) { _os = os; }
       ~Printer() {}
 
       void println(const char* msg, bool print) {
@@ -255,7 +256,7 @@ class Printer
 #ifdef CONCURRENCY_ENABLED
             lock_guard<mutex> lock(_mtx);
 #endif
-            (*_os) << msg << endl;
+            (*_os) << msg << std::endl;
          }
       }
 
@@ -263,7 +264,7 @@ class Printer
 #ifdef CONCURRENCY_ENABLED
       static mutex _mtx;
 #endif
-      ostream* _os;
+      std::ostream* _os;
 };
 
 #endif
