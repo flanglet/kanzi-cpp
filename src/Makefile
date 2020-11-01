@@ -45,6 +45,7 @@ LIB_SOURCES=Global.cpp \
 	entropy/TPAQPredictor.cpp \
 	function/BWTBlockCodec.cpp \
 	function/LZCodec.cpp \
+	function/FSDCodec.cpp \
 	function/ROLZCodec.cpp \
 	function/RLT.cpp \
 	function/SRT.cpp \

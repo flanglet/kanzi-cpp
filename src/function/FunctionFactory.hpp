@@ -10,12 +10,13 @@
 #include "../transform/BWT.hpp"
 #include "../transform/BWTS.hpp"
 #include "../transform/SBRT.hpp"
-#include "SRT.hpp"
 #include "BWTBlockCodec.hpp"
 #include "LZCodec.hpp"
+#include "FSDCodec.hpp"
 #include "NullFunction.hpp"
 #include "ROLZCodec.hpp"
 #include "RLT.hpp"
+#include "SRT.hpp"
 #include "TextCodec.hpp"
 #include "TransformSequence.hpp"
 #include "X86Codec.hpp"
@@ -43,12 +44,13 @@ namespace kanzi {
 		static const uint64 ROLZX_TYPE = 12; // ROLZ Extra codec
 		static const uint64 SRT_TYPE = 13; // Sorted Rank
 		static const uint64 LZP_TYPE = 14; // Lempel Ziv Predict
+		static const uint64 FSD_TYPE = 15; // Fixed Shift Delta codec
 
 		static uint64 getType(const char* tName) THROW;
 
 		static uint64 getTypeToken(const char* tName) THROW;
 
-		static string getName(uint64 functionType) THROW;
+		static std::string getName(uint64 functionType) THROW;
 
 		static TransformSequence<T>* newFunction(Context& ctx, uint64 functionType) THROW;
 
@@ -152,6 +154,9 @@ namespace kanzi {
 		if (name == "X86")
 			return X86_TYPE;
 
+		if (name == "FSD")
+			return FSD_TYPE;
+
 		if (name == "NONE")
 			return NONE_TYPE;
 
@@ -236,6 +241,9 @@ namespace kanzi {
 		case X86_TYPE:
 			return new X86Codec(ctx);
 
+		case FSD_TYPE:
+			return new FSDCodec(ctx);
+
 		case NONE_TYPE:
 			return new NullFunction<T>(ctx);
 
@@ -247,9 +255,9 @@ namespace kanzi {
 	}
 
 	template <class T>
-	string FunctionFactory<T>::getName(uint64 functionType) THROW
+	std::string FunctionFactory<T>::getName(uint64 functionType) THROW
 	{
-		string res;
+		std::string res;
 
 		for (int i = 0; i < 8; i++) {
 			const uint64 t = (functionType >> (MAX_SHIFT - ONE_SHIFT * i)) & MASK;
@@ -308,6 +316,9 @@ namespace kanzi {
 
 		case X86_TYPE:
 			return "X86";
+
+		case FSD_TYPE:
+			return "FSD";
 
 		case NONE_TYPE:
 			return "NONE";
