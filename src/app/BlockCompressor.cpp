@@ -756,21 +756,9 @@ T FileCompressTask<T>::run()
     // Close streams to ensure all data are flushed
     dispose();
 
-    if (os != &cout) {
-        ofstream* ofs = dynamic_cast<ofstream*>(os);
-
-        if (ofs) {
-            try {
-                ofs->close();
-            }
-            catch (exception&) {
-                // Ignore
-            }
-        }
-
-        if (os != nullptr)
-            delete os;
-    }
+    // os destructor will call close if ofstream
+    if ((os != &cout) && (os != nullptr))
+        delete os;
 
     if (read == 0) {
         delete[] buf;
@@ -872,20 +860,9 @@ void FileCompressTask<T>::dispose()
         exit(Error::ERR_WRITE_FILE);
     }
 
-    if (_is != &cin) {
-        ifstream* ifs = dynamic_cast<ifstream*>(_is);
-
-        if (ifs) {
-            try {
-                ifs->close();
-            }
-            catch (exception&) {
-                // Ignore
-            }
-        }
-    }
+   // _is destructor will call close if ifstream
 }
-#include <typeinfo>
+
 
 #ifdef CONCURRENCY_ENABLED
 template <class T, class R>

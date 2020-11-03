@@ -635,20 +635,9 @@ T FileDecompressTask<T>::run()
     // Close streams to ensure all data are flushed
     dispose();
 
-    if (is != &cin) {
-        ifstream* ifs = dynamic_cast<ifstream*>(is);
-
-        if (ifs) {
-            try {
-                ifs->close();
-            }
-            catch (exception&) {
-                // Ignore
-            }
-        }
-
+    // is destructor will call close if ifstream
+    if ((is != &cin) && (is != nullptr))
         delete is;
-    }
 
     stopClock.stop();
     double delta = stopClock.elapsed();
@@ -718,18 +707,7 @@ void FileDecompressTask<T>::dispose()
         exit(Error::ERR_WRITE_FILE);
     }
 
-    if (_os != &cout) {
-        ofstream* ofs = dynamic_cast<ofstream*>(_os);
-
-        if (ofs) {
-            try {
-                ofs->close();
-            }
-            catch (exception&) {
-                // Ignore
-            }
-        }
-    }
+    // _os destructor will call close if ofstream
 }
 
 #ifdef CONCURRENCY_ENABLED
