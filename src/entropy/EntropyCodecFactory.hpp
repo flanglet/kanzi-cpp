@@ -95,10 +95,10 @@ namespace kanzi {
            return new NullEntropyDecoder(ibs);
 
        default:
-           string msg = "Unknown entropy codec type: '";
+           std::string msg = "Unknown entropy codec type: '";
            msg += char(entropyType);
            msg += '\'';
-           throw invalid_argument(msg);
+           throw std::invalid_argument(msg);
        }
    }
 
@@ -133,10 +133,10 @@ namespace kanzi {
            return new NullEntropyEncoder(obs);
 
        default:
-           string msg = "Unknown entropy codec type: '";
+           std::string msg = "Unknown entropy codec type: '";
            msg += char(entropyType);
            msg += '\'';
-           throw invalid_argument(msg);
+           throw std::invalid_argument(msg);
        }
    }
 
@@ -171,16 +171,16 @@ namespace kanzi {
            return "NONE";
 
        default:
-           string msg = "Unknown entropy codec type: '";
+           std::string msg = "Unknown entropy codec type: '";
            msg += char(entropyType);
            msg += '\'';
-           throw invalid_argument(msg);
+           throw std::invalid_argument(msg);
        }
    }
 
    inline short EntropyCodecFactory::getType(const char* str) THROW
    {
-       string name = str;
+       std::string name = str;
        transform(name.begin(), name.end(), name.begin(), ::toupper);
 
        if (name == "HUFFMAN")

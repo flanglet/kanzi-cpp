@@ -30,7 +30,7 @@ namespace kanzi {
        int _code;
        uint64 _read;
        uint64 _written;
-       string _errMsg;
+       std::string _errMsg;
 
        FileCompressResult()
        {
@@ -40,7 +40,7 @@ namespace kanzi {
            _errMsg = "";
        }
 
-       FileCompressResult(int code, uint64 read, uint64 written, const string& errMsg)
+       FileCompressResult(int code, uint64 read, uint64 written, const std::string& errMsg)
        {
            _code = code;
            _read = read;
@@ -71,7 +71,7 @@ namespace kanzi {
    public:
        static const int DEFAULT_BUFFER_SIZE = 65536;
 
-       FileCompressTask(Context& ctx, vector<Listener*>& listeners);
+       FileCompressTask(Context& ctx, std::vector<Listener*>& listeners);
 
        ~FileCompressTask();
 
@@ -83,14 +83,14 @@ namespace kanzi {
        Context _ctx;
        InputStream* _is;
        CompressedOutputStream* _cos;
-       vector<Listener*> _listeners;
+       std::vector<Listener*> _listeners;
    };
 
    class BlockCompressor {
        friend class FileCompressTask<FileCompressResult>;
 
    public:
-       BlockCompressor(map<string, string>& m) THROW;
+       BlockCompressor(std::map<std::string, std::string>& m) THROW;
 
        ~BlockCompressor();
 
@@ -111,18 +111,18 @@ namespace kanzi {
        bool _overwrite;
        bool _checksum;
        bool _skipBlocks;
-       string _inputName;
-       string _outputName;
-       string _codec;
-       string _transform;
+       std::string _inputName;
+       std::string _outputName;
+       std::string _codec;
+       std::string _transform;
        int _blockSize;
        int _level; // command line compression level
        int _jobs;
-       vector<Listener*> _listeners;
+       std::vector<Listener*> _listeners;
 
-       static void notifyListeners(vector<Listener*>& listeners, const Event& evt);
+       static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 
-       static void getTransformAndCodec(int level, string tranformAndCodec[2]);
+       static void getTransformAndCodec(int level, std::string tranformAndCodec[2]);
    };
 }
 #endif

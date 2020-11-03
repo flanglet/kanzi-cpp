@@ -28,7 +28,7 @@ namespace kanzi {
    public:
        int _code;
        uint64 _read;
-       string _errMsg;
+       std::string _errMsg;
 
        FileDecompressResult()
        {
@@ -37,7 +37,7 @@ namespace kanzi {
            _errMsg = "";
        }
 
-       FileDecompressResult(int code, uint64 read, const string& errMsg)
+       FileDecompressResult(int code, uint64 read, const std::string& errMsg)
        {
            _code = code;
            _read = read;
@@ -67,7 +67,7 @@ namespace kanzi {
    public:
        static const int DEFAULT_BUFFER_SIZE = 65536;
 
-       FileDecompressTask(Context& ctx, vector<Listener*>& listeners);
+       FileDecompressTask(Context& ctx, std::vector<Listener*>& listeners);
 
        ~FileDecompressTask();
 
@@ -79,14 +79,14 @@ namespace kanzi {
        Context _ctx;
        OutputStream* _os;
        CompressedInputStream* _cis;
-       vector<Listener*> _listeners;
+       std::vector<Listener*> _listeners;
    };
 
    class BlockDecompressor {
        friend class FileDecompressTask<FileDecompressResult>;
 
    public:
-       BlockDecompressor(map<string, string>& map);
+       BlockDecompressor(std::map<std::string, std::string>& map);
 
        ~BlockDecompressor();
 
@@ -105,15 +105,15 @@ namespace kanzi {
 
        int _verbosity;
        bool _overwrite;
-       string _inputName;
-       string _outputName;
+       std::string _inputName;
+       std::string _outputName;
        int _blockSize;
        int _jobs;
        int _from; // start block
        int _to; // end block
-       vector<Listener*> _listeners;
+       std::vector<Listener*> _listeners;
 
-       static void notifyListeners(vector<Listener*>& listeners, const Event& evt);
+       static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
    };
 }
 #endif

@@ -194,7 +194,7 @@ namespace kanzi
            count = out->_index - savedOIdx;
            in->_index = savedIIdx;
            out->_index = savedOIdx;
-           swap(in, out);
+           std::swap(in, out);
            swaps++;
        }
 

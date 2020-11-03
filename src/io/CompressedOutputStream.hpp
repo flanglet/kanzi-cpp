@@ -33,7 +33,7 @@ namespace kanzi {
    public:
        int _blockId;
        int _error; // 0 = OK
-       string _msg;
+       std::string _msg;
 
        EncodingTaskResult()
            : _msg("")
@@ -42,7 +42,7 @@ namespace kanzi {
            _error = 0;
        }
 
-       EncodingTaskResult(int blockId, int error, const string& msg)
+       EncodingTaskResult(int blockId, int error, const std::string& msg)
            : _msg(msg)
        {
            _blockId = blockId;
@@ -82,14 +82,14 @@ namespace kanzi {
        OutputBitStream* _obs;
        XXHash32* _hasher;
        atomic_int* _processedBlockId;
-       vector<Listener*> _listeners;
+       std::vector<Listener*> _listeners;
        Context _ctx;
 
    public:
        EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int length,
            uint64 transformType, uint32 entropyType, int blockId,
            OutputBitStream* obs, XXHash32* hasher,
-           atomic_int* processedBlockId, vector<Listener*>& listeners,
+           atomic_int* processedBlockId, std::vector<Listener*>& listeners,
            Context& ctx);
 
        ~EncodingTask(){};
@@ -125,17 +125,17 @@ namespace kanzi {
        atomic_bool _closed;
        atomic_int _blockId;
        int _jobs;
-       vector<Listener*> _listeners;
+       std::vector<Listener*> _listeners;
        Context _ctx;
 
        void writeHeader() THROW;
 
        void processBlock(bool force) THROW;
 
-       static void notifyListeners(vector<Listener*>& listeners, const Event& evt);
+       static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 
    public:
-       CompressedOutputStream(OutputStream& os, const string& codec, const string& transform, int blockSize, int jobs, bool checksum);
+       CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform, int blockSize, int jobs, bool checksum);
        
        CompressedOutputStream(OutputStream& os, Context& ctx);
 
@@ -145,15 +145,15 @@ namespace kanzi {
 
        bool removeListener(Listener& bl);
 
-       ostream& write(const char* s, streamsize n) THROW;
+       std::ostream& write(const char* s, std::streamsize n) THROW;
 
-       ostream& put(char c) THROW;
+       std::ostream& put(char c) THROW;
 
-       ostream& flush();
+       std::ostream& flush();
 
-       streampos tellp();
+       std::streampos tellp();
 
-       ostream& seekp(streampos pos) THROW;
+       std::ostream& seekp(streampos pos) THROW;
 
        void close() THROW;
 

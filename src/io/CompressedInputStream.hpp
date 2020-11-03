@@ -36,7 +36,7 @@ namespace kanzi
        int _decoded;
        byte* _data;
        int _error; // 0 = OK
-       string _msg;
+       std::string _msg;
        int _checksum;
        bool _skipped;
        clock_t _completionTime;
@@ -54,7 +54,7 @@ namespace kanzi
        }
 
        DecodingTaskResult(SliceArray<byte>& data, int blockId, int decoded, int checksum, 
-          int error, const string& msg, bool skipped = false)
+          int error, const std::string& msg, bool skipped = false)
            : _msg(msg)
            , _completionTime(clock())
        {
@@ -109,14 +109,14 @@ namespace kanzi
        InputBitStream* _ibs;
        XXHash32* _hasher;
        atomic_int* _processedBlockId;
-       vector<Listener*> _listeners;
+       std::vector<Listener*> _listeners;
        Context _ctx;
 
    public:
        DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int blockSize,
            uint64 transformType, uint32 entropyType, int blockId,
            InputBitStream* ibs, XXHash32* hasher,
-           atomic_int* processedBlockId, vector<Listener*>& listeners,
+           atomic_int* processedBlockId, std::vector<Listener*>& listeners,
            Context& ctx);
 
        ~DecodingTask(){};
@@ -154,8 +154,8 @@ namespace kanzi
        atomic_int _blockId;
        int _maxIdx;
        int _jobs;
-       vector<Listener*> _listeners;
-       streamsize _gcount;
+       std::vector<Listener*> _listeners;
+       std::streamsize _gcount;
        Context _ctx;
 
        void readHeader() THROW;
@@ -164,7 +164,7 @@ namespace kanzi
 
        int _get();
 
-       static void notifyListeners(vector<Listener*>& listeners, const Event& evt);
+       static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 
    public:
        CompressedInputStream(InputStream& is, int jobs);
@@ -177,17 +177,17 @@ namespace kanzi
 
        bool removeListener(Listener& bl);
 
-       streampos tellg();
+       std::streampos tellg();
 
-       istream& seekp(streampos pos) THROW;
+       std::istream& seekp(streampos pos) THROW;
 
-       istream& read(char* s, streamsize n) THROW;
+       std::istream& read(char* s, std::streamsize n) THROW;
 
        int get() THROW;
 
        int peek() THROW;
 
-       streamsize gcount() const { return _gcount; }
+       std::streamsize gcount() const { return _gcount; }
 
        void close() THROW;
 
