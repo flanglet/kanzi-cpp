@@ -39,12 +39,13 @@ namespace kanzi
        OutputBitStream& _bitstream;
        bool _disposed;
        SliceArray<byte> _sba;
-       uint16 _probs[256]; // probability of bit=1
+       uint16 _probs[4][256]; // probability of bit=1
 
-
-       void encodeByte(byte val);
 
        void encodeBit(int bit, uint16& prob);
+
+       bool reset();
+
 
    protected:
        virtual void flush();

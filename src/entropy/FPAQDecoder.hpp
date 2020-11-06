@@ -38,14 +38,15 @@ namespace kanzi
        InputBitStream& _bitstream;
        bool _initialized;
        SliceArray<byte> _sba;
-       uint16 _probs[256]; // probability of bit=1
+       uint16 _probs[4][256]; // probability of bit=1
+       uint16* _p; // pointer to current prob
        int _ctx; // previous bits
 
        void dispose() {};
 
-       byte decodeByte();
-
        int decodeBit(int pred = 2048);
+
+       bool reset();
 
    protected:
        virtual void initialize();
@@ -65,24 +66,24 @@ namespace kanzi
    };
 
    
-   inline int FPAQDecoder::decodeBit(int pred)
+   inline int FPAQDecoder::decodeBit(int prob)
    {
        // Calculate interval split
        // Written in a way to maximize accuracy of multiplication/division
-       const uint64 split = ((((_high - _low) >> 4) * uint64(pred)) >> 8) + _low;
+       const uint64 split = ((((_high - _low) >> 4) * uint64(prob)) >> 8) + _low;
        int bit;
 
        // Update probabilities
        if (split >= _current) {
            bit = 1;
            _high = split;
-           _probs[_ctx] -= ((_probs[_ctx] - PSCALE + 64) >> 6);
+           _p[_ctx] -= ((_p[_ctx] - PSCALE + 64) >> 6);
            _ctx += (_ctx + 1);
        }
        else {
            bit = 0;
            _low = split + 1;
-           _probs[_ctx] -= (_probs[_ctx] >> 6);
+           _p[_ctx] -= (_p[_ctx] >> 6);
            _ctx += _ctx;
        }
 
@@ -93,6 +94,7 @@ namespace kanzi
        return bit;
    }
 
+
    inline void FPAQDecoder::read()
    {
        _low = (_low << 32) & MASK_0_56;
@@ -101,6 +103,5 @@ namespace kanzi
        _current = ((_current << 32) | val) & MASK_0_56;
        _sba._index += 4;
    }
-
 }
 #endif

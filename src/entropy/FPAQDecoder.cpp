@@ -22,20 +22,29 @@ FPAQDecoder::FPAQDecoder(InputBitStream& bitstream) THROW
     : _bitstream(bitstream),
       _sba(new byte[0], 0)
 {
-    _low = 0;
-    _high = TOP;
-    _current = 0;
-    _initialized = false;
-    _ctx = 1;
-
-    for (int i = 0; i < 256; i++)
-        _probs[i] = PSCALE >> 1;
+    reset();
 }
 
 FPAQDecoder::~FPAQDecoder()
 {
     dispose();
     delete[] _sba._array;
+}
+
+bool FPAQDecoder::reset()
+{
+    _low = 0;
+    _high = TOP;
+    _current = 0;
+    _initialized = false;
+    _ctx = 1;
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 256; j++)
+            _probs[i][j] = PSCALE >> 1;
+    }
+
+    return true;
 }
 
 int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
@@ -73,9 +82,21 @@ int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
 
         _sba._index = 0;
         const int endChunk = startChunk + chunkSize;
+        _p = _probs[0];
 
-        for (int i = startChunk; i < endChunk; i++)
-            block[i] = decodeByte();
+        for (int i = startChunk; i < endChunk; i++) {
+            _ctx = 1;
+            decodeBit(int(_p[_ctx] >> 4));
+            decodeBit(int(_p[_ctx] >> 4));
+            decodeBit(int(_p[_ctx] >> 4));
+            decodeBit(int(_p[_ctx] >> 4));
+            decodeBit(int(_p[_ctx] >> 4));
+            decodeBit(int(_p[_ctx] >> 4));
+            decodeBit(int(_p[_ctx] >> 4));
+            decodeBit(int(_p[_ctx] >> 4));
+            block[i] = byte(_ctx);
+            _p = _probs[byte(_ctx) >> 6];
+        }
 
         startChunk = endChunk;
     }
@@ -83,19 +104,6 @@ int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
     return count;
 }
 
-byte FPAQDecoder::decodeByte()
-{
-    _ctx = 1;
-    decodeBit(int(_probs[_ctx] >> 4));
-    decodeBit(int(_probs[_ctx] >> 4));
-    decodeBit(int(_probs[_ctx] >> 4));
-    decodeBit(int(_probs[_ctx] >> 4));
-    decodeBit(int(_probs[_ctx] >> 4));
-    decodeBit(int(_probs[_ctx] >> 4));
-    decodeBit(int(_probs[_ctx] >> 4));
-    decodeBit(int(_probs[_ctx] >> 4));
-    return byte(_ctx);
-}
 
 void FPAQDecoder::initialize()
 {

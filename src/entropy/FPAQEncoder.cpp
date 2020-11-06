@@ -22,18 +22,27 @@ FPAQEncoder::FPAQEncoder(OutputBitStream& bitstream) THROW
     : _bitstream(bitstream),
       _sba(new byte[0], 0)
 {
-    _low = 0;
-    _high = TOP;
-    _disposed = false;
-
-    for (int i = 0; i < 256; i++)
-        _probs[i] = PSCALE >> 1;
+    reset();
 }
 
 FPAQEncoder::~FPAQEncoder()
 {
     dispose();
     delete[] _sba._array;
+}
+
+bool FPAQEncoder::reset()
+{
+    _low = 0;
+    _high = TOP;
+    _disposed = false;
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 256; j++)
+            _probs[i][j] = PSCALE >> 1;
+    }
+
+    return true;
 }
 
 int FPAQEncoder::encode(const byte block[], uint blkptr, uint count) THROW
@@ -63,9 +72,22 @@ int FPAQEncoder::encode(const byte block[], uint blkptr, uint count) THROW
         }
 
         _sba._index = 0;
+        const int endChunk = startChunk + chunkSize;
+        int ctx = 0;
 
-        for (int i = startChunk; i < startChunk + chunkSize; i++)
-            encodeByte(block[i]);
+        for (int i = startChunk; i < endChunk; i++) {
+            const int val = int(block[i]);
+            const int bits = val + 256;
+            encodeBit(val & 0x80, _probs[ctx][1]);
+            encodeBit(val & 0x40, _probs[ctx][bits >> 7]);
+            encodeBit(val & 0x20, _probs[ctx][bits >> 6]);
+            encodeBit(val & 0x10, _probs[ctx][bits >> 5]);
+            encodeBit(val & 0x08, _probs[ctx][bits >> 4]);
+            encodeBit(val & 0x04, _probs[ctx][bits >> 3]);
+            encodeBit(val & 0x02, _probs[ctx][bits >> 2]);
+            encodeBit(val & 0x01, _probs[ctx][bits >> 1]);
+            ctx = val >> 6;
+        }
 
         EntropyUtils::writeVarInt(_bitstream, uint32(_sba._index));
         _bitstream.writeBits(&_sba._array[0], 8 * _sba._index);
@@ -76,19 +98,6 @@ int FPAQEncoder::encode(const byte block[], uint blkptr, uint count) THROW
     }
 
     return count;
-}
-
-void FPAQEncoder::encodeByte(byte val)
-{
-    const int bits = int(val) + 256;
-    encodeBit(int(val) & 0x80, _probs[1]);
-    encodeBit(int(val) & 0x40, _probs[bits >> 7]);
-    encodeBit(int(val) & 0x20, _probs[bits >> 6]);
-    encodeBit(int(val) & 0x10, _probs[bits >> 5]);
-    encodeBit(int(val) & 0x08, _probs[bits >> 4]);
-    encodeBit(int(val) & 0x04, _probs[bits >> 3]);
-    encodeBit(int(val) & 0x02, _probs[bits >> 2]);
-    encodeBit(int(val) & 0x01, _probs[bits >> 1]);
 }
 
 void FPAQEncoder::dispose()
