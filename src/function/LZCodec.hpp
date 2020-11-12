@@ -21,7 +21,7 @@ limitations under the License.
 #include "../Function.hpp"
 #include "../Memory.hpp"
 
-namespace kanzi 
+namespace kanzi
 {
 	class LZCodec : public Function<byte> {
 		friend class LZXCodec;
@@ -53,22 +53,24 @@ namespace kanzi
 
 
    // Simple byte oriented LZ77 implementation.
-   // It is a modified LZ4 with a bigger window, a bigger hash map, 3+n*8 bit 
+   // It is a modified LZ4 with a bigger window, a bigger hash map, 3+n*8 bit
    // literal lengths and 17 or 24 bit match lengths.
    class LZXCodec : public Function<byte>
    {
    public:
-       LZXCodec() { _hashes = new int32[0]; _hashSize = 0; }
-       LZXCodec(Context&) { _hashes = new int32[0]; _hashSize = 0; }
-       ~LZXCodec() { delete[] _hashes; _hashSize = 0; }
+       LZXCodec() { _hashes = new int32[0]; _hashSize = 0; _buffer = new byte[0]; _bufferSize = 0; }
+
+       LZXCodec(Context&) { _hashes = new int32[0]; _hashSize = 0; _buffer = new byte[0]; _bufferSize = 0; }
+
+       virtual ~LZXCodec() { delete[] _hashes; _hashSize = 0; delete[] _buffer; _bufferSize = 0; }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
        // Required encoding output buffer size
-       int getMaxEncodedLength(int srcLen) const 
-       { 
+       int getMaxEncodedLength(int srcLen) const
+       {
            return (srcLen <= 1024) ? srcLen + 16 : srcLen + (srcLen / 64);
        }
 
@@ -80,11 +82,14 @@ namespace kanzi
       static const int MAX_DISTANCE1      = (1 << 17) - 1;
       static const int MAX_DISTANCE2      = (1 << 24) - 1;
       static const int MIN_MATCH          = 5;
-      static const int MIN_LENGTH         = 24;
+      static const int MAX_MATCH          = 32767 + MIN_MATCH;
+      static const int MIN_BLOCK_LENGTH   = 24;
       static const int MIN_MATCH_MIN_DIST = 1 << 16;
 
       int32* _hashes;
       int _hashSize;
+      byte* _buffer;
+      int _bufferSize;
 
       static int emitLength(byte block[], int len);
 
@@ -100,9 +105,9 @@ namespace kanzi
    {
    public:
        LZPCodec() { _hashes = new int32[0]; _hashSize = 0; }
-       
+
        LZPCodec(Context&) { _hashes = new int32[0]; _hashSize = 0; }
-       
+
        virtual ~LZPCodec() { delete[] _hashes; _hashSize = 0; }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
@@ -110,8 +115,8 @@ namespace kanzi
        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
        // Required encoding output buffer size
-       int getMaxEncodedLength(int srcLen) const 
-       { 
+       int getMaxEncodedLength(int srcLen) const
+       {
            return (srcLen <= 1024) ? srcLen + 16 : srcLen + (srcLen / 64);
        }
 
@@ -120,7 +125,7 @@ namespace kanzi
       static const uint HASH_LOG          = 16;
       static const uint HASH_SHIFT        = 32 - HASH_LOG;
       static const int MIN_MATCH          = 64;
-      static const int MIN_LENGTH         = 128;
+      static const int MIN_BLOCK_LENGTH   = 128;
       static const int MATCH_FLAG         = 0xFC;
 
       int32* _hashes;
