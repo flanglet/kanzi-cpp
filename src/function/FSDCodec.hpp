@@ -30,9 +30,9 @@ namespace kanzi {
        static const byte ESCAPE_TOKEN = byte(255);
        static const int MIN_LENGTH = 128;
 
-       FSDCodec(){};
+       FSDCodec() { _isFast = true; }
 
-       FSDCodec(Context&){};
+       FSDCodec(Context&);
 
        virtual ~FSDCodec() {}
 
@@ -45,6 +45,15 @@ namespace kanzi {
        {
            return srcLen + max(64, srcLen >> 4); // limit expansion
        }
+
+   private:
+       bool _isFast;
+
    };
+
+
+   inline FSDCodec::FSDCodec(Context& ctx) {
+      _isFast = ctx.getInt("fullFSD") != 1;
+   }
 }
 #endif
