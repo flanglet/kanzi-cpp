@@ -30,7 +30,7 @@ namespace kanzi
        Context() {};
        Context(Context& ctx);
        Context(std::map<std::string, std::string>& ctx);
-       ~Context() {};
+       virtual ~Context() {};
 
        bool has(const std::string& key);
        int getInt(const std::string& key, int defValue=0);
@@ -39,6 +39,7 @@ namespace kanzi
        void putInt(const std::string& key, int value);
        void putLong(const std::string& key, int64 value);
        void putString(const std::string& key, const std::string& value);
+
 
    private:
        std::map<std::string, std::string> _map;
@@ -58,13 +59,13 @@ namespace kanzi
    }
 
 
-   inline bool Context::has(const std::string& key) 
+   inline bool Context::has(const std::string& key)
    {
       return _map.find(key) != _map.end();
    }
 
 
-   inline int Context::getInt(const std::string& key, int defValue) 
+   inline int Context::getInt(const std::string& key, int defValue)
    {
       std::map<std::string, std::string>::iterator it = _map.find(key);
 
@@ -79,7 +80,7 @@ namespace kanzi
    }
 
 
-   inline int64 Context::getLong(const std::string& key, int64 defValue) 
+   inline int64 Context::getLong(const std::string& key, int64 defValue)
    {
       std::map<std::string, std::string>::iterator it = _map.find(key);
 
@@ -94,14 +95,14 @@ namespace kanzi
    }
 
 
-   inline const char* Context::getString(const std::string& key, const std::string& defValue) 
+   inline const char* Context::getString(const std::string& key, const std::string& defValue)
    {
       std::map<std::string, std::string>::iterator it = _map.find(key);
       return (it == _map.end()) ? defValue.c_str() : it->second.c_str();
    }
 
 
-   inline void Context::putInt(const std::string& key, int value) 
+   inline void Context::putInt(const std::string& key, int value)
    {
       std::stringstream ss;
       ss << value;
@@ -109,7 +110,7 @@ namespace kanzi
    }
 
 
-   inline void Context::putLong(const std::string& key, int64 value) 
+   inline void Context::putLong(const std::string& key, int64 value)
    {
       std::stringstream ss;
       ss << value;
@@ -121,5 +122,6 @@ namespace kanzi
    {
       _map[key] = value;
    }
+
 }
 #endif

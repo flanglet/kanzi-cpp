@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef _Global_
 #define _Global_
 
+#include <cmath>
 #include <cstring>
 #include "types.hpp"
 #include "util.hpp"
@@ -52,6 +53,12 @@ namespace kanzi {
        static int computeFirstOrderEntropy1024(byte block[], int length, uint histo[]);
 
        static void computeHistogram(const byte block[], int end, uint freqs[], bool isOrder0, bool withTotal=false);
+
+       // Szudzik pairing
+       static void encodePair(int x, int y, int& res);
+
+       // Szudzik pairing
+       static void decodePair(int& x, int& y, int res);
 
    private:
        Global() { STRETCH_BUFFER = new int[4096]; SQUASH_BUFFER = new int[4096]; }
@@ -100,6 +107,28 @@ namespace kanzi {
 
            return res + Global::LOG2[x - 1];
        #endif
+   }
+
+
+   inline void Global::encodePair(int x, int y, int& res)
+   {
+      res = (x >= y) ? x * x + x + y : y * y + x;
+   }
+   
+   
+   inline void Global::decodePair(int& x, int& y, int res)
+   {
+      const int s = int(sqrt(float(res)));
+      res -= s * s;
+      
+      if (res >= s) {
+         x = s;
+         y = res - s;
+      }
+      else {
+         x = res;
+         y = s;
+      }
    }
 }
 #endif
