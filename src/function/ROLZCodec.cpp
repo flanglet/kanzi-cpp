@@ -138,6 +138,9 @@ int ROLZCodec1::findMatch(const byte buf[], const int pos, const int end)
 
             int n = 1;
 
+            while ((n + 4 < maxMatch) && (*(reinterpret_cast<const int32*>(&buf[ref + n])) == *(reinterpret_cast<const int32*>(&curBuf[n]))))
+                n += 4;
+
             while ((n < maxMatch) && (buf[ref + n] == curBuf[n]))
                 n++;
 
@@ -174,7 +177,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     SliceArray<byte> mIdxBuf(new byte[sizeChunk / 4], sizeChunk / 4);
     memset(&_counters[0], 0, sizeof(int32) * 65536);
     bool success = true;
-    const int litOrder = 0;
+    const int litOrder = (count < (1 << 17)) ? 0 : 1;
     dst[dstIdx++] = byte(litOrder);
     stringbuf buffer;
     iostream os(&buffer);
