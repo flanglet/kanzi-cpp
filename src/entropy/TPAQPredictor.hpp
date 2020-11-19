@@ -70,7 +70,6 @@ namespace kanzi
        static const int MAX_LENGTH = 88;
        static const int BUFFER_SIZE = 64 * 1024 * 1024;
        static const int HASH_SIZE = 16 * 1024 * 1024;
-       static const int MASK_BUFFER = BUFFER_SIZE - 1;
        static const int MASK_80808080 = 0x80808080;
        static const int MASK_F0F0F000 = 0xF0F0F000;
        static const int MASK_4F4FFFFF = 0x4F4FFFFF;
@@ -100,6 +99,7 @@ namespace kanzi
        int _statesMask;
        int _mixersMask;
        int _hashMask;
+       int _bufferMask;
        uint8* _cp0; // context pointers
        uint8* _cp1;
        uint8* _cp2;
@@ -122,6 +122,8 @@ namespace kanzi
        int getMatchContextPred();
 
        void findMatch();
+
+       bool reset();
   };
 
 
@@ -275,19 +277,20 @@ namespace kanzi
    template <bool T>
    TPAQPredictor<T>::TPAQPredictor(Context* ctx)
        : _sse0(256)
-       , _sse1(65536)
+       , _sse1((T == true) ? 65536 : 256)
    {
        uint statesSize = 1 << 28;
        uint mixersSize = 1 << 12;
        uint hashSize = HASH_SIZE;
        uint extraMem = 0;
+       uint bufferSize = BUFFER_SIZE;
 
        if (ctx != nullptr) {
            extraMem = (T == true) ? 1 : 0;
 
            // Block size requested by the user
            // The user can request a big block size to force more states
-           const int rbsz = ctx->getInt("blockSize");
+           const int rbsz = ctx->getInt("blockSize", 32768);
 
            if (rbsz >= 64 * 1024 * 1024)
                statesSize = 1 << 29;
@@ -295,12 +298,13 @@ namespace kanzi
                statesSize = 1 << 28;
            else if (rbsz >= 4 * 1024 * 1024)
                statesSize = 1 << 26;   
-           else statesSize = (rbsz >= 1024 * 1024) ? 1 << 24 : 1 << 22; 
+           else 
+               statesSize = (rbsz >= 1024 * 1024) ? 1 << 24 : 1 << 22; 
 
            // Actual size of the current block
            // Too many mixers hurts compression for small blocks.
            // Too few mixers hurts compression for big blocks.
-           const int absz = ctx->getInt("size");
+           const int absz = ctx->getInt("size", rbsz);
 
            if (absz >= 32 * 1024 * 1024)
                mixersSize = 1 << 17;
@@ -311,12 +315,31 @@ namespace kanzi
            else if (absz >= 4 * 1024 * 1024)
                mixersSize = 1 << 12;
            else
-               mixersSize = (absz >= 1 * 1024 * 1024) ? 1 << 10 : 1 << 9;
+               mixersSize = (absz >= 1 * 1024 * 1024) ? 1 << 10 : 1 << 8;
+
+           bufferSize = min(BUFFER_SIZE, rbsz); 
+           hashSize = min(hashSize, 16 * uint(absz)); 
        }
 
        mixersSize <<= extraMem;
        statesSize <<= extraMem;
        hashSize <<= (2 * extraMem);
+       _statesMask = statesSize - 1;
+       _mixersMask = (mixersSize - 1) & ~1;
+       _hashMask = hashSize - 1;
+       _bufferMask = bufferSize - 1;
+       _mixers = new TPAQMixer[_mixersMask + 2];
+       _bigStatesMap = new uint8[_statesMask + 1];
+       _smallStatesMap0 = new uint8[1 << 16];
+       _smallStatesMap1 = new uint8[1 << 24];
+       _hashes = new int[_hashMask + 1];
+       _buffer = new byte[_bufferMask + 1];
+
+       reset();
+   }
+
+   template <bool T>
+   bool TPAQPredictor<T>::reset() {
        _pr = 2048;
        _c0 = 1;
        _c4 = 0;
@@ -327,21 +350,12 @@ namespace kanzi
        _matchLen = 0;
        _matchPos = 0;
        _hash = 0;
-       _mixers = new TPAQMixer[mixersSize];
        _mixer = &_mixers[0];
-       _bigStatesMap = new uint8[statesSize];
-       memset(_bigStatesMap, 0, statesSize);
-       _smallStatesMap0 = new uint8[1 << 16];
+       memset(_bigStatesMap, 0, _statesMask + 1);
        memset(_smallStatesMap0, 0, 1 << 16);
-       _smallStatesMap1 = new uint8[1 << 24];
        memset(_smallStatesMap1, 0, 1 << 24);
-       _hashes = new int[hashSize];
-       memset(_hashes, 0, sizeof(int) * hashSize);
-       _buffer = new byte[BUFFER_SIZE];
-       memset(_buffer, 0, BUFFER_SIZE);
-       _statesMask = statesSize - 1;
-       _mixersMask = (mixersSize - 1) & ~1;
-       _hashMask = hashSize - 1;
+       memset(_hashes, 0, sizeof(int) * (_hashMask + 1));
+       memset(_buffer, 0, _bufferMask + 1);
        _cp0 = &_smallStatesMap0[0];
        _cp1 = &_smallStatesMap1[0];
        _cp2 = &_bigStatesMap[0];
@@ -351,6 +365,7 @@ namespace kanzi
        _cp6 = &_bigStatesMap[0];
        _ctx0 = _ctx1 = _ctx2 = _ctx3 = 0;
        _ctx4 = _ctx5 = _ctx6 = 0;
+       return true;
    }
 
    template <bool T>
@@ -373,7 +388,7 @@ namespace kanzi
        _c0 = (_c0 << 1) | bit;
 
        if (_c0 > 255) {
-           _buffer[_pos & MASK_BUFFER] = byte(_c0);
+           _buffer[_pos & _bufferMask] = byte(_c0);
            _pos++;
            _c8 = (_c8 << 8) | ((_c4 >> 24) & 0xFF);
            _c4 = (_c4 << 8) | (_c0 & 0xFF);
@@ -499,14 +514,14 @@ namespace kanzi
            _matchPos = _hashes[_hash];
 
            // Detect match
-           if ((_matchPos != 0) && (_pos - _matchPos <= MASK_BUFFER)) {
+           if ((_matchPos != 0) && (_pos - _matchPos <= _bufferMask)) {
                int r = _matchLen + 2;
 
                while (r <= MAX_LENGTH) {
-                   if ((_buffer[(_pos - r) & MASK_BUFFER]) != (_buffer[(_matchPos - r) & MASK_BUFFER]))
+                   if ((_buffer[(_pos - r) & _bufferMask]) != (_buffer[(_matchPos - r) & _bufferMask]))
                        break;
 
-                   if ((_buffer[(_pos - r - 1) & MASK_BUFFER]) != (_buffer[(_matchPos - r - 1) & MASK_BUFFER]))
+                   if ((_buffer[(_pos - r - 1) & _bufferMask]) != (_buffer[(_matchPos - r - 1) & _bufferMask]))
                        break;
 
                    r += 2;
@@ -536,10 +551,10 @@ namespace kanzi
    template <bool T>
    inline int TPAQPredictor<T>::getMatchContextPred()
    {
-       if (_c0 == ((int(_buffer[_matchPos & MASK_BUFFER]) & 0xFF) | 256) >> _bpos) {
+       if (_c0 == ((int(_buffer[_matchPos & _bufferMask]) & 0xFF) | 256) >> _bpos) {
            int p = (_matchLen <= 24) ? _matchLen : 24 + ((_matchLen - 24) >> 3);
 
-           if ((int(_buffer[_matchPos & MASK_BUFFER] >> (_bpos - 1)) & 1) == 0)
+           if ((int(_buffer[_matchPos & _bufferMask] >> (_bpos - 1)) & 1) == 0)
                p = -p;
 
            return p << 6;
