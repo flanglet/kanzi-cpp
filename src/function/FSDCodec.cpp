@@ -46,7 +46,8 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     const int srcEnd = count;
     const int dstEnd = output._length;
     const int count5 = count / 5;
-    const int length1 = (_isFast == true) ? count5 >> 1 : count5;
+    const int count10 = count / 10;
+    byte* in;
     byte* dst1 = &dst[0];
     byte* dst2 = &dst[count5 * 1];
     byte* dst3 = &dst[count5 * 2];
@@ -54,24 +55,39 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     byte* dst8 = &dst[count5 * 4];
 
     // Check several step values on a sub-block (no memory allocation)
-    for (int i = 8; i < length1; i++) {
-        const byte b = src[i];
-        dst1[i] = b ^ src[i - 1];
-        dst2[i] = b ^ src[i - 2];
-        dst3[i] = b ^ src[i - 3];
-        dst4[i] = b ^ src[i - 4];
-        dst8[i] = b ^ src[i - 8];
+    // Sample 2 sub-blocks
+    in = &src[count5 * 3];
+
+    for (int i = 0; i < count10; i++) {
+        const byte b = in[i];
+        dst1[i] = b ^ in[i - 1];
+        dst2[i] = b ^ in[i - 2];
+        dst3[i] = b ^ in[i - 3];
+        dst4[i] = b ^ in[i - 4];
+        dst8[i] = b ^ in[i - 8];
+    }
+
+    in = &src[count5 * 1];
+    
+    for (int i = count10; i < count5; i++) {
+        const byte b = in[i];
+        dst1[i] = b ^ in[i - 1];
+        dst2[i] = b ^ in[i - 2];
+        dst3[i] = b ^ in[i - 3];
+        dst4[i] = b ^ in[i - 4];
+        dst8[i] = b ^ in[i - 8];
     }
 
     // Find if entropy is lower post transform
     uint histo[256];
     int ent[6];
-    ent[0] = Global::computeFirstOrderEntropy1024(&src[8], length1 - 8, histo);
-    ent[1] = Global::computeFirstOrderEntropy1024(&dst1[8], length1 - 8, histo);
-    ent[2] = Global::computeFirstOrderEntropy1024(&dst2[8], length1 - 8, histo);
-    ent[3] = Global::computeFirstOrderEntropy1024(&dst3[8], length1 - 8, histo);
-    ent[4] = Global::computeFirstOrderEntropy1024(&dst4[8], length1 - 8, histo);
-    ent[5] = Global::computeFirstOrderEntropy1024(&dst8[8], length1 - 8, histo);
+    const int count3 = count / 3;
+    ent[0] = Global::computeFirstOrderEntropy1024(&src[count3], count3, histo);
+    ent[1] = Global::computeFirstOrderEntropy1024(&dst1[0], count5, histo);
+    ent[2] = Global::computeFirstOrderEntropy1024(&dst2[0], count5, histo);
+    ent[3] = Global::computeFirstOrderEntropy1024(&dst3[0], count5, histo);
+    ent[4] = Global::computeFirstOrderEntropy1024(&dst4[0], count5, histo);
+    ent[5] = Global::computeFirstOrderEntropy1024(&dst8[0], count5, histo);
 
     int minIdx = 0;
 
@@ -81,7 +97,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     }
 
     // If not 'better enough', quick exit
-    if (ent[minIdx] >= ((123 * ent[0]) >> 7))
+    if ((_isFast == true) && (ent[minIdx] >= ((123 * ent[0]) >> 7)))
         return false;
 
     // Emit step value
@@ -109,7 +125,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         // Skip delta, direct encode
         dst[dstIdx++] = ESCAPE_TOKEN;
-        dst[dstIdx++] = src[srcIdx];
+        dst[dstIdx++] = src[srcIdx] ^ src[srcIdx - dist];
         srcIdx++;
     }
 
