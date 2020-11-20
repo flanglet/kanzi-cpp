@@ -95,7 +95,7 @@ int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
             decodeBit(int(_p[_ctx] >> 4));
             decodeBit(int(_p[_ctx] >> 4));
             block[i] = byte(_ctx);
-            _p = _probs[byte(_ctx) >> 6];
+            _p = _probs[(_ctx & 0xFF) >> 6];
         }
 
         startChunk = endChunk;

@@ -31,7 +31,7 @@ limitations under the License.
 using namespace std;
 
 
-// Ahem ... Visual Studio the sequel
+// Ahem ... Visual Studio
 // This ostreambuf class is required because Microsoft cannot bother to implement
 // streambuf::pubsetbuf().
 template <typename T>
