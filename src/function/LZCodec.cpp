@@ -232,7 +232,7 @@ bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     int mIdx = int(LittleEndian::readInt32(&src[0]));
 
-    if (mIdx >= count)
+    if (mIdx > count)
         return false;
 
     const int srcEnd = mIdx - 5;
