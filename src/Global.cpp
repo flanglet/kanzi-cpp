@@ -202,16 +202,15 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
     }
 }
 
-// Return the first order entropy in the [0..1024] range
+// Return the first order entropy scaled to the [0..1024] range
 // Fills in the histogram with order 0 frequencies. Incoming array size must be 256
-int Global::computeFirstOrderEntropy1024(byte block[], int length, uint histo[])
+int Global::computeFirstOrderEntropy1024(int blockLen, uint histo[])
 {
-    if (length == 0)
-        return 0;
-
-    Global::computeHistogram(block, length, histo, true);
+    if (blockLen == 0)
+       return 0;
+    
     uint64 sum = 0;
-    const int logLength1024 = Global::log2_1024(length);
+    const int logLength1024 = Global::log2_1024(blockLen);
 
     for (int i = 0; i < 256; i++) {
         if (histo[i] == 0)
@@ -220,7 +219,7 @@ int Global::computeFirstOrderEntropy1024(byte block[], int length, uint histo[])
         sum += ((uint64(histo[i]) * uint64(logLength1024 - Global::log2_1024(histo[i]))) >> 3);
     }
 
-    return int(sum / uint64(length));
+    return int(sum / uint64(blockLen));
 }
 
 void Global::computeJobsPerTask(int jobsPerTask[], int jobs, int tasks) THROW

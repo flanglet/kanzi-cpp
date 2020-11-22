@@ -549,7 +549,8 @@ T EncodingTask<T>::run() THROW
 
                 if (str == STR_TRUE) {
                     uint histo[256];
-                    const int entropy = Global::computeFirstOrderEntropy1024(&_data->_array[_data->_index], _blockLength, histo);
+                    Global::computeHistogram(&_data->_array[_data->_index], _blockLength, histo);
+                    const int entropy = Global::computeFirstOrderEntropy1024(_blockLength, histo);
                     //_ctx.putString("histo0", toString(histo, 256));
 
                     if (entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD) {
@@ -679,11 +680,10 @@ T EncodingTask<T>::run() THROW
         const uint lw = (written < 8) ? 3 : uint(Global::log2(uint32(written >> 3)) + 4);
         _obs->writeBits(lw - 3, 5); // write length-3 (5 bits max)
         _obs->writeBits(written, lw);
-        uint chkSize = uint(min(written, uint64(1) << 30));
 
         // Emit data to shared bitstream
         for (int n = 0; written > 0; ) {
-            chkSize = uint(min(written, uint64(1) << 30));
+            uint chkSize = uint(min(written, uint64(1) << 30));
             _obs->writeBits(&_data->_array[n], chkSize);
             n += ((chkSize + 7) >> 3);
             written -= uint64(chkSize);

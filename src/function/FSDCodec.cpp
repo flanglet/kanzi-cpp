@@ -68,7 +68,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     }
 
     in = &src[count5 * 1];
-    
+
     for (int i = count10; i < count5; i++) {
         const byte b = in[i];
         dst1[i] = b ^ in[i - 1];
@@ -82,12 +82,18 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     uint histo[256];
     int ent[6];
     const int count3 = count / 3;
-    ent[0] = Global::computeFirstOrderEntropy1024(&src[count3], count3, histo);
-    ent[1] = Global::computeFirstOrderEntropy1024(&dst1[0], count5, histo);
-    ent[2] = Global::computeFirstOrderEntropy1024(&dst2[0], count5, histo);
-    ent[3] = Global::computeFirstOrderEntropy1024(&dst3[0], count5, histo);
-    ent[4] = Global::computeFirstOrderEntropy1024(&dst4[0], count5, histo);
-    ent[5] = Global::computeFirstOrderEntropy1024(&dst8[0], count5, histo);
+    Global::computeHistogram(&src[count3], count3, histo);
+    ent[0] = Global::computeFirstOrderEntropy1024(count3, histo);
+    Global::computeHistogram(&dst1[0], count5, histo);
+    ent[1] = Global::computeFirstOrderEntropy1024(count5, histo);
+    Global::computeHistogram(&dst2[0], count5, histo);
+    ent[2] = Global::computeFirstOrderEntropy1024(count5, histo);
+    Global::computeHistogram(&dst3[0], count5, histo);
+    ent[3] = Global::computeFirstOrderEntropy1024(count5, histo);
+    Global::computeHistogram(&dst4[0], count5, histo);
+    ent[4] = Global::computeFirstOrderEntropy1024(count5, histo);
+    Global::computeHistogram(&dst8[0], count5, histo);
+    ent[5] = Global::computeFirstOrderEntropy1024(count5, histo);
 
     int minIdx = 0;
 
@@ -100,41 +106,63 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if ((_isFast == true) && (ent[minIdx] >= ((123 * ent[0]) >> 7)))
         return false;
 
-    // Emit step value
     const int dist = (minIdx <= 4) ? minIdx : 8;
-    dst[0] = byte(dist);
+    int largeDeltas = 0;
+
+    // Detect best coding by sampling for large deltas
+    for (int i = 2 * count5; i < 3 * count5; i++) {
+        const int32 delta = int32(src[i]) - int32(src[i - dist]);
+
+        if ((delta < -127) || (delta > 127))
+            largeDeltas++;
+    }
+
+    // Delta coding works better for pictures & xor coding better for wav files
+    // Select xor coding if large deltas are over 3% (ad-hoc threshold)
+    const byte mode = (largeDeltas > (count5 >> 5)) ? XOR_CODING : DELTA_CODING;
+    dst[0] = mode;
+    dst[1] = byte(dist);
     int srcIdx = 0;
-    int dstIdx = 1;
+    int dstIdx = 2;
 
     // Emit first bytes
     for (int i = 0; i < dist; i++)
         dst[dstIdx++] = src[srcIdx++];
 
     // Emit modified bytes
-    while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
-        const int32 delta = int32(src[srcIdx]) - int32(src[srcIdx - dist]);
+    if (mode == DELTA_CODING) {
+        while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
+            const int32 delta = int32(src[srcIdx]) - int32(src[srcIdx - dist]);
 
-        if ((delta >= -127) && (delta <= 127)) {
-            dst[dstIdx++] = byte((delta >> 31) ^ (delta << 1)); // zigzag encode delta
+            if ((delta >= -127) && (delta <= 127)) {
+                dst[dstIdx++] = byte((delta >> 31) ^ (delta << 1)); // zigzag encode delta
+                srcIdx++;
+                continue;
+            }
+
+            if (dstIdx == dstEnd - 1)
+                break;
+
+            // Skip delta, encode with escape
+            dst[dstIdx++] = ESCAPE_TOKEN;
+            dst[dstIdx++] = src[srcIdx] ^ src[srcIdx - dist];
             srcIdx++;
-            continue;
         }
-
-        if (dstIdx == dstEnd - 1)
-            break;
-
-        // Skip delta, direct encode
-        dst[dstIdx++] = ESCAPE_TOKEN;
-        dst[dstIdx++] = src[srcIdx] ^ src[srcIdx - dist];
-        srcIdx++;
+    }
+    else { // mode == XOR_CODING
+        while (srcIdx < srcEnd) {
+            dst[dstIdx++] = src[srcIdx] ^ src[srcIdx - dist];
+            srcIdx++;
+        }
     }
 
     if (srcIdx != srcEnd)
         return false;
-    
+
     // Extra check that the transform makes sense
-    const int length2 = (_isFast == true) ? dstIdx >> 1 : dstIdx;
-    const int entropy = Global::computeFirstOrderEntropy1024(&dst[(dstIdx - length2) >> 1], length2, histo);
+    const int length = (_isFast == true) ? dstIdx >> 1 : dstIdx;
+    Global::computeHistogram(&dst[(dstIdx - length) >> 1], length, histo);
+    const int entropy = Global::computeFirstOrderEntropy1024(length, histo);
 
     if (entropy >= ent[0])
         return false;
@@ -150,10 +178,10 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("LZP codec: Invalid input block");
+        throw invalid_argument("FSD codec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("LZP codec: Invalid output block");
+        throw invalid_argument("FSD codec: Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -162,38 +190,52 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     const int srcEnd = count;
+    const int dstEnd = output._length;
     byte* dst = &output._array[output._index];
     byte* src = &input._array[input._index];
 
-    // Retrieve step value
-    const int dist = int(src[0]);
+    // Retrieve mode & step value
+    const byte mode = src[0];
+    const int dist = int(src[1]);
 
     // Sanity check
     if ((dist < 1) || ((dist > 4) && (dist != 8)))
         return false;
 
-    int srcIdx = 1;
+    int srcIdx = 2;
     int dstIdx = 0;
 
     // Emit first bytes
     for (int i = 0; i < dist; i++)
         dst[dstIdx++] = src[srcIdx++];
 
-    // Invert bytes
-    while (srcIdx < srcEnd) {
-        if (src[srcIdx] == ESCAPE_TOKEN) {
-            if (srcIdx == srcEnd - 1)
+    // Recover original bytes
+    if (mode == DELTA_CODING) {
+        while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
+            if (src[srcIdx] != ESCAPE_TOKEN) {
+                const int32 delta = int32(src[srcIdx] >> 1) ^ -int32((src[srcIdx] & byte(1))); // zigzag decode delta
+                dst[dstIdx] = byte(int32(dst[dstIdx - dist]) + delta);
+                srcIdx++;
+                dstIdx++;
+                continue;
+            }
+
+            srcIdx++;
+
+            if (srcIdx == srcEnd)
                 break;
 
-            dst[dstIdx++] = src[srcIdx + 1];
-            srcIdx += 2;
-            continue;
+            dst[dstIdx] = src[srcIdx] ^ dst[dstIdx - dist];
+            srcIdx++;
+            dstIdx++;
         }
-
-        const int32 diff = int32(src[srcIdx] >> 1) ^ -int32((src[srcIdx] & byte(1))); // zigzag decode
-        dst[dstIdx] = byte(int32(dst[dstIdx - dist]) + diff);
-        srcIdx++;
-        dstIdx++;
+    }
+    else { // mode == XOR_CODING
+        while (srcIdx < srcEnd) {
+            dst[dstIdx] = src[srcIdx] ^ dst[dstIdx - dist];
+            srcIdx++;
+            dstIdx++;
+        }
     }
 
     input._index = srcIdx;

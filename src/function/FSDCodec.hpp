@@ -27,9 +27,6 @@ namespace kanzi {
    class FSDCodec : public Function<byte> {
 
    public:
-       static const byte ESCAPE_TOKEN = byte(255);
-       static const int MIN_LENGTH = 128;
-
        FSDCodec() { _isFast = true; }
 
        FSDCodec(Context&);
@@ -47,8 +44,12 @@ namespace kanzi {
        }
 
    private:
-       bool _isFast;
+       static const int MIN_LENGTH = 128;
+       static const byte ESCAPE_TOKEN = byte(255);
+       static const byte DELTA_CODING = byte(0);
+       static const byte XOR_CODING = byte(1);
 
+       bool _isFast;
    };
 
 
