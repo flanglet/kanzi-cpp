@@ -60,6 +60,8 @@ namespace kanzi
        byte decodeByte();
 
        void fetchBits();
+
+       bool reset(); 
    };
 
 

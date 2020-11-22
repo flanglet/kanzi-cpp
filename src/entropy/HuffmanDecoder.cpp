@@ -16,8 +16,6 @@ limitations under the License.
 
 #include <cstring>
 #include <sstream>
-#include <algorithm>
-#include <vector>
 #include "HuffmanDecoder.hpp"
 #include "EntropyUtils.hpp"
 #include "ExpGolombDecoder.hpp"
@@ -39,6 +37,11 @@ HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) THROW :
     }
 
     _chunkSize = chunkSize;
+    reset();
+}
+
+bool HuffmanDecoder::reset()
+{
     _state = 0;
     _bits = 0;
 
@@ -50,6 +53,7 @@ HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) THROW :
 
     memset(_alphabet, 0, sizeof(_alphabet));
     memset(_table, 0, sizeof(_table));
+    return true;
 }
 
 int HuffmanDecoder::readLengths() THROW

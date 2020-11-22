@@ -41,6 +41,11 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW 
     }
 
     _chunkSize = chunkSize;
+    reset();
+}
+
+bool HuffmanEncoder::reset()
+{
     _maxCodeLen = 0;
 
     // Default frequencies, sizes and codes
@@ -51,6 +56,7 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW 
 
     memset(_alphabet, 0, sizeof(_alphabet));
     memset(_sranks, 0, sizeof(_sranks));
+    return true;
 }
 
 // Rebuild Huffman codes
@@ -89,17 +95,25 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
             throw invalid_argument(ss.str());
         }
 
+        uint f[256];
         uint totalFreq = 0;
 
-        for (int i = 0; i < count; i++)
-            totalFreq += frequencies[_alphabet[i]];
+        for (int i = 0; i < count; i++) {
+            f[i] = frequencies[_alphabet[i]];
+            totalFreq += f[i];
+        }
 
         // Copy alphabet (modified by normalizeFrequencies)
         uint alphabet[256];
         memcpy(alphabet, _alphabet, sizeof(alphabet));
         retries++;
-        EntropyUtils::normalizeFrequencies(frequencies, alphabet, count, totalFreq, 
+
+        // Normalize to a smaller scale
+        EntropyUtils::normalizeFrequencies(f, alphabet, count, totalFreq, 
            HuffmanCommon::MAX_CHUNK_SIZE >> (2 * retries));
+
+        for (int i = 0; i < count; i++)
+           frequencies[_alphabet[i]] = f[i];
     }
 
     // Transmit code lengths only, frequencies and codes do not matter

@@ -37,6 +37,8 @@ namespace kanzi
 
        void computeCodeLengths(uint frequencies[], uint16 sizes[], int count) THROW;
 
+       bool reset();
+
        static void computeInPlaceSizesPhase1(uint data[], int n);
 
        static void computeInPlaceSizesPhase2(uint data[], int n);
