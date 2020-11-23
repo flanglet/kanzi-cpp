@@ -225,7 +225,6 @@ int testBWTSpeed(bool isBWT)
             for (int i = 0; i < size; i++) {
                 if (input[i] != reverse[i]) {
                     idx = i;
-                    break;
                 }
 
                 if (idx >= 0) {

@@ -100,7 +100,7 @@ int testBitStreamCorrectnessAligned1()
             cvalues[4 * i] = (values[i] >> 24) & 0xFF;
             cvalues[4 * i + 1] = (values[i] >> 16) & 0xFF;
             cvalues[4 * i + 2] = (values[i] >> 8) & 0xFF;
-            cvalues[4 * i + 3] = (values[i] >> 0) & 0xFF;
+            cvalues[4 * i + 3] = values[i] & 0xFF;
         }
 
         is.read(cvalues, length);
@@ -168,7 +168,7 @@ int testBitStreamCorrectnessMisaligned1()
             cvalues[4 * i] = (values[i] >> 24) & 0xFF;
             cvalues[4 * i + 1] = (values[i] >> 16) & 0xFF;
             cvalues[4 * i + 2] = (values[i] >> 8) & 0xFF;
-            cvalues[4 * i + 3] = (values[i] >> 0) & 0xFF;
+            cvalues[4 * i + 3] = values[i] & 0xFF;
         }
 
         is.read(cvalues, length);

@@ -107,7 +107,7 @@ namespace kanzi {
        const int g = -bit & 65528;
        _data[_index] += (((g - int(_data[_index])) >> RATE) + bit);
 
-       if  (FAST == false) {
+       if (FAST == false) {
            _data[_index + 1] += (((g - int(_data[_index + 1])) >> RATE) + bit);
            pr = Global::STRETCH[pr];
            _index = ((pr + 2048) >> 7) + 33 * ctx;

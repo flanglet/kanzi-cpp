@@ -196,7 +196,7 @@ int testEntropyCodecCorrectness(const string& name)
         DefaultInputBitStream ibs(ios);
         EntropyDecoder* ed = getDecoder(name, ibs, getPredictor(name));
         
-        if (ec == nullptr)
+        if (ed == nullptr)
            return 1;
 
         cout << endl

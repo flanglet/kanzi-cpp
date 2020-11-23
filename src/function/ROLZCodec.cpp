@@ -726,7 +726,6 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         return false;
 
     byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
     int srcIdx = 0;
     const int dstEnd = BigEndian::readInt32(&src[srcIdx]);
     srcIdx += 4;
@@ -741,7 +740,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         const int endChunk = min(startChunk + sizeChunk, dstEnd);
         sizeChunk = endChunk - startChunk;
         rd.reset();
-        dst = &output._array[output._index];
+        byte* dst = &output._array[output._index];
         int dstIdx = 0;
 
         // First literals

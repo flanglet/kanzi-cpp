@@ -136,7 +136,7 @@ namespace kanzi
            return;
 
        // Quickly decaying learn rate
-       _learnRate += ((END_LEARN_RATE - _learnRate) >> 31);
+       _learnRate -= (uint32(END_LEARN_RATE - _learnRate) >> 31);
        _skew += err;
 
        // Train Neural Network: update weights
@@ -328,12 +328,12 @@ namespace kanzi
        _mixersMask = (mixersSize - 1) & ~1;
        _hashMask = hashSize - 1;
        _bufferMask = bufferSize - 1;
-       _mixers = new TPAQMixer[_mixersMask + 2];
-       _bigStatesMap = new uint8[_statesMask + 1];
+       _mixers = new TPAQMixer[mixersSize];
+       _bigStatesMap = new uint8[statesSize];
        _smallStatesMap0 = new uint8[1 << 16];
        _smallStatesMap1 = new uint8[1 << 24];
-       _hashes = new int[_hashMask + 1];
-       _buffer = new byte[_bufferMask + 1];
+       _hashes = new int[hashSize];
+       _buffer = new byte[bufferSize];
 
        reset();
    }

@@ -62,6 +62,7 @@ ANSRangeEncoder::~ANSRangeEncoder()
     delete[] _alphabet;
 }
 
+
 // Compute cumulated frequencies and encode header
 int ANSRangeEncoder::updateFrequencies(uint frequencies[], int lr)
 {
@@ -108,7 +109,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
     const int chkSize = (alphabetSize >= 64) ? 8 : 6;
     int llr = 3;
 
-    while (1 << llr <= lr)
+    while ((1 << llr) <= lr)
         llr++;
 
     // Encode all frequencies (but the first one) by chunks
