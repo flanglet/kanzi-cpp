@@ -30,6 +30,12 @@ limitations under the License.
 
 using namespace std;
 
+#ifdef _MSC_VER
+// Ahem ... Visual Studio
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+
 
 // Ahem ... Visual Studio
 // This ostreambuf class is required because Microsoft cannot bother to implement
