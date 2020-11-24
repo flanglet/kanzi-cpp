@@ -133,14 +133,8 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     }
 
     if (res == true) {
-        // Process any remaining run
-        if (run > RUN_THRESHOLD) {
-            const int dIdx = emitRunLength(&dst[dstIdx], dstEnd-dstIdx, run, escape, prev);
-
-            if (dIdx > 0)
-               dstIdx += dIdx;
-        }
-        else if (prev != escape) {
+        // run == 1
+        if (prev != escape) {
             if (dstIdx + run < dstEnd) {
                while (run-- > 0)
                   dst[dstIdx++] = prev;

@@ -44,6 +44,7 @@ bool FPAQDecoder::reset()
             _probs[i][j] = PSCALE >> 1;
     }
 
+    _p = _probs[0];
     return true;
 }
 
