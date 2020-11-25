@@ -531,12 +531,12 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         return;
 
     case 2:
-        tranformAndCodec[0] = "TEXT+ROLZ";
+        tranformAndCodec[0] = "TEXT+FSD+ROLZ";
         tranformAndCodec[1] = "NONE";
         return;
 
     case 3:
-        tranformAndCodec[0] = "TEXT+ROLZX";
+        tranformAndCodec[0] = "TEXT+FSD+ROLZX";
         tranformAndCodec[1] = "NONE";
         return;
 
