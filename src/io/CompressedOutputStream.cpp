@@ -545,7 +545,6 @@ T EncodingTask<T>::run() THROW
         else {
             if (_ctx.has("skipBlocks")) {
                 string str = _ctx.getString("skipBlocks");
-                transform(str.begin(), str.end(), str.begin(), ::toupper);
 
                 if (str == STR_TRUE) {
                     uint histo[256];

@@ -16,12 +16,19 @@ limitations under the License.
 #ifndef _Context_
 #define _Context_
 
-#include <map>
 #include <sstream>
 #include <string>
 #include "types.hpp"
 
-namespace kanzi 
+#if __cplusplus >= 201103L
+   #include <unordered_map>
+   #define CTX_MAP std::unordered_map
+#else
+   #include <map>
+   #define CTX_MAP std::map
+#endif
+
+namespace kanzi
 {
 
    class Context
@@ -29,7 +36,6 @@ namespace kanzi
    public:
        Context() {};
        Context(Context& ctx);
-       Context(std::map<std::string, std::string>& ctx);
        virtual ~Context() {};
 
        bool has(const std::string& key);
@@ -42,19 +48,12 @@ namespace kanzi
 
 
    private:
-       std::map<std::string, std::string> _map;
-
+       CTX_MAP<std::string, std::string> _map;
    };
 
 
    inline Context::Context(Context& ctx)
       : _map(ctx._map)
-   {
-   }
-
-
-   inline Context::Context(std::map<std::string, std::string>& ctx)
-      : _map(ctx)
    {
    }
 
@@ -67,7 +66,7 @@ namespace kanzi
 
    inline int Context::getInt(const std::string& key, int defValue)
    {
-      std::map<std::string, std::string>::iterator it = _map.find(key);
+      CTX_MAP<std::string, std::string>::iterator it = _map.find(key);
 
       if (it == _map.end())
           return defValue;
@@ -82,7 +81,7 @@ namespace kanzi
 
    inline int64 Context::getLong(const std::string& key, int64 defValue)
    {
-      std::map<std::string, std::string>::iterator it = _map.find(key);
+      CTX_MAP<std::string, std::string>::iterator it = _map.find(key);
 
       if (it == _map.end())
           return defValue;
@@ -97,7 +96,7 @@ namespace kanzi
 
    inline const char* Context::getString(const std::string& key, const std::string& defValue)
    {
-      std::map<std::string, std::string>::iterator it = _map.find(key);
+      CTX_MAP<std::string, std::string>::iterator it = _map.find(key);
       return (it == _map.end()) ? defValue.c_str() : it->second.c_str();
    }
 

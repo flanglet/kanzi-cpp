@@ -16,7 +16,9 @@ limitations under the License.
 #ifndef _BlockDecompressor_
 #define _BlockDecompressor_
 
+#include <map>
 #include <vector>
+
 #include "../concurrent.hpp"
 #include "../Context.hpp"
 #include "../OutputStream.hpp"

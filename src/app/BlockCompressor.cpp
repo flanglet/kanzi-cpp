@@ -325,19 +325,15 @@ int BlockCompressor::compress(uint64& outputSize)
        }
     }
 
-    map<string, string> ctx;
-    ss.str(string());
-    ss << _verbosity;
-    ctx["verbosity"] = ss.str();
-    ctx["overwrite"] = (_overwrite == true) ? STR_TRUE : STR_FALSE;
-    ss.str(string());
-    ss << _blockSize;
-    ctx["blockSize"] = ss.str();
-    ctx["skipBlocks"] = (_skipBlocks == true) ? STR_TRUE : STR_FALSE;
-    ctx["checksum"] = (_checksum == true) ? STR_TRUE : STR_FALSE;
-    ctx["codec"] = _codec;
-    ctx["transform"] = _transform;
-    ctx["extra"] = (_codec == "TPAQX") ? STR_TRUE : STR_FALSE;
+    Context ctx;
+    ctx.putInt("verbosity", _verbosity);
+    ctx.putString("overwrite", (_overwrite == true) ? STR_TRUE : STR_FALSE);
+    ctx.putInt("blockSize", _blockSize);
+    ctx.putString("skipBlocks", (_skipBlocks == true) ? STR_TRUE : STR_FALSE);
+    ctx.putString("checksum", (_checksum == true) ? STR_TRUE : STR_FALSE);
+    ctx.putString("codec", _codec);
+    ctx.putString("transform", _transform);
+    ctx.putString("extra", (_codec == "TPAQX") ? STR_TRUE : STR_FALSE);
 
     // Run the task(s)
     if (nbFiles == 1) {
@@ -346,9 +342,7 @@ int BlockCompressor::compress(uint64& outputSize)
         
         if (isStdIn == false) {
            iName = files[0]._fullPath;
-           ss.str(string());
-           ss << files[0]._size;
-           ctx["fileSize"] = ss.str();
+           ctx.putLong("fileSize", files[0]._size);
 
            if (oName.length() == 0) {
                oName = iName + ".knz";
@@ -358,13 +352,10 @@ int BlockCompressor::compress(uint64& outputSize)
            }
         }
 
-        ctx["inputName"] = iName;
-        ctx["outputName"] = oName;
-        ss.str(string());
-        ss << _jobs;
-        ctx["jobs"] = ss.str();
-        Context context(ctx);
-        FileCompressTask<FileCompressResult> task(context, _listeners);
+        ctx.putString("inputName", iName);
+        ctx.putString("outputName", oName);
+        ctx.putInt("jobs", _jobs);
+        FileCompressTask<FileCompressResult> task(ctx, _listeners);
         FileCompressResult fcr = task.run();
         res = fcr._code;
         read = fcr._read;

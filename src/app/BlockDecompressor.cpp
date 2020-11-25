@@ -236,8 +236,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         }
     }
 
-    map<string, string> ctxMap;
-    Context ctx(ctxMap);
+    Context ctx;
     ctx.putInt("verbosity", _verbosity);
     ctx.putInt("overwrite", (_overwrite == true) ? 1 : 0);
 

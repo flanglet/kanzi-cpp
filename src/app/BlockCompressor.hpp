@@ -16,7 +16,9 @@ limitations under the License.
 #ifndef _BlockCompressor_
 #define _BlockCompressor_
 
+#include <map>
 #include <vector>
+
 #include "../concurrent.hpp"
 #include "../Context.hpp"
 #include "../InputStream.hpp"
