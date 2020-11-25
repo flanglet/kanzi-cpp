@@ -146,7 +146,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     // Detect best coding by sampling for large deltas
     for (int i = 2 * count5; i < 3 * count5; i++) {
-        const int32 delta = int32(src[i]) - int32(src[i - dist]);
+        const int delta = int(src[i]) - int(src[i - dist]);
 
         if ((delta < -127) || (delta > 127))
             largeDeltas++;
@@ -248,8 +248,8 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (mode == DELTA_CODING) {
         while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
             if (src[srcIdx] != ESCAPE_TOKEN) {
-                const int32 delta = int32(src[srcIdx] >> 1) ^ -int32((src[srcIdx] & byte(1))); // zigzag decode delta
-                dst[dstIdx] = byte(int32(dst[dstIdx - dist]) + delta);
+                const int delta = int(src[srcIdx] >> 1) ^ -int((src[srcIdx] & byte(1))); // zigzag decode delta
+                dst[dstIdx] = byte(int(dst[dstIdx - dist]) + delta);
                 srcIdx++;
                 dstIdx++;
                 continue;
