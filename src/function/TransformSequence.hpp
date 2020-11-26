@@ -19,8 +19,7 @@ limitations under the License.
 #include <cstring>
 #include "../Function.hpp"
 
-namespace kanzi 
-{
+namespace kanzi {
 
    // Encapsulates a sequence of transforms or functions in a function
    template <class T>
@@ -106,36 +105,39 @@ namespace kanzi
 
        // Process transforms sequentially
        for (int i = 0; i < _length; i++) {
-            // Check that the output buffer has enough room. If not, allocate a new one.
-            if (out->_length < requiredSize) {
-                delete[] out->_array;
-                out->_array = new byte[requiredSize];
-                out->_length = requiredSize; 
-            }
+           if (_transforms[i] == nullptr)
+               continue;
 
-            const int savedIIdx = in->_index;
-            const int savedOIdx = out->_index;
+           // Check that the output buffer has enough room. If not, allocate a new one.
+           if (out->_length < requiredSize) {
+               delete[] out->_array;
+               out->_array = new byte[requiredSize];
+               out->_length = requiredSize;
+           }
 
-            // Apply forward transform
-            if (_transforms[i]->forward(*in, *out, count) == false) {
-                // Transform failed. Either it does not apply to this type
-                // of data or a recoverable error occured => revert
-                in->_index = savedIIdx;
-                out->_index = savedOIdx;
-                continue;
-            }
+           const int savedIIdx = in->_index;
+           const int savedOIdx = out->_index;
 
-            _skipFlags &= ~byte(1 << (7 - i));
-            count = out->_index - savedOIdx;
-            in->_index = savedIIdx;
-            out->_index = savedOIdx;
-            std::swap(in, out);
-            swaps++;
+           // Apply forward transform
+           if (_transforms[i]->forward(*in, *out, count) == false) {
+               // Transform failed. Either it does not apply to this type
+               // of data or a recoverable error occured => revert
+               in->_index = savedIIdx;
+               out->_index = savedOIdx;
+               continue;
+           }
+
+           _skipFlags &= ~byte(1 << (7 - i));
+           count = out->_index - savedOIdx;
+           in->_index = savedIIdx;
+           out->_index = savedOIdx;
+           std::swap(in, out);
+           swaps++;
        }
 
        if ((swaps & 1) == 0)
            memcpy(&output._array[output._index], &in->_array[in->_index], count);
-     
+
        input._index += blockSize;
        output._index += count;
        return _skipFlags != SKIP_MASK;
@@ -174,11 +176,14 @@ namespace kanzi
            if ((_skipFlags & byte(1 << (7 - i))) != byte(0))
                continue;
 
+           if (_transforms[i] == nullptr)
+               continue;
+
            // Check that the output buffer has enough room. If not, allocate a new one.
            if (out->_length < output._length) {
-              delete[] out->_array;
-              out->_array = new byte[output._length];
-              out->_length = output._length;
+               delete[] out->_array;
+               out->_array = new byte[output._length];
+               out->_length = output._length;
            }
 
            const int savedIIdx = in->_index;
