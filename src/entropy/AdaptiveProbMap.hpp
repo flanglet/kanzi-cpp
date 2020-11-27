@@ -93,7 +93,7 @@ namespace kanzi {
        _index = 0;
 
        for (int j = 0; j < mult; j++)
-           _data[j] = uint16(Global::squash((j - 16) << 7) << 4);
+           _data[j] = uint16(Global::squash((j - 16) * 128) << 4);
 
        for (int i = 1; i < n; i++)
            memcpy(&_data[i * mult], &_data[0], mult * sizeof(uint16));
