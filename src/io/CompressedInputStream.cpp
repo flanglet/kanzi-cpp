@@ -605,7 +605,7 @@ T DecodingTask<T>::run() THROW
     uint64 read = _ibs->readBits(lr);
 
     if (read == 0) {
-        (*_processedBlockId)++;
+        _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID);
         return T(*_data, _blockId, 0, 0, 0, "Success");
     }
 
@@ -717,6 +717,7 @@ T DecodingTask<T>::run() THROW
                 "Entropy decoding failed");
         }
 
+        ibs.close();
         delete ed;
         ed = nullptr;
 
