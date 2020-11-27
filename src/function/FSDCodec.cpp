@@ -137,6 +137,9 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             minIdx = i;
     }
 
+    if (minIdx == 0)
+        return false;
+
     // If not 'better enough', quick exit
     if ((_isFast == true) && (ent[minIdx] >= ((123 * ent[0]) >> 7)))
         return false;
