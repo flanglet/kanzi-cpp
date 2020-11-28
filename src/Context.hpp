@@ -35,7 +35,8 @@ namespace kanzi
    {
    public:
        Context() {};
-       Context(Context& ctx);
+       Context(const Context& ctx);
+       Context& operator=(const Context& ctx);
        virtual ~Context() {};
 
        bool has(const std::string& key);
@@ -52,9 +53,16 @@ namespace kanzi
    };
 
 
-   inline Context::Context(Context& ctx)
+   inline Context::Context(const Context& ctx)
       : _map(ctx._map)
    {
+   }
+  
+
+   inline Context& Context::operator=(const Context& ctx)
+   {
+      _map = ctx._map;
+      return*this;
    }
 
 
