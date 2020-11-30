@@ -135,34 +135,27 @@ int DefaultInputBitStream::readFromInputStream(uint count) THROW
     if (isClosed() == true)
         throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);
 
+    if (count == 0)
+        return 0;
+
     int size = -1;
 
     try {
         _read += (int64(_maxPosition + 1) << 3);
         _is.read(reinterpret_cast<char*>(_buffer), count);
-
-        if (_is.good()) {
-            size = count;
-        }
-        else {
-            size = int(_is.gcount());
-
-            if (!_is.eof()) {
-                _position = 0;
-                _maxPosition = (size <= 0) ? -1 : size - 1;
-                throw BitStreamException("No more data to read in the bitstream",
-                    BitStreamException::END_OF_STREAM);
-            }
-        }
+        _position = 0;
+        size = (_is.good() == true) ? int(count) : int(_is.gcount());
+        _maxPosition = (size <= 0) ? -1 : size - 1;
     }
     catch (IOException& e) {
-        _position = 0;
-        _maxPosition = (size <= 0) ? -1 : size - 1;
         throw BitStreamException(e.what(), BitStreamException::INPUT_OUTPUT);
     }
 
-    _position = 0;
-    _maxPosition = (size <= 0) ? -1 : size - 1;
+    if (size <= 0) {
+       throw BitStreamException("No more data to read in the bitstream",
+           BitStreamException::END_OF_STREAM);
+    }
+
     return size;
 }
 

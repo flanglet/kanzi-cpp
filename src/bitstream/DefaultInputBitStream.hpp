@@ -105,8 +105,8 @@ namespace kanzi {
 
            if (_position + 7 > _maxPosition) {
                // End of stream: overshoot max position => adjust bit index
-               uint shift = uint(_maxPosition - _position) << 3;
-               _availBits = shift + 8;
+               uint shift = uint(_maxPosition - _position) * 8;
+               _availBits = int(shift + 8);
                uint64 val = 0;
 
                while (_position <= _maxPosition) {
