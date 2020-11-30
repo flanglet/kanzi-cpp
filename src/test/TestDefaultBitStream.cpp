@@ -209,6 +209,19 @@ int testBitStreamCorrectnessMisaligned1()
 
         // Close first to force flush()
         dbs.close();
+
+#ifndef __MINGW32__
+        // Exception handling is broken with Mingw currently
+        if (test == 10) {
+            try {
+                cout << "\nTrying to write to closed stream" << endl;
+                dbs.writeBit(1);
+            } catch (BitStreamException& e) {
+               cout << "\nException: " << e.what() << endl;
+            }
+        }
+#endif
+
         ios.rdbuf()->pubseekpos(0);
         istringstream is;
         char* cvalues = new char[4 * length];
@@ -250,6 +263,18 @@ int testBitStreamCorrectnessMisaligned1()
              << "\n" << ((ok) ? "Success" : "Failure") << endl;
         cout << endl;
         cout << endl;
+
+#ifndef __MINGW32__
+        // Exception handling is broken with Mingw currently
+        if (test == 10) {
+            try {
+                cout << "\nTrying to read from closed stream" << endl;
+                ibs.readBit();
+            } catch (BitStreamException& e) {
+               cout << "\nException: " << e.what() << endl;
+            }
+        }
+#endif
     }
 
     delete[] values;
@@ -348,6 +373,19 @@ int testBitStreamCorrectnessAligned2()
 
         // Close first to force flush()
         dbs.close();
+
+#ifndef __MINGW32__
+        // Exception handling is broken with Mingw currently
+        if (test == 10) {
+            try {
+                cout << "\nTrying to write to closed stream" << endl;
+                dbs.writeBit(1);
+            } catch (BitStreamException& e) {
+               cout << "\nException: " << e.what() << endl;
+            }
+        }
+#endif
+
         ios.rdbuf()->pubseekpos(0);
         istringstream is;
         char* cvalues = new char[length];
@@ -389,6 +427,18 @@ int testBitStreamCorrectnessAligned2()
              << "\n" << ((ok) ? "Success" : "Failure") << endl;
         cout << endl;
         cout << endl;
+
+#ifndef __MINGW32__
+        // Exception handling is broken with Mingw currently
+        if (test == 10) {
+            try {
+                cout << "\nTrying to read from closed stream" << endl;
+                ibs.readBit();
+            } catch (BitStreamException& e) {
+               cout << "\nException: " << e.what() << endl;
+            }
+        }
+#endif
     }
 
     delete[] input;
@@ -485,9 +535,9 @@ int testBitStreamSpeed2(const string& fileName)
     // Test speed
     cout << "\nSpeed Test2" << endl;
 
-    byte values[] = { (byte)3, (byte)1, (byte)4, (byte)1, (byte)5,(byte) 9, (byte)2, (byte)6, 
+    byte values[] = { (byte)3, (byte)1, (byte)4, (byte)1, (byte)5,(byte) 9, (byte)2, (byte)6,
         (byte)5, (byte)3, (byte)5, (byte)8, (byte)9, (byte)7, (byte)9, (byte)3,
-        (byte)31, (byte)14, (byte)41, (byte)15, (byte)59, (byte)92, (byte)26, (byte)65, 
+        (byte)31, (byte)14, (byte)41, (byte)15, (byte)59, (byte)92, (byte)26, (byte)65,
         (byte)53, (byte)35, (byte)58, (byte)89, (byte)97, (byte)79, (byte)93, (byte)32 };
 
     int iter = 150;
