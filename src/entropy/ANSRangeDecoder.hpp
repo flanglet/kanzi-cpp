@@ -59,7 +59,8 @@ namespace kanzi
 
 	   InputBitStream& getBitStream() const { return _bitstream; }
 
-	   void dispose() {};
+	   void dispose() { _dispose(); }
+
 
    private:
 	   static const int DEFAULT_ANS0_CHUNK_SIZE = 1 << 15; // 32 KB by default
@@ -83,6 +84,8 @@ namespace kanzi
 	   int decodeSymbol(byte*& p, int& st, const ANSDecSymbol& sym, const int mask);
 
 	   int decodeHeader(uint frequencies[]);
+
+ 	   void _dispose() {};
    };
 
 

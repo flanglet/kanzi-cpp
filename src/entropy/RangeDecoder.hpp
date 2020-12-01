@@ -35,13 +35,13 @@ namespace kanzi
 
        RangeDecoder(InputBitStream& bitstream, int chunkSize = DEFAULT_CHUNK_SIZE) THROW;
 
-       ~RangeDecoder() { delete[] _f2s; dispose(); }
+       ~RangeDecoder() { _dispose(); delete[] _f2s; }
 
        int decode(byte block[], uint blkptr, uint len);
 
        InputBitStream& getBitStream() const { return _bitstream; }
 
-       void dispose(){};
+       void dispose() { _dispose(); }
 
    private:
        static const uint64 TOP_RANGE    = 0x0FFFFFFFFFFFFFFF;
@@ -66,6 +66,10 @@ namespace kanzi
        int decodeHeader(uint frequencies[]);
 
        byte decodeByte();
+
+       bool reset();
+       
+       void _dispose() {}
    };
 
 }

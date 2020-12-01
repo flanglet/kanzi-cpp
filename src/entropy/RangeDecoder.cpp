@@ -29,16 +29,22 @@ RangeDecoder::RangeDecoder(InputBitStream& bitstream, int chunkSize) THROW : _bi
     if (chunkSize > MAX_CHUNK_SIZE)
         throw invalid_argument("The chunk size must be at most 2^30");
 
-    _range = TOP_RANGE;
+    _f2s = new short[0];
+    _chunkSize = chunkSize;
+    reset();
+}
+
+bool RangeDecoder::reset()
+{
     _low = 0;
+    _range = TOP_RANGE;
     _code = 0;
     _lenF2S = 0;
-    _f2s = new short[_lenF2S];
-    _chunkSize = chunkSize;
     _shift = 0;
     memset(_alphabet, 0, sizeof(uint) * 256);
     memset(_freqs, 0, sizeof(uint) * 256);
     memset(_cumFreqs, 0, sizeof(uint64) * 257);
+    return true;
 }
 
 int RangeDecoder::decodeHeader(uint frequencies[])

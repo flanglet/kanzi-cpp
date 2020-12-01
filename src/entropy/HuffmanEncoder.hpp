@@ -39,6 +39,8 @@ namespace kanzi
 
        bool reset();
 
+       void _dispose() {}
+
        static void computeInPlaceSizesPhase1(uint data[], int n);
 
        static void computeInPlaceSizesPhase2(uint data[], int n);
@@ -46,7 +48,7 @@ namespace kanzi
    public:
        HuffmanEncoder(OutputBitStream& bitstream, int chunkSize=HuffmanCommon::MAX_CHUNK_SIZE) THROW;
 
-       ~HuffmanEncoder() { dispose(); }
+       ~HuffmanEncoder() { _dispose(); }
 
        int updateFrequencies(uint frequencies[]) THROW;
 
@@ -54,7 +56,7 @@ namespace kanzi
 
        OutputBitStream& getBitStream() const { return _bitstream; }
 
-       void dispose(){};
+       void dispose() { _dispose(); }
    };
 
 }

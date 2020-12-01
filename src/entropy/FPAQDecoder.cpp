@@ -27,7 +27,7 @@ FPAQDecoder::FPAQDecoder(InputBitStream& bitstream) THROW
 
 FPAQDecoder::~FPAQDecoder()
 {
-    dispose();
+    _dispose();
     delete[] _sba._array;
 }
 

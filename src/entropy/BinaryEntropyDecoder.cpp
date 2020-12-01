@@ -35,7 +35,7 @@ BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor*
 
 BinaryEntropyDecoder::~BinaryEntropyDecoder()
 {
-    dispose();
+    _dispose();
     delete[] _sba._array;
 
     if (_deallocate)

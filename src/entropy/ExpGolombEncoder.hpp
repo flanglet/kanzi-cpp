@@ -27,18 +27,20 @@ namespace kanzi
        OutputBitStream& _bitstream;
        const int _signed;
 
+       void _dispose() {}
+
    public:
        ExpGolombEncoder(OutputBitStream& bitstream, bool sign=true);
 
-       ~ExpGolombEncoder() { dispose(); }
+       ~ExpGolombEncoder() { _dispose(); }
 
        int encode(const byte block[], uint blkptr, uint len);
 
-       OutputBitStream& getBitStream() const { return _bitstream; };
+       OutputBitStream& getBitStream() const { return _bitstream; }
 
        void encodeByte(byte val);
 
-       void dispose() {}
+       void dispose() { _dispose(); }
 
        bool isSigned() const { return _signed == 1; }
    };

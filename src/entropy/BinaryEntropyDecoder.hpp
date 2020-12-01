@@ -45,6 +45,8 @@ namespace kanzi
        virtual void initialize();
 
        void read();
+       
+       void _dispose() {};
 
    public:
        BinaryEntropyDecoder(InputBitStream& bitstream, Predictor* predictor, bool deallocate=true) THROW;
@@ -53,11 +55,11 @@ namespace kanzi
 
        int decode(byte block[], uint blkptr, uint count) THROW;
 
-       InputBitStream& getBitStream() const { return _bitstream; };
+       InputBitStream& getBitStream() const { return _bitstream; }
 
-       bool isInitialized() const { return _initialized; };
+       bool isInitialized() const { return _initialized; }
 
-       virtual void dispose() {};
+       virtual void dispose() { _dispose(); }
 
        virtual byte decodeByte();
 

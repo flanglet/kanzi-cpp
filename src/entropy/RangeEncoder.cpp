@@ -38,10 +38,16 @@ RangeEncoder::RangeEncoder(OutputBitStream& bitstream, int chunkSize, int logRan
 
     _logRange = logRange;
     _chunkSize = chunkSize;
+    reset();
+}
+
+bool RangeEncoder::reset()
+{
     _low = 0;
     _range = TOP_RANGE;
     _shift = 0;
     memset(_cumFreqs, 0, 257 * sizeof(uint64));
+    return true;
 }
 
 int RangeEncoder::updateFrequencies(uint frequencies[], int size, int lr)

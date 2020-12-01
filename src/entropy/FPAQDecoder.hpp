@@ -42,7 +42,7 @@ namespace kanzi
        uint16* _p; // pointer to current prob
        int _ctx; // previous bits
 
-       void dispose() {};
+       void _dispose() {}
 
        int decodeBit(int pred = 2048);
 
@@ -60,9 +60,12 @@ namespace kanzi
 
        int decode(byte block[], uint blkptr, uint count) THROW;
 
-       InputBitStream& getBitStream() const { return _bitstream; };
+       InputBitStream& getBitStream() const { return _bitstream; }
 
-       bool isInitialized() const { return _initialized; };
+       bool isInitialized() const { return _initialized; }
+
+       void dispose() { _dispose(); }
+
    };
 
    

@@ -69,7 +69,7 @@ namespace kanzi
 
 	   OutputBitStream& getBitStream() const { return _bitstream; }
 
-	   void dispose() {};
+	   void dispose() { _dispose(); }
 
 
    private:
@@ -95,6 +95,8 @@ namespace kanzi
 	   int encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym);
 
 	   bool encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], int lr);
+
+	   void _dispose() {}
    };
 
 

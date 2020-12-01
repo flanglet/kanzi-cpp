@@ -40,6 +40,8 @@ namespace kanzi
        bool _deallocate;
        SliceArray<byte> _sba;
 
+       void _dispose();
+
    protected:
        virtual void flush();
 
@@ -50,9 +52,9 @@ namespace kanzi
 
        int encode(const byte block[], uint blkptr, uint count) THROW;
 
-       OutputBitStream& getBitStream() const { return _bitstream; };
+       OutputBitStream& getBitStream() const { return _bitstream; }
 
-       virtual void dispose();
+       virtual void dispose() { _dispose(); }
 
        virtual void encodeByte(byte val);
 

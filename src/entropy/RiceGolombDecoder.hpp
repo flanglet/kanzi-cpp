@@ -28,18 +28,20 @@ namespace kanzi
        bool _signed;
        uint _logBase;
 
+       void _dispose() {} 
+
    public:
        RiceGolombDecoder(InputBitStream& bitstream, uint logBase, bool sgn=true) THROW;
 
-       ~RiceGolombDecoder() { dispose(); }
+       ~RiceGolombDecoder() { _dispose(); }
 
        int decode(byte arr[], uint blkptr, uint len);
 
-       InputBitStream& getBitStream() const { return _bitstream; };
+       InputBitStream& getBitStream() const { return _bitstream; }
 
        byte decodeByte();
 
-       void dispose() {}
+       void dispose() { _dispose(); }
 
        bool isSigned() const { return _signed; }
    };

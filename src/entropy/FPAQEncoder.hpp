@@ -46,6 +46,7 @@ namespace kanzi
 
        bool reset();
 
+       void _dispose();
 
    protected:
        virtual void flush();
@@ -59,7 +60,7 @@ namespace kanzi
 
        OutputBitStream& getBitStream() const { return _bitstream; };
 
-       void dispose();
+       void dispose() { _dispose(); } 
    };
 
 

@@ -27,7 +27,7 @@ FPAQEncoder::FPAQEncoder(OutputBitStream& bitstream) THROW
 
 FPAQEncoder::~FPAQEncoder()
 {
-    dispose();
+    _dispose();
     delete[] _sba._array;
 }
 
@@ -100,7 +100,7 @@ int FPAQEncoder::encode(const byte block[], uint blkptr, uint count) THROW
     return count;
 }
 
-void FPAQEncoder::dispose()
+void FPAQEncoder::_dispose()
 {
     if (_disposed == true)
         return;

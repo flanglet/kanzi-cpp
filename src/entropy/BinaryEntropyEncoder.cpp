@@ -34,7 +34,7 @@ BinaryEntropyEncoder::BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor
 
 BinaryEntropyEncoder::~BinaryEntropyEncoder()
 {
-    dispose();
+    _dispose();
     delete[] _sba._array;
 
     if (_deallocate)
@@ -95,7 +95,7 @@ void BinaryEntropyEncoder::encodeByte(byte val)
     encodeBit(int(val) & 1, _predictor->get());
 }
 
-void BinaryEntropyEncoder::dispose()
+void BinaryEntropyEncoder::_dispose()
 {
     if (_disposed == true)
         return;

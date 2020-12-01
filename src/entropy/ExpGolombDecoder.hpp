@@ -29,18 +29,20 @@ namespace kanzi
 
        void flush();
 
+       void _dispose() {}
+
    public:
        ExpGolombDecoder(InputBitStream& bitstream, bool sign=true);
 
-       ~ExpGolombDecoder() { dispose(); }
+       ~ExpGolombDecoder() { _dispose(); }
 
        int decode(byte arr[], uint blkptr, uint len);
 
-       InputBitStream& getBitStream() const { return _bitstream; };
+       InputBitStream& getBitStream() const { return _bitstream; }
 
        byte decodeByte();
 
-       void dispose() {}
+       void dispose() { _dispose(); }
 
        bool isSigned() const { return _signed; }
    };

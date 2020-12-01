@@ -30,13 +30,13 @@ namespace kanzi
    public:
        HuffmanDecoder(InputBitStream& bitstream, int chunkSize=HuffmanCommon::MAX_CHUNK_SIZE) THROW;
 
-       ~HuffmanDecoder() { dispose(); }
+       ~HuffmanDecoder() { _dispose(); }
 
        int decode(byte block[], uint blkptr, uint len);
 
        InputBitStream& getBitStream() const { return _bitstream; }
 
-       void dispose() {};
+       void dispose() { _dispose(); }
 
    private:
        static const int DECODING_BATCH_SIZE = 14; // ensures decoding table fits in L1 cache
@@ -62,6 +62,9 @@ namespace kanzi
        void fetchBits();
 
        bool reset(); 
+
+       void _dispose() {}
+
    };
 
 
