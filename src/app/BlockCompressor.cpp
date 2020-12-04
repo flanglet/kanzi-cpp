@@ -15,9 +15,6 @@ limitations under the License.
 */
 
 #include <algorithm>
-#include <cstdlib>
-#include <stdio.h>
-#include <stdlib.h>
 #include <fstream>
 #include <iostream>
 #include <string>
