@@ -62,7 +62,12 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
         _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
 }
 
+#if __cplusplus >= 201103L
+CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, 
+          std::function<InputBitStream*(InputStream&)>* createBitStream)
+#else
 CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
+#endif
     : InputStream(is.rdbuf())
     , _is(is)
     , _ctx(ctx)
@@ -88,7 +93,13 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
     _closed = false;
     _maxIdx = 0;
     _gcount = 0;
+#if __cplusplus >= 201103L
+    // A hook can be provided by the caller to customize the instantiation of the 
+    // input bitstream.
+    _ibs = (createBitStream == nullptr) ? new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE) : (*createBitStream)(_os);
+#else
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
+#endif
     _jobs = tasks;
     _sa = new SliceArray<byte>(new byte[0], 0, 0);
     _hasher = nullptr;

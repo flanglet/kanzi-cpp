@@ -27,6 +27,10 @@ limitations under the License.
 #include "../SliceArray.hpp"
 #include "../util/XXHash32.hpp"
 
+#if __cplusplus >= 201103L
+   #include <functional>
+#endif
+
 namespace kanzi
 {
 
@@ -169,7 +173,12 @@ namespace kanzi
    public:
        CompressedInputStream(InputStream& is, int jobs);
 
+#if __cplusplus >= 201103L
+       CompressedInputStream(InputStream& is, Context& ctx, 
+          std::function<InputBitStream*(InputStream&)>* createBitStream=nullptr);
+#else
        CompressedInputStream(InputStream& is, Context& ctx);
+#endif
 
        ~CompressedInputStream();
 

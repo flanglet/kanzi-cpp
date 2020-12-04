@@ -27,6 +27,10 @@ limitations under the License.
 #include "../SliceArray.hpp"
 #include "../util/XXHash32.hpp"
 
+#if __cplusplus >= 201103L
+   #include <functional>
+#endif
+
 namespace kanzi {
 
    class EncodingTaskResult {
@@ -137,7 +141,12 @@ namespace kanzi {
    public:
        CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform, int blockSize, int jobs, bool checksum);
        
+#if __cplusplus >= 201103L
+       CompressedOutputStream(OutputStream& os, Context& ctx,
+          std::function<OutputBitStream*(OutputStream&)>* createBitStream=nullptr);
+#else
        CompressedOutputStream(OutputStream& os, Context& ctx);
+#endif
 
        ~CompressedOutputStream();
 

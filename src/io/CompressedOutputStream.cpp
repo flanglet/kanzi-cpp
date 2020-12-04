@@ -80,7 +80,12 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
         _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
 }
 
+#if __cplusplus >= 201103L
+CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx,
+          std::function<OutputBitStream*(OutputStream&)>* createBitStream)
+#else
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
+#endif
     : OutputStream(os.rdbuf())
     , _os(os)
     , _ctx(ctx)
@@ -136,7 +141,13 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
 
     _initialized = false;
     _closed = false;
+#if __cplusplus >= 201103L
+    // A hook can be provided by the caller to customize the instantiation of the 
+    // output bitstream.
+    _obs = (createBitStream == nullptr) ? new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE) : (*createBitStream)(_os);
+#else
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
+#endif
     _entropyType = EntropyCodecFactory::getType(entropyCodec.c_str());
     _transformType = FunctionFactory<byte>::getType(transform.c_str());
     string str = ctx.getString("checksum");
