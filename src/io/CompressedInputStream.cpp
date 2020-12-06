@@ -96,7 +96,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
 #if __cplusplus >= 201103L
     // A hook can be provided by the caller to customize the instantiation of the 
     // input bitstream.
-    _ibs = (createBitStream == nullptr) ? new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE) : (*createBitStream)(_os);
+    _ibs = (createBitStream == nullptr) ? new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE) : (*createBitStream)(_is);
 #else
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
 #endif
