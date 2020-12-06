@@ -28,10 +28,11 @@ namespace kanzi {
    private:
        OutputBitStream& _bitstream;
 
+
    public:
        NullEntropyEncoder(OutputBitStream& bitstream);
 
-       ~NullEntropyEncoder() { dispose(); }
+       ~NullEntropyEncoder() {}
 
        int encode(const byte block[], uint blkptr, uint len);
 

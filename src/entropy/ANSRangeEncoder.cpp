@@ -55,7 +55,7 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
 
 ANSRangeEncoder::~ANSRangeEncoder()
 {
-    dispose();
+    _dispose();
     delete[] _buffer;
     delete[] _symbols;
     delete[] _freqs;

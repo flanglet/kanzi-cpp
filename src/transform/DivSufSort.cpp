@@ -1298,39 +1298,28 @@ int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4,
     int* buf1 = &_sa[pa];
 
     if (buf0[buf1[_sa[v2]]] > buf0[buf1[_sa[v3]]]) {
-        const int t = v2;
-        v2 = v3;
-        v3 = t;
+        std::swap(v2, v3);
     }
 
     if (buf0[buf1[_sa[v4]]] > buf0[buf1[_sa[v5]]]) {
-        const int t = v4;
-        v4 = v5;
-        v5 = t;
+        std::swap(v4, v5);
     }
 
     if (buf0[buf1[_sa[v2]]] > buf0[buf1[_sa[v4]]]) {
-        const int t1 = v2;
-        v2 = v4;
-        v4 = t1;
-        const int t2 = v3;
-        v3 = v5;
-        v5 = t2;
+        //std::swap(v2, v4);
+        v4 = v2;
+        std::swap(v3, v5);
     }
 
     if (buf0[buf1[_sa[v1]]] > buf0[buf1[_sa[v3]]]) {
-        const int t = v1;
-        v1 = v3;
-        v3 = t;
+        std::swap(v1, v3);
     }
 
     if (buf0[buf1[_sa[v1]]] > buf0[buf1[_sa[v4]]]) {
-        const int t1 = v1;
-        v1 = v4;
-        v4 = t1;
-        const int t2 = v3;
+        //std::swap(v1, v4);
+        v4 = v1;
+        //std::swap(v3, v5);
         v3 = v5;
-        v5 = t2;
     }
 
     return (buf0[buf1[_sa[v3]]] > buf0[buf1[_sa[v4]]]) ? v4 : v3;
@@ -1342,9 +1331,7 @@ int DivSufSort::ssMedian3(int idx, int pa, int v1, int v2, int v3)
     int* buf1 = &_sa[pa];
 
     if (buf0[buf1[_sa[v1]]] > buf0[buf1[_sa[v2]]]) {
-        const int t = v1;
-        v1 = v2;
-        v2 = t;
+        std::swap(v1, v2);
     }
 
     if (buf0[buf1[_sa[v2]]] > buf0[buf1[_sa[v3]]]) {

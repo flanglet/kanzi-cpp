@@ -50,7 +50,7 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
 
 ANSRangeDecoder::~ANSRangeDecoder()
 {
-    dispose();
+    _dispose();
     delete[] _buffer;
     delete[] _symbols;
     delete[] _f2s;
