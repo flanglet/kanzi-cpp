@@ -14,7 +14,6 @@ limitations under the License.
 */
 
 #include "X86Codec.hpp"
-#include <stdexcept>
 
 using namespace kanzi;
 
@@ -29,7 +28,6 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (!SliceArray<byte>::isValid(output))
         throw std::invalid_argument("Invalid output block");
 
-    // Aliasing
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     const int end = count - 8;
@@ -81,10 +79,11 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         if ((sgn != 0) && (sgn != 0xFF))
             continue;
 
-        int addr = (0xFF & int(src[srcIdx])) | ((0xFF & int(src[srcIdx + 1])) << 8) | 
-                  ((0xFF & int(src[srcIdx + 2])) << 16) | (sgn << 24);
+        const int addr = ((0xFF & int(src[srcIdx])) | 
+                         ((0xFF & int(src[srcIdx + 1])) << 8) | 
+                         ((0xFF & int(src[srcIdx + 2])) << 16) | 
+                          (sgn << 24)) + srcIdx;
 
-        addr += srcIdx;
         dst[dstIdx] = byte(sgn + 1);
         dst[dstIdx + 1] = MASK_ADDRESS ^ byte(0xFF & (addr >> 16));
         dst[dstIdx + 2] = MASK_ADDRESS ^ byte(0xFF & (addr >> 8));
@@ -112,7 +111,6 @@ bool X86Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (!SliceArray<byte>::isValid(output))
         throw std::invalid_argument("Invalid output block");
 
-    // Aliasing
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     const int end = count - 8;
@@ -138,12 +136,11 @@ bool X86Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         if ((sgn != 0) && (sgn != -1))
             continue;
 
-        int addr =  (0xFF & int(MASK_ADDRESS ^ src[srcIdx+3]))        | 
-                   ((0xFF & int(MASK_ADDRESS ^ src[srcIdx+2])) <<  8) |
-                   ((0xFF & int(MASK_ADDRESS ^ src[srcIdx+1])) << 16) | 
-                   ((0xFF & sgn) << 24);
+        const int addr = (((0xFF & sgn) << 24) |
+                          ((0xFF & int(MASK_ADDRESS ^ src[srcIdx+1])) << 16) |
+                          ((0xFF & int(MASK_ADDRESS ^ src[srcIdx+2])) <<  8) |
+                           (0xFF & int(MASK_ADDRESS ^ src[srcIdx+3]))) - dstIdx;
 
-        addr -= dstIdx;
         dst[dstIdx] = byte(addr);
         dst[dstIdx + 1] = byte(addr >> 8);
         dst[dstIdx + 2] = byte(addr >> 16);
