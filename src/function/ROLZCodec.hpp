@@ -210,6 +210,7 @@ namespace kanzi {
        static const int32 HASH = 200002979;
        static const int32 HASH_MASK = ~(CHUNK_SIZE - 1);
        static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB
+       static const int MIN_BLOCK_SIZE = 64;
 
        Function<byte>* _delegate;
 

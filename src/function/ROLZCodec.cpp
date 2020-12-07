@@ -44,6 +44,9 @@ bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
     if (count == 0)
         return true;
 
+    if (count < MIN_BLOCK_SIZE)
+        return false;
+
     if (!SliceArray<byte>::isValid(input))
         throw invalid_argument("ROLZ codec: Invalid input block");
 
