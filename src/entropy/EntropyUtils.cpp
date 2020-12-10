@@ -20,6 +20,7 @@ limitations under the License.
 #include "../Global.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 class FreqSortData {
 public:
@@ -71,22 +72,15 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
         if (count == 256)
             obs.writeBit(ALPHABET_256); // shortcut
         else {
-            int log = 1;
-
-            while (1 << log <= count)
-                log++;
-
             // Write alphabet size
             obs.writeBit(ALPHABET_NOT_256);
-            obs.writeBits(log - 1, 3);
-            obs.writeBits(count, log);
+            obs.writeBits(count, 8);
         }
     }
     else {
         // Partial alphabet
         obs.writeBit(PARTIAL_ALPHABET);
-        byte masks[32];
-        memset(masks, 0, 32);
+        byte masks[32] = { 0 };
 
         for (int i = 0; i < count; i++)
             masks[alphabet[i] >> 3] |= byte(1 << (alphabet[i] & 7));
@@ -104,14 +98,12 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
 int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
 {
     // Read encoding mode from bitstream
-    const int alphabetType = ibs.readBit();
-
-    if (alphabetType == FULL_ALPHABET) {
+    if (ibs.readBit() == FULL_ALPHABET) {
         int alphabetSize;
 
-        if (ibs.readBit() == ALPHABET_256)
+        if (ibs.readBit() == ALPHABET_256) {
             alphabetSize = 256;
-        else {
+        } else {
             const int log = 1 + int(ibs.readBits(3));
             alphabetSize = int(ibs.readBits(log));
         }
