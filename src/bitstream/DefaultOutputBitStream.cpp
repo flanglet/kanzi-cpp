@@ -18,6 +18,7 @@ limitations under the License.
 #include <fstream>
 
 using namespace kanzi;
+using namespace std;
 
 DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize) THROW : _os(os)
 {

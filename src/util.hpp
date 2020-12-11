@@ -28,8 +28,6 @@ limitations under the License.
 #endif
 
 
-using namespace std;
-
 #ifdef _MSC_VER
 // Ahem ... Visual Studio
 #define min(a, b) (((a) < (b)) ? (a) : (b))
@@ -166,8 +164,8 @@ inline void fromString(std::string s, int data[], int length) {
 
 class Clock {
 private:
-        chrono::steady_clock::time_point _start;
-        chrono::steady_clock::time_point _stop;
+        std::chrono::steady_clock::time_point _start;
+        std::chrono::steady_clock::time_point _stop;
 
 public:
         Clock()
@@ -178,18 +176,18 @@ public:
 
         void start()
         {
-                _start = chrono::steady_clock::now();
+                _start = std::chrono::steady_clock::now();
         }
 
         void stop()
         {
-                _stop = chrono::steady_clock::now();
+                _stop = std::chrono::steady_clock::now();
         }
 
         double elapsed() const
         {
                 // In millisec
-                return double(chrono::duration_cast<chrono::milliseconds>(_stop - _start).count());
+                return double(std::chrono::duration_cast<std::chrono::milliseconds>(_stop - _start).count());
         }
 };
 #else
@@ -254,7 +252,7 @@ class Printer
       void println(const char* msg, bool print) {
          if ((print == true) && (msg != nullptr)) {
 #ifdef CONCURRENCY_ENABLED
-            lock_guard<mutex> lock(_mtx);
+            std::lock_guard<std::mutex> lock(_mtx);
 #endif
             (*_os) << msg << std::endl;
          }
@@ -262,7 +260,7 @@ class Printer
 
    private:
 #ifdef CONCURRENCY_ENABLED
-      static mutex _mtx;
+      static std::mutex _mtx;
 #endif
       std::ostream* _os;
 };

@@ -16,6 +16,7 @@ limitations under the License.
 #include "RiceGolombDecoder.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 RiceGolombDecoder::RiceGolombDecoder(InputBitStream& bitstream, uint logBase, bool sgn) THROW
     : _bitstream(bitstream)

@@ -16,7 +16,6 @@ limitations under the License.
 #ifndef _FSDCodec_
 #define _FSDCodec_
 
-#include "../util.hpp" // Visual Studio min/max
 #include "../Context.hpp"
 #include "../Function.hpp"
 
@@ -40,7 +39,7 @@ namespace kanzi {
        // Required encoding output buffer size
        int getMaxEncodedLength(int srcLen) const
        {
-           return srcLen + max(64, srcLen >> 4); // limit expansion
+           return srcLen + ((srcLen < 1024) ? 64 : srcLen >> 4); // limit expansion
        }
 
    private:

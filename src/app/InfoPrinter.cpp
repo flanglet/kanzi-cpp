@@ -18,6 +18,7 @@ limitations under the License.
 #include "InfoPrinter.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os)
     : _os(os)

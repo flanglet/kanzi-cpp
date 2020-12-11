@@ -17,6 +17,7 @@ limitations under the License.
 #include "EntropyUtils.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor* predictor, bool deallocate) THROW
     : _bitstream(bitstream),

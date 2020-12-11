@@ -19,6 +19,7 @@ limitations under the License.
 #include "../Global.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 const uint8 FSDCodec::ZIGZAG[255] = {
 	   253,   251,   249,   247,   245,   243,   241,   239,

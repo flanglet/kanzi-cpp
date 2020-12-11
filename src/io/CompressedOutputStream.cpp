@@ -27,6 +27,7 @@ limitations under the License.
 #endif
 
 using namespace kanzi;
+using namespace std;
 
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& entropyCodec, const string& transform, int bSize, int tasks, bool checksum)
     : OutputStream(os.rdbuf())

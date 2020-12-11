@@ -24,6 +24,7 @@ limitations under the License.
 #include "../Global.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats. 0 means that frequencies calculated at the

@@ -18,6 +18,7 @@ limitations under the License.
 #include "ZRLT.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
 {

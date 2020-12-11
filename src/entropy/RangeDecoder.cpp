@@ -18,6 +18,7 @@ limitations under the License.
 #include "EntropyUtils.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats. 

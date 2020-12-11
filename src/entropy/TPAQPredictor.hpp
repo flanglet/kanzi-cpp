@@ -317,8 +317,8 @@ namespace kanzi
            else
                mixersSize = (absz >= 1 * 1024 * 1024) ? 1 << 10 : 1 << 8;
 
-           bufferSize = min(BUFFER_SIZE, rbsz); 
-           hashSize = min(hashSize, 16 * uint(absz)); 
+           bufferSize = (rbsz < BUFFER_SIZE) ? rbsz : BUFFER_SIZE; 
+           hashSize = (hashSize < 16 * uint(absz)) ? hashSize : 16 * uint(absz); 
        }
 
        mixersSize <<= extraMem;

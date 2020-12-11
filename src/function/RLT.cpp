@@ -18,7 +18,7 @@ limitations under the License.
 #include "../Global.hpp"
 
 using namespace kanzi;
-
+using namespace std;
 
 bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
 {

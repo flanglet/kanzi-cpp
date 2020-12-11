@@ -210,7 +210,7 @@ namespace kanzi {
        if (name == "NONE")
            return NONE_TYPE;
 
-       throw invalid_argument("Unsupported entropy codec type: '" + name + "'");
+       throw std::invalid_argument("Unsupported entropy codec type: '" + name + "'");
    }
 }
 #endif

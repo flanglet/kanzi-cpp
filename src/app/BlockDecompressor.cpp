@@ -36,6 +36,7 @@ limitations under the License.
 #endif
 
 using namespace kanzi;
+using namespace std;
 
 BlockDecompressor::BlockDecompressor(map<string, string>& args)
 {

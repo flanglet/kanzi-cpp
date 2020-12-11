@@ -27,6 +27,7 @@ limitations under the License.
 #endif
 
 using namespace kanzi;
+using namespace std;
 
 CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
     : InputStream(is.rdbuf())

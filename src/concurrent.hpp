@@ -29,7 +29,6 @@ public:
 #if __cplusplus >= 201103L || _MSC_VER >= 1700
 	// C++ 11 (or partial)
 	#include <atomic>
-	typedef std::atomic_int atomic_int;
 
 	#ifndef CONCURRENCY_ENABLED
 		#ifdef __clang__
@@ -75,11 +74,11 @@ public:
 		~BoundedConcurrentQueue() { }
 
 		T* get() { int idx = _index.fetch_add(1); return (idx >= _size) ? nullptr : &_data[idx]; }
-   
+
 		void clear() { _index.store(_size); }
 
 	private:
-		atomic_int _index;
+		std::atomic_int _index;
 		int _size;
 		T* _data;
 	};

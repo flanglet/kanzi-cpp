@@ -31,6 +31,8 @@ limitations under the License.
    #include <functional>
 #endif
 
+using namespace std;
+
 namespace kanzi {
 
    class EncodingTaskResult {
@@ -140,7 +142,7 @@ namespace kanzi {
 
    public:
        CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform, int blockSize, int jobs, bool checksum);
-       
+
 #if __cplusplus >= 201103L
        CompressedOutputStream(OutputStream& os, Context& ctx,
           std::function<OutputBitStream*(OutputStream&)>* createBitStream=nullptr);

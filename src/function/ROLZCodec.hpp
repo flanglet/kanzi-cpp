@@ -163,7 +163,7 @@ namespace kanzi {
        {
            // Since we do not check the dst index for each byte (for speed purpose)
            // allocate some extra buffer for incompressible data.
-           return srcLen + max(srcLen >> 5, 1024);
+           return srcLen + ((srcLen < 32768) ? 1024 : srcLen >> 5);
        }
 
    private:

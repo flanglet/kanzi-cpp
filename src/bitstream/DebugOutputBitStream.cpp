@@ -17,6 +17,7 @@ limitations under the License.
 #include "DebugOutputBitStream.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs) THROW : _delegate(obs), _out(cout), _width(80)
 {

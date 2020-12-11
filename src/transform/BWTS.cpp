@@ -18,6 +18,7 @@ limitations under the License.
 #include "../Global.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 bool BWTS::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {

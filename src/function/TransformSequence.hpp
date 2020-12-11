@@ -66,7 +66,7 @@ namespace kanzi {
        }
 
        if (_length == 0)
-           throw invalid_argument("At least one transform required");
+           throw std::invalid_argument("At least one transform required");
    }
 
    template <class T>
@@ -219,8 +219,13 @@ namespace kanzi {
        for (int i = 0; i < _length; i++) {
            Function<T>* f = dynamic_cast<Function<T>*>(_transforms[i]);
 
-           if (f != nullptr)
-               requiredSize = max(requiredSize, f->getMaxEncodedLength(requiredSize));
+           if (f == nullptr)
+              continue;
+
+           const int max = f->getMaxEncodedLength(requiredSize);
+
+           if (max > requiredSize)
+              requiredSize = max;
        }
 
        return requiredSize;

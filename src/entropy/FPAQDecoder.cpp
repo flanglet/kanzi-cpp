@@ -17,6 +17,7 @@ limitations under the License.
 #include "EntropyUtils.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 FPAQDecoder::FPAQDecoder(InputBitStream& bitstream) THROW
     : _bitstream(bitstream),

@@ -21,6 +21,7 @@ limitations under the License.
 #include "../Global.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 // 1024 of the most common English words with at least 2 chars.
 char TextCodec::DICT_EN_1024[] = 

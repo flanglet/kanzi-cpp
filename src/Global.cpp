@@ -112,7 +112,7 @@ const int* Global::initStretch(int data[])
 int Global::log2_1024(uint32 x) THROW
 {
     if (x == 0)
-        throw invalid_argument("Cannot calculate log of a negative or null value");
+        throw std::invalid_argument("Cannot calculate log of a negative or null value");
 
     if (x < 256)
         return (Global::LOG2_4096[x] + 2) >> 2;
@@ -128,7 +128,7 @@ int Global::log2_1024(uint32 x) THROW
 int Global::log2(uint32 x) THROW
 {
     if (x == 0)
-        throw invalid_argument("Cannot calculate log of a negative or null value");
+        throw std::invalid_argument("Cannot calculate log of a negative or null value");
 
     return _log2(x);
 }
@@ -225,10 +225,10 @@ int Global::computeFirstOrderEntropy1024(int blockLen, uint histo[])
 void Global::computeJobsPerTask(int jobsPerTask[], int jobs, int tasks) THROW
 {
     if (jobs <= 0)
-        throw invalid_argument("Invalid number of jobs provided");
+        throw std::invalid_argument("Invalid number of jobs provided");
 
     if (tasks <= 0)
-        throw invalid_argument("Invalid number of tasks provided");
+        throw std::invalid_argument("Invalid number of tasks provided");
 
     int q = (jobs <= tasks) ? 1 : jobs / tasks;
     int r = (jobs <= tasks) ? 0 : jobs - q * tasks;

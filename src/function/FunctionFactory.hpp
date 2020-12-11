@@ -72,10 +72,10 @@ namespace kanzi {
 	template <class T>
 	uint64 FunctionFactory<T>::getType(const char* tName) THROW
 	{
-		string name(tName);
+		std::string name(tName);
 		size_t pos = name.find('+');
 
-		if (pos == string::npos)
+		if (pos == std::string::npos)
 			return getTypeToken(name.c_str()) << MAX_SHIFT;
 
 		size_t prv = 0;
@@ -84,16 +84,16 @@ namespace kanzi {
 		int shift = MAX_SHIFT;
 		name += '+';
 
-		while (pos != string::npos) {
+		while (pos != std::string::npos) {
 			n++;
 
 			if (n > 8) {
-				stringstream ss;
+				std::stringstream ss;
 				ss << "Only 8 transforms allowed: " << name;
-				throw invalid_argument(ss.str());
+				throw std::invalid_argument(ss.str());
 			}
 
-			string token = name.substr(prv, pos - prv);
+			std::string token = name.substr(prv, pos - prv);
 			uint64 typeTk = getTypeToken(token.c_str());
 
 			// Skip null transform
@@ -112,7 +112,7 @@ namespace kanzi {
 	template <class T>
 	uint64 FunctionFactory<T>::getTypeToken(const char* tName) THROW
 	{
-		string name(tName);
+		std::string name(tName);
 		transform(name.begin(), name.end(), name.begin(), ::toupper);
 
 		if (name == "TEXT")
@@ -160,9 +160,9 @@ namespace kanzi {
 		if (name == "NONE")
 			return NONE_TYPE;
 
-		stringstream ss;
+		std::stringstream ss;
 		ss << "Unknown transform type: '" << name << "'";
-		throw invalid_argument(ss.str());
+		throw std::invalid_argument(ss.str());
 	}
 
 	template <class T>
@@ -190,7 +190,7 @@ namespace kanzi {
 			int textCodecType = 1;
          
 			if (ctx.has("codec")) {			
-				string entropyType = ctx.getString("codec");
+				std::string entropyType = ctx.getString("codec");
 				transform(entropyType.begin(), entropyType.end(), entropyType.begin(), ::toupper);
             
 				// Select text encoding based on entropy codec.
@@ -248,9 +248,9 @@ namespace kanzi {
 			return new NullFunction<T>(ctx);
 
 		default:
-			stringstream ss;
+			std::stringstream ss;
 			ss << "Unknown transform type: '" << functionType << "'";
-			throw invalid_argument(ss.str());
+			throw std::invalid_argument(ss.str());
 		}
 	}
 
@@ -324,9 +324,9 @@ namespace kanzi {
 			return "NONE";
 
 		default:
-			stringstream ss;
+			std::stringstream ss;
 			ss << "Unknown transform type: '" << functionType << "'";
-			throw invalid_argument(ss.str());
+			throw std::invalid_argument(ss.str());
 		}
 	}
 }

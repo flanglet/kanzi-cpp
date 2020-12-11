@@ -42,6 +42,7 @@ limitations under the License.
 #include "../entropy/TPAQPredictor.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 static Predictor* getPredictor(string type)
 {

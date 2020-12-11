@@ -20,6 +20,7 @@ limitations under the License.
 #include "LZCodec.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 LZCodec::LZCodec() THROW
 {

@@ -31,6 +31,8 @@ limitations under the License.
    #include <functional>
 #endif
 
+using namespace std;
+
 namespace kanzi
 {
 
@@ -111,7 +113,7 @@ namespace kanzi
        uint32 _entropyType;
        int _blockId;
        InputBitStream* _ibs;
-       XXHash32* _hasher;
+       XXHash32* _hasher; 
        atomic_int* _processedBlockId;
        std::vector<Listener*> _listeners;
        Context _ctx;

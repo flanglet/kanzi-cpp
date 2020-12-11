@@ -17,6 +17,7 @@ limitations under the License.
 #include "../bitstream/DebugInputBitStream.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs) THROW : _delegate(ibs), _out(cout), _width(80)
 {

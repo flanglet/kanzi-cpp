@@ -49,10 +49,10 @@ namespace kanzi
            return true;
 
        if (!SliceArray<byte>::isValid(input))
-            throw invalid_argument("Invalid input block");
+            throw std::invalid_argument("Invalid input block");
 
        if (!SliceArray<byte>::isValid(output))
-           throw invalid_argument("Invalid output block");
+           throw std::invalid_argument("Invalid output block");
 
        if (input._index + length > input._length)
            return false;

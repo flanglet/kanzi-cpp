@@ -24,6 +24,7 @@ limitations under the License.
 #include "../Error.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 static const string CMD_LINE_ARGS[14] = {
     "-c", "-d", "-i", "-o", "-b", "-t", "-e", "-j", "-v", "-l", "-s", "-x", "-f", "-h"
@@ -679,5 +680,5 @@ int main(int argc, const char* argv[])
     }
 
     cout << "Missing arguments: try --help or -h" << endl;
-    return 1;
+    return Error::ERR_MISSING_PARAM;
 }

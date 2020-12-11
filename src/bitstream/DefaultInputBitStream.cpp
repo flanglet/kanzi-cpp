@@ -17,6 +17,7 @@ limitations under the License.
 #include "../io/IOException.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 DefaultInputBitStream::DefaultInputBitStream(InputStream& is, uint bufferSize) THROW : _is(is)
 {

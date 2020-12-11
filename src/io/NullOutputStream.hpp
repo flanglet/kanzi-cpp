@@ -18,10 +18,10 @@ limitations under the License.
 
 #include "../OutputStream.hpp"
 
-namespace kanzi 
+namespace kanzi
 {
    template <class T, class traits = std::char_traits<T> >
-   class basic_nullbuf : public std::basic_streambuf<T, traits> 
+   class basic_nullbuf : public std::basic_streambuf<T, traits>
    {
 	   typename traits::int_type overflow(typename traits::int_type c)
 	   {
@@ -32,12 +32,12 @@ namespace kanzi
    };
 
    template <class T, class traits = std::char_traits<T> >
-   class basic_onullstream : public std::basic_ostream<T, traits> 
+   class basic_onullstream : public std::basic_ostream<T, traits>
    {
    public:
 	   basic_onullstream() :
-		   basic_ios<T, traits>(&_sbuf),
-		   basic_ostream<T, traits>(&_sbuf)
+		   std::basic_ios<T, traits>(&_sbuf),
+		   std::basic_ostream<T, traits>(&_sbuf)
 	   {
 		   this->init(&_sbuf);
 	   }

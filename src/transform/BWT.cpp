@@ -23,6 +23,7 @@ limitations under the License.
 #endif
 
 using namespace kanzi;
+using namespace std;
 
 BWT::BWT(int jobs) THROW
 {
