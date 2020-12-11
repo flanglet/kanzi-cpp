@@ -237,7 +237,13 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
         // Update frequencies and rebuild Huffman codes
         const int endChunk = min(startChunk + _chunkSize, end);
         Global::computeHistogram(&block[startChunk], endChunk - startChunk, _freqs, true);
-        updateFrequencies(_freqs);
+        
+        if (updateFrequencies(_freqs) <= 1) {
+           // Skip chunk if only one symbol
+           startChunk = endChunk;
+           continue;
+        }
+
         const int endChunk4 = ((endChunk - startChunk) & -4) + startChunk;
 
         for (int i = startChunk; i < endChunk4; i += 4) {

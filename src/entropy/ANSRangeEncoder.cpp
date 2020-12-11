@@ -19,6 +19,7 @@ limitations under the License.
 #include "../Global.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats.
@@ -165,7 +166,14 @@ int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint len)
         while ((lr > 8) && (uint(1 << lr) > sizeChunk))
             lr--;
 
-        rebuildStatistics(&block[startChunk], sizeChunk, lr);
+        const int alphabetSize = rebuildStatistics(&block[startChunk], sizeChunk, lr);
+        
+        // Skip chunk if only one symbol
+        if ((alphabetSize <= 1) && (_order == 0)) {
+            startChunk += sizeChunk;
+            continue;
+        }
+
         encodeChunk(&block[startChunk], sizeChunk);
         startChunk += sizeChunk;
     }

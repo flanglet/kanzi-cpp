@@ -18,6 +18,7 @@ limitations under the License.
 #include "EntropyUtils.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats. 
@@ -175,11 +176,19 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint len)
     }
 
     while (startChunk < end) {
-        if (decodeHeader(_freqs) == 0)
+        const uint sizeChunk = min(sz, end - startChunk);
+        const int alphabetSize = decodeHeader(_freqs);
+
+        if (alphabetSize == 0)
             return startChunk - blkptr;
 
-        const uint sizeChunk = min(sz, end - startChunk);
-        decodeChunk(&block[startChunk], sizeChunk);
+        if ((_order == 0) && (alphabetSize == 1)) {
+            // Shortcut for chunks with only one symbol
+            memset(&block[startChunk], _alphabet[0], sizeChunk);
+        } else {
+            decodeChunk(&block[startChunk], sizeChunk);
+        }
+
         startChunk += sizeChunk;
     }
 
