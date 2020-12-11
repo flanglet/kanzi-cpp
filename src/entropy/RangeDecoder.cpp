@@ -140,13 +140,22 @@ int RangeDecoder::decode(byte block[], uint blkptr, uint len)
     int startChunk = blkptr;
 
     while (startChunk < end) {
-        if (decodeHeader(_freqs) == 0)
+        const int endChunk = min(startChunk + sz, end);
+        const int alphabetSize = decodeHeader(_freqs);
+
+        if (alphabetSize == 0)
             return startChunk - blkptr;
+
+        if (alphabetSize == 1) {
+            // Shortcut for chunks with only one symbol
+            memset(&block[startChunk], _alphabet[0], endChunk - startChunk);
+            startChunk = endChunk;
+            continue;
+        }
 
         _range = TOP_RANGE;
         _low = 0;
         _code = _bitstream.readBits(60);
-        const int endChunk = min(startChunk + sz, end);
 
         for (int i = startChunk; i < endChunk; i++)
             block[i] = decodeByte();

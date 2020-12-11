@@ -165,8 +165,10 @@ int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint len)
         while ((lr > 8) && (uint(1 << lr) > sizeChunk))
             lr--;
 
-        rebuildStatistics(&block[startChunk], sizeChunk, lr);
-        encodeChunk(&block[startChunk], sizeChunk);
+        // Skip chunk if only one symbol
+        if (rebuildStatistics(&block[startChunk], sizeChunk, lr) > 1)
+            encodeChunk(&block[startChunk], sizeChunk);
+
         startChunk += sizeChunk;
     }
 

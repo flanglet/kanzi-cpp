@@ -131,8 +131,11 @@ int RangeEncoder::encode(const byte block[], uint blkptr, uint len)
         while ((lr > 8) && (1 << lr > endChunk - startChunk))
             lr--;
 
-        if (rebuildStatistics(block, startChunk, endChunk, lr) < 0)
-            return startChunk;
+        if (rebuildStatistics(block, startChunk, endChunk, lr) <= 1) {
+            // Skip chunk if only one symbol
+            startChunk = endChunk;
+            continue;
+        }
 
         _shift = lr;
 
@@ -177,7 +180,5 @@ void RangeEncoder::encodeByte(byte b)
 int RangeEncoder::rebuildStatistics(const byte block[], int start, int end, int lr)
 {
     Global::computeHistogram(&block[start], end - start, _freqs, true);
-
-    // Rebuild statistics
     return updateFrequencies(_freqs, end - start, lr);
 }

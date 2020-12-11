@@ -138,11 +138,20 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
     const int end = blkptr + count;
 
     while (startChunk < end) {
+        const int endChunk = min(startChunk + _chunkSize, end);
+
         // For each chunk, read code lengths, rebuild codes, rebuild decoding table
         const int alphabetSize = readLengths();
 
         if (alphabetSize <= 0)
             return startChunk - blkptr;
+
+        if (alphabetSize == 1) {
+            // Shortcut for chunks with only one symbol
+            memset(&block[startChunk], _alphabet[0], endChunk - startChunk);
+            startChunk = endChunk;
+            continue;
+        }
 
         // Compute minimum number of bits required in bitstream for fast decoding
         const int minCodeLen = int(_sizes[_alphabet[0]]); // not 0
@@ -151,7 +160,6 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
         if (minCodeLen * padding != 64)
             padding++;
 
-        const int endChunk = min(startChunk + _chunkSize, end);
         const int endChunk4 = startChunk + max(((endChunk - startChunk - padding) & -4), 0);
 
         for (int i = startChunk; i < endChunk4; i += 4) {
