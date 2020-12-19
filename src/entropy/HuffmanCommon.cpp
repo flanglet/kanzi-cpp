@@ -33,9 +33,7 @@ int HuffmanCommon::generateCanonicalCodes(uint16 sizes[], uint codes[], uint sym
             buf[((sizes[s] - 1) << 8) | s] = byte(1);
         }
 
-        int n = 0;
-
-        for (int i = 0; i < BUFFER_SIZE; i++) {
+        for (int i = 0, n = 0; i < BUFFER_SIZE; i++) {
             if (buf[i] == byte(0))
                 continue;
 
@@ -46,10 +44,9 @@ int HuffmanCommon::generateCanonicalCodes(uint16 sizes[], uint codes[], uint sym
         }
     }
 
-    int code = 0;
     int curLen = sizes[symbols[0]];
 
-    for (int i = 0; i < count; i++) {
+    for (int i = 0, code = 0; i < count; i++) {
         const int s = symbols[i];
 
         if (sizes[s] > curLen) {

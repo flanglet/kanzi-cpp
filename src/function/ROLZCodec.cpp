@@ -25,6 +25,7 @@ limitations under the License.
 #include "../entropy/ANSRangeEncoder.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 ROLZCodec::ROLZCodec(uint logPosChecks) THROW
 {
@@ -117,43 +118,47 @@ int ROLZCodec1::findMatch(const byte buf[], const int pos, const int end)
     prefetchRead(matches);
     const byte* curBuf = &buf[pos];
     const int32 hash32 = ROLZCodec::hash(curBuf);
+
+    if (matches[counter & _maskChecks] == 0) {
+        _counters[key]++;
+        matches[(counter + 1) & _maskChecks] = hash32 | int32(pos);
+        return -1;
+    }
+
     int bestLen = ROLZCodec1::MIN_MATCH - 1;
     int bestIdx = -1;
+    const int maxMatch = min(ROLZCodec1::MAX_MATCH, end - pos);
 
-    if (matches[counter & _maskChecks] != 0) {
-        const int maxMatch = min(ROLZCodec1::MAX_MATCH, end - pos);
+    // Check all recorded positions
+    for (int i = counter; i > counter - _posChecks; i--) {
+        int32 ref = matches[i & _maskChecks];
 
-        // Check all recorded positions
-        for (int i = counter; i > counter - _posChecks; i--) {
-            int32 ref = matches[i & _maskChecks];
+        if (ref == 0)
+            break;
 
-            if (ref == 0)
+        // Hash check may save a memory access ...
+        if ((ref & ROLZCodec::HASH_MASK) != hash32)
+            continue;
+
+        ref &= ~ROLZCodec::HASH_MASK;
+
+        if (buf[ref] != curBuf[0])
+            continue;
+
+        int n = 1;
+
+        while ((n + 4 < maxMatch) && (*(reinterpret_cast<const int32*>(&buf[ref + n])) == *(reinterpret_cast<const int32*>(&curBuf[n]))))
+            n += 4;
+
+        while ((n < maxMatch) && (buf[ref + n] == curBuf[n]))
+            n++;
+
+        if (n > bestLen) {
+            bestIdx = counter - i;
+            bestLen = n;
+
+            if (bestLen == maxMatch)
                 break;
-
-            // Hash check may save a memory access ...
-            if ((ref & ROLZCodec::HASH_MASK) != hash32)
-                continue;
-
-            ref &= ~ROLZCodec::HASH_MASK;
-
-            if (buf[ref] != curBuf[0])
-                continue;
-
-            int n = 1;
-
-            while ((n + 4 < maxMatch) && (*(reinterpret_cast<const int32*>(&buf[ref + n])) == *(reinterpret_cast<const int32*>(&curBuf[n]))))
-                n += 4;
-
-            while ((n < maxMatch) && (buf[ref + n] == curBuf[n]))
-                n++;
-
-            if (n > bestLen) {
-                bestIdx = counter - i;
-                bestLen = n;
-
-                if (bestLen == maxMatch)
-                    break;
-            }
         }
     }
 
@@ -249,19 +254,19 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             mEnc.dispose();
             obs.close();
             os.flush();
-        } 
+        }
 
-        // Copy bitstream array to output	
-        const int bufSize = int(os.tellp());	
+        // Copy bitstream array to output
+        const int bufSize = int(os.tellp());
 
-        if (dstIdx + bufSize > output._length) {	
-            input._index = startChunk + srcIdx;	
-            success = false;	
-            goto End;	
-        }	
+        if (dstIdx + bufSize > output._length) {
+            input._index = startChunk + srcIdx;
+            success = false;
+            goto End;
+        }
 
-        os.seekg(0);	
-        os.read(reinterpret_cast<char*>(&dst[dstIdx]), bufSize);	
+        os.seekg(0);
+        os.read(reinterpret_cast<char*>(&dst[dstIdx]), bufSize);
         dstIdx += bufSize;
         startChunk = endChunk;
     }
@@ -270,7 +275,8 @@ End:
     if (success == true) {
         if (dstIdx + 4 > output._length) {
             input._index = srcEnd;
-        } else {
+        }
+        else {
             // Emit last literals
             dst[dstIdx++] = src[srcEnd];
             dst[dstIdx++] = src[srcEnd + 1];
@@ -603,40 +609,47 @@ int ROLZCodec2::findMatch(const byte buf[], const int pos, const int end)
     prefetchRead(matches);
     const byte* curBuf = &buf[pos];
     const int32 hash32 = ROLZCodec::hash(curBuf);
+
+    if (matches[counter & _maskChecks] == 0) {
+        _counters[key]++;
+        matches[(counter + 1) & _maskChecks] = hash32 | int32(pos);
+        return -1;
+    }
+
     int bestLen = ROLZCodec2::MIN_MATCH - 1;
     int bestIdx = -1;
+    const int maxMatch = min(ROLZCodec2::MAX_MATCH, end - pos);
 
-    if (matches[counter & _maskChecks] != 0) {
-        const int maxMatch = min(ROLZCodec2::MAX_MATCH, end - pos);
+    // Check all recorded positions
+    for (int i = counter; i > counter - _posChecks; i--) {
+        int32 ref = matches[i & _maskChecks];
 
-        // Check all recorded positions
-        for (int i = counter; i > counter - _posChecks; i--) {
-            int32 ref = matches[i & _maskChecks];
+        if (ref == 0)
+            break;
 
-            if (ref == 0)
+        // Hash check may save a memory access ...
+        if ((ref & ROLZCodec::HASH_MASK) != hash32)
+            continue;
+
+        ref &= ~ROLZCodec::HASH_MASK;
+
+        if (buf[ref] != curBuf[0])
+            continue;
+
+        int n = 1;
+
+        while ((n + 4 < maxMatch) && (*(reinterpret_cast<const int32*>(&buf[ref + n])) == *(reinterpret_cast<const int32*>(&curBuf[n]))))
+            n += 4;
+
+        while ((n < maxMatch) && (buf[ref + n] == curBuf[n]))
+            n++;
+
+        if (n > bestLen) {
+            bestIdx = counter - i;
+            bestLen = n;
+
+            if (bestLen == maxMatch)
                 break;
-
-            // Hash check may save a memory access ...
-            if ((ref & ROLZCodec::HASH_MASK) != hash32)
-                continue;
-
-            ref &= ~ROLZCodec::HASH_MASK;
-
-            if (buf[ref] != curBuf[0])
-                continue;
-
-            int n = 1;
-
-            while ((n < maxMatch) && (buf[ref + n] == curBuf[n]))
-                n++;
-
-            if (n > bestLen) {
-                bestIdx = counter - i;
-                bestLen = n;
-
-                if (bestLen == maxMatch)
-                    break;
-            }
         }
     }
 
@@ -755,21 +768,21 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         if ((val >> 8) == MATCH_FLAG) {
             output._index += dstIdx;
             break;
-        }    
+        }
 
         dst[dstIdx++] = byte(val);
 
         if (output._index + 1 < dstEnd) {
-           val = rd.decodeBits(9);
+            val = rd.decodeBits(9);
 
-           // Sanity check
-           if ((val >> 8) == MATCH_FLAG) {
-               output._index += dstIdx;
-               break;
-           }   
+            // Sanity check
+            if ((val >> 8) == MATCH_FLAG) {
+                output._index += dstIdx;
+                break;
+            }
 
-           dst[dstIdx++] = byte(val);
-        }    
+            dst[dstIdx++] = byte(val);
+        }
 
         // Next chunk
         while (dstIdx < sizeChunk) {
@@ -783,7 +796,8 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             if ((val >> 8) == LITERAL_FLAG) {
                 dst[dstIdx++] = byte(val);
-            } else {
+            }
+            else {
                 // Read one match length and index
                 const int matchLen = val & 0xFF;
 
@@ -813,4 +827,3 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     input._index = srcIdx;
     return srcIdx == count;
 }
-

@@ -31,27 +31,10 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     const int end = count - 8;
-    int jumps = 0;
 
-    for (int i = 0; i < end; i++) {
-        if ((src[i] & MASK_JUMP) == INSTRUCTION_JUMP) {
-           if ((src[i+4] == byte(0)) || (src[i+4] == byte(0xFF))) {
-              // Count relative jumps (E8/E9 .. .. .. 00/FF)
-              jumps++;
-           }
-        } else if (((src[i+1] & MASK_JCC) == INSTRUCTION_JCC) && (src[i] == PREFIX_JCC)) {
-           // Count relative conditional jumps (0x0F 0x8.)
-           jumps++;
-        }
-    }
-
-    if (jumps < (count >> 7)) {
-        // Number of jump instructions too small => either not a binary
-        // or not worth the change => skip. Very crude filter obviously.
-        // Also, binaries usually have a lot of 0x88..0x8C (MOV) instructions.
-        return false;
-    }
-
+    if (isExeBlock(src, end, count) == false)
+       return false;
+    
     int srcIdx = 0;
     int dstIdx = 0;
 
@@ -165,4 +148,27 @@ int X86Codec::getMaxEncodedLength(int srcLen) const
         return srcLen;
       
     return (srcLen <= 512) ? srcLen + 32 : srcLen + srcLen / 16;
+}
+
+
+bool X86Codec::isExeBlock(byte src[], int end, int count) const 
+{
+    int jumps = 0;
+
+    for (int i = 0; i < end; i++) {
+        if ((src[i] & MASK_JUMP) == INSTRUCTION_JUMP) {
+           if ((src[i+4] == byte(0)) || (src[i+4] == byte(0xFF))) {
+              // Count relative jumps (E8/E9 .. .. .. 00/FF)
+              jumps++;
+           }
+        } else if ((src[i] == PREFIX_JCC) && ((src[i+1] & MASK_JCC) == INSTRUCTION_JCC)) {
+           // Count relative conditional jumps (0x0F 0x8.)
+           jumps++;
+        }
+    }
+
+    // Number of jump instructions too small => either not a binary
+    // or not worth the change => skip. Very crude filter obviously.
+    // Also, binaries usually have a lot of 0x88..0x8C (MOV) instructions.
+    return jumps >= (count >> 7);
 }

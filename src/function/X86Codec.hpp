@@ -43,6 +43,8 @@ namespace kanzi
       static const byte MASK_JCC = byte(0xF0);
       static const byte MASK_ADDRESS = byte(0xD5); 
       static const byte ESCAPE = byte(0xF5);
+
+      bool isExeBlock(byte src[], int end, int count) const;
    };
 
 }
