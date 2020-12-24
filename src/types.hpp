@@ -170,11 +170,11 @@ limitations under the License.
 
 
    #ifndef STR_TRUE
-      #define STR_TRUE "TRUE"
+      #define STR_TRUE "1"
    #endif
 
    #ifndef STR_FALSE
-      #define STR_FALSE "FALSE"
+      #define STR_FALSE "0"
    #endif
 
 #endif

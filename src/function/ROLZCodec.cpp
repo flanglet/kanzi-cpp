@@ -133,9 +133,6 @@ int ROLZCodec1::findMatch(const byte buf[], const int pos, const int end)
     for (int i = counter; i > counter - _posChecks; i--) {
         int32 ref = matches[i & _maskChecks];
 
-        if (ref == 0)
-            break;
-
         // Hash check may save a memory access ...
         if ((ref & ROLZCodec::HASH_MASK) != hash32)
             continue;
@@ -623,9 +620,6 @@ int ROLZCodec2::findMatch(const byte buf[], const int pos, const int end)
     // Check all recorded positions
     for (int i = counter; i > counter - _posChecks; i--) {
         int32 ref = matches[i & _maskChecks];
-
-        if (ref == 0)
-            break;
 
         // Hash check may save a memory access ...
         if ((ref & ROLZCodec::HASH_MASK) != hash32)
