@@ -38,6 +38,8 @@ namespace kanzi
 
        void printByte(byte val);
 
+       void _close() THROW { _delegate.close(); }
+
    public:
        DebugInputBitStream(InputBitStream& ibs) THROW;
 
@@ -60,7 +62,7 @@ namespace kanzi
        // Return false when the bitstream is closed or the End-Of-Stream has been reached
        bool hasMoreToRead() { return _delegate.hasMoreToRead(); }
 
-       void close() THROW { _delegate.close(); }
+       void close() THROW { _close(); }
 
        inline void showByte(bool show) { _hexa = show; }
 

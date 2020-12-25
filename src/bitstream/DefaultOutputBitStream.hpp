@@ -39,6 +39,8 @@ namespace kanzi
        void pushCurrent() THROW;
 
        void flush() THROW;
+       
+       void _close() THROW;
 
    public:
        DefaultOutputBitStream(OutputStream& os, uint bufferSize=65536) THROW;
@@ -51,7 +53,7 @@ namespace kanzi
        
        uint writeBits(const byte bits[], uint length) THROW;
 
-       void close() THROW;
+       void close() THROW { _close(); }
 
        // Return number of bits written so far
        uint64 written() const

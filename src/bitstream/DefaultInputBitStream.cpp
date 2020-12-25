@@ -42,7 +42,7 @@ DefaultInputBitStream::DefaultInputBitStream(InputStream& is, uint bufferSize) T
 
 DefaultInputBitStream::~DefaultInputBitStream()
 {
-    close();
+    _close();
     delete[] _buffer;
 }
 
@@ -117,7 +117,7 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
     return count;
 }
 
-void DefaultInputBitStream::close() THROW
+void DefaultInputBitStream::_close() THROW
 {
     if (isClosed() == true)
         return;

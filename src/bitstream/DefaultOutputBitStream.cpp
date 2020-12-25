@@ -107,7 +107,7 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
     return count;
 }
 
-void DefaultOutputBitStream::close() THROW
+void DefaultOutputBitStream::_close() THROW
 {
     if (isClosed() == true)
         return;
@@ -186,7 +186,7 @@ void DefaultOutputBitStream::flush() THROW
 DefaultOutputBitStream::~DefaultOutputBitStream()
 {
     try {
-        close();
+        _close();
     }
     catch (exception&) {
         // Ignore and continue

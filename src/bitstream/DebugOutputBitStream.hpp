@@ -38,6 +38,8 @@ namespace kanzi
 
        void printByte(byte val);
 
+       void _close() THROW { _delegate.close(); }
+
    public:
        DebugOutputBitStream(OutputBitStream& obs) THROW;
 
@@ -56,7 +58,7 @@ namespace kanzi
        // Return number of bits written so far
        uint64 written() const { return _delegate.written(); }
 
-       void close() THROW { _delegate.close(); }
+       void close() THROW { _close(); }
 
        inline void showByte(bool show) { _hexa = show; }
 

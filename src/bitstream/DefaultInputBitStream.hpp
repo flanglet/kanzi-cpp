@@ -41,6 +41,9 @@ namespace kanzi {
 
        void pullCurrent();
 
+       void _close() THROW;
+
+
    public:
        // Returns 1 or 0
        int readBit() THROW;
@@ -49,7 +52,7 @@ namespace kanzi {
 
        uint readBits(byte bits[], uint count) THROW;
 
-       void close() THROW;
+       void close() THROW { _close(); } 
 
        // Number of bits read
        uint64 read() const
