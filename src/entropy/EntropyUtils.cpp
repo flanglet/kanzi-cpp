@@ -80,7 +80,7 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
     else {
         // Partial alphabet
         obs.writeBit(PARTIAL_ALPHABET);
-        byte masks[32] = { 0 };
+        byte masks[32] = { byte(0) };
 
         for (int i = 0; i < count; i++)
             masks[alphabet[i] >> 3] |= byte(1 << (alphabet[i] & 7));
