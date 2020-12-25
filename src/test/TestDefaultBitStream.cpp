@@ -47,17 +47,6 @@ int testBitStreamCorrectnessAligned1()
         obs.close();
         cout << "Written (after close): " << obs.written() << endl;
         ios.rdbuf()->pubseekpos(0);
-        istringstream is;
-        char* cvalues = new char[4 * length];
-
-        for (int i = 0; i < length; i++) {
-            cvalues[4 * i] = (values[i] >> 24) & 0xFF;
-            cvalues[4 * i + 1] = (values[i] >> 16) & 0xFF;
-            cvalues[4 * i + 2] = (values[i] >> 8) & 0xFF;
-            cvalues[4 * i + 3] = (values[i] >> 0) & 0xFF;
-        }
-
-        is.read(cvalues, length);
         DefaultInputBitStream ibs(ios, 16384);
         ibs.readBits(t);
 
@@ -65,7 +54,6 @@ int testBitStreamCorrectnessAligned1()
         cout << "Read (before close): " << ibs.read() << endl;
         ibs.close();
         cout << "Read (after close): " << ibs.read() << endl;
-        delete[] cvalues;
     }
 
     for (int test = 1; test <= 10; test++) {
@@ -192,7 +180,7 @@ int testBitStreamCorrectnessMisaligned1()
 
         for (int i = 0; i < length; i++) {
             values[i] = rand();
-            const int mask = (1 << (1 + (i & 63))) - 1;
+            const int mask = (1 << (1 + (i % 30))) - 1;
             values[i] &= mask;
             cout << (int)values[i] << " ";
 
@@ -204,7 +192,7 @@ int testBitStreamCorrectnessMisaligned1()
              << endl;
 
         for (int i = 0; i < length; i++) {
-            dbs.writeBits(values[i], (1 + (i & 63)));
+            dbs.writeBits(values[i], 1 + (i % 30));
         }
 
         // Close first to force flush()
