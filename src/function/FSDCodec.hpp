@@ -26,9 +26,9 @@ namespace kanzi {
    class FSDCodec : public Function<byte> {
 
    public:
-       FSDCodec() { _isFast = true; }
+       FSDCodec() { _pCtx = nullptr; }
 
-       FSDCodec(Context&);
+       FSDCodec(Context& ctx) { _pCtx = &ctx; }
 
        virtual ~FSDCodec() {}
 
@@ -49,12 +49,7 @@ namespace kanzi {
        static const byte XOR_CODING = byte(1);
        static const uint8 ZIGZAG[255];
 
-       bool _isFast;
+       Context* _pCtx;
    };
-
-
-   inline FSDCodec::FSDCodec(Context& ctx) {
-      _isFast = ctx.getInt("fullFSD") != 1;
-   }
 }
 #endif

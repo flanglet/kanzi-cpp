@@ -375,6 +375,7 @@ TextCodec1::TextCodec1()
     _isCRLF = false;
     _escapes[0] = TextCodec::ESCAPE_TOKEN2;
     _escapes[1] = TextCodec::ESCAPE_TOKEN1;
+    _pCtx = nullptr;
 }
 
 TextCodec1::TextCodec1(Context& ctx)
@@ -404,6 +405,7 @@ TextCodec1::TextCodec1(Context& ctx)
     _isCRLF = false;
     _escapes[0] = TextCodec::ESCAPE_TOKEN2;
     _escapes[1] = TextCodec::ESCAPE_TOKEN1;
+    _pCtx = &ctx;
 }
 
 void TextCodec1::reset(int count)
@@ -449,12 +451,22 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int srcIdx = 0;
     int dstIdx = 0;
 
+    if (_pCtx != nullptr) {
+        Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
+    
+        if ((dt != Global::UNDEFINED) && (dt != Global::TEXT))
+            return false;
+    }
+
     int freqs[256] = { 0 };
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, true);
 
     // Not text ?
     if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0))
         return false;
+
+    if (_pCtx != nullptr)
+       _pCtx->putInt("dataType", Global::TEXT);
 
     reset(count);
     const int srcEnd = count;
@@ -841,6 +853,7 @@ TextCodec2::TextCodec2()
     _hashMask = (1 << _logHashSize) - 1;
     _staticDictSize = TextCodec::STATIC_DICT_WORDS;
     _isCRLF = false;
+    _pCtx = nullptr;
 }
 
 TextCodec2::TextCodec2(Context& ctx)
@@ -867,6 +880,7 @@ TextCodec2::TextCodec2(Context& ctx)
     _hashMask = (1 << _logHashSize) - 1;
     _staticDictSize = TextCodec::STATIC_DICT_WORDS;
     _isCRLF = false;
+    _pCtx = &ctx;
 }
 
 void TextCodec2::reset(int count)
@@ -906,12 +920,22 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int srcIdx = 0;
     int dstIdx = 0;
 
+    if (_pCtx != nullptr) {
+        Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
+    
+        if ((dt != Global::UNDEFINED) && (dt != Global::TEXT))
+            return false;
+    }
+
     int freqs[256] = { 0 };
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, false);
 
     // Not text ?
     if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0))
         return false;
+
+    if (_pCtx != nullptr)
+       _pCtx->putInt("dataType", Global::TEXT);
 
     reset(count);
     const int srcEnd = count;

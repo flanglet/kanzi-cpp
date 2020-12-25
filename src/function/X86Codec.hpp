@@ -24,8 +24,10 @@ namespace kanzi
    // Adapted from MCM: https://github.com/mathieuchartier/mcm/blob/master/X86Binary.hpp
    class X86Codec : public Function<byte> {
    public:
-       X86Codec() {}
-       X86Codec(Context&) {}
+       X86Codec() { _pCtx = nullptr; }
+
+       X86Codec(Context& ctx) { _pCtx = &ctx; }
+
        ~X86Codec() {}
 
        bool forward(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
@@ -45,6 +47,8 @@ namespace kanzi
       static const byte ESCAPE = byte(0xF5);
 
       bool isExeBlock(byte src[], int end, int count) const;
+
+       Context* _pCtx;
    };
 
 }

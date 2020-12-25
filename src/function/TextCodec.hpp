@@ -49,7 +49,7 @@ namespace kanzi {
    public:
        TextCodec1();
 
-       TextCodec1(Context& ctx);
+       TextCodec1(Context&);
 
        ~TextCodec1()
        {
@@ -74,6 +74,7 @@ namespace kanzi {
        int _logHashSize;
        int _hashMask;
        bool _isCRLF; // EOL = CR + LF
+       Context* _pCtx;
 
        bool expandDictionary();
 
@@ -89,7 +90,7 @@ namespace kanzi {
    public:
        TextCodec2();
 
-       TextCodec2(Context& ctx);
+       TextCodec2(Context&);
 
        ~TextCodec2()
        {
@@ -113,6 +114,7 @@ namespace kanzi {
        int _logHashSize;
        int _hashMask;
        bool _isCRLF; // EOL = CR + LF
+       Context* _pCtx;
 
        bool expandDictionary();
 

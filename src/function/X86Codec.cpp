@@ -14,6 +14,7 @@ limitations under the License.
 */
 
 #include "X86Codec.hpp"
+#include "../Global.hpp"
 
 using namespace kanzi;
 
@@ -32,9 +33,19 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     byte* dst = &output._array[output._index];
     const int end = count - 8;
 
+    if (_pCtx != nullptr) {
+        Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
+    
+        if ((dt != Global::UNDEFINED) && (dt != Global::X86))
+            return false;
+    }
+
     if (isExeBlock(src, end, count) == false)
        return false;
     
+    if (_pCtx != nullptr)
+       _pCtx->putInt("dataType", Global::X86);
+
     int srcIdx = 0;
     int dstIdx = 0;
 

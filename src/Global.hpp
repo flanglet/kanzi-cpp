@@ -33,6 +33,8 @@ namespace kanzi {
 
    class Global {
    public:
+       enum DataType { UNDEFINED, TEXT, MULTIMEDIA, X86 };
+
        static const int INV_EXP[33]; //  65536 * 1/(1 + exp(-alpha*x)) with alpha = 0.54
        static const int LOG2_4096[257]; // 4096*Math.log2(x)
        static const int LOG2[256]; // int(Math.log2(x-1))

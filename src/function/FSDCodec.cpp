@@ -56,6 +56,7 @@ const uint8 FSDCodec::ZIGZAG[255] = {
 	   242,   244,   246,   248,   250,   252,   254
 };
 
+
 bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
@@ -89,6 +90,13 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     byte* dst3 = &dst[count5 * 2];
     byte* dst4 = &dst[count5 * 3];
     byte* dst8 = &dst[count5 * 4];
+
+    if (_pCtx != nullptr) {
+        Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
+    
+        if ((dt != Global::UNDEFINED) && (dt != Global::MULTIMEDIA))
+            return false;
+    }
 
     // Check several step values on a sub-block (no memory allocation)
     // Sample 2 sub-blocks
@@ -142,9 +150,14 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     // If not 'better enough', quick exit
-    if ((_isFast == true) && (ent[minIdx] >= ((123 * ent[0]) >> 7)))
+    bool isFast = (_pCtx == nullptr) ? true : _pCtx->getInt("fullFSD") == 0;
+
+    if ((isFast == true) && (ent[minIdx] >= ((123 * ent[0]) >> 7)))
         return false;
 
+    if (_pCtx != nullptr)
+       _pCtx->putInt("dataType", Global::MULTIMEDIA);
+    
     const int dist = (minIdx <= 4) ? minIdx : 8;
     int largeDeltas = 0;
 
@@ -199,7 +212,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     // Extra check that the transform makes sense
-    const int length = (_isFast == true) ? dstIdx >> 1 : dstIdx;
+    const int length = (isFast == true) ? dstIdx >> 1 : dstIdx;
     Global::computeHistogram(&dst[(dstIdx - length) >> 1], length, histo);
     const int entropy = Global::computeFirstOrderEntropy1024(length, histo);
 
