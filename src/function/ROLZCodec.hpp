@@ -139,9 +139,9 @@ namespace kanzi {
 
        int findMatch(const byte buf[], const int pos, const int end);
 
-       void emitToken(byte block[], int& idx, int litLen, int mLen);
+       void emitLength(byte block[], int& idx, int length);
 
-       void readLengths(byte block[], int& idx, int& litLen, int& mLen);
+       int readLength(byte block[], int& idx);
 
        int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int litLen);
    };
@@ -226,6 +226,23 @@ namespace kanzi {
 
        static int emitCopy(byte dst[], int dstIdx, int ref, int matchLen);
    };
+
+
+   inline void ROLZCodec1::emitLength(byte block[], int& idx, int length)
+   {
+       if (length >= 1 << 7) {
+           if (length >= 1 << 14) {
+               if (length >= 1 << 21)
+                   block[idx++] = byte(0x80 | (length >> 21));
+
+               block[idx++] = byte(0x80 | (length >> 14));
+           }
+
+           block[idx++] = byte(0x80 | (length >> 7));
+       }
+
+       block[idx++] = byte(length & 0x7F);
+   }
 
    inline int ROLZCodec::emitCopy(byte dst[], int dstIdx, int ref, int matchLen)
    {
