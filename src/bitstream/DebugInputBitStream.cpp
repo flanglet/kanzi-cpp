@@ -52,7 +52,7 @@ DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os, int w
 
 DebugInputBitStream::~DebugInputBitStream()
 {
-    close();
+    _close();
 }
 
 // Returns 1 or 0

@@ -52,7 +52,7 @@ DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs, OutputStream& o
 
 DebugOutputBitStream::~DebugOutputBitStream()
 {
-    close();
+    _close();
 }
 
 void DebugOutputBitStream::writeBit(int bit) THROW
