@@ -17,6 +17,7 @@ limitations under the License.
 #define _TransformSequence_
 
 #include <cstring>
+#include <stdexcept>
 #include "../Function.hpp"
 
 namespace kanzi {

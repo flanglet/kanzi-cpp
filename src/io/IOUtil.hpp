@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <errno.h>
 #include <sys/stat.h>
+#include <vector>
 #include "IOException.hpp"
 #include "../types.hpp"
 #include "../Error.hpp"

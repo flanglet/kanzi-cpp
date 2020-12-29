@@ -18,7 +18,7 @@ limitations under the License.
 
 #include <string>
 #include <stdexcept>
-#include "Kanzi.hpp"
+
 
 namespace kanzi 
 {

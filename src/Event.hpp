@@ -16,6 +16,7 @@ limitations under the License.
 #ifndef _Event_
 #define _Event_
 
+#include <string>
 #include <time.h>
 #include "types.hpp"
 
