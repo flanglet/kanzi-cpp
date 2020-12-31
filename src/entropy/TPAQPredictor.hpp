@@ -274,6 +274,21 @@ namespace kanzi
         1,     1,     1,     1,     1,     1,     1,     1,
    };
 
+   const int MATCH_PRED[] = {
+        0,    64,   128,   192,   256,   320,   384,   448,
+      512,   576,   640,   704,   768,   832,   896,   960,
+     1024,  1038,  1053,  1067,  1082,  1096,  1111,  1125,
+     1139,  1154,  1168,  1183,  1197,  1211,  1226,  1240,
+     1255,  1269,  1284,  1298,  1312,  1327,  1341,  1356,
+     1370,  1385,  1399,  1413,  1428,  1442,  1457,  1471,
+     1486,  1500,  1514,  1529,  1543,  1558,  1572,  1586,
+     1601,  1615,  1630,  1644,  1659,  1673,  1687,  1702,
+     1716,  1731,  1745,  1760,  1774,  1788,  1803,  1817,
+     1832,  1846,  1861,  1875,  1889,  1904,  1918,  1933,
+     1947,  1961,  1976,  1990,  2005,  2019,  2034,  2047,
+   };
+
+
    template <bool T>
    TPAQPredictor<T>::TPAQPredictor(Context* ctx)
        : _sse0(256)
@@ -423,7 +438,7 @@ namespace kanzi
                   _ctx6 = hash(_c4 & 0xFFFF0000, _c8 >> 16);
                }
 
-               _ctx4 = createContext(HASH, _c4 ^ (_c4 & 0x000FFFFF));
+               _ctx4 = createContext(HASH + _matchLen, _c4 ^ (_c4 & 0x000FFFFF));
                _ctx5 = _ctx0 | (_c8 << 16);
            }
 
@@ -473,7 +488,7 @@ namespace kanzi
 
           // SSE (Secondary Symbol Estimation)
           if (_binCount < (_pos >> 3)) {
-              p = _sse0.get(bit, p, _c0);
+              p = (3 * _sse0.get(bit, p, _c0) + p) >> 2;
           }
        } else {
           // One more prediction
@@ -552,12 +567,8 @@ namespace kanzi
    inline int TPAQPredictor<T>::getMatchContextPred()
    {
        if (_c0 == ((int(_buffer[_matchPos & _bufferMask]) & 0xFF) | 256) >> _bpos) {
-           int p = (_matchLen <= 24) ? _matchLen : 24 + ((_matchLen - 24) >> 3);
-
-           if ((int(_buffer[_matchPos & _bufferMask] >> (_bpos - 1)) & 1) == 0)
-               p = -p;
-
-           return p << 6;
+           return ((int(_buffer[_matchPos & _bufferMask] >> (_bpos - 1)) & 1) != 0) ?
+              MATCH_PRED[_matchLen - 1] : -MATCH_PRED[_matchLen - 1];
        }
 
        _matchLen = 0;

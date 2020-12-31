@@ -69,8 +69,9 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
         // uint64 alphabet
         obs.writeBit(FULL_ALPHABET);
 
-        if (count == 256)
+        if (count == 256) {
             obs.writeBit(ALPHABET_256); // shortcut
+        }
         else {
             // Write alphabet size
             obs.writeBit(ALPHABET_NOT_256);
