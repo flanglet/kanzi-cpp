@@ -21,48 +21,65 @@ limitations under the License.
 #include "../Function.hpp"
 #include "../Memory.hpp"
 
-namespace kanzi
-{
-	class LZCodec : public Function<byte> {
-		friend class LZXCodec;
-		friend class LZPCodec;
+namespace kanzi {
+   class LZCodec : public Function<byte> {
+       friend class LZXCodec;
+       friend class LZPCodec;
 
-	public:
-		LZCodec() THROW;
+   public:
+       LZCodec() THROW;
 
-		LZCodec(Context& ctx) THROW;
+       LZCodec(Context& ctx) THROW;
 
-		virtual ~LZCodec() { delete _delegate; }
+       virtual ~LZCodec() { delete _delegate; }
 
-		bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
-		bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
-		static bool sameInts(byte block[], int srcIdx, int dstIdx);
+       static bool sameInts(byte block[], int srcIdx, int dstIdx);
 
-		// Required encoding output buffer size
-		int getMaxEncodedLength(int srcLen) const
-		{
-		   return _delegate->getMaxEncodedLength(srcLen);
-		}
+       // Required encoding output buffer size
+       int getMaxEncodedLength(int srcLen) const
+       {
+           return _delegate->getMaxEncodedLength(srcLen);
+       }
 
-	private:
-
-		Function<byte>* _delegate;
+   private:
+       Function<byte>* _delegate;
    };
-
 
    // Simple byte oriented LZ77 implementation.
-   // It is a modified LZ4 with a bigger window, a bigger hash map, 3+n*8 bit
-   // literal lengths and 17 or 24 bit match lengths.
-   class LZXCodec : public Function<byte>
-   {
+   // It is a based on a heavily modified LZ4 with a bigger window, a bigger
+   // hash map, 3+n*8 bit literal lengths and 17 or 24 bit match lengths.
+   class LZXCodec : public Function<byte> {
    public:
-       LZXCodec() { _hashes = new int32[0]; _hashSize = 0; _buffer = new byte[0]; _bufferSize = 0; }
+       LZXCodec()
+       {
+           _hashes = new int32[0];
+           _hashSize = 0;
+           _tkBuf = new byte[0];
+           _mBuf = new byte[0];
+           _bufferSize = 0;
+       }
 
-       LZXCodec(Context&) { _hashes = new int32[0]; _hashSize = 0; _buffer = new byte[0]; _bufferSize = 0; }
+       LZXCodec(Context&)
+       {
+           _hashes = new int32[0];
+           _hashSize = 0;
+           _tkBuf = new byte[0];
+           _mBuf = new byte[0];
+           _bufferSize = 0;
+       }
 
-       virtual ~LZXCodec() { delete[] _hashes; _hashSize = 0; delete[] _buffer; _bufferSize = 0; }
+       virtual ~LZXCodec()
+       {
+           delete[] _hashes;
+           _hashSize = 0;
+           delete[] _mBuf;
+           _bufferSize = 0;
+           delete[] _tkBuf;
+       }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
@@ -75,40 +92,53 @@ namespace kanzi
        }
 
    private:
-      static const uint HASH_SEED         = 0x1E35A7BD;
-      static const uint HASH_LOG          = 19; // 512K
-      static const uint HASH_SHIFT        = 40 - HASH_LOG;
-      static const uint HASH_MASK         = (1 << HASH_LOG) - 1;
-      static const int MAX_DISTANCE1      = (1 << 17) - 1;
-      static const int MAX_DISTANCE2      = (1 << 24) - 1;
-      static const int MIN_MATCH          = 5;
-      static const int MAX_MATCH          = 32767 + MIN_MATCH;
-      static const int MIN_BLOCK_LENGTH   = 24;
-      static const int MIN_MATCH_MIN_DIST = 1 << 16;
+       static const uint HASH_SEED = 0x1E35A7BD;
+       static const uint HASH_LOG = 19;
+       static const uint HASH_SHIFT = 40 - HASH_LOG;
+       static const uint HASH_MASK = (1 << HASH_LOG) - 1;
+       static const int MAX_DISTANCE1 = (1 << 17) - 1;
+       static const int MAX_DISTANCE2 = (1 << 24) - 1;
+       static const int MIN_MATCH = 5;
+       static const int MAX_MATCH = 32767 + MIN_MATCH;
+       static const int MIN_BLOCK_LENGTH = 24;
+       static const int MIN_MATCH_MIN_DIST = 1 << 16;
 
-      int32* _hashes;
-      int _hashSize;
-      byte* _buffer;
-      int _bufferSize;
+       int32* _hashes;
+       int _hashSize;
+       byte* _mBuf;
+       byte* _tkBuf;
+       int _bufferSize;
 
-      static int emitLength(byte block[], int len);
+       static int emitLength(byte block[], int len);
 
-      static int emitLastLiterals(const byte src[], byte dst[], int runLength);
+       static void emitLiterals(const byte src[], byte dst[], int len);
 
-      static void emitLiterals(const byte src[], byte dst[], int len);
+       static int readLength(byte block[], int& pos);
 
-      static int32 hash(const byte* p);
+       static int32 hash(const byte* p);
+
+       static int findMatch(byte block[], int pos, int ref, int maxMatch);
    };
 
-
-   class LZPCodec : public Function<byte>
-   {
+   class LZPCodec : public Function<byte> {
    public:
-       LZPCodec() { _hashes = new int32[0]; _hashSize = 0; }
+       LZPCodec()
+       {
+           _hashes = new int32[0];
+           _hashSize = 0;
+       }
 
-       LZPCodec(Context&) { _hashes = new int32[0]; _hashSize = 0; }
+       LZPCodec(Context&)
+       {
+           _hashes = new int32[0];
+           _hashSize = 0;
+       }
 
-       virtual ~LZPCodec() { delete[] _hashes; _hashSize = 0; }
+       virtual ~LZPCodec()
+       {
+           delete[] _hashes;
+           _hashSize = 0;
+       }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
@@ -121,29 +151,26 @@ namespace kanzi
        }
 
    private:
-      static const uint HASH_SEED         = 0x7FEB352D;
-      static const uint HASH_LOG          = 16;
-      static const uint HASH_SHIFT        = 32 - HASH_LOG;
-      static const int MIN_MATCH          = 64;
-      static const int MIN_BLOCK_LENGTH   = 128;
-      static const int MATCH_FLAG         = 0xFC;
+       static const uint HASH_SEED = 0x7FEB352D;
+       static const uint HASH_LOG = 16;
+       static const uint HASH_SHIFT = 32 - HASH_LOG;
+       static const int MIN_MATCH = 64;
+       static const int MIN_BLOCK_LENGTH = 128;
+       static const int MATCH_FLAG = 0xFC;
 
-      int32* _hashes;
-      int _hashSize;
-  };
-
-
+       int32* _hashes;
+       int _hashSize;
+   };
 
    inline bool LZCodec::sameInts(byte block[], int srcIdx, int dstIdx)
    {
        return *(reinterpret_cast<int32*>(&block[srcIdx])) == *(reinterpret_cast<int32*>(&block[dstIdx]));
    }
 
-
    inline void LZXCodec::emitLiterals(const byte src[], byte dst[], int len)
    {
-       for (int i = 0; i < len; i += 8)
-           memcpy(&dst[i], &src[i], 8);
+       for (int i = 0; i < len; i += 16)
+           memcpy(&dst[i], &src[i], 16);
    }
 
    inline int32 LZXCodec::hash(const byte* p)
@@ -153,16 +180,62 @@ namespace kanzi
 
    inline int LZXCodec::emitLength(byte block[], int length)
    {
-       int idx = 0;
-
-       while (length >= 0xFF) {
-           block[idx] = byte(0xFF);
-           idx++;
-           length -= 0xFF;
+       if (length < 254) {
+           block[0] = byte(length);
+           return 1;
        }
 
-       block[idx] = byte(length);
-       return idx + 1;
+       if (length < 65536 + 254) {
+           length -= 254;
+           block[0] = byte(254);
+           block[1] = byte(length >> 8);
+           block[2] = byte(length);
+           return 3;
+       }
+
+       length -= 255;
+       block[0] = byte(255);
+       block[1] = byte(length >> 16);
+       block[2] = byte(length >> 8);
+       block[3] = byte(length);
+       return 4;
+   }
+
+   inline int LZXCodec::readLength(byte block[], int& pos)
+   {
+       int res = int(block[pos++]);
+
+       if (res < 254)
+           return res;
+
+       if (res == 254) {
+           res += (int(block[pos++]) << 8);
+           res += int(block[pos++]);
+           return res;
+       }
+
+       res += (int(block[pos]) << 16);
+       res += (int(block[pos + 1]) << 8);
+       res += int(block[pos + 2]);
+       pos += 3;
+       return res;
+   }
+
+   inline int LZXCodec::findMatch(byte src[], int srcIdx, int ref, int maxMatch)
+   {
+       int bestLen = 0;
+
+       if (LZCodec::sameInts(src, ref, srcIdx) == true) {
+           bestLen = 4;
+
+           while ((bestLen + 4 < maxMatch) && (LZCodec::sameInts(src, ref + bestLen, srcIdx + bestLen) == true))
+               bestLen += 4;
+
+           while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))
+               bestLen++;
+       }
+
+       return bestLen;
    }
 }
 #endif
