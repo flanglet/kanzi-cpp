@@ -95,7 +95,7 @@ namespace kanzi {
        static const uint HASH_LOG1 = 16;
        static const uint HASH_SHIFT1 = 40 - HASH_LOG1;
        static const uint HASH_MASK1 = (1 << HASH_LOG1) - 1;
-       static const uint HASH_LOG2 = 22;
+       static const uint HASH_LOG2 = 21;
        static const uint HASH_SHIFT2 = 40 - HASH_LOG2;
        static const uint HASH_MASK2 = (1 << HASH_LOG2) - 1;
        static const int MAX_DISTANCE1 = (1 << 17) - 1;
