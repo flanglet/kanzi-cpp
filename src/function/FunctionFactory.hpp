@@ -45,6 +45,7 @@ namespace kanzi {
 		static const uint64 SRT_TYPE = 13; // Sorted Rank
 		static const uint64 LZP_TYPE = 14; // Lempel Ziv Predict
 		static const uint64 FSD_TYPE = 15; // Fixed Shift Delta codec
+		static const uint64 LZX_TYPE = 16; // Lempel Ziv Extra 
 
 		static uint64 getType(const char* tName) THROW;
 
@@ -148,6 +149,9 @@ namespace kanzi {
 		if (name == "LZ")
 			return LZ_TYPE;
 
+		if (name == "LZX")
+			return LZX_TYPE;
+
 		if (name == "LZP")
 			return LZP_TYPE;
 
@@ -215,6 +219,18 @@ namespace kanzi {
 		case BWTS_TYPE:
 			return new BWTS(ctx);
 
+		case LZX_TYPE:
+			ctx.putInt("lz", LZX_TYPE);
+			return new LZCodec(ctx);
+
+		case LZ_TYPE:
+			ctx.putInt("lz", LZ_TYPE);
+			return new LZCodec(ctx);
+
+		case LZP_TYPE:
+			ctx.putInt("lz", LZP_TYPE);
+			return new LZCodec(ctx);
+
 		case RANK_TYPE:
 			return new SBRT(SBRT::MODE_RANK, ctx);
 
@@ -229,14 +245,6 @@ namespace kanzi {
 
 		case RLT_TYPE:
 			return new RLT(ctx);
-
-		case LZ_TYPE:
-			ctx.putInt("lz", LZ_TYPE);
-			return new LZCodec(ctx);
-
-		case LZP_TYPE:
-			ctx.putInt("lz", LZP_TYPE);
-			return new LZCodec(ctx);
 
 		case X86_TYPE:
 			return new X86Codec(ctx);
@@ -293,6 +301,15 @@ namespace kanzi {
 		case ROLZX_TYPE:
 			return "ROLZX";
 
+		case LZ_TYPE:
+			return "LZ";
+
+		case LZX_TYPE:
+			return "LZX";
+
+		case LZP_TYPE:
+			return "LZP";
+
 		case ZRLT_TYPE:
 			return "ZRLT";
 
@@ -307,12 +324,6 @@ namespace kanzi {
 
 		case MTFT_TYPE:
 			return "MTFT";
-
-		case LZ_TYPE:
-			return "LZ";
-
-		case LZP_TYPE:
-			return "LZP";
 
 		case X86_TYPE:
 			return "X86";

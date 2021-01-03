@@ -24,14 +24,20 @@ using namespace std;
 
 LZCodec::LZCodec() THROW
 {
-    _delegate = new LZXCodec();
+    _delegate = new LZXCodec<false>();
 }
 
 LZCodec::LZCodec(Context& ctx) THROW
 {
-    int lzpType = ctx.getInt("lz", FunctionFactory<byte>::LZ_TYPE);
-    _delegate = (lzpType == FunctionFactory<byte>::LZP_TYPE) ? (Function<byte>*)new LZPCodec() :
-       (Function<byte>*)new LZXCodec();
+    const int lzType = ctx.getInt("lz", FunctionFactory<byte>::LZ_TYPE);
+
+    if (lzType == FunctionFactory<byte>::LZP_TYPE) {
+        _delegate = (Function<byte>*)new LZPCodec();
+    } else if (lzType == FunctionFactory<byte>::LZX_TYPE) {
+        _delegate = (Function<byte>*)new LZXCodec<true>();
+    } else {
+        _delegate = (Function<byte>*)new LZXCodec<false>();
+    }
 }
 
 bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
@@ -56,8 +62,8 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     return _delegate->inverse(input, output, count);
 }
 
-
-bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+template <bool T>
+bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -79,7 +85,7 @@ bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     if (_hashSize == 0) {
-        _hashSize = 1 << HASH_LOG;
+        _hashSize = (T == true) ? 1 << HASH_LOG2 : 1 << HASH_LOG1;
         delete[] _hashes;
         _hashes = new int32[_hashSize];
     }
@@ -187,7 +193,7 @@ bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         _mBuf[mIdx++] = byte(dist >> 8);
         _mBuf[mIdx++] = byte(dist);
 
-        if (mIdx >= _bufferSize - 16) {
+        if (mIdx >= _bufferSize - 4) {
             // Expand match buffer
             byte* buf = new byte[_bufferSize << 1];
             memcpy(&buf[0], &_mBuf[0], _bufferSize);
@@ -236,7 +242,9 @@ bool LZXCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return dstIdx < count;
 }
 
-bool LZXCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+
+template <bool T>
+bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;

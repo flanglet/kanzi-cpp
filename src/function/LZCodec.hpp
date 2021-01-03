@@ -23,8 +23,6 @@ limitations under the License.
 
 namespace kanzi {
    class LZCodec : public Function<byte> {
-       friend class LZXCodec;
-       friend class LZPCodec;
 
    public:
        LZCodec() THROW;
@@ -52,6 +50,7 @@ namespace kanzi {
    // Simple byte oriented LZ77 implementation.
    // It is a based on a heavily modified LZ4 with a bigger window, a bigger
    // hash map, 3+n*8 bit literal lengths and 17 or 24 bit match lengths.
+   template <bool T>
    class LZXCodec : public Function<byte> {
    public:
        LZXCodec()
@@ -93,9 +92,12 @@ namespace kanzi {
 
    private:
        static const uint HASH_SEED = 0x1E35A7BD;
-       static const uint HASH_LOG = 19;
-       static const uint HASH_SHIFT = 40 - HASH_LOG;
-       static const uint HASH_MASK = (1 << HASH_LOG) - 1;
+       static const uint HASH_LOG1 = 16;
+       static const uint HASH_SHIFT1 = 40 - HASH_LOG1;
+       static const uint HASH_MASK1 = (1 << HASH_LOG1) - 1;
+       static const uint HASH_LOG2 = 22;
+       static const uint HASH_SHIFT2 = 40 - HASH_LOG2;
+       static const uint HASH_MASK2 = (1 << HASH_LOG2) - 1;
        static const int MAX_DISTANCE1 = (1 << 17) - 1;
        static const int MAX_DISTANCE2 = (1 << 24) - 1;
        static const int MIN_MATCH = 5;
@@ -167,18 +169,25 @@ namespace kanzi {
        return *(reinterpret_cast<int32*>(&block[srcIdx])) == *(reinterpret_cast<int32*>(&block[dstIdx]));
    }
 
-   inline void LZXCodec::emitLiterals(const byte src[], byte dst[], int len)
+   template <bool T>
+   inline void LZXCodec<T>::emitLiterals(const byte src[], byte dst[], int len)
    {
        for (int i = 0; i < len; i += 16)
            memcpy(&dst[i], &src[i], 16);
    }
 
-   inline int32 LZXCodec::hash(const byte* p)
+   template <bool T>
+   inline int32 LZXCodec<T>::hash(const byte* p)
    {
-       return ((LittleEndian::readLong64(p) * HASH_SEED) >> HASH_SHIFT) & HASH_MASK;
+       if (T == true) {
+           return ((LittleEndian::readLong64(p) * HASH_SEED) >> HASH_SHIFT2) & HASH_MASK2;
+       } else {
+           return ((LittleEndian::readLong64(p) * HASH_SEED) >> HASH_SHIFT1) & HASH_MASK1;
+       }
    }
 
-   inline int LZXCodec::emitLength(byte block[], int length)
+   template <bool T>
+   inline int LZXCodec<T>::emitLength(byte block[], int length)
    {
        if (length < 254) {
            block[0] = byte(length);
@@ -201,7 +210,8 @@ namespace kanzi {
        return 4;
    }
 
-   inline int LZXCodec::readLength(byte block[], int& pos)
+   template <bool T>
+   inline int LZXCodec<T>::readLength(byte block[], int& pos)
    {
        int res = int(block[pos++]);
 
@@ -221,7 +231,8 @@ namespace kanzi {
        return res;
    }
 
-   inline int LZXCodec::findMatch(byte src[], int srcIdx, int ref, int maxMatch)
+   template <bool T>
+   inline int LZXCodec<T>::findMatch(byte src[], int srcIdx, int ref, int maxMatch)
    {
        int bestLen = 0;
 
