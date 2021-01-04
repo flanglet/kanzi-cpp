@@ -244,11 +244,6 @@ int BlockCompressor::compress(uint64& outputSize)
     string outputName = _outputName;
     transform(outputName.begin(), outputName.end(), outputName.begin(), ::toupper);
 
-    if ((_jobs > 1) && (outputName.compare("STDOUT") == 0)) {
-        cerr << "Cannot output to STDOUT with multiple jobs" << endl;
-        return Error::ERR_CREATE_FILE;
-    }
-
     // Limit verbosity level when files are processed concurrently
     if ((_jobs > 1) && (nbFiles > 1) && (_verbosity > 1)) {
         log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", _verbosity > 1);
@@ -520,36 +515,41 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         return;
 
     case 2:
+        tranformAndCodec[0] = "TEXT+FSD+LZX";
+        tranformAndCodec[1] = "HUFFMAN";
+        return;
+
+    case 3:
         tranformAndCodec[0] = "TEXT+FSD+ROLZ";
         tranformAndCodec[1] = "NONE";
         return;
 
-    case 3:
+    case 4:
         tranformAndCodec[0] = "TEXT+FSD+ROLZX";
         tranformAndCodec[1] = "NONE";
         return;
 
-    case 4:
+    case 5:
         tranformAndCodec[0] = "TEXT+BWT+RANK+ZRLT";
         tranformAndCodec[1] = "ANS0";
         return;
 
-    case 5:
+    case 6:
         tranformAndCodec[0] = "TEXT+BWT+SRT+ZRLT";
         tranformAndCodec[1] = "FPAQ";
         return;
 
-    case 6:
+    case 7:
         tranformAndCodec[0] = "LZP+TEXT+BWT";
         tranformAndCodec[1] = "CM";
         return;
 
-    case 7:
+    case 8:
         tranformAndCodec[0] = "X86+RLT+TEXT";
         tranformAndCodec[1] = "TPAQ";
         return;
 
-    case 8:
+    case 9:
         tranformAndCodec[0] = "X86+RLT+TEXT";
         tranformAndCodec[1] = "TPAQX";
         return;

@@ -227,35 +227,36 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             ss.str(string());
             log.println("   -o, --output=<outputName>", true);
 
-            if (mode.compare(0, 1, "c") != 0) {
+            if (mode.compare(0, 1, "c") == 0) {
                 log.println("        optional name of the output file or directory (defaults to", true);
                 log.println("        <inputName.knz>) or 'none' or 'stdout'. 'stdout' is not valid", true);
                 log.println("        when the number of jobs is greater than 1.\n", true);
             }
-            else if (mode.compare(0, 1, "d") != 0) {
+            else if (mode.compare(0, 1, "d") == 0) {
                 log.println("        optional name of the output file or directory (defaults to", true);
-                log.println("        <inputName.knz>) or 'none' or 'stdout'. 'stdout' is not valid", true);
+                log.println("        <inputName.bak>) or 'none' or 'stdout'. 'stdout' is not valid", true);
                 log.println("        when the number of jobs is greater than 1.\n", true);
             }
             else {
                 log.println("        optional name of the output file or 'none' or 'stdout'.\n", true);
             }
 
-            if (mode.compare(0, 1, "d") != 0) {
+            if (mode.compare(0, 1, "c") == 0) {
                 log.println("   -b, --block=<size>", true);
                 log.println("        size of blocks, multiple of 16 (default 1 MB, max 1 GB, min 1 KB).\n", true);
                 log.println("   -l, --level=<compression>", true);
-                log.println("        set the compression level [0..8]", true);
+                log.println("        set the compression level [0..9]", true);
                 log.println("        Providing this option forces entropy and transform.", true);
-                log.println("        0=None&None (store), 1=TEXT+LZ&HUFFMAN, 2=TEXT+FSD+ROLZ", true);
-                log.println("        3=TEXT+FSD+ROLZX, 4=TEXT+BWT+RANK+ZRLT&ANS0, 5=TEXT+BWT+SRT+ZRLT&FPAQ", true);
-                log.println("        6=LZP+TEXT+BWT&CM, 7=X86+RLT+TEXT&TPAQ, 8=X86+RLT+TEXT&TPAQX\n", true);
+                log.println("        0=None&None (store), 1=TEXT+LZ&HUFFMAN, 2=TEXT+FSD+LZX&HUFFMAN", true);
+                log.println("        3=TEXT+FSD+ROLZ, 4=TEXT+FSD+ROLZX, 5=TEXT+BWT+RANK+ZRLT&ANS0", true);
+                log.println("        6=TEXT+BWT+SRT+ZRLT&FPAQ, 7=LZP+TEXT+BWT&CM, 8=X86+RLT+TEXT&TPAQ", true);
+                log.println("        9=X86+RLT+TEXT&TPAQX\n", true);
                 log.println("   -e, --entropy=<codec>", true);
                 log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]", true);
                 log.println("        (default is ANS0)\n", true);
                 log.println("   -t, --transform=<codec>", true);
-                log.println("        transform [None|BWT|BWTS|LZ|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
-                log.println("                  [MTFT|RANK|SRT|TEXT|X86]", true);
+                log.println("        transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
+                log.println("                  [MTFT|RANK|SRT|TEXT|FSD|X86]", true);
                 log.println("        EG: BWT+RANK or BWTS+MTFT (default is BWT+RANK+ZRLT)\n", true);
                 log.println("   -x, --checksum", true);
                 log.println("        enable block checksum\n", true);
@@ -268,14 +269,14 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             log.println("        (default is 1, maximum is 64).\n", true);
             log.println("", true);
 
-            if (mode.compare(0, 1, "d") != 0) {
+            if (mode.compare(0, 1, "c") == 0) {
                 log.println("EG. kanzi -c -i foo.txt -o none -b 4m -l 4 -v 3\n", true);
                 log.println("EG. kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -v 3 -j 4\n", true);
                 log.println("EG. kanzi --compress --input=foo.txt --output=foo.knz --force", true);
                 log.println("          --transform=BWT+MTFT+ZRLT --block=4m --entropy=FPAQ --verbose=3 --jobs=4\n", true);
             }
 
-            if (mode.compare(0, 1, "c") != 0) {
+            if (mode.compare(0, 1, "d") == 0) {
                 log.println("EG. kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
                 log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
             }

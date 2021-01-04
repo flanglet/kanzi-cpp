@@ -159,11 +159,6 @@ int BlockDecompressor::decompress(uint64& inputSize)
     string outputName = _outputName;
     transform(outputName.begin(), outputName.end(), outputName.begin(), ::toupper);
 
-    if ((_jobs > 1) && (outputName.compare("STDOUT") == 0)) {
-        cerr << "Cannot output to STDOUT with multiple jobs" << endl;
-        return Error::ERR_CREATE_FILE;
-    }
-
     // Limit verbosity level when files are processed concurrently
     if ((_jobs > 1) && (nbFiles > 1) && (_verbosity > 1)) {
         log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", _verbosity > 1);
