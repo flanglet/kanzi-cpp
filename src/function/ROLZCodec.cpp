@@ -171,9 +171,9 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int sizeChunk = (count <= ROLZCodec::CHUNK_SIZE) ? count : ROLZCodec::CHUNK_SIZE;
     int startChunk = 0;
     SliceArray<byte> litBuf(new byte[getMaxEncodedLength(sizeChunk)], getMaxEncodedLength(sizeChunk));
-    SliceArray<byte> lenBuf(new byte[sizeChunk / 6], sizeChunk / 6);
+    SliceArray<byte> lenBuf(new byte[sizeChunk / 5], sizeChunk / 5);
     SliceArray<byte> mIdxBuf(new byte[sizeChunk / 4], sizeChunk / 4);
-    SliceArray<byte> tkBuf(new byte[sizeChunk / 6], sizeChunk / 6);
+    SliceArray<byte> tkBuf(new byte[sizeChunk / 5], sizeChunk / 5);
     memset(&_counters[0], 0, sizeof(int32) * 65536);
     bool success = true;
     const int litOrder = (count < (1 << 17)) ? 0 : 1;
@@ -316,9 +316,9 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int startChunk = 0;
     const int litOrder = int(src[srcIdx++]);
     SliceArray<byte> litBuf(new byte[getMaxEncodedLength(sizeChunk)], getMaxEncodedLength(sizeChunk));
-    SliceArray<byte> lenBuf(new byte[sizeChunk / 6], sizeChunk / 6);
+    SliceArray<byte> lenBuf(new byte[sizeChunk / 5], sizeChunk / 5);
     SliceArray<byte> mIdxBuf(new byte[sizeChunk / 4], sizeChunk / 4);
-    SliceArray<byte> tkBuf(new byte[sizeChunk / 6], sizeChunk / 6);
+    SliceArray<byte> tkBuf(new byte[sizeChunk / 5], sizeChunk / 5);
     memset(&_counters[0], 0, sizeof(int32) * 65536);
     bool success = true;
 
