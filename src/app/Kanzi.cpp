@@ -428,7 +428,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 strLevel = name;
                 level = atoi(strLevel.c_str());
 
-                if (((level < 0) || (level > 8)) || ((level == 0) && (strLevel != "0"))) {
+                if (((level < 0) || (level > 9)) || ((level == 0) && (strLevel != "0"))) {
                     cerr << "Invalid compression level provided on command line: " << arg << endl;
                     return Error::ERR_INVALID_PARAM;
                 }
