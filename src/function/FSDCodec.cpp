@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//#include <sstream>
 #include "FSDCodec.hpp"
 #include "FunctionFactory.hpp"
 #include "../Global.hpp"
@@ -78,19 +77,6 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (count < MIN_LENGTH)
         return false;
 
-    byte* dst = &output._array[output._index];
-    byte* src = &input._array[input._index];
-    const int srcEnd = count;
-    const int dstEnd = output._length;
-    const int count5 = count / 5;
-    const int count10 = count / 10;
-    byte* in;
-    byte* dst1 = &dst[0];
-    byte* dst2 = &dst[count5 * 1];
-    byte* dst3 = &dst[count5 * 2];
-    byte* dst4 = &dst[count5 * 3];
-    byte* dst8 = &dst[count5 * 4];
-
     if (_pCtx != nullptr) {
         Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
     
@@ -98,61 +84,56 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             return false;
     }
 
+    byte* dst = &output._array[output._index];
+    byte* src = &input._array[input._index];
+    const int srcEnd = count;
+    const int dstEnd = output._length;
+    const int count5 = count / 5;
+    const int count10 = count / 10;
+    byte* in;
+    uint histo[6][256];
+    memset(&histo[0][0], 0, sizeof(uint) * 6 * 256);
+
     // Check several step values on a sub-block (no memory allocation)
     // Sample 2 sub-blocks
     in = &src[count5 * 3];
 
     for (int i = 0; i < count10; i++) {
         const byte b = in[i];
-        dst1[i] = b ^ in[i - 1];
-        dst2[i] = b ^ in[i - 2];
-        dst3[i] = b ^ in[i - 3];
-        dst4[i] = b ^ in[i - 4];
-        dst8[i] = b ^ in[i - 8];
+        histo[0][b]++;
+        histo[1][b ^ in[i - 1]]++;
+        histo[2][b ^ in[i - 2]]++;
+        histo[3][b ^ in[i - 3]]++;
+        histo[4][b ^ in[i - 4]]++;
+        histo[5][b ^ in[i - 8]]++;
     }
 
     in = &src[count5 * 1];
 
     for (int i = count10; i < count5; i++) {
         const byte b = in[i];
-        dst1[i] = b ^ in[i - 1];
-        dst2[i] = b ^ in[i - 2];
-        dst3[i] = b ^ in[i - 3];
-        dst4[i] = b ^ in[i - 4];
-        dst8[i] = b ^ in[i - 8];
+        histo[0][b]++;
+        histo[1][b ^ in[i - 1]]++;
+        histo[2][b ^ in[i - 2]]++;
+        histo[3][b ^ in[i - 3]]++;
+        histo[4][b ^ in[i - 4]]++;
+        histo[5][b ^ in[i - 8]]++;
     }
 
     // Find if entropy is lower post transform
-    uint histo[256];
-    int ent[6];
-    const int count3 = count / 3;
-    Global::computeHistogram(&src[count3], count3, histo);
-    ent[0] = Global::computeFirstOrderEntropy1024(count3, histo);
-    Global::computeHistogram(&dst1[0], count5, histo);
-    ent[1] = Global::computeFirstOrderEntropy1024(count5, histo);
-    Global::computeHistogram(&dst2[0], count5, histo);
-    ent[2] = Global::computeFirstOrderEntropy1024(count5, histo);
-    Global::computeHistogram(&dst3[0], count5, histo);
-    ent[3] = Global::computeFirstOrderEntropy1024(count5, histo);
-    Global::computeHistogram(&dst4[0], count5, histo);
-    ent[4] = Global::computeFirstOrderEntropy1024(count5, histo);
-    Global::computeHistogram(&dst8[0], count5, histo);
-    ent[5] = Global::computeFirstOrderEntropy1024(count5, histo);
-
     int minIdx = 0;
+    int ent[6];
+    ent[0] = Global::computeFirstOrderEntropy1024(count5, histo[0]);
 
     for (int i = 1; i < 6; i++) {
+        ent[i] = Global::computeFirstOrderEntropy1024(count5, histo[i]);
+
         if (ent[i] < ent[minIdx])
             minIdx = i;
     }
 
-    if (minIdx == 0)
-        return false;
-
-    // If not 'better enough', quick exit
-    bool isFast = (_pCtx == nullptr) ? true : _pCtx->getInt("fullFSD") == 0;
-
-    if ((isFast == true) && (ent[minIdx] >= ((123 * ent[0]) >> 7)))
+    // If not better, quick exit
+    if ((minIdx == 0) || (ent[minIdx] >= ent[0]))
         return false;
 
     if (_pCtx != nullptr)
@@ -212,9 +193,10 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     // Extra check that the transform makes sense
+    bool isFast = (_pCtx == nullptr) ? true : _pCtx->getInt("fullFSD") == 0;
     const int length = (isFast == true) ? dstIdx >> 1 : dstIdx;
-    Global::computeHistogram(&dst[(dstIdx - length) >> 1], length, histo);
-    const int entropy = Global::computeFirstOrderEntropy1024(length, histo);
+    Global::computeHistogram(&dst[(dstIdx - length) >> 1], length, histo[0]);
+    const int entropy = Global::computeFirstOrderEntropy1024(length, histo[0]);
 
     if (entropy >= ent[0])
         return false;
