@@ -29,7 +29,7 @@ namespace kanzi
        static const int FULL_ALPHABET = 0;
        static const int PARTIAL_ALPHABET = 1;
        static const int ALPHABET_256 = 0;
-       static const int ALPHABET_NOT_256 = 1;
+       static const int ALPHABET_0 = 1;
 
    public:
        static const int INCOMPRESSIBLE_THRESHOLD = 973; // 0.95*1024

@@ -25,12 +25,10 @@ using namespace std;
 class FreqSortData {
 public:
     uint _symbol;
-    int* _errors;
     uint* _frequencies;
 
-    FreqSortData(int errors[], uint frequencies[], int symbol)
+    FreqSortData(uint frequencies[], int symbol)
     {
-        _errors = errors;
         _frequencies = frequencies;
         _symbol = symbol;
     }
@@ -39,18 +37,11 @@ public:
 struct FreqDataComparator {
     bool operator()(FreqSortData* fd1, FreqSortData* fd2) const
     {
-        int res = fd1->_errors[fd1->_symbol] - fd2->_errors[fd2->_symbol];
+        // Decreasing frequency
+        int res = fd1->_frequencies[fd1->_symbol] - fd2->_frequencies[fd2->_symbol];
 
-        // Increasing frequency
-        if (res == 0) {
-            res = fd1->_frequencies[fd1->_symbol] - fd2->_frequencies[fd2->_symbol];
-
-            // Increasing symbol
-            if (res == 0)
-                return fd1->_symbol < fd2->_symbol;
-        }
-
-        return res < 0;
+        // Decreasing symbol
+        return (res == 0) ? fd1->_symbol < fd2->_symbol : res < 0;
     }
 };
 
@@ -65,18 +56,13 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int leng
     if ((length > 256) || (count > length))
         return -1;
 
-    if ((count == 0) || (count == length)) {
-        // uint64 alphabet
+    if (count == 0) {
         obs.writeBit(FULL_ALPHABET);
-
-        if (count == 256) {
-            obs.writeBit(ALPHABET_256); // shortcut
-        }
-        else {
-            // Write alphabet size
-            obs.writeBit(ALPHABET_NOT_256);
-            obs.writeBits(count, 8);
-        }
+        obs.writeBit(ALPHABET_0);
+    }
+    else if (count == 256) {
+        obs.writeBit(FULL_ALPHABET);
+        obs.writeBit(ALPHABET_256);
     }
     else {
         // Partial alphabet
@@ -173,12 +159,10 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     uint sumFreq = 0;
     uint freqMax = 0;
     int idxMax = -1;
-    int errors[256] = { 0 };
 
     // Scale frequencies by stretching distribution over complete range
     for (int i = 0; (i < length) && (sumFreq < totalFreq); i++) {
         alphabet[i] = 0;
-        errors[i] = 0;
         const uint f = freqs[i];
 
         if (f == 0)
@@ -203,13 +187,8 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
             int64 errCeiling = int64(scaledFreq + 1) * int64(totalFreq) - sf;
             int64 errFloor = sf - int64(scaledFreq) * int64(totalFreq);
 
-            if (errCeiling < errFloor) {
+            if (errCeiling < errFloor)
                 scaledFreq++;
-                errors[i] = int(errCeiling);
-            }
-            else {
-                errors[i] = int(errFloor);
-            }
         }
 
         alphabet[alphabetSize++] = i;
@@ -226,26 +205,27 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     }
 
     if (sumScaledFreq != scale) {
-        if (int(freqs[idxMax]) > int(sumScaledFreq - scale)) {
-            // Fast path: just adjust the max frequency
-            freqs[idxMax] += int(scale - sumScaledFreq);
+        const int delta = int(sumScaledFreq - scale);
+
+        if (abs(delta) * 100 < int(freqs[idxMax]) * 5) {
+           // Fast path: just adjust the max frequency (or do nothing)
+           if (int(freqs[idxMax]) > delta) 
+               freqs[idxMax] -= delta;
         }
         else {
             // Slow path: spread error across frequencies
             const int inc = (sumScaledFreq > scale) ? -1 : 1;
             vector<FreqSortData*> queue;
 
-            // Create sorted queue of present symbols (except those with 'quantum frequency')
+            // Create sorted queue of present symbols
             for (int i = 0; i < alphabetSize; i++) {
-                if ((errors[alphabet[i]] > 0) && (int(freqs[alphabet[i]]) != -inc)) {
-                    queue.push_back(new FreqSortData(errors, freqs, alphabet[i]));
-                }
+                queue.push_back(new FreqSortData(freqs, alphabet[i]));
             }
 
             make_heap(queue.begin(), queue.end(), FreqDataComparator());
 
             while ((sumScaledFreq != scale) && (queue.size() > 0)) {
-                // Remove symbol with highest error
+                // Remove symbol with highest frequency
                 pop_heap(queue.begin(), queue.end(), FreqDataComparator());
                 FreqSortData* fsd = queue.back();
                 queue.pop_back();
@@ -256,12 +236,9 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
                     continue;
                 }
 
-                // Distort frequency and error
+                // Distort frequency
                 freqs[fsd->_symbol] += inc;
-                errors[fsd->_symbol] -= scale;
                 sumScaledFreq += inc;
-                queue.push_back(fsd);
-                push_heap(queue.begin(), queue.end(), FreqDataComparator());
             }
 
             while (queue.size() > 0) {
