@@ -86,7 +86,7 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
 {
     // Read encoding mode from bitstream
     if (ibs.readBit() == FULL_ALPHABET) {
-        const int alphabetSize = (ibs.readBit() == ALPHABET_256) ? 256 : int(ibs.readBits(8));
+        const int alphabetSize = (ibs.readBit() == ALPHABET_256) ? 256 : 0;
 
         if (alphabetSize > 256) {
             stringstream ss;
