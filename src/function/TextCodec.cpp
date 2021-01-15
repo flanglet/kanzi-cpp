@@ -381,22 +381,10 @@ TextCodec1::TextCodec1()
 TextCodec1::TextCodec1(Context& ctx)
 {
     // Actual block size
-    int blockSize = 0;
-    int log = 13;
-
-    if (ctx.has("blockSize")) {
-        blockSize = ctx.getInt("blockSize");
-
-        if (blockSize >= 8)
-            log = max(min(Global::log2(blockSize / 8), 26), 13);
-    }
-
-    if (ctx.has("extra")) {
-        string strExtra = ctx.getString("extra");
-        log += (strExtra == STR_TRUE) ? 1 : 0;
-    }
-
-    _logHashSize = log;
+    const int blockSize = ctx.getInt("blockSize", 0);
+    const int log = (blockSize >= 8) ? max(min(Global::log2(blockSize / 8), 26), 13) : 13;
+    const int extra = ctx.getInt("extra", 0);
+    _logHashSize = (extra == 0) ? log : log + 1;
     _dictSize = 1 << 13;
     _dictMap = nullptr;
     _dictList = nullptr;
@@ -858,22 +846,10 @@ TextCodec2::TextCodec2()
 
 TextCodec2::TextCodec2(Context& ctx)
 {
-    int log = 13;
-
-    if (ctx.has("blockSize")) {
-        // Actual block size
-        int blockSize = ctx.getInt("blockSize");
-
-        if (blockSize >= 32)
-            log = max(min(Global::log2(blockSize / 32), 24), 13);
-    }
-
-    if (ctx.has("extra")) {
-        string strExtra = ctx.getString("extra");
-        log += (strExtra == STR_TRUE) ? 1 : 0;
-    }
-
-    _logHashSize = log;
+    const int blockSize = ctx.getInt("blockSize", 0);
+    const int log = (blockSize >= 32) ? max(min(Global::log2(blockSize / 32), 24), 13) : 13;
+    const int extra = ctx.getInt("extra", 0);
+    _logHashSize = (extra == 0) ? log : log + 1;
     _dictSize = 1 << 13;
     _dictMap = nullptr;
     _dictList = nullptr;
