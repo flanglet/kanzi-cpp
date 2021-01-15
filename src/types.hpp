@@ -28,6 +28,20 @@ limitations under the License.
 		#endif
 	#endif
 
+
+	#ifdef _MSC_VER
+		#include <intrin.h>
+		#define popcount __popcnt
+	#else
+		#ifdef  __INTEL_COMPILER
+			#include <intrin.h>
+			#define popcount _popcnt32
+		#else
+			#define popcount __builtin_popcount
+		#endif
+	#endif
+
+
 	#ifdef __x86_64__
 	   #include <emmintrin.h>
 	#endif
