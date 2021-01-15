@@ -115,6 +115,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         const int minRef = max(srcIdx - maxDist, 0);
         int32 h = hash(&src[srcIdx]);
         int ref = _hashes[h];
+        _hashes[h] = srcIdx;
         int bestLen = 0;
 
         if (ref > minRef) {
@@ -124,7 +125,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         // No good match ?
         if ((bestLen < MIN_MATCH) || ((bestLen == MIN_MATCH) && (srcIdx - ref >= MIN_MATCH_MIN_DIST))) {
-            _hashes[h] = srcIdx;
             srcIdx++;
             continue;
         }
@@ -132,6 +132,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // Check if better match at next position
         const int32 h2 = hash(&src[srcIdx + 1]);
         const int ref2 = _hashes[h2];
+        _hashes[h2] = srcIdx + 1;
         int bestLen2 = 0;
 
         if (ref2 > minRef + 1) {
@@ -204,7 +205,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         // Fill _hashes and update positions
         anchor = srcIdx + bestLen;
-        _hashes[h] = srcIdx;
         srcIdx++;
 
         while (srcIdx < anchor) {
