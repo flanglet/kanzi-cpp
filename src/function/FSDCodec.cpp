@@ -100,24 +100,24 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     for (int i = 0; i < count10; i++) {
         const byte b = in[i];
-        histo[0][b]++;
-        histo[1][b ^ in[i - 1]]++;
-        histo[2][b ^ in[i - 2]]++;
-        histo[3][b ^ in[i - 3]]++;
-        histo[4][b ^ in[i - 4]]++;
-        histo[5][b ^ in[i - 8]]++;
+        histo[0][int(b)]++;
+        histo[1][int(b ^ in[i - 1])]++;
+        histo[2][int(b ^ in[i - 2])]++;
+        histo[3][int(b ^ in[i - 3])]++;
+        histo[4][int(b ^ in[i - 4])]++;
+        histo[5][int(b ^ in[i - 8])]++;
     }
 
     in = &src[count5 * 1];
 
     for (int i = count10; i < count5; i++) {
         const byte b = in[i];
-        histo[0][b]++;
-        histo[1][b ^ in[i - 1]]++;
-        histo[2][b ^ in[i - 2]]++;
-        histo[3][b ^ in[i - 3]]++;
-        histo[4][b ^ in[i - 4]]++;
-        histo[5][b ^ in[i - 8]]++;
+        histo[0][int(b)]++;
+        histo[1][int(b ^ in[i - 1])]++;
+        histo[2][int(b ^ in[i - 2])]++;
+        histo[3][int(b ^ in[i - 3])]++;
+        histo[4][int(b ^ in[i - 4])]++;
+        histo[5][int(b ^ in[i - 8])]++;
     }
 
     // Find if entropy is lower post transform
