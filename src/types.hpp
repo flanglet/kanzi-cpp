@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -24,7 +24,7 @@ limitations under the License.
 			#define __x86_64__  _M_X64
 		#endif
 		#if !defined(__i386__)
-			#define __i386__  _M_IX86 
+			#define __i386__  _M_IX86
 		#endif
 	#endif
 
@@ -75,30 +75,30 @@ limitations under the License.
    Visual Studio                 MSVC++ 2     _MSC_VER == 900
    Visual Studio                 MSVC++ 1     _MSC_VER == 800
    */
-       
+
    #ifdef _MSC_VER
       #if _MSC_VER == 1300
          #define _MSC_VER_STR 2003
-      #endif 
+      #endif
       #if _MSC_VER == 1400
          #define _MSC_VER_STR 2005
-      #endif 
+      #endif
       #if _MSC_VER == 1500
          #define _MSC_VER_STR 2008
-      #endif 
+      #endif
       #if _MSC_VER == 1600
          #define _MSC_VER_STR 2010
-      #endif 
+      #endif
       #if _MSC_VER == 1700
          #define _MSC_VER_STR 2012
-      #endif 
+      #endif
       #if _MSC_VER == 1800
          #define _MSC_VER_STR 2013
-      #endif 
+      #endif
       #if _MSC_VER == 1900
          #define _MSC_VER_STR 2015
-      #endif 
-      #if _MSC_VER >= 1910 && _MSC_VER <= 1916 
+      #endif
+      #if _MSC_VER >= 1910 && _MSC_VER <= 1916
          #define _MSC_VER_STR 2017
       #endif
       #if _MSC_VER >= 1920
@@ -114,7 +114,7 @@ limitations under the License.
 	#ifndef THROW
 	   #if __cplusplus >= 201103L
 	      #define THROW
-	   #else 
+	   #else
           #if defined(__GNUC__)
 		     #define THROW
           #else
@@ -167,10 +167,10 @@ limitations under the License.
 	typedef uint64_t uint64;
 
 
-   #if defined(WIN32) || defined(_WIN32) 
-      #define PATH_SEPARATOR '\\' 
-   #else 
-      #define PATH_SEPARATOR '/' 
+   #if defined(WIN32) || defined(_WIN32)
+      #define PATH_SEPARATOR '\\'
+   #else
+      #define PATH_SEPARATOR '/'
    #endif
 
 

@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -21,7 +21,7 @@ limitations under the License.
 #include "DivSufSort.hpp"
 
 
-namespace kanzi 
+namespace kanzi
 {
 
    // Bijective version of the Burrows-Wheeler Transform
@@ -33,7 +33,7 @@ namespace kanzi
    class BWTS : public Transform<byte> {
 
    private:
-       static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB 
+       static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB
 
        int* _buffer1;
        int* _buffer2;
@@ -57,10 +57,10 @@ namespace kanzi
            _bufferSize = 0;
        }
 
-       ~BWTS() 
-       { 
-          delete[] _buffer1; 
-          delete[] _buffer2; 
+       ~BWTS()
+       {
+          delete[] _buffer1;
+          delete[] _buffer2;
        }
 
        bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;

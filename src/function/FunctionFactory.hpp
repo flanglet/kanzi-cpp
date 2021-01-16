@@ -45,7 +45,7 @@ namespace kanzi {
 		static const uint64 SRT_TYPE = 13; // Sorted Rank
 		static const uint64 LZP_TYPE = 14; // Lempel Ziv Predict
 		static const uint64 FSD_TYPE = 15; // Fixed Shift Delta codec
-		static const uint64 LZX_TYPE = 16; // Lempel Ziv Extra 
+		static const uint64 LZX_TYPE = 16; // Lempel Ziv Extra
 
 		static uint64 getType(const char* tName) THROW;
 
@@ -192,17 +192,17 @@ namespace kanzi {
 		switch (functionType) {
 		case DICT_TYPE: {
 			int textCodecType = 1;
-         
+
 			if (ctx.has("codec")) {			
 				std::string entropyType = ctx.getString("codec");
 				transform(entropyType.begin(), entropyType.end(), entropyType.begin(), ::toupper);
-            
+
 				// Select text encoding based on entropy codec.
 				if ((entropyType == "NONE") || (entropyType == "ANS0") ||
 				   (entropyType == "HUFFMAN") || (entropyType == "RANGE"))
 				    textCodecType = 2;
 			}
-         
+
 			ctx.putInt("textcodec", textCodecType);
 			return new TextCodec(ctx);
 		}

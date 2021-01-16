@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -635,7 +635,7 @@ dirent_first(
 /*
  * Get next directory entry (internal).
  *
- * Returns 
+ * Returns
  */
 static WIN32_FIND_DATAW*
 dirent_next(
@@ -678,7 +678,7 @@ dirent_next(
  */
 static DIR*
 opendir(
-    const char *dirname) 
+    const char *dirname)
 {
     struct DIR *dirp;
     int error;

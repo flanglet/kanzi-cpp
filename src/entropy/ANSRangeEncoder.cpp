@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -92,7 +92,7 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], int lr)
         encodeHeader(alphabetSize, curAlphabet, f, lr);
         res += alphabetSize;
     }
-   
+
     return res;
 }
 
@@ -167,7 +167,7 @@ int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint len)
             lr--;
 
         const int alphabetSize = rebuildStatistics(&block[startChunk], sizeChunk, lr);
-        
+
         // Skip chunk if only one symbol
         if ((alphabetSize <= 1) && (_order == 0)) {
             startChunk += sizeChunk;

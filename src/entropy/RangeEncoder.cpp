@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -22,7 +22,7 @@ using namespace kanzi;
 using namespace std;
 
 // The chunk size indicates how many bytes are encoded (per block) before
-// resetting the frequency stats. 
+// resetting the frequency stats.
 RangeEncoder::RangeEncoder(OutputBitStream& bitstream, int chunkSize, int logRange) THROW : _bitstream(bitstream)
 {
     if (chunkSize < 1024)

@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -72,7 +72,7 @@ const int Global::INV_EXP[33] = {
         0,     8,    22,    47,    88,   160,   283,   492,
       848,  1451,  2459,  4117,  6766, 10819, 16608, 24127,
     32768, 41409, 48928, 54717, 58770, 61419, 63077, 64085,
-    64688, 65044, 65253, 65376, 65448, 65489, 65514, 65528, 
+    64688, 65044, 65253, 65376, 65448, 65489, 65514, 65528,
     65536
 };
 
@@ -208,7 +208,7 @@ int Global::computeFirstOrderEntropy1024(int blockLen, uint histo[])
 {
     if (blockLen == 0)
        return 0;
-    
+
     uint64 sum = 0;
     const int logLength1024 = Global::log2_1024(blockLen);
 

@@ -1,6 +1,6 @@
 
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -166,7 +166,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     }
 
     InfoPrinter listener(_verbosity, InfoPrinter::DECODING, cout);
-    
+
     if (_verbosity > 2)
         addListener(listener);
 
@@ -254,7 +254,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         ctx.putLong("fileSize", files[0]._size);
         ctx.putString("inputName", iName);
         ctx.putString("outputName", oName);
-        ctx.putInt("jobs", _jobs); 
+        ctx.putInt("jobs", _jobs);
         FileDecompressTask<FileDecompressResult> task(ctx, _listeners);
         FileDecompressResult fdr = task.run();
         res = fdr._code;
@@ -350,7 +350,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         double delta = stopClock.elapsed();
         log.println("", _verbosity > 0);
         char buffer[32];
-        
+
         if (delta >= 1e5) {
             sprintf(buffer, "%.1f s", delta / 1000);
             ss << "Total decoding time: " << buffer;

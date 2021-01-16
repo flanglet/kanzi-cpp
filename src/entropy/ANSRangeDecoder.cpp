@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -21,7 +21,7 @@ using namespace kanzi;
 using namespace std;
 
 // The chunk size indicates how many bytes are encoded (per block) before
-// resetting the frequency stats. 
+// resetting the frequency stats.
 ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunkSize) THROW : _bitstream(bitstream)
 {
     if ((order != 0) && (order != 1))
@@ -204,7 +204,7 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     int st = int(_bitstream.readBits(32));
 
     // Read bit buffer
-    if (sz != 0) 
+    if (sz != 0)
         _bitstream.readBits(&_buffer[0], 8 * sz);
 
     byte* p = &_buffer[0];

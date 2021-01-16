@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -21,7 +21,7 @@ limitations under the License.
 #include "../Memory.hpp"
 
 
-namespace kanzi 
+namespace kanzi
 {
 
    class DefaultOutputBitStream : public OutputBitStream
@@ -33,13 +33,13 @@ namespace kanzi
        uint _bufferSize;
        uint _position; // index of current byte in buffer
        uint _availBits; // bits not consumed in _current
-       int64 _written; 
+       int64 _written;
        uint64 _current; // cached bits
 
        void pushCurrent() THROW;
 
        void flush() THROW;
-       
+
        void _close() THROW;
 
    public:
@@ -50,7 +50,7 @@ namespace kanzi
        void writeBit(int bit) THROW;
 
        uint writeBits(uint64 bits, uint length) THROW;
-       
+
        uint writeBits(const byte bits[], uint length) THROW;
 
        void close() THROW { _close(); }

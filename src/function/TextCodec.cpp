@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -24,7 +24,7 @@ using namespace kanzi;
 using namespace std;
 
 // 1024 of the most common English words with at least 2 chars.
-char TextCodec::DICT_EN_1024[] = 
+char TextCodec::DICT_EN_1024[] =
 "TheBeAndOfInToWithItThatForYouHeHaveOnSaidSayAtButWeByHadTheyAsW\
 ouldWhoOrCanMayDoThisWasIsMuchAnyFromNotSheWhatTheirWhichGetGive\
 HasAreHimHerComeMyOurWereWillSomeBecauseThereThroughTellWhenWork\
@@ -158,7 +158,7 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
 
     for (int i = 0; ((i < dictSize) && (nbWords < maxWords)); i++) {
         const byte b = byte(words[i]);
-        
+
         if (isText(b) == false)
             continue;
 
@@ -310,7 +310,7 @@ TextCodec::TextCodec()
 TextCodec::TextCodec(Context& ctx)
 {
     int encodingType = ctx.getInt("textcodec", 1);
-    _delegate = (encodingType == 1) ? reinterpret_cast<Function<byte>*>(new TextCodec1(ctx)) : 
+    _delegate = (encodingType == 1) ? reinterpret_cast<Function<byte>*>(new TextCodec1(ctx)) :
         reinterpret_cast<Function<byte>*>(new TextCodec2(ctx));
 }
 
@@ -441,7 +441,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     if (_pCtx != nullptr) {
         Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
-    
+
         if ((dt != Global::UNDEFINED) && (dt != Global::TEXT))
             return false;
     }
@@ -898,7 +898,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     if (_pCtx != nullptr) {
         Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
-    
+
         if ((dt != Global::UNDEFINED) && (dt != Global::TEXT))
             return false;
     }
@@ -1045,7 +1045,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         res &= (srcIdx == srcEnd);
     }
-      
+
     output._index += dstIdx;
     input._index += srcIdx;
     return res;

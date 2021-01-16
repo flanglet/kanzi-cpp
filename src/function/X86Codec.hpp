@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -19,7 +19,7 @@ limitations under the License.
 #include "../Context.hpp"
 #include "../Function.hpp"
 
-namespace kanzi 
+namespace kanzi
 {
    // Adapted from MCM: https://github.com/mathieuchartier/mcm/blob/master/X86Binary.hpp
    class X86Codec : public Function<byte> {
@@ -43,7 +43,7 @@ namespace kanzi
       static const byte INSTRUCTION_JCC = byte(0x80);
       static const byte PREFIX_JCC = byte(0x0F);
       static const byte MASK_JCC = byte(0xF0);
-      static const byte MASK_ADDRESS = byte(0xD5); 
+      static const byte MASK_ADDRESS = byte(0xD5);
       static const byte ESCAPE = byte(0xF5);
 
       bool isExeBlock(byte src[], int end, int count) const;

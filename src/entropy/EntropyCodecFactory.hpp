@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -85,10 +85,10 @@ namespace kanzi {
        case CM_TYPE:
            return new BinaryEntropyDecoder(ibs, new CMPredictor());
 
-       case TPAQ_TYPE: 
+       case TPAQ_TYPE:
            return new BinaryEntropyDecoder(ibs, new TPAQPredictor<false>(&ctx));
-       
-       case TPAQX_TYPE: 
+
+       case TPAQX_TYPE:
            return new BinaryEntropyDecoder(ibs, new TPAQPredictor<true>(&ctx));
 
        case NONE_TYPE:
@@ -123,10 +123,10 @@ namespace kanzi {
        case CM_TYPE:
            return new BinaryEntropyEncoder(obs, new CMPredictor());
 
-       case TPAQ_TYPE: 
+       case TPAQ_TYPE:
            return new BinaryEntropyEncoder(obs, new TPAQPredictor<false>(&ctx));
-       
-       case TPAQX_TYPE: 
+
+       case TPAQX_TYPE:
            return new BinaryEntropyEncoder(obs, new TPAQPredictor<true>(&ctx));
 
        case NONE_TYPE:

@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -19,14 +19,14 @@ limitations under the License.
 #include "../types.hpp"
 
 
-namespace kanzi 
+namespace kanzi
 {
 
    class HuffmanCommon
    {
    public:
-       static const int LOG_MAX_CHUNK_SIZE = 14; 
-       static const int MAX_CHUNK_SIZE = 1 << LOG_MAX_CHUNK_SIZE; 
+       static const int LOG_MAX_CHUNK_SIZE = 14;
+       static const int MAX_CHUNK_SIZE = 1 << LOG_MAX_CHUNK_SIZE;
        static const int MAX_SYMBOL_SIZE = LOG_MAX_CHUNK_SIZE;
 
        static int generateCanonicalCodes(uint16 sizes[], uint codes[], uint ranks[], int count);

@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -79,7 +79,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     if (_pCtx != nullptr) {
         Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
-    
+
         if ((dt != Global::UNDEFINED) && (dt != Global::MULTIMEDIA))
             return false;
     }
@@ -138,7 +138,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     if (_pCtx != nullptr)
        _pCtx->putInt("dataType", Global::MULTIMEDIA);
-    
+
     const int dist = (minIdx <= 4) ? minIdx : 8;
     int largeDeltas = 0;
 

@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -41,8 +41,8 @@ class FileData {
       std::string _name;
       int64 _size;
 
-      FileData(std::string& path, int64 size) : _fullPath(path), _size(size) 
-      { 
+      FileData(std::string& path, int64 size) : _fullPath(path), _size(size)
+      {
          int idx = int(_fullPath.find_last_of(PATH_SEPARATOR));
 
          if (idx > 0) {
@@ -138,8 +138,8 @@ struct FileDataComparator
 {
     bool _sortBySize;
 
-    bool operator() (const FileData& f1, const FileData& f2) 
-    { 
+    bool operator() (const FileData& f1, const FileData& f2)
+    {
         if (_sortBySize == false)
            return f1._fullPath < f2._fullPath;
 
@@ -184,7 +184,7 @@ static int mkdirAll(const std::string& path) {
 #if defined(_MSC_VER)
     if (_mkdir(path.c_str()) != 0) {
 #elif defined(__MINGW32__)
-    if (mkdir(path.c_str()) != 0) {    
+    if (mkdir(path.c_str()) != 0) {
 #else
     if (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
 #endif

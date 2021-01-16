@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -19,11 +19,11 @@ limitations under the License.
 #include "types.hpp"
 #include "SliceArray.hpp"
 
-namespace kanzi 
+namespace kanzi
 {
 
    template <class T>
-   class Transform 
+   class Transform
    {
    public:
        Transform(){};

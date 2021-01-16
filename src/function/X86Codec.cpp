@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -35,14 +35,14 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     if (_pCtx != nullptr) {
         Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
-    
+
         if ((dt != Global::UNDEFINED) && (dt != Global::X86))
             return false;
     }
 
     if (isExeBlock(src, end, count) == false)
        return false;
-    
+
     if (_pCtx != nullptr)
        _pCtx->putInt("dataType", Global::X86);
 
@@ -73,9 +73,9 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         if ((sgn != 0) && (sgn != 0xFF))
             continue;
 
-        const int addr = ((0xFF & int(src[srcIdx])) | 
-                         ((0xFF & int(src[srcIdx + 1])) << 8) | 
-                         ((0xFF & int(src[srcIdx + 2])) << 16) | 
+        const int addr = ((0xFF & int(src[srcIdx])) |
+                         ((0xFF & int(src[srcIdx + 1])) << 8) |
+                         ((0xFF & int(src[srcIdx + 2])) << 16) |
                           (sgn << 24)) + srcIdx;
 
         dst[dstIdx] = byte(sgn + 1);
@@ -151,18 +151,18 @@ bool X86Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return true;
 }
 
-int X86Codec::getMaxEncodedLength(int srcLen) const 
-{ 
+int X86Codec::getMaxEncodedLength(int srcLen) const
+{
     // Since we do not check the dst index for each byte (for speed purpose)
     // allocate some extra buffer for incompressible data.
     if (srcLen >= 1 << 30)
         return srcLen;
-      
+
     return (srcLen <= 512) ? srcLen + 32 : srcLen + srcLen / 16;
 }
 
 
-bool X86Codec::isExeBlock(byte src[], int end, int count) const 
+bool X86Codec::isExeBlock(byte src[], int end, int count) const
 {
     int jumps = 0;
 

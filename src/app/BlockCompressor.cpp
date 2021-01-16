@@ -1,6 +1,6 @@
 
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -332,7 +332,7 @@ int BlockCompressor::compress(uint64& outputSize)
     if (nbFiles == 1) {
         string oName = formattedOutName;
         string iName = "STDIN";
-        
+
         if (isStdIn == false) {
            iName = files[0]._fullPath;
            ctx.putLong("fileSize", files[0]._size);
@@ -446,7 +446,7 @@ int BlockCompressor::compress(uint64& outputSize)
         double delta = stopClock.elapsed();
         log.println("", _verbosity > 0);
         char buffer[32];
-        
+
         if (delta >= 1e5) {
             sprintf(buffer, "%.1f s", delta / 1000);
             ss << "Total encoding time: " << buffer;

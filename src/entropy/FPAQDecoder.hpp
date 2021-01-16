@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -20,11 +20,11 @@ limitations under the License.
 #include "../Memory.hpp"
 #include "../SliceArray.hpp"
 
-namespace kanzi 
+namespace kanzi
 {
 
    // This class is a generic implementation of a bool entropy decoder
-   class FPAQDecoder : public EntropyDecoder 
+   class FPAQDecoder : public EntropyDecoder
    {
    private:
        static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
@@ -68,7 +68,7 @@ namespace kanzi
 
    };
 
-   
+
    inline int FPAQDecoder::decodeBit(int prob)
    {
        // Calculate interval split

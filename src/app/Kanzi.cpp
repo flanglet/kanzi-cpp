@@ -1,6 +1,6 @@
 
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -112,12 +112,12 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         if ((arg.compare(0, 10, "--verbose=") == 0) || (ctx == ARG_IDX_VERBOSE)) {
             strVerbose = (arg.compare(0, 10, "--verbose=") == 0) ? arg.substr(10) : arg;
             strVerbose = trim(strVerbose);
-            
+
             if (strVerbose.length() != 1) {
                 cerr << "Invalid verbosity level provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
             }
-            
+
             verbose = atoi(strVerbose.c_str());
 
             if ((verbose < 0) || (verbose > 5)) {
@@ -148,7 +148,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         log.println("", true);
         log.println(APP_HEADER, true);
         stringstream extraHeader;
-        
+
 #ifdef __clang__
        extraHeader << "\nCompiled with clang version ";
        extraHeader << __clang_major__ << "." << __clang_minor__;
@@ -174,15 +174,15 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         if (extraHeader.str().length() > 0) {
 #if defined(__AVX2__)
             extraHeader << " - AVX2";
-#elif defined(__AVX__)   
+#elif defined(__AVX__)
             extraHeader << " - AVX";
-#elif defined(__AVX512F__)   
+#elif defined(__AVX512F__)
             extraHeader << " - AVX512";
-#elif defined(__SSE4_1__)   
+#elif defined(__SSE4_1__)
             extraHeader << " - SSE4.1";
 #elif defined(__SSE3__)
             extraHeader << " - SSE3";
-#elif defined(__SSE2__) 
+#elif defined(__SSE2__)
             extraHeader << " - SSE2";
 #elif defined(__SSE__)
             extraHeader << " - SSE";
@@ -352,7 +352,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (outputName != "") {
-                cerr << "Warning: ignoring duplicate output name: " << name << endl;                
+                cerr << "Warning: ignoring duplicate output name: " << name << endl;
             } else {
                 outputName = name;
             }
@@ -366,7 +366,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (inputName != "") {
-                cerr << "Warning: ignoring duplicate input name: " << name << endl;                
+                cerr << "Warning: ignoring duplicate input name: " << name << endl;
             } else {
                 inputName = name;
             }
@@ -380,7 +380,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (codec != "") {
-                cerr << "Warning: ignoring duplicate entropy: " << name << endl;                
+                cerr << "Warning: ignoring duplicate entropy: " << name << endl;
             } else {
                 codec = name;
                 transform(codec.begin(), codec.end(), codec.begin(), ::toupper);
@@ -395,7 +395,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (transf != "") {
-                cerr << "Warning: ignoring duplicate transform: " << name << endl;                
+                cerr << "Warning: ignoring duplicate transform: " << name << endl;
             } else {
                 transf = name;
                 transform(transf.begin(), transf.end(), transf.begin(), ::toupper);
@@ -418,7 +418,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (strLevel != "-1") {
-                cerr << "Warning: ignoring duplicate level: " << name << endl;                
+                cerr << "Warning: ignoring duplicate level: " << name << endl;
             } else {
                 if (name.length() != 1) {
                     cerr << "Invalid compression level provided on command line: " << arg << endl;
@@ -443,10 +443,10 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (strBlockSize != "") {
-                cerr << "Warning: ignoring duplicate block size: " << name << endl;                
+                cerr << "Warning: ignoring duplicate block size: " << name << endl;
                 ctx = -1;
                 continue;
-            } 
+            }
 
             transform(name.begin(), name.end(), name.begin(), ::toupper);
             char lastChar = (name.length() == 0) ? ' ' : name[name.length() - 1];
@@ -497,16 +497,16 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (strTasks != "0") {
-                cerr << "Warning: ignoring duplicate jobs: " << name << endl;                
+                cerr << "Warning: ignoring duplicate jobs: " << name << endl;
                 ctx = -1;
                 continue;
-            } 
+            }
 
             if ((name.length() != 1) && (name.length() != 2)) {
                 cerr << "Invalid number of jobs provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
             }
-                 
+
             strTasks = name;
             int tasks = atoi(strTasks.c_str());
 
@@ -524,7 +524,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (strFrom != "") {
-                cerr << "Warning: ignoring duplicate start block: " << name << endl;                
+                cerr << "Warning: ignoring duplicate start block: " << name << endl;
             } else {
                 strFrom = name;
                 from = atoi(strFrom.c_str());
@@ -543,7 +543,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (strTo != "") {
-                cerr << "Warning: ignoring duplicate end block: " << name << endl;                
+                cerr << "Warning: ignoring duplicate end block: " << name << endl;
             } else {
                 strTo = name;
                 to = atoi(strTo.c_str());

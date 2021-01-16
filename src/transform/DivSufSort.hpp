@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -239,7 +239,7 @@ namespace kanzi
                                       : (((n & 0x0000FF00) != 0) ? 8 + LOG_TABLE[(n >> 8) & 0xFF]
                                                                  : LOG_TABLE[n & 0xFF]);
    }
-   
+
 
 
    inline int DivSufSort::trMedian5(int _sa[], int isad, int v1, int v2, int v3, int v4, int v5)

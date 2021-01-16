@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -20,7 +20,7 @@ limitations under the License.
 #include "../Transform.hpp"
 
 
-namespace kanzi 
+namespace kanzi
 {
    // Sort by Rank Transform is a family of transforms typically used after
    // a BWT to reduce the variance of the data prior to entropy coding.
@@ -47,7 +47,7 @@ namespace kanzi
        bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
    private:
-      
+
        const int _mask1;
        const int _mask2;
        const int _shift;

@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -163,7 +163,7 @@ int testEntropyCodecCorrectness(const string& name)
         }
         else {
             size = 256;
-            
+
             for (int i = 0; i < 256; i++)
                 val[i] = byte(64 + 4 * ii + (rand() % (8*ii + 1)));
         }
@@ -196,7 +196,7 @@ int testEntropyCodecCorrectness(const string& name)
 
         DefaultInputBitStream ibs(ios);
         EntropyDecoder* ed = getDecoder(name, ibs, getPredictor(name));
-        
+
         if (ed == nullptr)
            return 1;
 
@@ -270,7 +270,7 @@ int testEntropyCodecSpeed(const string& name)
             DefaultOutputBitStream obs(ios, 16384);
             predictor = getPredictor(name);
             EntropyEncoder* ec = getEncoder(name, obs, predictor);
-            
+
             if (ec == nullptr)
                  return 1;
 
@@ -296,7 +296,7 @@ int testEntropyCodecSpeed(const string& name)
             DefaultInputBitStream ibs(ios, 16384);
             predictor = getPredictor(name);
             EntropyDecoder* ed = getDecoder(name, ibs, predictor);
-            
+
             if (ed == nullptr)
                  return 1;
 

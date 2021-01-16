@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -22,10 +22,10 @@ limitations under the License.
 #include "../Global.hpp"
 
 
-namespace kanzi 
+namespace kanzi
 {
 
-   class IOException : public std::runtime_error 
+   class IOException : public std::runtime_error
    {
    private:
        int _code;
@@ -40,7 +40,7 @@ namespace kanzi
        {
            _code = error;
        }
-        
+
        int error() const { return _code; }
 
        ~IOException() _GLIBCXX_USE_NOEXCEPT{};

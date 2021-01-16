@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -19,7 +19,7 @@ limitations under the License.
 #include "../Context.hpp"
 #include "../Function.hpp"
 
-namespace kanzi 
+namespace kanzi
 {
    // Zero Run Length Encoding is a simple encoding algorithm by Wheeler
    // closely related to Run Length Encoding. The main difference is
@@ -27,7 +27,7 @@ namespace kanzi
    // encoded in a different way (each digit in a different byte)
    // This algorithm is well adapted to process post BWT/MTFT data.
 
-   class ZRLT : public Function<byte> 
+   class ZRLT : public Function<byte>
    {
    public:
        ZRLT() {}

@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -64,7 +64,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
 }
 
 #if __cplusplus >= 201103L
-CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, 
+CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx,
           std::function<InputBitStream*(InputStream&)>* createBitStream)
 #else
 CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
@@ -95,7 +95,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
     _maxIdx = 0;
     _gcount = 0;
 #if __cplusplus >= 201103L
-    // A hook can be provided by the caller to customize the instantiation of the 
+    // A hook can be provided by the caller to customize the instantiation of the
     // input bitstream.
     _ibs = (createBitStream == nullptr) ? new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE) : (*createBitStream)(_is);
 #else
@@ -356,7 +356,7 @@ int CompressedInputStream::processBlock() THROW
     try {
         // Add a padding area to manage any block with header or temporarily expanded
         const int blkSize = max(_blockSize + EXTRA_BUFFER_SIZE, _blockSize + (_blockSize >> 4));
-        
+
         // Protect against future concurrent modification of the list of block listeners
         vector<Listener*> blockListeners(_listeners);
         int decoded = 0;

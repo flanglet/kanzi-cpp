@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -86,8 +86,8 @@ namespace kanzi {
        static const int BWT_MAX_CHUNKS = 8;
        static const int NB_FASTBITS = 17;
 
-       uint* _buffer; 
-       int* _sa; 
+       uint* _buffer;
+       int* _sa;
        int _bufferSize;
        int _primaryIndexes[8];
        DivSufSort _saAlgo;

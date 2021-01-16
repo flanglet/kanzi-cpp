@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -20,11 +20,11 @@ limitations under the License.
 #include "../EntropyEncoder.hpp"
 
 
-namespace kanzi 
+namespace kanzi
 {
 
    // Implementation of a static Huffman encoder.
-   class HuffmanEncoder : public EntropyEncoder 
+   class HuffmanEncoder : public EntropyEncoder
    {
    private:
        OutputBitStream& _bitstream;

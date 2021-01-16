@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -59,7 +59,7 @@ namespace kanzi
           _skipped = false;
        }
 
-       DecodingTaskResult(SliceArray<byte>& data, int blockId, int decoded, int checksum, 
+       DecodingTaskResult(SliceArray<byte>& data, int blockId, int decoded, int checksum,
           int error, const std::string& msg, bool skipped = false)
            : _msg(msg)
            , _completionTime(clock())
@@ -113,7 +113,7 @@ namespace kanzi
        uint32 _entropyType;
        int _blockId;
        InputBitStream* _ibs;
-       XXHash32* _hasher; 
+       XXHash32* _hasher;
        atomic_int* _processedBlockId;
        std::vector<Listener*> _listeners;
        Context _ctx;
@@ -176,7 +176,7 @@ namespace kanzi
        CompressedInputStream(InputStream& is, int jobs);
 
 #if __cplusplus >= 201103L
-       CompressedInputStream(InputStream& is, Context& ctx, 
+       CompressedInputStream(InputStream& is, Context& ctx,
           std::function<InputBitStream*(InputStream&)>* createBitStream=nullptr);
 #else
        CompressedInputStream(InputStream& is, Context& ctx);

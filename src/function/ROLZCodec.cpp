@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -36,7 +36,7 @@ ROLZCodec::ROLZCodec(Context& ctx) THROW
 {
     string transform = ctx.getString("transform", "NONE");
 
-    _delegate = (transform.find("ROLZX") != string::npos) ? (Function<byte>*)new ROLZCodec2(LOG_POS_CHECKS2) : 
+    _delegate = (transform.find("ROLZX") != string::npos) ? (Function<byte>*)new ROLZCodec2(LOG_POS_CHECKS2) :
        (Function<byte>*)new ROLZCodec1(LOG_POS_CHECKS1);
 }
 
@@ -226,7 +226,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             if (litLen > 0) {
                 if (litLen >= 31)
                     emitLength(lenBuf._array, lenBuf._index, litLen - 31);
-                
+
                 memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], litLen);
                 litBuf._index += litLen;
             }
@@ -244,7 +244,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         if (litLen >= 31)
             emitLength(lenBuf._array, lenBuf._index, litLen - 31);
-        
+
         memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], litLen);
         litBuf._index += litLen;
 

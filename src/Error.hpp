@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -16,10 +16,10 @@ limitations under the License.
 #ifndef _Error_
 #define _Error_
 
-namespace kanzi 
+namespace kanzi
 {
 
-   class Error 
+   class Error
    {
    public:
        static const int ERR_MISSING_PARAM = 1;

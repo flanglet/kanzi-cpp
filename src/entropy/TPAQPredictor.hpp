@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -312,9 +312,9 @@ namespace kanzi
            else if (rbsz >= 16 * 1024 * 1024)
                statesSize = 1 << 28;
            else if (rbsz >= 4 * 1024 * 1024)
-               statesSize = 1 << 26;   
-           else 
-               statesSize = (rbsz >= 1024 * 1024) ? 1 << 24 : 1 << 22; 
+               statesSize = 1 << 26;
+           else
+               statesSize = (rbsz >= 1024 * 1024) ? 1 << 24 : 1 << 22;
 
            // Actual size of the current block
            // Too many mixers hurts compression for small blocks.
@@ -332,8 +332,8 @@ namespace kanzi
            else
                mixersSize = (absz >= 1 * 1024 * 1024) ? 1 << 10 : 1 << 8;
 
-           bufferSize = (rbsz < BUFFER_SIZE) ? rbsz : BUFFER_SIZE; 
-           hashSize = (hashSize < 16 * uint(absz)) ? hashSize : 16 * uint(absz); 
+           bufferSize = (rbsz < BUFFER_SIZE) ? rbsz : BUFFER_SIZE;
+           hashSize = (hashSize < 16 * uint(absz)) ? hashSize : 16 * uint(absz);
        }
 
        mixersSize <<= extraMem;

@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -19,10 +19,10 @@ limitations under the License.
 #include "BitStreamException.hpp"
 #include "types.hpp"
 
-namespace kanzi 
+namespace kanzi
 {
 
-   class InputBitStream 
+   class InputBitStream
    {
    public:
        // Returns 1 or 0
@@ -33,7 +33,7 @@ namespace kanzi
        virtual uint64 readBits(uint length) THROW = 0;
 
        // Read bits and put them in the byte array. Length is the number of bits
-       // Return the number of bits read. 
+       // Return the number of bits read.
        // Throws if the stream is closed.
        virtual uint readBits(byte bits[], uint length) THROW = 0;
 

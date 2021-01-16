@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -85,7 +85,7 @@ void InfoPrinter::processEvent(const Event& evt)
 
         if (_type == InfoPrinter::DECODING)
             bi->_stage0Size = evt.getSize();
-        
+
         _clock12.stop();
         _clock23.start();
 
@@ -116,7 +116,7 @@ void InfoPrinter::processEvent(const Event& evt)
 
         if (_level >= 5) {
             _os << evt.toString() << endl;
-        }        
+        }
     }
     else if (evt.getType() == _thresholds[4]) {
         BlockInfo* bi = nullptr;
@@ -172,7 +172,7 @@ void InfoPrinter::processEvent(const Event& evt)
 
             _os << ss.str() << endl;
         }
- 
+
         delete bi;
 
         {

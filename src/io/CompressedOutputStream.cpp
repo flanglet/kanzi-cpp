@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -143,7 +143,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     _initialized = false;
     _closed = false;
 #if __cplusplus >= 201103L
-    // A hook can be provided by the caller to customize the instantiation of the 
+    // A hook can be provided by the caller to customize the instantiation of the
     // output bitstream.
     _obs = (createBitStream == nullptr) ? new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE) : (*createBitStream)(_os);
 #else
@@ -674,7 +674,7 @@ T EncodingTask<T>::run() THROW
 
             if (taskId == _blockId - 1)
                 break;
-        
+
             // Back-off improves performance
             CPU_PAUSE();
         }

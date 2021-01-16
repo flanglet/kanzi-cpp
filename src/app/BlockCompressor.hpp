@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -38,7 +38,7 @@ namespace kanzi {
        {
            _code = 0;
            _read = 0;
-           _written = 0; 
+           _written = 0;
            _errMsg = "";
        }
 
@@ -46,7 +46,7 @@ namespace kanzi {
        {
            _code = code;
            _read = read;
-           _written = written; 
+           _written = written;
            _errMsg = errMsg;
        }
 

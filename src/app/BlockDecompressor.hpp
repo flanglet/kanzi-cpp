@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -103,7 +103,7 @@ namespace kanzi {
    private:
        static const int DEFAULT_BUFFER_SIZE = 32768;
        static const int DEFAULT_CONCURRENCY = 1;
-       static const int MAX_CONCURRENCY = 64; 
+       static const int MAX_CONCURRENCY = 64;
 
        int _verbosity;
        bool _overwrite;

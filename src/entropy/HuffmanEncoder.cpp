@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -110,7 +110,7 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
         retries++;
 
         // Normalize to a smaller scale
-        EntropyUtils::normalizeFrequencies(f, alphabet, count, totalFreq, 
+        EntropyUtils::normalizeFrequencies(f, alphabet, count, totalFreq,
            HuffmanCommon::MAX_CHUNK_SIZE >> (2 * retries));
 
         for (int i = 0; i < count; i++)
@@ -238,7 +238,7 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
         // Update frequencies and rebuild Huffman codes
         const int endChunk = min(startChunk + _chunkSize, end);
         Global::computeHistogram(&block[startChunk], endChunk - startChunk, _freqs, true);
-        
+
         if (updateFrequencies(_freqs) <= 1) {
            // Skip chunk if only one symbol
            startChunk = endChunk;

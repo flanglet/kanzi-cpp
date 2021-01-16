@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -134,7 +134,7 @@ namespace kanzi {
    public:
        static const int MAX_DICT_SIZE = 1 << 19; // must be less than 1<<24
        static const int MAX_WORD_LENGTH = 31; // must be less than 128
-       static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB       
+       static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB
        static const byte ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
        static const byte ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
        static const byte MASK_1F = byte(0x1F);
@@ -152,7 +152,7 @@ namespace kanzi {
        }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
-       
+
        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
        int getMaxEncodedLength(int srcLen) const
@@ -197,7 +197,7 @@ namespace kanzi {
 
        // Common English words.
        static char DICT_EN_1024[];
-       
+
        // Static dictionary of 1024 entries.
        static DictEntry STATIC_DICTIONARY[1024];
        static int createDictionary(char words[], int dictSize, DictEntry dict[], int maxWords, int startWord);

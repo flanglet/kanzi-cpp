@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -64,7 +64,7 @@ namespace kanzi {
    #endif
 	}
 
-   
+
 
 	#ifndef IS_BIG_ENDIAN
 		#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
@@ -119,7 +119,7 @@ namespace kanzi {
 
    #if (!IS_BIG_ENDIAN)
       val = bswap64(val);
-   #endif 
+   #endif
       return int64(val);
 	}
 
@@ -137,7 +137,7 @@ namespace kanzi {
 
    #if (!IS_BIG_ENDIAN)
       val = bswap32(val);
-   #endif 
+   #endif
       return int32(val);
 	}
 
@@ -155,7 +155,7 @@ namespace kanzi {
 
    #if (!IS_BIG_ENDIAN)
       val = bswap16(val);
-   #endif 
+   #endif
       return int16(val);
 	}
 
@@ -164,7 +164,7 @@ namespace kanzi {
 	{
    #if (!IS_BIG_ENDIAN)
       val = int64(bswap64(uint64(val)));
-   #endif 
+   #endif
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data
@@ -179,7 +179,7 @@ namespace kanzi {
 	{
    #if (!IS_BIG_ENDIAN)
       val = int32(bswap32(uint32(val)));
-   #endif 
+   #endif
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data
@@ -194,7 +194,7 @@ namespace kanzi {
 	{
    #if (!IS_BIG_ENDIAN)
       val = int16(bswap16(uint16(val)));
-   #endif 
+   #endif
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data
@@ -218,7 +218,7 @@ namespace kanzi {
 
    #if (IS_BIG_ENDIAN)
       val = bswap64(val);
-   #endif 
+   #endif
       return int64(val);
 	}
 
@@ -236,7 +236,7 @@ namespace kanzi {
 
    #if (IS_BIG_ENDIAN)
       val = bswap32(val);
-   #endif 
+   #endif
       return int32(val);
 	}
 
@@ -254,7 +254,7 @@ namespace kanzi {
 
    #if (IS_BIG_ENDIAN)
       val = bswap16(val);
-   #endif 
+   #endif
       return int16(val);
 	}
 
@@ -263,7 +263,7 @@ namespace kanzi {
 	{
    #if (IS_BIG_ENDIAN)
       val = int64(bswap64(uint64(val)));
-   #endif 
+   #endif
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data
@@ -278,7 +278,7 @@ namespace kanzi {
 	{
    #if (IS_BIG_ENDIAN)
       val = int32(bswap32(uint32(val)));
-   #endif 
+   #endif
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data
@@ -293,7 +293,7 @@ namespace kanzi {
 	{
    #if (IS_BIG_ENDIAN)
       val = int16(bswap16(uint16(val)));
-   #endif 
+   #endif
 
    #ifdef AGGRESSIVE_OPTIMIZATION
       // !!! unaligned data

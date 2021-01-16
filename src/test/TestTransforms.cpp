@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -61,9 +61,9 @@ int testTransformsCorrectness(const string& name)
 
         if (ii == 0) {
             byte arr[] = {
-                byte(0), byte(1), byte(2), byte(2), byte(2), byte(2), byte(7), byte(9), 
+                byte(0), byte(1), byte(2), byte(2), byte(2), byte(2), byte(7), byte(9),
                 byte(9), byte(16), byte(16), byte(16), byte(1), byte(3), byte(3), byte(3),
-                byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), 
+                byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3),
                 byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3), byte(3)
             };
 
@@ -89,12 +89,12 @@ int testTransformsCorrectness(const string& name)
             size = 512;
             byte arr[512];
 
-            for (int i = 0; i < 256; i++) {              
+            for (int i = 0; i < 256; i++) {
                 arr[2 * i] = byte(i);
                 arr[2 * i + 1] = byte(i);
             }
 
-            arr[1] = byte(255); 
+            arr[1] = byte(255);
             memcpy(values, &arr[0], size);
         }
         else if (ii == 4) {
@@ -132,7 +132,7 @@ int testTransformsCorrectness(const string& name)
             size = 512;
             byte arr[512];
 
-            // Leave zeros at the beginning 
+            // Leave zeros at the beginning
             for (int j = 20; j < 512; j++)
                 arr[j] = byte(rand() % mod);
 
@@ -142,7 +142,7 @@ int testTransformsCorrectness(const string& name)
             size = 1024;
             byte arr[1024];
 
-            // Leave zeros at the beginning 
+            // Leave zeros at the beginning
             int idx = 20;
 
             while (idx < 1024) {
@@ -164,7 +164,7 @@ int testTransformsCorrectness(const string& name)
         }
 
         Transform<byte>* f = getByteTransform(name);
-        
+
         if (f == nullptr)
             return 1;
 
@@ -277,7 +277,7 @@ int testTransformsSpeed(const string& name)
     byte output[50000];
     byte reverse[50000];
     Transform<byte>* f = getByteTransform(name);
-    
+
     if (f == nullptr)
        return 1;
 
@@ -406,7 +406,7 @@ int TestTransforms_main(int argc, const char* argv[])
                  << endl
                  << "TestBWTS" << endl;
             res |= testTransformsCorrectness("BWTS");
-            res |= testTransformsSpeed("BWTS");            
+            res |= testTransformsSpeed("BWTS");
         }
         else {
             cout << "Test" << str << endl;

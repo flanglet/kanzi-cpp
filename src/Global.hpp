@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -22,7 +22,7 @@ limitations under the License.
 #include "util.hpp"
 
 #if defined(_MSC_VER)
-   #include <intrin.h>  
+   #include <intrin.h>
 #elif defined(__clang__)
    #ifdef __x86_64__
       #include <x86intrin.h>
@@ -49,7 +49,7 @@ namespace kanzi {
        static int _log2(uint32 x); // same as log2 minus check on input value
 
        static int log2_1024(uint32 x) THROW; // slow, accurate to 1/1024th
-       
+
        static void computeJobsPerTask(int jobsPerTask[], int jobs, int tasks) THROW;
 
        static int computeFirstOrderEntropy1024(int blockLen, uint histo[]);
@@ -116,13 +116,13 @@ namespace kanzi {
    {
       res = (x >= y) ? x * x + x + y : y * y + x;
    }
-   
-   
+
+
    inline void Global::decodePair(int& x, int& y, int res)
    {
       const int s = int(sqrt(float(res)));
       res -= s * s;
-      
+
       if (res >= s) {
          x = s;
          y = res - s;

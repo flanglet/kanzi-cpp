@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2017 Frederic Langlet
+Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -20,12 +20,12 @@ limitations under the License.
 #include "../EntropyDecoder.hpp"
 
 
-namespace kanzi 
+namespace kanzi
 {
 
    // Implementation of a static Huffman encoder.
    // Uses in place generation of canonical codes instead of a tree
-   class HuffmanDecoder : public EntropyDecoder 
+   class HuffmanDecoder : public EntropyDecoder
    {
    public:
        HuffmanDecoder(InputBitStream& bitstream, int chunkSize=HuffmanCommon::MAX_CHUNK_SIZE) THROW;
@@ -61,7 +61,7 @@ namespace kanzi
 
        void fetchBits();
 
-       bool reset(); 
+       bool reset();
 
        void _dispose() {}
 
