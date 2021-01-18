@@ -34,20 +34,20 @@ namespace kanzi {
        uint64 _written;
        std::string _errMsg;
 
-       FileCompressResult()
+       FileCompressResult():
+           _errMsg("")
        {
            _code = 0;
            _read = 0;
            _written = 0;
-           _errMsg = "";
        }
 
-       FileCompressResult(int code, uint64 read, uint64 written, const std::string& errMsg)
+       FileCompressResult(int code, uint64 read, uint64 written, const std::string& errMsg) :
+           _errMsg(errMsg)
        {
            _code = code;
            _read = read;
            _written = written;
-           _errMsg = errMsg;
        }
 
        ~FileCompressResult() {}

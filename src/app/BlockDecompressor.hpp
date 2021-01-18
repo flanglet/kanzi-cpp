@@ -32,18 +32,18 @@ namespace kanzi {
        uint64 _read;
        std::string _errMsg;
 
-       FileDecompressResult()
+       FileDecompressResult() :
+           _errMsg("")
        {
            _code = 0;
            _read = 0;
-           _errMsg = "";
        }
 
-       FileDecompressResult(int code, uint64 read, const std::string& errMsg)
+       FileDecompressResult(int code, uint64 read, const std::string& errMsg):
+           _errMsg(errMsg)
        {
            _code = code;
            _read = read;
-           _errMsg = errMsg;
        }
 
        ~FileDecompressResult() {}

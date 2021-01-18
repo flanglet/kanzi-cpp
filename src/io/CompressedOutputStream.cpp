@@ -501,6 +501,7 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     Context& ctx)
     : _obs(obs)
     , _ctx(ctx)
+    , _listeners(listeners)
 {
     _data = iBuffer;
     _buffer = oBuffer;
@@ -509,7 +510,6 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     _entropyType = entropyType;
     _blockId = blockId;
     _hasher = hasher;
-    _listeners = listeners;
     _processedBlockId = processedBlockId;
 }
 

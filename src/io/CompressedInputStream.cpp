@@ -571,6 +571,7 @@ DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     atomic_int* processedBlockId, vector<Listener*>& listeners,
     Context& ctx)
     : _ctx(ctx)
+    , _listeners(listeners)
 {
     _blockLength = blockSize;
     _data = iBuffer;
@@ -580,7 +581,6 @@ DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     _blockId = blockId;
     _ibs = ibs;
     _hasher = hasher;
-    _listeners = listeners;
     _processedBlockId = processedBlockId;
 }
 

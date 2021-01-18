@@ -74,13 +74,13 @@ namespace kanzi
 
        DecodingTaskResult(const DecodingTaskResult& result)
            : _msg(result._msg)
+           , _completionTime(result._completionTime)
        {
            _data = result._data;
            _blockId = result._blockId;
            _error = result._error;
            _decoded = result._decoded;
            _checksum = result._checksum;
-           _completionTime = result._completionTime;
            _skipped = result._skipped;
        }
 
