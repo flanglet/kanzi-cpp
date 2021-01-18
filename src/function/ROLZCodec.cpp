@@ -762,7 +762,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             rd.setMode(LITERAL_FLAG);
             rd.setContext(dst[dstIdx - 1]);
             prefetchRead(&_counters[key]);
-            const int val = rd.decodeBits(9);
+            val = rd.decodeBits(9);
 
             if ((val >> 8) == LITERAL_FLAG) {
                 dst[dstIdx++] = byte(val);

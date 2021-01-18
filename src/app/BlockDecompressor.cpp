@@ -346,24 +346,24 @@ int BlockDecompressor::decompress(uint64& inputSize)
     stopClock.stop();
 
     if (nbFiles > 1) {
-        Printer log(&cout);
+        Printer out(&cout);
         double delta = stopClock.elapsed();
-        log.println("", _verbosity > 0);
-        char buffer[32];
+        out.println("", _verbosity > 0);
+        char buf[32];
 
         if (delta >= 1e5) {
-            sprintf(buffer, "%.1f s", delta / 1000);
-            ss << "Total decoding time: " << buffer;
+            sprintf(buf, "%.1f s", delta / 1000);
+            ss << "Total decoding time: " << buf;
         }
         else {
-            sprintf(buffer, "%.0f ms", delta);
-            ss << "Total decoding time: " << buffer;
+            sprintf(buf, "%.0f ms", delta);
+            ss << "Total decoding time: " << buf;
         }
 
-        log.println(ss.str().c_str(), _verbosity > 0);
+        out.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
         ss << "Total output size: " << read << " byte" << ((read > 1) ? "s" : "");
-        log.println(ss.str().c_str(), _verbosity > 0);
+        out.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
     }
 

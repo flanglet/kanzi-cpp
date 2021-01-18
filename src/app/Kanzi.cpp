@@ -334,9 +334,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         if (ctx == -1) {
             int idx = -1;
 
-            for (int i = 0; i < 10; i++) {
-                if (arg == CMD_LINE_ARGS[i]) {
-                    idx = i;
+            for (int j = 0; j < 10; i++) {
+                if (arg == CMD_LINE_ARGS[j]) {
+                    idx = j;
                     break;
                 }
             }

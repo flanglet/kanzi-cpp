@@ -263,22 +263,23 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
         // Another crude test: check that the frequencies of < and > are similar
         // and 'high enough'. Also check it is worth to attempt replacing ampersand sequences.
         // Getting this flag wrong results in a very small compression speed degradation.
-        const int f1 = freqs0[60]; // '<'
-        const int f2 = freqs0[62]; // '>'
-        const int f3 = freqs[38][97] + freqs[38][103] + freqs[38][108] + freqs[38][113]; // '&a', '&g', '&l', '&q'
+        const int f60 = freqs0[60]; // '<'
+        const int f62 = freqs0[62]; // '>'
+        const int f38 = freqs[38][97] + freqs[38][103] + freqs[38][108] + freqs[38][113]; // '&a', '&g', '&l', '&q'
         const int minFreq = (((count - nbBinChars) >> 9) < 2) ? 2 : (count - nbBinChars) >> 9;
 
-        if ((f1 >= minFreq) && (f2 >= minFreq) && (f3 > 0)) {
-            if (f1 < f2) {
-                if (f1 >= (f2 - f2 / 100))
+        if ((f60 >= minFreq) && (f62 >= minFreq) && (f38 > 0)) {
+            if (f60 < f62) {
+                if (f60 >= (f62 - f62 / 100))
                     res |= TextCodec::MASK_XML_HTML;
             }
-            else if (f2 < f1) {
-                if (f2 >= (f1 - f1 / 100))
+            else if (f62 < f60) {
+                if (f62 >= (f60 - f60 / 100))
                     res |= TextCodec::MASK_XML_HTML;
             }
-            else
+            else {
                 res |= TextCodec::MASK_XML_HTML;
+            }
         }
     }
 
@@ -526,18 +527,18 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     // Word not found in the dictionary or hash collision.
                     // Replace entry if not in static dictionary
                     if (((length > 3) || ((length == 3) && (words < TextCodec::THRESHOLD2))) && (pe1 == nullptr)) {
-                        DictEntry* pe = &_dictList[words];
+                        DictEntry* pe3 = &_dictList[words];
 
-                        if ((pe->_data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
+                        if ((pe3->_data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
                             // Reuse old entry
-                            _dictMap[pe->_hash & _hashMask] = nullptr;
-                            pe->_ptr = &src[delimAnchor + 1];
-                            pe->_hash = h1;
-                            pe->_data = (length << 24) | words;
+                            _dictMap[pe3->_hash & _hashMask] = nullptr;
+                            pe3->_ptr = &src[delimAnchor + 1];
+                            pe3->_hash = h1;
+                            pe3->_data = (length << 24) | words;
                         }
 
                         // Update hash map
-                        _dictMap[h1 & _hashMask] = pe;
+                        _dictMap[h1 & _hashMask] = pe3;
                         words++;
 
                         // Dictionary full ? Expand or reset index to end of static dictionary
@@ -983,18 +984,18 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     // Word not found in the dictionary or hash collision.
                     // Replace entry if not in static dictionary
                     if (((length > 3) || ((length == 3) && (words < TextCodec::THRESHOLD2))) && (pe1 == nullptr)) {
-                        DictEntry* pe = &_dictList[words];
+                        DictEntry* pe3 = &_dictList[words];
 
-                        if ((pe->_data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
+                        if ((pe3->_data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
                             // Reuse old entry
-                            _dictMap[pe->_hash & _hashMask] = nullptr;
-                            pe->_ptr = &src[delimAnchor + 1];
-                            pe->_hash = h1;
-                            pe->_data = (length << 24) | words;
+                            _dictMap[pe3->_hash & _hashMask] = nullptr;
+                            pe3->_ptr = &src[delimAnchor + 1];
+                            pe3->_hash = h1;
+                            pe3->_data = (length << 24) | words;
                         }
 
                         // Update hash map
-                        _dictMap[h1 & _hashMask] = pe;
+                        _dictMap[h1 & _hashMask] = pe3;
                         words++;
 
                         // Dictionary full ? Expand or reset index to end of static dictionary
