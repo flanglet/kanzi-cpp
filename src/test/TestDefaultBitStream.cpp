@@ -149,17 +149,6 @@ int testBitStreamCorrectnessMisaligned1()
         obs.close();
         cout << "Written (after close): " << obs.written() << endl;
         ios.rdbuf()->pubseekpos(0);
-        istringstream is;
-        char* cvalues = new char[4 * length];
-
-        for (int i = 0; i < length; i++) {
-            cvalues[4 * i] = (values[i] >> 24) & 0xFF;
-            cvalues[4 * i + 1] = (values[i] >> 16) & 0xFF;
-            cvalues[4 * i + 2] = (values[i] >> 8) & 0xFF;
-            cvalues[4 * i + 3] = values[i] & 0xFF;
-        }
-
-        is.read(cvalues, length);
         DefaultInputBitStream ibs(ios, 16384);
         ibs.readBit();
         ibs.readBits(t);
@@ -168,7 +157,6 @@ int testBitStreamCorrectnessMisaligned1()
         cout << "Read (before close): " << ibs.read() << endl;
         ibs.close();
         cout << "Read (after close): " << ibs.read() << endl;
-        delete[] cvalues;
     }
 
     for (int test = 1; test <= 10; test++) {

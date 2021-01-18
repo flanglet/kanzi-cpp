@@ -307,38 +307,38 @@ int testTransformsSpeed(const string& name)
         double delta2 = 0;
 
         for (int ii = 0; ii < iter; ii++) {
-            Transform<byte>* f = getByteTransform(name);
+            Transform<byte>* ff = getByteTransform(name);
             iba1._index = 0;
             iba2._index = 0;
             before = clock();
 
-            if (f->forward(iba1, iba2, size) == false) {
+            if (ff->forward(iba1, iba2, size) == false) {
                 cout << "Encoding error" << endl;
-                delete f;
+                delete ff;
                 continue;
             }
 
             after = clock();
             delta1 += (after - before);
-            delete f;
+            delete ff;
         }
 
         for (int ii = 0; ii < iter; ii++) {
-            Transform<byte>* f = getByteTransform(name);
+            Transform<byte>* fi = getByteTransform(name);
             int count = iba2._index;
             iba3._index = 0;
             iba2._index = 0;
             before = clock();
 
-            if (f->inverse(iba2, iba3, count) == false) {
+            if (fi->inverse(iba2, iba3, count) == false) {
                 cout << "Decoding error" << endl;
-                delete f;
+                delete fi;
                 return 1;
             }
 
             after = clock();
             delta2 += (after - before);
-            delete f;
+            delete fi;
         }
 
         int idx = -1;
