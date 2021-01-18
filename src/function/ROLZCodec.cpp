@@ -577,6 +577,7 @@ ROLZCodec2::ROLZCodec2(uint logPosChecks) THROW
     _posChecks = 1 << logPosChecks;
     _maskChecks = _posChecks - 1;
     _matches = new int32[ROLZCodec::HASH_SIZE << logPosChecks];
+    memset(&_counters[0], 0, sizeof(int32) * 65536);
 }
 
 // return position index (_logPosChecks bits) + length (16 bits) or -1

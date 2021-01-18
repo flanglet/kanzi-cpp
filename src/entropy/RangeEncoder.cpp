@@ -47,6 +47,8 @@ bool RangeEncoder::reset()
     _low = 0;
     _range = TOP_RANGE;
     _shift = 0;
+    memset(_alphabet, 0, 256 * sizeof(uint));
+    memset(_freqs, 0, 256 * sizeof(uint));
     memset(_cumFreqs, 0, 257 * sizeof(uint64));
     return true;
 }
