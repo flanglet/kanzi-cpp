@@ -60,8 +60,8 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
         throw invalid_argument("The block size must be a multiple of 16");
 
 #ifdef CONCURRENCY_ENABLED
-    if (uint64(bSize) * uint64(tasks) >= uint64(1 << 31))
-        tasks = (1 << 31) / bSize;
+    if (uint64(bSize) * uint64(tasks) >= (uint64(1) << 31))
+        tasks = int((uint(1) << 31) / uint(bSize));
 #endif
 
     _blockId = 0;
@@ -124,8 +124,8 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
         throw invalid_argument("The block size must be a multiple of 16");
 
 #ifdef CONCURRENCY_ENABLED
-    if (uint64(bSize) * uint64(tasks) >= uint64(1 << 31))
-        tasks = (1 << 31) / bSize;
+    if (uint64(bSize) * uint64(tasks) >= (uint64(1) << 31))
+        tasks = int((uint(1) << 31) / uint(bSize));
 #endif
 
     _blockId = 0;
@@ -500,8 +500,8 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     atomic_int* processedBlockId, vector<Listener*>& listeners,
     Context& ctx)
     : _obs(obs)
-    , _ctx(ctx)
     , _listeners(listeners)
+    , _ctx(ctx)
 {
     _data = iBuffer;
     _buffer = oBuffer;

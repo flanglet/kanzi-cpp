@@ -570,8 +570,8 @@ DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     InputBitStream* ibs, XXHash32* hasher,
     atomic_int* processedBlockId, vector<Listener*>& listeners,
     Context& ctx)
-    : _ctx(ctx)
-    , _listeners(listeners)
+    : _listeners(listeners)
+    , _ctx(ctx)
 {
     _blockLength = blockSize;
     _data = iBuffer;
