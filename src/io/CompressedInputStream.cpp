@@ -255,13 +255,13 @@ int CompressedInputStream::peek() THROW
 
         return int(_sa->_array[_sa->_index]);
     }
-    catch (IOException& e) {
+    catch (IOException&) {
         setstate(ios::badbit);
-        throw e;
+        throw; // rethrow
     }
-    catch (exception& e) {
+    catch (exception&) {
         setstate(ios::badbit);
-        throw e;
+        throw; // rethrow
     }
 }
 

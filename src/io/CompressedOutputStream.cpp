@@ -456,12 +456,12 @@ void CompressedOutputStream::processBlock(bool force) THROW
 #endif
         _sa->_index = 0;
     }
-    catch (IOException& e) {
+    catch (IOException&) {
         for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
             delete *it;
 
         tasks.clear();
-        throw e;
+        throw; // rethrow
     }
     catch (BitStreamException& e) {
         for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)

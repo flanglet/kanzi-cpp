@@ -130,12 +130,12 @@ void DefaultOutputBitStream::_close() THROW
         _availBits = 64;
         flush();
     }
-    catch (BitStreamException& e) {
+    catch (BitStreamException&) {
         // Revert fields to allow subsequent attempts in case of transient failure
         _position = savedPosition;
         _availBits = savedBitIndex;
         _current = savedCurrent;
-        throw e;
+        throw; // re-throw
     }
 
     try {
