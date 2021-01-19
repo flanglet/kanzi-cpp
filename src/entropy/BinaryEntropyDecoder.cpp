@@ -30,7 +30,6 @@ BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor*
     _low = 0;
     _high = TOP;
     _current = 0;
-    _initialized = false;
     _deallocate = deallocate;
 }
 
@@ -71,7 +70,6 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
 
         const int szBytes = int(EntropyUtils::readVarInt(_bitstream));
         _current = _bitstream.readBits(56);
-        _initialized = true;
 
         if (szBytes != 0)
             _bitstream.readBits(&_sba._array[0], 8 * szBytes);
@@ -98,13 +96,4 @@ byte BinaryEntropyDecoder::decodeByte()
         | (decodeBit(_predictor->get()) << 2)
         | (decodeBit(_predictor->get()) << 1)
         | decodeBit(_predictor->get()));
-}
-
-void BinaryEntropyDecoder::initialize()
-{
-    if (_initialized == true)
-        return;
-
-    _current = _bitstream.readBits(56);
-    _initialized = true;
 }

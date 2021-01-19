@@ -37,13 +37,10 @@ namespace kanzi
        uint64 _high;
        uint64 _current;
        InputBitStream& _bitstream;
-       bool _initialized;
        bool _deallocate;
        SliceArray<byte> _sba;
 
    protected:
-       virtual void initialize();
-
        void read();
 
        void _dispose() {};
@@ -56,8 +53,6 @@ namespace kanzi
        int decode(byte block[], uint blkptr, uint count) THROW;
 
        InputBitStream& getBitStream() const { return _bitstream; }
-
-       bool isInitialized() const { return _initialized; }
 
        virtual void dispose() { _dispose(); }
 
