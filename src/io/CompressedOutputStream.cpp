@@ -449,7 +449,7 @@ void CompressedOutputStream::processBlock(bool force) THROW
             }
         }
 
-        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
             delete *it;
 
         tasks.clear();
@@ -457,21 +457,21 @@ void CompressedOutputStream::processBlock(bool force) THROW
         _sa->_index = 0;
     }
     catch (IOException&) {
-        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
             delete *it;
 
         tasks.clear();
         throw; // rethrow
     }
     catch (BitStreamException& e) {
-        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
             delete *it;
 
         tasks.clear();
         throw IOException(e.what(), e.error());
     }
     catch (exception& e) {
-        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
             delete *it;
 
         tasks.clear();
@@ -489,7 +489,7 @@ void CompressedOutputStream::notifyListeners(vector<Listener*>& listeners, const
 {
     vector<Listener*>::iterator it;
 
-    for (it = listeners.begin(); it != listeners.end(); it++)
+    for (it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->processEvent(evt);
 }
 
@@ -498,7 +498,7 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     uint64 transformType, uint entropyType, int blockId,
     OutputBitStream* obs, XXHash32* hasher,
     atomic_int* processedBlockId, vector<Listener*>& listeners,
-    Context& ctx)
+    const Context& ctx)
     : _obs(obs)
     , _listeners(listeners)
     , _ctx(ctx)

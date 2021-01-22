@@ -96,7 +96,7 @@ namespace kanzi {
            uint64 transformType, uint32 entropyType, int blockId,
            OutputBitStream* obs, XXHash32* hasher,
            atomic_int* processedBlockId, std::vector<Listener*>& listeners,
-           Context& ctx);
+           const Context& ctx);
 
        ~EncodingTask(){};
 

@@ -59,7 +59,7 @@ namespace kanzi
           _skipped = false;
        }
 
-       DecodingTaskResult(SliceArray<byte>& data, int blockId, int decoded, int checksum,
+       DecodingTaskResult(const SliceArray<byte>& data, int blockId, int decoded, int checksum,
           int error, const std::string& msg, bool skipped = false)
            : _msg(msg)
            , _completionTime(clock())
@@ -123,7 +123,7 @@ namespace kanzi
            uint64 transformType, uint32 entropyType, int blockId,
            InputBitStream* ibs, XXHash32* hasher,
            atomic_int* processedBlockId, std::vector<Listener*>& listeners,
-           Context& ctx);
+           const Context& ctx);
 
        ~DecodingTask(){};
 

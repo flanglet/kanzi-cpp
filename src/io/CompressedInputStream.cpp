@@ -181,8 +181,8 @@ void CompressedInputStream::readHeader() THROW
     }
 
 #ifdef CONCURRENCY_ENABLED
-    if (uint64(_blockSize) * uint64(_jobs) >= uint64(1 << 31))
-        _jobs = (1 << 31) / _blockSize;
+    if (uint64(_blockSize) * uint64(_jobs) >= (uint64(1) << 31))
+        _jobs = int((uint(1) << 31) / uint(_blockSize));
 #endif
 
     // Read number of blocks in input. 0 means 'unknown' and 63 means 63 or more.
@@ -494,7 +494,7 @@ int CompressedInputStream::processBlock() THROW
                 }
             }
 
-            for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+            for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
                 delete *it;
 
             tasks.clear();
@@ -509,14 +509,14 @@ int CompressedInputStream::processBlock() THROW
         return decoded;
     }
     catch (IOException&) {
-        for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+        for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
             delete *it;
 
         tasks.clear();
         throw;
     }
     catch (exception& e) {
-        for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); it++)
+        for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
             delete *it;
 
         tasks.clear();
@@ -560,7 +560,7 @@ void CompressedInputStream::notifyListeners(vector<Listener*>& listeners, const 
 {
     vector<Listener*>::iterator it;
 
-    for (it = listeners.begin(); it != listeners.end(); it++)
+    for (it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->processEvent(evt);
 }
 
@@ -569,7 +569,7 @@ DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     uint64 transformType, uint entropyType, int blockId,
     InputBitStream* ibs, XXHash32* hasher,
     atomic_int* processedBlockId, vector<Listener*>& listeners,
-    Context& ctx)
+    const Context& ctx)
     : _listeners(listeners)
     , _ctx(ctx)
 {

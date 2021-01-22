@@ -101,7 +101,7 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
     if ((_verbosity > 0) && (args.size() > 0)) {
         Printer log(&cout);
 
-        for (it = args.begin(); it != args.end(); it++) {
+        for (it = args.begin(); it != args.end(); ++it) {
             stringstream ss;
             ss << "Ignoring invalid option [" << it->first << "]";
             log.println(ss.str().c_str(), _verbosity > 0);
@@ -395,7 +395,7 @@ void BlockDecompressor::notifyListeners(vector<Listener*>& listeners, const Even
 {
     vector<Listener*>::iterator it;
 
-    for (it = listeners.begin(); it != listeners.end(); it++)
+    for (it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->processEvent(evt);
 }
 

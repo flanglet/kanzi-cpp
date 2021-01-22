@@ -158,7 +158,7 @@ void InfoPrinter::processEvent(const Event& evt)
             if (_type == InfoPrinter::ENCODING) {
                 if (bi->_stage0Size != 0) {
                     char buf[32];
-                    sprintf(buf, " (%d%%)", uint(stage2Size * double(100) / double(bi->_stage0Size)));
+                    sprintf(buf, " (%u%%)", uint(stage2Size * double(100) / double(bi->_stage0Size)));
                     ss << buf;
                 }
             }
