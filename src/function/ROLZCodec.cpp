@@ -216,7 +216,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             if (mLen >= 7) {
                 tkBuf._array[tkBuf._index++] = byte(mode | 0x07);
-                lenBuf._array[lenBuf._index++] = byte(mLen - 7);
+                lenBuf._index += emitLength(&lenBuf._array[lenBuf._index], mLen - 7);
             }
             else {
                 tkBuf._array[tkBuf._index++] = byte(mode | mLen);
@@ -225,7 +225,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             // Emit literals
             if (litLen > 0) {
                 if (litLen >= 31)
-                    emitLength(lenBuf._array, lenBuf._index, litLen - 31);
+                    lenBuf._index += emitLength(&lenBuf._array[lenBuf._index], litLen - 31);
 
                 memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], litLen);
                 litBuf._index += litLen;
@@ -243,7 +243,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         tkBuf._array[tkBuf._index++] = byte(mode);
 
         if (litLen >= 31)
-            emitLength(lenBuf._array, lenBuf._index, litLen - 31);
+            lenBuf._index += emitLength(&lenBuf._array[lenBuf._index], litLen - 31);
 
         memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], litLen);
         litBuf._index += litLen;
@@ -377,9 +377,9 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             int matchLen = mode & 0x07;
 
             if (matchLen == 7)
-                matchLen += int(lenBuf._array[lenBuf._index++]);
+                matchLen += readLength(lenBuf._array, lenBuf._index);
 
-            const int litLen = (mode < 0xF8) ? mode >> 3 : readLength(lenBuf._array, lenBuf._index);
+            const int litLen = (mode < 0xF8) ? mode >> 3 : readLength(lenBuf._array, lenBuf._index) + 31;
             emitLiterals(litBuf, buf, dstIdx, litLen);
             litBuf._index += litLen;
             dstIdx += litLen;
@@ -432,28 +432,6 @@ End:
     return srcIdx == count;
 }
 
-int ROLZCodec1::readLength(byte block[], int& idx)
-{
-    int next = int(block[idx++]);
-    int length = next & 0x7F;
-
-    if (next >= 128) {
-        next = int(block[idx++]);
-        length = (length << 7) | (next & 0x7F);
-
-        if (next >= 128) {
-            next = int(block[idx++]);
-            length = (length << 7) | (next & 0x7F);
-
-            if (next >= 128) {
-                next = int(block[idx++]);
-                length = (length << 7) | (next & 0x7F);
-            }
-        }
-    }
-
-    return length + 31;
-}
 
 int ROLZCodec1::emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int litLen)
 {

@@ -22,7 +22,6 @@ limitations under the License.
 #include "../Predictor.hpp"
 #include "../util.hpp"
 
-
 // Implementation of a Reduced Offset Lempel Ziv transform
 // More information about ROLZ at http://ezcodesample.com/rolz/rolz_article.html
 
@@ -129,7 +128,7 @@ namespace kanzi {
 
    private:
        static const int MIN_MATCH = 3;
-       static const int MAX_MATCH = MIN_MATCH + 255 + 7;
+       static const int MAX_MATCH = MIN_MATCH + 65535 + 7;
 
        int32* _matches;
        int32 _counters[65536];
@@ -139,7 +138,7 @@ namespace kanzi {
 
        int findMatch(const byte buf[], const int pos, const int end);
 
-       void emitLength(byte block[], int& idx, int length);
+       int emitLength(byte block[], int length);
 
        int readLength(byte block[], int& idx);
 
@@ -227,9 +226,10 @@ namespace kanzi {
        static int emitCopy(byte dst[], int dstIdx, int ref, int matchLen);
    };
 
-
-   inline void ROLZCodec1::emitLength(byte block[], int& idx, int length)
+   inline int ROLZCodec1::emitLength(byte block[], int length)
    {
+       int idx = 0;
+
        if (length >= 1 << 7) {
            if (length >= 1 << 14) {
                if (length >= 1 << 21)
@@ -242,6 +242,30 @@ namespace kanzi {
        }
 
        block[idx++] = byte(length & 0x7F);
+       return idx;
+   }
+
+   inline int ROLZCodec1::readLength(byte block[], int& pos)
+   {
+       int next = int(block[pos++]);
+       int length = next & 0x7F;
+
+       if (next >= 128) {
+           next = int(block[pos++]);
+           length = (length << 7) | (next & 0x7F);
+
+           if (next >= 128) {
+               next = int(block[pos++]);
+               length = (length << 7) | (next & 0x7F);
+
+               if (next >= 128) {
+                   next = int(block[pos++]);
+                   length = (length << 7) | (next & 0x7F);
+               }
+           }
+       }
+
+       return length;
    }
 
    inline int ROLZCodec::emitCopy(byte dst[], int dstIdx, int ref, int matchLen)
