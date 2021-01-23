@@ -99,11 +99,20 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     else {
         _blockSize = atoi(it->second.c_str());
         args.erase(it);
-        _blockSize = (_blockSize + 15) & -16;
 
-        if (_blockSize > 1024 * 1024 * 1024) {
+        if (_blockSize < MIN_BLOCK_SIZE) {
            stringstream sserr;
-           sserr << "Maximum block size is 1 GB (1073741824 bytes), got " << _blockSize << " bytes";
+           sserr << "Minimum block size is " << (MIN_BLOCK_SIZE / 1024) << " KB (";
+           sserr << MIN_BLOCK_SIZE << " bytes), got " << _blockSize << " bytes";
+           throw invalid_argument(sserr.str().c_str());
+        }
+
+        _blockSize = (_blockSize + 15) & -16; // may increase value
+
+        if (_blockSize > MAX_BLOCK_SIZE) {
+           stringstream sserr;
+           sserr << "Maximum block size is " << (MAX_BLOCK_SIZE / (1024 * 1024 * 1024)) << " GB (";
+           sserr << MAX_BLOCK_SIZE << " bytes), got " << _blockSize << " bytes";
            throw invalid_argument(sserr.str().c_str());
         }
     }

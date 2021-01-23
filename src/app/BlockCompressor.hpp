@@ -105,7 +105,9 @@ namespace kanzi {
        void dispose();
 
    private:
-       static const int DEFAULT_BLOCK_SIZE = 1024 * 1024;
+       static const int DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024;
+       static const int MIN_BLOCK_SIZE = 1024;
+       static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024;
        static const int DEFAULT_CONCURRENCY = 1;
        static const int MAX_CONCURRENCY = 64;
 

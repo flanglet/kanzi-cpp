@@ -243,7 +243,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
             if (mode.compare(0, 1, "c") == 0) {
                 log.println("   -b, --block=<size>", true);
-                log.println("        size of blocks, multiple of 16 (default 1 MB, max 1 GB, min 1 KB).\n", true);
+                log.println("        size of blocks (default 4 MB, max 1 GB, min 1 KB).\n", true);
                 log.println("   -l, --level=<compression>", true);
                 log.println("        set the compression level [0..9]", true);
                 log.println("        Providing this option forces entropy and transform.", true);
