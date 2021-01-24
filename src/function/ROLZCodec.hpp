@@ -128,7 +128,7 @@ namespace kanzi {
 
    private:
        static const int MIN_MATCH = 3;
-       static const int MAX_MATCH = MIN_MATCH + 65535 + 7;
+       static const int MAX_MATCH = MIN_MATCH + 65535;
 
        int32* _matches;
        int32 _counters[65536];
