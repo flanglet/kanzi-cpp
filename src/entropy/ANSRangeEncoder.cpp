@@ -28,8 +28,11 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
     if ((order != 0) && (order != 1))
         throw invalid_argument("ANS Codec: The order must be 0 or 1");
 
-    if (chunkSize < 1024)
-        throw invalid_argument("ANS Codec: The chunk size must be at least 1024");
+    if (chunkSize < MIN_CHUNK_SIZE) {
+        stringstream ss;
+        ss << "ANS Codec: The chunk size must be at least " << MIN_CHUNK_SIZE;
+        throw invalid_argument(ss.str());
+    }
 
     if (chunkSize > MAX_CHUNK_SIZE) {
         stringstream ss;
@@ -43,7 +46,7 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
         throw invalid_argument(ss.str());
     }
 
-    _chunkSize = chunkSize << (8 * order);
+    _chunkSize = min(chunkSize << (8 * order), MAX_CHUNK_SIZE);
     _order = order;
     const int32 dim = 255 * order + 1;
     _alphabet = new uint[dim * 256];

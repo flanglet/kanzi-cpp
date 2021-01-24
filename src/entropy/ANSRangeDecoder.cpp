@@ -27,8 +27,11 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
     if ((order != 0) && (order != 1))
         throw invalid_argument("ANS Codec: The order must be 0 or 1");
 
-    if (chunkSize < 1024)
-        throw invalid_argument("ANS Codec: The chunk size must be at least 1024");
+    if (chunkSize < MIN_CHUNK_SIZE) {
+        stringstream ss;
+        ss << "ANS Codec: The chunk size must be at least " << MIN_CHUNK_SIZE;
+        throw invalid_argument(ss.str());
+    }
 
     if (chunkSize > MAX_CHUNK_SIZE) {
         stringstream ss;
@@ -36,7 +39,7 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
         throw invalid_argument(ss.str());
     }
 
-    _chunkSize = chunkSize << (8 * order);
+    _chunkSize = min(chunkSize << (8 * order), MAX_CHUNK_SIZE);
     _order = order;
     const int dim = 255 * order + 1;
     _alphabet = new uint[dim * 256];
@@ -65,8 +68,8 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
 
     if ((_logRange < 8) || (_logRange > 16)) {
         stringstream ss;
-        ss << "ANS Codec: Invalid range: " << _logRange << " (must be in [8..16])";
-        throw invalid_argument(ss.str());
+        ss << "Invalid bitstream: range = " << _logRange << " (must be in [8..16])";
+        throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
     }
 
     int res = 0;
@@ -132,8 +135,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
             stringstream ss;
             ss << "Invalid bitstream: incorrect frequency " << frequencies[_alphabet[0]];
             ss << " for symbol '" << _alphabet[0] << "' in ANS range decoder";
-            throw BitStreamException(ss.str(),
-                BitStreamException::INVALID_STREAM);
+            throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
         }
 
         f[curAlphabet[0]] = uint(scale - sum);
