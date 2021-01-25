@@ -101,20 +101,20 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         args.erase(it);
 
         if (_blockSize < MIN_BLOCK_SIZE) {
-           stringstream sserr;
-           sserr << "Minimum block size is " << (MIN_BLOCK_SIZE / 1024) << " KB (";
-           sserr << MIN_BLOCK_SIZE << " bytes), got " << _blockSize << " bytes";
-           throw invalid_argument(sserr.str().c_str());
+            stringstream sserr;
+            sserr << "Minimum block size is " << (MIN_BLOCK_SIZE / 1024) << " KB (";
+            sserr << MIN_BLOCK_SIZE << " bytes), got " << _blockSize << " bytes";
+            throw invalid_argument(sserr.str().c_str());
         }
-
-        _blockSize = (_blockSize + 15) & -16; // may increase value
 
         if (_blockSize > MAX_BLOCK_SIZE) {
-           stringstream sserr;
-           sserr << "Maximum block size is " << (MAX_BLOCK_SIZE / (1024 * 1024 * 1024)) << " GB (";
-           sserr << MAX_BLOCK_SIZE << " bytes), got " << _blockSize << " bytes";
-           throw invalid_argument(sserr.str().c_str());
+            stringstream sserr;
+            sserr << "Maximum block size is " << (MAX_BLOCK_SIZE / (1024 * 1024 * 1024)) << " GB (";
+            sserr << MAX_BLOCK_SIZE << " bytes), got " << _blockSize << " bytes";
+            throw invalid_argument(sserr.str().c_str());
         }
+
+        _blockSize = min((_blockSize + 15) & -16, MAX_BLOCK_SIZE);
     }
 
     it = args.find("transform");
@@ -193,62 +193,59 @@ int BlockCompressor::compress(uint64& outputSize)
     Clock stopClock;
     int nbFiles = 1;
     Printer log(&cout);
-    bool printFlag = _verbosity > 2;
     stringstream ss;
     string str = _inputName;
     transform(str.begin(), str.end(), str.begin(), ::toupper);
     bool isStdIn = str.compare(0, 5, "STDIN") == 0;
 
     if (isStdIn == false) {
-       try {
-           createFileList(_inputName, files);
-       }
-       catch (IOException& e) {
-           cerr << e.what() << endl;
-           return Error::ERR_OPEN_FILE;
-       }
+        try {
+            createFileList(_inputName, files);
+        }
+        catch (IOException& e) {
+            cerr << e.what() << endl;
+            return Error::ERR_OPEN_FILE;
+        }
 
-       if (files.size() == 0) {
-           cerr << "Cannot access input file '" << _inputName << "'" << endl;
-           return Error::ERR_OPEN_FILE;
-       }
+        if (files.size() == 0) {
+            cerr << "Cannot access input file '" << _inputName << "'" << endl;
+            return Error::ERR_OPEN_FILE;
+        }
 
-       nbFiles = int(files.size());
-       string strFiles = (nbFiles > 1) ? " files" : " file";
-       ss << nbFiles << strFiles << " to compress\n";
-       log.println(ss.str().c_str(), _verbosity > 0);
-       ss.str(string());
+        nbFiles = int(files.size());
+        string strFiles = (nbFiles > 1) ? " files" : " file";
+        ss << nbFiles << strFiles << " to compress\n";
+        log.println(ss.str().c_str(), _verbosity > 0);
+        ss.str(string());
     }
 
-    ss << "Block size set to " << _blockSize << " bytes";
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Verbosity set to " << _verbosity;
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Overwrite set to " << (_overwrite ? "true" : "false");
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Checksum set to " << (_checksum ? "true" : "false");
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-
-    if (printFlag == true) {
+    if (_verbosity > 2) {
+        ss << "Block size set to " << _blockSize << " bytes";
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
+        ss << "Verbosity set to " << _verbosity;
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
+        ss << "Overwrite set to " << (_overwrite ? "true" : "false");
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
+        ss << "Checksum set to " << (_checksum ? "true" : "false");
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
         string etransform = _transform;
         transform(etransform.begin(), etransform.end(), etransform.begin(), ::toupper);
         ss << "Using " << ((etransform == "NONE") ? "no" : _transform) << " transform (stage 1)";
-        log.println(ss.str().c_str(), printFlag);
+        log.println(ss.str().c_str(), true);
         ss.str(string());
         string ecodec = _codec;
         transform(ecodec.begin(), ecodec.end(), ecodec.begin(), ::toupper);
         ss << "Using " << ((ecodec == "NONE") ? "no" : _codec) << " entropy codec (stage 2)";
-        log.println(ss.str().c_str(), printFlag);
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
+        ss << "Using " << _jobs << " job" << ((_jobs > 1) ? "s" : "");
+        log.println(ss.str().c_str(), true);
         ss.str(string());
     }
-
-    ss << "Using " << _jobs << " job" << ((_jobs > 1) ? "s" : "");
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
 
     string outputName = _outputName;
     transform(outputName.begin(), outputName.end(), outputName.begin(), ::toupper);
@@ -276,55 +273,55 @@ int BlockCompressor::compress(uint64& outputSize)
     bool specialOutput = (upperOutputName.compare(0, 4, "NONE") == 0) || (upperOutputName.compare(0, 6, "STDOUT") == 0);
 
     if (isStdIn == false) {
-       struct stat buffer;
+        struct stat buffer;
 
-       // Need to strip path separator at the end to make 'stat()' happy
-       if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
-           formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
-       }
+        // Need to strip path separator at the end to make 'stat()' happy
+        if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
+            formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
+        }
 
-       if ((formattedOutName.size() != 0) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
-           formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
-       }
+        if ((formattedOutName.size() != 0) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
+            formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
+        }
 
-       if (stat(formattedInName.c_str(), &buffer) != 0) {
-           cerr << "Cannot access input file '" << formattedInName << "'" << endl;
-           return Error::ERR_OPEN_FILE;
-       }
+        if (stat(formattedInName.c_str(), &buffer) != 0) {
+            cerr << "Cannot access input file '" << formattedInName << "'" << endl;
+            return Error::ERR_OPEN_FILE;
+        }
 
-       if ((buffer.st_mode & S_IFDIR) != 0) {
-           inputIsDir = true;
+        if ((buffer.st_mode & S_IFDIR) != 0) {
+            inputIsDir = true;
 
-           if (formattedInName[formattedInName.size() - 1] == '.') {
-               formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
-           }
+            if (formattedInName[formattedInName.size() - 1] == '.') {
+                formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
+            }
 
-           if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] != PATH_SEPARATOR)) {
-               formattedInName += PATH_SEPARATOR;
-           }
+            if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] != PATH_SEPARATOR)) {
+                formattedInName += PATH_SEPARATOR;
+            }
 
-           if ((formattedOutName.size() != 0) && (specialOutput == false)) {
-               if (stat(formattedOutName.c_str(), &buffer) != 0) {
-                   cerr << "Output must be an existing directory (or 'NONE')" << endl;
-                   return Error::ERR_OPEN_FILE;
-               }
+            if ((formattedOutName.size() != 0) && (specialOutput == false)) {
+                if (stat(formattedOutName.c_str(), &buffer) != 0) {
+                    cerr << "Output must be an existing directory (or 'NONE')" << endl;
+                    return Error::ERR_OPEN_FILE;
+                }
 
-               if ((buffer.st_mode & S_IFDIR) == 0) {
-                   cerr << "Output must be a directory (or 'NONE')" << endl;
-                   return Error::ERR_CREATE_FILE;
-               }
+                if ((buffer.st_mode & S_IFDIR) == 0) {
+                    cerr << "Output must be a directory (or 'NONE')" << endl;
+                    return Error::ERR_CREATE_FILE;
+                }
 
-               formattedOutName += PATH_SEPARATOR;
-           }
-       }
-       else {
-           if ((formattedOutName.size() != 0) && (specialOutput == false)) {
-               if ((stat(formattedOutName.c_str(), &buffer) != 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
-                   cerr << "Output must be a file (or 'NONE')" << endl;
-                   return Error::ERR_CREATE_FILE;
-               }
-           }
-       }
+                formattedOutName += PATH_SEPARATOR;
+            }
+        }
+        else {
+            if ((formattedOutName.size() != 0) && (specialOutput == false)) {
+                if ((stat(formattedOutName.c_str(), &buffer) != 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
+                    cerr << "Output must be a file (or 'NONE')" << endl;
+                    return Error::ERR_CREATE_FILE;
+                }
+            }
+        }
     }
 
     Context ctx;
@@ -343,15 +340,15 @@ int BlockCompressor::compress(uint64& outputSize)
         string iName = "STDIN";
 
         if (isStdIn == false) {
-           iName = files[0]._fullPath;
-           ctx.putLong("fileSize", files[0]._size);
+            iName = files[0]._fullPath;
+            ctx.putLong("fileSize", files[0]._size);
 
-           if (oName.length() == 0) {
-               oName = iName + ".knz";
-           }
-           else if ((inputIsDir == true) && (specialOutput == false)) {
-               oName = formattedOutName + iName.substr(formattedInName.size()) + ".knz";
-           }
+            if (oName.length() == 0) {
+                oName = iName + ".knz";
+            }
+            else if ((inputIsDir == true) && (specialOutput == false)) {
+                oName = formattedOutName + iName.substr(formattedInName.size()) + ".knz";
+            }
         }
 
         ctx.putString("inputName", iName);
@@ -585,14 +582,17 @@ T FileCompressTask<T>::run()
     int verbosity = _ctx.getInt("verbosity");
     string inputName = _ctx.getString("inputName");
     string outputName = _ctx.getString("outputName");
-    bool printFlag = verbosity > 2;
     stringstream ss;
-    ss << "Input file name set to '" << inputName << "'";
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Output file name set to '" << outputName << "'";
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
+
+    if (verbosity > 2) {
+        ss << "Input file name set to '" << inputName << "'";
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
+        ss << "Output file name set to '" << outputName << "'";
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
+    }
+
     string strOverwrite = _ctx.getString("overwrite");
     bool overwrite = strOverwrite == STR_TRUE;
 
@@ -701,9 +701,8 @@ T FileCompressTask<T>::run()
     }
 
     // Encode
-    printFlag = verbosity > 1;
     ss << "\nEncoding " << inputName << " ...";
-    log.println(ss.str().c_str(), printFlag);
+    log.println(ss.str().c_str(), verbosity > 1);
     log.println("\n", verbosity > 3);
     int64 read = 0;
     byte* buf = new byte[DEFAULT_BUFFER_SIZE];
@@ -768,51 +767,51 @@ T FileCompressTask<T>::run()
 
     stopClock.stop();
     double delta = stopClock.elapsed();
-    log.println("", verbosity > 1);
-    ss.str(string());
-    char buffer[32];
 
-    if (delta >= 1e5) {
-        sprintf(buffer, "%.1f s", delta / 1000);
-        ss << "Encoding:          " << buffer;
-    }
-    else {
-        sprintf(buffer, "%.0f ms", delta);
-        ss << "Encoding:          " << buffer;
-    }
-
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Input size:        " << read;
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Output size:       " << _cos->getWritten();
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Compression ratio: " << float(_cos->getWritten()) / float(read);
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Encoding " << inputName << ": " << read << " => " << _cos->getWritten();
-
-    if (delta >= 1e5) {
-        sprintf(buffer, "%.1f s", delta / 1000);
-        ss << " bytes in " << buffer;
-    }
-    else {
-        sprintf(buffer, "%.0f ms", delta);
-        ss << " bytes in " << buffer;
-    }
-
-    log.println(ss.str().c_str(), verbosity == 1);
-
-    if (delta > 0) {
-        double b2KB = double(1000) / double(1024);
+    if (verbosity >= 1) {
+        log.println("", verbosity > 1);
         ss.str(string());
-        ss << "Throughput (KB/s): " << uint(read * b2KB / delta);
-        log.println(ss.str().c_str(), printFlag);
-    }
+        float f = float(_cos->getWritten()) / float(read);
 
-    log.println("", verbosity > 1);
+        if (verbosity > 1) {
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+            ss << "Input size:        " << read;
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+            ss << "Output size:       " << _cos->getWritten();
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+            ss << "Compression ratio: " << f;
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+        }
+
+        if (verbosity == 1) {
+            ss << "Encoding " << inputName << ": " << read << " => " << _cos->getWritten();
+            char buffer[32];
+
+            if (delta >= 1e5) {
+                sprintf(buffer, " (%.2f%%) in %.1f s", 100 * f, delta / 1000);
+            }
+            else {
+                sprintf(buffer, " (%.2f%%) in %.0f ms", 100 * f, delta);
+            }
+
+            ss << buffer;
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+        }
+
+        if ((verbosity > 1) && (delta > 0)) {
+            double b2KB = double(1000) / double(1024);
+            ss << "Throughput (KB/s): " << uint(read * b2KB / delta);
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+        }
+
+        log.println("", verbosity > 1);
+    }
 
     if (_listeners.size() > 0) {
         Event evt(Event::COMPRESSION_END, -1, int64(_cos->getWritten()), clock());
@@ -858,9 +857,8 @@ void FileCompressTask<T>::dispose()
         exit(Error::ERR_WRITE_FILE);
     }
 
-   // _is destructor will call close if ifstream
+    // _is destructor will call close if ifstream
 }
-
 
 #ifdef CONCURRENCY_ENABLED
 template <class T, class R>

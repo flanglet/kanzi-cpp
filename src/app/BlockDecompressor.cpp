@@ -30,7 +30,6 @@ limitations under the License.
 #include "../io/NullOutputStream.hpp"
 #include "../io/NullOutputStream.hpp"
 
-
 #ifdef CONCURRENCY_ENABLED
 #include <future>
 #endif
@@ -65,7 +64,8 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
 
     if (it == args.end()) {
         _from = -1;
-    } else {
+    }
+    else {
         _from = atoi(it->second.c_str());
         args.erase(it);
     }
@@ -74,7 +74,8 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
 
     if (it == args.end()) {
         _to = -1;
-    } else {
+    }
+    else {
         _to = atoi(it->second.c_str());
         args.erase(it);
     }
@@ -140,21 +141,23 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     int nbFiles = int(files.size());
     Printer log(&cout);
-    bool printFlag = _verbosity > 2;
     stringstream ss;
     string strFiles = (nbFiles > 1) ? " files" : " file";
     ss << nbFiles << strFiles << " to decompress\n";
     log.println(ss.str().c_str(), _verbosity > 0);
     ss.str(string());
-    ss << "Verbosity set to " << _verbosity;
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Overwrite set to " << (_overwrite ? "true" : "false");
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Using " << _jobs << " job" << ((_jobs > 1) ? "s" : "");
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
+
+    if (_verbosity > 2) {
+        ss << "Verbosity set to " << _verbosity;
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
+        ss << "Overwrite set to " << (_overwrite ? "true" : "false");
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
+        ss << "Using " << _jobs << " job" << ((_jobs > 1) ? "s" : "");
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
+    }
 
     string outputName = _outputName;
     transform(outputName.begin(), outputName.end(), outputName.begin(), ::toupper);
@@ -234,10 +237,10 @@ int BlockDecompressor::decompress(uint64& inputSize)
     ctx.putInt("overwrite", (_overwrite == true) ? 1 : 0);
 
     if (_from >= 0)
-       ctx.putInt("from", _from);
+        ctx.putInt("from", _from);
 
     if (_to >= 0)
-       ctx.putInt("to", _to);
+        ctx.putInt("to", _to);
 
     // Run the task(s)
     if (nbFiles == 1) {
@@ -436,20 +439,22 @@ T FileDecompressTask<T>::run()
     int verbosity = _ctx.getInt("verbosity");
     string inputName = _ctx.getString("inputName");
     string outputName = _ctx.getString("outputName");
-    bool printFlag = verbosity > 2;
     stringstream ss;
-    ss << "Input file name set to '" << inputName << "'";
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Output file name set to '" << outputName << "'";
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
+
+    if (verbosity > 2) {
+        ss << "Input file name set to '" << inputName << "'";
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
+        ss << "Output file name set to '" << outputName << "'";
+        log.println(ss.str().c_str(), true);
+        ss.str(string());
+    }
+
     bool overwrite = _ctx.getInt("overwrite") != 0;
 
     int64 read = 0;
-    printFlag = verbosity > 1;
     ss << "\nDecoding " << inputName << " ...";
-    log.println(ss.str().c_str(), printFlag);
+    log.println(ss.str().c_str(), verbosity > 1);
     log.println("\n", verbosity > 3);
 
     if (_listeners.size() > 0) {
@@ -633,48 +638,48 @@ T FileDecompressTask<T>::run()
 
     stopClock.stop();
     double delta = stopClock.elapsed();
-    log.println("", verbosity > 1);
-    ss.str(string());
-    char buffer[32];
 
-    if (delta >= 1e5) {
-        sprintf(buffer, "%.1f s", delta / 1000);
-        ss << "Decoding:          " << buffer;
-    }
-    else {
-        sprintf(buffer, "%.0f ms", delta);
-        ss << "Decoding:          " << buffer;
-    }
-
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Input size:        " << _cis->getRead();
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Output size:       " << read;
-    log.println(ss.str().c_str(), printFlag);
-    ss.str(string());
-    ss << "Decoding " << inputName << ": " << _cis->getRead() << " => " << read;
-
-    if (delta >= 1e5) {
-        sprintf(buffer, "%.1f s", delta / 1000);
-        ss << " bytes in " << buffer;
-    }
-    else {
-        sprintf(buffer, "%.0f ms", delta);
-        ss << " bytes in " << buffer;
-    }
-
-    log.println(ss.str().c_str(), verbosity == 1);
-
-    if (delta > 0) {
-        double b2KB = double(1000) / double(1024);
+    if (verbosity >= 1) {
+        log.println("", verbosity > 1);
         ss.str(string());
-        ss << "Throughput (KB/s): " << uint(read * b2KB / delta);
-        log.println(ss.str().c_str(), printFlag);
-    }
 
-    log.println("", verbosity > 1);
+        if (verbosity > 1) {
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+            ss << "Input size:        " << _cis->getRead();
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+            ss << "Output size:       " << read;
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+        }
+
+        if (verbosity == 1) {
+            ss << "Decoding " << inputName << ": " << _cis->getRead() << " => " << read;
+            char buffer[32];
+
+            if (delta >= 1e5) {
+                sprintf(buffer, "%.1f s", delta / 1000);
+                ss << " bytes in " << buffer;
+            }
+            else {
+                sprintf(buffer, "%.0f ms", delta);
+                ss << " bytes in " << buffer;
+            }
+
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+        }
+
+        if ((verbosity > 1) && (delta > 0)) {
+            double b2KB = double(1000) / double(1024);
+            ss << "Throughput (KB/s): " << uint(read * b2KB / delta);
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+        }
+
+        log.println("", verbosity > 1);
+    }
 
     if (_listeners.size() > 0) {
         Event evt(Event::DECOMPRESSION_END, -1, int64(_cis->getRead()), clock());
