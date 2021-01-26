@@ -82,10 +82,10 @@ const int* Global::SQUASH = Global::initSquash(_singleton.SQUASH_BUFFER);
 
 const int* Global::initSquash(int data[])
 {
-    for (int x = -2047; x <= 2047; x++) {
+    for (int x = 0; x <= 4095; x++) {
         const int w = x & 127;
-        const int y = (x / 128) + 16; // Avoid right shift of negative value
-        data[x + 2047] = (INV_EXP[y] * (128 - w) + INV_EXP[y + 1] * w) >> 11;
+        const int y = x >> 7; 
+        data[x] = (INV_EXP[y] * (128 - w) + INV_EXP[y + 1] * w) >> 11;
     }
 
     return data;
