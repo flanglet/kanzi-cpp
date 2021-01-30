@@ -96,10 +96,10 @@ namespace kanzi {
        static const uint HASH_SHIFT1 = 40 - HASH_LOG1;
        static const uint HASH_MASK1 = (1 << HASH_LOG1) - 1;
        static const uint HASH_LOG2 = 21;
-       static const uint HASH_SHIFT2 = 40 - HASH_LOG2;
+       static const uint HASH_SHIFT2 = 48 - HASH_LOG2;
        static const uint HASH_MASK2 = (1 << HASH_LOG2) - 1;
-       static const int MAX_DISTANCE1 = (1 << 17) - 1;
-       static const int MAX_DISTANCE2 = (1 << 24) - 1;
+       static const int MAX_DISTANCE1 = (1 << 17) - 2;
+       static const int MAX_DISTANCE2 = (1 << 24) - 2;
        static const int MIN_MATCH = 5;
        static const int MAX_MATCH = 32767 + MIN_MATCH;
        static const int MIN_BLOCK_LENGTH = 24;

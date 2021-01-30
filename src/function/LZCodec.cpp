@@ -74,9 +74,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("LZ codec: Invalid output block");
 
-    if (input._array == output._array)
-        return false;
-
     if (output._length < getMaxEncodedLength(count))
         return false;
 
@@ -141,8 +138,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
 
         // Select best match
-        if (bestLen2 > bestLen + 1) {
-            h = h2;
+        if ((bestLen2 > bestLen) || ((bestLen2 == bestLen) && ((srcIdx - ref2) < (srcIdx - ref)))) {
             ref = ref2;
             bestLen = bestLen2;
             srcIdx++;
@@ -150,7 +146,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         // Emit token
         // Token: 3 bits litLen + 1 bit flag + 4 bits mLen (LLLFMMMM)
-        // flag = if maxDist = (1<<17)-1, then highest bit of distance
+        // flag = if maxDist = MAX_DISTANCE1, then highest bit of distance
         //        else 1 if dist needs 3 bytes (> 0xFFFF) and 0 otherwise
         const int mLen = bestLen - MIN_MATCH;
         const int d = srcIdx - ref;
@@ -254,9 +250,6 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("LZ codec: Invalid output block");
-
-    if (input._array == output._array)
-        return false;
 
     const int dstEnd = output._length - 16;
     byte* dst = &output._array[output._index];
@@ -363,9 +356,6 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("LZP codec: Invalid output block");
-
-    if (input._array == output._array)
-        return false;
 
     if (output._length < getMaxEncodedLength(count))
         return false;
@@ -474,9 +464,6 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("LZP codec: Invalid output block");
-
-    if (input._array == output._array)
-        return false;
 
     if (count < 4)
         return false;
