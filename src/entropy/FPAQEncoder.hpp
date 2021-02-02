@@ -25,7 +25,7 @@ namespace kanzi
 
    // Derived from fpaq0r by Matt Mahoney & Alexander Ratushnyak.
    // See http://mattmahoney.net/dc/#fpaq0.
-   // Simple (and fast) adaptive order 0 entropy coder predictor
+   // Simple (and fast) adaptive entropy bit coder
    class FPAQEncoder : public EntropyEncoder
    {
    private:
@@ -48,9 +48,6 @@ namespace kanzi
 
        void _dispose();
 
-   protected:
-       virtual void flush();
-
    public:
        FPAQEncoder(OutputBitStream& bitstream) THROW;
 
@@ -61,6 +58,8 @@ namespace kanzi
        OutputBitStream& getBitStream() const { return _bitstream; };
 
        void dispose() { _dispose(); }
+
+       void flush();
    };
 
 

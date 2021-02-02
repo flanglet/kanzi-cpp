@@ -23,7 +23,9 @@ limitations under the License.
 namespace kanzi
 {
 
-   // This class is a generic implementation of a bool entropy decoder
+   // Derived from fpaq0r by Matt Mahoney & Alexander Ratushnyak.
+   // See http://mattmahoney.net/dc/#fpaq0.
+   // Simple (and fast) adaptive entropy bit coder
    class FPAQDecoder : public EntropyDecoder
    {
    private:
@@ -36,7 +38,6 @@ namespace kanzi
        uint64 _high;
        uint64 _current;
        InputBitStream& _bitstream;
-       bool _initialized;
        SliceArray<byte> _sba;
        uint16 _probs[4][256]; // probability of bit=1
        uint16* _p; // pointer to current prob
@@ -48,11 +49,6 @@ namespace kanzi
 
        bool reset();
 
-   protected:
-       virtual void initialize();
-
-       void read();
-
    public:
        FPAQDecoder(InputBitStream& bitstream) THROW;
 
@@ -62,10 +58,9 @@ namespace kanzi
 
        InputBitStream& getBitStream() const { return _bitstream; }
 
-       bool isInitialized() const { return _initialized; }
-
        void dispose() { _dispose(); }
 
+       void read();
    };
 
 
