@@ -137,10 +137,15 @@ The project generates a Windows 64 binary. Multithreading is supported with this
 ### mingw-w64
 Go to the source directory and run 'make clean && mingw32-make.exe'. The Makefile contains 
 all the necessary targets. Tested successfully on Win64 with mingw-w64 g++ 8.1.0. 
-Multithreading is supported.
+Multithreading is supported. Compiled successfully with C++11, C++14, C++17.
 
 ### Linux
 Go to the source directory and run 'make clean && make'. The Makefile contains all the necessary
-targets. Build successfully on Ubuntu 18.04 with g++ 8.4.0 and g++ 9.3.0, clang++ 10.0.0
+targets. Build successfully on Ubuntu with g++ 8.4.0 and g++ 9.3.0, clang++ 10.0.0
 and icc 19.0.0.117. Multithreading is supported with g++ version 5.0.0 or newer.
-Compiled successfully against C++03, C++11, C++14, C++17.
+Compiled successfully with C++11, C++14, C++17.
+
+### BSD
+The makefile uses the gnu-make syntax. First, make sure gmake is present (or install it: 'pkg_add gmake').
+Go to the source directory and run 'gmake clean && gmake'. The Makefile contains all the necessary
+targets.
