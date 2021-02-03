@@ -112,6 +112,13 @@ rGenerationLeafCopyMatchClaimAnyoneSoftwarePartyDeviceCodeLangua\
 geLinkHoweverConfirmCommentCityAnywhereSomewhereDebateDriveHighe\
 rBeautifulOnlineFanPriorityTraditionalSixUnited";
 
+char TextCodec::BASE64_SYMBOLS[] =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+char TextCodec::NUMERIC_SYMBOLS[] = "0123456789+-*/=,.:; ";
+
+char TextCodec::DNA_SYMBOLS[] = "acgntuACGNTU"; // either T or U and N for unknown
+
 DictEntry TextCodec::STATIC_DICTIONARY[1024] = {};
 bool TextCodec::DELIMITER_CHARS[256] = {};
 bool TextCodec::TEXT_CHARS[256] = {};
@@ -237,12 +244,37 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
     }
 
     // Not text (crude thresholds)
-    if((nbTextChars < (count >> 1)) || (freqs0[32] < (count >> 5)))
-        return TextCodec::MASK_NOT_TEXT;
+    bool notText;
 
     if (strict == true) {
-        if ((nbTextChars < (count >> 2)) || (freqs0[0] >= (count / 100)) || ((nbASCII / 95) < (count / 100)))
-            return TextCodec::MASK_NOT_TEXT;
+        notText = ((nbTextChars < (count >> 2)) || (freqs0[0] >= (count / 100)) || ((nbASCII / 95) < (count / 100)));
+    } else {
+        notText = ((nbTextChars < (count >> 1)) || (freqs0[32] < (count >> 5))); 
+    }
+
+    if (notText == true) {
+        int sum = 0;
+
+        for (int i = 0; i < 12; i++)
+            sum += freqs0[int(DNA_SYMBOLS[i])];
+
+        if (sum >= (count / 100) * 90)
+            return (sum == count) ? TextCodec::MASK_DNA : TextCodec::MASK_FASTA;
+
+        sum = 0;
+
+        for (int i = 0; i < 20; i++)
+            sum += freqs0[int(NUMERIC_SYMBOLS[i])];
+
+        if (sum >= (count / 100) * 98)
+            return TextCodec::MASK_NUMERIC;
+
+        sum = 0;
+
+        for (int i = 0; i < 64; i++)
+            sum += freqs0[int(BASE64_SYMBOLS[i])];
+
+        return (sum == count) ? TextCodec::MASK_BASE64 : TextCodec::MASK_NOT_TEXT;
     }
 
     const int nbBinChars = count - nbASCII;
@@ -255,8 +287,6 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
 
     if (nbBinChars == 0)
         res |= TextCodec::MASK_FULL_ASCII;
-    else if (nbBinChars <= count / 100)
-        res |= TextCodec::MASK_ALMOST_FULL_ASCII;
 
     if (nbBinChars <= count - count / 10) {
         // Check if likely XML/HTML
@@ -451,8 +481,28 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, true);
 
     // Not text ?
-    if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0))
+    if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0)) {
+        if (_pCtx != nullptr) {
+           switch (mode) {
+              case TextCodec::MASK_NUMERIC:
+                 _pCtx->putInt("dataType", Global::NUMERIC);
+                 break;
+              case TextCodec::MASK_BASE64:
+                 _pCtx->putInt("dataType", Global::BASE64);
+                 break;
+              case TextCodec::MASK_FASTA:
+                 _pCtx->putInt("dataType", Global::FASTA);
+                 break;
+              case TextCodec::MASK_DNA:
+                 _pCtx->putInt("dataType", Global::DNA);
+                 break;
+              default :
+                 break;
+           }
+        }
+
         return false;
+    }
 
     if (_pCtx != nullptr)
        _pCtx->putInt("dataType", Global::TEXT);
@@ -908,8 +958,28 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, false);
 
     // Not text ?
-    if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0))
+    if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0)) {
+        if (_pCtx != nullptr) {
+           switch (mode) {
+              case TextCodec::MASK_NUMERIC:
+                 _pCtx->putInt("dataType", Global::NUMERIC);
+                 break;
+              case TextCodec::MASK_BASE64:
+                 _pCtx->putInt("dataType", Global::BASE64);
+                 break;
+              case TextCodec::MASK_FASTA:
+                 _pCtx->putInt("dataType", Global::FASTA);
+                 break;
+              case TextCodec::MASK_DNA:
+                 _pCtx->putInt("dataType", Global::DNA);
+                 break;
+              default :
+                 break;
+           }
+        }
+
         return false;
+    }
 
     if (_pCtx != nullptr)
        _pCtx->putInt("dataType", Global::TEXT);
