@@ -69,11 +69,12 @@ int testFunctionsCorrectness(const string& name)
     for (int ii = 0; ii < 20; ii++) {
         cout << endl
              << "Test " << ii << endl;
-        int size = 32;
-        byte values[80000];
+        int size = 80000;
+        byte values[80000] = { byte(0xAA) };
 
         if (ii == 0) {
-            byte arr[] = {
+            size = 32;
+            byte arr[32] = {
                 (byte)0, (byte)1, (byte)2, (byte)2, (byte)2, (byte)2, (byte)7, (byte)9,
                 (byte)9, (byte)16, (byte)16, (byte)16, (byte)1, (byte)3, (byte)3, (byte)3,
                 (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3, (byte)3,
@@ -94,7 +95,7 @@ int testFunctionsCorrectness(const string& name)
         }
         else if (ii == 2) {
             size = 8;
-            byte arr[] = { (byte)0, (byte)0, (byte)1, (byte)1, (byte)2, (byte)2, (byte)3, (byte)3 };
+            byte arr[8] = { (byte)0, (byte)0, (byte)1, (byte)1, (byte)2, (byte)2, (byte)3, (byte)3 };
             memcpy(values, &arr[0], size);
         }
         else if (ii == 3) {
@@ -113,7 +114,7 @@ int testFunctionsCorrectness(const string& name)
         else if (ii == 4) {
             // Lots of zeros
             size = 1024;
-            byte arr[1024];
+            byte arr[1024] = { byte(0) };
 
             for (int i = 0; i < size; i++) {
                 int val = rand() % 100;
@@ -129,7 +130,7 @@ int testFunctionsCorrectness(const string& name)
         else if (ii == 5) {
             // Lots of zeros
             size = 2048;
-            byte arr[2048];
+            byte arr[2048] = { byte(0) };
 
             for (int i = 0; i < size; i++) {
                 int val = rand() % 100;
@@ -145,7 +146,7 @@ int testFunctionsCorrectness(const string& name)
         else if (ii == 6) {
             // Totally random
             size = 512;
-            byte arr[512];
+            byte arr[512] = { byte(0) };
 
             // Leave zeros at the beginning for ZRLT to succeed
             for (int j = 20; j < 512; j++)
@@ -155,7 +156,7 @@ int testFunctionsCorrectness(const string& name)
         }
         else {
             size = 1024;
-            byte arr[1024];
+            byte arr[1024] = { byte(0) };
 
             // Leave zeros at the beginning for ZRLT to succeed
             int idx = 20;
@@ -178,18 +179,19 @@ int testFunctionsCorrectness(const string& name)
             memcpy(values, &arr[0], size);
         }
 
-        Function<byte>* f = getByteFunction(name);
+        Function<byte>* ff = getByteFunction(name);
+        Function<byte>* fi = getByteFunction(name);
 
-        if (f == nullptr)
+        if ((ff == nullptr) || (fi == nullptr))
             return 1;
 
         byte* input = new byte[size];
-        byte* output = new byte[f->getMaxEncodedLength(size)];
+        byte* output = new byte[ff->getMaxEncodedLength(size)];
         byte* reverse = new byte[size];
         SliceArray<byte> iba1(input, size, 0);
-        SliceArray<byte> iba2(output, f->getMaxEncodedLength(size), 0);
+        SliceArray<byte> iba2(output, ff->getMaxEncodedLength(size), 0);
         SliceArray<byte> iba3(reverse, size, 0);
-        memset(output, 0xAA, f->getMaxEncodedLength(size));
+        memset(output, 0xAA, ff->getMaxEncodedLength(size));
         memset(reverse, 0xAA, size);
         int count;
 
@@ -207,26 +209,29 @@ int testFunctionsCorrectness(const string& name)
                 cout << (int(input[i]) & 0xFF) << " ";
         }
 
-        if (f->forward(iba1, iba2, size) == false) {
+        if (ff->forward(iba1, iba2, size) == false) {
             if ((iba1._index != size) || (iba2._index >= iba1._index)) {
                 cout << endl
                      << "No compression (ratio > 1.0), skip reverse" << endl;
+                delete ff;
                 continue;
             }
 
             cout << endl
                  << "Encoding error" << endl;
             res = 1;
+            delete ff;
             goto End;
         }
 
         if ((iba1._index != size) || (iba1._index < iba2._index)) {
             cout << endl
                  << "No compression (ratio > 1.0), skip reverse" << endl;
+            delete ff;
             continue;
         }
 
-        delete f;
+        delete ff;
         cout << endl;
         cout << "Coded: " << endl;
 
@@ -234,15 +239,15 @@ int testFunctionsCorrectness(const string& name)
             cout << (int(output[i]) & 0xFF) << " ";
 
         cout << " (Compression ratio: " << (iba2._index * 100 / size) << "%)" << endl;
-        f = getByteFunction(name);
         count = iba2._index;
         iba1._index = 0;
         iba2._index = 0;
         iba3._index = 0;
 
-        if (f->inverse(iba2, iba3, count) == false) {
+        if (fi->inverse(iba2, iba3, count) == false) {
             cout << "Decoding error" << endl;
             res = 1;
+            delete fi;
             goto End;
         }
 
@@ -264,6 +269,7 @@ int testFunctionsCorrectness(const string& name)
                 cout << (int(input[i]) & 0xFF) << " - " << (int(reverse[i]) & 0xFF);
                 cout << ")" << endl;
                 res = 1;
+                delete fi;
                 goto End;
             }
         }
@@ -272,8 +278,9 @@ int testFunctionsCorrectness(const string& name)
              << "Identical" << endl
              << endl;
 
+        delete fi;
+
     End:
-        delete f;
         delete[] input;
         delete[] output;
         delete[] reverse;
@@ -295,9 +302,9 @@ int testFunctionsSpeed(const string& name)
          << "Speed test for " << name << endl;
     cout << "Iterations: " << iter << endl;
     cout << endl;
-    byte input[50000];
-    byte output[50000];
-    byte reverse[50000];
+    byte input[50000] = { byte(0) };
+    byte output[50000] = { byte(0) };
+    byte reverse[50000] = { byte(0) };
     Function<byte>* f = getByteFunction(name);
 
     if (f == nullptr)

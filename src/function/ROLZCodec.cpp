@@ -302,6 +302,7 @@ End:
     delete[] litBuf._array;
     delete[] lenBuf._array;
     delete[] mIdxBuf._array;
+    delete[] tkBuf._array;
     return (input._index == count) && (output._index < count);
 }
 
@@ -429,6 +430,7 @@ End:
     delete[] litBuf._array;
     delete[] lenBuf._array;
     delete[] mIdxBuf._array;
+    delete[] tkBuf._array;
     return srcIdx == count;
 }
 
