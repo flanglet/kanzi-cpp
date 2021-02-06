@@ -279,17 +279,15 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
                 litLen += readLength(src, srcIdx);
 
             // Emit literals
-            if (dstIdx + litLen >= dstEnd) {
-               memcpy(&dst[dstIdx], &src[srcIdx], litLen);
-            } else {
-               emitLiterals(&src[srcIdx], &dst[dstIdx], litLen);
-            }
-
             srcIdx += litLen;
             dstIdx += litLen;
 
-            if (srcIdx >= srcEnd)
+            if ((srcIdx >= srcEnd) || (dstIdx >= dstEnd)) {
+                memcpy(&dst[dstIdx - litLen], &src[srcIdx - litLen], litLen);
                 break;
+            }
+
+            emitLiterals(&src[srcIdx - litLen], &dst[dstIdx - litLen], litLen);
         }
 
         // Get match length

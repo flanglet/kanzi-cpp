@@ -64,21 +64,20 @@ namespace kanzi
        bool reset();
 
        void _dispose() {}
-
    };
 
 
    inline byte HuffmanDecoder::decodeByte()
    {
-      const uint val = uint(_table[(_state >> (_bits - DECODING_BATCH_SIZE)) & TABLE_MASK]);
+      const uint16 val = _table[(_state >> (_bits - DECODING_BATCH_SIZE)) & TABLE_MASK];
       _bits -= uint8(val);
       return byte(val >> 8);
    }
 
    inline void HuffmanDecoder::fetchBits()
    {
-      const uint64 mask = (uint64(1) << _bits) - 1; // for _bits = 0
-      _state = ((_state & mask) << (64 - _bits)) | _bitstream.readBits(64 - _bits);
+      // Handle _bits == 0 case
+      _state = ((_state << (63 - _bits)) << 1) | _bitstream.readBits(64 - _bits);
       _bits = 64;
    }
 
