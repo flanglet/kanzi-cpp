@@ -106,7 +106,7 @@ public:
 			_n++;
 			return *this;
 		}
-		atomic_int fetch_add(atomic_int arg) {
+		atomic_int fetch_add(atomic_int) {
 		   _n++;
 		   return atomic_int(_n-1);
 		}
