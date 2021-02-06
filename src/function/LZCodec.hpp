@@ -101,7 +101,7 @@ namespace kanzi {
        static const int MAX_DISTANCE1 = (1 << 17) - 2;
        static const int MAX_DISTANCE2 = (1 << 24) - 2;
        static const int MIN_MATCH = 5;
-       static const int MAX_MATCH = 32767 + MIN_MATCH;
+       static const int MAX_MATCH = 65535 + 254 + 15 + MIN_MATCH;
        static const int MIN_BLOCK_LENGTH = 24;
        static const int MIN_MATCH_MIN_DIST = 1 << 16;
 
@@ -172,8 +172,8 @@ namespace kanzi {
    template <bool T>
    inline void LZXCodec<T>::emitLiterals(const byte src[], byte dst[], int len)
    {
-       for (int i = 0; i < len; i += 16)
-           memcpy(&dst[i], &src[i], 16);
+       for (int i = 0; i < len; i += 8)
+           memcpy(&dst[i], &src[i], 8);
    }
 
    template <bool T>

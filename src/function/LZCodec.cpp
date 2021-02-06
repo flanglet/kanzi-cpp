@@ -283,7 +283,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
             srcIdx += litLen;
             dstIdx += litLen;
 
-            if ((dstIdx > dstEnd) || (srcIdx >= srcEnd))
+            if (srcIdx >= srcEnd)
                 break;
         }
 
@@ -295,12 +295,6 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         mLen += MIN_MATCH;
         const int mEnd = dstIdx + mLen;
-
-        // Sanity check
-        if (mEnd > dstEnd + 16) {
-            res = false;
-            goto exit;
-        }
 
         // Get distance
         int d = (int(src[mIdx]) << 8) | int(src[mIdx + 1]);
@@ -314,7 +308,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
         repd = dist;
 
         // Sanity check
-        if ((dstIdx < dist) || (dist > maxDist)) {
+        if ((dstIdx < dist) || (dist > maxDist) ||  (mEnd > dstEnd + 16)) {
             res = false;
             goto exit;
         }
