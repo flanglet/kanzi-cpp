@@ -279,7 +279,12 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
                 litLen += readLength(src, srcIdx);
 
             // Emit literals
-            emitLiterals(&src[srcIdx], &dst[dstIdx], litLen);
+            if (dstIdx + litLen >= dstEnd) {
+               memcpy(&dst[dstIdx], &src[srcIdx], litLen);
+            } else {
+               emitLiterals(&src[srcIdx], &dst[dstIdx], litLen);
+            }
+
             srcIdx += litLen;
             dstIdx += litLen;
 
