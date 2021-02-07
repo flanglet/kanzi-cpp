@@ -65,6 +65,11 @@ namespace kanzi {
 	}
 
 
+	#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__DragonFly__) || defined(BSD)
+		#include <machine/endian.h>
+	#elif defined(__linux__) || defined(__linux) || defined(__gnu_linux__)
+		#include <endian.h>
+	#endif
 
 	#ifndef IS_BIG_ENDIAN
 		#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
@@ -73,16 +78,28 @@ namespace kanzi {
 			   defined(__THUMBEB__) || \
 			   defined(__AARCH64EB__) || \
 			   defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__)
-			#define IS_BIG_ENDIAN true
-		#else
-         static inline bool IS_BIG_ENDIAN() {
-            union { uint32 v; uint8 c[4]; } one = { 0x03020100 };
-            return one.c[0] == 0;
-            //const union { uint32 u; uint8 c[4]; } one = { 1 };
-            //return one.c[3] == 1;
-         }
+			#define IS_BIG_ENDIAN 1
+		#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN|| defined(__LITTLE_ENDIAN__)
+			#define IS_BIG_ENDIAN 0
+		#elif defined(_WIN32)
+			#define IS_BIG_ENDIAN 0
+		#elif defined(__amd64) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
+			#define IS_BIG_ENDIAN 0
 		#endif
 	#endif
+
+
+   static inline bool IsBigEndian() {
+      #if defined(IS_BIG_ENDIAN)
+         return IS_BIG_ENDIAN == 1;
+      #else
+         union { uint32 v; uint8 c[4]; } one = { 0x03020100 };
+         return one.c[0] == 0;
+         //const union { uint32 u; uint8 c[4]; } one = { 1 };
+         //return one.c[3] == 1;
+      #endif
+   }
+
 
 	class BigEndian {
 	public:
