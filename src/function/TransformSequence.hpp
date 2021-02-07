@@ -56,21 +56,18 @@ namespace kanzi {
    TransformSequence<T>::TransformSequence(Transform<T>* transforms[8], bool deallocate) THROW
    {
        _deallocate = deallocate;
-       _length = 0;
+       _length = 8;
        _skipFlags = byte(0);
 
-       for (int i = 0; i < 8; i++) {
-           if (_transforms[i] == nullptr)
-               continue;
+       for (int i = 7; i >= 0; i--) {
+           _transforms[i] = transforms[i];
 
-           _transforms[_length++] = transforms[i];
+           if (_transforms[i] == nullptr)
+               _length = i;
        }
 
        if (_length == 0)
            throw std::invalid_argument("At least one transform required");
-
-       for (int i = _length; i < 8; i++)
-           _transforms[i] = nullptr;
    }
 
    template <class T>
