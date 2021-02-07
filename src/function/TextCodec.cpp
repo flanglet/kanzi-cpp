@@ -258,8 +258,8 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
         for (int i = 0; i < 12; i++)
             sum += freqs0[int(DNA_SYMBOLS[i])];
 
-        if (sum >= (count / 100) * 90)
-            return (sum == count) ? TextCodec::MASK_DNA : TextCodec::MASK_FASTA;
+        if (sum == count)
+            return TextCodec::MASK_DNA;
 
         sum = 0;
 
@@ -274,7 +274,17 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
         for (int i = 0; i < 64; i++)
             sum += freqs0[int(BASE64_SYMBOLS[i])];
 
-        return (sum == count) ? TextCodec::MASK_BASE64 : TextCodec::MASK_NOT_TEXT;
+        if (sum == count)
+            return TextCodec::MASK_BASE64;
+
+        sum = 0;
+
+        for (int i = 0; i < 256; i++) {
+            if (freqs[i] > 0)
+                sum++;
+        }
+
+        return (sum == 255) ? TextCodec::MASK_BIN : TextCodec::MASK_NOT_TEXT;
     }
 
     const int nbBinChars = count - nbASCII;
@@ -490,8 +500,8 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
               case TextCodec::MASK_BASE64:
                  _pCtx->putInt("dataType", Global::BASE64);
                  break;
-              case TextCodec::MASK_FASTA:
-                 _pCtx->putInt("dataType", Global::FASTA);
+              case TextCodec::MASK_BIN:
+                 _pCtx->putInt("dataType", Global::BIN);
                  break;
               case TextCodec::MASK_DNA:
                  _pCtx->putInt("dataType", Global::DNA);
@@ -967,8 +977,8 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
               case TextCodec::MASK_BASE64:
                  _pCtx->putInt("dataType", Global::BASE64);
                  break;
-              case TextCodec::MASK_FASTA:
-                 _pCtx->putInt("dataType", Global::FASTA);
+              case TextCodec::MASK_BIN:
+                 _pCtx->putInt("dataType", Global::BIN);
                  break;
               case TextCodec::MASK_DNA:
                  _pCtx->putInt("dataType", Global::DNA);

@@ -181,7 +181,7 @@ namespace kanzi {
        static const int LOG_HASHES_SIZE = 24; // 16 MB
        static const byte MASK_NOT_TEXT = byte(0x80);
        static const byte MASK_DNA = MASK_NOT_TEXT | byte(0x40);
-       static const byte MASK_FASTA = MASK_NOT_TEXT | byte(0x20);
+       static const byte MASK_BIN = MASK_NOT_TEXT | byte(0x20);
        static const byte MASK_BASE64 = MASK_NOT_TEXT | byte(0x10);
        static const byte MASK_NUMERIC = MASK_NOT_TEXT | byte(0x08);
        static const byte MASK_FULL_ASCII = byte(0x04);
