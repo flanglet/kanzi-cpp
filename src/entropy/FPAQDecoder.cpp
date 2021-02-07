@@ -20,10 +20,12 @@ using namespace kanzi;
 using namespace std;
 
 FPAQDecoder::FPAQDecoder(InputBitStream& bitstream) THROW
-    : _bitstream(bitstream),
-      _sba(new byte[0], 0)
+    : _low(0)
+    , _high(TOP)
+    , _current(0)
+    , _bitstream(bitstream)
+    , _sba(new byte[0], 0)
 {
-    reset();
 }
 
 FPAQDecoder::~FPAQDecoder()

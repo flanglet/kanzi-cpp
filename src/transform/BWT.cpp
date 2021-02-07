@@ -190,7 +190,7 @@ bool BWT::inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, i
         if (_buffer != nullptr)
             delete[] _buffer;
 
-        _bufferSize = count;
+        _bufferSize = max(count, 64);
         _buffer = new uint[_bufferSize];
     }
 
@@ -245,7 +245,7 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
         if (_buffer != nullptr)
             delete[] _buffer;
 
-        _bufferSize = count + 1;
+        _bufferSize = max(count + 1, 64);
         _buffer = new uint[_bufferSize];
     }
 

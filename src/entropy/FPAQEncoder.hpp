@@ -36,8 +36,8 @@ namespace kanzi
 
        uint64 _low;
        uint64 _high;
-       OutputBitStream& _bitstream;
        bool _disposed;
+       OutputBitStream& _bitstream;
        SliceArray<byte> _sba;
        uint16 _probs[4][256]; // probability of bit=1
 

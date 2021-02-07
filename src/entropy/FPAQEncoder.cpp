@@ -20,10 +20,12 @@ using namespace kanzi;
 using namespace std;
 
 FPAQEncoder::FPAQEncoder(OutputBitStream& bitstream) THROW
-    : _bitstream(bitstream),
-      _sba(new byte[0], 0)
+    : _low(0)
+    , _high(TOP)
+    , _disposed(false)
+    , _bitstream(bitstream)
+    , _sba(new byte[0], 0)
 {
-    reset();
 }
 
 FPAQEncoder::~FPAQEncoder()
