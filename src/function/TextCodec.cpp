@@ -280,7 +280,7 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
         sum = 0;
 
         for (int i = 0; i < 256; i++) {
-            if (freqs[i] > 0)
+            if (freqs0[i] > 0)
                 sum++;
         }
 
