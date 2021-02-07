@@ -249,16 +249,21 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
 
         for (int i = startChunk; i < endChunk4; i += 4) {
             // Pack 4 codes into 1 uint64
-            const uint code1 = _codes[int(block[i])];
-            const uint codeLen1 = code1 >> 24;
-            const uint code2 = _codes[int(block[i + 1])];
-            const uint codeLen2 = code2 >> 24;
-            const uint code3 = _codes[int(block[i + 2])];
-            const uint codeLen3 = code3 >> 24;
-            const uint code4 = _codes[int(block[i + 3])];
-            const uint codeLen4 = code4 >> 24;
-            const uint64 st = (uint64(code1) << (codeLen2 + codeLen3 + codeLen4)) | ((uint64(code2) & ((1 << codeLen2) - 1)) << (codeLen3 + codeLen4)) | ((uint64(code3) & ((1 << codeLen3) - 1)) << codeLen4) | (uint64(code4) & ((1 << codeLen4) - 1));
-            _bitstream.writeBits(st, codeLen1 + codeLen2 + codeLen3 + codeLen4);
+            uint code;
+            uint64 st;
+            code = _codes[int(block[i])];
+            uint codeLen0 = code >> 24;
+            st = uint64(code & 0xFFFFFF);
+            code = _codes[int(block[i + 1])];
+            uint codeLen1 = code >> 24;
+            st = (st << codeLen1) | uint64(code & 0xFFFFFF);
+            code = _codes[int(block[i + 2])];
+            uint codeLen2 = code >> 24;
+            st = (st << codeLen2) | uint64(code & 0xFFFFFF);
+            code = _codes[int(block[i + 3])];
+            uint codeLen3 = code >> 24;
+            st = (st << codeLen3) | uint64(code & 0xFFFFFF);
+            _bitstream.writeBits(st, codeLen0 + codeLen1 + codeLen2 + codeLen3);
         }
 
         for (int i = endChunk4; i < endChunk; i++) {
