@@ -265,30 +265,6 @@ int CompressedInputStream::peek() THROW
     }
 }
 
-int CompressedInputStream::get() THROW
-{
-    _gcount = 0;
-    int res = peek();
-
-    if (res != EOF) {
-        _sa->_index++;
-        _gcount++;
-    }
-
-    return res;
-}
-
-int CompressedInputStream::_get() THROW
-{
-    int res = peek();
-
-    if (res != EOF) {
-        _sa->_index++;
-    }
-
-    return res;
-}
-
 istream& CompressedInputStream::read(char* data, streamsize length) THROW
 {
     int remaining = int(length);
@@ -333,17 +309,6 @@ istream& CompressedInputStream::read(char* data, streamsize length) THROW
     }
 
     return *this;
-}
-
-streampos CompressedInputStream::tellg()
-{
-    return _is.tellg();
-}
-
-istream& CompressedInputStream::seekp(streampos) THROW
-{
-    setstate(ios::badbit);
-    throw ios_base::failure("Not supported");
 }
 
 int CompressedInputStream::processBlock() THROW

@@ -101,8 +101,7 @@ namespace kanzi
    };
 
    // A task used to decode a block
-   // Several tasks may run in parallel. The transforms can be computed concurrently
-   // but the entropy decoding is sequential since all tasks share the same bitstream.
+   // Several tasks (transform+entropy) may run in parallel
    template <class T>
    class DecodingTask : public Task<T> {
    private:
@@ -204,5 +203,40 @@ namespace kanzi
 
        uint64 getRead();
    };
+
+
+   inline int CompressedInputStream::get() THROW
+   {
+       _gcount = 0;
+       const int res = peek();
+
+       if (res != EOF) {
+           _sa->_index++;
+           _gcount++;
+       }
+
+       return res;
+   }
+
+   inline int CompressedInputStream::_get() THROW
+   {
+       const int res = peek();
+
+       if (res != EOF)
+           _sa->_index++;
+
+       return res;
+   }
+
+   inline streampos CompressedInputStream::tellg()
+   {
+       return _is.tellg();
+   }
+
+   inline istream& CompressedInputStream::seekp(streampos) THROW
+   {
+       setstate(ios::badbit);
+       throw ios_base::failure("Not supported");
+   }
 }
 #endif

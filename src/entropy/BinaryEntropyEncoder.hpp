@@ -56,7 +56,7 @@ namespace kanzi
 
        virtual void dispose() { _dispose(); }
 
-       virtual void encodeByte(byte val);
+       void encodeByte(byte val);
 
        void encodeBit(int bit, int pred = 2048);
    };

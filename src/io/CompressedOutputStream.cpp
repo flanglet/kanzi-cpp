@@ -267,28 +267,6 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length) THRO
     return *this;
 }
 
-ostream& CompressedOutputStream::put(char c) THROW
-{
-    try {
-        // If the buffer is full, time to encode
-        if (_sa->_index >= _sa->_length)
-            processBlock(false);
-
-        _sa->_array[_sa->_index++] = byte(c);
-        return *this;
-    }
-    catch (exception& e) {
-        setstate(ios::badbit);
-        throw ios_base::failure(e.what());
-    }
-}
-
-ostream& CompressedOutputStream::flush()
-{
-    // Let the bitstream of the entropy encoder flush itself when needed
-    return *this;
-}
-
 void CompressedOutputStream::close() THROW
 {
     if (_closed.exchange(true, memory_order_acquire))
@@ -322,17 +300,6 @@ void CompressedOutputStream::close() THROW
         _buffers[i]->_array = new byte[0];
         _buffers[i]->_length = 0;
     }
-}
-
-streampos CompressedOutputStream::tellp()
-{
-    return _os.tellp();
-}
-
-ostream& CompressedOutputStream::seekp(streampos) THROW
-{
-    setstate(ios::badbit);
-    throw ios_base::failure("Not supported");
 }
 
 void CompressedOutputStream::processBlock(bool force) THROW

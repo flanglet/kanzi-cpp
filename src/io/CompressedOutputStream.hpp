@@ -74,8 +74,7 @@ namespace kanzi {
    };
 
    // A task used to encode a block
-   // Several tasks may run in parallel. The transforms can be computed concurrently
-   // but the entropy encoding is sequential since all tasks share the same bitstream.
+   // Several tasks (transform+entropy) may run in parallel
    template <class T>
    class EncodingTask : public Task<T> {
    private:
@@ -170,5 +169,39 @@ namespace kanzi {
 
        uint64 getWritten();
    };
+
+
+   inline streampos CompressedOutputStream::tellp()
+   {
+       return _os.tellp();
+   }
+
+   inline ostream& CompressedOutputStream::seekp(streampos) THROW
+   {
+       setstate(ios::badbit);
+       throw ios_base::failure("Not supported");
+   }
+
+   inline ostream& CompressedOutputStream::flush()
+   {
+       // Let the underlying output stream flush itself when needed
+       return *this;
+   }
+
+   inline ostream& CompressedOutputStream::put(char c) THROW
+   {
+       try {
+           // If the buffer is full, time to encode
+           if (_sa->_index >= _sa->_length)
+               processBlock(false);
+
+           _sa->_array[_sa->_index++] = byte(c);
+           return *this;
+       }
+       catch (exception& e) {
+           setstate(ios::badbit);
+           throw ios_base::failure(e.what());
+       }
+   }
 }
 #endif
