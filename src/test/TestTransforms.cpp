@@ -22,13 +22,12 @@ limitations under the License.
 #include <cstring>
 #include <algorithm>
 #include "../types.hpp"
-#include "../transform/BWT.hpp"
-#include "../transform/BWTS.hpp"
 #include "../transform/LZCodec.hpp"
 #include "../transform/RLT.hpp"
 #include "../transform/ROLZCodec.hpp"
 #include "../transform/SBRT.hpp"
 #include "../transform/SRT.hpp"
+#include "../transform/TransformFactory.hpp"
 #include "../transform/ZRLT.hpp"
 
 using namespace std;
@@ -48,6 +47,18 @@ static Transform<byte>* getByteTransform(string name)
     if (name.compare("LZ") == 0)
         return new LZCodec();
 
+    if (name.compare("LZX") == 0){
+        Context ctx;
+        ctx.putInt("lz", TransformFactory<byte>::LZX_TYPE);
+        return new LZCodec(ctx);
+    }
+
+    if (name.compare("LZP") == 0){
+        Context ctx;
+        ctx.putInt("lz", TransformFactory<byte>::LZP_TYPE);
+        return new LZCodec(ctx);
+    }
+
     if (name.compare("ROLZ") == 0)
         return new ROLZCodec();
 
@@ -62,9 +73,6 @@ static Transform<byte>* getByteTransform(string name)
 
     if (name.compare("MTFT") == 0)
        return new SBRT(SBRT::MODE_MTF);
-
-    if (name.compare("BWTS") == 0)
-        return new BWTS();
 
     cout << "No such byte transform: " << name << endl;
     return nullptr;
@@ -442,9 +450,44 @@ int TestTransforms_main(int argc, const char* argv[])
         if (str.compare("ALL") == 0) {
             cout << endl
                  << endl
+                 << "TestLZ" << endl;
+            res |= testTransformsCorrectness("LZ");
+            res |= testTransformsSpeed("LZ");
+            cout << endl
+                 << endl
+                 << "TestLZX" << endl;
+            res |= testTransformsCorrectness("LZX");
+            res |= testTransformsSpeed("LZX");
+            cout << endl
+                 << endl
+                 << "TestLZP" << endl;
+            res |= testTransformsCorrectness("LZP");
+            //res |= testTransformsSpeed("LZP"); skip (returns false if not good enough compression)
+            cout << endl
+                 << endl
+                 << "TestROLZ" << endl;
+            res |= testTransformsCorrectness("ROLZ");
+            res |= testTransformsSpeed("ROLZ");
+            cout << endl
+                 << endl
+                 << "TestROLZX" << endl;
+            res |= testTransformsCorrectness("ROLZX");
+            res |= testTransformsSpeed("ROLZX");
+            cout << endl
+                 << endl
+                 << "TestZRLT" << endl;
+            res |= testTransformsCorrectness("ZRLT");
+            res |= testTransformsSpeed("ZRLT");
+            cout << endl
+                 << endl
                  << "TestRANK" << endl;
             res |= testTransformsCorrectness("RANK");
             res |= testTransformsSpeed("RANK");
+            cout << endl
+                 << endl
+                 << "TestSRT" << endl;
+            res |= testTransformsCorrectness("SRT");
+            res |= testTransformsSpeed("SRT");
             cout << endl
                  << endl
                  << "TestMTFT" << endl;
@@ -455,6 +498,11 @@ int TestTransforms_main(int argc, const char* argv[])
                  << "TestBWTS" << endl;
             res |= testTransformsCorrectness("BWTS");
             res |= testTransformsSpeed("BWTS");
+            cout << endl
+                 << endl
+                 << "TestFSD" << endl;
+            res |= testTransformsCorrectness("FSD");
+            //res |= testTransformsSpeed("FSD"); skip no good data
         }
         else {
             cout << "Test" << str << endl;
