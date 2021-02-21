@@ -46,6 +46,8 @@ namespace kanzi
 
        bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
+       int getMaxEncodedLength(int srcLen) const { return srcLen; }
+
    private:
 
        const int _mask1;

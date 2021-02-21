@@ -20,7 +20,7 @@ limitations under the License.
 #include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../entropy/EntropyCodecFactory.hpp"
 #include "../entropy/EntropyUtils.hpp"
-#include "../function/FunctionFactory.hpp"
+#include "../transform/TransformFactory.hpp"
 
 #ifdef CONCURRENCY_ENABLED
 #include <future>
@@ -71,7 +71,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _closed = false;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
     _entropyType = EntropyCodecFactory::getType(entropyCodec.c_str());
-    _transformType = FunctionFactory<byte>::getType(transform.c_str());
+    _transformType = TransformFactory<byte>::getType(transform.c_str());
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _jobs = tasks;
     _sa = new SliceArray<byte>(new byte[0], 0);
@@ -150,7 +150,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
 #endif
     _entropyType = EntropyCodecFactory::getType(entropyCodec.c_str());
-    _transformType = FunctionFactory<byte>::getType(transform.c_str());
+    _transformType = TransformFactory<byte>::getType(transform.c_str());
     string str = ctx.getString("checksum");
     bool checksum = str == STR_TRUE;
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
@@ -517,7 +517,7 @@ T EncodingTask<T>::run() THROW
         }
 
         if (_blockLength <= CompressedOutputStream::SMALL_BLOCK_SIZE) {
-            _transformType = FunctionFactory<byte>::NONE_TYPE;
+            _transformType = TransformFactory<byte>::NONE_TYPE;
             _entropyType = EntropyCodecFactory::NONE_TYPE;
             mode |= CompressedOutputStream::COPY_BLOCK_MASK;
         }
@@ -532,7 +532,7 @@ T EncodingTask<T>::run() THROW
                     //_ctx.putString("histo0", toString(histo, 256));
 
                     if (entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD) {
-                        _transformType = FunctionFactory<byte>::NONE_TYPE;
+                        _transformType = TransformFactory<byte>::NONE_TYPE;
                         _entropyType = EntropyCodecFactory::NONE_TYPE;
                         mode |= CompressedOutputStream::COPY_BLOCK_MASK;
                     }
@@ -541,7 +541,7 @@ T EncodingTask<T>::run() THROW
         }
 
         _ctx.putInt("size", _blockLength);
-        TransformSequence<byte>* transform = FunctionFactory<byte>::newFunction(_ctx, _transformType);
+        TransformSequence<byte>* transform = TransformFactory<byte>::newTransform(_ctx, _transformType);
         const int requiredSize = transform->getMaxEncodedLength(_blockLength);
 
         if (_buffer->_length < requiredSize) {
@@ -555,7 +555,7 @@ T EncodingTask<T>::run() THROW
 
         // _data->_length is at least _blockLength
         transform->forward(*_data, *_buffer, _blockLength);
-        const int nbFunctions = transform->getNbFunctions();
+        const int nbTransforms = transform->getNbTransforms();
         const byte skipFlags = transform->getSkipFlags();
         delete transform;
         postTransformLength = _buffer->_index;
@@ -590,7 +590,7 @@ T EncodingTask<T>::run() THROW
         DefaultOutputBitStream obs(os);
 
         // Write block 'header' (mode + compressed length);
-        if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != byte(0)) || (nbFunctions <= 4)) {
+        if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != byte(0)) || (nbTransforms <= 4)) {
             mode |= byte(skipFlags >> 4);
             obs.writeBits(uint64(mode), 8);
         }

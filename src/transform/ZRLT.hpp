@@ -17,7 +17,7 @@ limitations under the License.
 #define _ZRLT_
 
 #include "../Context.hpp"
-#include "../Function.hpp"
+#include "../Transform.hpp"
 
 namespace kanzi
 {
@@ -27,7 +27,7 @@ namespace kanzi
    // encoded in a different way (each digit in a different byte)
    // This algorithm is well adapted to process post BWT/MTFT data.
 
-   class ZRLT : public Function<byte>
+   class ZRLT : public Transform<byte>
    {
    public:
        ZRLT() {}

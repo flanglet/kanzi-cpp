@@ -13,22 +13,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef _NullFunction_
-#define _NullFunction_
+#ifndef _NullTransform_
+#define _NullTransform_
 
 #include "../Context.hpp"
-#include "../Function.hpp"
+#include "../Transform.hpp"
 
 
 namespace kanzi
 {
 
    template <class T>
-   class NullFunction : public Function<T> {
+   class NullTransform : public Transform<T> {
    public:
-       NullFunction() {}
-       NullFunction(Context&) {}
-       ~NullFunction() {}
+       NullTransform() {}
+       NullTransform(Context&) {}
+       ~NullTransform() {}
 
        bool forward(SliceArray<T>& input, SliceArray<T>& output, int length) THROW { return doCopy(input, output, length); }
 
@@ -43,7 +43,7 @@ namespace kanzi
    };
 
    template <class T>
-   bool NullFunction<T>::doCopy(SliceArray<T>& input, SliceArray<T>& output, int length) THROW
+   bool NullTransform<T>::doCopy(SliceArray<T>& input, SliceArray<T>& output, int length) THROW
    {
        if (length == 0)
            return true;

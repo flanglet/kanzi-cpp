@@ -17,7 +17,7 @@ limitations under the License.
 #define _RLT_
 
 #include "../Context.hpp"
-#include "../Function.hpp"
+#include "../Transform.hpp"
 
 namespace kanzi
 {
@@ -29,7 +29,7 @@ namespace kanzi
    // 228  <= runLen < 6944+228   -> 2 bytes
    // 7172 <= runLen < 65535+7172 -> 3 bytes
 
-   class RLT : public Function<byte>
+   class RLT : public Transform<byte>
    {
    public:
        RLT() {}

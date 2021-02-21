@@ -1,5 +1,5 @@
-#ifndef _FunctionFactory_
-#define _FunctionFactory_
+#ifndef _TransformFactory_
+#define _TransformFactory_
 
 #include <iostream>
 #include <fstream>
@@ -7,13 +7,13 @@
 #include <cstring>
 #include "../types.hpp"
 #include "../Context.hpp"
-#include "../transform/BWT.hpp"
-#include "../transform/BWTS.hpp"
-#include "../transform/SBRT.hpp"
+#include "BWT.hpp"
+#include "BWTS.hpp"
+#include "SBRT.hpp"
 #include "BWTBlockCodec.hpp"
 #include "LZCodec.hpp"
 #include "FSDCodec.hpp"
-#include "NullFunction.hpp"
+#include "NullTransform.hpp"
 #include "ROLZCodec.hpp"
 #include "RLT.hpp"
 #include "SRT.hpp"
@@ -26,7 +26,7 @@
 namespace kanzi {
 
 	template <class T>
-	class FunctionFactory {
+	class TransformFactory {
 	public:
 		// Up to 64 transforms can be declared (6 bit index)
 		static const uint64 NONE_TYPE = 0; // Copy
@@ -53,25 +53,25 @@ namespace kanzi {
 
 		static std::string getName(uint64 functionType) THROW;
 
-		static TransformSequence<T>* newFunction(Context& ctx, uint64 functionType) THROW;
+		static TransformSequence<T>* newTransform(Context& ctx, uint64 functionType) THROW;
 
 	private:
-		FunctionFactory() {}
+		TransformFactory() {}
 
-		~FunctionFactory() {}
+		~TransformFactory() {}
 
 		static const int ONE_SHIFT = 6; // bits per transform
 		static const int MAX_SHIFT = (8 - 1) * ONE_SHIFT; // 8 transforms
 		static const int MASK = (1 << ONE_SHIFT) - 1;
 
-		static Transform<T>* newFunctionToken(Context& ctx, uint64 functionType) THROW;
+		static Transform<T>* newToken(Context& ctx, uint64 functionType) THROW;
 
 		static const char* getNameToken(uint64 functionType) THROW;
 	};
 
 	// The returned type contains 8 transform values
 	template <class T>
-	uint64 FunctionFactory<T>::getType(const char* tName) THROW
+	uint64 TransformFactory<T>::getType(const char* tName) THROW
 	{
 		std::string name(tName);
 		size_t pos = name.find('+');
@@ -111,7 +111,7 @@ namespace kanzi {
 	}
 
 	template <class T>
-	uint64 FunctionFactory<T>::getTypeToken(const char* tName) THROW
+	uint64 TransformFactory<T>::getTypeToken(const char* tName) THROW
 	{
 		std::string name(tName);
 		transform(name.begin(), name.end(), name.begin(), ::toupper);
@@ -170,7 +170,7 @@ namespace kanzi {
 	}
 
 	template <class T>
-	TransformSequence<T>* FunctionFactory<T>::newFunction(Context& ctx, uint64 functionType) THROW
+	TransformSequence<T>* TransformFactory<T>::newTransform(Context& ctx, uint64 functionType) THROW
 	{
 		Transform<T>* transforms[8];
 		int nbtr = 0;
@@ -180,14 +180,14 @@ namespace kanzi {
 			const uint64 t = (functionType >> (MAX_SHIFT - ONE_SHIFT * i)) & MASK;
 
 			if ((t != NONE_TYPE) || (i == 0))
-				transforms[nbtr++] = newFunctionToken(ctx, t);
+				transforms[nbtr++] = newToken(ctx, t);
 		}
 
 		return new TransformSequence<T>(transforms, true);
 	}
 
 	template <class T>
-	Transform<T>* FunctionFactory<T>::newFunctionToken(Context& ctx, uint64 functionType) THROW
+	Transform<T>* TransformFactory<T>::newToken(Context& ctx, uint64 functionType) THROW
 	{
 		switch (functionType) {
 		case DICT_TYPE: {
@@ -253,7 +253,7 @@ namespace kanzi {
 			return new FSDCodec(ctx);
 
 		case NONE_TYPE:
-			return new NullFunction<T>(ctx);
+			return new NullTransform<T>(ctx);
 
 		default:
 			std::stringstream ss;
@@ -263,7 +263,7 @@ namespace kanzi {
 	}
 
 	template <class T>
-	std::string FunctionFactory<T>::getName(uint64 functionType) THROW
+	std::string TransformFactory<T>::getName(uint64 functionType) THROW
 	{
 		std::string res;
 
@@ -283,7 +283,7 @@ namespace kanzi {
 	}
 
 	template <class T>
-	const char* FunctionFactory<T>::getNameToken(uint64 functionType) THROW
+	const char* TransformFactory<T>::getNameToken(uint64 functionType) THROW
 	{
 		switch (functionType) {
 		case DICT_TYPE:

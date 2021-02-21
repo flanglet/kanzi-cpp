@@ -15,10 +15,6 @@ endif
 LDFLAGS=-lpthread
 LIB_SOURCES=Global.cpp \
 	Event.cpp \
-	transform/BWT.cpp \
-	transform/BWTS.cpp \
-	transform/DivSufSort.cpp \
-	transform/SBRT.cpp \
 	bitstream/DebugInputBitStream.cpp \
 	bitstream/DebugOutputBitStream.cpp \
 	bitstream/DefaultInputBitStream.cpp \
@@ -43,21 +39,24 @@ LIB_SOURCES=Global.cpp \
 	entropy/FPAQEncoder.cpp \
 	entropy/CMPredictor.cpp \
 	entropy/TPAQPredictor.cpp \
-	function/BWTBlockCodec.cpp \
-	function/LZCodec.cpp \
-	function/FSDCodec.cpp \
-	function/ROLZCodec.cpp \
-	function/RLT.cpp \
-	function/SRT.cpp \
-	function/TextCodec.cpp \
-	function/X86Codec.cpp \
-	function/ZRLT.cpp 
+	transform/BWT.cpp \
+	transform/BWTS.cpp \
+	transform/DivSufSort.cpp \
+	transform/SBRT.cpp \
+	transform/BWTBlockCodec.cpp \
+	transform/LZCodec.cpp \
+	transform/FSDCodec.cpp \
+	transform/ROLZCodec.cpp \
+	transform/RLT.cpp \
+	transform/SRT.cpp \
+	transform/TextCodec.cpp \
+	transform/X86Codec.cpp \
+	transform/ZRLT.cpp
 LIB_OBJECTS=$(LIB_SOURCES:.cpp=.o)
 
 TEST_SOURCES=test/TestEntropyCodec.cpp \
 	test/TestBWT.cpp \
 	test/TestDefaultBitStream.cpp \
-	test/TestFunctions.cpp \
 	test/TestTransforms.cpp 
 TEST_OBJECTS=$(TEST_SOURCES:.cpp=.o)
 
@@ -71,9 +70,8 @@ SOURCES=$(LIB_SOURCES) $(APP_SOURCES)
 OBJECTS=$(SOURCES:.cpp=.o)
 RPTS=$(SOURCES:.cpp=.optrpt)
 TESTS=testBWT testTransforms \
-	testEntropyCodec testDefaultBitStream \
-        testFunctions
-
+	testEntropyCodec testDefaultBitStream
+	
 APP=kanzi
 	
 STATIC_LIB_SUFFIX := .a
@@ -112,9 +110,6 @@ testEntropyCodec: $(LIB_OBJECTS) test/TestEntropyCodec.o
 
 testDefaultBitStream: $(LIB_OBJECTS) test/TestDefaultBitStream.o
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
-
-testFunctions: $(LIB_OBJECTS) test/TestFunctions.o
-	$(CXX) $^ -o ../bin/$@ $(LDFLAGS) 
 
 kanzi: $(OBJECTS) app/Kanzi.o
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)

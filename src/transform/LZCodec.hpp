@@ -18,11 +18,11 @@ limitations under the License.
 
 #include <cstring> // for memcpy
 #include "../Context.hpp"
-#include "../Function.hpp"
+#include "../Transform.hpp"
 #include "../Memory.hpp"
 
 namespace kanzi {
-   class LZCodec : public Function<byte> {
+   class LZCodec : public Transform<byte> {
 
    public:
        LZCodec() THROW;
@@ -44,14 +44,14 @@ namespace kanzi {
        }
 
    private:
-       Function<byte>* _delegate;
+       Transform<byte>* _delegate;
    };
 
    // Simple byte oriented LZ77 implementation.
    // It is a based on a heavily modified LZ4 with a bigger window, a bigger
    // hash map, 3+n*8 bit literal lengths and 17 or 24 bit match lengths.
    template <bool T>
-   class LZXCodec : public Function<byte> {
+   class LZXCodec : public Transform<byte> {
    public:
        LZXCodec()
        {
@@ -122,7 +122,7 @@ namespace kanzi {
        static int findMatch(byte block[], int pos, int ref, int maxMatch);
    };
 
-   class LZPCodec : public Function<byte> {
+   class LZPCodec : public Transform<byte> {
    public:
        LZPCodec()
        {

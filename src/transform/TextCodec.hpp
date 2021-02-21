@@ -17,7 +17,7 @@ limitations under the License.
 #define _TextCodec_
 
 #include "../Context.hpp"
-#include "../Function.hpp"
+#include "../Transform.hpp"
 
 
 namespace kanzi {
@@ -45,7 +45,7 @@ namespace kanzi {
    };
 
    // Encode word indexes using a token
-   class TextCodec1 : public Function<byte> {
+   class TextCodec1 : public Transform<byte> {
    public:
        TextCodec1();
 
@@ -86,7 +86,7 @@ namespace kanzi {
    };
 
    // Encode word indexes using a mask (0x80)
-   class TextCodec2 : public Function<byte> {
+   class TextCodec2 : public Transform<byte> {
    public:
        TextCodec2();
 
@@ -127,7 +127,7 @@ namespace kanzi {
 
    // Simple one-pass text codec that replaces words with indexes.
    // Generates a dynamic dictionary.
-   class TextCodec : public Function<byte> {
+   class TextCodec : public Transform<byte> {
        friend class TextCodec1;
        friend class TextCodec2;
 
@@ -210,7 +210,7 @@ namespace kanzi {
        static int createDictionary(char words[], int dictSize, DictEntry dict[], int maxWords, int startWord);
        static const int STATIC_DICT_WORDS;
 
-       Function<byte>* _delegate;
+       Transform<byte>* _delegate;
    };
 
    inline DictEntry::DictEntry()

@@ -32,6 +32,8 @@ namespace kanzi
 
        virtual bool inverse(SliceArray<T>& src, SliceArray<T>& dst, int length) = 0;
 
+       virtual int getMaxEncodedLength(int srcLen) const = 0;
+
        virtual ~Transform(){};
    };
 

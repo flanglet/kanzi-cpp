@@ -36,8 +36,8 @@ ROLZCodec::ROLZCodec(Context& ctx) THROW
 {
     string transform = ctx.getString("transform", "NONE");
 
-    _delegate = (transform.find("ROLZX") != string::npos) ? (Function<byte>*)new ROLZCodec2(LOG_POS_CHECKS2) :
-       (Function<byte>*)new ROLZCodec1(LOG_POS_CHECKS1);
+    _delegate = (transform.find("ROLZX") != string::npos) ? (Transform<byte>*)new ROLZCodec2(LOG_POS_CHECKS2) :
+       (Transform<byte>*)new ROLZCodec1(LOG_POS_CHECKS1);
 }
 
 bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW

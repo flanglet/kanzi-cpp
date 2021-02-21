@@ -17,14 +17,14 @@ limitations under the License.
 #define _SRT_
 
 #include "../Context.hpp"
-#include "../Function.hpp"
+#include "../Transform.hpp"
 
 namespace kanzi {
 
    // Sorted Rank Transform is typically used after a BWT to reduce the variance
    // of the data prior to entropy coding.
 
-   class SRT : public Function<byte> {
+   class SRT : public Transform<byte> {
    public:
        SRT() {}
        SRT(Context&) {}

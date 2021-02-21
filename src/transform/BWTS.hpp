@@ -67,6 +67,8 @@ namespace kanzi
 
        bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
+       int getMaxEncodedLength(int srcLen) const { return srcLen; }
+
        static int maxBlockSize() { return MAX_BLOCK_SIZE; }
    };
 

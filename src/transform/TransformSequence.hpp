@@ -18,13 +18,13 @@ limitations under the License.
 
 #include <cstring>
 #include <stdexcept>
-#include "../Function.hpp"
+#include "../Transform.hpp"
 
 namespace kanzi {
 
    // Encapsulates a sequence of transforms or functions in a function
    template <class T>
-   class TransformSequence : public Function<T> {
+   class TransformSequence : public Transform<T> {
    public:
        TransformSequence(Transform<T>* transforms[8], bool deallocate = true) THROW;
 
@@ -41,7 +41,7 @@ namespace kanzi {
 
        void setSkipFlags(byte flags) { _skipFlags = flags; }
 
-       int getNbFunctions() const { return _length; }
+       int getNbTransforms() const { return _length; }
 
    private:
        static const byte SKIP_MASK = byte(0xFF);
@@ -218,12 +218,7 @@ namespace kanzi {
        int requiredSize = srcLength;
 
        for (int i = 0; i < _length; i++) {
-           Function<T>* f = dynamic_cast<Function<T>*>(_transforms[i]);
-
-           if (f == nullptr)
-              continue;
-
-           const int max = f->getMaxEncodedLength(requiredSize);
+           const int max = _transforms[i]->getMaxEncodedLength(requiredSize);
 
            if (max > requiredSize)
               requiredSize = max;

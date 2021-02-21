@@ -25,7 +25,7 @@ limitations under the License.
 #include "../util.hpp"
 #include "../SliceArray.hpp"
 #include "../Error.hpp"
-#include "../function/FunctionFactory.hpp"
+#include "../transform/TransformFactory.hpp"
 #include "../io/IOException.hpp"
 #include "../io/IOUtil.hpp"
 #include "../io/NullOutputStream.hpp"
@@ -131,7 +131,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     }
 
     // Extract transform names. Curate input (EG. NONE+NONE+xxxx => xxxx)
-    _transform = FunctionFactory<byte>::getName(FunctionFactory<byte>::getType(strTransf.c_str()));
+    _transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(strTransf.c_str()));
     it = args.find("checksum");
 
     if (it == args.end()) {

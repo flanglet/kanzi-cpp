@@ -17,7 +17,7 @@ limitations under the License.
 #define _ROLZCodec_
 
 #include "../Context.hpp"
-#include "../Function.hpp"
+#include "../Transform.hpp"
 #include "../Memory.hpp"
 #include "../Predictor.hpp"
 #include "../util.hpp"
@@ -110,7 +110,7 @@ namespace kanzi {
    };
 
    // Use ANS to encode/decode literals and matches
-   class ROLZCodec1 : public Function<byte> {
+   class ROLZCodec1 : public Transform<byte> {
    public:
        ROLZCodec1(uint logPosChecks) THROW;
 
@@ -147,7 +147,7 @@ namespace kanzi {
 
    // Use CM (ROLZEncoder/ROLZDecoder) to encode/decode literals and matches
    // Code loosely based on 'balz' by Ilya Muravyov
-   class ROLZCodec2 : public Function<byte> {
+   class ROLZCodec2 : public Transform<byte> {
    public:
        ROLZCodec2(uint logPosChecks) THROW;
 
@@ -180,7 +180,7 @@ namespace kanzi {
        int findMatch(const byte buf[], const int pos, const int end);
    };
 
-   class ROLZCodec : public Function<byte> {
+   class ROLZCodec : public Transform<byte> {
        friend class ROLZCodec1;
        friend class ROLZCodec2;
 
@@ -211,7 +211,7 @@ namespace kanzi {
        static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB
        static const int MIN_BLOCK_SIZE = 64;
 
-       Function<byte>* _delegate;
+       Transform<byte>* _delegate;
 
        static uint16 getKey(const byte* p)
        {

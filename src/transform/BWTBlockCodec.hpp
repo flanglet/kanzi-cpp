@@ -19,7 +19,7 @@ limitations under the License.
 #include <string>
 #include "../transform/BWT.hpp"
 #include "../Context.hpp"
-#include "../Function.hpp"
+#include "../Transform.hpp"
 
 
 namespace kanzi {
@@ -37,7 +37,7 @@ namespace kanzi {
    //         bits 5-0 contain 6 most significant bits of primary index
    //   primary index: remaining bits (up to 3 bytes)
 
-   class BWTBlockCodec : public Function<byte> {
+   class BWTBlockCodec : public Transform<byte> {
    public:
        BWTBlockCodec(Context& ctx);
 

@@ -20,7 +20,7 @@ limitations under the License.
 #include "../Error.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../entropy/EntropyCodecFactory.hpp"
-#include "../function/FunctionFactory.hpp"
+#include "../transform/TransformFactory.hpp"
 
 #ifdef CONCURRENCY_ENABLED
 #include <future>
@@ -47,7 +47,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
     _blockId = 0;
     _blockSize = 0;
     _entropyType = EntropyCodecFactory::NONE_TYPE;
-    _transformType = FunctionFactory<byte>::NONE_TYPE;
+    _transformType = TransformFactory<byte>::NONE_TYPE;
     _initialized = false;
     _closed = false;
     _maxIdx = 0;
@@ -89,7 +89,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
     _blockId = 0;
     _blockSize = 0;
     _entropyType = EntropyCodecFactory::NONE_TYPE;
-    _transformType = FunctionFactory<byte>::NONE_TYPE;
+    _transformType = TransformFactory<byte>::NONE_TYPE;
     _initialized = false;
     _closed = false;
     _maxIdx = 0;
@@ -168,7 +168,7 @@ void CompressedInputStream::readHeader() THROW
 
     // Read transform: 8*6 bits
     _transformType = _ibs->readBits(48);
-    _ctx.putString("transform", FunctionFactory<byte>::getName(_transformType));
+    _ctx.putString("transform", TransformFactory<byte>::getName(_transformType));
 
     // Read block size
     _blockSize = int(_ibs->readBits(28)) << 4;
@@ -207,7 +207,7 @@ void CompressedInputStream::readHeader() THROW
         }
 
         try {
-            string w2 = FunctionFactory<byte>::getName(_transformType);
+            string w2 = TransformFactory<byte>::getName(_transformType);
             ss << "Using " << ((w2 == "NONE") ? "no" : w2) << " transform (stage 2)" << endl;
         }
         catch (invalid_argument&) {
@@ -631,7 +631,7 @@ T DecodingTask<T>::run() THROW
         byte skipFlags = byte(0);
 
         if ((mode & CompressedInputStream::COPY_BLOCK_MASK) != byte(0)) {
-            _transformType = FunctionFactory<byte>::NONE_TYPE;
+            _transformType = TransformFactory<byte>::NONE_TYPE;
             _entropyType = EntropyCodecFactory::NONE_TYPE;
         }
         else {
@@ -714,7 +714,7 @@ T DecodingTask<T>::run() THROW
             CompressedInputStream::notifyListeners(_listeners, evt);
         }
 
-        TransformSequence<byte>* transform = FunctionFactory<byte>::newFunction(_ctx, _transformType);
+        TransformSequence<byte>* transform = TransformFactory<byte>::newTransform(_ctx, _transformType);
         transform->setSkipFlags(skipFlags);
         _buffer->_index = 0;
 

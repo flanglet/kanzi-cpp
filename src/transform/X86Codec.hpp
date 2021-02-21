@@ -17,12 +17,12 @@ limitations under the License.
 #define _X86Codec_
 
 #include "../Context.hpp"
-#include "../Function.hpp"
+#include "../Transform.hpp"
 
 namespace kanzi
 {
    // Adapted from MCM: https://github.com/mathieuchartier/mcm/blob/master/X86Binary.hpp
-   class X86Codec : public Function<byte> {
+   class X86Codec : public Transform<byte> {
    public:
        X86Codec() { _pCtx = nullptr; }
 

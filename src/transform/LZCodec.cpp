@@ -16,7 +16,7 @@ limitations under the License.
 #include <sstream>
 #include "../util.hpp" // Visual Studio min/max
 #include "../Memory.hpp"
-#include "FunctionFactory.hpp"
+#include "TransformFactory.hpp"
 #include "LZCodec.hpp"
 
 using namespace kanzi;
@@ -29,14 +29,14 @@ LZCodec::LZCodec() THROW
 
 LZCodec::LZCodec(Context& ctx) THROW
 {
-    const int lzType = ctx.getInt("lz", FunctionFactory<byte>::LZ_TYPE);
+    const int lzType = ctx.getInt("lz", TransformFactory<byte>::LZ_TYPE);
 
-    if (lzType == FunctionFactory<byte>::LZP_TYPE) {
-        _delegate = (Function<byte>*)new LZPCodec();
-    } else if (lzType == FunctionFactory<byte>::LZX_TYPE) {
-        _delegate = (Function<byte>*)new LZXCodec<true>();
+    if (lzType == TransformFactory<byte>::LZP_TYPE) {
+        _delegate = (Transform<byte>*)new LZPCodec();
+    } else if (lzType == TransformFactory<byte>::LZX_TYPE) {
+        _delegate = (Transform<byte>*)new LZXCodec<true>();
     } else {
-        _delegate = (Function<byte>*)new LZXCodec<false>();
+        _delegate = (Transform<byte>*)new LZXCodec<false>();
     }
 }
 

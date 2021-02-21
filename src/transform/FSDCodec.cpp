@@ -14,7 +14,6 @@ limitations under the License.
 */
 
 #include "FSDCodec.hpp"
-#include "FunctionFactory.hpp"
 #include "../Global.hpp"
 
 using namespace kanzi;

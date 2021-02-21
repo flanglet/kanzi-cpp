@@ -17,13 +17,13 @@ limitations under the License.
 #define _FSDCodec_
 
 #include "../Context.hpp"
-#include "../Function.hpp"
+#include "../Transform.hpp"
 
 
 // Fixed Step Delta codec
 // Decorrelate values separated by a constant distance (step) and encode residuals
 namespace kanzi {
-   class FSDCodec : public Function<byte> {
+   class FSDCodec : public Transform<byte> {
 
    public:
        FSDCodec() { _pCtx = nullptr; }
