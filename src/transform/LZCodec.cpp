@@ -209,11 +209,11 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
     }
 
-    if ((dstIdx + tkIdx + mIdx) > (output._length - output._index))
-        return false;
-
     // Emit last literals
     const int litLen = count - anchor;
+
+    if (dstIdx + litLen + tkIdx + mIdx >= output._index + count)
+        return false;
 
     if (litLen >= 7) {
         _tkBuf[tkIdx++] = byte(7 << 5);
@@ -235,7 +235,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     dstIdx += mIdx;
     input._index = count;
     output._index = dstIdx;
-    return dstIdx < count;
+    return true;
 }
 
 
