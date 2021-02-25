@@ -148,12 +148,13 @@ inline void fromString(std::string s, int data[], int length) {
    int idx = 0;
 
    for (uint i = 0; (i < s.length()) && (idx < length); i++) {
-      if (s[i] != ' ')
+      if ((s[i] >= '0') && (s[i] <= '9'))  {
          n = (10 * n) + s[i] - '0';
-      else {
-         data[idx++] = n;
-         n = 0;
+         continue;
       }
+
+      data[idx++] = n;
+      n = 0;
    }
 }
 
@@ -228,16 +229,24 @@ public:
 static inline void prefetchRead(const void* ptr) {
 #if defined(__GNUG__) || defined(__clang__)
         __builtin_prefetch(ptr, 0, 1);
-#elif defined(__x86_64__)
+#elif defined(__x86_64__) || defined(_m_amd64)
         _mm_prefetch((char*) ptr, _MM_HINT_T0);
+#elif defined(_M_ARM)
+        __prefetch(ptr)
+#elif defined(_M_ARM64)
+        __prefetch2(ptr, 1)
 #endif
 }
 
 static inline void prefetchWrite(const void* ptr) {
 #if defined(__GNUG__) || defined(__clang__)
         __builtin_prefetch(ptr, 1, 1);
-#elif defined(__x86_64__)
+#elif defined(__x86_64__) || defined(_m_amd64)
         _mm_prefetch((char*) ptr, _MM_HINT_T0);
+#elif defined(_M_ARM)
+        __prefetchw(ptr)
+#elif defined(_M_ARM64)
+        __prefetch2(ptr, 17)
 #endif
 }
 
