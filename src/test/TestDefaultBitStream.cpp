@@ -186,17 +186,14 @@ int testBitStreamCorrectnessMisaligned1()
         // Close first to force flush()
         dbs.close();
 
-#ifndef __MINGW32__
-        // Exception handling is broken with Mingw currently
         if (test == 10) {
             try {
                 cout << "\nTrying to write to closed stream" << endl;
                 dbs.writeBit(1);
             } catch (BitStreamException& e) {
-               cout << "\nException: " << e.what() << endl;
+                cout << "\nException: " << e.what() << endl;
             }
         }
-#endif
 
         ios.rdbuf()->pubseekpos(0);
         istringstream is;
@@ -218,7 +215,7 @@ int testBitStreamCorrectnessMisaligned1()
         bool ok = true;
 
         for (int i = 0; i < length; i++) {
-            int x = (int)ibs.readBits((1 + (i & 63)));
+            int x = (int)ibs.readBits((1 + (i % 30)));
             cout << x;
             cout << ((x == values[i]) ? " " : "* ");
             ok &= (x == values[i]);
@@ -240,17 +237,14 @@ int testBitStreamCorrectnessMisaligned1()
         cout << endl;
         cout << endl;
 
-#ifndef __MINGW32__
-        // Exception handling is broken with Mingw currently
         if (test == 10) {
             try {
                 cout << "\nTrying to read from closed stream" << endl;
                 ibs.readBit();
             } catch (BitStreamException& e) {
-               cout << "\nException: " << e.what() << endl;
+                cout << "\nException: " << e.what() << endl;
             }
         }
-#endif
     }
 
     delete[] values;
@@ -350,17 +344,14 @@ int testBitStreamCorrectnessAligned2()
         // Close first to force flush()
         dbs.close();
 
-#ifndef __MINGW32__
-        // Exception handling is broken with Mingw currently
         if (test == 10) {
             try {
                 cout << "\nTrying to write to closed stream" << endl;
                 dbs.writeBit(1);
             } catch (BitStreamException& e) {
-               cout << "\nException: " << e.what() << endl;
+                cout << "\nException: " << e.what() << endl;
             }
         }
-#endif
 
         ios.rdbuf()->pubseekpos(0);
         istringstream is;
@@ -404,17 +395,14 @@ int testBitStreamCorrectnessAligned2()
         cout << endl;
         cout << endl;
 
-#ifndef __MINGW32__
-        // Exception handling is broken with Mingw currently
         if (test == 10) {
             try {
                 cout << "\nTrying to read from closed stream" << endl;
                 ibs.readBit();
             } catch (BitStreamException& e) {
-               cout << "\nException: " << e.what() << endl;
+                cout << "\nException: " << e.what() << endl;
             }
         }
-#endif
     }
 
     delete[] input;
