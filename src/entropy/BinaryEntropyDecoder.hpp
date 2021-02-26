@@ -92,7 +92,7 @@ namespace kanzi
    {
        _low = (_low << 32) & MASK_0_56;
        _high = ((_high << 32) | MASK_0_32) & MASK_0_56;
-       const uint64 val = BigEndian::readInt32(&_sba._array[_sba._index]) & MASK_0_32;
+       const uint64 val = LittleEndian::readInt32(&_sba._array[_sba._index]) & MASK_0_32;
        _current = ((_current << 32) | val) & MASK_0_56;
        _sba._index += 4;
    }
