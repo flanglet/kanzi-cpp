@@ -166,7 +166,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     const int srcEnd = count - 4;
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    LittleEndian::writeInt32(&dst[0], count);
+    BigEndian::writeInt32(&dst[0], count);
     int dstIdx = 4;
     int sizeChunk = (count <= ROLZCodec::CHUNK_SIZE) ? count : ROLZCodec::CHUNK_SIZE;
     int startChunk = 0;
@@ -311,7 +311,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    const int dstEnd = LittleEndian::readInt32(&src[0]) - 4;
+    const int dstEnd = BigEndian::readInt32(&src[0]) - 4;
     int srcIdx = 4;
     int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
@@ -618,7 +618,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     const int srcEnd = count - 4;
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    LittleEndian::writeInt32(&dst[0], count);
+    BigEndian::writeInt32(&dst[0], count);
     int srcIdx = 0;
     int dstIdx = 4;
     int sizeChunk = min(count, ROLZCodec::CHUNK_SIZE);
@@ -694,7 +694,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     byte* src = &input._array[input._index];
     int srcIdx = 0;
-    const int dstEnd = LittleEndian::readInt32(&src[srcIdx]);
+    const int dstEnd = BigEndian::readInt32(&src[srcIdx]);
     srcIdx += 4;
     int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;

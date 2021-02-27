@@ -103,7 +103,7 @@ namespace kanzi
    // Push 64 bits of current value into buffer.
    inline void DefaultOutputBitStream::pushCurrent() THROW
    {
-       LittleEndian::writeLong64(&_buffer[_position], _current);
+       BigEndian::writeLong64(&_buffer[_position], _current);
        _availBits = 64;
        _current = 0;
        _position += 8;

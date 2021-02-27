@@ -81,7 +81,7 @@ namespace kanzi
 
    inline void FPAQEncoder::flush()
    {
-       LittleEndian::writeInt32(&_sba._array[_sba._index], int32(_high >> 24));
+       BigEndian::writeInt32(&_sba._array[_sba._index], int32(_high >> 24));
        _sba._index += 4;
        _low <<= 32;
        _high = (_high << 32) | MASK_0_32;
