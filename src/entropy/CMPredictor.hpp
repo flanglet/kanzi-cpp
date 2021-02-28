@@ -29,6 +29,7 @@ namespace kanzi
        static const int FAST_RATE = 2;
        static const int MEDIUM_RATE = 4;
        static const int SLOW_RATE = 6;
+       static const int PSCALE = 65536;
 
        int _c1;
        int _c2;
@@ -58,11 +59,13 @@ namespace kanzi
            _pc1[256] -= (_pc1[256] >> FAST_RATE);
            _pc1[_c1] -= (_pc1[_c1] >> MEDIUM_RATE);
            _pc2[0] -= (_pc2[0]>> SLOW_RATE);
+           _pc2[1] -= (_pc2[1]>> SLOW_RATE);
        }
        else {
-           _pc1[256] += ((0xFFFF - _pc1[256]) >> FAST_RATE);
-           _pc1[_c1] += ((0xFFFF - _pc1[_c1]) >> MEDIUM_RATE);
-           _pc2[0] += ((0xFFFF - _pc2[0]) >> SLOW_RATE);
+           _pc1[256] -= ((_pc1[256] - PSCALE + 16) >> FAST_RATE);
+           _pc1[_c1] -= ((_pc1[_c1] - PSCALE + 16) >> MEDIUM_RATE);
+           _pc2[0] -= ((_pc2[0] - PSCALE + 16) >> SLOW_RATE);
+           _pc2[1] -= ((_pc2[1] - PSCALE + 16) >> SLOW_RATE);
            _ctx++;
        }
 
@@ -80,7 +83,10 @@ namespace kanzi
        _pc1 = _counter1[_ctx];
        const int p = (13 * (_pc1[256] + _pc1[_c1]) + 6 * _pc1[_c2]) >> 5;
        _pc2 = &_counter2[_ctx | _runMask][p >> 12];
-       return (p + 3 * _pc2[0] + 32) >> 6; // rescale to [0..4095]
+       const int x1 = _pc2[0];
+       const int x2 = _pc2[1];
+       const int ssep = x1 + (((x2 - x1) * (p & 4095)) >> 12);
+       return (p + 3*ssep + 32) >> 6; // rescale to [0..4095]
    }
 }
 #endif

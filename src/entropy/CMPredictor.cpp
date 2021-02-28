@@ -35,8 +35,8 @@ CMPredictor::CMPredictor()
             _counter2[2 * i + 1][j] = j << 12;
         }
 
-        _counter2[2 * i][16] = 65520;
-        _counter2[2 * i + 1][16] = 65520;
+        _counter2[2 * i][16] = 15 << 12;
+        _counter2[2 * i + 1][16] = 15 << 12;
     }
 
     _pc1 = _counter1[_ctx];

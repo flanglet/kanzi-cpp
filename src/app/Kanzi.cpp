@@ -249,7 +249,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println("        Providing this option forces entropy and transform.", true);
                 log.println("        0=None&None (store), 1=TEXT+LZ&HUFFMAN, 2=TEXT+FSD+LZX&HUFFMAN", true);
                 log.println("        3=TEXT+FSD+ROLZ, 4=TEXT+FSD+ROLZX, 5=TEXT+BWT+RANK+ZRLT&ANS0", true);
-                log.println("        6=TEXT+BWT+SRT+ZRLT&FPAQ, 7=LZP+TEXT+BWT&CM, 8=X86+RLT+TEXT&TPAQ", true);
+                log.println("        6=TEXT+BWT+SRT+ZRLT&FPAQ, 7=LZP+TEXT+BWT&CM, 8=X86+RLT+TEXT+LZP&TPAQ", true);
                 log.println("        9=X86+RLT+TEXT&TPAQX\n", true);
                 log.println("   -e, --entropy=<codec>", true);
                 log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]", true);
