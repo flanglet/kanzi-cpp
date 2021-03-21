@@ -25,9 +25,9 @@ namespace kanzi
 {
 
    // TPAQ predictor
-   // Derived from a heavily modified version of Tangelo 2.4 (by Jan Ondrus).
+   // Initially based on Tangelo 2.4 (by Jan Ondrus).
    // PAQ8 is written by Matt Mahoney.
-   // See http://encode.ru/threads/1738-TANGELO-new-compressor-(derived-from-PAQ8-FP8)
+   // See http://encode.su/threads/1738-TANGELO-new-compressor-(derived-from-PAQ8-FP8)
 
    // Mixer combines models using neural networks with 8 inputs.
    class TPAQMixer
@@ -308,9 +308,9 @@ namespace kanzi
            const int rbsz = ctx->getInt("blockSize", 32768);
 
            if (rbsz >= 64 * 1024 * 1024)
-               statesSize = 1 << 29;
-           else if (rbsz >= 16 * 1024 * 1024)
                statesSize = 1 << 28;
+           else if (rbsz >= 16 * 1024 * 1024)
+               statesSize = 1 << 27;
            else if (rbsz >= 4 * 1024 * 1024)
                statesSize = 1 << 26;
            else
@@ -322,22 +322,22 @@ namespace kanzi
            const int absz = ctx->getInt("size", rbsz);
 
            if (absz >= 32 * 1024 * 1024)
-               mixersSize = 1 << 17;
-           else if (absz >= 16 * 1024 * 1024)
                mixersSize = 1 << 16;
+           else if (absz >= 16 * 1024 * 1024)
+               mixersSize = 1 << 15;
            else if (absz >= 8 * 1024 * 1024)
                mixersSize = 1 << 14;
            else if (absz >= 4 * 1024 * 1024)
-               mixersSize = 1 << 12;
+               mixersSize = 1 << 13;
            else
-               mixersSize = (absz >= 1 * 1024 * 1024) ? 1 << 10 : 1 << 8;
+               mixersSize = (absz >= 1 * 1024 * 1024) ? 1 << 11 : 1 << 8;
 
            bufferSize = (rbsz < BUFFER_SIZE) ? rbsz : BUFFER_SIZE;
            hashSize = (hashSize < 16 * uint(absz)) ? hashSize : 16 * uint(absz);
        }
 
-       mixersSize <<= extraMem;
-       statesSize <<= extraMem;
+       mixersSize <<= (2 * extraMem);
+       statesSize <<= (2 * extraMem);
        hashSize <<= (2 * extraMem);
        _statesMask = statesSize - 1;
        _mixersMask = (mixersSize - 1) & ~1;
@@ -533,10 +533,10 @@ namespace kanzi
                int r = _matchLen + 2;
 
                while (r <= MAX_LENGTH) {
-                   if ((_buffer[(_pos - r) & _bufferMask]) != (_buffer[(_matchPos - r) & _bufferMask]))
+                   if ((_buffer[(_pos - r - 1) & _bufferMask]) != (_buffer[(_matchPos - r - 1) & _bufferMask]))
                        break;
 
-                   if ((_buffer[(_pos - r - 1) & _bufferMask]) != (_buffer[(_matchPos - r - 1) & _bufferMask]))
+                   if ((_buffer[(_pos - r) & _bufferMask]) != (_buffer[(_matchPos - r) & _bufferMask]))
                        break;
 
                    r += 2;
@@ -568,7 +568,7 @@ namespace kanzi
    {
        if (_c0 == ((int(_buffer[_matchPos & _bufferMask]) & 0xFF) | 256) >> _bpos) {
            return ((int(_buffer[_matchPos & _bufferMask] >> (_bpos - 1)) & 1) != 0) ?
-              MATCH_PRED[_matchLen - 1] : -MATCH_PRED[_matchLen - 1];
+               MATCH_PRED[_matchLen - 1] : -MATCH_PRED[_matchLen - 1];
        }
 
        _matchLen = 0;

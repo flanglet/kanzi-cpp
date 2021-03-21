@@ -40,7 +40,8 @@ namespace kanzi {
    template <int RATE>
    inline LinearAdaptiveProbMap<RATE>::LinearAdaptiveProbMap(int n)
    {
-       _data = new uint16[65 * n];
+       const int size = (n == 0) ? 65 : n * 65;
+       _data = new uint16[size];
        _index = 0;
 
        for (int j = 0; j <= 64; j++) {
@@ -89,7 +90,8 @@ namespace kanzi {
    inline LogisticAdaptiveProbMap<FAST, RATE>::LogisticAdaptiveProbMap(int n)
    {
        const int mult = (FAST == false) ? 33 : 32;
-       _data = new uint16[n * mult];
+       const int size = (n == 0) ? mult : n * mult;
+       _data = new uint16[size];
        _index = 0;
 
        for (int j = 0; j < mult; j++)
