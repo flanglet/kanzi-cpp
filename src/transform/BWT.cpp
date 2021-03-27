@@ -96,29 +96,16 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
         _sa = new int[_bufferSize];
     }
 
-    int* sa = _sa;
-    _saAlgo.computeSuffixArray(src, sa, 0, count);
-    const int chunks = getBWTChunks(count);
     bool res = true;
+    int* sa = _sa;
+    const int chunks = getBWTChunks(count);
 
     if (chunks == 1) {
-        dst[0] = src[count - 1];
-        int n = 0;
-
-        for (; n < count; n++) {
-            if (sa[n] == 0)
-                break;
-
-            dst[n + 1] = src[sa[n] - 1];
-        }
-
-        n++;
-        res &= setPrimaryIndex(0, n);
-
-        for (; n < count; n++)
-            dst[n] = src[sa[n] - 1];
+        const int pIdx = _saAlgo.computeBWT(src, dst, sa, 0, count);
+        res = setPrimaryIndex(0, pIdx);
     }
     else {
+        _saAlgo.computeSuffixArray(src, sa, 0, count);
         const int st = count / chunks;
         const int step = (chunks * st == count) ? st : st + 1;
         dst[0] = src[count - 1];
@@ -458,11 +445,3 @@ T InverseBigChunkTask<T>::run() THROW
     return T(0);
 }
 
-int BWT::getBWTChunks(int size)
-{
-    if (size < 4 * 1024 * 1024)
-        return 1;
-
-    const int res = (size + (1 << 21)) >> 22;
-    return (res > BWT_MAX_CHUNKS) ? BWT_MAX_CHUNKS : res;
-}

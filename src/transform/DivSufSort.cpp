@@ -154,18 +154,26 @@ void DivSufSort::constructSuffixArray(int bucketA[], int bucketB[], int n, int m
     }
 }
 
-int DivSufSort::computeBWT(byte input[], int sa[], int start, int length)
+int DivSufSort::computeBWT(byte input[], byte output[], int bwt[], int start, int length)
 {
     _buffer = reinterpret_cast<uint8*>(&input[start]);
-    _sa = sa;
+    _sa = bwt;
     reset();
     int bucketA[256] = { 0 };
     int* bucketB = new int[65536];
     memset(&bucketB[0], 0, sizeof(int) * 65536);
     const int m = sortTypeBstar(bucketA, bucketB, length);
-    const int res = constructBWT(bucketA, bucketB, length, m);
+    const int pIdx = constructBWT(bucketA, bucketB, length, m);
     delete[] bucketB;
-    return res;
+    output[0] = input[length - 1];
+
+    for (int i = 0; i < pIdx; i++)
+        output[i + 1] = byte(bwt[i]);
+
+    for (int i = pIdx + 1; i < length; i++)
+        output[i] = byte(bwt[i]);
+
+    return pIdx + 1;
 }
 
 int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m)
@@ -252,7 +260,7 @@ int DivSufSort::sortTypeBstar(int bucketA[], int bucketB[], int n)
 
     // Count the number of occurrences of the first one or two characters of each
     // type A, B and B* suffix. Moreover, store the beginning position of all
-    // type B* suffixes into the array SA.
+    // type B* suffixes into the array _sa.
     for (int i = n - 1; i >= 0;) {
         int c1;
 

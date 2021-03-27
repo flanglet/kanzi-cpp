@@ -118,5 +118,15 @@ namespace kanzi {
 
        static int getBWTChunks(int size);
    };
+
+
+   inline int BWT::getBWTChunks(int size)
+   {
+       if (size < 4 * 1024 * 1024)
+           return 1;
+
+       const int res = (size + (1 << 21)) >> 22;
+       return (res > BWT_MAX_CHUNKS) ? BWT_MAX_CHUNKS : res;
+   }
 }
 #endif

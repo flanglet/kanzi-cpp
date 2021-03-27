@@ -221,7 +221,7 @@ namespace kanzi
 
        void computeSuffixArray(byte input[], int sa[], int start, int length);
 
-       int computeBWT(byte input[], int sa[], int start, int length);
+       int computeBWT(byte input[], byte output[], int sa[], int start, int length);
    };
 
 
