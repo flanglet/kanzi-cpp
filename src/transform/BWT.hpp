@@ -83,8 +83,9 @@ namespace kanzi {
 
    private:
        static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB
-       static const int BWT_MAX_CHUNKS = 8;
        static const int NB_FASTBITS = 17;
+       static const int BLOCK_SIZE_THRESHOLD1 = 256;
+       static const int BLOCK_SIZE_THRESHOLD2 = 4 * 1024 * 1024;
 
        uint* _buffer;
        int* _sa;
@@ -122,11 +123,7 @@ namespace kanzi {
 
    inline int BWT::getBWTChunks(int size)
    {
-       if (size < 4 * 1024 * 1024)
-           return 1;
-
-       const int res = (size + (1 << 21)) >> 22;
-       return (res > BWT_MAX_CHUNKS) ? BWT_MAX_CHUNKS : res;
+       return (size < BLOCK_SIZE_THRESHOLD1) ? 1 : 8;
    }
 }
 #endif

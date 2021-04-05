@@ -163,13 +163,13 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     }
 
     // Find the fastest way to implement inverse based on block size
-    if (count < 4 * 1024 * 1024)
+    if (count <= BLOCK_SIZE_THRESHOLD2)
         return inverseSmallBlock(input, output, count);
 
     return inverseBigBlock(input, output, count);
 }
 
-// When count < 4M, mergeTPSI algo, always one chunk
+// When count <= 4M, mergeTPSI algo
 bool BWT::inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     // Lazy dynamic memory allocation
@@ -186,7 +186,7 @@ bool BWT::inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, i
     if ((pIdx < 0) || (pIdx > count))
         return false;
 
-    // Build array of packed index + value (assumes block size < 2^24)
+    // Build array of packed index + value (assumes block size < 1<<24)
     uint buckets[256] = { 0 };
     Global::computeHistogram(&input._array[input._index], count, buckets, true);
 
@@ -213,10 +213,50 @@ bool BWT::inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, i
     }
 
     // Build inverse
-    for (int i = 0, t = pIdx - 1; i < count; i++) {
-        const uint ptr = data[t];
-        dst[i] = byte(ptr);
-        t = ptr >> 8;
+    if (count < BLOCK_SIZE_THRESHOLD1) {
+        for (int i = 0, t = pIdx - 1; i < count; i++) {
+            const uint ptr = data[t];
+            dst[i] = byte(ptr);
+            t = ptr >> 8;
+        }
+    }
+    else {
+        const int ckSize = count >> 3;
+        int t0 = getPrimaryIndex(0) - 1;
+        int t1 = getPrimaryIndex(1) - 1;
+        int t2 = getPrimaryIndex(2) - 1;
+        int t3 = getPrimaryIndex(3) - 1;
+        int t4 = getPrimaryIndex(4) - 1;
+        int t5 = getPrimaryIndex(5) - 1;
+        int t6 = getPrimaryIndex(6) - 1;
+        int t7 = getPrimaryIndex(7) - 1;
+
+        for (int i = 0; i < ckSize; i++) {
+            const int ptr0 = data[t0];
+            dst[i] = byte(ptr0);
+            t0 = ptr0 >> 8;
+            const int ptr1 = data[t1];
+            dst[i + ckSize * 1] = byte(ptr1);
+            t1 = ptr1 >> 8;
+            const int ptr2 = data[t2];
+            dst[i + ckSize * 2] = byte(ptr2);
+            t2 = ptr2 >> 8;
+            const int ptr3 = data[t3];
+            dst[i + ckSize * 3] = byte(ptr3);
+            t3 = ptr3 >> 8;
+            const int ptr4 = data[t4];
+            dst[i + ckSize * 4] = byte(ptr4);
+            t4 = ptr4 >> 8;
+            const int ptr5 = data[t5];
+            dst[i + ckSize * 5] = byte(ptr5);
+            t5 = ptr5 >> 8;
+            const int ptr6 = data[t6];
+            dst[i + ckSize * 6] = byte(ptr6);
+            t6 = ptr6 >> 8;
+            const int ptr7 = data[t7];
+            dst[i + ckSize * 7] = byte(ptr7);
+            t7 = ptr7 >> 8;
+        }
     }
 
     input._index += count;
@@ -224,7 +264,7 @@ bool BWT::inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, i
     return true;
 }
 
-// When count >= 4M, biPSIv2 algo, possibly several chunks
+// When count > 4M, biPSIv2 algo, possibly several chunks
 bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     // Lazy dynamic memory allocations
@@ -331,65 +371,49 @@ bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int
     const int chunks = getBWTChunks(count);
 
     // Build inverse
-    if (chunks == 1) {
-        uint p = pIdx;
+    const int st = count / chunks;
+    const int ckSize = (chunks * st == count) ? st : st + 1;
+    const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
 
-        for (int i = 1; i < count; i += 2) {
-            uint16 c = fastBits[p >> shift];
-
-            while (buckets[c] <= p)
-                c++;
-
-            dst[i - 1] = byte(c >> 8);
-            dst[i] = byte(c);
-            p = data[p];
-        }
+    if (nbTasks == 1) {
+        InverseBigChunkTask<int> task(data, buckets, fastBits, dst, _primaryIndexes,
+            count, 0, ckSize, 0, chunks);
+        task.run();
     }
     else {
-        const int st = count / chunks;
-        const int ckSize = (chunks * st == count) ? st : st + 1;
-        const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
-
-        if (nbTasks == 1) {
-            InverseBigChunkTask<int> task(data, buckets, fastBits, dst, _primaryIndexes,
-                count, 0, ckSize, 0, chunks);
-            task.run();
-        }
-        else {
 #ifdef CONCURRENCY_ENABLED
-            // Several chunks may be decoded concurrently (depending on the availability
-            // of jobs per block).
-            int* jobsPerTask = new int[nbTasks];
-            Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
-            vector<future<int> > futures;
-            vector<InverseBigChunkTask<int>*> tasks;
+        // Several chunks may be decoded concurrently (depending on the availability
+        // of jobs per block).
+        int* jobsPerTask = new int[nbTasks];
+        Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
+        vector<future<int> > futures;
+        vector<InverseBigChunkTask<int>*> tasks;
 
-            // Create one task per job
-            for (int j = 0, c = 0; j < nbTasks; j++) {
-                // Each task decodes jobsPerTask[j] chunks
-                const int start = c * ckSize;
+        // Create one task per job
+        for (int j = 0, c = 0; j < nbTasks; j++) {
+            // Each task decodes jobsPerTask[j] chunks
+            const int start = c * ckSize;
 
-                InverseBigChunkTask<int>* task = new InverseBigChunkTask<int>(data, buckets, fastBits, dst, _primaryIndexes,
-                    count, start, ckSize, c, c + jobsPerTask[j]);
-                tasks.push_back(task);
-                futures.push_back(async(launch::async, &InverseBigChunkTask<int>::run, task));
-                c += jobsPerTask[j];
-            }
-
-            // Wait for completion of all concurrent tasks
-            for (int j = 0; j < nbTasks; j++)
-                futures[j].get();
-
-            // Cleanup
-            for (InverseBigChunkTask<int>* task : tasks)
-                delete task;
-
-            delete[] jobsPerTask;
-#else
-            // nbTasks > 1 but concurrency is not enabled (should never happen)
-            throw invalid_argument("Error during BWT inverse: concurrency not supported");
-#endif
+            InverseBigChunkTask<int>* task = new InverseBigChunkTask<int>(data, buckets, fastBits, dst, _primaryIndexes,
+                count, start, ckSize, c, c + jobsPerTask[j]);
+            tasks.push_back(task);
+            futures.push_back(async(launch::async, &InverseBigChunkTask<int>::run, task));
+            c += jobsPerTask[j];
         }
+
+        // Wait for completion of all concurrent tasks
+        for (int j = 0; j < nbTasks; j++)
+            futures[j].get();
+
+        // Cleanup
+        for (InverseBigChunkTask<int>* task : tasks)
+            delete task;
+
+        delete[] jobsPerTask;
+#else
+        // nbTasks > 1 but concurrency is not enabled (should never happen)
+        throw invalid_argument("Error during BWT inverse: concurrency not supported");
+#endif
     }
 
     dst[count - 1] = byte(lastc);
