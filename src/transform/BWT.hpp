@@ -85,7 +85,7 @@ namespace kanzi {
        static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB
        static const int NB_FASTBITS = 17;
        static const int BLOCK_SIZE_THRESHOLD1 = 256;
-       static const int BLOCK_SIZE_THRESHOLD2 = 4 * 1024 * 1024;
+       static const int BLOCK_SIZE_THRESHOLD2 = 8 * 1024 * 1024;
 
        uint* _buffer;
        int* _sa;
@@ -94,9 +94,9 @@ namespace kanzi {
        DivSufSort _saAlgo;
        int _jobs;
 
-       bool inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count);
+       bool inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int count);
 
-       bool inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count);
+       bool inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, int count);
 
    public:
        static const int MASK_FASTBITS = (1 << NB_FASTBITS) - 1;

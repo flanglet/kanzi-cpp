@@ -106,8 +106,7 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     }
     else {
         _saAlgo.computeSuffixArray(src, sa, 0, count);
-        const int st = count / chunks;
-        const int step = (chunks * st == count) ? st : st + 1;
+        const int step = count / chunks;
         dst[0] = src[count - 1];
         int idx = 0;
 
@@ -164,13 +163,16 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
 
     // Find the fastest way to implement inverse based on block size
     if (count <= BLOCK_SIZE_THRESHOLD2)
-        return inverseSmallBlock(input, output, count);
+        return inverseMergeTPSI(input, output, count);
 
-    return inverseBigBlock(input, output, count);
+    if ((count < (1 << 24)) && (_jobs == 1))
+        return inverseMergeTPSI(input, output, count);
+
+    return inverseBiPSIv2(input, output, count);
 }
 
-// When count <= 4M, mergeTPSI algo
-bool BWT::inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+// When count <= BLOCK_SIZE_THRESHOLD2, mergeTPSI algo
+bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     // Lazy dynamic memory allocation
     if ((_buffer == nullptr) || (_bufferSize < count)) {
@@ -230,32 +232,37 @@ bool BWT::inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, i
         int t5 = getPrimaryIndex(5) - 1;
         int t6 = getPrimaryIndex(6) - 1;
         int t7 = getPrimaryIndex(7) - 1;
+        int n = 0;
 
-        for (int i = 0; i < ckSize; i++) {
+        while (true) {
             const int ptr0 = data[t0];
-            dst[i] = byte(ptr0);
+            dst[n] = byte(ptr0);
             t0 = ptr0 >> 8;
             const int ptr1 = data[t1];
-            dst[i + ckSize * 1] = byte(ptr1);
+            dst[n + ckSize * 1] = byte(ptr1);
             t1 = ptr1 >> 8;
             const int ptr2 = data[t2];
-            dst[i + ckSize * 2] = byte(ptr2);
+            dst[n + ckSize * 2] = byte(ptr2);
             t2 = ptr2 >> 8;
             const int ptr3 = data[t3];
-            dst[i + ckSize * 3] = byte(ptr3);
+            dst[n + ckSize * 3] = byte(ptr3);
             t3 = ptr3 >> 8;
             const int ptr4 = data[t4];
-            dst[i + ckSize * 4] = byte(ptr4);
+            dst[n + ckSize * 4] = byte(ptr4);
             t4 = ptr4 >> 8;
             const int ptr5 = data[t5];
-            dst[i + ckSize * 5] = byte(ptr5);
+            dst[n + ckSize * 5] = byte(ptr5);
             t5 = ptr5 >> 8;
             const int ptr6 = data[t6];
-            dst[i + ckSize * 6] = byte(ptr6);
+            dst[n + ckSize * 6] = byte(ptr6);
             t6 = ptr6 >> 8;
             const int ptr7 = data[t7];
-            dst[i + ckSize * 7] = byte(ptr7);
+            dst[n + ckSize * 7] = byte(ptr7);
             t7 = ptr7 >> 8;
+            n++;
+
+            if (ptr7 < 0)
+                break;
         }
     }
 
@@ -264,8 +271,8 @@ bool BWT::inverseSmallBlock(SliceArray<byte>& input, SliceArray<byte>& output, i
     return true;
 }
 
-// When count > 4M, biPSIv2 algo, possibly several chunks
-bool BWT::inverseBigBlock(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+// When count > BLOCK_SIZE_THRESHOLD2, biPSIv2 algo
+bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     // Lazy dynamic memory allocations
     if ((_buffer == nullptr) || (_bufferSize < count + 1)) {
