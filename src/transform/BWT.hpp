@@ -58,7 +58,7 @@ namespace kanzi {
 // indexes (based on input block size). Each primary index corresponds to a data chunk.
 // Chunks may be inverted concurrently.
    template <class T>
-   class InverseBigChunkTask : public Task<T> {
+   class InverseBiPSIv2Task : public Task<T> {
    private:
        uint* _data;
        uint* _buckets;
@@ -72,9 +72,9 @@ namespace kanzi {
        int _lastChunk;
 
    public:
-       InverseBigChunkTask(uint* buf, uint* buckets, uint16* fastBits, byte* output,
+       InverseBiPSIv2Task(uint* buf, uint* buckets, uint16* fastBits, byte* output,
            int* primaryIndexes, int total, int start, int ckSize, int firstChunk, int lastChunk);
-       ~InverseBigChunkTask() {}
+       ~InverseBiPSIv2Task() {}
 
        T run() THROW;
    };

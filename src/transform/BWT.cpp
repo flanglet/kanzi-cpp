@@ -106,19 +106,20 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     }
     else {
         _saAlgo.computeSuffixArray(src, sa, 0, count);
-        const int step = count / chunks;
+        const int st = count / chunks;
+        const int step = (chunks * st == count) ? st : st + 1;
         dst[0] = src[count - 1];
-        int idx = 0;
 
-        for (int i = 0; i < count; i++) {
+        for (int i = 0, idx = 0; i < count; i++) {
             if ((sa[i] % step) != 0)
                 continue;
 
-            res &= setPrimaryIndex(sa[i] / step, i + 1);
-            idx++;
+            if (setPrimaryIndex(sa[i] / step, i + 1) == true) {
+                idx++;
 
-            if (idx == chunks)
-                break;
+                if (idx == chunks)
+                    break;
+            }
         }
 
         const int pIdx0 = getPrimaryIndex(0);
@@ -214,7 +215,6 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
         buckets[val]++;
     }
 
-    // Build inverse
     if (count < BLOCK_SIZE_THRESHOLD1) {
         for (int i = 0, t = pIdx - 1; i < count; i++) {
             const uint ptr = data[t];
@@ -223,7 +223,7 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
         }
     }
     else {
-        const int ckSize = count >> 3;
+        const int ckSize = ((count & 7) == 0) ? count >> 3 : (count >> 3) + 1;
         int t0 = getPrimaryIndex(0) - 1;
         int t1 = getPrimaryIndex(1) - 1;
         int t2 = getPrimaryIndex(2) - 1;
@@ -263,6 +263,31 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
 
             if (ptr7 < 0)
                 break;
+        }
+
+        while (n < ckSize) {
+            const int ptr0 = data[t0];
+            dst[n] = byte(ptr0);
+            t0 = ptr0 >> 8;
+            const int ptr1 = data[t1];
+            dst[n + ckSize * 1] = byte(ptr1);
+            t1 = ptr1 >> 8;
+            const int ptr2 = data[t2];
+            dst[n + ckSize * 2] = byte(ptr2);
+            t2 = ptr2 >> 8;
+            const int ptr3 = data[t3];
+            dst[n + ckSize * 3] = byte(ptr3);
+            t3 = ptr3 >> 8;
+            const int ptr4 = data[t4];
+            dst[n + ckSize * 4] = byte(ptr4);
+            t4 = ptr4 >> 8;
+            const int ptr5 = data[t5];
+            dst[n + ckSize * 5] = byte(ptr5);
+            t5 = ptr5 >> 8;
+            const int ptr6 = data[t6];
+            dst[n + ckSize * 6] = byte(ptr6);
+            t6 = ptr6 >> 8;
+            n++;
         }
     }
 
@@ -383,7 +408,7 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
     const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
 
     if (nbTasks == 1) {
-        InverseBigChunkTask<int> task(data, buckets, fastBits, dst, _primaryIndexes,
+        InverseBiPSIv2Task<int> task(data, buckets, fastBits, dst, _primaryIndexes,
             count, 0, ckSize, 0, chunks);
         task.run();
     }
@@ -394,17 +419,17 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
         int* jobsPerTask = new int[nbTasks];
         Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
         vector<future<int> > futures;
-        vector<InverseBigChunkTask<int>*> tasks;
+        vector<InverseBiPSIv2Task<int>*> tasks;
 
         // Create one task per job
         for (int j = 0, c = 0; j < nbTasks; j++) {
             // Each task decodes jobsPerTask[j] chunks
             const int start = c * ckSize;
 
-            InverseBigChunkTask<int>* task = new InverseBigChunkTask<int>(data, buckets, fastBits, dst, _primaryIndexes,
+            InverseBiPSIv2Task<int>* task = new InverseBiPSIv2Task<int>(data, buckets, fastBits, dst, _primaryIndexes,
                 count, start, ckSize, c, c + jobsPerTask[j]);
             tasks.push_back(task);
-            futures.push_back(async(launch::async, &InverseBigChunkTask<int>::run, task));
+            futures.push_back(async(launch::async, &InverseBiPSIv2Task<int>::run, task));
             c += jobsPerTask[j];
         }
 
@@ -413,7 +438,7 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
             futures[j].get();
 
         // Cleanup
-        for (InverseBigChunkTask<int>* task : tasks)
+        for (InverseBiPSIv2Task<int>* task : tasks)
             delete task;
 
         delete[] jobsPerTask;
@@ -432,7 +457,7 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
 }
 
 template <class T>
-InverseBigChunkTask<T>::InverseBigChunkTask(uint* buf, uint* buckets, uint16* fastBits, byte* output,
+InverseBiPSIv2Task<T>::InverseBiPSIv2Task(uint* buf, uint* buckets, uint16* fastBits, byte* output,
     int* primaryIndexes, int total, int start, int ckSize, int firstChunk, int lastChunk)
 {
     _data = buf;
@@ -448,7 +473,7 @@ InverseBigChunkTask<T>::InverseBigChunkTask(uint* buf, uint* buckets, uint16* fa
 }
 
 template <class T>
-T InverseBigChunkTask<T>::run() THROW
+T InverseBiPSIv2Task<T>::run() THROW
 {
     int shift = 0;
 
@@ -462,7 +487,7 @@ T InverseBigChunkTask<T>::run() THROW
         for (int i = _start + 1; i <= end; i += 2) {
             uint16 s = _fastBits[p >> shift];
 
-            while (_buckets[s] <= (const uint) p)
+            while (_buckets[s] <= (const uint)p)
                 s++;
 
             _dst[i - 1] = byte(s >> 8);
@@ -475,4 +500,3 @@ T InverseBigChunkTask<T>::run() THROW
 
     return T(0);
 }
-
