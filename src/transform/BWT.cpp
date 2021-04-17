@@ -163,10 +163,7 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     }
 
     // Find the fastest way to implement inverse based on block size
-    if (count <= BLOCK_SIZE_THRESHOLD2)
-        return inverseMergeTPSI(input, output, count);
-
-    if ((count < (1 << 24)) && (_jobs == 1))
+    if ((count <= BLOCK_SIZE_THRESHOLD2) && (_jobs == 1))
         return inverseMergeTPSI(input, output, count);
 
     return inverseBiPSIv2(input, output, count);
