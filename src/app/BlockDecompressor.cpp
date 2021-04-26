@@ -642,8 +642,18 @@ T FileDecompressTask<T>::run()
     if (verbosity >= 1) {
         log.println("", verbosity > 1);
         ss.str(string());
+        char buffer[32];
 
         if (verbosity > 1) {
+            if (delta >= 1e5) {
+                sprintf(buffer, "%.1f s", delta / 1000);
+                ss << "Decoding:          " << buffer;
+            }
+            else {
+                sprintf(buffer, "%.0f ms", delta);
+                ss << "Decoding:          " << buffer;
+            }
+
             log.println(ss.str().c_str(), true);
             ss.str(string());
             ss << "Input size:        " << _cis->getRead();
@@ -656,7 +666,6 @@ T FileDecompressTask<T>::run()
 
         if (verbosity == 1) {
             ss << "Decoding " << inputName << ": " << _cis->getRead() << " => " << read;
-            char buffer[32];
 
             if (delta >= 1e5) {
                 sprintf(buffer, "%.1f s", delta / 1000);

@@ -772,8 +772,18 @@ T FileCompressTask<T>::run()
         log.println("", verbosity > 1);
         ss.str(string());
         float f = float(_cos->getWritten()) / float(read);
+        char buffer[32];
 
         if (verbosity > 1) {
+            if (delta >= 1e5) {
+                sprintf(buffer, "%.1f s", delta / 1000);
+                ss << "Encoding:          " << buffer;
+            }
+            else {
+                sprintf(buffer, "%.0f ms", delta);
+                ss << "Encoding:          " << buffer;
+            }
+
             log.println(ss.str().c_str(), true);
             ss.str(string());
             ss << "Input size:        " << read;
@@ -789,7 +799,6 @@ T FileCompressTask<T>::run()
 
         if (verbosity == 1) {
             ss << "Encoding " << inputName << ": " << read << " => " << _cos->getWritten();
-            char buffer[32];
 
             if (delta >= 1e5) {
                 sprintf(buffer, " (%.2f%%) in %.1f s", 100 * f, delta / 1000);
