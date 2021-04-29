@@ -47,7 +47,7 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
     _symbols = new ANSDecSymbol[dim * 256];
     _buffer = new byte[0];
     _bufferSize = 0;
-    _f2s = new byte[0];
+    _f2s = new uint8[0];
     _f2sSize = 0;
     _logRange = 9;
 }
@@ -79,7 +79,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
     if (_f2sSize < dim * scale) {
         delete[] _f2s;
         _f2sSize = dim * scale;
-        _f2s = new byte[_f2sSize];
+        _f2s = new uint8[_f2sSize];
     }
 
     for (int k = 0; k < dim; k++) {
@@ -141,7 +141,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
         f[curAlphabet[0]] = uint(scale - sum);
         sum = 0;
         ANSDecSymbol* symb = &_symbols[k << 8];
-        byte* freq2sym = &_f2s[k << _logRange];
+        uint8* freq2sym = &_f2s[k << _logRange];
 
         // Create reverse mapping
         for (int i = 0; i < 256; i++) {
@@ -149,7 +149,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
                 continue;
 
             for (int j = f[i] - 1; j >= 0; j--)
-                freq2sym[sum + j] = byte(i);
+                freq2sym[sum + j] = uint8(i);
 
             symb[i].reset(sum, f[i], _logRange);
             sum += f[i];
@@ -161,15 +161,15 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
     return res;
 }
 
-int ANSRangeDecoder::decode(byte block[], uint blkptr, uint len)
+int ANSRangeDecoder::decode(byte block[], uint blkptr, uint count)
 {
-    if (len == 0)
+    if (count == 0)
         return 0;
 
-    const uint end = blkptr + len;
+    const uint end = blkptr + count;
     uint startChunk = blkptr;
     uint sz = uint(_chunkSize);
-    const uint size = max(min(sz + (sz >> 3), 2 * len), uint(65536));
+    const uint size = max(min(sz + (sz >> 3), 2 * count), uint(65536));
 
     if (_bufferSize < size) {
         delete[] _buffer;
@@ -194,7 +194,7 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint len)
         startChunk += sizeChunk;
     }
 
-    return len;
+    return count;
 }
 
 void ANSRangeDecoder::decodeChunk(byte block[], int end)
@@ -203,7 +203,8 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     const int sz = int(EntropyUtils::readVarInt(_bitstream) & (MAX_CHUNK_SIZE - 1));
 
     // Read initial ANS state
-    int st = int(_bitstream.readBits(32));
+    int st0 = int(_bitstream.readBits(32));
+    int st1 = (_order == 0) ? int(_bitstream.readBits(32)) : 0;
 
     // Read bit buffer
     if (sz != 0)
@@ -213,11 +214,19 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     const int mask = (1 << _logRange) - 1;
 
     if (_order == 0) {
-        for (int i = 0; i < end; i++) {
-            const uint8 cur = uint8(_f2s[st & mask]);
-            block[i] = byte(cur);
-            st = decodeSymbol(p, st, _symbols[cur], mask);
+        const int end2 = (end & -2) - 1;
+
+        for (int i = 0; i < end2; i += 2) {
+            const uint8 cur1 = _f2s[st1 & mask];
+            block[i] = byte(cur1);
+            st1 = decodeSymbol(p, st1, _symbols[cur1], mask);
+            const uint8 cur0 = _f2s[st0 & mask];
+            block[i + 1] = byte(cur0);
+            st0 = decodeSymbol(p, st0, _symbols[cur0], mask);
         }
+
+        if ((end & 1) != 0)
+            block[end - 1] = _buffer[sz - 1];
     }
     else {
         uint8 prv = 0;
@@ -225,11 +234,11 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
 
         for (int i = 0; i < end; i++) {
             prefetchRead(symbols);
-            byte* f2s = &_f2s[(prv << _logRange)];
+            uint8* f2s = &_f2s[(prv << _logRange)];
             prefetchRead(f2s);
-            const uint8 cur = uint8(f2s[st & mask]);
+            const uint8 cur = uint8(f2s[st0 & mask]);
             block[i] = byte(cur);
-            st = decodeSymbol(p, st, symbols[cur], mask);
+            st0 = decodeSymbol(p, st0, symbols[cur], mask);
             prv = cur;
             symbols = &_symbols[prv << 8];
         }

@@ -145,15 +145,15 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
 }
 
 // Dynamically compute the frequencies for every chunk of data in the block
-int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint len)
+int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint count)
 {
-    if (len == 0)
+    if (count == 0)
         return 0;
 
-    const uint end = blkptr + len;
+    const uint end = blkptr + count;
     uint startChunk = blkptr;
     uint sz = uint(_chunkSize);
-    const uint size = max(min(sz + (sz >> 3), 2 * len), uint(65536));
+    const uint size = max(min(sz + (sz >> 3), 2 * count), uint(65536));
 
     if (_bufferSize < size) {
         delete[] _buffer;
@@ -181,18 +181,28 @@ int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint len)
         startChunk += sizeChunk;
     }
 
-    return len;
+    return count;
 }
 
 void ANSRangeEncoder::encodeChunk(const byte block[], int end)
 {
-    int st = ANS_TOP;
+    int st0 = ANS_TOP;
+    int st1 = ANS_TOP;
     byte* p0 = &_buffer[_bufferSize - 1];
     byte* p = p0;
 
     if (_order == 0) {
-        for (int i = end - 1; i >= 0; i--) {
-            st = encodeSymbol(p, st, _symbols[int(block[i])]);
+        int start = end - 1;
+
+        if ((end & 1) != 0) {
+            p[0] = block[start];
+            start--;
+            p--;
+        }
+
+        for (int i = start; i > 0; i -= 2) {
+            st0 = encodeSymbol(p, st0, _symbols[int(block[i])]);
+            st1 = encodeSymbol(p, st1, _symbols[int(block[i - 1])]);
         }
     }
     else { // order 1
@@ -200,19 +210,22 @@ void ANSRangeEncoder::encodeChunk(const byte block[], int end)
 
         for (int i = end - 2; i >= 0; i--) {
             const int cur = int(block[i]);
-            st = encodeSymbol(p, st, _symbols[(cur << 8) | prv]);
+            st0 = encodeSymbol(p, st0, _symbols[(cur << 8) | prv]);
             prv = cur;
         }
 
         // Last symbol
-        st = encodeSymbol(p, st, _symbols[prv]);
+        st0 = encodeSymbol(p, st0, _symbols[prv]);
     }
 
     // Write chunk size
     EntropyUtils::writeVarInt(_bitstream, uint32(p0 - p));
 
     // Write final ANS state
-    _bitstream.writeBits(st, 32);
+    _bitstream.writeBits(st0, 32);
+
+    if (_order == 0)
+        _bitstream.writeBits(st1, 32);
 
     if (p != p0) {
         // Write encoded data to bitstream
@@ -226,4 +239,3 @@ int ANSRangeEncoder::rebuildStatistics(const byte block[], int end, int lr)
     Global::computeHistogram(block, end, _freqs, _order == 0, true);
     return updateFrequencies(_freqs, lr);
 }
-

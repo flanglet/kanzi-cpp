@@ -17,6 +17,7 @@ limitations under the License.
 #define _ANSRangeDecoder_
 
 #include "../EntropyDecoder.hpp"
+#include "../types.hpp"
 
 
 // Implementation of an Asymmetric Numeral System decoder.
@@ -66,12 +67,12 @@ namespace kanzi
 	   static const int DEFAULT_ANS0_CHUNK_SIZE = 1 << 15; // 32 KB by default
 	   static const int DEFAULT_LOG_RANGE = 12;
 	   static const int MIN_CHUNK_SIZE = 1024;
-	   static const int MAX_CHUNK_SIZE = 1 << 27;          // 8*MAX_CHUNK_SIZE must not overflow
+	   static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
 
 	   InputBitStream& _bitstream;
 	   uint* _alphabet;
 	   uint* _freqs;
-	   byte* _f2s;
+	   uint8* _f2s;
 	   int _f2sSize;
 	   ANSDecSymbol* _symbols;
 	   byte* _buffer;

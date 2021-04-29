@@ -223,7 +223,7 @@ int testTransformsCorrectness(const string& name)
              << "Original: " << endl;
 
         if (ii == 1) {
-            cout << "1 8 (" << size << " times)";
+            cout << "1 8 (" << (size - 1) << " times)";
         }
         else {
             for (int i = 0; i < size; i++)
@@ -275,7 +275,7 @@ int testTransformsCorrectness(const string& name)
         cout << "Decoded: " << endl;
 
         if (ii == 1) {
-            cout << "1 8 (" << size << " times)";
+            cout << "1 8 (" << (size - 1) << " times)";
         }
         else {
             for (int i = 0; i < size; i++)
