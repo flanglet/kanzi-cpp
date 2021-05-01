@@ -43,7 +43,7 @@ static const int ARG_IDX_LEVEL = 9;
 //static const int ARG_IDX_FROM = 10;
 //static const int ARG_IDX_TO = 11;
 
-static const char* APP_HEADER = "Kanzi 1.8 (C) 2020,  Frederic Langlet";
+static const char* APP_HEADER = "Kanzi 1.9 (C) 2021,  Frederic Langlet";
 
 
 #ifdef CONCURRENCY_ENABLED
@@ -267,9 +267,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             log.println("   -j, --jobs=<jobs>", true);
             log.println("        maximum number of jobs the program may start concurrently", true);
             log.println("        (default is 1, maximum is 64).\n", true);
-            log.println("", true);
 
             if (mode.compare(0, 1, "c") == 0) {
+                log.println("", true);
                 log.println("EG. kanzi -c -i foo.txt -o none -b 4m -l 4 -v 3\n", true);
                 log.println("EG. kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -v 3 -j 4\n", true);
                 log.println("EG. kanzi --compress --input=foo.txt --output=foo.knz --force", true);
@@ -277,7 +277,12 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             }
 
             if (mode.compare(0, 1, "d") == 0) {
-                log.println("EG. kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
+                log.println("   --from=blockId\n", true);
+                log.println("        Decompress starting from the provided block (included).\n", true);
+                log.println("        The first block ID is 1.\n", true);
+                log.println("   --to=blockId\n", true);
+                log.println("        Decompress ending at the provided block (excluded).\n", true);
+                log.println("", true);
                 log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
             }
 
@@ -531,6 +536,11 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
                 if ((from < 0) || ((from == 0) && (strFrom != "0"))) {
                     cerr << "Invalid start block provided on command line: " << arg << endl;
+
+                    if (from == 0) {
+                        cerr << "The first block ID is 1." << endl;
+                    }
+
                     return Error::ERR_INVALID_PARAM;
                 }
             }

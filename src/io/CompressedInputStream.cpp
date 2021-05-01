@@ -148,7 +148,7 @@ void CompressedInputStream::readHeader() THROW
     }
 
     // Read stream version
-    int version = int(_ibs->readBits(5));
+    int version = int(_ibs->readBits(4));
 
     // Sanity check
     if (version != BITSTREAM_FORMAT_VERSION) {
@@ -189,7 +189,7 @@ void CompressedInputStream::readHeader() THROW
     _nbInputBlocks = uint8(_ibs->readBits(6));
 
     // Read reserved bits
-    _ibs->readBits(3);
+    _ibs->readBits(4);
 
     if (_listeners.size() > 0) {
         stringstream ss;

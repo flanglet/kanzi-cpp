@@ -192,7 +192,7 @@ void CompressedOutputStream::writeHeader() THROW
     if (_obs->writeBits(BITSTREAM_TYPE, 32) != 32)
         throw IOException("Cannot write bitstream type to header", Error::ERR_WRITE_FILE);
 
-    if (_obs->writeBits(BITSTREAM_FORMAT_VERSION, 5) != 5)
+    if (_obs->writeBits(BITSTREAM_FORMAT_VERSION, 4) != 4)
         throw IOException("Cannot write bitstream version to header", Error::ERR_WRITE_FILE);
 
     if (_obs->writeBits((_hasher != nullptr) ? 1 : 0, 1) != 1)
@@ -210,7 +210,7 @@ void CompressedOutputStream::writeHeader() THROW
     if (_obs->writeBits(_nbInputBlocks, 6) != 6)
         throw IOException("Cannot write number of blocks to header", Error::ERR_WRITE_FILE);
 
-    if (_obs->writeBits(uint64(0), 3) != 3)
+    if (_obs->writeBits(uint64(0), 4) != 4)
         throw IOException("Cannot write reserved bits to header", Error::ERR_WRITE_FILE);
 }
 
