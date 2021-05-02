@@ -82,12 +82,13 @@ const int* Global::SQUASH = Global::initSquash(_singleton.SQUASH_BUFFER);
 
 const int* Global::initSquash(int data[])
 {
-    for (int x = 0; x <= 4095; x++) {
+    for (int x = 1; x < 4096; x++) {
         const int w = x & 127;
         const int y = x >> 7; 
-        data[x] = (INV_EXP[y] * (128 - w) + INV_EXP[y + 1] * w) >> 11;
+        data[x - 1] = (INV_EXP[y] * (128 - w) + INV_EXP[y + 1] * w) >> 11;
     }
 
+    data[4095] = 4095;
     return data;
 }
 
