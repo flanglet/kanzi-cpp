@@ -242,47 +242,47 @@ namespace kanzi
 
 
 
-   inline int DivSufSort::trMedian5(int _sa[], int isad, int v1, int v2, int v3, int v4, int v5)
+   inline int DivSufSort::trMedian5(int sa[], int isad, int v1, int v2, int v3, int v4, int v5)
    {
-       if (_sa[isad + _sa[v2]] > _sa[isad + _sa[v3]]) {
+       if (sa[isad + sa[v2]] > sa[isad + sa[v3]]) {
            std::swap(v2, v3);
        }
 
-       if (_sa[isad + _sa[v4]] > _sa[isad + _sa[v5]]) {
+       if (sa[isad + sa[v4]] > sa[isad + sa[v5]]) {
            const int t = v4;
            v4 = v5;
            v5 = t;
        }
 
-       if (_sa[isad + _sa[v2]] > _sa[isad + _sa[v4]]) {
+       if (sa[isad + sa[v2]] > sa[isad + sa[v4]]) {
            std::swap(v2, v4);
            std::swap(v3, v5);
        }
 
-       if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v3]]) {
+       if (sa[isad + sa[v1]] > sa[isad + sa[v3]]) {
            std::swap(v1, v3);
        }
 
-       if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v4]]) {
+       if (sa[isad + sa[v1]] > sa[isad + sa[v4]]) {
            std::swap(v1, v4);
            std::swap(v3, v5);
        }
 
-       if (_sa[isad + _sa[v3]] > _sa[isad + _sa[v4]])
+       if (sa[isad + sa[v3]] > sa[isad + sa[v4]])
            return v4;
 
        return v3;
    }
 
 
-   inline int DivSufSort::trMedian3(int _sa[], int isad, int v1, int v2, int v3)
+   inline int DivSufSort::trMedian3(int sa[], int isad, int v1, int v2, int v3)
    {
-       if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v2]]) {
+       if (sa[isad + sa[v1]] > sa[isad + sa[v2]]) {
            std::swap(v1, v2);
        }
 
-       if (_sa[isad + _sa[v2]] > _sa[isad + _sa[v3]]) {
-           if (_sa[isad + _sa[v1]] > _sa[isad + _sa[v3]])
+       if (sa[isad + sa[v2]] > sa[isad + sa[v3]]) {
+           if (sa[isad + sa[v1]] > sa[isad + sa[v3]])
                return v1;
 
            return v3;
