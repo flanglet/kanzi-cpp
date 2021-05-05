@@ -50,6 +50,14 @@ namespace kanzi {
            _written = written;
        }
 
+       FileCompressResult(const FileCompressResult& fcr)
+       {
+           _errMsg = fcr._errMsg;
+           _code = fcr._code;
+           _read = fcr._read;
+           _written = fcr._written;
+       }
+
        ~FileCompressResult() {}
    };
 
