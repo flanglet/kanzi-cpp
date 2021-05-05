@@ -26,7 +26,7 @@ namespace kanzi
    class Transform
    {
    public:
-       Transform(){};
+       Transform(){}
 
        virtual bool forward(SliceArray<T>& src, SliceArray<T>& dst, int length) = 0;
 
@@ -34,7 +34,7 @@ namespace kanzi
 
        virtual int getMaxEncodedLength(int srcLen) const = 0;
 
-       virtual ~Transform(){};
+       virtual ~Transform(){}
    };
 
 }

@@ -45,7 +45,7 @@ namespace kanzi
 
        OutputBitStream(){};
 
-       virtual ~OutputBitStream(){};
+       virtual ~OutputBitStream(){}
    };
 
 }

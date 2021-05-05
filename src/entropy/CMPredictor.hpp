@@ -43,7 +43,7 @@ namespace kanzi
    public:
        CMPredictor();
 
-       ~CMPredictor(){};
+       ~CMPredictor(){}
 
        void update(int bit);
 

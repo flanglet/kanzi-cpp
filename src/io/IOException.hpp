@@ -43,7 +43,7 @@ namespace kanzi
 
        int error() const { return _code; }
 
-       ~IOException() _GLIBCXX_USE_NOEXCEPT{};
+       ~IOException() _GLIBCXX_USE_NOEXCEPT{}
    };
 
 }

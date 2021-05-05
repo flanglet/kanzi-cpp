@@ -87,7 +87,7 @@ namespace kanzi
 
 	   int decodeHeader(uint frequencies[]);
 
- 	   void _dispose() {};
+ 	   void _dispose() {}
    };
 
 

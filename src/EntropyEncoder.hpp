@@ -35,7 +35,7 @@ namespace kanzi
        // Trying to encode after a call to dispose gives undefined behavior
        virtual void dispose() = 0;
 
-       virtual ~EntropyEncoder(){};
+       virtual ~EntropyEncoder(){}
    };
 
 }

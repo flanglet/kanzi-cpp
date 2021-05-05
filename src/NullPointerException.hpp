@@ -29,7 +29,7 @@ namespace kanzi
 
         NullPointerException(const std::string& msg) : std::runtime_error(msg) {}
 
-        virtual ~NullPointerException() _GLIBCXX_USE_NOEXCEPT {};
+        virtual ~NullPointerException() _GLIBCXX_USE_NOEXCEPT {}
    };
 
 }

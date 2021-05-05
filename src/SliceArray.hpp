@@ -31,7 +31,7 @@ namespace kanzi
 
       SliceArray(const SliceArray& sa) { _array = sa._array; _length = sa._length; _index = sa._index; }
 
-      ~SliceArray(){}; // does not deallocate buffer memory
+      ~SliceArray(){} // does not deallocate buffer memory
 
       SliceArray& operator=(const SliceArray& sa);
 

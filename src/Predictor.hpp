@@ -23,7 +23,7 @@ namespace kanzi
    class Predictor
    {
    public:
-       Predictor(){};
+       Predictor(){}
 
        // Updates the internal probability model based on the observed bit
        virtual void update(int bit) = 0;
@@ -33,7 +33,7 @@ namespace kanzi
        // E.G. 410 represents roughly a probability of 10% for 1
        virtual int get() = 0;
 
-       virtual ~Predictor(){};
+       virtual ~Predictor(){}
    };
 
 }

@@ -34,10 +34,10 @@ namespace kanzi
    class Context
    {
    public:
-       Context() {};
+       Context() {}
        Context(const Context& ctx);
        Context& operator=(const Context& ctx);
-       virtual ~Context() {};
+       virtual ~Context() {}
 
        bool has(const std::string& key);
        int getInt(const std::string& key, int defValue=0);

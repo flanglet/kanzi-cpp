@@ -97,7 +97,7 @@ namespace kanzi {
            atomic_int* processedBlockId, std::vector<Listener*>& listeners,
            const Context& ctx);
 
-       ~EncodingTask(){};
+       ~EncodingTask(){}
 
        T run() THROW;
    };

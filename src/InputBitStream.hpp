@@ -45,9 +45,9 @@ namespace kanzi
        // Return false when the bitstream is closed or the End-Of-Stream has been reached
        virtual bool hasMoreToRead() = 0;
 
-       InputBitStream(){};
+       InputBitStream(){}
 
-       virtual ~InputBitStream(){};
+       virtual ~InputBitStream(){}
    };
 
 }
