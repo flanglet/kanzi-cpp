@@ -120,7 +120,7 @@ namespace kanzi {
 
    inline void Global::decodePair(int& x, int& y, int res)
    {
-      const int s = int(sqrt(float(res)));
+      const int s = int(sqrt(double(res)));
       res -= s * s;
 
       if (res >= s) {

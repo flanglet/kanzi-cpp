@@ -28,18 +28,18 @@ namespace kanzi
 
    class XXHash32 {
    private:
-       static const int PRIME32_1 = -1640531535;
-       static const int PRIME32_2 = -2048144777;
-       static const int PRIME32_3 = -1028477379;
-       static const int PRIME32_4 = 668265263;
-       static const int PRIME32_5 = 374761393;
+       static const uint32 PRIME32_1 = -1640531535;
+       static const uint32 PRIME32_2 = -2048144777;
+       static const uint32 PRIME32_3 = -1028477379;
+       static const uint32 PRIME32_4 = 668265263;
+       static const uint32 PRIME32_5 = 374761393;
 
        int _seed;
 
-       int round(uint32 acc, uint32 val);
+       uint32 round(uint32 acc, int32 val);
 
    public:
-       XXHash32() { _seed = (int)time(nullptr); }
+       XXHash32() { _seed = int(time(nullptr)); }
 
        XXHash32(int seed) { _seed = seed; }
 
@@ -79,7 +79,7 @@ namespace kanzi
            h32 = _seed + PRIME32_5;
        }
 
-       h32 += length;
+       h32 += uint32(length);
 
        while (idx <= length - 4) {
            h32 += ((LittleEndian::readInt32(&data[idx])) * PRIME32_3);
@@ -88,7 +88,7 @@ namespace kanzi
        }
 
        while (idx < length) {
-           h32 += ((int(data[idx]) & 0xFF) * PRIME32_5);
+           h32 += ((uint32(data[idx]) & 0xFF) * PRIME32_5);
            h32 = ((h32 << 11) | (h32 >> 21)) * PRIME32_1;
            idx++;
        }
@@ -100,9 +100,9 @@ namespace kanzi
        return h32 ^ (h32 >> 16);
    }
 
-   inline int XXHash32::round(uint32 acc, uint32 val)
+   inline uint32 XXHash32::round(uint32 acc, int32 val)
    {
-       acc += (val * PRIME32_2);
+       acc += (uint32(val) * PRIME32_2);
        return ((acc << 13) | (acc >> 19)) * PRIME32_1;
    }
 
