@@ -82,7 +82,7 @@ namespace kanzi
        h32 += uint32(length);
 
        while (idx <= length - 4) {
-           h32 += ((LittleEndian::readInt32(&data[idx])) * PRIME32_3);
+           h32 += (uint32(LittleEndian::readInt32(&data[idx])) * PRIME32_3);
            h32 = ((h32 << 17) | (h32 >> 15)) * PRIME32_4;
            idx += 4;
        }
