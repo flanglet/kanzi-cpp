@@ -155,6 +155,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     bool checksum = str == STR_TRUE;
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _jobs = tasks;
+    _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
     _sa = new SliceArray<byte>(new byte[0], 0);
     _buffers = new SliceArray<byte>*[2 * _jobs];
 

@@ -148,14 +148,16 @@ void CompressedInputStream::readHeader() THROW
     }
 
     // Read stream version
-    int version = int(_ibs->readBits(4));
+    int bsVersion = int(_ibs->readBits(4));
 
     // Sanity check
-    if (version != BITSTREAM_FORMAT_VERSION) {
+    if (bsVersion != BITSTREAM_FORMAT_VERSION) {
         stringstream ss;
-        ss << "Invalid bitstream, cannot read this version of the stream: " << version;
+        ss << "Invalid bitstream, cannot read this version of the stream: " << bsVersion;
         throw IOException(ss.str(), Error::ERR_STREAM_VERSION);
     }
+
+    _ctx.putInt("bsVersion", bsVersion);
 
     // Read block checksum
     if (_ibs->readBit() == 1)
