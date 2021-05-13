@@ -51,17 +51,17 @@ namespace kanzi {
        }
 
 #if __cplusplus < 201103L
-       FileCompressResult(const FileCompressResult& fcr)
+       FileCompressResult(const FileCompressResult& fcr) :
+           _errMsg(fcr._errMsg)
        {
-           _errMsg = fcr._errMsg;
            _code = fcr._code;
            _read = fcr._read;
            _written = fcr._written;
        }
 
-       FileCompressResult& operator=(const FileCompressResult& fcr)
+       FileCompressResult& operator=(const FileCompressResult& fcr) :
+           _errMsg(fcr._errMsg)
        {
-           _errMsg = fcr._errMsg;
            _code = fcr._code;
            _read = fcr._read;
            _written = fcr._written;
