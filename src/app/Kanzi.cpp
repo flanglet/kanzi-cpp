@@ -207,6 +207,14 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             log.println("", true);
             log.println("   -h, --help", true);
             log.println("        display this message\n", true);
+
+            if ((mode.compare(0, 1, "c") != 0) && (mode.compare(0, 1, "d") != 0)) {
+                log.println("   -c, --compress", true);
+                log.println("        compress mode\n", true);
+                log.println("   -d, --decompress", true);
+                log.println("        decompress mode\n", true);
+            }
+
             log.println("   -v, --verbose=<level>", true);
             log.println("        0=silent, 1=default, 2=display details, 3=display configuration,", true);
             log.println("        4=display block size and timings, 5=display extra information", true);
@@ -274,9 +282,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println("EG. kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -v 3 -j 4\n", true);
                 log.println("EG. kanzi --compress --input=foo.txt --output=foo.knz --force", true);
                 log.println("          --transform=BWT+MTFT+ZRLT --block=4m --entropy=FPAQ --verbose=3 --jobs=4\n", true);
-            }
-
-            if (mode.compare(0, 1, "d") == 0) {
+            } else if (mode.compare(0, 1, "d") == 0) {
                 log.println("   --from=blockId\n", true);
                 log.println("        Decompress starting from the provided block (included).\n", true);
                 log.println("        The first block ID is 1.\n", true);
