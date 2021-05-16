@@ -236,7 +236,7 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
             prefetchRead(symbols);
             uint8* f2s = &_f2s[(prv << _logRange)];
             prefetchRead(f2s);
-            const uint8 cur = uint8(f2s[st0 & mask]);
+            const uint8 cur = f2s[st0 & mask];
             block[i] = byte(cur);
             st0 = decodeSymbol(p, st0, symbols[cur], mask);
             prv = cur;

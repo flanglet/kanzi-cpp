@@ -94,7 +94,7 @@ namespace kanzi
    inline void ANSDecSymbol::reset(int cumFreq, int freq, int logRange)
    {
        _cumFreq = cumFreq;
-       _freq = (freq >= 1 << logRange) ? (1 << logRange) - 1 : freq; // Mirror encoder
+       _freq = (freq >= (1 << logRange)) ? (1 << logRange) - 1 : freq; // Mirror encoder
    }
 
 
