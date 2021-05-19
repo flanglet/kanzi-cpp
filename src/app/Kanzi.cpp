@@ -50,6 +50,104 @@ static const char* APP_HEADER = "Kanzi 1.9 (C) 2021,  Frederic Langlet";
    mutex Printer::_mtx;
 #endif
 
+void printHelp(Printer& log, const string& mode)
+{
+   log.println("", true);
+   log.println("Credits: Matt Mahoney, Yann Collet, Jan Ondrus, Yuta Mori, Ilya Muravyov,", true);
+   log.println("         Neal Burns, Fabian Giesen, Jarek Duda, Ilya Grebnov", true);
+   log.println("", true);
+   log.println("   -h, --help", true);
+   log.println("        display this message\n", true);
+
+   if ((mode.compare(0, 1, "c") != 0) && (mode.compare(0, 1, "d") != 0)) {
+       log.println("   -c, --compress", true);
+       log.println("        compress mode\n", true);
+       log.println("   -d, --decompress", true);
+       log.println("        decompress mode\n", true);
+   }
+
+   log.println("   -i, --input=<inputName>", true);
+   log.println("        mandatory name of the input file or directory or 'stdin'", true);
+   log.println("        When the source is a directory, all files in it will be processed.", true);
+   stringstream ss;
+   ss << "        Provide " << PATH_SEPARATOR << ". at the end of the directory name to avoid recursion";
+   log.println(ss.str().c_str(), true);
+   ss.str(string());
+   ss << "        (EG: myDir" << PATH_SEPARATOR << ". => no recursion)\n";
+   log.println(ss.str().c_str(), true);
+   ss.str(string());
+   log.println("   -o, --output=<outputName>", true);
+
+   if (mode.compare(0, 1, "c") == 0) {
+       log.println("        optional name of the output file or directory (defaults to", true);
+       log.println("        <inputName.knz>) or 'none' or 'stdout'. 'stdout' is not valid", true);
+       log.println("        when the number of jobs is greater than 1.\n", true);
+   }
+   else if (mode.compare(0, 1, "d") == 0) {
+       log.println("        optional name of the output file or directory (defaults to", true);
+       log.println("        <inputName.bak>) or 'none' or 'stdout'. 'stdout' is not valid", true);
+       log.println("        when the number of jobs is greater than 1.\n", true);
+   }
+   else {
+       log.println("        optional name of the output file or 'none' or 'stdout'.\n", true);
+   }
+
+   if (mode.compare(0, 1, "c") == 0) {
+       log.println("   -b, --block=<size>", true);
+       log.println("        size of blocks (default 4 MB, max 1 GB, min 1 KB).\n", true);
+       log.println("   -l, --level=<compression>", true);
+       log.println("        set the compression level [0..9]", true);
+       log.println("        Providing this option forces entropy and transform.", true);
+       log.println("        0=None&None (store), 1=TEXT+LZ&HUFFMAN, 2=TEXT+FSD+LZX&HUFFMAN", true);
+       log.println("        3=TEXT+FSD+ROLZ, 4=TEXT+FSD+ROLZX, 5=TEXT+BWT+RANK+ZRLT&ANS0", true);
+       log.println("        6=TEXT+BWT+SRT+ZRLT&FPAQ, 7=LZP+TEXT+BWT+LZP&CM, 8=X86+RLT+TEXT&TPAQ", true);
+       log.println("        9=X86+RLT+TEXT&TPAQX\n", true);
+       log.println("   -e, --entropy=<codec>", true);
+       log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]", true);
+       log.println("        (default is ANS0)\n", true);
+       log.println("   -t, --transform=<codec>", true);
+       log.println("        transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
+       log.println("                  [MTFT|RANK|SRT|TEXT|FSD|X86]", true);
+       log.println("        EG: BWT+RANK or BWTS+MTFT (default is BWT+RANK+ZRLT)\n", true);
+       log.println("   -x, --checksum", true);
+       log.println("        enable block checksum\n", true);
+       log.println("   -s, --skip", true);
+       log.println("        copy blocks with high entropy instead of compressing them.\n", true);
+   }
+
+   log.println("   -j, --jobs=<jobs>", true);
+   log.println("        maximum number of jobs the program may start concurrently", true);
+   log.println("        (default is 1, maximum is 64).\n", true);
+   log.println("   -v, --verbose=<level>", true);
+   log.println("        0=silent, 1=default, 2=display details, 3=display configuration,", true);
+   log.println("        4=display block size and timings, 5=display extra information", true);
+   log.println("        Verbosity is reduced to 1 when files are processed concurrently", true);
+   log.println("        Verbosity is reduced to 0 when the output is 'stdout'", true);
+   log.println("   -f, --force", true);
+   log.println("        overwrite the output file if it already exists\n", true);
+
+   if (mode.compare(0, 1, "d") == 0) {
+       log.println("   --from=blockId\n", true);
+       log.println("        Decompress starting from the provided block (included).\n", true);
+       log.println("        The first block ID is 1.\n", true);
+       log.println("   --to=blockId\n", true);
+       log.println("        Decompress ending at the provided block (excluded).\n", true);
+   }
+
+   if (mode.compare(0, 1, "d") != 0) {
+       log.println("", true);
+       log.println("EG. kanzi -c -i foo.txt -o none -b 4m -l 4 -v 3\n", true);
+       log.println("EG. kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -j 4\n", true);
+       log.println("EG. kanzi --compress --input=foo.txt --output=foo.knz --force", true);
+       log.println("          --transform=BWT+MTFT+ZRLT --block=4m --entropy=FPAQ --jobs=4\n", true);
+   }
+
+   if (mode.compare(0, 1, "c") != 0) {
+       log.println("", true);
+       log.println("EG. kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
+       log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
+   }
+}
 
 int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 {
@@ -196,102 +294,17 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     outputName = "";
     ctx = -1;
 
+    if (argc == 1) {
+        printHelp(log, mode);
+        return 0;
+    }
+
     for (int i = 1; i < argc; i++) {
         string arg(argv[i]);
         arg = trim(arg);
 
         if ((arg == "--help") || (arg == "-h")) {
-            log.println("", true);
-            log.println("Credits: Matt Mahoney, Yann Collet, Jan Ondrus, Yuta Mori, Ilya Muravyov,", true);
-            log.println("         Neal Burns, Fabian Giesen, Jarek Duda, Ilya Grebnov", true);
-            log.println("", true);
-            log.println("   -h, --help", true);
-            log.println("        display this message\n", true);
-
-            if ((mode.compare(0, 1, "c") != 0) && (mode.compare(0, 1, "d") != 0)) {
-                log.println("   -c, --compress", true);
-                log.println("        compress mode\n", true);
-                log.println("   -d, --decompress", true);
-                log.println("        decompress mode\n", true);
-            }
-
-            log.println("   -v, --verbose=<level>", true);
-            log.println("        0=silent, 1=default, 2=display details, 3=display configuration,", true);
-            log.println("        4=display block size and timings, 5=display extra information", true);
-            log.println("        Verbosity is reduced to 1 when files are processed concurrently", true);
-            log.println("        Verbosity is silently reduced to 0 when the output is 'stdout'", true);
-            log.println("        (EG: The source is a directory and the number of jobs > 1).\n", true);
-            log.println("   -f, --force", true);
-            log.println("        overwrite the output file if it already exists\n", true);
-            log.println("   -i, --input=<inputName>", true);
-            log.println("        mandatory name of the input file or directory or 'stdin'", true);
-            log.println("        When the source is a directory, all files in it will be processed.", true);
-            stringstream ss;
-            ss << "        Provide " << PATH_SEPARATOR << ". at the end of the directory name to avoid recursion";
-            log.println(ss.str().c_str(), true);
-            ss.str(string());
-            ss << "        (EG: myDir" << PATH_SEPARATOR << ". => no recursion)\n";
-            log.println(ss.str().c_str(), true);
-            ss.str(string());
-            log.println("   -o, --output=<outputName>", true);
-
-            if (mode.compare(0, 1, "c") == 0) {
-                log.println("        optional name of the output file or directory (defaults to", true);
-                log.println("        <inputName.knz>) or 'none' or 'stdout'. 'stdout' is not valid", true);
-                log.println("        when the number of jobs is greater than 1.\n", true);
-            }
-            else if (mode.compare(0, 1, "d") == 0) {
-                log.println("        optional name of the output file or directory (defaults to", true);
-                log.println("        <inputName.bak>) or 'none' or 'stdout'. 'stdout' is not valid", true);
-                log.println("        when the number of jobs is greater than 1.\n", true);
-            }
-            else {
-                log.println("        optional name of the output file or 'none' or 'stdout'.\n", true);
-            }
-
-            if (mode.compare(0, 1, "c") == 0) {
-                log.println("   -b, --block=<size>", true);
-                log.println("        size of blocks (default 4 MB, max 1 GB, min 1 KB).\n", true);
-                log.println("   -l, --level=<compression>", true);
-                log.println("        set the compression level [0..9]", true);
-                log.println("        Providing this option forces entropy and transform.", true);
-                log.println("        0=None&None (store), 1=TEXT+LZ&HUFFMAN, 2=TEXT+FSD+LZX&HUFFMAN", true);
-                log.println("        3=TEXT+FSD+ROLZ, 4=TEXT+FSD+ROLZX, 5=TEXT+BWT+RANK+ZRLT&ANS0", true);
-                log.println("        6=TEXT+BWT+SRT+ZRLT&FPAQ, 7=LZP+TEXT+BWT+LZP&CM, 8=X86+RLT+TEXT&TPAQ", true);
-                log.println("        9=X86+RLT+TEXT&TPAQX\n", true);
-                log.println("   -e, --entropy=<codec>", true);
-                log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]", true);
-                log.println("        (default is ANS0)\n", true);
-                log.println("   -t, --transform=<codec>", true);
-                log.println("        transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
-                log.println("                  [MTFT|RANK|SRT|TEXT|FSD|X86]", true);
-                log.println("        EG: BWT+RANK or BWTS+MTFT (default is BWT+RANK+ZRLT)\n", true);
-                log.println("   -x, --checksum", true);
-                log.println("        enable block checksum\n", true);
-                log.println("   -s, --skip", true);
-                log.println("        copy blocks with high entropy instead of compressing them.\n", true);
-            }
-
-            log.println("   -j, --jobs=<jobs>", true);
-            log.println("        maximum number of jobs the program may start concurrently", true);
-            log.println("        (default is 1, maximum is 64).\n", true);
-
-            if (mode.compare(0, 1, "c") == 0) {
-                log.println("", true);
-                log.println("EG. kanzi -c -i foo.txt -o none -b 4m -l 4 -v 3\n", true);
-                log.println("EG. kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -v 3 -j 4\n", true);
-                log.println("EG. kanzi --compress --input=foo.txt --output=foo.knz --force", true);
-                log.println("          --transform=BWT+MTFT+ZRLT --block=4m --entropy=FPAQ --verbose=3 --jobs=4\n", true);
-            } else if (mode.compare(0, 1, "d") == 0) {
-                log.println("   --from=blockId\n", true);
-                log.println("        Decompress starting from the provided block (included).\n", true);
-                log.println("        The first block ID is 1.\n", true);
-                log.println("   --to=blockId\n", true);
-                log.println("        Decompress ending at the provided block (excluded).\n", true);
-                log.println("", true);
-                log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
-            }
-
+            printHelp(log, mode);
             return 0;
         }
 
