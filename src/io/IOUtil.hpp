@@ -17,11 +17,10 @@ limitations under the License.
 #define _IOUtil_
 
 #include <errno.h>
-#include <sys/stat.h>
 #include <algorithm>
 #include <vector>
 #include "IOException.hpp"
-#include "../types.hpp"
+#include "../util.hpp"
 #include "../Error.hpp"
 
 #ifdef _MSC_VER
@@ -60,12 +59,12 @@ class FileData {
 
 static void createFileList(std::string& target, std::vector<FileData>& files) THROW
 {
-    struct stat buffer;
+    struct STAT buffer;
 
     if (target[target.size()-1] == PATH_SEPARATOR)
         target = target.substr(0, target.size()-1);
 
-    if (stat(target.c_str(), &buffer) != 0) {
+    if (STAT(target.c_str(), &buffer) != 0) {
         std::stringstream ss;
         ss << "Cannot access input file '" << target << "'";
         throw IOException(ss.str(), Error::ERR_OPEN_FILE);
@@ -107,7 +106,7 @@ static void createFileList(std::string& target, std::vector<FileData>& files) TH
         while ((ent = readdir(dir)) != nullptr) {
             std::string fullpath = target + ent->d_name;
 
-            if (stat(fullpath.c_str(), &buffer) != 0) {
+            if (STAT(fullpath.c_str(), &buffer) != 0) {
                 std::stringstream ss;
                 ss << "Cannot access input file '" << target << ent->d_name << "'";
                 throw IOException(ss.str(), Error::ERR_OPEN_FILE);

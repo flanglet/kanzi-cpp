@@ -32,6 +32,9 @@ limitations under the License.
 // Ahem ... Visual Studio
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
+#define STAT _stat64
+#else
+#define STAT stat64
 #endif
 
 
@@ -89,10 +92,10 @@ inline bool samePaths(std::string& f1, std::string& f2)
    if (f1.compare(f2) == 0)
       return true;
 
-   struct stat buf1;
-   int s1 = stat(f1.c_str(), &buf1);
-   struct stat buf2;
-   int s2 = stat(f2.c_str(), &buf2);
+   struct STAT buf1;
+   int s1 = STAT(f1.c_str(), &buf1);
+   struct STAT buf2;
+   int s2 = STAT(f2.c_str(), &buf2);
 
    if (s1 != s2)
       return false;
@@ -202,24 +205,24 @@ private:
 public:
         Clock()
         {
-                start();
-                _stop = _start;
+            start();
+            _stop = _start;
         }
 
         void start()
         {
-                _start = clock();
+           _start = clock();
         }
 
         void stop()
         {
-                _stop = clock();
+           _stop = clock();
         }
 
         double elapsed() const
         {
-                // In millisec
-                return double(_stop - _start) / CLOCKS_PER_SEC * 1000.0;
+           // In millisec
+           return (_stop <= _start) ? 0.0 : double(_stop - _start) / CLOCKS_PER_SEC * 1000.0;
         }
 };
 #endif

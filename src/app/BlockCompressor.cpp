@@ -15,14 +15,9 @@ limitations under the License.
 */
 
 #include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <string>
 #include <time.h>
-#include <sys/stat.h>
 #include "BlockCompressor.hpp"
 #include "InfoPrinter.hpp"
-#include "../util.hpp"
 #include "../SliceArray.hpp"
 #include "../Error.hpp"
 #include "../transform/TransformFactory.hpp"
@@ -273,7 +268,7 @@ int BlockCompressor::compress(uint64& outputSize)
     bool specialOutput = (upperOutputName.compare(0, 4, "NONE") == 0) || (upperOutputName.compare(0, 6, "STDOUT") == 0);
 
     if (isStdIn == false) {
-        struct stat buffer;
+        struct STAT buffer;
 
         // Need to strip path separator at the end to make 'stat()' happy
         if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
@@ -284,7 +279,7 @@ int BlockCompressor::compress(uint64& outputSize)
             formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
         }
 
-        if (stat(formattedInName.c_str(), &buffer) != 0) {
+        if (STAT(formattedInName.c_str(), &buffer) != 0) {
             cerr << "Cannot access input file '" << formattedInName << "'" << endl;
             return Error::ERR_OPEN_FILE;
         }
@@ -301,7 +296,7 @@ int BlockCompressor::compress(uint64& outputSize)
             }
 
             if ((formattedOutName.size() != 0) && (specialOutput == false)) {
-                if (stat(formattedOutName.c_str(), &buffer) != 0) {
+                if (STAT(formattedOutName.c_str(), &buffer) != 0) {
                     cerr << "Output must be an existing directory (or 'NONE')" << endl;
                     return Error::ERR_OPEN_FILE;
                 }
@@ -316,7 +311,7 @@ int BlockCompressor::compress(uint64& outputSize)
         }
         else {
             if ((formattedOutName.size() != 0) && (specialOutput == false)) {
-                if ((stat(formattedOutName.c_str(), &buffer) != 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
+                if ((STAT(formattedOutName.c_str(), &buffer) != 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
                     cerr << "Output must be a file (or 'NONE')" << endl;
                     return Error::ERR_CREATE_FILE;
                 }
@@ -615,11 +610,11 @@ T FileCompressTask<T>::run()
                 return T(Error::ERR_CREATE_FILE, 0, 0, sserr.str().c_str());
             }
 
-            struct stat buffer;
+            struct STAT buffer;
             string path = outputName;
             replace(path.begin(), path.end(), '\\', '/');
 
-            if (stat(outputName.c_str(), &buffer) == 0) {
+            if (STAT(outputName.c_str(), &buffer) == 0) {
                 if ((buffer.st_mode & S_IFDIR) != 0) {
                     return T(Error::ERR_OUTPUT_IS_DIR, 0, 0, "The output file is a directory");
                 }

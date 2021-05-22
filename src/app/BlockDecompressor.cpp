@@ -16,14 +16,10 @@ limitations under the License.
 
 #include <algorithm>
 #include <fstream>
-#include <iostream>
-#include <string>
 #include <time.h>
-#include <sys/stat.h>
 #include "BlockDecompressor.hpp"
 #include "InfoPrinter.hpp"
 #include "../SliceArray.hpp"
-#include "../util.hpp"
 #include "../Error.hpp"
 #include "../io/IOException.hpp"
 #include "../io/IOUtil.hpp"
@@ -180,7 +176,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     string upperOutputName = _outputName;
     transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), ::toupper);
     bool specialOutput = (upperOutputName.compare(0, 4, "NONE") == 0) || (upperOutputName.compare(0, 6, "STDOUT") == 0);
-    struct stat buffer;
+    struct STAT buffer;
 
     // Need to strip path separator at the end to make 'stat()' happy
     if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
@@ -191,7 +187,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
     }
 
-    if (stat(formattedInName.c_str(), &buffer) != 0) {
+    if (STAT(formattedInName.c_str(), &buffer) != 0) {
         cerr << "Cannot access input file '" << formattedInName << "'" << endl;
         return Error::ERR_OPEN_FILE;
     }
@@ -208,7 +204,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         }
 
         if ((formattedOutName.size() != 0) && (specialOutput == false)) {
-            if (stat(formattedOutName.c_str(), &buffer) != 0) {
+            if (STAT(formattedOutName.c_str(), &buffer) != 0) {
                 cerr << "Output must be an existing directory (or 'NONE')" << endl;
                 return Error::ERR_OPEN_FILE;
             }
@@ -225,7 +221,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         inputIsDir = false;
 
         if ((formattedOutName.size() != 0) && (specialOutput == false)) {
-            if ((stat(formattedOutName.c_str(), &buffer) != 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
+            if ((STAT(formattedOutName.c_str(), &buffer) != 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
                 cerr << "Output must be a file (or 'NONE')" << endl;
                 return Error::ERR_CREATE_FILE;
             }
@@ -479,9 +475,9 @@ T FileDecompressTask<T>::run()
                 return T(Error::ERR_CREATE_FILE, 0, sserr.str().c_str());
             }
 
-            struct stat buffer;
+            struct STAT buffer;
 
-            if (stat(outputName.c_str(), &buffer) == 0) {
+            if (STAT(outputName.c_str(), &buffer) == 0) {
                 if ((buffer.st_mode & S_IFDIR) != 0) {
                     stringstream sserr;
                     sserr << "The output file is a directory";
