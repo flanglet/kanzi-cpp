@@ -342,7 +342,7 @@ int CompressedInputStream::processBlock() THROW
                 if (_nbInputBlocks != 0) {
                     // Limit the number of jobs if there are fewer blocks that _jobs
                     // It allows more jobs per task and reduces memory usage.
-                    nbTasks = min(nbTasks, _nbInputBlocks);
+                    nbTasks = min(nbTasks, int(_nbInputBlocks));
                 }
 
                 Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
