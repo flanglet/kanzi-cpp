@@ -60,8 +60,9 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
         throw invalid_argument("The block size must be a multiple of 16");
 
 #ifdef CONCURRENCY_ENABLED
-    if (uint64(bSize) * uint64(tasks) >= (uint64(1) << 31))
-        tasks = int((uint(1) << 31) / uint(bSize));
+    // Limit concurrency with big blocks to avoid too much memory usage
+    if (uint64(bSize) * uint64(tasks) >= (uint64(1) << 30))
+        tasks = int((uint(1) << 30) / uint(bSize));
 #endif
 
     _blockId = 0;
@@ -100,7 +101,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
         throw invalid_argument(ss.str());
     }
 #else
-    if ((tasks <= 0) || (tasks > 1))
+    if (tasks != 1)
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
@@ -124,8 +125,9 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
         throw invalid_argument("The block size must be a multiple of 16");
 
 #ifdef CONCURRENCY_ENABLED
-    if (uint64(bSize) * uint64(tasks) >= (uint64(1) << 31))
-        tasks = int((uint(1) << 31) / uint(bSize));
+    // Limit concurrency with big blocks to avoid too much memory usage
+    if (uint64(bSize) * uint64(tasks) >= (uint64(1) << 30))
+        tasks = int((uint(1) << 30) / uint(bSize));
 #endif
 
     _blockId = 0;

@@ -82,7 +82,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
         throw invalid_argument(ss.str());
     }
 #else
-    if ((tasks <= 0) || (tasks > 1))
+    if (tasks != 1)
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
@@ -183,8 +183,9 @@ void CompressedInputStream::readHeader() THROW
     }
 
 #ifdef CONCURRENCY_ENABLED
-    if (uint64(_blockSize) * uint64(_jobs) >= (uint64(1) << 31))
-        _jobs = int((uint(1) << 31) / uint(_blockSize));
+    // Limit concurrency with big blocks to avoid too much memory usage
+    if (uint64(_blockSize) * uint64(_jobs) >= (uint64(1) << 30))
+        _jobs = int((uint(1) << 30) / uint(_blockSize));
 #endif
 
     // Read number of blocks in input. 0 means 'unknown' and 63 means 63 or more.
@@ -341,9 +342,7 @@ int CompressedInputStream::processBlock() THROW
                 if (_nbInputBlocks != 0) {
                     // Limit the number of jobs if there are fewer blocks that _jobs
                     // It allows more jobs per task and reduces memory usage.
-                    if (nbTasks > _nbInputBlocks) {
-                        nbTasks = _nbInputBlocks;
-                    }
+                    nbTasks = min(nbTasks, _nbInputBlocks);
                 }
 
                 Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
