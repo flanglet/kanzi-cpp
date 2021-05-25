@@ -29,12 +29,16 @@ limitations under the License.
 
 
 #ifdef _MSC_VER
-// Ahem ... Visual Studio
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-#define STAT _stat64
+   // Ahem ... Visual Studio
+   #define min(a, b) (((a) < (b)) ? (a) : (b))
+   #define max(a, b) (((a) > (b)) ? (a) : (b))
+   #define STAT _stat64
 #else
-#define STAT stat64
+   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+      #define STAT stat
+   #else
+      #define STAT stat64
+   #endif
 #endif
 
 
