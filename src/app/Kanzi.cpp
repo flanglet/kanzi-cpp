@@ -490,26 +490,22 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 name = name.substr(0, name.length() - 1);
             }
 
-            int bk = atoi(name.c_str());
+            stringstream ss;
+            ss << name;
+            int64 bk;
+            ss >> bk;
 
             if (bk <= 0) {
                 cerr << "Invalid block size provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
             } else if (lastChar != ' ') {
-                // Check validity of input: atoi is not strict enough
-                while (name.length() > 0) {
-                    lastChar = name[name.length() - 1];
-
-                    if ((lastChar < '0') || (lastChar > '9')) {
-                        cerr << "Invalid block size provided on command line: " << arg << endl;
-                        return Error::ERR_INVALID_PARAM;
-                    }
-
-                    name = name.substr(0, name.length() - 1);
+                if (int(bk) != bk) {
+                    cerr << "Invalid block size provided on command line: " << arg << endl;
+                    return Error::ERR_INVALID_PARAM;
                 }
             }
 
-            stringstream ss;
+            ss.str(string());
             ss << scale * bk;
             strBlockSize = ss.str();
             ctx = -1;
