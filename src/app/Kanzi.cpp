@@ -490,9 +490,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 name = name.substr(0, name.length() - 1);
             }
 
+            int64 bk;
             stringstream ss;
             ss << name;
-            int64 bk;
             ss >> bk;
 
             if (bk <= 0) {
@@ -505,9 +505,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 }
             }
 
-            ss.str(string());
-            ss << scale * bk;
-            strBlockSize = ss.str();
+            stringstream ss2;
+            ss2 << (scale * int(bk));
+            strBlockSize = ss2.str();
             ctx = -1;
             continue;
         }
