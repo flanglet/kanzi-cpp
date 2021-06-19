@@ -234,17 +234,16 @@ namespace kanzi {
    template <bool T>
    inline int LZXCodec<T>::findMatch(byte src[], int srcIdx, int ref, int maxMatch)
    {
-       int bestLen = 0;
+       if (LZCodec::sameInts(src, ref, srcIdx) == false)
+           return 0;
 
-       if (LZCodec::sameInts(src, ref, srcIdx) == true) {
-           bestLen = 4;
+       int bestLen =  4;
 
-           while ((bestLen + 4 < maxMatch) && (LZCodec::sameInts(src, ref + bestLen, srcIdx + bestLen) == true))
-               bestLen += 4;
+       while ((bestLen + 4 < maxMatch) && (LZCodec::sameInts(src, ref + bestLen, srcIdx + bestLen) == true))
+           bestLen += 4;
 
-           while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))
-               bestLen++;
-       }
+       while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))
+           bestLen++;
 
        return bestLen;
    }

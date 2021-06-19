@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <sstream>
 #include "../util.hpp" // Visual Studio min/max
 #include "../Memory.hpp"
 #include "TransformFactory.hpp"
@@ -273,10 +272,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         if (token >= 32) {
             // Get literal length
-            int litLen = token >> 5;
-
-            if (litLen == 7)
-                litLen += readLength(src, srcIdx);
+            const int litLen = (token >= 0xE0) ? 7 + readLength(src, srcIdx) : token >> 5;
 
             // Emit literals
             srcIdx += litLen;
