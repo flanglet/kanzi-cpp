@@ -163,7 +163,7 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     }
 
     // Find the fastest way to implement inverse based on block size
-    if ((count <= BLOCK_SIZE_THRESHOLD2) && (_jobs == 1))
+    if (count <= BLOCK_SIZE_THRESHOLD2)
         return inverseMergeTPSI(input, output, count);
 
     return inverseBiPSIv2(input, output, count);
@@ -477,7 +477,53 @@ T InverseBiPSIv2Task<T>::run() THROW
     while ((_total >> shift) > BWT::MASK_FASTBITS)
         shift++;
 
-    for (int c = _firstChunk; c < _lastChunk; c++) {
+    int c = _firstChunk;
+
+    if (_start + 4 * _ckSize < _total) {
+        for (; c + 3 < _lastChunk; c += 4) {
+            const int end = _start + _ckSize;
+            uint p0 = _primaryIndexes[c];
+            uint p1 = _primaryIndexes[c + 1];
+            uint p2 = _primaryIndexes[c + 2];
+            uint p3 = _primaryIndexes[c + 3];
+
+            for (int i = _start + 1; i <= end; i += 2) {
+                uint16 s0 = _fastBits[p0 >> shift];
+                uint16 s1 = _fastBits[p1 >> shift];
+                uint16 s2 = _fastBits[p2 >> shift];
+                uint16 s3 = _fastBits[p3 >> shift];
+
+                while (_buckets[s0] <= (const uint)p0)
+                    s0++;
+
+                while (_buckets[s1] <= (const uint)p1)
+                    s1++;
+
+                while (_buckets[s2] <= (const uint)p2)
+                    s2++;
+
+                while (_buckets[s3] <= (const uint)p3)
+                    s3++;
+
+                _dst[i - 1] = byte(s0 >> 8);
+                _dst[i] = byte(s0);
+                _dst[_ckSize + i - 1] = byte(s1 >> 8);
+                _dst[_ckSize + i] = byte(s1);
+                _dst[2 * _ckSize + i - 1] = byte(s2 >> 8);
+                _dst[2 * _ckSize + i] = byte(s2);
+                _dst[3 * _ckSize + i - 1] = byte(s3 >> 8);
+                _dst[3 * _ckSize + i] = byte(s3);
+                p0 = _data[p0];
+                p1 = _data[p1];
+                p2 = _data[p2];
+                p3 = _data[p3];
+            }
+
+            _start = end + 3 * _ckSize;
+        }
+    }
+
+    for (; c < _lastChunk; c++) {
         const int end = min(_start + _ckSize, _total - 1);
         uint p = _primaryIndexes[c];
 
