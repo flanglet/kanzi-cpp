@@ -170,11 +170,10 @@ int testBWTCorrectness(bool isBWT)
     return res;
 }
 
-int testBWTSpeed(bool isBWT)
+int testBWTSpeed(bool isBWT, int iter, bool isSmallSize)
 {
     // Test speed
-    int iter = 2000;
-    int size = 256 * 1024;
+    int size = (isSmallSize) ? 256 * 1024 : 10 * 1024 * 1024;
     int res = 0;
 
     cout << endl
@@ -185,23 +184,24 @@ int testBWTSpeed(bool isBWT)
     srand(uint(time(nullptr)));
 
     for (int jj = 0; jj < 3; jj++) {
-        byte input[256 * 1024];
-        byte output[256 * 1024];
-        byte reverse[256 * 1024];
+        byte* input = (isSmallSize) ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
+        byte* output = (isSmallSize) ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
+        byte* reverse = (isSmallSize) ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
         SliceArray<byte> ia1(input, size, 0);
         SliceArray<byte> ia2(output, size, 0);
         SliceArray<byte> ia3(reverse, size, 0);
         double delta1 = 0, delta2 = 0;
-        Transform<byte>* bwt;
-
-        if (isBWT) {
-            bwt = new BWT();
-        }
-        else {
-            bwt = new BWTS();
-        }
+        Transform<byte>* bwt = nullptr;
 
         for (int ii = 0; ii < iter; ii++) {
+
+            if (isBWT) {
+                bwt = new BWT();
+            }
+            else {
+                bwt = new BWTS();
+            }
+
             for (int i = 0; i < size; i++) {
                 input[i] = byte(1 + (rand() % 255));
             }
@@ -235,7 +235,12 @@ int testBWTSpeed(bool isBWT)
             }
         }
 
-        delete bwt;
+        if (bwt != nullptr)
+            delete bwt;
+
+        delete input;
+        delete output;
+        delete reverse;
 
         double prod = double(iter) * double(size);
         double b2KB = double(1) / double(1024);
@@ -260,7 +265,8 @@ int TestBWT_main()
     int res = 0;
     res |= testBWTCorrectness(true);
     res |= testBWTCorrectness(false);
-    res |= testBWTSpeed(true);
-    res |= testBWTSpeed(false);
+    res |= testBWTSpeed(true, 200, true); // test MergeTPSI inverse
+    res |= testBWTSpeed(true, 5, false); // test BiPSIv2 inverse
+    res |= testBWTSpeed(false, 200, true);
     return res;
 }
