@@ -404,10 +404,10 @@ int DivSufSort::sortTypeBstar(int bucketA[], int bucketB[], int n)
                 const int tt = i - bucketB[(c1 << 8) + c0];
                 bucketB[(c1 << 8) + c0] = i; // end point
                 i = tt;
+                const int j = bucketB[idx + c1];
 
                 // Move all type B* suffixes to the correct position.
-                // Typically very small number of copies, no need for arraycopy
-                for (int j = bucketB[idx + c1]; j <= k; i--, k--)
+                for (; k >= j; i--, k--)
                     _sa[i] = _sa[k];
             }
 
@@ -1303,7 +1303,7 @@ int DivSufSort::ssPivot(int td, int pa, int first, int last)
 int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5)
 {
     uint8* buf0 = &_buffer[idx];
-    int* buf1 = &_sa[pa];
+    const int* buf1 = &_sa[pa];
 
     if (buf0[buf1[_sa[v2]]] > buf0[buf1[_sa[v3]]]) {
         std::swap(v2, v3);
@@ -1336,7 +1336,7 @@ int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4,
 int DivSufSort::ssMedian3(int idx, int pa, int v1, int v2, int v3)
 {
     uint8* buf0 = &_buffer[idx];
-    int* buf1 = &_sa[pa];
+    const int* buf1 = &_sa[pa];
 
     if (buf0[buf1[_sa[v1]]] > buf0[buf1[_sa[v2]]]) {
         std::swap(v1, v2);
@@ -1403,7 +1403,7 @@ void DivSufSort::ssHeapSort(int idx, int pa, int saIdx, int size)
     }
 
     for (int i = m - 1; i > 0; i--) {
-        int t = _sa[saIdx];
+        const int t = _sa[saIdx];
         _sa[saIdx] = _sa[saIdx + i];
         ssFixDown(idx, pa, saIdx, 0, i);
         _sa[saIdx + i] = t;
@@ -1456,29 +1456,29 @@ void DivSufSort::trSort(int n, int depth)
             if (t < 0) {
                 first -= t;
                 skip += t;
+                continue;
             }
-            else {
-                if (skip != 0) {
-                    _sa[first + skip] = skip;
-                    skip = 0;
-                }
 
-                const int last = _sa[n + t] + 1;
+             if (skip != 0) {
+                 _sa[first + skip] = skip;
+                 skip = 0;
+             }
 
-                if (last - first > 1) {
-                    budget._count = 0;
-                    trIntroSort(n, isad, first, last, budget);
+             const int last = _sa[n + t] + 1;
 
-                    if (budget._count != 0)
-                        unsorted += budget._count;
-                    else
-                        skip = first - last;
-                }
-                else if (last - first == 1)
-                    skip = -1;
+             if (last - first > 1) {
+                 budget._count = 0;
+                 trIntroSort(n, isad, first, last, budget);
 
-                first = last;
-            }
+                 if (budget._count != 0)
+                     unsorted += budget._count;
+                 else
+                     skip = first - last;
+             }
+             else if (last - first == 1)
+                 skip = -1;
+
+             first = last;
         } while (first < n);
 
         if (skip != 0)
@@ -1576,7 +1576,7 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
         last -= (d - c);
     }
 
-    return (((uint64)first) << 32) | (((uint64)last) & (uint64)0xFFFFFFFF);
+    return ((uint64(first) << 32) | (uint64(last) & uint64(0xFFFFFFFF)));
 }
 
 void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& budget)
