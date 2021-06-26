@@ -166,7 +166,7 @@ namespace kanzi {
 
    inline bool LZCodec::sameInts(byte block[], int srcIdx, int dstIdx)
    {
-       return *(reinterpret_cast<int32*>(&block[srcIdx])) == *(reinterpret_cast<int32*>(&block[dstIdx]));
+       return memcmp(&block[srcIdx], &block[dstIdx], 4) == 0;
    }
 
    template <bool T>

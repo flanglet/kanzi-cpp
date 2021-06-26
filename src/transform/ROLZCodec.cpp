@@ -137,7 +137,7 @@ int ROLZCodec1::findMatch(const byte buf[], const int pos, const int end)
 
         int n = 1;
 
-        while ((n + 4 < maxMatch) && (*(reinterpret_cast<const int32*>(&buf[ref + n])) == *(reinterpret_cast<const int32*>(&curBuf[n]))))
+        while ((n + 4 < maxMatch) && (memcmp(&buf[ref + n], &curBuf[n], 4) == 0))
             n += 4;
 
         while ((n < maxMatch) && (buf[ref + n] == curBuf[n]))
