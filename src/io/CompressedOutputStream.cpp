@@ -241,7 +241,7 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length) THRO
     if (remaining < 0)
         throw IOException("Invalid buffer size");
 
-    if (_closed.load() == true)
+    if (_closed.load(memory_order_relaxed) == true)
         throw ios_base::failure("Stream closed");
 
     int off = 0;
@@ -335,7 +335,7 @@ void CompressedOutputStream::processBlock(bool force) THROW
         vector<Listener*> blockListeners(_listeners);
         const int dataLength = _sa->_index;
         _sa->_index = 0;
-        int firstBlockId = _blockId.load();
+        int firstBlockId = _blockId.load(memory_order_relaxed);
         int nbTasks = _jobs;
         int jobsPerTask[MAX_CONCURRENCY];
 
@@ -562,7 +562,7 @@ T EncodingTask<T>::run() THROW
         postTransformLength = _buffer->_index;
 
         if (postTransformLength < 0) {
-            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID);
+            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID, memory_order_release);
             return T(_blockId, Error::ERR_WRITE_FILE, "Invalid transform size");
         }
 
@@ -570,7 +570,7 @@ T EncodingTask<T>::run() THROW
         const int dataSize = (postTransformLength < 256) ? 1 : (Global::_log2(postTransformLength) >> 3) + 1;
 
         if (dataSize > 4) {
-            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID);
+            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID, memory_order_release);
             return T(_blockId, Error::ERR_WRITE_FILE, "Invalid block data length");
         }
 
@@ -622,7 +622,7 @@ T EncodingTask<T>::run() THROW
         // Entropy encode block
         if (ee->encode(_buffer->_array, 0, postTransformLength) != postTransformLength) {
             delete ee;
-            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID);
+            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID, memory_order_release);
             return T(_blockId, Error::ERR_PROCESS_BLOCK, "Entropy coding failed");
         }
 
@@ -635,7 +635,7 @@ T EncodingTask<T>::run() THROW
 
         // Lock free synchronization
         while (true) {
-            const int taskId = _processedBlockId->load();
+            const int taskId = _processedBlockId->load(memory_order_relaxed);
 
             if (taskId == CompressedOutputStream::CANCEL_TASKS_ID)
                 return T(_blockId, 0, "Canceled");
@@ -676,7 +676,7 @@ T EncodingTask<T>::run() THROW
     }
     catch (exception& e) {
         // Make sure to unfreeze next block
-        if (_processedBlockId->load() == _blockId - 1)
+        if (_processedBlockId->load(memory_order_relaxed) == _blockId - 1)
             (*_processedBlockId)++;
 
         if (ee != nullptr)

@@ -87,7 +87,9 @@ public:
 	// ! Stubs for NON CONCURRENT USAGE !
 	// Used to compile and provide a non concurrent version AND
 	// when atomic.h is not available (VS C++)
-	const int memory_order_acquire = 0;
+	const int memory_order_relaxed = 0;
+	const int memory_order_acquire = 2;
+	const int memory_order_release = 3;
 	#include <iostream>
 
 	class atomic_int {
@@ -100,8 +102,8 @@ public:
 			_n = n;
 			return *this;
 		}
-		int load() const { return _n; }
-		void store(int n) { _n = n; }
+		int load(int mo = memory_order_relaxed) const { return _n; }
+		void store(int n, int mo = memory_order_release) { _n = n; }
 		atomic_int& operator++(int) {
 			_n++;
 			return *this;
@@ -130,9 +132,9 @@ public:
 			_b = b;
 			return *this;
 		}
-		bool load() const { return _b; }
-		void store(bool b) { _b = b; }
-		bool exchange(bool expected, int) {
+		bool load(int mo = memory_order_relaxed) const { return _b; }
+		void store(bool b, int mo = memory_order_release) { _b = b; }
+		bool exchange(bool expected, int mo = memory_order_acquire) {
 			bool b = _b;
 			_b = expected;
 			return b;

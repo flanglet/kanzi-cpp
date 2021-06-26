@@ -275,7 +275,7 @@ istream& CompressedInputStream::read(char* data, streamsize length) THROW
     if (remaining < 0)
         throw ios_base::failure("Invalid buffer size");
 
-    if (_closed.load() == true) {
+    if (_closed.load(memory_order_relaxed) == true) {
         setstate(ios::badbit);
         throw ios_base::failure("Stream closed");
     }
@@ -331,7 +331,7 @@ int CompressedInputStream::processBlock() THROW
 
         while (true) {
             _sa->_index = 0;
-            const int firstBlockId = _blockId.load();
+            const int firstBlockId = _blockId.load(memory_order_relaxed);
             int nbTasks = _jobs;
             int jobsPerTask[MAX_CONCURRENCY];
 
@@ -564,7 +564,7 @@ T DecodingTask<T>::run() THROW
 {
     // Lock free synchronization
     while (true) {
-        const int taskId = _processedBlockId->load();
+        const int taskId = _processedBlockId->load(memory_order_relaxed);
 
         if (taskId == CompressedInputStream::CANCEL_TASKS_ID) {
             // Skip, an error occurred
@@ -583,12 +583,12 @@ T DecodingTask<T>::run() THROW
     uint64 read = _ibs->readBits(lr);
 
     if (read == 0) {
-        _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID);
+        _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
         return T(*_data, _blockId, 0, 0, 0, "Success");
     }
 
     if (read > (uint64(1) << 34)) {
-        _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID);
+        _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
         return T(*_data, _blockId, 0, 0, Error::ERR_BLOCK_SIZE, "Invalid block size");
     }
 
@@ -649,13 +649,13 @@ T DecodingTask<T>::run() THROW
 
         if (preTransformLength == 0) {
             // Error => cancel concurrent decoding tasks
-            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID);
+            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
             return T(*_data, _blockId, 0, checksum1, 0, "Invalid transform block size");
         }
 
         if ((preTransformLength < 0) || (preTransformLength > CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE)) {
             // Error => cancel concurrent decoding tasks
-            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID);
+            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
             stringstream ss;
             ss << "Invalid compressed block length: " << preTransformLength;
             return T(*_data, _blockId, 0, checksum1, Error::ERR_READ_FILE, ss.str());
@@ -690,7 +690,7 @@ T DecodingTask<T>::run() THROW
         if (ed->decode(_buffer->_array, 0, preTransformLength) != preTransformLength) {
             // Error => cancel concurrent decoding tasks
             delete ed;
-            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID);
+            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
             return T(*_data, _blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
                 "Entropy decoding failed");
         }
@@ -746,7 +746,7 @@ T DecodingTask<T>::run() THROW
     }
     catch (exception& e) {
         // Make sure to unfreeze next block
-        if (_processedBlockId->load() == _blockId - 1)
+        if (_processedBlockId->load(memory_order_relaxed) == _blockId - 1)
             (*_processedBlockId)++;
 
         if (ed != nullptr)
