@@ -399,10 +399,10 @@ namespace kanzi
    void TPAQPredictor<T>::update(int bit)
    {
        _mixer->update(bit);
-       _bpos--;
        _c0 = (_c0 << 1) | bit;
+       _bpos--;
 
-       if (_c0 > 255) {
+       if (_bpos == 0) {
            _buffer[_pos & _bufferMask] = byte(_c0);
            _pos++;
            _c8 = (_c8 << 8) | ((_c4 >> 24) & 0xFF);
@@ -434,12 +434,12 @@ namespace kanzi
            }
            else {
                // Mostly binary
+               _ctx4 = createContext(HASH + _matchLen, _c4 ^ (_c4 & 0x000FFFFF));
+               _ctx5 = _ctx0 | (_c8 << 16);
+
                if (T == true) {
                   _ctx6 = hash(_c4 & 0xFFFF0000, _c8 >> 16);
                }
-
-               _ctx4 = createContext(HASH + _matchLen, _c4 ^ (_c4 & 0x000FFFFF));
-               _ctx5 = _ctx0 | (_c8 << 16);
            }
 
            findMatch();

@@ -35,8 +35,6 @@ namespace kanzi {
 
        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
-       static bool sameInts(byte block[], int srcIdx, int dstIdx);
-
        // Required encoding output buffer size
        int getMaxEncodedLength(int srcLen) const
        {
@@ -115,11 +113,11 @@ namespace kanzi {
 
        static void emitLiterals(const byte src[], byte dst[], int len);
 
-       static int readLength(byte block[], int& pos);
+       static int readLength(const byte block[], int& pos);
 
        static int32 hash(const byte* p);
 
-       static int findMatch(byte block[], int pos, int ref, int maxMatch);
+       static int findMatch(byte block[], const int pos, const int ref, int maxMatch);
    };
 
    class LZPCodec : public Transform<byte> {
@@ -164,11 +162,6 @@ namespace kanzi {
        int _hashSize;
    };
 
-   inline bool LZCodec::sameInts(byte block[], int srcIdx, int dstIdx)
-   {
-       return memcmp(&block[srcIdx], &block[dstIdx], 4) == 0;
-   }
-
    template <bool T>
    inline void LZXCodec<T>::emitLiterals(const byte src[], byte dst[], int len)
    {
@@ -211,7 +204,7 @@ namespace kanzi {
    }
 
    template <bool T>
-   inline int LZXCodec<T>::readLength(byte block[], int& pos)
+   inline int LZXCodec<T>::readLength(const byte block[], int& pos)
    {
        int res = int(block[pos++]);
 
@@ -232,14 +225,14 @@ namespace kanzi {
    }
 
    template <bool T>
-   inline int LZXCodec<T>::findMatch(byte src[], int srcIdx, int ref, int maxMatch)
+   inline int LZXCodec<T>::findMatch(byte src[], const int srcIdx, const int ref, int maxMatch)
    {
-       if (LZCodec::sameInts(src, ref, srcIdx) == false)
+       if (memcmp(&src[ref], &src[srcIdx], 4) != 0)
            return 0;
 
        int bestLen =  4;
 
-       while ((bestLen + 4 < maxMatch) && (LZCodec::sameInts(src, ref + bestLen, srcIdx + bestLen) == true))
+       while ((bestLen + 4 < maxMatch) && (memcmp(&src[ref + bestLen], &src[srcIdx + bestLen], 4) == 0))
            bestLen += 4;
 
        while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))

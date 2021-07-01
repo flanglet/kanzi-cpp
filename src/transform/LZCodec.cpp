@@ -385,11 +385,11 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         int bestLen = 0;
 
         // Find a match
-        if ((ref > minRef) && (LZCodec::sameInts(src, ref, srcIdx) == true)) {
+        if ((ref > minRef) && (memcmp(&src[ref], &src[srcIdx], 4) == 0)) {
             const int maxMatch = srcEnd - srcIdx;
             bestLen = 4;
 
-            while ((bestLen < maxMatch) && (LZCodec::sameInts(src, ref + bestLen, srcIdx + bestLen) == true))
+            while ((bestLen < maxMatch) && (memcmp(&src[ref + bestLen], &src[srcIdx + bestLen], 4) == 0))
                 bestLen += 4;
 
             while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))
