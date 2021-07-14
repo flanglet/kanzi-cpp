@@ -34,7 +34,7 @@ limitations under the License.
    #define max(a, b) (((a) > (b)) ? (a) : (b))
    #define STAT _stat64
 #else
-   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
+   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
       #define STAT stat
    #else
       #define STAT stat64
