@@ -37,8 +37,15 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
 {
     map<string, string>::iterator it;
     it = args.find("level");
-    _level = atoi(it->second.c_str());
-    args.erase(it);
+
+    if (it == args.end()) {
+        _level = -1;
+    }
+    else {
+        _level = atoi(it->second.c_str());
+        args.erase(it);
+    }
+
     it = args.find("overwrite");
 
     if (it == args.end()) {
