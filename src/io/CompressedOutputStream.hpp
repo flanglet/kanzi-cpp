@@ -82,7 +82,7 @@ namespace kanzi {
        SliceArray<byte>* _buffer;
        int _blockLength;
        uint64 _transformType;
-       uint32 _entropyType;
+       short _entropyType;
        int _blockId;
        OutputBitStream* _obs;
        XXHash32* _hasher;
@@ -92,7 +92,7 @@ namespace kanzi {
 
    public:
        EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int length,
-           uint64 transformType, uint32 entropyType, int blockId,
+           uint64 transformType, short entropyType, int blockId,
            OutputBitStream* obs, XXHash32* hasher,
            atomic_int* processedBlockId, std::vector<Listener*>& listeners,
            const Context& ctx);
@@ -122,7 +122,7 @@ namespace kanzi {
        XXHash32* _hasher;
        SliceArray<byte>* _sa; // for all blocks
        SliceArray<byte>** _buffers; // input & output per block
-       uint32 _entropyType;
+       short _entropyType;
        uint64 _transformType;
        OutputBitStream* _obs;
        OutputStream& _os;

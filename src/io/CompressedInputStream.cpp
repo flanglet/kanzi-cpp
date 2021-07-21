@@ -164,7 +164,7 @@ void CompressedInputStream::readHeader() THROW
         _hasher = new XXHash32(BITSTREAM_TYPE);
 
     // Read entropy codec
-    _entropyType = uint(_ibs->readBits(5));
+    _entropyType = short(_ibs->readBits(5));
     _ctx.putString("codec", EntropyCodecFactory::getName(_entropyType));
     _ctx.putString("extra", _entropyType == EntropyCodecFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
 
@@ -532,7 +532,7 @@ void CompressedInputStream::notifyListeners(vector<Listener*>& listeners, const 
 
 template <class T>
 DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int blockSize,
-    uint64 transformType, uint entropyType, int blockId,
+    uint64 transformType, short entropyType, int blockId,
     InputBitStream* ibs, XXHash32* hasher,
     atomic_int* processedBlockId, vector<Listener*>& listeners,
     const Context& ctx)

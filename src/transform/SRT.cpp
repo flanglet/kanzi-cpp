@@ -83,7 +83,7 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         if (r != 0) {
             do {
                 r2s[r] = r2s[r - 1];
-                s2r[r2s[r]] = r;
+                s2r[r2s[r]] = uint8(r);
                 r--;
             } while (r != 0);
 

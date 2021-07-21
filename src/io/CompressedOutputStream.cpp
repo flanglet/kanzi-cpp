@@ -463,7 +463,7 @@ void CompressedOutputStream::notifyListeners(vector<Listener*>& listeners, const
 
 template <class T>
 EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int length,
-    uint64 transformType, uint entropyType, int blockId,
+    uint64 transformType, short entropyType, int blockId,
     OutputBitStream* obs, XXHash32* hasher,
     atomic_int* processedBlockId, vector<Listener*>& listeners,
     const Context& ctx)
