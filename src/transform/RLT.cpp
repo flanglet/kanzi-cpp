@@ -49,7 +49,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     int minIdx = 0;
 
     if (freqs[minIdx] > 0) {
-        for (int i=1; i<256; i++) {
+        for (int i = 1; i < 256; i++) {
             if (freqs[i] < freqs[minIdx]) {
                 minIdx = i;
 
@@ -91,7 +91,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         }
 
         if (run > RUN_THRESHOLD) {
-            const int dIdx = emitRunLength(&dst[dstIdx], dstEnd-dstIdx, run, escape, prev);
+            const int dIdx = emitRunLength(&dst[dstIdx], dstEnd - dstIdx, run, escape, prev);
 
             if (dIdx < 0) {
                res = false;
@@ -101,7 +101,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             dstIdx += dIdx;
         }
         else if (prev != escape) {
-            if (dstIdx+run >= dstEnd) {
+            if (dstIdx + run >= dstEnd) {
                res = false;
                break;
             }
@@ -113,7 +113,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
                dst[dstIdx++] = prev;
         }
         else { // escape literal
-            if (dstIdx+2*run >= dstEnd) {
+            if (dstIdx + (2 * run) >= dstEnd) {
                res = false;
                break;
             }
@@ -141,7 +141,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             }
         }
         else { // escape literal
-            if (dstIdx + 2 * run < dstEnd) {
+            if (dstIdx + (2 * run) < dstEnd) {
                while (run-- > 0) {
                   dst[dstIdx++] = escape;
                   dst[dstIdx++] = byte(0);
@@ -261,7 +261,7 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             break;
         }
 
-        const byte val = dst[dstIdx-1];
+        const byte val = dst[dstIdx - 1];
         int run = int(src[srcIdx++]);
 
         if (run == 0) {
@@ -303,20 +303,9 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             break;
         }
 
-        // Emit 'run' times the previous byte
-        while (run >= 4) {
-            dst[dstIdx] = val;
-            dst[dstIdx + 1] = val;
-            dst[dstIdx + 2] = val;
-            dst[dstIdx + 3] = val;
-            dstIdx += 4;
-            run -= 4;
-        }
-
-        while (run > 0) {
-            dst[dstIdx++] = val;
-            run--;
-        }
+        memset(&dst[dstIdx], int(val), size_t(run));
+        dstIdx += run;
+        run = 0;
     }
 
     res &= (srcIdx == srcEnd);

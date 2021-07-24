@@ -188,7 +188,7 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
 
     // Build array of packed index + value (assumes block size < 1<<24)
     uint buckets[256] = { 0 };
-    Global::computeHistogram(&input._array[input._index], count, buckets, true);
+    Global::computeHistogram(&input._array[input._index], count, buckets);
 
     for (int i = 0, sum = 0; i < 256; i++) {
         const int tmp = buckets[i];
@@ -316,7 +316,7 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
     uint* buckets = new uint[65536];
     memset(&buckets[0], 0, 65536 * sizeof(uint));
     uint freqs[256];
-    Global::computeHistogram(&input._array[input._index], count, freqs, true);
+    Global::computeHistogram(&input._array[input._index], count, freqs);
 
     for (int sum = 1, c = 0; c < 256; c++) {
         const int f = sum;
