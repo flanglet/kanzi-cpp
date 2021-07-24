@@ -57,7 +57,7 @@ class FileData {
 };
 
 
-static void createFileList(std::string& target, std::vector<FileData>& files) THROW
+static inline void createFileList(std::string& target, std::vector<FileData>& files) THROW
 {
     struct STAT buffer;
 
