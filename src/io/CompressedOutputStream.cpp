@@ -585,6 +585,13 @@ T EncodingTask<T>::run() THROW
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
+        if (_data->_length < postTransformLength) {
+            // Rare case where the transform expanded the input
+            _data->_length = postTransformLength + (postTransformLength >> 5);
+            delete[] _data->_array;
+            _data->_array = new byte[_data->_length];
+        }
+
         _data->_index = 0;
         ostreambuf<char> buf(reinterpret_cast<char*>(&_data->_array[_data->_index]), streamsize(_data->_length));
         ostream os(&buf);
