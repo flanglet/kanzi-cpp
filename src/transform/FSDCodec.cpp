@@ -188,7 +188,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
     }
 
-    if ((srcIdx != srcEnd) || (srcIdx <= dstIdx))
+    if (srcIdx != srcEnd)
         return false;
 
     // Extra check that the transform makes sense
@@ -202,7 +202,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     input._index = srcIdx;
     output._index = dstIdx;
-    return true;
+    return true; // Allowed to expand
 }
 
 bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
