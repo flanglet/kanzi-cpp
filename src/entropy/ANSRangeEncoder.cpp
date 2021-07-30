@@ -49,7 +49,6 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
     _chunkSize = min(chunkSize << (8 * order), MAX_CHUNK_SIZE);
     _order = order;
     const int32 dim = 255 * order + 1;
-    _alphabet = new uint[dim * 256];
     _freqs = new uint[dim * 257]; // freqs[x][256] = total(freqs[x][0..255])
     _symbols = new ANSEncSymbol[dim * 256];
     _buffer = new byte[0];
@@ -63,7 +62,6 @@ ANSRangeEncoder::~ANSRangeEncoder()
     delete[] _buffer;
     delete[] _symbols;
     delete[] _freqs;
-    delete[] _alphabet;
 }
 
 
@@ -73,11 +71,11 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], int lr)
     int res = 0;
     const int endk = 255 * _order + 1;
     _bitstream.writeBits(lr - 8, 3); // logRange
+    uint curAlphabet[256];
 
     for (int k = 0; k < endk; k++) {
         uint* f = &frequencies[k * 257];
         ANSEncSymbol* symb = &_symbols[k << 8];
-        uint* curAlphabet = &_alphabet[k << 8];
         const int alphabetSize = EntropyUtils::normalizeFrequencies(f, curAlphabet, 256, f[256], 1 << lr);
 
         if (alphabetSize > 0) {

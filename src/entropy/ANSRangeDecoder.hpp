@@ -70,7 +70,6 @@ namespace kanzi
 	   static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
 
 	   InputBitStream& _bitstream;
-	   uint* _alphabet;
 	   uint* _freqs;
 	   uint8* _f2s;
 	   int _f2sSize;
@@ -85,7 +84,7 @@ namespace kanzi
 
 	   int decodeSymbol(byte*& p, int& st, const ANSDecSymbol& sym, const int mask);
 
-	   int decodeHeader(uint frequencies[]);
+	   int decodeHeader(uint frequencies[], uint alphabet[]);
 
  	   void _dispose() {}
    };

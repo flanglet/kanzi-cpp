@@ -42,7 +42,6 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
     _chunkSize = min(chunkSize << (8 * order), MAX_CHUNK_SIZE);
     _order = order;
     const int dim = 255 * order + 1;
-    _alphabet = new uint[dim * 256];
     _freqs = new uint[dim * 256];
     _symbols = new ANSDecSymbol[dim * 256];
     _buffer = new byte[0];
@@ -59,10 +58,9 @@ ANSRangeDecoder::~ANSRangeDecoder()
     delete[] _symbols;
     delete[] _f2s;
     delete[] _freqs;
-    delete[] _alphabet;
 }
 
-int ANSRangeDecoder::decodeHeader(uint frequencies[])
+int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
 {
     _logRange = int(8 + _bitstream.readBits(3));
 
@@ -84,8 +82,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
 
     for (int k = 0; k < dim; k++) {
         uint* f = &frequencies[k << 8];
-        uint* curAlphabet = &_alphabet[k << 8];
-        int alphabetSize = EntropyUtils::decodeAlphabet(_bitstream, curAlphabet);
+        int alphabetSize = EntropyUtils::decodeAlphabet(_bitstream, alphabet);
 
         if (alphabetSize == 0)
             continue;
@@ -121,11 +118,11 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
                 if ((freq < 0) || (freq >= scale)) {
                     stringstream ss;
                     ss << "Invalid bitstream: incorrect frequency " << freq;
-                    ss << " for symbol '" << curAlphabet[j] << "' in ANS range decoder";
+                    ss << " for symbol '" << alphabet[j] << "' in ANS range decoder";
                     throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
                 }
 
-                f[curAlphabet[j]] = uint(freq);
+                f[alphabet[j]] = uint(freq);
                 sum += freq;
             }
         }
@@ -133,12 +130,12 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[])
         // Infer first frequency
         if (scale <= sum) {
             stringstream ss;
-            ss << "Invalid bitstream: incorrect frequency " << frequencies[_alphabet[0]];
-            ss << " for symbol '" << _alphabet[0] << "' in ANS range decoder";
+            ss << "Invalid bitstream: incorrect frequency " << frequencies[alphabet[0]];
+            ss << " for symbol '" << alphabet[0] << "' in ANS range decoder";
             throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
         }
 
-        f[curAlphabet[0]] = uint(scale - sum);
+        f[alphabet[0]] = uint(scale - sum);
         sum = 0;
         ANSDecSymbol* symb = &_symbols[k << 8];
         uint8* freq2sym = &_f2s[k << _logRange];
@@ -169,24 +166,18 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint count)
     const uint end = blkptr + count;
     uint startChunk = blkptr;
     uint sz = uint(_chunkSize);
-    const uint size = max(min(sz + (sz >> 3), 2 * count), uint(65536));
-
-    if (_bufferSize < size) {
-        delete[] _buffer;
-        _bufferSize = size;
-        _buffer = new byte[_bufferSize];
-    }
+    uint alphabet[256];
 
     while (startChunk < end) {
         const uint sizeChunk = min(sz, end - startChunk);
-        const int alphabetSize = decodeHeader(_freqs);
+        const int alphabetSize = decodeHeader(_freqs, alphabet);
 
         if (alphabetSize == 0)
             return startChunk - blkptr;
 
         if ((_order == 0) && (alphabetSize == 1)) {
             // Shortcut for chunks with only one symbol
-            memset(&block[startChunk], _alphabet[0], sizeChunk);
+            memset(&block[startChunk], alphabet[0], sizeChunk);
         } else {
             decodeChunk(&block[startChunk], sizeChunk);
         }
@@ -200,15 +191,22 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint count)
 void ANSRangeDecoder::decodeChunk(byte block[], int end)
 {
     // Read chunk size
-    const int sz = int(EntropyUtils::readVarInt(_bitstream) & (MAX_CHUNK_SIZE - 1));
+    const uint sz = uint(EntropyUtils::readVarInt(_bitstream) & (MAX_CHUNK_SIZE - 1));
 
     // Read initial ANS state
     int st0 = int(_bitstream.readBits(32));
     int st1 = (_order == 0) ? int(_bitstream.readBits(32)) : 0;
 
     // Read bit buffer
-    if (sz != 0)
+    if (sz != 0) {
+         if (_bufferSize < sz) {
+            delete[] _buffer;
+            _bufferSize = sz + (sz >> 3);
+            _buffer = new byte[_bufferSize];
+        }
+
         _bitstream.readBits(&_buffer[0], 8 * sz);
+    }
 
     byte* p = &_buffer[0];
     const int mask = (1 << _logRange) - 1;

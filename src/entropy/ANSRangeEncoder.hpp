@@ -78,7 +78,6 @@ namespace kanzi
 	   static const int MIN_CHUNK_SIZE = 1024;
 	   static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
 
-	   uint* _alphabet;
 	   uint* _freqs;
 	   ANSEncSymbol* _symbols;
 	   byte* _buffer;
