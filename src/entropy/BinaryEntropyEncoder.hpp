@@ -31,6 +31,8 @@ namespace kanzi
        static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
        static const uint64 MASK_0_24 = 0x0000000000FFFFFF;
        static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
+       static const int MAX_BLOCK_SIZE = 1 << 30;
+       static const int MAX_CHUNK_SIZE = 1 << 26;
 
        Predictor* _predictor;
        uint64 _low;

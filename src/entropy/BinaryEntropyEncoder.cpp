@@ -44,17 +44,17 @@ BinaryEntropyEncoder::~BinaryEntropyEncoder()
 
 int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) THROW
 {
-    if (count >= 1 << 30)
+    if (count >= MAX_BLOCK_SIZE)
         throw invalid_argument("Invalid block size parameter (max is 1<<30)");
 
     int startChunk = blkptr;
     const int end = blkptr + count;
     int length = (count < 64) ? 64 : count;
 
-    if (count >= 1 << 26) {
+    if (count >= MAX_CHUNK_SIZE) {
         // If the block is big (>=64MB), split the encoding to avoid allocating
         // too much memory.
-        length = (count < (1 << 29)) ? count >> 3 : count >> 4;
+        length = (count < 8 * MAX_CHUNK_SIZE) ? count >> 3 : count >> 4;
     }
 
     // Split block into chunks, encode chunk and write bit array to bitstream
@@ -62,20 +62,20 @@ int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) TH
         const int chunkSize = min(length, end - startChunk);
 
         if (_sba._length < (chunkSize + (chunkSize >> 3))) {
-            const int bufSize = chunkSize + (chunkSize >> 3);
             delete[] _sba._array;
-            _sba._array = new byte[bufSize];
-            _sba._length = bufSize;
+            _sba._length = chunkSize + (chunkSize >> 3);
+            _sba._array = new byte[_sba._length];
         }
 
         _sba._index = 0;
+        const int endChunk = startChunk + chunkSize;
 
-        for (int i = startChunk; i < startChunk + chunkSize; i++)
+        for (int i = startChunk; i < endChunk; i++)
             encodeByte(block[i]);
 
         EntropyUtils::writeVarInt(_bitstream, uint32(_sba._index));
         _bitstream.writeBits(&_sba._array[0], 8 * _sba._index);
-        startChunk += chunkSize;
+        startChunk = endChunk;
 
         if (startChunk < end)
             _bitstream.writeBits(_low | MASK_0_24, 56);
