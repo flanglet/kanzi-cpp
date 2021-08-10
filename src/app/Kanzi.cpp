@@ -122,7 +122,7 @@ void printHelp(Printer& log, const string& mode)
    log.println("        0=silent, 1=default, 2=display details, 3=display configuration,", true);
    log.println("        4=display block size and timings, 5=display extra information", true);
    log.println("        Verbosity is reduced to 1 when files are processed concurrently", true);
-   log.println("        Verbosity is reduced to 0 when the output is 'stdout'", true);
+   log.println("        Verbosity is reduced to 0 when the output is 'stdout'\n", true);
    log.println("   -f, --force", true);
    log.println("        overwrite the output file if it already exists\n", true);
 
