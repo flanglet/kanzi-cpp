@@ -183,7 +183,7 @@ int testTransformsCorrectness(const string& name)
             int idx = 20;
 
             while (idx < 1024) {
-                int len = rand() % 40;
+                int len = rand() % 120; // above LZP min match threshold
 
                 if (len % 3 == 0)
                     len = 1;
