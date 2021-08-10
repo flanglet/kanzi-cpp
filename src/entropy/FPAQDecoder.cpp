@@ -53,36 +53,28 @@ bool FPAQDecoder::reset()
 
 int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
 {
-    if (count >= 1 << 30)
+    if (count >= MAX_BLOCK_SIZE)
         throw invalid_argument("Invalid block size parameter (max is 1<<30)");
 
     int startChunk = blkptr;
     const int end = blkptr + count;
-    int length = (count < 64) ? 64 : count;
-
-    if (count >= 1 << 26) {
-        // If the block is big (>=64MB), split the decoding to avoid allocating
-        // too much memory.
-        length = (count < (1 << 29)) ? count >> 3 : count >> 4;
-    }
 
     // Split block into chunks, read bit array from bitstream and decode chunk
     while (startChunk < end) {
-        const int chunkSize = min(length, end - startChunk);
-
-        if (_sba._length < chunkSize + (chunkSize >> 3)) {
-            const int bufSize = chunkSize + (chunkSize >> 3);
-            delete[] _sba._array;
-            _sba._array = new byte[bufSize];
-            _sba._length = bufSize;
-        }
-
+        const int chunkSize = min(DEFAULT_CHUNK_SIZE, end - startChunk);
         const int szBytes = int(EntropyUtils::readVarInt(_bitstream));
         _current = _bitstream.readBits(56);
 
-        if (szBytes != 0)
-            _bitstream.readBits(&_sba._array[0], 8 * szBytes);
+        if (szBytes == 0)
+           break;
 
+        if (_sba._length < szBytes) {
+            delete[] _sba._array;
+            _sba._length = szBytes + (szBytes >> 3);
+            _sba._array = new byte[_sba._length];
+        }
+
+        _bitstream.readBits(&_sba._array[0], 8 * szBytes);
         _sba._index = 0;
         const int endChunk = startChunk + chunkSize;
         _p = _probs[0];

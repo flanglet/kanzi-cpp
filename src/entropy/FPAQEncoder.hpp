@@ -32,6 +32,8 @@ namespace kanzi
        static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
        static const uint64 MASK_0_24 = 0x0000000000FFFFFF;
        static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
+       static const int DEFAULT_CHUNK_SIZE = 4 * 1024 * 1024;
+       static const int MAX_BLOCK_SIZE = 1 << 30;
        static const int PSCALE = 65536;
 
        uint64 _low;
