@@ -78,11 +78,11 @@ namespace kanzi {
 
        bool expandDictionary();
 
-       inline void reset(int count);
+       void reset(int count);
 
-       inline int emitWordIndex(byte dst[], int val);
+       int emitWordIndex(byte dst[], int val);
 
-       inline int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
+       int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
 
    // Encode word indexes using a mask (0x80)
@@ -104,7 +104,7 @@ namespace kanzi {
 
        // Limit to 1 x srcLength and let the caller deal with
        // a failure when the output is too small
-       inline int getMaxEncodedLength(int srcLen) const { return srcLen; }
+       int getMaxEncodedLength(int srcLen) const { return srcLen; }
 
    private:
        DictEntry** _dictMap;
@@ -118,11 +118,11 @@ namespace kanzi {
 
        bool expandDictionary();
 
-       inline void reset(int count);
+       void reset(int count);
 
-       inline int emitWordIndex(byte dst[], int val, int mask);
+       int emitWordIndex(byte dst[], int val, int mask);
 
-       inline int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
+       int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
 
    // Simple one-pass text codec that replaces words with indexes.
@@ -220,7 +220,7 @@ namespace kanzi {
        _data = 0;
    }
 
-   inline DictEntry::DictEntry(const byte* ptr, int hash, int idx, int length)
+   inline DictEntry::DictEntry(const byte* ptr, int hash, int idx, int length = 0)
    {
        _ptr = ptr;
        _hash = hash;

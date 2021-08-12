@@ -467,7 +467,7 @@ void TextCodec1::reset(int count)
 
     // Pre-allocate all dictionary entries
     for (int i = _staticDictSize; i < _dictSize; i++)
-        _dictList[i] = DictEntry(nullptr, 0, i, 0);
+        _dictList[i] = DictEntry(nullptr, 0, i);
 }
 
 bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
@@ -665,7 +665,7 @@ bool TextCodec1::expandDictionary()
     memcpy(static_cast<void*>(&newDict[0]), &_dictList[0], sizeof(DictEntry) * _dictSize);
 
     for (int i = _dictSize; i < _dictSize * 2; i++)
-        newDict[i] = DictEntry(nullptr, 0, i, 0);
+        newDict[i] = DictEntry(nullptr, 0, i);
 
     delete[] _dictList;
     _dictList = newDict;
@@ -847,10 +847,9 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             }
 
             const int length = _dictList[idx]._data >> 24;
-            const byte* buf = _dictList[idx]._ptr;
 
             // Sanity check
-            if ((buf == nullptr) || (dstIdx + length >= dstEnd))
+            if (dstIdx + length >= dstEnd)
                 break;
 
             // Emit word
@@ -864,12 +863,15 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 delimAnchor = srcIdx;
             }
             else {
+                if (length == 0)
+                   break;
+
                 // Escape entry
                 wordRun = false;
                 delimAnchor = srcIdx - 1;
             }
 
-            memcpy(&dst[dstIdx], &buf[0], length);
+            memcpy(&dst[dstIdx], _dictList[idx]._ptr, length);
 
             // Flip case of first character ?
             if (cur == TextCodec::ESCAPE_TOKEN2)
@@ -944,7 +946,7 @@ void TextCodec2::reset(int count)
 
     // Pre-allocate all dictionary entries
     for (int i = _staticDictSize; i < _dictSize; i++)
-        _dictList[i] = DictEntry(nullptr, 0, i, 0);
+        _dictList[i] = DictEntry(nullptr, 0, i);
 }
 
 bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
@@ -1141,7 +1143,7 @@ bool TextCodec2::expandDictionary()
     memcpy(static_cast<void*>(&newDict[0]), &_dictList[0], sizeof(DictEntry) * _dictSize);
 
     for (int i = _dictSize; i < _dictSize * 2; i++)
-        newDict[i] = DictEntry(nullptr, 0, i, 0);
+        newDict[i] = DictEntry(nullptr, 0, i);
 
     delete[] _dictList;
     _dictList = newDict;
@@ -1357,10 +1359,9 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             }
 
             const int length = _dictList[idx]._data >> 24;
-            const byte* buf = _dictList[idx]._ptr;
 
             // Sanity check
-            if ((buf == nullptr) || (dstIdx + length >= dstEnd))
+            if (dstIdx + length >= dstEnd)
                 break;
 
             // Emit word
@@ -1374,12 +1375,15 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 delimAnchor = srcIdx;
             }
             else {
+                if (length == 0)
+                   break;
+
                 // Escape entry
                 wordRun = false;
                 delimAnchor = srcIdx - 1;
             }
 
-            memcpy(&dst[dstIdx], &buf[0], length);
+            memcpy(&dst[dstIdx], _dictList[idx]._ptr, length);
 
             // Flip case of first character ?
             dst[dstIdx] ^= (cur & TextCodec::MASK_20);
