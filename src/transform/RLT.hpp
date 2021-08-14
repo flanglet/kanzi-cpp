@@ -49,7 +49,7 @@ namespace kanzi
        static const int MAX_RUN = 0xFFFF + RUN_LEN_ENCODE2 + RUN_THRESHOLD - 1;
        static const int MAX_RUN4 = MAX_RUN - 4;
 
-       int emitRunLength(byte* dst, int length, int run, byte escape, byte val);
+       static int emitRunLength(byte dst[], int length, int run, byte escape, byte val);
    };
 
 }

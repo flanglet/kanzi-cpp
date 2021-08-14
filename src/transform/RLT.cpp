@@ -175,7 +175,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     return res;
 }
 
-int RLT::emitRunLength(byte* dst, int length, int run, byte escape, byte val) {
+int RLT::emitRunLength(byte dst[], int length, int run, byte escape, byte val) {
     int dstIdx = 1;
     dst[0] = val;
 
@@ -305,7 +305,6 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
         memset(&dst[dstIdx], int(val), size_t(run));
         dstIdx += run;
-        run = 0;
     }
 
     res &= (srcIdx == srcEnd);
