@@ -86,6 +86,7 @@ namespace kanzi
        int _binCount;
        int _matchLen;
        int _matchPos;
+       int _matchVal;
        int _hash;
        LogisticAdaptiveProbMap<false, SSE0_RATE(T)> _sse0;
        LogisticAdaptiveProbMap<false, 7> _sse1;
@@ -364,6 +365,7 @@ namespace kanzi
        _binCount = 0;
        _matchLen = 0;
        _matchPos = 0;
+       _matchVal = 0;
        _hash = 0;
        _mixer = &_mixers[0];
        memset(_bigStatesMap, 0, _statesMask + 1);
@@ -443,6 +445,7 @@ namespace kanzi
            }
 
            findMatch();
+           _matchVal = int(_buffer[_matchPos & _bufferMask]) | 0x100;
 
            // Keep track current position
            _hashes[_hash] = _pos;
@@ -566,8 +569,8 @@ namespace kanzi
    template <bool T>
    inline int TPAQPredictor<T>::getMatchContextPred()
    {
-       if (_c0 == ((int(_buffer[_matchPos & _bufferMask]) & 0xFF) | 256) >> _bpos) {
-           return ((int(_buffer[_matchPos & _bufferMask] >> (_bpos - 1)) & 1) != 0) ?
+       if (_c0 == (_matchVal >> _bpos)) {
+           return (((_matchVal >> (_bpos - 1)) & 1) != 0) ?
                MATCH_PRED[_matchLen - 1] : -MATCH_PRED[_matchLen - 1];
        }
 
