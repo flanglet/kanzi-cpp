@@ -41,7 +41,7 @@ namespace kanzi
 
       ~ANSEncSymbol() { }
 
-      void reset(int cumFreq, int freq, int logRange);
+      void reset(int cumFreq, int freq, uint logRange);
 
       int _xMax; // (Exclusive) upper bound of pre-normalization interval
       int _bias; // Bias
@@ -63,7 +63,7 @@ namespace kanzi
 
 	   ~ANSRangeEncoder();
 
-	   int updateFrequencies(uint frequencies[], int lr);
+	   int updateFrequencies(uint frequencies[], uint lr);
 
 	   int encode(const byte block[], uint blkptr, uint len);
 
@@ -78,8 +78,8 @@ namespace kanzi
 	   static const int MIN_CHUNK_SIZE = 1024;
 	   static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
 
-	   uint* _freqs;
 	   ANSEncSymbol* _symbols;
+	   uint* _freqs;
 	   byte* _buffer;
 	   uint _bufferSize;
 	   OutputBitStream& _bitstream;
@@ -88,19 +88,19 @@ namespace kanzi
 	   uint _order;
 
 
-	   int rebuildStatistics(const byte block[], int end, int lr);
+	   int rebuildStatistics(const byte block[], int end, uint lr);
 
 	   void encodeChunk(const byte block[], int end);
 
 	   int encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym);
 
-	   bool encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], int lr);
+	   bool encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], uint lr);
 
 	   void _dispose() {}
    };
 
 
-   inline void ANSEncSymbol::reset(int cumFreq, int freq, int logRange)
+   inline void ANSEncSymbol::reset(int cumFreq, int freq, uint logRange)
    {
       // Make sure xMax is a positive int32. Compatibility with Java implementation
       if (freq >= 1 << logRange)

@@ -49,8 +49,8 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
     _chunkSize = min(chunkSize << (8 * order), MAX_CHUNK_SIZE);
     _order = order;
     const int32 dim = 255 * order + 1;
-    _freqs = new uint[dim * 257]; // freqs[x][256] = total(freqs[x][0..255])
     _symbols = new ANSEncSymbol[dim * 256];
+    _freqs = new uint[dim * 257]; // freqs[x][256] = total(freqs[x][0..255])
     _buffer = new byte[0];
     _bufferSize = 0;
     _logRange = logRange;
@@ -66,7 +66,7 @@ ANSRangeEncoder::~ANSRangeEncoder()
 
 
 // Compute cumulated frequencies and encode header
-int ANSRangeEncoder::updateFrequencies(uint frequencies[], int lr)
+int ANSRangeEncoder::updateFrequencies(uint frequencies[], uint lr)
 {
     int res = 0;
     const int endk = 255 * _order + 1;
@@ -98,7 +98,7 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], int lr)
 }
 
 // Encode alphabet and frequencies
-bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], int lr)
+bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], uint lr)
 {
     const int encoded = EntropyUtils::encodeAlphabet(_bitstream, alphabet, 256, alphabetSize);
 
@@ -109,7 +109,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
         return true;
 
     const int chkSize = (alphabetSize >= 64) ? 8 : 6;
-    int llr = 3;
+    uint llr = 3;
 
     while ((1 << llr) <= lr)
         llr++;
@@ -232,7 +232,7 @@ void ANSRangeEncoder::encodeChunk(const byte block[], int end)
 }
 
 // Compute chunk frequencies, cumulated frequencies and encode chunk header
-int ANSRangeEncoder::rebuildStatistics(const byte block[], int end, int lr)
+int ANSRangeEncoder::rebuildStatistics(const byte block[], int end, uint lr)
 {
     Global::computeHistogram(block, end, _freqs, _order == 0, true);
     return updateFrequencies(_freqs, lr);
