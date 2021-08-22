@@ -33,8 +33,7 @@ Disclaimer
 
 Use at your own risk. Always keep a backup of your files.
 
-[![Build Status](https://travis-ci.org/flanglet/kanzi-cpp.svg?branch=master)](https://travis-ci.org/flanglet/kanzi-cpp)
-
+![Build Status](https://github.com/flanglet/kanzi-cpp/actions/workflows/c-cpp.yml/badge.svg)
 [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/flanglet/kanzi-cpp.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/flanglet/kanzi-cpp/context:cpp)
 
 <a href="https://scan.coverity.com/projects/flanglet-kanzi-cpp">
