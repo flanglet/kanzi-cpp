@@ -96,7 +96,6 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         while ((i < length) && (src[i] == byte(c))) {
             dst[p] = byte(0);
             p++;
-            j++;
         }
 
         buckets[c] = p;
