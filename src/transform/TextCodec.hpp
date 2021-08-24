@@ -246,19 +246,17 @@ namespace kanzi {
 
    inline bool TextCodec::sameWords(const byte src[], const byte dst[], const int length)
    {
-       int n = length - 4;
+       int n = 0;
 
-       for (; n >= 0; n -= 4) {
+       for (; n + 4 < length; n += 4) {
 		     if (memcmp(&src[n], &dst[n], 4) != 0)
 			      return false;
        }
 
-       for (; n >= 0; n--) {
+       for (; n < length; n++) {
 		     if (dst[n] != src[n])
 			      return false;
        }
-
-       return true;
    }
 }
 #endif
