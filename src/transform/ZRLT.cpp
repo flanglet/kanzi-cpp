@@ -40,11 +40,15 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
     int dstIdx = 0;
     const int srcEnd = length;
     const int dstEnd = output._length;
-    bool res = false;
+    bool res = true;
+    byte zeros[4] = { byte(0) };
 
     while (srcIdx < srcEnd) {
         if (src[srcIdx] == byte(0)) {
             int runLength = 1;
+
+            while ((srcIdx + runLength + 4 < srcEnd) && (memcmp(&src[srcIdx + runLength], &zeros[0], 4) == 0))
+                runLength += 4;
 
             while ((srcIdx + runLength < srcEnd) && src[srcIdx + runLength] == byte(0))
                 runLength++;
