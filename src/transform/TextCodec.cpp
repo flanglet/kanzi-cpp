@@ -579,7 +579,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 }
 
                 if (pe != nullptr) {
-                    if (!TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1))
+                    if (!TextCodec::sameWords(&pe->_ptr[1], &src[delimAnchor + 2], length - 1))
                         pe = nullptr;
                 }
 
@@ -793,7 +793,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
                 // Check for hash collisions
                 if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length)) {
-                    if (TextCodec::sameWords(pe1->_ptr + 1, &src[delimAnchor + 2], length - 1))
+                    if (TextCodec::sameWords(&pe1->_ptr[1], &src[delimAnchor + 2], length - 1))
                         pe = pe1;
                 }
 
@@ -837,7 +837,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
                 if (idx2 >= 128) {
                     idx = ((idx & 0x1F) << 7) | (idx2 & 0x7F);
-                    idx2 = int(src[srcIdx++]) & 0x7F;
+                    idx2 = int(src[srcIdx++]);
                 }
 
                 idx = (idx << 7) | idx2;
@@ -1058,7 +1058,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 }
 
                 if (pe != nullptr) {
-                    if (!TextCodec::sameWords(pe->_ptr + 1, &src[delimAnchor + 2], length - 1))
+                    if (!TextCodec::sameWords(&pe->_ptr[1], &src[delimAnchor + 2], length - 1))
                         pe = nullptr;
                 }
 
@@ -1306,7 +1306,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
                 // Check for hash collisions
                 if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length)) {
-                    if (TextCodec::sameWords(pe1->_ptr + 1, &src[delimAnchor + 2], length - 1))
+                    if (TextCodec::sameWords(&pe1->_ptr[1], &src[delimAnchor + 2], length - 1))
                         pe = pe1;
                 }
 
@@ -1349,7 +1349,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
                 if (idx2 >= 128) {
                     idx = (idx << 7) | (idx2 & 0x7F);
-                    idx2 = int(src[srcIdx++]) & 0x7F;
+                    idx2 = int(src[srcIdx++]);
                 }
 
                 idx = (idx << 7) | idx2;

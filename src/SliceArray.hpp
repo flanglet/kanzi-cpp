@@ -29,11 +29,19 @@ namespace kanzi
 
       SliceArray(T* arr, int len, int index = 0) { _array = arr; _length = len; _index = index; }
 
+#if __cplusplus < 201103L
       SliceArray(const SliceArray& sa) { _array = sa._array; _length = sa._length; _index = sa._index; }
 
-      ~SliceArray(){} // does not deallocate buffer memory
-
       SliceArray& operator=(const SliceArray& sa);
+
+      ~SliceArray(){} // does not deallocate buffer memory
+#else
+      SliceArray(SliceArray&& sa) = default;
+
+      SliceArray& operator=(SliceArray&& sa) = default;
+
+      ~SliceArray() = default;
+#endif
 
       static bool isValid(const SliceArray& sa);
    };
@@ -52,14 +60,15 @@ namespace kanzi
        return (sa._index <= sa._length);
    }
 
+#if __cplusplus < 201103L
    template <class T>
-   SliceArray<T>& SliceArray<T>::operator=(const SliceArray& sa) {
+   inline SliceArray<T>& SliceArray<T>::operator=(const SliceArray& sa) {
       _array = sa._array;
       _length = sa._length;
       _index = sa._index;
       return *this;
    }
-
+#endif
 
 }
 #endif

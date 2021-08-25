@@ -194,7 +194,7 @@ namespace kanzi {
        static bool TEXT_CHARS[256];
        static const bool INIT;
 
-       static bool sameWords(const byte src[], const byte dst[], const int length);
+       static bool sameWords(const byte src[], const byte dst[], int length);
 
        static byte computeStats(const byte block[], int count, int freqs[], bool strict);
 
@@ -244,19 +244,23 @@ namespace kanzi {
    }
 #endif
 
-   inline bool TextCodec::sameWords(const byte src[], const byte dst[], const int length)
+   inline bool TextCodec::sameWords(const byte src[], const byte dst[], int length)
    {
-       int n = 0;
+       while (length >= 4) {
+		     if (memcmp(&src[length - 4], &dst[length - 4], 4) != 0)
+			      return false;
 
-       for (; n + 4 < length; n += 4) {
-		     if (memcmp(&src[n], &dst[n], 4) != 0)
+           length -= 4;
+       }
+
+       while (length > 0) {
+		     length--;
+
+		     if (dst[length] != src[length])
 			      return false;
        }
 
-       for (; n < length; n++) {
-		     if (dst[n] != src[n])
-			      return false;
-       }
+       return true;
    }
 }
 #endif
