@@ -587,7 +587,7 @@ T EncodingTask<T>::run() THROW
 
         if (_data->_length < postTransformLength) {
             // Rare case where the transform expanded the input
-            _data->_length = postTransformLength + (postTransformLength >> 5);
+            _data->_length = max(1024, postTransformLength + (postTransformLength >> 5));
             delete[] _data->_array;
             _data->_array = new byte[_data->_length];
         }
