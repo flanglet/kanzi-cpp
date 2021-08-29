@@ -57,10 +57,10 @@ namespace kanzi {
        static void computeHistogram(const byte block[], int end, uint freqs[], bool isOrder0=true, bool withTotal=false);
 
        // Szudzik pairing
-       static void encodePair(int x, int y, int& res);
+       static void encodePair(int x, int y, int& pair);
 
        // Szudzik pairing
-       static void decodePair(int& x, int& y, int res);
+       static void decodePair(int& x, int& y, int pair);
 
    private:
        Global() { STRETCH_BUFFER = new int[4096]; SQUASH_BUFFER = new int[4096]; }
@@ -112,23 +112,23 @@ namespace kanzi {
    }
 
 
-   inline void Global::encodePair(int x, int y, int& res)
+   inline void Global::encodePair(int x, int y, int& pair)
    {
-      res = (x >= y) ? x * x + x + y : y * y + x;
+      pair = (x >= y) ? x * x + x + y : y * y + x;
    }
 
 
-   inline void Global::decodePair(int& x, int& y, int res)
+   inline void Global::decodePair(int& x, int& y, int pair)
    {
-      const int s = int(sqrt(double(res)));
-      res -= s * s;
+      const int s = int(sqrt(double(pair)));
+      pair -= s * s;
 
-      if (res >= s) {
+      if (pair >= s) {
          x = s;
-         y = res - s;
+         y = pair - s;
       }
       else {
-         x = res;
+         x = pair;
          y = s;
       }
    }
