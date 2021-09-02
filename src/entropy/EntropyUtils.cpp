@@ -202,45 +202,46 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         const int delta = int(sumScaledFreq - scale);
 
         if (abs(delta) * 100 < int(freqs[idxMax]) * 5) {
-           // Fast path: just adjust the max frequency (or do nothing)
-           if (int(freqs[idxMax]) > delta)
+           // Fast path: just adjust the max frequency (or fallback to slow path)
+           if (int(freqs[idxMax]) > delta) {
                freqs[idxMax] -= delta;
+               return alphabetSize;
+           }
         }
-        else {
-            // Slow path: spread error across frequencies
-            const int inc = (sumScaledFreq > scale) ? -1 : 1;
-            deque<FreqSortData*> queue;
 
-            // Create sorted queue of present symbols
-            for (int i = 0; i < alphabetSize; i++) {
-                queue.push_back(new FreqSortData(freqs, alphabet[i]));
-            }
+        // Slow path: spread error across frequencies
+        const int inc = (sumScaledFreq > scale) ? -1 : 1;
+        deque<FreqSortData*> queue;
 
-            sort(queue.begin(), queue.end(), FreqDataComparator());
+        // Create sorted queue of present symbols
+        for (int i = 0; i < alphabetSize; i++) {
+           queue.push_back(new FreqSortData(freqs, alphabet[i]));
+        }
 
-            while (queue.size() > 0) {
-                if (sumScaledFreq != scale) {
-                   // Remove symbol with highest frequency
-                   FreqSortData* fsd = queue.front();
-                   queue.pop_front();
+        sort(queue.begin(), queue.end(), FreqDataComparator());
 
-                   // Do not zero out any frequency
-                   if (int(freqs[fsd->_symbol]) == -inc) {
-                       delete fsd;
-                       continue;
-                   }
+        while (queue.size() > 0) {
+           if (sumScaledFreq != scale) {
+               // Remove symbol with highest frequency
+               FreqSortData* fsd = queue.front();
+               queue.pop_front();
 
-                   // Distort frequency
-                   freqs[fsd->_symbol] += inc;
-                   sumScaledFreq += inc;
-                   queue.push_back(fsd);
+               // Do not zero out any frequency
+               if (int(freqs[fsd->_symbol]) == -inc) {
+                   delete fsd;
                    continue;
-                }
+               }
 
-                FreqSortData* fsd = queue.back();
-                queue.pop_back();
-                delete fsd;
-            }
+               // Distort frequency
+               freqs[fsd->_symbol] += inc;
+               sumScaledFreq += inc;
+               queue.push_back(fsd);
+               continue;
+           }
+
+           FreqSortData* fsd = queue.back();
+           queue.pop_back();
+           delete fsd;
         }
     }
 
