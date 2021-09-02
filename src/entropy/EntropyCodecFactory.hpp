@@ -52,6 +52,12 @@ namespace kanzi {
        static const short TPAQ_TYPE = 7; // Tangelo PAQ
        static const short ANS1_TYPE = 8; // Asymmetric Numerical System order 1
        static const short TPAQX_TYPE = 9; // Tangelo PAQ Extra
+       static const short RESERVED1 = 10; //Reserved
+       static const short RESERVED2 = 11; //Reserved
+       static const short RESERVED3 = 12; //Reserved
+       static const short RESERVED4 = 13; //Reserved
+       static const short RESERVED5 = 14; //Reserved
+       static const short RESERVED6 = 15; //Reserved
 
        static EntropyDecoder* newDecoder(InputBitStream& ibs, Context& ctx, short entropyType) THROW;
 

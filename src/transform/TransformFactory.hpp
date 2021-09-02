@@ -46,6 +46,12 @@ namespace kanzi {
 		static const uint64 LZP_TYPE = 14; // Lempel Ziv Predict
 		static const uint64 FSD_TYPE = 15; // Fixed Shift Delta codec
 		static const uint64 LZX_TYPE = 16; // Lempel Ziv Extra
+		static const uint64 RESERVED1 = 17; // Reserved
+		static const uint64 RESERVED2 = 18; // Reserved
+		static const uint64 RESERVED3 = 19; // Reserved
+		static const uint64 RESERVED4 = 20; // Reserved
+		static const uint64 RESERVED5 = 21; // Reserved
+		static const uint64 RESERVED6 = 22; // Reserved
 
 		static uint64 getType(const char* tName) THROW;
 
