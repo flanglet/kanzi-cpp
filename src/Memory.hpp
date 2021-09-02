@@ -79,6 +79,8 @@ namespace kanzi {
 			   defined(__AARCH64EB__) || \
 			   defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__)
 			#define IS_BIG_ENDIAN 1
+		#elif defined(_AIX) || defined(__hpux) || (defined(__sun) && defined(__sparc)) || defined(__OS400__) || defined(__MVS__)
+			#define IS_BIG_ENDIAN 1
 		#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN|| defined(__LITTLE_ENDIAN__)
 			#define IS_BIG_ENDIAN 0
 		#elif defined(_WIN32)
