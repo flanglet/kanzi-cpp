@@ -39,7 +39,7 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
     int srcIdx = 0;
     int dstIdx = 0;
     const int srcEnd = length;
-    const int dstEnd = output._length;
+    const int dstEnd = length; // do not expand
     bool res = true;
     byte zeros[4] = { byte(0) };
 
@@ -100,7 +100,7 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
 
     input._index = srcIdx;
     output._index = dstIdx;
-    return (srcIdx == srcEnd) && (res == true);
+    return res & (srcIdx == srcEnd);
 }
 
 bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
