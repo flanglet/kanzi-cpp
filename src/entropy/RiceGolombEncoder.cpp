@@ -31,9 +31,9 @@ RiceGolombEncoder::RiceGolombEncoder(OutputBitStream& bitstream, uint logBase, b
 
 int RiceGolombEncoder::encode(const byte block[], uint blkptr, uint len)
 {
-    const int end = blkptr + len;
+    const uint end = blkptr + len;
 
-    for (int i = blkptr; i < end; i++)
+    for (uint i = blkptr; i < end; i++)
         encodeByte(block[i]);
 
     return len;

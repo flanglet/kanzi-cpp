@@ -31,9 +31,9 @@ RiceGolombDecoder::RiceGolombDecoder(InputBitStream& bitstream, uint logBase, bo
 
 int RiceGolombDecoder::decode(byte block[], uint blkptr, uint len)
 {
-    const int end = blkptr + len;
+    const uint end = blkptr + len;
 
-    for (int i = blkptr; i < end; i++)
+    for (uint i = blkptr; i < end; i++)
         block[i] = decodeByte();
 
     return len;

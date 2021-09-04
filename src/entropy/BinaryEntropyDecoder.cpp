@@ -47,9 +47,9 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
     if (count >= MAX_BLOCK_SIZE)
         throw invalid_argument("Invalid block size parameter (max is 1<<30)");
 
-    int startChunk = blkptr;
-    const int end = blkptr + count;
-    int length = (count < 64) ? 64 : count;
+    uint startChunk = blkptr;
+    const uint end = blkptr + count;
+    uint length = (count < 64) ? 64 : count;
 
     if (count >= MAX_CHUNK_SIZE) {
         // If the block is big (>=64MB), split the decoding to avoid allocating
@@ -59,7 +59,7 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
 
     // Split block into chunks, read bit array from bitstream and decode chunk
     while (startChunk < end) {
-        const int chunkSize = min(length, end - startChunk);
+        const uint chunkSize = min(length, end - startChunk);
         const int szBytes = int(EntropyUtils::readVarInt(_bitstream));
         _current = _bitstream.readBits(56);
 
@@ -74,9 +74,9 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
 
         _bitstream.readBits(&_sba._array[0], 8 * szBytes);
         _sba._index = 0;
-        const int endChunk = startChunk + chunkSize;
+        const uint endChunk = startChunk + chunkSize;
 
-        for (int i = startChunk; i < endChunk; i++)
+        for (uint i = startChunk; i < endChunk; i++)
             block[i] = decodeByte();
 
         startChunk = endChunk;
@@ -95,4 +95,14 @@ byte BinaryEntropyDecoder::decodeByte()
         | (decodeBit(_predictor->get()) << 2)
         | (decodeBit(_predictor->get()) << 1)
         | decodeBit(_predictor->get()));
+}
+
+// no inline
+void BinaryEntropyDecoder::read()
+{
+    _low = (_low << 32) & MASK_0_56;
+    _high = ((_high << 32) | MASK_0_32) & MASK_0_56;
+    const uint64 val = BigEndian::readInt32(&_sba._array[_sba._index]) & MASK_0_32;
+    _current = ((_current << 32) | val) & MASK_0_56;
+    _sba._index += 4;
 }

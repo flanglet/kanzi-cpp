@@ -53,7 +53,7 @@ namespace kanzi
        if (_bitstream.readBit() == 1)
            return byte(0);
 
-       int log2 = 1;
+       uint log2 = 1;
 
        while (_bitstream.readBit() == 0)
            log2++;

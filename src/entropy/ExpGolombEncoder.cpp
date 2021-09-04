@@ -27,7 +27,7 @@ int ExpGolombEncoder::encode(const byte block[], uint blkptr, uint len)
     const byte* buf = &block[blkptr];
     const uint len8 = len & uint(-8);
 
-    for (uint i = 0; i < len8; i+=8) {
+    for (uint i = 0; i < len8; i += 8) {
         encodeByte(buf[i]);
         encodeByte(buf[i+1]);
         encodeByte(buf[i+2]);

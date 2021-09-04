@@ -49,11 +49,11 @@ namespace kanzi {
 
    inline int NullEntropyDecoder::decode(byte block[], uint blkptr, uint count)
    {
-      int res = 0;
+      uint res = 0;
 
-      while (count > 0) {
-	      const int ckSize = (count < 1<<23) ? count : 1<<23;
-	      const int r = (_bitstream.readBits(&block[blkptr], 8 * ckSize) >> 3);
+      while (count != 0) {
+	      const uint ckSize = (count < 1<<23) ? count : 1<<23;
+	      const uint r = uint(_bitstream.readBits(&block[blkptr], 8 * ckSize) >> 3);
 
 	      if (r == 0)
 	         break;

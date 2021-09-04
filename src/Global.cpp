@@ -141,7 +141,7 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
     const uint8* p = reinterpret_cast<const uint8*>(&block[0]);
 
     if (isOrder0 == true) {
-        memset(freqs, 0, mult * sizeof(uint));
+        memset(freqs, 0, size_t(mult * sizeof(uint)));
 
         if (withTotal == true)
             freqs[256] = length;
@@ -184,7 +184,7 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
             freqs[i] += (f0[i] + f1[i] + f2[i] + f3[i]);
     }
     else { // Order 1
-        memset(freqs, 0, 256 * mult * sizeof(uint));
+        memset(freqs, 0, size_t(256 * mult * sizeof(uint)));
         uint prv = 0;
 
         if (withTotal == true) {

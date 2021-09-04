@@ -76,16 +76,8 @@ namespace kanzi
        }
 
        // Write unchanged first 32 bits to bitstream
-       while (((_low ^ _high) >> 24) == 0)
+       if (((_low ^ _high) >> 24) == 0)
            flush();
-   }
-
-   inline void BinaryEntropyEncoder::flush()
-   {
-       BigEndian::writeInt32(&_sba._array[_sba._index], int32(_high >> 24));
-       _sba._index += 4;
-       _low <<= 32;
-       _high = (_high << 32) | MASK_0_32;
    }
 }
 #endif

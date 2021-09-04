@@ -50,11 +50,11 @@ namespace kanzi {
 
    inline int NullEntropyEncoder::encode(const byte block[], uint blkptr, uint count)
    {
-      int res = 0;
+      uint res = 0;
 
-      while (count > 0) {
-	      const int ckSize = (count < 1<<23) ? count : 1<<23;
-	      const int w = (_bitstream.writeBits(&block[blkptr], 8 * ckSize) >> 3);
+      while (count != 0) {
+	      const uint ckSize = (count < 1<<23) ? count : 1<<23;
+	      const uint w = uint(_bitstream.writeBits(&block[blkptr], 8 * ckSize) >> 3);
 
 	      if (w == 0)
 	         break;

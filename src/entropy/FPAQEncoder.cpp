@@ -54,24 +54,24 @@ int FPAQEncoder::encode(const byte block[], uint blkptr, uint count) THROW
     if (count >= MAX_BLOCK_SIZE)
         throw invalid_argument("Invalid block size parameter (max is 1<<30)");
 
-    int startChunk = blkptr;
-    const int end = blkptr + count;
+    uint startChunk = blkptr;
+    const uint end = blkptr + count;
 
     // Split block into chunks, encode chunk and write bit array to bitstream
     while (startChunk < end) {
-        const int chunkSize = min(DEFAULT_CHUNK_SIZE, end - startChunk);
+        const uint chunkSize = min(DEFAULT_CHUNK_SIZE, end - startChunk);
 
-        if (_sba._length < (chunkSize + (chunkSize >> 3))) {
+        if (_sba._length < int(chunkSize + (chunkSize >> 3))) {
             delete[] _sba._array;
             _sba._length = chunkSize + (chunkSize >> 3);
             _sba._array = new byte[_sba._length];
         }
 
         _sba._index = 0;
-        const int endChunk = startChunk + chunkSize;
+        const uint endChunk = startChunk + chunkSize;
         int ctx = 0;
 
-        for (int i = startChunk; i < endChunk; i++) {
+        for (uint i = startChunk; i < endChunk; i++) {
             const int val = int(block[i]);
             const int bits = val + 256;
             encodeBit(val & 0x80, _probs[ctx][1]);

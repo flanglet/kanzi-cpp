@@ -47,9 +47,9 @@ int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) TH
     if (count >= MAX_BLOCK_SIZE)
         throw invalid_argument("Invalid block size parameter (max is 1<<30)");
 
-    int startChunk = blkptr;
-    const int end = blkptr + count;
-    int length = (count < 64) ? 64 : count;
+    uint startChunk = blkptr;
+    const uint end = blkptr + count;
+    uint length = (count < 64) ? 64 : count;
 
     if (count >= MAX_CHUNK_SIZE) {
         // If the block is big (>=64MB), split the encoding to avoid allocating
@@ -59,18 +59,18 @@ int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) TH
 
     // Split block into chunks, encode chunk and write bit array to bitstream
     while (startChunk < end) {
-        const int chunkSize = min(length, end - startChunk);
+        const uint chunkSize = min(length, end - startChunk);
 
-        if (_sba._length < (chunkSize + (chunkSize >> 3))) {
+        if (_sba._length < int(chunkSize + (chunkSize >> 3))) {
             delete[] _sba._array;
             _sba._length = chunkSize + (chunkSize >> 3);
             _sba._array = new byte[_sba._length];
         }
 
         _sba._index = 0;
-        const int endChunk = startChunk + chunkSize;
+        const uint endChunk = startChunk + chunkSize;
 
-        for (int i = startChunk; i < endChunk; i++)
+        for (uint i = startChunk; i < endChunk; i++) 
             encodeByte(block[i]);
 
         EntropyUtils::writeVarInt(_bitstream, uint32(_sba._index));
@@ -86,14 +86,14 @@ int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) TH
 
 void BinaryEntropyEncoder::encodeByte(byte val)
 {
-    encodeBit(int(val >> 7) & 1, _predictor->get());
-    encodeBit(int(val >> 6) & 1, _predictor->get());
-    encodeBit(int(val >> 5) & 1, _predictor->get());
-    encodeBit(int(val >> 4) & 1, _predictor->get());
-    encodeBit(int(val >> 3) & 1, _predictor->get());
-    encodeBit(int(val >> 2) & 1, _predictor->get());
-    encodeBit(int(val >> 1) & 1, _predictor->get());
-    encodeBit(int(val) & 1, _predictor->get());
+    encodeBit(int(val) & 0x80, _predictor->get());
+    encodeBit(int(val) & 0x40, _predictor->get());
+    encodeBit(int(val) & 0x20, _predictor->get());
+    encodeBit(int(val) & 0x10, _predictor->get());
+    encodeBit(int(val) & 0x08, _predictor->get());
+    encodeBit(int(val) & 0x04, _predictor->get());
+    encodeBit(int(val) & 0x02, _predictor->get());
+    encodeBit(int(val) & 0x01, _predictor->get());
 }
 
 void BinaryEntropyEncoder::_dispose()
@@ -103,4 +103,13 @@ void BinaryEntropyEncoder::_dispose()
 
     _disposed = true;
     _bitstream.writeBits(_low | MASK_0_24, 56);
+}
+
+// no inline
+void BinaryEntropyEncoder::flush()
+{
+    BigEndian::writeInt32(&_sba._array[_sba._index], int32(_high >> 24));
+    _sba._index += 4;
+    _low <<= 32;
+    _high = (_high << 32) | MASK_0_32;
 }

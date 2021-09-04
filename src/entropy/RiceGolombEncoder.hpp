@@ -27,7 +27,7 @@ namespace kanzi
        OutputBitStream& _bitstream;
        bool _signed;
        uint _logBase;
-       int _base;
+       uint _base;
 
        void _dispose() {}
 
