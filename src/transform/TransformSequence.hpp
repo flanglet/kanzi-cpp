@@ -93,7 +93,7 @@ namespace kanzi {
        if ((count < 0) || (count + input._index > input._length))
            return false;
 
-       _skipFlags = byte(SKIP_MASK);
+       _skipFlags = SKIP_MASK;
 
        if (count == 0)
            return true;
@@ -136,8 +136,12 @@ namespace kanzi {
            swaps++;
        }
 
-       if ((swaps & 1) == 0)
-           memcpy(&output._array[output._index], &in->_array[in->_index], count);
+       if ((swaps & 1) == 0) {
+           if ((output._index + count > output._length) || (in->_index + count > in->_length))
+               _skipFlags = SKIP_MASK;
+           else
+               memcpy(&output._array[output._index], &in->_array[in->_index], count);
+       }
 
        input._index += blockSize;
        output._index += count;
@@ -204,8 +208,12 @@ namespace kanzi {
            swaps++;
        }
 
-       if ((res == true) && ((swaps & 1) == 0))
-           memcpy(&output._array[output._index], &input._array[input._index], count);
+       if ((res == true) && ((swaps & 1) == 0)) {
+           if ((output._index + count > output._length) || (input._index + count > input._length))
+               res = false;
+           else
+               memcpy(&output._array[output._index], &input._array[input._index], count);
+       }
 
        input._index += blockSize;
        output._index += count;
@@ -221,7 +229,7 @@ namespace kanzi {
            const int max = _transforms[i]->getMaxEncodedLength(requiredSize);
 
            if (max > requiredSize)
-              requiredSize = max;
+               requiredSize = max;
        }
 
        return requiredSize;
