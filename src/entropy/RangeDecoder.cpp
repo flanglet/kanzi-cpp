@@ -149,7 +149,7 @@ int RangeDecoder::decode(byte block[], uint blkptr, uint len)
 
         if (alphabetSize == 1) {
             // Shortcut for chunks with only one symbol
-            memset(&block[startChunk], _alphabet[0], endChunk - startChunk);
+            memset(&block[startChunk], _alphabet[0], size_t(endChunk - startChunk));
             startChunk = endChunk;
             continue;
         }

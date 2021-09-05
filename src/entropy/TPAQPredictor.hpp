@@ -368,11 +368,11 @@ namespace kanzi
        _matchVal = 0;
        _hash = 0;
        _mixer = &_mixers[0];
-       memset(_bigStatesMap, 0, _statesMask + 1);
+       memset(_bigStatesMap, 0, size_t(_statesMask + 1));
        memset(_smallStatesMap0, 0, 1 << 16);
        memset(_smallStatesMap1, 0, 1 << 24);
-       memset(_hashes, 0, sizeof(int) * (_hashMask + 1));
-       memset(_buffer, 0, _bufferMask + 1);
+       memset(_hashes, 0, sizeof(int) * size_t(_hashMask + 1));
+       memset(_buffer, 0, size_t(_bufferMask + 1));
        _cp0 = &_smallStatesMap0[0];
        _cp1 = &_smallStatesMap1[0];
        _cp2 = &_bigStatesMap[0];

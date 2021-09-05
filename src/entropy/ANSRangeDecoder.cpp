@@ -177,7 +177,7 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint count)
 
         if ((_order == 0) && (alphabetSize == 1)) {
             // Shortcut for chunks with only one symbol
-            memset(&block[startChunk], alphabet[0], sizeChunk);
+            memset(&block[startChunk], alphabet[0], size_t(sizeChunk));
         } else {
             decodeChunk(&block[startChunk], sizeChunk);
         }
