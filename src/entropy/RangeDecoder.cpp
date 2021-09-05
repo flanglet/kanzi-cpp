@@ -131,17 +131,17 @@ int RangeDecoder::decodeHeader(uint frequencies[])
 
 // Initialize once (if necessary) at the beginning, the use the faster decodeByte_()
 // Reset frequency stats for each chunk of data in the block
-int RangeDecoder::decode(byte block[], uint blkptr, uint len)
+int RangeDecoder::decode(byte block[], uint blkptr, uint count)
 {
-    if (len == 0)
+    if (count == 0)
         return 0;
 
-    const int end = blkptr + len;
-    const int sz = _chunkSize;
-    int startChunk = blkptr;
+    const uint end = blkptr + count;
+    const uint sz = _chunkSize;
+    uint startChunk = blkptr;
 
     while (startChunk < end) {
-        const int endChunk = min(startChunk + sz, end);
+        const uint endChunk = min(startChunk + sz, end);
         const int alphabetSize = decodeHeader(_freqs);
 
         if (alphabetSize == 0)
@@ -158,13 +158,13 @@ int RangeDecoder::decode(byte block[], uint blkptr, uint len)
         _low = 0;
         _code = _bitstream.readBits(60);
 
-        for (int i = startChunk; i < endChunk; i++)
+        for (uint i = startChunk; i < endChunk; i++)
             block[i] = decodeByte();
 
         startChunk = endChunk;
     }
 
-    return len;
+    return count;
 }
 
 byte RangeDecoder::decodeByte()

@@ -115,23 +115,23 @@ bool RangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequenc
 }
 
 // Reset frequency stats for each chunk of data in the block
-int RangeEncoder::encode(const byte block[], uint blkptr, uint len)
+int RangeEncoder::encode(const byte block[], uint blkptr, uint count)
 {
-    if (len == 0)
+    if (count == 0)
         return 0;
 
-    const int end = blkptr + len;
-    const int sz = _chunkSize;
-    int startChunk = blkptr;
+    const uint end = blkptr + count;
+    const uint sz = _chunkSize;
+    uint startChunk = blkptr;
 
     while (startChunk < end) {
-        const int endChunk = min(startChunk + sz, end);
+        const uint endChunk = min(startChunk + sz, end);
         _range = TOP_RANGE;
         _low = 0;
         int lr = _logRange;
 
         // Lower log range if the size of the data chunk is small
-        while ((lr > 8) && (1 << lr > endChunk - startChunk))
+        while ((lr > 8) && (uint(1 << lr) > endChunk - startChunk))
             lr--;
 
         if (rebuildStatistics(block, startChunk, endChunk, lr) <= 1) {
@@ -142,7 +142,7 @@ int RangeEncoder::encode(const byte block[], uint blkptr, uint len)
 
         _shift = lr;
 
-        for (int i = startChunk; i < endChunk; i++)
+        for (uint i = startChunk; i < endChunk; i++)
             encodeByte(block[i]);
 
         // Flush 'low'
@@ -150,7 +150,7 @@ int RangeEncoder::encode(const byte block[], uint blkptr, uint len)
         startChunk = endChunk;
     }
 
-    return len;
+    return count;
 }
 
 void RangeEncoder::encodeByte(byte b)
