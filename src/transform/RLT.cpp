@@ -25,7 +25,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     if (length == 0)
         return true;
 
-    if (length < 16)
+    if (length < MIN_BLOCK_LENGTH)
         return false;
 
     if (!SliceArray<byte>::isValid(input))
@@ -261,7 +261,6 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             break;
         }
 
-        const byte val = dst[dstIdx - 1];
         int run = int(src[srcIdx++]);
 
         if (run == 0) {
@@ -292,7 +291,8 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
                   break;
             }
 
-            run = ((run - RUN_LEN_ENCODE1) << 8) | int(src[srcIdx++]);
+            run = ((run - RUN_LEN_ENCODE1) << 8) | int(src[srcIdx]);
+            srcIdx++;
             run += RUN_LEN_ENCODE1;
         }
 
@@ -303,12 +303,11 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             break;
         }
 
-        memset(&dst[dstIdx], int(val), size_t(run));
+        memset(&dst[dstIdx], int(dst[dstIdx - 1]), size_t(run));
         dstIdx += run;
     }
 
-    res &= (srcIdx == srcEnd);
     input._index += srcIdx;
     output._index += dstIdx;
-    return res;
+    return res & (srcIdx == srcEnd);
 }
