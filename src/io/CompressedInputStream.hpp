@@ -189,7 +189,7 @@ namespace kanzi
 
        std::streampos tellg();
 
-       std::istream& seekp(streampos pos) THROW;
+       std::istream& seekp(std::streampos pos) THROW;
 
        std::istream& read(char* s, std::streamsize n) THROW;
 
@@ -228,12 +228,12 @@ namespace kanzi
        return res;
    }
 
-   inline streampos CompressedInputStream::tellg()
+   inline std::streampos CompressedInputStream::tellg()
    {
        return _is.tellg();
    }
 
-   inline istream& CompressedInputStream::seekp(streampos) THROW
+   inline std::istream& CompressedInputStream::seekp(std::streampos) THROW
    {
        setstate(ios::badbit);
        throw ios_base::failure("Not supported");

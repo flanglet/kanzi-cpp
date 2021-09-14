@@ -1,4 +1,3 @@
-
 /*
 Copyright 2011-2021 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -515,52 +514,52 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
     case 0:
         tranformAndCodec[0] = "NONE";
         tranformAndCodec[1] = "NONE";
-        return;
+        break;
 
     case 1:
         tranformAndCodec[0] = "TEXT+LZ";
         tranformAndCodec[1] = "HUFFMAN";
-        return;
+        break;
 
     case 2:
         tranformAndCodec[0] = "TEXT+FSD+LZX";
         tranformAndCodec[1] = "HUFFMAN";
-        return;
+        break;
 
     case 3:
         tranformAndCodec[0] = "TEXT+FSD+ROLZ";
         tranformAndCodec[1] = "NONE";
-        return;
+        break;
 
     case 4:
         tranformAndCodec[0] = "TEXT+FSD+ROLZX";
         tranformAndCodec[1] = "NONE";
-        return;
+        break;
 
     case 5:
         tranformAndCodec[0] = "TEXT+BWT+RANK+ZRLT";
         tranformAndCodec[1] = "ANS0";
-        return;
+        break;
 
     case 6:
         tranformAndCodec[0] = "TEXT+BWT+SRT+ZRLT";
         tranformAndCodec[1] = "FPAQ";
-        return;
+        break;
 
     case 7:
         tranformAndCodec[0] = "LZP+TEXT+BWT+LZP";
         tranformAndCodec[1] = "CM";
-        return;
+        break;
 
     case 8:
         tranformAndCodec[0] = "X86+RLT+TEXT";
         tranformAndCodec[1] = "TPAQ";
-        return;
+        break;
 
     case 9:
         tranformAndCodec[0] = "X86+RLT+TEXT";
         tranformAndCodec[1] = "TPAQX";
-        return;
+        break;
 
     default:
         tranformAndCodec[0] = "Unknown";
