@@ -38,7 +38,7 @@ DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize
     _current = 0;
     _written = 0;
     _closed = false;
-    memset(&_buffer[0], 0, _bufferSize);
+    memset(&_buffer[0], 0, size_t(_bufferSize));
 }
 
 uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
@@ -58,12 +58,14 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
             remaining -= 8;
         }
 
+        const int maxPos = _bufferSize - 8;
+
         // Copy bits array to internal buffer
-        while (uint(remaining >> 3) >= _bufferSize - _position) {
-            memcpy(&_buffer[_position], &bits[start], _bufferSize - _position);
-            start += (_bufferSize - _position);
-            remaining -= ((_bufferSize - _position) << 3);
-            _position = _bufferSize;
+        while (uint(remaining >> 3) >= maxPos - _position) {
+            memcpy(&_buffer[_position], &bits[start], maxPos - _position);
+            start += (maxPos - _position);
+            remaining -= ((maxPos - _position) << 3);
+            _position = maxPos;
             flush();
         }
 
@@ -158,7 +160,7 @@ void DefaultOutputBitStream::_close() THROW
     delete[] _buffer;
     _bufferSize = 8;
     _buffer = new byte[_bufferSize];
-    memset(&_buffer[0], 0, _bufferSize);
+    memset(&_buffer[0], 0, size_t(_bufferSize));
 }
 
 // Write buffer to underlying stream

@@ -108,7 +108,7 @@ namespace kanzi
        _current = 0;
        _position += 8;
 
-       if (_position >= _bufferSize)
+       if (_position >= _bufferSize - 8)
            flush();
    }
 }
