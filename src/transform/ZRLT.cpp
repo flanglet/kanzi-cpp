@@ -57,7 +57,7 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
 
             // Encode length
             runLength++;
-            int log = Global::_log2(runLength);
+            int log = Global::_log2(uint32(runLength));
 
             if (dstIdx >= dstEnd - log) {
                 res = false;

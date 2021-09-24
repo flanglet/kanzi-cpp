@@ -567,7 +567,7 @@ T EncodingTask<T>::run() THROW
         }
 
         _ctx.putInt("size", postTransformLength);
-        const int dataSize = (postTransformLength < 256) ? 1 : (Global::_log2(postTransformLength) >> 3) + 1;
+        const int dataSize = (postTransformLength < 256) ? 1 : (Global::_log2(uint32(postTransformLength)) >> 3) + 1;
 
         if (dataSize > 4) {
             _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID, memory_order_release);

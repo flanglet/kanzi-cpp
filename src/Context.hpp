@@ -62,7 +62,7 @@ namespace kanzi
    inline Context& Context::operator=(const Context& ctx)
    {
       _map = ctx._map;
-      return*this;
+      return *this;
    }
 
 
