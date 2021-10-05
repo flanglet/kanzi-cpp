@@ -201,7 +201,7 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
     int f3[256] = { 0 };
     int f2[256] = { 0 };
     uint8 prv = 0;
-    const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
+    const uint8* data = static_cast<const uint8*>(&block[0]);
     const int count4 = count & -4;
 
     // Unroll loop
@@ -351,8 +351,8 @@ TextCodec::TextCodec()
 TextCodec::TextCodec(Context& ctx)
 {
     int encodingType = ctx.getInt("textcodec", 1);
-    _delegate = (encodingType == 1) ? reinterpret_cast<Transform<byte>*>(new TextCodec1(ctx)) :
-        reinterpret_cast<Transform<byte>*>(new TextCodec2(ctx));
+    _delegate = (encodingType == 1) ? static_cast<Transform<byte>*>(new TextCodec1(ctx)) :
+        static_cast<Transform<byte>*>(new TextCodec2(ctx));
 }
 
 bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
