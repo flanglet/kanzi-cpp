@@ -679,7 +679,7 @@ bool TextCodec1::expandDictionary()
     return true;
 }
 
-int TextCodec1::emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd)
+int TextCodec1::emitSymbols(const byte src[], byte dst[], const int srcEnd, const int dstEnd)
 {
     int dstIdx = 0;
 
@@ -1157,7 +1157,7 @@ bool TextCodec2::expandDictionary()
     return true;
 }
 
-int TextCodec2::emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd)
+int TextCodec2::emitSymbols(const byte src[], byte dst[], const int srcEnd, const int dstEnd)
 {
 // Work around incorrect warning by GCC 7.x.x with C++17
 #ifdef __GNUC__

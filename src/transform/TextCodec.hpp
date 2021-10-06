@@ -80,9 +80,9 @@ namespace kanzi {
 
        void reset(int count);
 
-       int emitWordIndex(byte dst[], int val);
+       static int emitWordIndex(byte dst[], int val);
 
-       int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
+       int emitSymbols(const byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
 
    // Encode word indexes using a mask (0x80)
@@ -120,9 +120,9 @@ namespace kanzi {
 
        void reset(int count);
 
-       int emitWordIndex(byte dst[], int val, int mask);
+       static int emitWordIndex(byte dst[], int val, int mask);
 
-       int emitSymbols(byte src[], byte dst[], const int srcEnd, const int dstEnd);
+       int emitSymbols(const byte src[], byte dst[], const int srcEnd, const int dstEnd);
    };
 
    // Simple one-pass text codec that replaces words with indexes.

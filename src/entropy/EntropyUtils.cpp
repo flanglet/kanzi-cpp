@@ -168,7 +168,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         }
 
         sumFreq += f;
-        int64 sf = int64(f) * scale;
+        int64 sf = int64(f) * int64(scale);
         uint scaledFreq;
 
         if (sf <= int64(totalFreq)) {
@@ -177,9 +177,10 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         }
         else {
             // Find best frequency rounding value
-            scaledFreq = uint(sf / totalFreq);
-            int64 errCeiling = int64(scaledFreq + 1) * int64(totalFreq) - sf;
-            int64 errFloor = sf - int64(scaledFreq) * int64(totalFreq);
+            scaledFreq = uint(sf / int64(totalFreq));
+            const int64 prod = int64(scaledFreq) * int64(totalFreq);
+            const int64 errCeiling = prod + int64(totalFreq) - sf;
+            const int64 errFloor = sf - prod;
 
             if (errCeiling < errFloor)
                 scaledFreq++;
