@@ -47,33 +47,38 @@ limitations under the License.
 	#endif
 
    /*
-   Visual Studio 2019 Update 4   MSVC++ 14.24 _MSC_VER == 1924
-   Visual Studio 2019 Update 3   MSVC++ 14.21 _MSC_VER == 1923
-   Visual Studio 2019 Update 2   MSVC++ 14.21 _MSC_VER == 1922
-   Visual Studio 2019 Update 1   MSVC++ 14.21 _MSC_VER == 1921
-   Visual Studio 2019            MSVC++ 14.20 _MSC_VER == 1920
-   Visual Studio 2017 Update 9   MSVC++ 14.16 _MSC_VER == 1916
-   Visual Studio 2017 Update 8   MSVC++ 14.15 _MSC_VER == 1915
-   Visual Studio 2017 Update 7   MSVC++ 14.14 _MSC_VER == 1914
-   Visual Studio 2017 Update 6   MSVC++ 14.13 _MSC_VER == 1913
-   Visual Studio 2017 Update 5   MSVC++ 14.12 _MSC_VER == 1912
-   Visual Studio 2017 Update 3&4 MSVC++ 14.11 _MSC_VER == 1911
-   Visual Studio 2017            MSVC++ 14.10 _MSC_VER == 1910
-   Visual Studio 2015            MSVC++ 14    _MSC_VER == 1900
-   Visual Studio 2013            MSVC++ 12    _MSC_VER == 1800
-   Visual Studio 2012            MSVC++ 11    _MSC_VER == 1700
-   Visual Studio 2010            MSVC++ 10    _MSC_VER == 1600
-   Visual Studio 2008            MSVC++ 9     _MSC_VER == 1500
-   Visual Studio 2005            MSVC++ 8     _MSC_VER == 1400
-   Visual Studio 2003 Beta       MSVC++ 7.1   _MSC_VER == 1310
-   Visual Studio 2002            MSVC++ 7     _MSC_VER == 1300
-   Visual Studio                 MSVC++ 6.0   _MSC_VER == 1200
-   Visual Studio                 MSVC++ 5     _MSC_VER == 1100
-   Visual Studio                 MSVC++ 4.2   _MSC_VER == 1020
-   Visual Studio                 MSVC++ 4.1   _MSC_VER == 1010
-   Visual Studio                 MSVC++ 4     _MSC_VER == 1000
-   Visual Studio                 MSVC++ 2     _MSC_VER == 900
-   Visual Studio                 MSVC++ 1     _MSC_VER == 800
+   Visual Studio 2019 version 16.10, 16.11  MSVC++ 14.28 _MSC_VER == 1929
+   Visual Studio 2019 version 16.8, 16.9    MSVC++ 14.28 _MSC_VER == 1928
+   Visual Studio 2019 version 16.7          MSVC++ 14.27 _MSC_VER == 1927
+   Visual Studio 2019 version 16.6          MSVC++ 14.26 _MSC_VER == 1926
+   Visual Studio 2019 version 16.5          MSVC++ 14.25 _MSC_VER == 1925
+   Visual Studio 2019 Update 4              MSVC++ 14.24 _MSC_VER == 1924
+   Visual Studio 2019 Update 3              MSVC++ 14.21 _MSC_VER == 1923
+   Visual Studio 2019 Update 2              MSVC++ 14.21 _MSC_VER == 1922
+   Visual Studio 2019 Update 1              MSVC++ 14.21 _MSC_VER == 1921
+   Visual Studio 2019                       MSVC++ 14.20 _MSC_VER == 1920
+   Visual Studio 2017 Update 9              MSVC++ 14.16 _MSC_VER == 1916
+   Visual Studio 2017 Update 8              MSVC++ 14.15 _MSC_VER == 1915
+   Visual Studio 2017 Update 7              MSVC++ 14.14 _MSC_VER == 1914
+   Visual Studio 2017 Update 6              MSVC++ 14.13 _MSC_VER == 1913
+   Visual Studio 2017 Update 5              MSVC++ 14.12 _MSC_VER == 1912
+   Visual Studio 2017 Update 3&4            MSVC++ 14.11 _MSC_VER == 1911
+   Visual Studio 2017                       MSVC++ 14.10 _MSC_VER == 1910
+   Visual Studio 2015                       MSVC++ 14    _MSC_VER == 1900
+   Visual Studio 2013                       MSVC++ 12    _MSC_VER == 1800
+   Visual Studio 2012                       MSVC++ 11    _MSC_VER == 1700
+   Visual Studio 2010                       MSVC++ 10    _MSC_VER == 1600
+   Visual Studio 2008                       MSVC++ 9     _MSC_VER == 1500
+   Visual Studio 2005                       MSVC++ 8     _MSC_VER == 1400
+   Visual Studio 2003 Beta                  MSVC++ 7.1   _MSC_VER == 1310
+   Visual Studio 2002                       MSVC++ 7     _MSC_VER == 1300
+   Visual Studio                            MSVC++ 6.0   _MSC_VER == 1200
+   Visual Studio                            MSVC++ 5     _MSC_VER == 1100
+   Visual Studio                            MSVC++ 4.2   _MSC_VER == 1020
+   Visual Studio                            MSVC++ 4.1   _MSC_VER == 1010
+   Visual Studio                            MSVC++ 4     _MSC_VER == 1000
+   Visual Studio                            MSVC++ 2     _MSC_VER == 900
+   Visual Studio                            MSVC++ 1     _MSC_VER == 800
    */
 
    #ifdef _MSC_VER
