@@ -255,31 +255,25 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
     if (notText == true) {
         int sum = 0;
 
-        for (int i = 0; i < 12; i++)
+        for (int i = 0, sum = 0; i < 12; i++)
             sum += freqs0[int(DNA_SYMBOLS[i])];
 
         if (sum == count)
             return TextCodec::MASK_DNA;
 
-        sum = 0;
-
-        for (int i = 0; i < 20; i++)
+        for (int i = 0, sum = 0; i < 20; i++)
             sum += freqs0[int(NUMERIC_SYMBOLS[i])];
 
         if (sum >= (count / 100) * 98)
             return TextCodec::MASK_NUMERIC;
 
-        sum = 0;
-
-        for (int i = 0; i < 64; i++)
+        for (int i = 0, sum = 0; i < 64; i++)
             sum += freqs0[int(BASE64_SYMBOLS[i])];
 
         if (sum == count)
             return TextCodec::MASK_BASE64;
 
-        sum = 0;
-
-        for (int i = 0; i < 256; i++) {
+        for (int i = 0, sum = 0; i < 256; i++) {
             if (freqs0[i] > 0)
                 sum++;
         }

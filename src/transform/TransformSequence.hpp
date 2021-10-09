@@ -22,7 +22,7 @@ limitations under the License.
 
 namespace kanzi {
 
-   // Encapsulates a sequence of transforms or functions in a function
+   // Encapsulates a sequence of transforms in a transform
    template <class T>
    class TransformSequence : public Transform<T> {
    public:
