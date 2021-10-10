@@ -68,9 +68,13 @@ namespace kanzi {
            return *this;
        }
 #else
-       FileCompressResult(FileCompressResult&& fcr) = default;
+       FileCompressResult(const FileCompressResult& fdr) = delete;
+       
+       FileCompressResult& operator=(const FileCompressResult& fdr) = delete;
 
-       FileCompressResult& operator=(FileCompressResult&& fcr) = default;
+       FileCompressResult(FileCompressResult&& fdr) = default;
+
+       FileCompressResult& operator=(FileCompressResult&& fdr) = default;
 #endif
 
        ~FileCompressResult() {}

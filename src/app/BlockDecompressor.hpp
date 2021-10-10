@@ -46,6 +46,30 @@ namespace kanzi {
            _read = read;
        }
 
+#if __cplusplus < 201103L
+       FileDecompressResult(const FileDecompressResult& fdr) :
+           _errMsg(fdr._errMsg)
+       {
+           _code = fdr._code;
+           _read = fdr._read;
+       }
+
+       FileDecompressResult& operator=(const FileDecompressResult& fdr)
+       {
+           _errMsg = fdr._errMsg;
+           _code = fdr._code;
+           _read = fdr._read;
+           return *this;
+       }
+#else
+       FileDecompressResult(const FileDecompressResult& fcr) = delete;
+       
+       FileDecompressResult& operator=(const FileDecompressResult& fcr) = delete;
+
+       FileDecompressResult(FileDecompressResult&& fcr) = default;
+
+       FileDecompressResult& operator=(FileDecompressResult&& fcr) = default;
+#endif
        ~FileDecompressResult() {}
    };
 

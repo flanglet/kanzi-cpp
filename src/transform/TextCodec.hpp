@@ -38,6 +38,10 @@ namespace kanzi {
 
        DictEntry& operator=(const DictEntry& de);
 #else
+       DictEntry(const DictEntry& de) = delete;
+
+       DictEntry& operator=(const DictEntry& de) = delete;
+
        DictEntry(DictEntry&& de) = default;
 
        DictEntry& operator=(DictEntry&& de) = default;
