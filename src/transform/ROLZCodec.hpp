@@ -58,6 +58,8 @@ namespace kanzi {
 
        void encodeBits(int val, int n);
 
+       void encode9Bits(int val);
+
        void dispose();
 
        void reset();
@@ -100,6 +102,8 @@ namespace kanzi {
 
        int decodeBits(int n);
 
+       int decode9Bits();
+
        void dispose() {}
 
        void reset();
@@ -131,18 +135,16 @@ namespace kanzi {
        static const int MAX_MATCH = MIN_MATCH + 65535;
 
        int32* _matches;
-       int32 _counters[65536];
+       uint8 _counters[65536];
        int _logPosChecks;
-       int _maskChecks;
        int _posChecks;
+       uint8 _maskChecks;
 
        int findMatch(const byte buf[], const int pos, const int end);
 
        int emitLength(byte block[], int length);
 
        int readLength(byte block[], int& idx);
-
-       int emitLiterals(SliceArray<byte>& litBuf, byte dst[], int dstIdx, int litLen);
    };
 
    // Use CM (ROLZEncoder/ROLZDecoder) to encode/decode literals and matches
@@ -172,9 +174,9 @@ namespace kanzi {
        static const int MAX_MATCH = MIN_MATCH + 255;
 
        int32* _matches;
-       int32 _counters[65536];
+       uint8 _counters[65536];
        int _logPosChecks;
-       int _maskChecks;
+       uint8 _maskChecks;
        int _posChecks;
 
        int findMatch(const byte buf[], const int pos, const int end);
@@ -202,13 +204,13 @@ namespace kanzi {
        }
 
    private:
-       static const int HASH_SIZE = 1 << 16;
+       static const int HASH_SIZE = 65536;
        static const int LOG_POS_CHECKS1 = 4;
        static const int LOG_POS_CHECKS2 = 5;
-       static const int CHUNK_SIZE = 1 << 26; // 64 MB
+       static const int CHUNK_SIZE = 64 * 1024 * 1024;
        static const int32 HASH = 200002979;
        static const int32 HASH_MASK = ~(CHUNK_SIZE - 1);
-       static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB
+       static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024;
        static const int MIN_BLOCK_SIZE = 64;
 
        Transform<byte>* _delegate;
