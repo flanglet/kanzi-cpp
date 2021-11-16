@@ -55,7 +55,6 @@ bool HuffmanEncoder::reset()
         _codes[i] = i;
     }
 
-    memset(_alphabet, 0, sizeof(_alphabet));
     memset(_sranks, 0, sizeof(_sranks));
     return true;
 }
@@ -65,20 +64,21 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
 {
     int count = 0;
     uint16 sizes[256];
+    uint alphabet[256] = { 0 };
 
     for (int i = 0; i < 256; i++) {
         sizes[i] = 0;
         _codes[i] = 0;
 
         if (frequencies[i] > 0)
-            _alphabet[count++] = i;
+            alphabet[count++] = i;
     }
 
-    EntropyUtils::encodeAlphabet(_bitstream, _alphabet, 256, count);
+    EntropyUtils::encodeAlphabet(_bitstream, alphabet, 256, count);
     int retries = 0;
 
     while (true) {
-        computeCodeLengths(frequencies, sizes, count);
+        computeCodeLengths(frequencies, sizes, alphabet, count);
 
         if (_maxCodeLen <= HuffmanCommon::MAX_SYMBOL_SIZE) {
             // Usual case
@@ -100,21 +100,21 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
         uint totalFreq = 0;
 
         for (int i = 0; i < count; i++) {
-            f[i] = frequencies[_alphabet[i]];
+            f[i] = frequencies[alphabet[i]];
             totalFreq += f[i];
         }
 
         // Copy alphabet (modified by normalizeFrequencies)
-        uint alphabet[256];
-        memcpy(alphabet, _alphabet, sizeof(alphabet));
+        uint alpha[256];
+        memcpy(alpha, alphabet, sizeof(alphabet));
         retries++;
 
         // Normalize to a smaller scale
-        EntropyUtils::normalizeFrequencies(f, alphabet, count, totalFreq,
+        EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq,
            HuffmanCommon::MAX_CHUNK_SIZE >> (2 * retries));
 
         for (int i = 0; i < count; i++)
-           frequencies[_alphabet[i]] = f[i];
+           frequencies[alphabet[i]] = f[i];
     }
 
     // Transmit code lengths only, frequencies and codes do not matter
@@ -124,7 +124,7 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
     // Pack size and code (size <= MAX_SYMBOL_SIZE bits)
     // Unary encode the code length differences
     for (int i = 0; i < count; i++) {
-        const int s = _alphabet[i];
+        const int s = alphabet[i];
         _codes[s] |= (sizes[s] << 24);
         egenc.encodeByte(byte(sizes[s] - prevSize));
         prevSize = sizes[s];
@@ -133,18 +133,18 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
     return count;
 }
 
-void HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], int count) THROW
+void HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], uint alphabet[], int count) THROW
 {
     if (count == 1) {
-        _sranks[0] = _alphabet[0];
-        sizes[_alphabet[0]] = 1;
+        _sranks[0] = alphabet[0];
+        sizes[alphabet[0]] = 1;
         _maxCodeLen = 1;
         return;
     }
 
     // Sort _sranks by increasing frequencies (first key) and increasing value (second key)
     for (int i = 0; i < count; i++)
-        _sranks[i] = (frequencies[_alphabet[i]] << 8) | _alphabet[i];
+        _sranks[i] = (frequencies[alphabet[i]] << 8) | alphabet[i];
 
     vector<uint> v(_sranks, _sranks + count);
     sort(v.begin(), v.end());
@@ -231,12 +231,13 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
     if (count == 0)
         return 0;
 
-    const int end = blkptr + count;
-    int startChunk = blkptr;
+    const uint end = blkptr + count;
+    uint startChunk = blkptr;
 
     while (startChunk < end) {
         // Update frequencies and rebuild Huffman codes
-        const int endChunk = min(startChunk + _chunkSize, end);
+        const uint endChunk = min(startChunk + _chunkSize, end);
+        memset(_freqs, 0, sizeof(_freqs));
         Global::computeHistogram(&block[startChunk], endChunk - startChunk, _freqs);
 
         if (updateFrequencies(_freqs) <= 1) {
@@ -245,28 +246,28 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
            continue;
         }
 
-        const int endChunk4 = ((endChunk - startChunk) & -4) + startChunk;
+        const uint endChunk4 = ((endChunk - startChunk) & -4) + startChunk;
 
-        for (int i = startChunk; i < endChunk4; i += 4) {
+        for (uint i = startChunk; i < endChunk4; i += 4) {
             // Pack 4 codes into 1 uint64
             uint code;
             uint64 st;
             code = _codes[int(block[i])];
-            uint codeLen0 = code >> 24;
+            const uint codeLen0 = code >> 24;
             st = uint64(code & 0xFFFFFF);
             code = _codes[int(block[i + 1])];
-            uint codeLen1 = code >> 24;
+            const uint codeLen1 = code >> 24;
             st = (st << codeLen1) | uint64(code & 0xFFFFFF);
             code = _codes[int(block[i + 2])];
-            uint codeLen2 = code >> 24;
+            const uint codeLen2 = code >> 24;
             st = (st << codeLen2) | uint64(code & 0xFFFFFF);
             code = _codes[int(block[i + 3])];
-            uint codeLen3 = code >> 24;
+            const uint codeLen3 = code >> 24;
             st = (st << codeLen3) | uint64(code & 0xFFFFFF);
             _bitstream.writeBits(st, codeLen0 + codeLen1 + codeLen2 + codeLen3);
         }
 
-        for (int i = endChunk4; i < endChunk; i++) {
+        for (uint i = endChunk4; i < endChunk; i++) {
             const uint code = _codes[int(block[i])];
             _bitstream.writeBits(code, code >> 24);
         }

@@ -30,12 +30,11 @@ namespace kanzi
        OutputBitStream& _bitstream;
        uint _freqs[256];
        uint _codes[256];
-       uint _alphabet[256];
        uint _sranks[256]; // sorted ranks
        int _chunkSize;
        uint _maxCodeLen;
 
-       void computeCodeLengths(uint frequencies[], uint16 sizes[], int count) THROW;
+       void computeCodeLengths(uint frequencies[], uint16 sizes[], uint alphabet[], int count) THROW;
 
        bool reset();
 

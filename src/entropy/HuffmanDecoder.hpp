@@ -48,7 +48,7 @@ namespace kanzi
        uint16 _sizes[256];
        uint16 _table[TABLE_MASK + 1]; // decoding table: code -> size, symbol
        uint64 _state; // holds bits read from bitstream
-       uint8 _bits; // hold number of unused bits in 'state'
+       uint8 _bits; // hold number of used bits in 'state'
        int _chunkSize;
 
        int readLengths() THROW;
@@ -56,8 +56,6 @@ namespace kanzi
        void buildDecodingTable(int count);
 
        byte slowDecodeByte() THROW;
-
-       byte decodeByte();
 
        void fetchBits();
 
@@ -67,18 +65,11 @@ namespace kanzi
    };
 
 
-   inline byte HuffmanDecoder::decodeByte()
-   {
-      const uint16 val = _table[(_state >> (_bits - DECODING_BATCH_SIZE)) & TABLE_MASK];
-      _bits -= uint8(val);
-      return byte(val >> 8);
-   }
-
    inline void HuffmanDecoder::fetchBits()
    {
-      // Handle _bits == 0 case
-      _state = ((_state << (63 - _bits)) << 1) | _bitstream.readBits(64 - _bits);
-      _bits = 64;
+      // Handle _bits == 64 case
+      _state = ((_state << (_bits - 1)) << 1) | _bitstream.readBits(_bits);
+      _bits = 0;
    }
 
 }
