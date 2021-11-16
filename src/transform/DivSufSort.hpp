@@ -41,7 +41,7 @@ namespace kanzi
    private:
        int _a, _b, _c, _d, _e;
 
-       StackElement();
+       StackElement() { _a = _b = _c = _d = _e = 0; }
 
        ~StackElement() {}
    };
@@ -122,12 +122,12 @@ namespace kanzi
    class DivSufSort
    {
    private:
-       static const int SS_INSERTIONSORT_THRESHOLD = 8;
-       static const int SS_BLOCKSIZE = 1024;
+       static const int SS_INSERTIONSORT_THRESHOLD = 16;
+       static const int SS_BLOCKSIZE = 4096;
        static const int SS_MISORT_STACKSIZE = 16;
        static const int SS_SMERGE_STACKSIZE = 32;
        static const int TR_STACKSIZE = 64;
-       static const int TR_INSERTIONSORT_THRESHOLD = 8;
+       static const int TR_INSERTIONSORT_THRESHOLD = 16;
        static const int SQQ_TABLE[];
        static const int LOG_TABLE[];
 
@@ -137,10 +137,13 @@ namespace kanzi
        Stack* _ssStack;
        Stack* _trStack;
        Stack* _mergeStack;
+       int _bucketA[256];
+       int _bucketB[65536];
+
 
        void constructSuffixArray(int bucketA[], int bucketB[], int n, int m);
 
-       int constructBWT(int bucketA[], int bucketB[], int n, int m);
+       int constructBWT(int bucketA[], int bucketB[], int n, int m, int indexes[], int idxCount);
 
        int sortTypeBstar(int bucketA[], int bucketB[], int n);
 
@@ -186,7 +189,7 @@ namespace kanzi
 
        void ssFixDown(int idx, int pa, int saIdx, int i, int size);
 
-       int ssIlg(int n);
+       static int ssIlg(int n);
 
        void trSort(int n, int depth);
 
@@ -204,7 +207,7 @@ namespace kanzi
 
        void trFixDown(int isad, int saIdx, int i, int size);
 
-       void trInsertionSort(int isad, int first, int last);
+       void trInsertionSort(int arr[], int first, int last);
 
        void trPartialCopy(int isa, int first, int a, int b, int last, int depth);
 
@@ -219,9 +222,9 @@ namespace kanzi
 
        ~DivSufSort();
 
-       void computeSuffixArray(byte input[], int sa[], int start, int length);
+       void computeSuffixArray(byte input[], int sa[], int length);
 
-       int computeBWT(byte input[], byte output[], int sa[], int start, int length);
+       int computeBWT(byte input[], byte output[], int sa[], int length, int indexes[], int idxCount = 8);
    };
 
 
@@ -232,6 +235,16 @@ namespace kanzi
    }
 
 
+   inline void DivSufSort::ssBlockSwap(int a, int b, int n)
+   {
+       while (n-- > 0) {
+           std::swap(_sa[a], _sa[b]);
+           a++;
+           b++;
+       }
+   }
+
+
    inline int DivSufSort::trIlg(int n)
    {
        return ((n & 0xFFFF0000) != 0) ? (((n & 0xFF000000) != 0) ? 24 + LOG_TABLE[(n >> 24) & 0xFF]
@@ -239,7 +252,6 @@ namespace kanzi
                                       : (((n & 0x0000FF00) != 0) ? 8 + LOG_TABLE[(n >> 8) & 0xFF]
                                                                  : LOG_TABLE[n & 0xFF]);
    }
-
 
 
    inline int DivSufSort::trMedian5(int sa[], int isad, int v1, int v2, int v3, int v4, int v5)

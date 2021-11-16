@@ -15,7 +15,6 @@ limitations under the License.
 
 #include <algorithm>
 #include <cstring>
-#include <utility>
 #include <stddef.h>
 #include "DivSufSort.hpp"
 
@@ -75,19 +74,17 @@ void DivSufSort::reset()
     _ssStack->_index = 0;
     _trStack->_index = 0;
     _mergeStack->_index = 0;
+    memset(&_bucketA[0], 0, sizeof(int) * 256);
+    memset(&_bucketB[0], 0, sizeof(int) * 65536);
 }
 
-void DivSufSort::computeSuffixArray(byte input[], int sa[], int start, int length)
+void DivSufSort::computeSuffixArray(byte input[], int sa[], int length)
 {
-    _buffer = reinterpret_cast<uint8*>(&input[start]);
+    _buffer = reinterpret_cast<uint8*>(&input[0]);
     _sa = sa;
     reset();
-    int bucketA[256] = { 0 };
-    int* bucketB = new int[65536];
-    memset(&bucketB[0], 0, sizeof(int) * 65536);
-    const int m = sortTypeBstar(bucketA, bucketB, length);
-    constructSuffixArray(bucketA, bucketB, length, m);
-    delete[] bucketB;
+    const int m = sortTypeBstar(_bucketA, _bucketB, length);
+    constructSuffixArray(_bucketA, _bucketB, length, m);
 }
 
 void DivSufSort::constructSuffixArray(int bucketA[], int bucketB[], int n, int m)
@@ -154,17 +151,13 @@ void DivSufSort::constructSuffixArray(int bucketA[], int bucketB[], int n, int m
     }
 }
 
-int DivSufSort::computeBWT(byte input[], byte output[], int bwt[], int start, int length)
+int DivSufSort::computeBWT(byte input[], byte output[], int bwt[], int length, int indexes[], int idxCount)
 {
-    _buffer = reinterpret_cast<uint8*>(&input[start]);
+    _buffer = reinterpret_cast<uint8*>(&input[0]);
     _sa = bwt;
     reset();
-    int bucketA[256] = { 0 };
-    int* bucketB = new int[65536];
-    memset(&bucketB[0], 0, sizeof(int) * 65536);
-    const int m = sortTypeBstar(bucketA, bucketB, length);
-    const int pIdx = constructBWT(bucketA, bucketB, length, m);
-    delete[] bucketB;
+    const int m = sortTypeBstar(_bucketA, _bucketB, length);
+    const int pIdx = constructBWT(_bucketA, _bucketB, length, m, indexes, idxCount);
     output[0] = input[length - 1];
 
     for (int i = 0; i < pIdx; i++)
@@ -176,9 +169,11 @@ int DivSufSort::computeBWT(byte input[], byte output[], int bwt[], int start, in
     return pIdx + 1;
 }
 
-int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m)
+int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m, int indexes[], int idxCount)
 {
     int pIdx = -1;
+    const int st = n / idxCount;
+    const int step = (idxCount * st == n) ? st : st + 1;
 
     if (m > 0) {
         for (int c1 = 254; c1 >= 0; c1--) {
@@ -196,6 +191,9 @@ int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m)
 
                     continue;
                 }
+
+                if ((s % step) == 0)
+                    indexes[s / step] = j + 1;
 
                 s--;
                 const int c0 = _buffer[s];
@@ -219,7 +217,16 @@ int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m)
 
     int c2 = _buffer[n - 1];
     int k = bucketA[c2];
-    _sa[k++] = (_buffer[n - 2] < c2) ? ~_buffer[n - 2] : (n - 1);
+
+    if (_buffer[n - 2] < c2) {
+        if (((n - 1) % step) == 0)
+            indexes[(n - 1) / step] = n;
+
+        _sa[k++] = ~_buffer[n - 2];
+    }
+    else {
+        _sa[k++] = n - 1;
+    }
 
     // Scan the suffix array from left to right.
     for (int i = 0; i < n; i++) {
@@ -234,12 +241,12 @@ int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m)
             continue;
         }
 
+        if ((s % step) == 0)
+            indexes[s / step] = i + 1;
+
         s--;
         const int c0 = _buffer[s];
         _sa[i] = c0;
-
-        if ((s > 0) && (_buffer[s - 1] < c0))
-            s = ~_buffer[s - 1];
 
         if (c0 != c2) {
             bucketA[c2] = k;
@@ -247,9 +254,18 @@ int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m)
             k = bucketA[c2];
         }
 
+        if ((s > 0) && (_buffer[s - 1] < c0)) {
+            if ((s % step) == 0) {
+                indexes[s / step] = k + 1;
+            }
+
+            s = ~_buffer[s - 1];
+        }
+
         _sa[k++] = s;
     }
 
+    indexes[0] = pIdx + 1;
     return pIdx;
 }
 
@@ -498,15 +514,6 @@ void DivSufSort::ssSort(const int pa, int first, int last, int buf, int bufSize,
     }
 }
 
-
-void DivSufSort::ssBlockSwap(int a, int b, int n)
-{
-    while (n-- > 0) {
-        std::swap(_sa[a], _sa[b]);
-        a++;
-        b++;
-    }
-}
 
 int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
 {
@@ -1091,6 +1098,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
         }
 
         const int idx = depth;
+        uint8* p = &_buffer[idx];
 
         if (limit == 0)
             ssHeapSort(idx, pa, first, last - first);
@@ -1099,10 +1107,10 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
         int a;
 
         if (limit < 0) {
-            int v = _buffer[idx + _sa[pa + _sa[first]]];
+            int v = p[_sa[pa + _sa[first]]];
 
             for (a = first + 1; a < last; a++) {
-                if ((x = _buffer[idx + _sa[pa + _sa[a]]]) != v) {
+                if ((x = p[_sa[pa + _sa[a]]]) != v) {
                     if (a - first > 1)
                         break;
 
@@ -1111,7 +1119,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
                 }
             }
 
-            if (_buffer[idx + _sa[pa + _sa[first]] - 1] < v)
+            if (p[_sa[pa + _sa[first]] - 1] < v)
                 first = ssPartition(pa, first, a, depth);
 
             if (a - first <= last - a) {
@@ -1144,13 +1152,13 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
 
         // choose pivot
         a = ssPivot(idx, pa, first, last);
-        const int v = _buffer[idx + _sa[pa + _sa[a]]];
+        const int v = p[_sa[pa + _sa[a]]];
         std::swap(_sa[first], _sa[a]);
         int b = first;
 
         // partition
         while (++b < last) {
-            if ((x = _buffer[idx + _sa[pa + _sa[b]]]) != v)
+            if ((x = p[_sa[pa + _sa[b]]]) != v)
                 break;
         }
 
@@ -1158,7 +1166,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
 
         if ((a < last) && (x < v)) {
             while (++b < last) {
-                if ((x = _buffer[idx + _sa[pa + _sa[b]]]) > v)
+                if ((x = p[_sa[pa + _sa[b]]]) > v)
                     break;
 
                 if (x == v) {
@@ -1171,7 +1179,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
         int c = last;
 
         while (--c > b) {
-            if ((x = _buffer[idx + _sa[pa + _sa[c]]]) != v)
+            if ((x = p[_sa[pa + _sa[c]]]) != v)
                 break;
         }
 
@@ -1179,7 +1187,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
 
         if ((b < d) && (x > v)) {
             while (--c > b) {
-                if ((x = _buffer[idx + _sa[pa + _sa[c]]]) < v)
+                if ((x = p[_sa[pa + _sa[c]]]) < v)
                     break;
 
                 if (x == v) {
@@ -1193,7 +1201,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
             std::swap(_sa[b], _sa[c]);
 
             while (++b < c) {
-                if ((x = _buffer[idx + _sa[pa + _sa[b]]]) > v)
+                if ((x = p[_sa[pa + _sa[b]]]) > v)
                     break;
 
                 if (x == v) {
@@ -1203,7 +1211,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
             }
 
             while (--c > b) {
-                if ((x = _buffer[idx + _sa[pa + _sa[c]]]) < v)
+                if ((x = p[_sa[pa + _sa[c]]]) < v)
                     break;
 
                 if (x == v) {
@@ -1227,7 +1235,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
 
             a = first + (b - a);
             c = last - (d - c);
-            b = (v <= _buffer[idx + _sa[pa + _sa[a]] - 1]) ? a : ssPartition(pa, a, c, depth);
+            b = (v <= p[_sa[pa + _sa[a]] - 1]) ? a : ssPartition(pa, a, c, depth);
 
             if (a - first <= last - c) {
                 if (last - c <= c - b) {
@@ -1271,7 +1279,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
             }
         }
         else {
-            if (_buffer[idx + _sa[pa + _sa[first]] - 1] < v) {
+            if (p[_sa[pa + _sa[first]] - 1] < v) {
                 first = ssPartition(pa, first, last, depth);
                 limit = ssIlg(last - first);
             }
@@ -1775,7 +1783,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
         }
 
         if (last - first <= TR_INSERTIONSORT_THRESHOLD) {
-            trInsertionSort(isad, first, last);
+            trInsertionSort(&_sa[isad], first, last);
             limit = -3;
             continue;
         }
@@ -2056,14 +2064,14 @@ void DivSufSort::trFixDown(int isad, int saIdx, int i, int size)
     _sa[saIdx + i] = v;
 }
 
-void DivSufSort::trInsertionSort(int isad, int first, int last)
+void DivSufSort::trInsertionSort(int arr[], int first, int last)
 {
     for (int a = first + 1; a < last; a++) {
         int b = a - 1;
         const int t = _sa[a];
-        int r = _sa[isad + t] - _sa[isad + _sa[b]];
+        int r;
 
-        while (r < 0) {
+        while ((r = arr[t] - arr[_sa[b]]) < 0) {
             do {
                 _sa[b + 1] = _sa[b];
                 b--;
@@ -2071,8 +2079,6 @@ void DivSufSort::trInsertionSort(int isad, int first, int last)
 
             if (b < first)
                 break;
-
-            r = _sa[isad + t] - _sa[isad + _sa[b]];
         }
 
         if (r == 0)
@@ -2172,15 +2178,6 @@ void DivSufSort::trCopy(int isa, int first, int a, int b, int last, int depth)
     }
 }
 
-
-StackElement::StackElement()
-{
-    _a = 0;
-    _b = 0;
-    _c = 0;
-    _d = 0;
-    _e = 0;
-}
 
 Stack::Stack(int size)
 {

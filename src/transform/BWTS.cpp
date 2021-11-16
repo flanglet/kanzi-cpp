@@ -62,7 +62,7 @@ bool BWTS::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     int* sa = _buffer1;
     int* isa = _buffer2;
 
-    _saAlgo.computeSuffixArray(src, sa, 0, count);
+    _saAlgo.computeSuffixArray(src, sa, count);
 
     for (int i = 0; i < count; i++)
         isa[sa[i]] = i;
