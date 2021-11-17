@@ -193,15 +193,17 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     // Read chunk size
     const uint sz = uint(EntropyUtils::readVarInt(_bitstream) & (MAX_CHUNK_SIZE - 1));
 
-    // Read initial ANS state
+    // Read initial ANS states
     int st0 = int(_bitstream.readBits(32));
-    int st1 = (_order == 0) ? int(_bitstream.readBits(32)) : 0;
+    int st1 = int(_bitstream.readBits(32));
+    int st2 = int(_bitstream.readBits(32));
+    int st3 = int(_bitstream.readBits(32));
 
-    // Read bit buffer
+    // Read encoded data from bitstream
     if (sz != 0) {
          if (_bufferSize < sz) {
             delete[] _buffer;
-            _bufferSize = sz + (sz >> 3);
+            _bufferSize = max(sz + (sz >> 3), uint(256));
             _buffer = new byte[_bufferSize];
         }
 
@@ -210,35 +212,56 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
 
     byte* p = &_buffer[0];
     const int mask = (1 << _logRange) - 1;
+    const int end4 = end & -4;
 
     if (_order == 0) {
-        const int end2 = (end & -2) - 1;
-
-        for (int i = 0; i < end2; i += 2) {
+        for (int i = 0; i < end4; i += 4) {
+            const uint8 cur3 = _f2s[st3 & mask];
+            block[i] = byte(cur3);
+            st3 = decodeSymbol(p, st3, _symbols[cur3], mask);
+            const uint8 cur2 = _f2s[st2 & mask];
+            block[i + 1] = byte(cur2);
+            st2 = decodeSymbol(p, st2, _symbols[cur2], mask);
             const uint8 cur1 = _f2s[st1 & mask];
-            block[i] = byte(cur1);
+            block[i + 2] = byte(cur1);
             st1 = decodeSymbol(p, st1, _symbols[cur1], mask);
             const uint8 cur0 = _f2s[st0 & mask];
-            block[i + 1] = byte(cur0);
+            block[i + 3] = byte(cur0);
             st0 = decodeSymbol(p, st0, _symbols[cur0], mask);
         }
-
-        if ((end & 1) != 0)
-            block[end - 1] = _buffer[sz - 1];
     }
     else {
-        uint8 prv = 0;
-        ANSDecSymbol* symbols = &_symbols[0];
+        const int quarter = end4 >> 2;
+        int i0 = 0;
+        int i1 = 1 * quarter;
+        int i2 = 2 * quarter;
+        int i3 = 3 * quarter;
+        int prv0 = 0, prv1 = 0, prv2 = 0, prv3 = 0;
 
-        for (int i = 0; i < end; i++) {
-            prefetchRead(symbols);
-            uint8* f2s = &_f2s[(prv << _logRange)];
-            prefetchRead(f2s);
-            const uint8 cur = f2s[st0 & mask];
-            block[i] = byte(cur);
-            st0 = decodeSymbol(p, st0, symbols[cur], mask);
-            prv = cur;
-            symbols = &_symbols[prv << 8];
+        for ( ; i0 < quarter; i0++, i1++, i2++, i3++) {
+            ANSDecSymbol* symbols3 = &_symbols[prv3 << 8];
+            ANSDecSymbol* symbols2 = &_symbols[prv2 << 8];
+            ANSDecSymbol* symbols1 = &_symbols[prv1 << 8];
+            ANSDecSymbol* symbols0 = &_symbols[prv0 << 8];
+            const uint8 cur3 = _f2s[(prv3 << _logRange) + (st3 & mask)];
+            block[i3] = byte(cur3);
+            st3 = decodeSymbol(p, st3, symbols3[cur3], mask);
+            const uint8 cur2 = _f2s[(prv2 << _logRange) + (st2 & mask)];
+            block[i2] = byte(cur2);
+            st2 = decodeSymbol(p, st2, symbols2[cur2], mask);
+            const uint8 cur1 = _f2s[(prv1 << _logRange) + (st1 & mask)];
+            block[i1] = byte(cur1);
+            st1 = decodeSymbol(p, st1, symbols1[cur1], mask);
+            const uint8 cur0 = _f2s[(prv0 << _logRange) + (st0 & mask)];
+            block[i0] = byte(cur0);
+            st0 = decodeSymbol(p, st0, symbols0[cur0], mask);
+            prv3 = cur3;
+            prv2 = cur2;
+            prv1 = cur1;
+            prv0 = cur0;
         }
     }
+
+    for (int i = end4; i < end; i++)
+        block[i] = *p++;
 }

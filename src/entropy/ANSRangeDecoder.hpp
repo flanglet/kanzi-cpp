@@ -41,8 +41,8 @@ namespace kanzi
 
       void reset(int cumFreq, int freq, int logRange);
 
-      int _cumFreq;
-      int _freq;
+      uint16 _cumFreq;
+      uint16 _freq;
    };
 
 
@@ -92,8 +92,8 @@ namespace kanzi
 
    inline void ANSDecSymbol::reset(int cumFreq, int freq, int logRange)
    {
-       _cumFreq = cumFreq;
-       _freq = (freq >= (1 << logRange)) ? (1 << logRange) - 1 : freq; // Mirror encoder
+       _cumFreq = uint16(cumFreq);
+       _freq = (freq >= (1 << logRange)) ? (uint16(1) << logRange) - 1 : uint16(freq); // Mirror encoder
    }
 
 
@@ -101,10 +101,10 @@ namespace kanzi
    {
       // Compute next ANS state
       // D(x) = (s, q_s (x/M) + mod(x,M) - b_s) where s is such b_s <= x mod M < b_{s+1}
-      st = int(sym._freq * (st >> _logRange) + (st & mask) - sym._cumFreq);
+      st = int(sym._freq) * (st >> _logRange) + (st & mask) - int(sym._cumFreq);
 
       // Normalize
-      while (st < ANS_TOP) {
+      if (st < ANS_TOP) {
 	      st = (st << 8) | int(*p++);
 	      st = (st << 8) | int(*p++);
       }

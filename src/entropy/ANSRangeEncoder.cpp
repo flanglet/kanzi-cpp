@@ -48,7 +48,7 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
 
     _chunkSize = min(chunkSize << (8 * order), MAX_CHUNK_SIZE);
     _order = order;
-    const int32 dim = 255 * order + 1;
+    const int dim = 255 * order + 1;
     _symbols = new ANSEncSymbol[dim * 256];
     _freqs = new uint[dim * 257]; // freqs[x][256] = total(freqs[x][0..255])
     _buffer = new byte[0];
@@ -186,44 +186,64 @@ void ANSRangeEncoder::encodeChunk(const byte block[], int end)
 {
     int st0 = ANS_TOP;
     int st1 = ANS_TOP;
-    byte* p0 = &_buffer[_bufferSize - 1];
-    byte* p = p0;
+    int st2 = ANS_TOP;
+    int st3 = ANS_TOP;
+    byte* p = &_buffer[_bufferSize - 1];
+    const byte* p0 = p;
+    const int end4 = end & -4;
+
+    for (int i = end - 1; i >= end4; i--)
+        *p-- = block[i];
 
     if (_order == 0) {
-        int start = end - 1;
-
-        if ((end & 1) != 0) {
-            p[0] = block[start];
-            start--;
-            p--;
-        }
-
-        for (int i = start; i > 0; i -= 2) {
+        for (int i = end4 - 1; i > 0; i -= 4) {
             st0 = encodeSymbol(p, st0, _symbols[int(block[i])]);
             st1 = encodeSymbol(p, st1, _symbols[int(block[i - 1])]);
+            st2 = encodeSymbol(p, st2, _symbols[int(block[i - 2])]);
+            st3 = encodeSymbol(p, st3, _symbols[int(block[i - 3])]);
         }
     }
     else { // order 1
-        int prv = int(block[end - 1]);
+        const int quarter = end4 >> 2;
+        int i0 = 1 * quarter - 2;
+        int i1 = 2 * quarter - 2;
+        int i2 = 3 * quarter - 2;
+        int i3 = end4 - 2;
+        int prv0 = int(block[i0 + 1]);
+        int prv1 = int(block[i1 + 1]);
+        int prv2 = int(block[i2 + 1]);
+        int prv3 = int(block[i3 + 1]);
 
-        for (int i = end - 2; i >= 0; i--) {
-            const int cur = int(block[i]);
-            st0 = encodeSymbol(p, st0, _symbols[(cur << 8) | prv]);
-            prv = cur;
+        for ( ; i0 >= 0; i0--, i1--, i2--, i3--) {
+            const int cur0 = int(block[i0]);
+            st0 = encodeSymbol(p, st0, _symbols[(cur0 << 8) | prv0]);
+            const int cur1 = int(block[i1]);
+            st1 = encodeSymbol(p, st1, _symbols[(cur1 << 8) | prv1]);
+            const int cur2 = int(block[i2]);
+            st2 = encodeSymbol(p, st2, _symbols[(cur2 << 8) | prv2]);
+            const int cur3 = int(block[i3]);
+            st3 = encodeSymbol(p, st3, _symbols[(cur3 << 8) | prv3]);
+            prv0 = cur0;
+            prv1 = cur1;
+            prv2 = cur2;
+            prv3 = cur3;
         }
 
-        // Last symbol
-        st0 = encodeSymbol(p, st0, _symbols[prv]);
+        // Last symbols
+        st0 = encodeSymbol(p, st0, _symbols[prv0]);
+        st1 = encodeSymbol(p, st1, _symbols[prv1]);
+        st2 = encodeSymbol(p, st2, _symbols[prv2]);
+        st3 = encodeSymbol(p, st3, _symbols[prv3]);
     }
 
     // Write chunk size
     EntropyUtils::writeVarInt(_bitstream, uint32(p0 - p));
 
-    // Write final ANS state
+    // Write final ANS states
     _bitstream.writeBits(st0, 32);
-
-    if (_order == 0)
-        _bitstream.writeBits(st1, 32);
+    _bitstream.writeBits(st1, 32);
+    _bitstream.writeBits(st2, 32);
+    _bitstream.writeBits(st3, 32);
 
     if (p != p0) {
         // Write encoded data to bitstream
@@ -234,6 +254,19 @@ void ANSRangeEncoder::encodeChunk(const byte block[], int end)
 // Compute chunk frequencies, cumulated frequencies and encode chunk header
 int ANSRangeEncoder::rebuildStatistics(const byte block[], int end, uint lr)
 {
-    Global::computeHistogram(block, end, _freqs, _order == 0, true);
+    const int dim = 255 * _order + 1;
+    memset(_freqs, 0, size_t(257 * dim) * sizeof(uint));
+
+    if (_order == 0){
+       Global::computeHistogram(block, end & -4, _freqs, true, true);
+    }
+    else {
+       const int quarter = end >> 2;
+       Global::computeHistogram(&block[0 * quarter], quarter, _freqs, false, true);
+       Global::computeHistogram(&block[1 * quarter], quarter, _freqs, false, true);
+       Global::computeHistogram(&block[2 * quarter], quarter, _freqs, false, true);
+       Global::computeHistogram(&block[3 * quarter], quarter, _freqs, false, true);
+    }
+
     return updateFrequencies(_freqs, lr);
 }
