@@ -48,6 +48,8 @@ namespace kanzi {
 
        static int _log2(uint32 x); // same as log2 minus check on input value
 
+       static int _log2(uint64 x); // same as log2 minus check on input value
+
        static int log2_1024(uint32 x) THROW; // slow, accurate to 1/1024th
 
        static void computeJobsPerTask(int jobsPerTask[], int jobs, int tasks) THROW;
@@ -103,6 +105,39 @@ namespace kanzi {
            }
 
            if (x >= 1 << 8) {
+              x >>= 8;
+              res += 8;
+           }
+
+           return res + Global::LOG2[x - 1];
+       #endif
+   }
+
+
+   inline int Global::_log2(uint64 x)
+   {
+       #if defined(_MSC_VER) && defined(_M_AMD64)
+           int res;
+           _BitScanReverse64((unsigned long long*) &res, x);
+           return res;
+       #elif defined(__GNUG__)
+           return 63 - __builtin_ctzll (x);
+       #elif defined(__clang__)
+           return 63 - __lzcnt64(x);
+       #else
+           int res = 0;
+
+           if (x >= uint64(1) << 32) {
+              x >>= 32;
+              res = 32;
+           }
+
+           if (x >= uint64(1) << 16) {
+              x >>= 16;
+              res += 16;
+           }
+
+           if (x >= uint64(1) << 8) {
               x >>= 8;
               res += 8;
            }

@@ -39,7 +39,7 @@ const int Global::LOG2[256] = {
 
 // 4096*Math.log2(x)
 const int Global::LOG2_4096[257] = {
-        0,     0,  4096,  6492,  8192,  9511, 10588, 11499, 12288, 12984,
+    0, 0, 4096, 6492, 8192, 9511, 10588, 11499, 12288, 12984,
     13607, 14170, 14684, 15157, 15595, 16003, 16384, 16742, 17080, 17400,
     17703, 17991, 18266, 18529, 18780, 19021, 19253, 19476, 19691, 19898,
     20099, 20292, 20480, 20662, 20838, 21010, 21176, 21338, 21496, 21649,
@@ -69,8 +69,8 @@ const int Global::LOG2_4096[257] = {
 
 //  65536 /(1 + exp(-alpha*x)) with alpha ~= 0.54
 const int Global::INV_EXP[33] = {
-        0,     8,    22,    47,    88,   160,   283,   492,
-      848,  1451,  2459,  4117,  6766, 10819, 16608, 24127,
+    0, 8, 22, 47, 88, 160, 283, 492,
+    848, 1451, 2459, 4117, 6766, 10819, 16608, 24127,
     32768, 41409, 48928, 54717, 58770, 61419, 63077, 64085,
     64688, 65044, 65253, 65376, 65448, 65489, 65514, 65528,
     65536
@@ -84,7 +84,7 @@ const int* Global::initSquash(int data[])
 {
     for (int x = 1; x < 4096; x++) {
         const int w = x & 127;
-        const int y = x >> 7; 
+        const int y = x >> 7;
         data[x - 1] = (INV_EXP[y] * (128 - w) + INV_EXP[y + 1] * w) >> 11;
     }
 
@@ -137,12 +137,9 @@ int Global::log2(uint32 x) THROW
 // If withTotal is true, the last spot in each frequencies order 0 array is for the total
 void Global::computeHistogram(const byte block[], int length, uint freqs[], bool isOrder0, bool withTotal)
 {
-    const int mult = (withTotal == true) ? 257 : 256;
     const uint8* p = reinterpret_cast<const uint8*>(&block[0]);
 
     if (isOrder0 == true) {
-        memset(freqs, 0, size_t(mult * sizeof(uint)));
-
         if (withTotal == true)
             freqs[256] = length;
 
@@ -184,31 +181,99 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
             freqs[i] += (f0[i] + f1[i] + f2[i] + f3[i]);
     }
     else { // Order 1
-        memset(freqs, 0, size_t(256 * mult * sizeof(uint)));
-        uint prv = 0;
+        const int quarter = length >> 2;
+        int n0 = 0 * quarter;
+        int n1 = 1 * quarter;
+        int n2 = 2 * quarter;
+        int n3 = 3 * quarter;
 
         if (withTotal == true) {
-            for (int i = 0; i < length; i++) {
-                freqs[prv + uint(p[i])]++;
-                freqs[prv + 256]++;
-                prv = 257 * uint(p[i]);
+            if (length < 32) {
+                uint prv = 0;
+
+                for (int i = 0; i < length; i++) {
+                    freqs[prv + uint(p[i])]++;
+                    freqs[prv + 256]++;
+                    prv = 257 * uint(p[i]);
+                }
+            }
+            else {
+                uint prv0 = 0;
+                uint prv1 = 257 * uint(p[n1 - 1]);
+                uint prv2 = 257 * uint(p[n2 - 1]);
+                uint prv3 = 257 * uint(p[n3 - 1]);
+
+                for (; n0 < quarter; n0++, n1++, n2++, n3++) {
+                    const uint cur0 = uint(p[n0]);
+                    const uint cur1 = uint(p[n1]);
+                    const uint cur2 = uint(p[n2]);
+                    const uint cur3 = uint(p[n3]);
+                    freqs[prv0 + cur0]++;
+                    freqs[prv0 + 256]++;
+                    freqs[prv1 + cur1]++;
+                    freqs[prv1 + 256]++;
+                    freqs[prv2 + cur2]++;
+                    freqs[prv2 + 256]++;
+                    freqs[prv3 + cur3]++;
+                    freqs[prv3 + 256]++;
+                    prv0 = 257 * cur0;
+                    prv1 = 257 * cur1;
+                    prv2 = 257 * cur2;
+                    prv3 = 257 * cur3;
+                }
+
+                for (; n3 < length; n3++) {
+                    freqs[prv3 + uint(p[n3])]++;
+                    freqs[prv3 + 256]++;
+                    prv3 = 257 * uint(p[n3]);
+                }
             }
         }
-        else {
-            for (int i = 0; i < length; i++) {
-                freqs[prv + uint(p[i])]++;
-                prv = 256 * uint(p[i]);
+        else { // order 1, no total
+            if (length < 32) {
+                uint prv = 0;
+
+                for (int i = 0; i < length; i++) {
+                    freqs[prv + uint(p[i])]++;
+                    prv = 256 * uint(p[i]);
+                }
+            }
+            else {
+                uint prv0 = 0;
+                uint prv1 = 256 * uint(p[n1 - 1]);
+                uint prv2 = 256 * uint(p[n2 - 1]);
+                uint prv3 = 256 * uint(p[n3 - 1]);
+
+                for (; n0 < quarter; n0++, n1++, n2++, n3++) {
+                    const uint cur0 = uint(p[n0]);
+                    const uint cur1 = uint(p[n1]);
+                    const uint cur2 = uint(p[n2]);
+                    const uint cur3 = uint(p[n3]);
+                    freqs[prv0 + cur0]++;
+                    freqs[prv1 + cur1]++;
+                    freqs[prv2 + cur2]++;
+                    freqs[prv3 + cur3]++;
+                    prv0 = cur0 << 8;
+                    prv1 = cur1 << 8;
+                    prv2 = cur2 << 8;
+                    prv3 = cur3 << 8;
+                }
+
+                for (; n3 < length; n3++) {
+                    freqs[prv3 + uint(p[n3])]++;
+                    prv3 = uint(p[n3]) << 8;
+                }
             }
         }
     }
 }
 
-// Return the first order entropy scaled to the [0..1024] range
-// Fills in the histogram with order 0 frequencies. Incoming array size must be 256
+// Return the zero order entropy scaled to the [0..1024] range
+// Incoming array size must be 256
 int Global::computeFirstOrderEntropy1024(int blockLen, uint histo[])
 {
     if (blockLen == 0)
-       return 0;
+        return 0;
 
     uint64 sum = 0;
     const int logLength1024 = Global::log2_1024(blockLen);
