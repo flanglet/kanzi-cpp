@@ -729,7 +729,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int startChunk = 0;
 
     ROLZDecoder rd(9, _logPosChecks, &src[0], srcIdx);
-    memset(&_counters[0], 0, sizeof(int32) * 65536);
+    memset(&_counters[0], 0, sizeof(_counters));
 
     while (startChunk < dstEnd) {
         memset(&_matches[0], 0, sizeof(int32) * (ROLZCodec::HASH_SIZE << _logPosChecks));
