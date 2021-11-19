@@ -258,7 +258,7 @@ int ANSRangeEncoder::rebuildStatistics(const byte block[], int end, uint lr)
     memset(_freqs, 0, size_t(257 * dim) * sizeof(uint));
 
     if (_order == 0){
-       Global::computeHistogram(block, end & -4, _freqs, true, true);
+       Global::computeHistogram(block, end, _freqs, true, true);
     }
     else {
        const int quarter = end >> 2;
