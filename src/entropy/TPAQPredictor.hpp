@@ -526,27 +526,27 @@ namespace kanzi
                _matchLen++;
 
            _matchPos++;
+           return;
        }
-       else {
-           // Retrieve match position
-           _matchPos = _hashes[_hash];
 
-           // Detect match
-           if ((_matchPos != 0) && (_pos - _matchPos <= _bufferMask)) {
-               int r = _matchLen + 2;
+       // Retrieve match position
+       _matchPos = _hashes[_hash];
 
-               while (r <= MAX_LENGTH) {
-                   if ((_buffer[(_pos - r - 1) & _bufferMask]) != (_buffer[(_matchPos - r - 1) & _bufferMask]))
-                       break;
+       // Detect match
+       if ((_matchPos != 0) && (_pos - _matchPos <= _bufferMask)) {
+           int r = _matchLen + 2;
 
-                   if ((_buffer[(_pos - r) & _bufferMask]) != (_buffer[(_matchPos - r) & _bufferMask]))
-                       break;
+           while (r <= MAX_LENGTH) {
+               if ((_buffer[(_pos - r - 1) & _bufferMask]) != (_buffer[(_matchPos - r - 1) & _bufferMask]))
+                   break;
 
-                   r += 2;
-               }
+               if ((_buffer[(_pos - r) & _bufferMask]) != (_buffer[(_matchPos - r) & _bufferMask]))
+                   break;
 
-               _matchLen = r - 2;
+               r += 2;
            }
+
+           _matchLen = r - 2;
        }
    }
 
