@@ -527,7 +527,7 @@ T EncodingTask<T>::run() THROW
                 string str = _ctx.getString("skipBlocks");
 
                 if (str == STR_TRUE) {
-                    uint histo[256];
+                    uint histo[256] = { 0 };
                     Global::computeHistogram(&_data->_array[_data->_index], _blockLength, histo);
                     const int entropy = Global::computeFirstOrderEntropy1024(_blockLength, histo);
                     //_ctx.putString("histo0", toString(histo, 256));
