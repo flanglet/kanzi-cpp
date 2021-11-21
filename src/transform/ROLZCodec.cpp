@@ -18,6 +18,7 @@ limitations under the License.
 #include <sstream>
 #include <streambuf>
 #include "ROLZCodec.hpp"
+#include "../Global.hpp"
 #include "../Memory.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
@@ -136,15 +137,16 @@ int ROLZCodec1::findMatch(const byte buf[], const int pos, const int end)
 
         int n = 0;
 
-        if ((n + 4 < maxMatch) && (memcmp(&buf[ref + n], &curBuf[n], 4) == 0)) {
+        while (n + 4 < maxMatch) {
+            const int32 diff = LittleEndian::readInt32(&buf[ref + n]) ^ LittleEndian::readInt32(&curBuf[n]);
+
+            if (diff != 0) {
+                n += (Global::trailingZeros(uint32(diff)) >> 3);
+                break;
+            }
+
             n += 4;
-
-            while ((n + 4 < maxMatch) && (memcmp(&buf[ref + n], &curBuf[n], 4) == 0))
-                n += 4;
         }
-
-        while ((n < maxMatch) && (buf[ref + n] == curBuf[n]))
-            n++;
 
         if (n > bestLen) {
             bestIdx = counter - i;
@@ -614,15 +616,16 @@ int ROLZCodec2::findMatch(const byte buf[], const int pos, const int end)
 
         int n = 0;
 
-        if ((n + 4 < maxMatch) && (memcmp(&buf[ref + n], &curBuf[n], 4) == 0)) {
+        while (n + 4 < maxMatch) {
+            const int32 diff = LittleEndian::readInt32(&buf[ref + n]) ^ LittleEndian::readInt32(&curBuf[n]);
+
+            if (diff != 0) {
+                n += (Global::trailingZeros(uint32(diff)) >> 3);
+                break;
+            }
+
             n += 4;
-
-            while ((n + 4 < maxMatch) && (memcmp(&buf[ref + n], &curBuf[n], 4) == 0))
-                n += 4;
         }
-
-        while ((n < maxMatch) && (buf[ref + n] == curBuf[n]))
-            n++;
 
         if (n > bestLen) {
             bestIdx = counter - i;

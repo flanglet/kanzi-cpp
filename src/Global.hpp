@@ -50,6 +50,10 @@ namespace kanzi {
 
        static int _log2(uint64 x); // same as log2 minus check on input value
 
+       static int trailingZeros(uint32 x);
+
+       static int trailingZeros(uint64 x);
+
        static int log2_1024(uint32 x) THROW; // slow, accurate to 1/1024th
 
        static void computeJobsPerTask(int jobsPerTask[], int jobs, int tasks) THROW;
@@ -86,16 +90,17 @@ namespace kanzi {
    }
 
 
+   // x cannot be 0
    inline int Global::_log2(uint32 x)
    {
        #if defined(_MSC_VER)
-           int res;
-           _BitScanReverse((unsigned long*) &res, x);
-           return res;
-       #elif defined(__GNUG__)
-           return 31 - __builtin_clz(x);
+           unsigned long res;
+           _BitScanReverse(&res, x);
+           return int(res);
+       #elif defined(__GNUG__) 
+           return 31 ^ __builtin_clz(x);
        #elif defined(__clang__)
-           return 31 - __lzcnt32(x);
+           return 31 ^ __builtin_clz(x);
        #else
            int res = 0;
 
@@ -114,16 +119,17 @@ namespace kanzi {
    }
 
 
+   // x cannot be 0
    inline int Global::_log2(uint64 x)
    {
        #if defined(_MSC_VER) && defined(_M_AMD64)
-           int res;
-           _BitScanReverse64((unsigned long long*) &res, x);
-           return res;
+           unsigned long long res;
+           _BitScanReverse64(&res, x);
+           return int(res);
        #elif defined(__GNUG__)
-           return 63 - __builtin_ctzll (x);
+           return 63 ^ __builtin_clzll(x);
        #elif defined(__clang__)
-           return 63 - __lzcnt64(x);
+           return 63 ^ __builtin_clzll(x);
        #else
            int res = 0;
 
@@ -143,6 +149,40 @@ namespace kanzi {
            }
 
            return res + Global::LOG2[x - 1];
+       #endif
+   }
+
+
+   // x cannot be 0
+   inline int Global::trailingZeros(uint32 x)
+   {
+       #if defined(_MSC_VER)
+           unsigned long res;
+           _BitScanForward(&res, x);
+           return int(res);
+       #elif defined(__GNUG__)
+           return __builtin_ctz(x);
+       #elif defined(__clang__)
+           return __builtin_ctz(x);
+       #else
+          return _log2((x & (~x + 1)) - 1);
+       #endif
+   }
+
+
+   // x cannot be 0
+   inline int Global::trailingZeros(uint64 x)
+   {
+       #if defined(_MSC_VER) && defined(_M_AMD64)
+           unsigned long long res;
+           _BitScanForward64(&res, x);
+           return int(res);
+       #elif defined(__GNUG__)
+           return __builtin_ctzll(x);
+       #elif defined(__clang__)
+           return __builtin_ctzll(x);
+       #else
+          return _log2((x & (~x + 1)) - 1);
        #endif
    }
 
