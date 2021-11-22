@@ -148,12 +148,11 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], uint
 
     vector<uint> v(_sranks, _sranks + count);
     sort(v.begin(), v.end());
-    memcpy(_sranks, &v[0], count * sizeof(uint));
-    uint buffer[256]= { 0 };
+    uint buffer[256] = { 0 };
 
     for (int i = 0; i < count; i++) {
-        buffer[i] = _sranks[i] >> 8;
-        _sranks[i] &= 0xFF;
+        buffer[i] = v[i] >> 8;
+        _sranks[i] = v[i] & 0xFF;
     }
 
     // See [In-Place Calculation of Minimum-Redundancy Codes]

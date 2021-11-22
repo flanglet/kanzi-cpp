@@ -60,13 +60,13 @@ namespace kanzi
 
        void close() THROW { _close(); }
 
-       inline void showByte(bool show) { _hexa = show; }
+       void showByte(bool show) { _hexa = show; }
 
-       inline bool showByte() const { return _hexa; }
+       bool showByte() const { return _hexa; }
 
-       inline void setMark(bool mark) { _mark = mark; }
+       void setMark(bool mark) { _mark = mark; }
 
-       inline bool mark() const { return _mark; }
+       bool mark() const { return _mark; }
    };
 
 }
