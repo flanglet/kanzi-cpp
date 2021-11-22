@@ -163,7 +163,7 @@ namespace kanzi {
 
        std::streampos tellp();
 
-       std::ostream& seekp(streampos pos) THROW;
+       std::ostream& seekp(std::streampos pos) THROW;
 
        void close() THROW;
 
@@ -176,7 +176,7 @@ namespace kanzi {
        return _os.tellp();
    }
 
-   inline ostream& CompressedOutputStream::seekp(streampos) THROW
+   inline ostream& CompressedOutputStream::seekp(std::streampos) THROW
    {
        setstate(ios::badbit);
        throw ios_base::failure("Not supported");
