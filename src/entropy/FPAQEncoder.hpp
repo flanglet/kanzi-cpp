@@ -70,10 +70,10 @@ namespace kanzi
        // Update probabilities
        if (bit == 0) {
           _low = _low + ((((_high - _low) >> 4) * uint64(prob >> 4)) >> 8) + 1;
-          prob -= (prob >> 6);
+          prob -= uint16(prob >> 6);
        } else  {
           _high = _low + ((((_high - _low) >> 4) * uint64(prob >> 4)) >> 8);
-          prob -= ((prob - PSCALE + 64) >> 6);
+          prob -= uint16((prob - PSCALE + 64) >> 6);
        }
 
        // Write unchanged first 32 bits to bitstream

@@ -77,13 +77,13 @@ namespace kanzi
        if (split >= _current) {
            bit = 1;
            _high = split;
-           _p[_ctx] -= ((_p[_ctx] - PSCALE + 64) >> 6);
+           _p[_ctx] -= uint16((_p[_ctx] - PSCALE + 64) >> 6);
            _ctx += (_ctx + 1);
        }
        else {
            bit = 0;
            _low = split + 1;
-           _p[_ctx] -= (_p[_ctx] >> 6);
+           _p[_ctx] -= uint16(_p[_ctx] >> 6);
            _ctx += _ctx;
        }
 
