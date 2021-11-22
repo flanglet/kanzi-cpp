@@ -123,7 +123,7 @@ namespace kanzi {
    inline int Global::_log2(uint64 x)
    {
        #if defined(_MSC_VER) && defined(_M_AMD64)
-           unsigned long long res;
+           unsigned long res;
            _BitScanReverse64(&res, x);
            return int(res);
        #elif defined(__GNUG__)
@@ -174,7 +174,7 @@ namespace kanzi {
    inline int Global::trailingZeros(uint64 x)
    {
        #if defined(_MSC_VER) && defined(_M_AMD64)
-           unsigned long long res;
+           unsigned long res;
            _BitScanForward64(&res, x);
            return int(res);
        #elif defined(__GNUG__)
