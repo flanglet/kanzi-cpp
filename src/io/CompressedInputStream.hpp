@@ -146,10 +146,13 @@ namespace kanzi
        static const int MAX_BLOCK_ID = int((uint(1) << 31) - 1);
 
        int _blockSize;
-       uint8 _nbInputBlocks;
+       int _bufferId; // index of current read buffer
+       int _maxBufferId; // max index of read buffer
+       int _nbInputBlocks;
+       int _jobs;
+       int _available; // decoded not consumed bytes
        XXHash32* _hasher;
-       SliceArray<byte>* _sa; // for all blocks
-       SliceArray<byte>** _buffers; // per block
+       SliceArray<byte>** _buffers; // input & output per block
        short _entropyType;
        uint64 _transformType;
        InputBitStream* _ibs;
@@ -157,8 +160,6 @@ namespace kanzi
        atomic_bool _initialized;
        atomic_bool _closed;
        atomic_int _blockId;
-       int _maxIdx;
-       int _jobs;
        std::vector<Listener*> _listeners;
        std::streamsize _gcount;
        Context _ctx;
@@ -167,7 +168,7 @@ namespace kanzi
 
        int processBlock() THROW;
 
-       int _get();
+       int _get(int inc);
 
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 
@@ -189,43 +190,36 @@ namespace kanzi
 
        std::streampos tellg();
 
-       std::istream& seekp(std::streampos pos) THROW;
+       std::istream& seekg(std::streampos pos) THROW;
+
+       std::istream& putback(char c) THROW;
+
+       std::istream& unget() THROW;
 
        std::istream& read(char* s, std::streamsize n) THROW;
+
+       std::streamsize gcount() const { return _gcount; }
 
        int get() THROW;
 
        int peek() THROW;
 
-       std::streamsize gcount() const { return _gcount; }
-
        void close() THROW;
 
-       uint64 getRead();
+       uint64 getRead() { return (_ibs->read() + 7) >> 3; }
    };
 
 
    inline int CompressedInputStream::get() THROW
    {
-       _gcount = 0;
-       const int res = peek();
-
-       if (res != EOF) {
-           _sa->_index++;
-           _gcount++;
-       }
-
+       const int res = _get(1);
+       _gcount = (res != EOF)? 1 : 0;
        return res;
    }
 
-   inline int CompressedInputStream::_get() THROW
+   inline int CompressedInputStream::peek() THROW
    {
-       const int res = peek();
-
-       if (res != EOF)
-           _sa->_index++;
-
-       return res;
+       return _get(0);
    }
 
    inline std::streampos CompressedInputStream::tellg()
@@ -233,10 +227,23 @@ namespace kanzi
        return _is.tellg();
    }
 
-   inline std::istream& CompressedInputStream::seekp(std::streampos) THROW
+   inline std::istream& CompressedInputStream::seekg(std::streampos) THROW
    {
        setstate(ios::badbit);
        throw ios_base::failure("Not supported");
    }
+
+   inline istream& CompressedInputStream::putback(char) THROW
+   {
+       setstate(ios::badbit);
+       throw ios_base::failure("Not supported");
+   }
+
+   inline istream& CompressedInputStream::unget() THROW
+   {
+       setstate(ios::badbit);
+       throw ios_base::failure("Not supported");
+   }
+
 }
 #endif

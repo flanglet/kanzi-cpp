@@ -59,13 +59,8 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     if ((bSize & -16) != bSize)
         throw invalid_argument("The block size must be a multiple of 16");
 
-#ifdef CONCURRENCY_ENABLED
-    // Limit concurrency with big blocks to avoid too much memory usage
-    if (uint64(bSize) * uint64(tasks) >= (uint64(1) << 30))
-        tasks = int((uint(1) << 30) / uint(bSize));
-#endif
-
     _blockId = 0;
+    _bufferId = 0;
     _blockSize = bSize;
     _nbInputBlocks = 0;
     _initialized = false;
@@ -75,11 +70,17 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _transformType = TransformFactory<byte>::getType(transform.c_str());
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _jobs = tasks;
-    _sa = new SliceArray<byte>(new byte[0], 0);
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
-    for (int i = 0; i < 2 * _jobs; i++)
-        _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+    // Allocate first buffer and add padding for incompressible blocks 
+    const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
+    _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
+    _buffers[_jobs] = new SliceArray<byte>(new byte[0], 0, 0);
+
+    for (int i = 1; i < _jobs; i++) {
+       _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+       _buffers[i + _jobs] = new SliceArray<byte>(new byte[0], 0, 0);
+    }
 }
 
 #if __cplusplus >= 201103L
@@ -92,7 +93,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     , _os(os)
     , _ctx(ctx)
 {
-    int tasks = ctx.getInt("jobs");
+    int tasks = ctx.getInt("jobs", 1);
 
 #ifdef CONCURRENCY_ENABLED
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
@@ -124,26 +125,21 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     if ((bSize & -16) != bSize)
         throw invalid_argument("The block size must be a multiple of 16");
 
-#ifdef CONCURRENCY_ENABLED
-    // Limit concurrency with big blocks to avoid too much memory usage
-    if (uint64(bSize) * uint64(tasks) >= (uint64(1) << 30))
-        tasks = int((uint(1) << 30) / uint(bSize));
-#endif
-
-    _blockId = 0;
-    _blockSize = bSize;
-
     // If input size has been provided, calculate the number of blocks
     // in the input data else use 0. A value of 63 means '63 or more blocks'.
     // This value is written to the bitstream header to let the decoder make
     // better decisions about memory usage and job allocation in concurrent
     // decompression scenario.
     const int64 fileSize = ctx.getLong("fileSize", 0);
-    const int64 nbBlocks = (fileSize + int64(bSize - 1)) / int64(bSize);
-    _nbInputBlocks = (nbBlocks > 63) ? 63 : uint8(nbBlocks);
-
+    const int nbBlocks = int((fileSize + int64(bSize - 1)) / int64(bSize));
+    _nbInputBlocks = min(nbBlocks, 63);
+    _jobs = tasks;
+    _blockId = 0;
+    _bufferId = 0;
+    _blockSize = bSize;
     _initialized = false;
     _closed = false;
+
 #if __cplusplus >= 201103L
     // A hook can be provided by the caller to customize the instantiation of the
     // output bitstream.
@@ -151,18 +147,24 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
 #else
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
 #endif
+
     _entropyType = EntropyCodecFactory::getType(entropyCodec.c_str());
     _transformType = TransformFactory<byte>::getType(transform.c_str());
     string str = ctx.getString("checksum");
     bool checksum = str == STR_TRUE;
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
-    _jobs = tasks;
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
-    _sa = new SliceArray<byte>(new byte[0], 0);
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
-    for (int i = 0; i < 2 * _jobs; i++)
-        _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+    // Allocate first buffer and add padding for incompressible blocks 
+    const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
+    _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
+    _buffers[_jobs] = new SliceArray<byte>(new byte[0], 0, 0);
+
+    for (int i = 1; i < _jobs; i++) {
+       _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+       _buffers[i + _jobs] = new SliceArray<byte>(new byte[0], 0, 0);
+    }
 }
 
 CompressedOutputStream::~CompressedOutputStream()
@@ -181,8 +183,6 @@ CompressedOutputStream::~CompressedOutputStream()
 
     delete[] _buffers;
     delete _obs;
-    delete[] _sa->_array;
-    delete _sa;
 
     if (_hasher != nullptr) {
         delete _hasher;
@@ -247,15 +247,35 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length) THRO
     int off = 0;
 
     while (remaining > 0) {
-        // Limit to number of available bytes in buffer
-        const int lenChunk = (_sa->_index + remaining < _sa->_length) ? remaining : _sa->_length - _sa->_index;
+        // Limit to number of available bytes in current buffer
+        const int lenChunk = min(remaining, _blockSize - _buffers[_bufferId]->_index);
 
         if (lenChunk > 0) {
             // Process a chunk of in-buffer data. No access to bitstream required
-            memcpy(&_sa->_array[_sa->_index], &data[off], lenChunk);
-            _sa->_index += lenChunk;
+            memcpy(&_buffers[_bufferId]->_array[_buffers[_bufferId]->_index], &data[off], lenChunk);
+            _buffers[_bufferId]->_index += lenChunk;
             off += lenChunk;
             remaining -= lenChunk;
+
+            if (_buffers[_bufferId]->_index >= _blockSize) {
+                // Current write buffer is full
+                if (_bufferId + 1 < min(_nbInputBlocks, _jobs)) {
+                    _bufferId++;
+                    const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
+
+                    if (_buffers[_bufferId]->_length == 0) {
+                        delete[] _buffers[_bufferId]->_array;
+                        _buffers[_bufferId]->_array = new byte[bufSize];
+                        _buffers[_bufferId]->_length = bufSize;
+                    }
+
+                    _buffers[_bufferId]->_index = 0;
+                }
+                else {
+                    // If all buffers are full, time to encode
+                    processBlock();
+                }
+            }
 
             if (remaining == 0)
                 break;
@@ -275,8 +295,7 @@ void CompressedOutputStream::close() THROW
     if (_closed.exchange(true, memory_order_acquire))
         return;
 
-    if (_sa->_index > 0)
-        processBlock(true);
+    processBlock();
 
     try {
         // Write end block of size 0
@@ -293,60 +312,38 @@ void CompressedOutputStream::close() THROW
 
     // Release resources
     // Force error on any subsequent write attempt
-    delete[] _sa->_array;
-    _sa->_array = new byte[0];
-    _sa->_length = 0;
-    _sa->_index = -1;
-
     for (int i = 0; i < 2 * _jobs; i++) {
         delete[] _buffers[i]->_array;
         _buffers[i]->_array = new byte[0];
         _buffers[i]->_length = 0;
+        _buffers[i]->_index = -1;
     }
 }
 
-void CompressedOutputStream::processBlock(bool force) THROW
+void CompressedOutputStream::processBlock() THROW
 {
-    if (force == false) {
-        const int bufSize = min(_jobs, max(int(_nbInputBlocks), 1)) * _blockSize;
-
-        if (_sa->_length < bufSize) {
-            // Grow byte array until max allowed
-            byte* buf = new byte[bufSize];
-            memcpy(buf, _sa->_array, _sa->_length);
-            delete[] _sa->_array;
-            _sa->_array = buf;
-            _sa->_length = bufSize;
-            return;
-        }
-    }
-
-    if (_sa->_index == 0)
+    // All buffers empty, nothing to do
+    if (_buffers[0]->_index == 0)
         return;
 
     if (!_initialized.exchange(true, memory_order_acquire))
         writeHeader();
 
+    // Protect against future concurrent modification of the list of block listeners
+    vector<Listener*> blockListeners(_listeners);
     vector<EncodingTask<EncodingTaskResult>*> tasks;
 
     try {
-
-        // Protect against future concurrent modification of the list of block listeners
-        vector<Listener*> blockListeners(_listeners);
-        const int dataLength = _sa->_index;
-        _sa->_index = 0;
         int firstBlockId = _blockId.load(memory_order_relaxed);
         int nbTasks = _jobs;
         int jobsPerTask[MAX_CONCURRENCY];
 
         // Assign optimal number of tasks and jobs per task
         if (nbTasks > 1) {
-            // If the number of input blocks is available, use it to optimize
-            // memory usage
             if (_nbInputBlocks != 0) {
                 // Limit the number of jobs if there are fewer blocks that _jobs
                 // It allows more jobs per task and reduces memory usage.
-                nbTasks = min(nbTasks, int(_nbInputBlocks));
+                nbTasks = min(_nbInputBlocks, _jobs);
             }
 
             Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
@@ -355,37 +352,23 @@ void CompressedOutputStream::processBlock(bool force) THROW
             jobsPerTask[0] = _jobs;
         }
 
-        // Create as many tasks as required
+        // Create as many tasks as non-empty buffers to encode
         for (int taskId = 0; taskId < nbTasks; taskId++) {
-            const int sz = (_sa->_index + _blockSize > dataLength) ? dataLength - _sa->_index : _blockSize;
+            const int dataLength = _buffers[taskId]->_index;
 
-            if (sz == 0)
+            if (dataLength == 0)
                 break;
-
-            _buffers[2 * taskId]->_index = 0;
-            _buffers[2 * taskId + 1]->_index = 0;
-
-            // Add padding for incompressible data
-            const int length = max(sz + (sz >> 6), 65536);
-
-            // Grow encoding buffer if required
-            if (_buffers[2 * taskId]->_length < length) {
-                delete[] _buffers[2 * taskId]->_array;
-                _buffers[2 * taskId]->_array = new byte[length];
-                _buffers[2 * taskId]->_length = length;
-            }
 
             Context copyCtx(_ctx);
             copyCtx.putInt("jobs", jobsPerTask[taskId]);
-            memcpy(&_buffers[2 * taskId]->_array[0], &_sa->_array[_sa->_index], sz);
+            _buffers[taskId]->_index = 0;
 
-            EncodingTask<EncodingTaskResult>* task = new EncodingTask<EncodingTaskResult>(_buffers[2 * taskId],
-                _buffers[2 * taskId + 1], sz, _transformType,
+            EncodingTask<EncodingTaskResult>* task = new EncodingTask<EncodingTaskResult>(_buffers[taskId],
+                _buffers[_jobs + taskId], dataLength, _transformType,
                 _entropyType, firstBlockId + taskId + 1,
                 _obs, _hasher, &_blockId,
                 blockListeners, copyCtx);
             tasks.push_back(task);
-            _sa->_index += sz;
         }
 
         if (tasks.size() == 1) {
@@ -422,7 +405,8 @@ void CompressedOutputStream::processBlock(bool force) THROW
 
         tasks.clear();
 #endif
-        _sa->_index = 0;
+
+        _bufferId = 0;
     }
     catch (IOException&) {
         for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
@@ -445,12 +429,6 @@ void CompressedOutputStream::processBlock(bool force) THROW
         tasks.clear();
         throw IOException(e.what(), Error::ERR_UNKNOWN);
     }
-}
-
-// Return the number of bytes written so far
-uint64 CompressedOutputStream::getWritten()
-{
-    return (_obs->written() + 7) >> 3;
 }
 
 void CompressedOutputStream::notifyListeners(vector<Listener*>& listeners, const Event& evt)

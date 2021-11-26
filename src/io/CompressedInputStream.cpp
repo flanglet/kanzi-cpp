@@ -45,22 +45,25 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
 #endif
 
     _blockId = 0;
+    _bufferId = 0;
+    _maxBufferId = 0;
     _blockSize = 0;
+    _available = 0;
     _entropyType = EntropyCodecFactory::NONE_TYPE;
     _transformType = TransformFactory<byte>::NONE_TYPE;
     _initialized = false;
     _closed = false;
-    _maxIdx = 0;
     _gcount = 0;
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
     _jobs = tasks;
-    _sa = new SliceArray<byte>(new byte[0], 0, 0);
     _hasher = nullptr;
     _nbInputBlocks = 0;
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
-    for (int i = 0; i < 2 * _jobs; i++)
-        _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+    for (int i = 0; i < _jobs; i++) {
+       _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+       _buffers[i + _jobs] = new SliceArray<byte>(new byte[0], 0, 0);
+    }
 }
 
 #if __cplusplus >= 201103L
@@ -87,13 +90,16 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
 #endif
 
     _blockId = 0;
+    _bufferId = 0;
+    _maxBufferId = 0;
     _blockSize = 0;
+    _available = 0;
     _entropyType = EntropyCodecFactory::NONE_TYPE;
     _transformType = TransformFactory<byte>::NONE_TYPE;
     _initialized = false;
     _closed = false;
-    _maxIdx = 0;
     _gcount = 0;
+
 #if __cplusplus >= 201103L
     // A hook can be provided by the caller to customize the instantiation of the
     // input bitstream.
@@ -101,14 +107,16 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
 #else
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
 #endif
+
     _jobs = tasks;
-    _sa = new SliceArray<byte>(new byte[0], 0, 0);
     _hasher = nullptr;
     _nbInputBlocks = 0;
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
-    for (int i = 0; i < 2 * _jobs; i++)
-        _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+    for (int i = 0; i < _jobs; i++) {
+       _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+       _buffers[i + _jobs] = new SliceArray<byte>(new byte[0], 0, 0);
+    }
 }
 
 CompressedInputStream::~CompressedInputStream()
@@ -127,8 +135,6 @@ CompressedInputStream::~CompressedInputStream()
 
     delete[] _buffers;
     delete _ibs;
-    delete[] _sa->_array;
-    delete _sa;
 
     if (_hasher != nullptr) {
         delete _hasher;
@@ -182,14 +188,8 @@ void CompressedInputStream::readHeader() THROW
         throw IOException(ss.str(), Error::ERR_BLOCK_SIZE);
     }
 
-#ifdef CONCURRENCY_ENABLED
-    // Limit concurrency with big blocks to avoid too much memory usage
-    if (uint64(_blockSize) * uint64(_jobs) >= (uint64(1) << 30))
-        _jobs = int((uint(1) << 30) / uint(_blockSize));
-#endif
-
     // Read number of blocks in input. 0 means 'unknown' and 63 means 63 or more.
-    _nbInputBlocks = uint8(_ibs->readBits(6));
+    _nbInputBlocks = int(_ibs->readBits(6));
 
     // Read reserved bits
     _ibs->readBits(4);
@@ -243,20 +243,32 @@ bool CompressedInputStream::removeListener(Listener& bl)
     return true;
 }
 
-int CompressedInputStream::peek() THROW
+int CompressedInputStream::_get(int inc) THROW
 {
     try {
-        if (_sa->_index >= _maxIdx) {
-            _maxIdx = processBlock();
+        if (_available == 0) {
+            _available = processBlock();
 
-            if (_maxIdx == 0) {
+            if (_available == 0) {
                 // Reached end of stream
                 setstate(ios::eofbit);
                 return EOF;
             }
         }
 
-        return int(_sa->_array[_sa->_index]);
+        int res = int(_buffers[_bufferId]->_array[_buffers[_bufferId]->_index]);
+
+        if (inc == 0)
+           return res;
+
+        _available -= inc;
+        _buffers[_bufferId]->_index += inc;
+
+        // Is current read buffer empty ?
+        if ((_bufferId < _maxBufferId) && (_buffers[_bufferId]->_index >= _blockSize))
+           _bufferId++;
+
+        return res;
     }
     catch (IOException&) {
         setstate(ios::badbit);
@@ -280,34 +292,39 @@ istream& CompressedInputStream::read(char* data, streamsize length) THROW
         throw ios_base::failure("Stream closed");
     }
 
-    int off = 0;
     _gcount = 0;
 
     while (remaining > 0) {
-        // Limit to number of available bytes in buffer
-        const int lenChunk = (_sa->_index + remaining < _maxIdx) ? remaining : _maxIdx - _sa->_index;
+        // Limit to number of available bytes in current buffer
+        const int lenChunk = min(remaining, min(_available, _blockSize - _buffers[_bufferId]->_index));
 
         if (lenChunk > 0) {
             // Process a chunk of in-buffer data. No access to bitstream required
-            memcpy(&data[off], &_sa->_array[_sa->_index], lenChunk);
-            _sa->_index += lenChunk;
-            off += lenChunk;
-            remaining -= lenChunk;
+            memcpy(&data[_gcount], &_buffers[_bufferId]->_array[_buffers[_bufferId]->_index], lenChunk);
+            _buffers[_bufferId]->_index += lenChunk;
             _gcount += lenChunk;
+            remaining -= lenChunk;
+            _available -= lenChunk;
+
+            if ((_bufferId < _maxBufferId) && (_buffers[_bufferId]->_index >= _blockSize)){
+                if (_bufferId + 1 >= _jobs)
+                    break;
+
+                _bufferId++;
+            }
 
             if (remaining == 0)
                 break;
         }
 
         // Buffer empty, time to decode
-        int c2 = _get();
+        int c2 = _get(1);
 
         // EOF ?
         if (c2 == EOF)
             break;
 
-        data[off++] = char(c2);
-        _gcount++;
+        data[_gcount++] = char(c2);
         remaining--;
     }
 
@@ -316,33 +333,29 @@ istream& CompressedInputStream::read(char* data, streamsize length) THROW
 
 int CompressedInputStream::processBlock() THROW
 {
-    vector<DecodingTask<DecodingTaskResult>*> tasks;
-
     if (!_initialized.exchange(true, memory_order_acquire))
         readHeader();
 
-    try {
-        // Add a padding area to manage any block with header or temporarily expanded
-        const int blkSize = max(_blockSize + EXTRA_BUFFER_SIZE, _blockSize + (_blockSize >> 4));
+    // Protect against future concurrent modification of the list of block listeners
+    vector<Listener*> blockListeners(_listeners);
+    vector<DecodingTask<DecodingTaskResult>*> tasks;
 
-        // Protect against future concurrent modification of the list of block listeners
-        vector<Listener*> blockListeners(_listeners);
+    try {
+        // Add a padding area to manage any block temporarily expanded
+        const int blkSize = max(_blockSize + EXTRA_BUFFER_SIZE, _blockSize + (_blockSize >> 4));
         int decoded = 0;
 
         while (true) {
-            _sa->_index = 0;
             const int firstBlockId = _blockId.load(memory_order_relaxed);
             int nbTasks = _jobs;
             int jobsPerTask[MAX_CONCURRENCY];
 
             // Assign optimal number of tasks and jobs per task
             if (nbTasks > 1) {
-                // If the number of input blocks is available, use it to optimize
-                // memory usage
                 if (_nbInputBlocks != 0) {
                     // Limit the number of jobs if there are fewer blocks that _jobs
                     // It allows more jobs per task and reduces memory usage.
-                    nbTasks = min(nbTasks, int(_nbInputBlocks));
+                    nbTasks = min(_nbInputBlocks, _jobs);
                 }
 
                 Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
@@ -351,31 +364,31 @@ int CompressedInputStream::processBlock() THROW
                 jobsPerTask[0] = _jobs;
             }
 
-            // Create as many tasks as required
-            for (int taskId = 0; taskId < nbTasks; taskId++) {
-                _buffers[2 * taskId]->_index = 0;
-                _buffers[2 * taskId + 1]->_index = 0;
+            const int bufSize = max(_blockSize + EXTRA_BUFFER_SIZE, _blockSize + (_blockSize >> 4));
 
-                if (_buffers[2 * taskId]->_length < blkSize + 1024) {
-                    // Lazy instantiation of input buffers this.buffers[2*taskId]
-                    // Output buffers this.buffers[2*taskId+1] are lazily instantiated
-                    // by the decoding tasks.
-                    delete[] _buffers[2 * taskId]->_array;
-                    _buffers[2 * taskId]->_array = new byte[blkSize + 1024];
-                    _buffers[2 * taskId]->_length = blkSize + 1024;
+            // Create as many tasks as empty buffers to decode
+            for (int taskId = 0; taskId < nbTasks; taskId++) {
+                if (_buffers[taskId]->_length < bufSize) {
+                    delete[] _buffers[taskId]->_array;
+                    _buffers[taskId]->_array = new byte[bufSize];
+                    _buffers[taskId]->_length = bufSize;        
                 }
 
                 Context copyCtx(_ctx);
                 copyCtx.putInt("jobs", jobsPerTask[taskId]);
+                _buffers[taskId]->_index = 0;
+                _buffers[_jobs + taskId]->_index = 0;
 
-                DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(_buffers[2 * taskId],
-                    _buffers[2 * taskId + 1], blkSize, _transformType,
-                    _entropyType, firstBlockId + taskId + 1, _ibs, _hasher, &_blockId,
+                DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(_buffers[taskId],
+                    _buffers[_jobs + taskId], blkSize, _transformType,
+                    _entropyType, firstBlockId + taskId + 1, 
+                    _ibs, _hasher, &_blockId,
                     blockListeners, copyCtx);
                 tasks.push_back(task);
             }
 
             int skipped = 0;
+            _maxBufferId = nbTasks - 1;
 
             if (tasks.size() == 1) {
                 // Synchronous call
@@ -391,19 +404,11 @@ int CompressedInputStream::processBlock() THROW
                 if (res._skipped == true)
                     skipped++;
 
-                const int size = _sa->_index + decoded;
-
-                if (size > nbTasks * _blockSize)
+                if (decoded > _blockSize)
                     throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
 
-                if (_sa->_length < size) {
-                    _sa->_length = size;
-                    delete[] _sa->_array;
-                    _sa->_array = new byte[_sa->_length];
-                }
-
-                memcpy(&_sa->_array[_sa->_index], &res._data[0], res._decoded);
-                _sa->_index += res._decoded;
+                memcpy(&_buffers[_bufferId]->_array[0], &res._data[0], res._decoded);
+                _buffers[_bufferId]->_index = 0;
 
                 if (blockListeners.size() > 0) {
                     // Notify after transform ... in block order !
@@ -431,25 +436,17 @@ int CompressedInputStream::processBlock() THROW
                     if (status._error != 0)
                         throw IOException(status._msg, status._error); // deallocate in catch block
 
+                    if (status._decoded > _blockSize)
+                        throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
+
                     if (status._skipped == true)
                         skipped++;
                 }
 
-                const int size = _sa->_index + decoded;
-
-                if (size > nbTasks * _blockSize)
-                    throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
-
-                if (_sa->_length < size) {
-                    _sa->_length = size;
-                    delete[] _sa->_array;
-                    _sa->_array = new byte[_sa->_length];
-                }
-
                 for (uint i = 0; i < results.size(); i++) {
                     DecodingTaskResult res = results[i];
-                    memcpy(&_sa->_array[_sa->_index], &res._data[0], res._decoded);
-                    _sa->_index += res._decoded;
+                    memcpy(&_buffers[i]->_array[0], &res._data[0], res._decoded);
+                    _buffers[i]->_index = 0;
 
                     if (blockListeners.size() > 0) {
                         // Notify after transform ... in block order !
@@ -466,12 +463,13 @@ int CompressedInputStream::processBlock() THROW
             tasks.clear();
 #endif
 
+            _bufferId = 0;
+
             // Unless all blocks were skipped, exit the loop (usual case)
             if (skipped != nbTasks)
                 break;
         }
 
-        _sa->_index = 0;
         return decoded;
     }
     catch (IOException&) {
@@ -502,24 +500,15 @@ void CompressedInputStream::close() THROW
         throw IOException(e.what(), e.error());
     }
 
-    // Release resources
-    // Force error on any subsequent write attempt
-    delete[] _sa->_array;
-    _sa->_array = new byte[0];
-    _sa->_length = 0;
-    _sa->_index = -1;
+    _available = 0;
 
+    // Release resources, force error on any subsequent write attempt
     for (int i = 0; i < 2 * _jobs; i++) {
         delete[] _buffers[i]->_array;
         _buffers[i]->_array = new byte[0];
         _buffers[i]->_length = 0;
+        _buffers[i]->_index = -1;
     }
-}
-
-// Return the number of bytes read so far
-uint64 CompressedInputStream::getRead()
-{
-    return (_ibs->read() + 7) >> 3;
 }
 
 void CompressedInputStream::notifyListeners(vector<Listener*>& listeners, const Event& evt)
@@ -671,7 +660,7 @@ T DecodingTask<T>::run() THROW
             CompressedInputStream::notifyListeners(_listeners, evt);
         }
 
-        const int bufferSize = (_blockLength >= preTransformLength + CompressedInputStream::EXTRA_BUFFER_SIZE) ? _blockLength : preTransformLength + CompressedInputStream::EXTRA_BUFFER_SIZE;
+        const int bufferSize = max(_blockLength, preTransformLength + CompressedInputStream::EXTRA_BUFFER_SIZE);
 
         if (_buffer->_length < bufferSize) {
             _buffer->_length = bufferSize;

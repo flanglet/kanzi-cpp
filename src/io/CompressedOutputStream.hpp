@@ -118,9 +118,10 @@ namespace kanzi {
        static const int MAX_CONCURRENCY = 64;
 
        int _blockSize;
-       uint8 _nbInputBlocks;
+       int _bufferId; // index of current write buffer
+       int _nbInputBlocks;
+       int _jobs;
        XXHash32* _hasher;
-       SliceArray<byte>* _sa; // for all blocks
        SliceArray<byte>** _buffers; // input & output per block
        short _entropyType;
        uint64 _transformType;
@@ -129,13 +130,12 @@ namespace kanzi {
        atomic_bool _initialized;
        atomic_bool _closed;
        atomic_int _blockId;
-       int _jobs;
        std::vector<Listener*> _listeners;
        Context _ctx;
 
        void writeHeader() THROW;
 
-       void processBlock(bool force) THROW;
+       void processBlock() THROW;
 
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 
@@ -167,7 +167,7 @@ namespace kanzi {
 
        void close() THROW;
 
-       uint64 getWritten();
+       uint64 getWritten() { return (_obs->written() + 7) >> 3; }
    };
 
 
@@ -191,11 +191,27 @@ namespace kanzi {
    inline ostream& CompressedOutputStream::put(char c) THROW
    {
        try {
-           // If the buffer is full, time to encode
-           if (_sa->_index >= _sa->_length)
-               processBlock(false);
+           if (_buffers[_bufferId]->_index >= _blockSize) {
+               // Current write buffer is full
+               if (_bufferId + 1 < min(_nbInputBlocks, _jobs)) {
+                   _bufferId++;
+                   const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
 
-           _sa->_array[_sa->_index++] = byte(c);
+                   if (_buffers[_bufferId]->_length == 0) {
+                       delete[] _buffers[_bufferId]->_array;
+                       _buffers[_bufferId]->_array = new byte[bufSize];
+                       _buffers[_bufferId]->_length = bufSize;
+                   }
+
+                   _buffers[_bufferId]->_index = 0;
+               }
+               else {
+                   // If all buffers are full, time to encode
+                   processBlock();
+               }
+           }
+
+           _buffers[_bufferId]->_array[_buffers[_bufferId]->_index++] = byte(c);
            return *this;
        }
        catch (exception& e) {
