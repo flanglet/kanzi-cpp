@@ -116,6 +116,7 @@ namespace kanzi {
        static const int SMALL_BLOCK_SIZE = 15;
        static const int CANCEL_TASKS_ID = -1;
        static const int MAX_CONCURRENCY = 64;
+       static const int UNKNOWN_NB_BLOCKS = 65536;
 
        int _blockSize;
        int _bufferId; // index of current write buffer

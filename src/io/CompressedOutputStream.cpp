@@ -62,7 +62,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _blockId = 0;
     _bufferId = 0;
     _blockSize = bSize;
-    _nbInputBlocks = 0;
+    _nbInputBlocks = UNKNOWN_NB_BLOCKS;
     _initialized = false;
     _closed = false;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
@@ -130,9 +130,9 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     // This value is written to the bitstream header to let the decoder make
     // better decisions about memory usage and job allocation in concurrent
     // decompression scenario.
-    const int64 fileSize = ctx.getLong("fileSize", 0);
+    const int64 fileSize = ctx.getLong("fileSize", int64(UNKNOWN_NB_BLOCKS));
     const int nbBlocks = int((fileSize + int64(bSize - 1)) / int64(bSize));
-    _nbInputBlocks = min(nbBlocks, 63);
+    _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
     _jobs = tasks;
     _blockId = 0;
     _bufferId = 0;
@@ -210,7 +210,7 @@ void CompressedOutputStream::writeHeader() THROW
     if (_obs->writeBits(_blockSize >> 4, 28) != 28)
         throw IOException("Cannot write block size to header", Error::ERR_WRITE_FILE);
 
-    if (_obs->writeBits(_nbInputBlocks, 6) != 6)
+    if (_obs->writeBits(_nbInputBlocks & (MAX_CONCURRENCY - 1), 6) != 6)
         throw IOException("Cannot write number of blocks to header", Error::ERR_WRITE_FILE);
 
     if (_obs->writeBits(uint64(0), 4) != 4)
@@ -310,8 +310,7 @@ void CompressedOutputStream::close() THROW
 
     setstate(ios::eofbit);
 
-    // Release resources
-    // Force error on any subsequent write attempt
+    // Release resources, force error on any subsequent write attempt
     for (int i = 0; i < 2 * _jobs; i++) {
         delete[] _buffers[i]->_array;
         _buffers[i]->_array = new byte[0];
@@ -340,12 +339,9 @@ void CompressedOutputStream::processBlock() THROW
 
         // Assign optimal number of tasks and jobs per task
         if (nbTasks > 1) {
-            if (_nbInputBlocks != 0) {
-                // Limit the number of jobs if there are fewer blocks that _jobs
-                // It allows more jobs per task and reduces memory usage.
-                nbTasks = min(_nbInputBlocks, _jobs);
-            }
-
+            // Limit the number of jobs if there are fewer blocks that _jobs
+            // It allows more jobs per task and reduces memory usage.
+            nbTasks = min(_nbInputBlocks, _jobs);
             Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
         }
         else {

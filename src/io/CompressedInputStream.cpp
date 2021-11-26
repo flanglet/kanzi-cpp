@@ -57,13 +57,11 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
     _jobs = tasks;
     _hasher = nullptr;
-    _nbInputBlocks = 0;
+    _nbInputBlocks = UNKNOWN_NB_BLOCKS;
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
-    for (int i = 0; i < _jobs; i++) {
+    for (int i = 0; i < 2 * _jobs; i++)
        _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
-       _buffers[i + _jobs] = new SliceArray<byte>(new byte[0], 0, 0);
-    }
 }
 
 #if __cplusplus >= 201103L
@@ -110,13 +108,11 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
 
     _jobs = tasks;
     _hasher = nullptr;
-    _nbInputBlocks = 0;
+    _nbInputBlocks = UNKNOWN_NB_BLOCKS;
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
-    for (int i = 0; i < _jobs; i++) {
+    for (int i = 0; i < 2 * _jobs; i++) 
        _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
-       _buffers[i + _jobs] = new SliceArray<byte>(new byte[0], 0, 0);
-    }
 }
 
 CompressedInputStream::~CompressedInputStream()
@@ -188,8 +184,12 @@ void CompressedInputStream::readHeader() THROW
         throw IOException(ss.str(), Error::ERR_BLOCK_SIZE);
     }
 
-    // Read number of blocks in input. 0 means 'unknown' and 63 means 63 or more.
+    // Read number of blocks in input. 
     _nbInputBlocks = int(_ibs->readBits(6));
+
+    // 0 means 'unknown' and 63 means 63 or more.
+    if (_nbInputBlocks == 0)
+       _nbInputBlocks = UNKNOWN_NB_BLOCKS;
 
     // Read reserved bits
     _ibs->readBits(4);
@@ -352,12 +352,9 @@ int CompressedInputStream::processBlock() THROW
 
             // Assign optimal number of tasks and jobs per task
             if (nbTasks > 1) {
-                if (_nbInputBlocks != 0) {
-                    // Limit the number of jobs if there are fewer blocks that _jobs
-                    // It allows more jobs per task and reduces memory usage.
-                    nbTasks = min(_nbInputBlocks, _jobs);
-                }
-
+                // Limit the number of jobs if there are fewer blocks that _jobs
+                // It allows more jobs per task and reduces memory usage.
+                nbTasks = min(_nbInputBlocks, _jobs);
                 Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
             }
             else {
