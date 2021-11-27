@@ -68,11 +68,8 @@ int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
         if (szBytes == 0)
            break;
 
-        if (_sba._length < szBytes) {
-            delete[] _sba._array;
-            _sba._length = szBytes + (szBytes >> 3);
-            _sba._array = new byte[_sba._length];
-        }
+        if (_sba._length < szBytes)
+            _sba.realloc(szBytes, false);
 
         _bitstream.readBits(&_sba._array[0], 8 * szBytes);
         _sba._index = 0;

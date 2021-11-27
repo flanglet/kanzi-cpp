@@ -263,11 +263,8 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length) THRO
                     _bufferId++;
                     const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
 
-                    if (_buffers[_bufferId]->_length == 0) {
-                        delete[] _buffers[_bufferId]->_array;
-                        _buffers[_bufferId]->_array = new byte[bufSize];
-                        _buffers[_bufferId]->_length = bufSize;
-                    }
+                    if (_buffers[_bufferId]->_length == 0)
+                        _buffers[_bufferId]->realloc(bufSize, false);
 
                     _buffers[_bufferId]->_index = 0;
                 }
@@ -312,10 +309,8 @@ void CompressedOutputStream::close() THROW
 
     // Release resources, force error on any subsequent write attempt
     for (int i = 0; i < 2 * _jobs; i++) {
-        delete[] _buffers[i]->_array;
-        _buffers[i]->_array = new byte[0];
-        _buffers[i]->_length = 0;
-        _buffers[i]->_index = -1;
+        _buffers[i]->realloc(0);
+        _buffers[i]->_index = 0;
     }
 }
 
@@ -519,11 +514,8 @@ T EncodingTask<T>::run() THROW
         TransformSequence<byte>* transform = TransformFactory<byte>::newTransform(_ctx, _transformType);
         const int requiredSize = transform->getMaxEncodedLength(_blockLength);
 
-        if (_buffer->_length < requiredSize) {
-            _buffer->_length = requiredSize;
-            delete[] _buffer->_array;
-            _buffer->_array = new byte[_buffer->_length];
-        }
+        if (_buffer->_length < requiredSize)
+            _buffer->realloc(requiredSize, false);
 
         // Forward transform (ignore error, encode skipFlags)
         _buffer->_index = 0;
@@ -559,12 +551,9 @@ T EncodingTask<T>::run() THROW
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
-        if (_data->_length < postTransformLength) {
-            // Rare case where the transform expanded the input
-            _data->_length = max(1024, postTransformLength + (postTransformLength >> 5));
-            delete[] _data->_array;
-            _data->_array = new byte[_data->_length];
-        }
+        // Rare case where the transform expanded the input
+        if (_data->_length < postTransformLength)
+            _data->realloc(max(1024, postTransformLength + (postTransformLength >> 5)), false);
 
         _data->_index = 0;
         ostreambuf<char> buf(reinterpret_cast<char*>(&_data->_array[_data->_index]), streamsize(_data->_length));

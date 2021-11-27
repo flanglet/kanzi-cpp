@@ -61,11 +61,8 @@ int FPAQEncoder::encode(const byte block[], uint blkptr, uint count) THROW
     while (startChunk < end) {
         const uint chunkSize = min(DEFAULT_CHUNK_SIZE, end - startChunk);
 
-        if (_sba._length < int(chunkSize + (chunkSize >> 3))) {
-            delete[] _sba._array;
-            _sba._length = chunkSize + (chunkSize >> 3);
-            _sba._array = new byte[_sba._length];
-        }
+        if (_sba._length < int(chunkSize + (chunkSize >> 3)))
+            _sba.realloc(chunkSize + (chunkSize >> 3), false);
 
         _sba._index = 0;
         const uint endChunk = startChunk + chunkSize;

@@ -110,11 +110,8 @@ namespace kanzi {
                continue;
 
            // Check that the output buffer has enough room. If not, allocate a new one.
-           if (out->_length < requiredSize) {
-               delete[] out->_array;
-               out->_array = new byte[requiredSize];
-               out->_length = requiredSize;
-           }
+           if (out->_length < requiredSize)
+               out->realloc(requiredSize, false);
 
            const int savedIIdx = in->_index;
            const int savedOIdx = out->_index;
@@ -185,11 +182,8 @@ namespace kanzi {
                continue;
 
            // Check that the output buffer has enough room. If not, allocate a new one.
-           if (out->_length < output._length) {
-               delete[] out->_array;
-               out->_array = new byte[output._length];
-               out->_length = output._length;
-           }
+           if (out->_length < output._length) 
+               out->realloc(output._length, false);
 
            const int savedIIdx = in->_index;
            const int savedOIdx = out->_index;
