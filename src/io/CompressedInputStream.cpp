@@ -365,8 +365,11 @@ int CompressedInputStream::processBlock() THROW
 
             // Create as many tasks as empty buffers to decode
             for (int taskId = 0; taskId < nbTasks; taskId++) {
-                if (_buffers[taskId]->_length < bufSize)
-                    _buffers[taskId]->realloc(bufSize, false);
+                if (_buffers[taskId]->_length < bufSize) {
+                    delete[] _buffers[taskId]->_array;
+                    _buffers[taskId]->_array = new byte[bufSize];
+                    _buffers[taskId]->_length = bufSize;        
+                }
 
                 Context copyCtx(_ctx);
                 copyCtx.putInt("jobs", jobsPerTask[taskId]);
@@ -498,7 +501,9 @@ void CompressedInputStream::close() THROW
 
     // Release resources, force error on any subsequent write attempt
     for (int i = 0; i < 2 * _jobs; i++) {
-        _buffers[i]->realloc(0);
+        delete[] _buffers[i]->_array;
+        _buffers[i]->_array = new byte[0];
+        _buffers[i]->_length = 0;
         _buffers[i]->_index = 0;
     }
 }
@@ -575,8 +580,11 @@ T DecodingTask<T>::run() THROW
 
     const int r = int((read + 7) >> 3);
 
-    if (_data->_length < max(_blockLength, r))
-        _data->realloc(max(_blockLength, r), false);
+    if (_data->_length < max(_blockLength, r)) {
+        _data->_length = max(_blockLength, r);
+        delete[] _data->_array;
+        _data->_array = new byte[_data->_length];
+    }
 
     for (int n = 0; read > 0; ) {
         const uint chkSize = uint(min(read, uint64(1) << 30));
@@ -651,8 +659,11 @@ T DecodingTask<T>::run() THROW
 
         const int bufferSize = max(_blockLength, preTransformLength + CompressedInputStream::EXTRA_BUFFER_SIZE);
 
-        if (_buffer->_length < bufferSize)
-            _buffer->realloc(bufferSize, false);
+        if (_buffer->_length < bufferSize) {
+            _buffer->_length = bufferSize;
+            delete[] _buffer->_array;
+            _buffer->_array = new byte[_buffer->_length];
+        }
 
         const int savedIdx = _data->_index;
         _ctx.putInt("size", preTransformLength);

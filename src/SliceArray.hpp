@@ -45,8 +45,6 @@ namespace kanzi
 
       // Utility methods
       static bool isValid(const SliceArray& sa);
-
-      SliceArray& realloc(int newLength, bool keepData = true);
    };
 
    template <class T>
@@ -61,27 +59,6 @@ namespace kanzi
           return false;
 
        return (sa._index <= sa._length);
-   }
-
-   template <class T>
-   inline SliceArray<T>& SliceArray<T>::realloc(int newLength, bool keepData) {
-       if ((newLength >= 0) && (newLength <= _length)) {
-          _length = newLength;
-          return *this;
-       }
-
-       T* arr = new T[newLength];
-
-       if (_array != nullptr) {
-          if ((keepData == true) && (_length != 0))
-             memcpy(&arr[0], &_array[0], _length);
-
-          delete[] _array;
-       }
-
-       _array = arr;
-       _length = newLength;
-       return *this;
    }
 
 #if __cplusplus < 201103L
