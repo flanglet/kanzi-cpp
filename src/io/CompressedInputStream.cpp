@@ -48,6 +48,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
     _bufferId = 0;
     _maxBufferId = 0;
     _blockSize = 0;
+    _bufferThreshold = 0;
     _available = 0;
     _entropyType = EntropyCodecFactory::NONE_TYPE;
     _transformType = TransformFactory<byte>::NONE_TYPE;
@@ -91,6 +92,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
     _bufferId = 0;
     _maxBufferId = 0;
     _blockSize = 0;
+    _bufferThreshold = 0;
     _available = 0;
     _entropyType = EntropyCodecFactory::NONE_TYPE;
     _transformType = TransformFactory<byte>::NONE_TYPE;
@@ -177,6 +179,7 @@ void CompressedInputStream::readHeader() THROW
     // Read block size
     _blockSize = int(_ibs->readBits(28)) << 4;
     _ctx.putInt("blockSize", _blockSize);
+    _bufferThreshold = _blockSize;
 
     if ((_blockSize < MIN_BITSTREAM_BLOCK_SIZE) || (_blockSize > MAX_BITSTREAM_BLOCK_SIZE)) {
         stringstream ss;
@@ -247,6 +250,9 @@ int CompressedInputStream::_get(int inc) THROW
 {
     try {
         if (_available == 0) {
+            if (_closed.load(memory_order_relaxed) == true)
+                throw ios_base::failure("Stream closed");
+
             _available = processBlock();
 
             if (_available == 0) {
@@ -287,16 +293,11 @@ istream& CompressedInputStream::read(char* data, streamsize length) THROW
     if (remaining < 0)
         throw ios_base::failure("Invalid buffer size");
 
-    if (_closed.load(memory_order_relaxed) == true) {
-        setstate(ios::badbit);
-        throw ios_base::failure("Stream closed");
-    }
-
     _gcount = 0;
 
     while (remaining > 0) {
         // Limit to number of available bytes in current buffer
-        const int lenChunk = min(remaining, min(_available, _blockSize - _buffers[_bufferId]->_index));
+        const int lenChunk = min(remaining, min(_available, _bufferThreshold - _buffers[_bufferId]->_index));
 
         if (lenChunk > 0) {
             // Process a chunk of in-buffer data. No access to bitstream required
@@ -498,6 +499,7 @@ void CompressedInputStream::close() THROW
     }
 
     _available = 0;
+    _bufferThreshold = 0;
 
     // Release resources, force error on any subsequent write attempt
     for (int i = 0; i < 2 * _jobs; i++) {

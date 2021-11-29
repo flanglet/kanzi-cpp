@@ -62,6 +62,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _blockId = 0;
     _bufferId = 0;
     _blockSize = bSize;
+    _bufferThreshold = bSize;
     _nbInputBlocks = UNKNOWN_NB_BLOCKS;
     _initialized = false;
     _closed = false;
@@ -131,12 +132,14 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     // better decisions about memory usage and job allocation in concurrent
     // decompression scenario.
     const int64 fileSize = ctx.getLong("fileSize", int64(UNKNOWN_NB_BLOCKS));
-    const int nbBlocks = int((fileSize + int64(bSize - 1)) / int64(bSize));
+    const int nbBlocks = (fileSize == int64(UNKNOWN_NB_BLOCKS)) ? UNKNOWN_NB_BLOCKS : 
+                           int((fileSize + int64(bSize - 1)) / int64(bSize));
     _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
     _jobs = tasks;
     _blockId = 0;
     _bufferId = 0;
     _blockSize = bSize;
+    _bufferThreshold = bSize;
     _initialized = false;
     _closed = false;
 
@@ -241,14 +244,11 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length) THRO
     if (remaining < 0)
         throw IOException("Invalid buffer size");
 
-    if (_closed.load(memory_order_relaxed) == true)
-        throw ios_base::failure("Stream closed");
-
     int off = 0;
 
     while (remaining > 0) {
         // Limit to number of available bytes in current buffer
-        const int lenChunk = min(remaining, _blockSize - _buffers[_bufferId]->_index);
+        const int lenChunk = min(remaining, _bufferThreshold - _buffers[_bufferId]->_index);
 
         if (lenChunk > 0) {
             // Process a chunk of in-buffer data. No access to bitstream required
@@ -257,7 +257,7 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length) THRO
             off += lenChunk;
             remaining -= lenChunk;
 
-            if (_buffers[_bufferId]->_index >= _blockSize) {
+            if (_buffers[_bufferId]->_index >= _bufferThreshold) {
                 // Current write buffer is full
                 if (_bufferId + 1 < min(_nbInputBlocks, _jobs)) {
                     _bufferId++;
@@ -309,6 +309,7 @@ void CompressedOutputStream::close() THROW
     }
 
     setstate(ios::eofbit);
+    _bufferThreshold = 0;
 
     // Release resources, force error on any subsequent write attempt
     for (int i = 0; i < 2 * _jobs; i++) {

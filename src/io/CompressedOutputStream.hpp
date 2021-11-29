@@ -122,6 +122,7 @@ namespace kanzi {
        int _bufferId; // index of current write buffer
        int _nbInputBlocks;
        int _jobs;
+       int _bufferThreshold;
        XXHash32* _hasher;
        SliceArray<byte>** _buffers; // input & output per block
        short _entropyType;
@@ -192,7 +193,7 @@ namespace kanzi {
    inline ostream& CompressedOutputStream::put(char c) THROW
    {
        try {
-           if (_buffers[_bufferId]->_index >= _blockSize) {
+           if (_buffers[_bufferId]->_index >= _bufferThreshold) {
                // Current write buffer is full
                if (_bufferId + 1 < min(_nbInputBlocks, _jobs)) {
                    _bufferId++;
@@ -207,6 +208,9 @@ namespace kanzi {
                    _buffers[_bufferId]->_index = 0;
                }
                else {
+                   if (_closed.load(memory_order_relaxed) == true)
+                       throw ios_base::failure("Stream closed");
+
                    // If all buffers are full, time to encode
                    processBlock();
                }

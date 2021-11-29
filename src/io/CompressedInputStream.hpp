@@ -151,6 +151,7 @@ namespace kanzi
        int _maxBufferId; // max index of read buffer
        int _nbInputBlocks;
        int _jobs;
+       int _bufferThreshold;
        int _available; // decoded not consumed bytes
        XXHash32* _hasher;
        SliceArray<byte>** _buffers; // input & output per block
