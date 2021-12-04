@@ -56,6 +56,7 @@ LIB_OBJECTS=$(LIB_SOURCES:.cpp=.o)
 
 TEST_SOURCES=test/TestEntropyCodec.cpp \
 	test/TestBWT.cpp \
+	test/TestCompressedStream.cpp \
 	test/TestDefaultBitStream.cpp \
 	test/TestTransforms.cpp 
 TEST_OBJECTS=$(TEST_SOURCES:.cpp=.o)
