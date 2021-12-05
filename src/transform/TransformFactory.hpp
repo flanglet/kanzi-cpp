@@ -213,7 +213,7 @@ namespace kanzi {
 			return new TextCodec(ctx);
 		}
 
-      case ROLZ_TYPE:
+		case ROLZ_TYPE:
 			return new ROLZCodec(ctx);
 
 		case ROLZX_TYPE:
