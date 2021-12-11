@@ -95,7 +95,10 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     it = args.find("block");
 
     if (it == args.end()) {
-        _blockSize = DEFAULT_BLOCK_SIZE;
+        if (_level < 7)
+            _blockSize = DEFAULT_BLOCK_SIZE;
+        else // level 7 or 8
+            _blockSize = (_level >= 9) ? 4 * DEFAULT_BLOCK_SIZE : 2 * DEFAULT_BLOCK_SIZE;
     }
     else {
         _blockSize = atoi(it->second.c_str());

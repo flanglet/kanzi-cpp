@@ -42,7 +42,7 @@ static const int ARG_IDX_LEVEL = 9;
 //static const int ARG_IDX_FROM = 10;
 //static const int ARG_IDX_TO = 11;
 
-static const char* APP_HEADER = "Kanzi 1.9 (C) 2021,  Frederic Langlet";
+static const char* APP_HEADER = "Kanzi 2.0 (c) Frederic Langlet";
 
 
 #ifdef CONCURRENCY_ENABLED
@@ -93,7 +93,7 @@ void printHelp(Printer& log, const string& mode)
 
    if (mode.compare(0, 1, "c") == 0) {
        log.println("   -b, --block=<size>", true);
-       log.println("        size of blocks (default 4 MB, max 1 GB, min 1 KB).\n", true);
+       log.println("        size of blocks (default 4|8|16 MB based on level, max 1 GB, min 1 KB).\n", true);
        log.println("   -l, --level=<compression>", true);
        log.println("        set the compression level [0..9]", true);
        log.println("        Providing this option forces entropy and transform.", true);
