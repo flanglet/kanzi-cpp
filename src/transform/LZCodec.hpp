@@ -113,11 +113,11 @@ namespace kanzi {
 
        static void emitLiterals(const byte src[], byte dst[], int len);
 
+       static int findMatch(const byte block[], const int pos, const int ref, const int maxMatch);
+
        static int readLength(const byte block[], int& pos);
 
        static int32 hash(const byte* p);
-
-       static int findMatch(byte block[], const int pos, const int ref, int maxMatch);
    };
 
    class LZPCodec : public Transform<byte> {
@@ -160,6 +160,8 @@ namespace kanzi {
 
        int32* _hashes;
        int _hashSize;
+
+       static int findMatch(const byte block[], const int pos, const int ref, const int maxMatch);
    };
 
    template <bool T>
@@ -225,12 +227,9 @@ namespace kanzi {
    }
 
    template <bool T>
-   inline int LZXCodec<T>::findMatch(byte src[], const int srcIdx, const int ref, int maxMatch)
+   inline int LZXCodec<T>::findMatch(const byte src[], const int srcIdx, const int ref, const int maxMatch)
    {
-       if (memcmp(&src[ref], &src[srcIdx], 4) != 0)
-           return 0;
-
-       int bestLen =  4;
+       int bestLen = 0;
 
        while ((bestLen + 4 < maxMatch) && (memcmp(&src[ref + bestLen], &src[srcIdx + bestLen], 4) == 0))
            bestLen += 4;
@@ -240,5 +239,23 @@ namespace kanzi {
 
        return bestLen;
    }
+
+
+
+   inline int LZPCodec::findMatch(const byte src[], const int srcIdx, const int ref, const int maxMatch)
+   {
+       int bestLen = 0;
+
+       while ((bestLen + 4 < maxMatch) && (memcmp(&src[ref + bestLen], &src[srcIdx + bestLen], 4) == 0))
+           bestLen += 4;
+
+       if (bestLen > MIN_MATCH - 4) {
+           while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))
+               bestLen++;
+       }
+
+       return bestLen;
+   }
+
 }
 #endif

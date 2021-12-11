@@ -112,11 +112,16 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         int32 h = hash(&src[srcIdx]);
         int ref = _hashes[h];
         _hashes[h] = srcIdx;
+
+        if (ref <= minRef) {
+            srcIdx++;
+            continue;
+        }
+
         int bestLen = 0;
 
-        if (ref > minRef) {
-            const int maxMatch = min(srcEnd - srcIdx, MAX_MATCH);
-            bestLen = findMatch(src, srcIdx, ref, maxMatch);
+        if (memcmp(&src[srcIdx], &src[ref], 4) == 0) {
+            bestLen = 4 + findMatch(src, srcIdx + 4, ref + 4, min(srcEnd - srcIdx, MAX_MATCH));
         }
 
         // No good match ?
@@ -132,8 +137,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         int bestLen2 = 0;
 
         if (ref2 > minRef + 1) {
-            const int maxMatch = min(srcEnd - srcIdx - 1, MAX_MATCH);
-            bestLen2 = findMatch(src, srcIdx + 1, ref2, maxMatch);
+            bestLen2 = findMatch(src, srcIdx + 1, ref2, min(srcEnd - srcIdx - 1, MAX_MATCH));
         }
 
         // Select best match
@@ -307,7 +311,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
         repd = dist;
 
         // Sanity check
-        if ((dstIdx < dist) || (dist > maxDist) ||  (mEnd > dstEnd + 16)) {
+        if ((dstIdx < dist) || (dist > maxDist) || (mEnd > dstEnd + 16)) {
             res = false;
             goto exit;
         }
@@ -359,7 +363,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     byte* dst = &output._array[output._index];
     byte* src = &input._array[input._index];
-    const int srcEnd = count - 8;
+    const int srcEnd = count;
     const int dstEnd = output._length - 4;
 
     if (_hashSize == 0) {
@@ -378,23 +382,15 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int dstIdx = 4;
     int minRef = 4;
 
-    while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
+    while ((srcIdx < srcEnd - MIN_MATCH) && (dstIdx < dstEnd)) {
         const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
         const int32 ref = _hashes[h];
         _hashes[h] = srcIdx;
         int bestLen = 0;
 
         // Find a match
-        if ((ref > minRef) && (memcmp(&src[ref], &src[srcIdx], 4) == 0)) {
-            const int maxMatch = srcEnd - srcIdx;
-            bestLen = 4;
-
-            while ((bestLen < maxMatch) && (memcmp(&src[ref + bestLen], &src[srcIdx + bestLen], 4) == 0))
-                bestLen += 4;
-
-            while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))
-                bestLen++;
-        }
+        if ((ref > minRef) && (memcmp(&src[ref+MIN_MATCH-4], &src[srcIdx+MIN_MATCH-4], 4) == 0))
+            bestLen = findMatch(src, srcIdx, ref, srcEnd - srcIdx);
 
         // No good match ?
         if (bestLen < MIN_MATCH) {
@@ -430,7 +426,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         dst[dstIdx++] = byte(bestLen);
     }
 
-    while ((srcIdx < srcEnd + 8) && (dstIdx < dstEnd)) {
+    while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
         const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
         const int ref = _hashes[h];
         _hashes[h] = srcIdx;
@@ -511,7 +507,7 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
 
         if (srcIdx >= srcEnd)
-            break;
+            return false;
 
         mLen += int(src[srcIdx++]);
 
