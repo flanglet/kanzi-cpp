@@ -121,7 +121,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         int bestLen = 0;
 
         if (memcmp(&src[srcIdx], &src[ref], 4) == 0) {
-            bestLen = 4 + findMatch(src, srcIdx + 4, ref + 4, min(srcEnd - srcIdx, MAX_MATCH));
+            bestLen = 4 + findMatch(src, srcIdx + 4, ref + 4, min(srcEnd - srcIdx - 4, MAX_MATCH));
         }
 
         // No good match ?
