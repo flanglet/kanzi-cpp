@@ -147,7 +147,7 @@ Multithreading is supported. Compiled successfully with C++11, C++14, C++17.
 
 ### Linux
 Go to the source directory and run 'make clean && make'. The Makefile contains all the necessary
-targets. Build successfully on Ubuntu with g++ 8.4.0 and g++ 9.3.0, clang++ 10.0.0
+targets. Build successfully on Ubuntu with g++ 8.4.0, g++ 9.3.0, g++ 10.3.0, clang++ 10.0.0
 and icc 19.0.0.117. Multithreading is supported with g++ version 5.0.0 or newer.
 Compiled successfully with C++11, C++14, C++17.
 
