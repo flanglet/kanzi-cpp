@@ -76,12 +76,12 @@ inline std::string __trim(std::string& str, bool left, bool right)
 
     if (left) {
        while (begin <= end && (str[begin] <= 0x20 || str[begin] == 0x7F))
-           begin++;
+          begin++;
     }
 
     if (right) {
        while (end > begin && (str[end] <= 0x20 || str[end] == 0x7F))
-         end--;
+          end--;
     }
 
     return str.substr(begin, end - begin + 1);
@@ -140,30 +140,7 @@ inline bool samePaths(std::string& f1, std::string& f2)
    return true;
 }
 
-inline std::string toString(int data[], int length) {
-   std::stringstream ss;
 
-   for (int i = 0; i < length; i++) {
-       ss << data[i] << " ";
-   }
-
-   return ss.str();
-}
-
-inline void fromString(std::string s, int data[], int length) {
-   int n = 0;
-   int idx = 0;
-
-   for (uint i = 0; (i < s.length()) && (idx < length); i++) {
-      if ((s[i] >= '0') && (s[i] <= '9'))  {
-         n = (10 * n) + s[i] - '0';
-         continue;
-      }
-
-      data[idx++] = n;
-      n = 0;
-   }
-}
 
 #if __cplusplus >= 201103L || _MSC_VER >= 1700
 
