@@ -175,7 +175,7 @@ namespace kanzi
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 
    public:
-       CompressedInputStream(InputStream& is, int jobs);
+       CompressedInputStream(InputStream& is, int jobs = 1);
 
 #if __cplusplus >= 201103L
        CompressedInputStream(InputStream& is, Context& ctx,

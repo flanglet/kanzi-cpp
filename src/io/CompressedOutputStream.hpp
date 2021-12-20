@@ -142,7 +142,8 @@ namespace kanzi {
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 
    public:
-       CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform, int blockSize, int jobs, bool checksum);
+       CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform, 
+          int blockSize = 4 * 1024 * 1024, int jobs = 1, bool checksum = false);
 
 #if __cplusplus >= 201103L
        CompressedOutputStream(OutputStream& os, Context& ctx,
