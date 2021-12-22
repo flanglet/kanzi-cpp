@@ -33,14 +33,11 @@ int HuffmanCommon::generateCanonicalCodes(uint16 sizes[], uint codes[], uint sym
             buf[((sizes[s] - 1) << 8) | s] = byte(1);
         }
 
-        for (int i = 0, n = 0; i < BUFFER_SIZE; i++) {
+        for (int i = 0, n = 0; n < count; i++) {
             if (buf[i] == byte(0))
                 continue;
 
             symbols[n++] = i & 0xFF;
-
-            if (n == count)
-                break;
         }
     }
 
