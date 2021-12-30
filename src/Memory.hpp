@@ -24,7 +24,7 @@ namespace kanzi {
    static inline uint32 bswap32(uint32 x) {
    #if defined(__clang__)
 		return __builtin_bswap32(x);
-   #elif defined(__GNUC__) && ((__GNUC__ << 16) + __GNUC_MINOR__ >= (5 << 16) + 0)
+   #elif defined(__GNUC__) && (__GNUC__ >= 5)
 		return __builtin_bswap32(x);
    #elif defined(_MSC_VER)
 		return uint32(_byteswap_ulong(x));
@@ -41,7 +41,7 @@ namespace kanzi {
    static inline uint16 bswap16(uint16 x) {
    #if defined(__clang__)
 		return __builtin_bswap16(x);
-   #elif defined(__GNUC__)
+   #elif defined(__GNUC__) && (__GNUC__ >= 5)
 		return __builtin_bswap16(x);
    #elif defined(_MSC_VER)
 		return _byteswap_ushort(x);
@@ -54,7 +54,7 @@ namespace kanzi {
    static inline uint64 bswap64(uint64 x) {
    #if defined(__clang__)
 		return __builtin_bswap64(x);
-   #elif defined(__GNUC__)
+   #elif defined(__GNUC__) && (__GNUC__ >= 5)
 		return __builtin_bswap64(x);
    #elif defined(_MSC_VER)
 		return uint64(_byteswap_uint64(x));
