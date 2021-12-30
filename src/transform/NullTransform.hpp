@@ -60,13 +60,7 @@ namespace kanzi
        if (output._index + length > output._length)
            return false;
 
-       if (&input._array[0] == &output._array[0]) {
-           if (input._index != output._index)
-               memmove(&output._array[output._index], &input._array[input._index], length);
-       } else {
-           memcpy(&output._array[output._index], &input._array[input._index], length);
-       }
-
+       memcpy(&output._array[output._index], &input._array[input._index], length);
        input._index += length;
        output._index += length;
        return true;
