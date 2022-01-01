@@ -14,7 +14,6 @@ limitations under the License.
 */
 
 
-#include "../types.hpp"
 #include "CMPredictor.hpp"
 
 using namespace kanzi;

@@ -165,7 +165,7 @@ namespace kanzi {
        #elif defined(__clang__)
            return __builtin_ctz(x);
        #else
-          return _log2((x & (~x + 1)) - 1);
+           return _log2((x & (~x + 1)) - 1);
        #endif
    }
 
@@ -182,7 +182,7 @@ namespace kanzi {
        #elif defined(__clang__)
            return __builtin_ctzll(x);
        #else
-          return _log2((x & (~x + 1)) - 1);
+           return _log2((x & (~x + 1)) - 1);
        #endif
    }
 

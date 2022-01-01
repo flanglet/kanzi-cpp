@@ -21,8 +21,6 @@ limitations under the License.
 namespace kanzi
 {
 
-   // Context model predictor based on BCM by Ilya Muravyov.
-   // See https://github.com/encode84/bcm
    class CMPredictor : public Predictor
    {
    private:
