@@ -60,19 +60,19 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
     // Split block into chunks, read bit array from bitstream and decode chunk
     while (startChunk < end) {
         const uint chunkSize = min(length, end - startChunk);
-        const int szBytes = int(EntropyUtils::readVarInt(_bitstream));
-        _current = _bitstream.readBits(56);
 
-        if (szBytes == 0)
-           break;
-
-        if (_sba._length < szBytes) {
+        if (_sba._length < int(chunkSize + (chunkSize >> 3))) {
             delete[] _sba._array;
-            _sba._length = szBytes + (szBytes >> 3);
+            _sba._length = int(chunkSize + (chunkSize >> 3));
             _sba._array = new byte[_sba._length];
         }
 
-        _bitstream.readBits(&_sba._array[0], 8 * szBytes);
+        const int szBytes = int(EntropyUtils::readVarInt(_bitstream));
+        _current = _bitstream.readBits(56);
+
+        if (szBytes != 0)
+           _bitstream.readBits(&_sba._array[0], 8 * szBytes);
+
         _sba._index = 0;
         const uint endChunk = startChunk + chunkSize;
 
