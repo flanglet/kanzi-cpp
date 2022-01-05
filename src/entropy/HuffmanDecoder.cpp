@@ -117,7 +117,7 @@ void HuffmanDecoder::buildDecodingTable(int count)
             length = _sizes[s];
 
         // code -> size, symbol
-        const uint16 val = (s << 8) | uint16(_sizes[s]);
+        const uint16 val = (s << 8) | _sizes[s];
 
         // All DECODING_BATCH_SIZE bit values read from the bit stream and
         // starting with the same prefix point to symbol s

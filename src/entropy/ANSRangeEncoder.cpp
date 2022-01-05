@@ -117,7 +117,6 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
     // Encode all frequencies (but the first one) by chunks
     for (int i = 1; i < alphabetSize; i += chkSize) {
         uint max = frequencies[alphabet[i]] - 1;
-        uint logMax = 0;
         const int endj = min(i + chkSize, alphabetSize);
 
         // Search for max frequency log size in next chunk
@@ -126,9 +125,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
                 max = frequencies[alphabet[j]] - 1;
         }
 
-        while (uint(1 << logMax) <= max)
-            logMax++;
-
+        const uint logMax = (max == 0) ? 0 : Global::_log2(max) + 1;
         _bitstream.writeBits(logMax, llr);
 
         if (logMax == 0) // all frequencies equal one in this chunk
