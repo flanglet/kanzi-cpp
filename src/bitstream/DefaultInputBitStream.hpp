@@ -113,7 +113,7 @@ namespace kanzi {
                uint64 val = 0;
 
                while (_position <= _maxPosition) {
-                   val |= ((uint64(_buffer[_position++]) & 0xFF) << shift);
+                   val |= (uint64(_buffer[_position++]) << shift);
                    shift -= 8;
                }
 

@@ -46,8 +46,8 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
     if (isClosed() == true)
         throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);
 
-    int remaining = count;
-    int start = 0;
+    uint remaining = count;
+    uint start = 0;
 
     // Byte aligned cursor ?
     if ((_availBits & 7) == 0) {
@@ -58,10 +58,10 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
             remaining -= 8;
         }
 
-        const int maxPos = _bufferSize - 8;
+        const uint maxPos = _bufferSize - 8;
 
         // Copy bits array to internal buffer
-        while (uint(remaining >> 3) >= maxPos - _position) {
+        while ((remaining >> 3) >= maxPos - _position) {
             memcpy(&_buffer[_position], &bits[start], maxPos - _position);
             start += (maxPos - _position);
             remaining -= ((maxPos - _position) << 3);
@@ -69,7 +69,7 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
             flush();
         }
 
-        const int r = (remaining >> 6) << 3;
+        const uint r = (remaining >> 6) << 3;
 
         if (r > 0) {
             memcpy(&_buffer[_position], &bits[start], r);
@@ -81,30 +81,25 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
     else {
         // Not byte aligned
         if (remaining >= 64) {
-            const uint r = 64 - _availBits;
+            const int r = 64 - _availBits;
+            const int a = _availBits;
 
             while (remaining >= 64) {
                const uint64 value = uint64(BigEndian::readLong64(&bits[start]));
                _current |= (value >> r);
                pushCurrent();
-               _current = (value << (64 - r));
+               _current = (value << a);
                start += 8;
                remaining -= 64;
             }
 
-            _availBits -= r;
+            _availBits = a;
         }
     }
 
     // Last bytes
-    while (remaining >= 8) {
-        writeBits(uint64(bits[start]), 8);
-        start++;
-        remaining -= 8;
-    }
-
     if (remaining > 0)
-        writeBits(uint64(bits[start]) >> (8 - remaining), remaining);
+         writeBits(uint64(BigEndian::readLong64(&bits[start])) >> (64 - remaining), remaining);
 
     return count;
 }
