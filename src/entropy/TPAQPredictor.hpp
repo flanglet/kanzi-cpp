@@ -534,19 +534,15 @@ namespace kanzi
 
        // Detect match
        if ((_matchPos != 0) && (_pos - _matchPos <= _bufferMask)) {
-           int r = _matchLen + 2;
+           const int endR = std::min(std::min(_pos, _matchPos), MAX_LENGTH);
+           int r;
 
-           while (r <= MAX_LENGTH) {
-               if ((_buffer[(_pos - r - 1) & _bufferMask]) != (_buffer[(_matchPos - r - 1) & _bufferMask]))
-                   break;
-
-               if ((_buffer[(_pos - r) & _bufferMask]) != (_buffer[(_matchPos - r) & _bufferMask]))
-                   break;
-
-               r += 2;
+           for (r = 3; r < endR; r += 2) {
+               if (memcmp(&_buffer[_pos - r], &_buffer[_matchPos - r], 2) != 0)
+		             break;
            }
 
-           _matchLen = r - 2;
+           _matchLen = r - 3;
        }
    }
 

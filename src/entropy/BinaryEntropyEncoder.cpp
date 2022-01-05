@@ -70,8 +70,16 @@ int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) TH
         _sba._index = 0;
         const uint endChunk = startChunk + chunkSize;
 
-        for (uint i = startChunk; i < endChunk; i++) 
-            encodeByte(block[i]);
+        for (uint i = startChunk; i < endChunk; i++) {
+            encodeBit(int(block[i]) & 0x80, _predictor->get());
+            encodeBit(int(block[i]) & 0x40, _predictor->get());
+            encodeBit(int(block[i]) & 0x20, _predictor->get());
+            encodeBit(int(block[i]) & 0x10, _predictor->get());
+            encodeBit(int(block[i]) & 0x08, _predictor->get());
+            encodeBit(int(block[i]) & 0x04, _predictor->get());
+            encodeBit(int(block[i]) & 0x02, _predictor->get());
+            encodeBit(int(block[i]) & 0x01, _predictor->get());
+        }
 
         EntropyUtils::writeVarInt(_bitstream, uint32(_sba._index));
         _bitstream.writeBits(&_sba._array[0], 8 * _sba._index);
@@ -82,18 +90,6 @@ int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) TH
     }
 
     return count;
-}
-
-void BinaryEntropyEncoder::encodeByte(byte val)
-{
-    encodeBit(int(val) & 0x80, _predictor->get());
-    encodeBit(int(val) & 0x40, _predictor->get());
-    encodeBit(int(val) & 0x20, _predictor->get());
-    encodeBit(int(val) & 0x10, _predictor->get());
-    encodeBit(int(val) & 0x08, _predictor->get());
-    encodeBit(int(val) & 0x04, _predictor->get());
-    encodeBit(int(val) & 0x02, _predictor->get());
-    encodeBit(int(val) & 0x01, _predictor->get());
 }
 
 void BinaryEntropyEncoder::_dispose()
@@ -112,4 +108,17 @@ void BinaryEntropyEncoder::flush()
     _sba._index += 4;
     _low <<= 32;
     _high = (_high << 32) | MASK_0_32;
+}
+
+// no inline
+void BinaryEntropyEncoder::encodeByte(byte val)
+{
+    encodeBit(int(val) & 0x80, _predictor->get());
+    encodeBit(int(val) & 0x40, _predictor->get());
+    encodeBit(int(val) & 0x20, _predictor->get());
+    encodeBit(int(val) & 0x10, _predictor->get());
+    encodeBit(int(val) & 0x08, _predictor->get());
+    encodeBit(int(val) & 0x04, _predictor->get());
+    encodeBit(int(val) & 0x02, _predictor->get());
+    encodeBit(int(val) & 0x01, _predictor->get());
 }

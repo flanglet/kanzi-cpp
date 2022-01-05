@@ -76,8 +76,16 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
         _sba._index = 0;
         const uint endChunk = startChunk + chunkSize;
 
-        for (uint i = startChunk; i < endChunk; i++)
-            block[i] = decodeByte();
+        for (uint i = startChunk; i < endChunk; i++) {
+           block[i] = byte((decodeBit(_predictor->get()) << 7)
+                         | (decodeBit(_predictor->get()) << 6)
+                         | (decodeBit(_predictor->get()) << 5)
+                         | (decodeBit(_predictor->get()) << 4)
+                         | (decodeBit(_predictor->get()) << 3)
+                         | (decodeBit(_predictor->get()) << 2)
+                         | (decodeBit(_predictor->get()) << 1)
+                         |  decodeBit(_predictor->get()));
+        }
 
         startChunk = endChunk;
     }
@@ -85,17 +93,6 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
     return count;
 }
 
-byte BinaryEntropyDecoder::decodeByte()
-{
-    return byte((decodeBit(_predictor->get()) << 7)
-        | (decodeBit(_predictor->get()) << 6)
-        | (decodeBit(_predictor->get()) << 5)
-        | (decodeBit(_predictor->get()) << 4)
-        | (decodeBit(_predictor->get()) << 3)
-        | (decodeBit(_predictor->get()) << 2)
-        | (decodeBit(_predictor->get()) << 1)
-        | decodeBit(_predictor->get()));
-}
 
 // no inline
 void BinaryEntropyDecoder::read()
@@ -105,4 +102,17 @@ void BinaryEntropyDecoder::read()
     const uint64 val = BigEndian::readInt32(&_sba._array[_sba._index]) & MASK_0_32;
     _current = ((_current << 32) | val) & MASK_0_56;
     _sba._index += 4;
+}
+
+// no inline
+byte BinaryEntropyDecoder::decodeByte()
+{
+    return byte((decodeBit(_predictor->get()) << 7)
+        | (decodeBit(_predictor->get()) << 6)
+        | (decodeBit(_predictor->get()) << 5)
+        | (decodeBit(_predictor->get()) << 4)
+        | (decodeBit(_predictor->get()) << 3)
+        | (decodeBit(_predictor->get()) << 2)
+        | (decodeBit(_predictor->get()) << 1)
+        |  decodeBit(_predictor->get()));
 }
