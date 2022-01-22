@@ -244,59 +244,21 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
     }
 
     // Not text (crude thresholds)
-    bool notText;
-
-    if (strict == true) {
-        notText = ((nbTextChars < (count >> 2)) || (freqs0[0] >= (count / 100)) || ((nbASCII / 95) < (count / 100)));
-    } else {
-        notText = ((nbTextChars < (count >> 1)) || (freqs0[32] < (count >> 5))); 
-    }
-
-    if (notText == true) {
-        int sum = 0;
-
-        for (int i = 0; i < 12; i++)
-            sum += freqs0[int(DNA_SYMBOLS[i])];
-
-        if (sum == count)
-            return TextCodec::MASK_DNA;
-
-        sum = 0;
-
-        for (int i = 0; i < 20; i++)
-            sum += freqs0[int(NUMERIC_SYMBOLS[i])];
-
-        if (sum >= (count / 100) * 98)
-            return TextCodec::MASK_NUMERIC;
-
-        sum = 0;
-
-        for (int i = 0; i < 64; i++)
-            sum += freqs0[int(BASE64_SYMBOLS[i])];
-
-        if (sum == count)
-            return TextCodec::MASK_BASE64;
-
-        sum = 0;
-
-        for (int i = 0; i < 256; i++) {
-            if (freqs0[i] > 0)
-                sum++;
-        }
-
-        return (sum == 255) ? TextCodec::MASK_BIN : TextCodec::MASK_NOT_TEXT;
-    }
-
     const int nbBinChars = count - nbASCII;
+    bool notText = nbBinChars > (count >> 2);
 
-    // Not text (crude threshold)
-    if (nbBinChars > (count >> 2))
-        return TextCodec::MASK_NOT_TEXT;
+    if (notText == false) {
+        if (strict == true) {
+            notText = ((nbTextChars < (count >> 2)) || (freqs0[0] >= (count / 100)) || ((nbASCII / 95) < (count / 100)));
+        } else {
+            notText = ((nbTextChars < (count >> 1)) || (freqs0[32] < (count / 50))); 
+        }
+    }
 
-    byte res = byte(0);
+    if (notText == true) 
+        return detectType(freqs0, freqs, count);
 
-    if (nbBinChars == 0)
-        res |= TextCodec::MASK_FULL_ASCII;
+    byte res = (nbBinChars == 0) ? TextCodec::MASK_FULL_ASCII : byte(0);
 
     if (nbBinChars <= count - count / 10) {
         // Check if likely XML/HTML
@@ -306,7 +268,7 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
         const int f60 = freqs0[60]; // '<'
         const int f62 = freqs0[62]; // '>'
         const int f38 = freqs[38][97] + freqs[38][103] + freqs[38][108] + freqs[38][113]; // '&a', '&g', '&l', '&q'
-        const int minFreq = (((count - nbBinChars) >> 9) < 2) ? 2 : (count - nbBinChars) >> 9;
+        const int minFreq = max((count - nbBinChars) >> 9, 2);
 
         if ((f60 >= minFreq) && (f62 >= minFreq) && (f38 > 0)) {
             if (f60 < f62) {
@@ -343,6 +305,81 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
     return res;
 }
 
+byte TextCodec::detectType(int freqs0[256], int freqs[256][256], int count) {
+    int sum = 0;
+
+    for (int i = 0; i < 12; i++)
+        sum += freqs0[int(DNA_SYMBOLS[i])];
+
+    if (sum >= (count -  count / 12))
+        return TextCodec::MASK_DNA;
+
+    sum = 0;
+
+    for (int i = 0; i < 20; i++)
+        sum += freqs0[int(NUMERIC_SYMBOLS[i])];
+
+    if (sum >= (count / 100) * 98)
+        return TextCodec::MASK_NUMERIC;
+
+    // Last symbol with padding '='
+    sum = (freqs0[0x3D] == 1) ? 1 : 0;
+
+    for (int i = 0; i < 64; i++)
+        sum += freqs0[int(BASE64_SYMBOLS[i])];
+
+    if (sum == count)
+        return TextCodec::MASK_BASE64;       
+
+    // Check UTF-8
+    // See Unicode 14 Standard - UTF-8 Table 3.7
+    // U+0000..U+007F          00..7F
+    // U+0080..U+07FF          C2..DF 80..BF
+    // U+0800..U+0FFF          E0 A0..BF 80..BF
+    // U+1000..U+CFFF          E1..EC 80..BF 80..BF
+    // U+D000..U+D7FF          ED 80..9F 80..BF
+    // U+E000..U+FFFF          EE..EF 80..BF 80..BF
+    // U+10000..U+3FFFF        F0 90..BF 80..BF 80..BF
+    // U+40000..U+FFFFF        F1..F3 80..BF 80..BF 80..BF
+    // U+100000..U+10FFFF      F4 80..8F 80..BF 80..BF
+
+    if ((freqs0[0xC0] > 0) || (freqs0[0xC1] > 0))
+        return TextCodec::MASK_NOT_TEXT;
+        
+    for (int i = 0xF5; i <= 0xFF; i++) {
+        if (freqs0[i] > 0)
+            return TextCodec::MASK_NOT_TEXT;
+    }
+          
+    sum = 0;
+
+    for (int i = 0; i < 256; i++) {
+        // Exclude < 0xE0A0 || > 0xE0BF
+        if (((i < 0xA0) || (i > 0xBF)) && (freqs[0xE0][i] > 0))
+            return TextCodec::MASK_NOT_TEXT;
+
+        // Exclude < 0xED80 || > 0xEDE9F
+        if (((i < 0x80) || (i > 0x9F)) && (freqs[0xED][i] > 0))
+            return TextCodec::MASK_NOT_TEXT;
+
+        // Exclude < 0xF090 || > 0xF0BF
+        if (((i < 0x90) || (i > 0xBF)) && (freqs[0xF0][i] > 0))
+            return TextCodec::MASK_NOT_TEXT;
+
+        // Exclude < 0xF480 || > 0xF4BF
+        if (((i < 0x80) || (i > 0xBF)) && (freqs[0xF4][i] > 0))
+            return TextCodec::MASK_NOT_TEXT;
+
+        // Count non-primary bytes
+        if ((i >= 0x80) && (i <= 0xBF))
+           sum += freqs0[i];
+    } 
+
+    // Another ad-hoc threshold
+    return (sum < count / 2) ? TextCodec::MASK_NOT_TEXT : TextCodec::MASK_UTF8;
+}
+
+
 TextCodec::TextCodec()
 {
     _delegate = new TextCodec1();
@@ -360,6 +397,9 @@ bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
     if (count == 0)
         return true;
 
+    if ((count < MIN_BLOCK_SIZE) || (count > MAX_BLOCK_SIZE))
+        return false;
+
     if (!SliceArray<byte>::isValid(input))
         throw invalid_argument("Invalid input block");
 
@@ -368,14 +408,6 @@ bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
 
     if (input._array == output._array)
         return false;
-
-    if (count > MAX_BLOCK_SIZE) {
-        // Not a recoverable error: instead of silently fail the transform,
-        // issue a fatal error.
-        stringstream ss;
-        ss << "The max text transform block size is " << MAX_BLOCK_SIZE << ", got " << count;
-        throw invalid_argument(ss.str());
-    }
 
     return _delegate->forward(input, output, count);
 }
@@ -385,6 +417,9 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
     if (count == 0)
         return true;
 
+    if (count > MAX_BLOCK_SIZE) // ! no min
+        return false;
+
     if (!SliceArray<byte>::isValid(input))
         throw invalid_argument("Invalid input block");
 
@@ -393,14 +428,6 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
 
     if (input._array == output._array)
         return false;
-
-    if (count > MAX_BLOCK_SIZE) {
-        // Not a recoverable error: instead of silently fail the transform,
-        // issue a fatal error.
-        stringstream ss;
-        ss << "The max text transform block size is " << MAX_BLOCK_SIZE << ", got " << count;
-        throw invalid_argument(ss.str());
-    }
 
     return _delegate->inverse(input, output, count);
 }
@@ -500,8 +527,8 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
               case TextCodec::MASK_BASE64:
                  _pCtx->putInt("dataType", Global::BASE64);
                  break;
-              case TextCodec::MASK_BIN:
-                 _pCtx->putInt("dataType", Global::BIN);
+              case TextCodec::MASK_UTF8:
+                 _pCtx->putInt("dataType", Global::UTF8);
                  break;
               case TextCodec::MASK_DNA:
                  _pCtx->putInt("dataType", Global::DNA);
@@ -979,8 +1006,8 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
               case TextCodec::MASK_BASE64:
                  _pCtx->putInt("dataType", Global::BASE64);
                  break;
-              case TextCodec::MASK_BIN:
-                 _pCtx->putInt("dataType", Global::BIN);
+              case TextCodec::MASK_UTF8:
+                 _pCtx->putInt("dataType", Global::UTF8);
                  break;
               case TextCodec::MASK_DNA:
                  _pCtx->putInt("dataType", Global::DNA);
