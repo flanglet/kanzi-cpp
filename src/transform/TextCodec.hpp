@@ -138,6 +138,7 @@ namespace kanzi {
    public:
        static const int MAX_DICT_SIZE = 1 << 19; // must be less than 1<<24
        static const int MAX_WORD_LENGTH = 31; // must be less than 128
+       static const int MIN_BLOCK_SIZE = 1024;
        static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB
        static const byte ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
        static const byte ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
@@ -185,7 +186,7 @@ namespace kanzi {
        static const int LOG_HASHES_SIZE = 24; // 16 MB
        static const byte MASK_NOT_TEXT = byte(0x80);
        static const byte MASK_DNA = MASK_NOT_TEXT | byte(0x40);
-       static const byte MASK_BIN = MASK_NOT_TEXT | byte(0x20);
+       static const byte MASK_UTF8 = MASK_NOT_TEXT | byte(0x20);
        static const byte MASK_BASE64 = MASK_NOT_TEXT | byte(0x10);
        static const byte MASK_NUMERIC = MASK_NOT_TEXT | byte(0x08);
        static const byte MASK_FULL_ASCII = byte(0x04);
@@ -202,6 +203,8 @@ namespace kanzi {
 
        static byte computeStats(const byte block[], int count, int freqs[], bool strict);
 
+       static byte detectType(int freqs0[256], int freqs[256][256], int count);
+       
        // Common English words.
        static char DICT_EN_1024[];
 
