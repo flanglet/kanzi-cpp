@@ -459,16 +459,16 @@ int BlockCompressor::compress(uint64& outputSize)
 
         if (delta >= 1e5) {
             sprintf(buffer, "%.1f s", delta / 1000);
-            ss << "Total encoding time: " << buffer;
+            ss << "Total compression time: " << buffer;
         }
         else {
             sprintf(buffer, "%.0f ms", delta);
-            ss << "Total encoding time: " << buffer;
+            ss << "Total compression time: " << buffer;
         }
 
         log.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
-        ss << "Total output size: " << written << " byte" << ((written > 1) ? "s" : "");
+        ss << "Total output size: " << written << ((written > 1) ? " bytes" : " byte");
         log.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
 
@@ -704,8 +704,8 @@ T FileCompressTask<T>::run()
         return T(Error::ERR_OPEN_FILE, 0, 0, sserr.str().c_str());
     }
 
-    // Encode
-    ss << "\nEncoding " << inputName << " ...";
+    // Compress
+    ss << "\nCompressing " << inputName << " ...";
     log.println(ss.str().c_str(), verbosity > 1);
     log.println("\n", verbosity > 3);
     int64 read = 0;
@@ -781,11 +781,11 @@ T FileCompressTask<T>::run()
         if (verbosity > 1) {
             if (delta >= 1e5) {
                 sprintf(buffer, "%.1f s", delta / 1000);
-                ss << "Encoding:          " << buffer;
+                ss << "Compressing:          " << buffer;
             }
             else {
                 sprintf(buffer, "%.0f ms", delta);
-                ss << "Encoding:          " << buffer;
+                ss << "Compressing:          " << buffer;
             }
 
             log.println(ss.str().c_str(), true);
@@ -802,7 +802,7 @@ T FileCompressTask<T>::run()
         }
 
         if (verbosity == 1) {
-            ss << "Encoding " << inputName << ": " << read << " => " << _cos->getWritten();
+            ss << "Compressing " << inputName << ": " << read << " => " << _cos->getWritten();
 
             if (delta >= 1e5) {
                 sprintf(buffer, " (%.2f%%) in %.1f s", 100 * f, delta / 1000);

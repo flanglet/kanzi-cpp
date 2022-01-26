@@ -351,16 +351,16 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
         if (delta >= 1e5) {
             sprintf(buf, "%.1f s", delta / 1000);
-            ss << "Total decoding time: " << buf;
+            ss << "Total decompression time: " << buf;
         }
         else {
             sprintf(buf, "%.0f ms", delta);
-            ss << "Total decoding time: " << buf;
+            ss << "Total decompression time: " << buf;
         }
 
         out.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
-        ss << "Total output size: " << read << " byte" << ((read > 1) ? "s" : "");
+        ss << "Total output size: " << read;
         out.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
     }
@@ -448,7 +448,7 @@ T FileDecompressTask<T>::run()
     bool overwrite = _ctx.getInt("overwrite") != 0;
 
     int64 read = 0;
-    ss << "\nDecoding " << inputName << " ...";
+    ss << "\nDecompressing " << inputName << " ...";
     log.println(ss.str().c_str(), verbosity > 1);
     log.println("\n", verbosity > 3);
 
@@ -642,11 +642,11 @@ T FileDecompressTask<T>::run()
         if (verbosity > 1) {
             if (delta >= 1e5) {
                 sprintf(buffer, "%.1f s", delta / 1000);
-                ss << "Decoding:          " << buffer;
+                ss << "Decompressing:          " << buffer;
             }
             else {
                 sprintf(buffer, "%.0f ms", delta);
-                ss << "Decoding:          " << buffer;
+                ss << "Decompressing:          " << buffer;
             }
 
             log.println(ss.str().c_str(), true);
@@ -660,7 +660,7 @@ T FileDecompressTask<T>::run()
         }
 
         if (verbosity == 1) {
-            ss << "Decoding " << inputName << ": " << _cis->getRead() << " => " << read;
+            ss << "Decompressing " << inputName << ": " << _cis->getRead() << " => " << read;
 
             if (delta >= 1e5) {
                 sprintf(buffer, "%.1f s", delta / 1000);
