@@ -781,11 +781,11 @@ T FileCompressTask<T>::run()
         if (verbosity > 1) {
             if (delta >= 1e5) {
                 sprintf(buffer, "%.1f s", delta / 1000);
-                ss << "Compressing:          " << buffer;
+                ss << "Compressing:       " << buffer;
             }
             else {
                 sprintf(buffer, "%.0f ms", delta);
-                ss << "Compressing:          " << buffer;
+                ss << "Compressing:       " << buffer;
             }
 
             log.println(ss.str().c_str(), true);
