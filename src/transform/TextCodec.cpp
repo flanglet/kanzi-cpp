@@ -19,6 +19,7 @@ limitations under the License.
 #include <sstream>
 #include "TextCodec.hpp"
 #include "../Global.hpp"
+#include "../Magic.hpp"
 
 using namespace kanzi;
 using namespace std;
@@ -195,6 +196,13 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
 // The goal is to detect test data amenable to pre-processing.
 byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool strict)
 {
+    if (strict == false) {
+        // This is going to fail if the block is not the first of the file.
+        // But this is a cheap test, good enough for fast mode.
+        if (Magic::getType(block) != Magic::NO_MAGIC)
+            return TextCodec::MASK_NOT_TEXT;
+    }
+
     int freqs[256][256] = { { 0 } };
     int f0[256] = { 0 };
     int f1[256] = { 0 };
