@@ -1,8 +1,11 @@
 CXX=g++
 
 ifeq ($(OS),Windows_NT)
-   CFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti
+	CFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti
+	#LDFLAGS=-static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
+	LDFLAGS=-static-libgcc -static-libstdc++ -lpthread
 else
+	LDFLAGS=-lpthread
 	ARCH := $(shell uname -m)
 
 	ifeq ($(ARCH),x86_64)
@@ -12,7 +15,6 @@ else
 	endif
 endif	
 
-LDFLAGS=-lpthread
 LIB_SOURCES=Global.cpp \
 	Event.cpp \
 	bitstream/DebugInputBitStream.cpp \
