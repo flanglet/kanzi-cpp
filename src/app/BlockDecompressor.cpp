@@ -642,11 +642,11 @@ T FileDecompressTask<T>::run()
         if (verbosity > 1) {
             if (delta >= 1e5) {
                 sprintf(buffer, "%.1f s", delta / 1000);
-                ss << "Decompressing:          " << buffer;
+                ss << "Decompressing:     " << buffer;
             }
             else {
                 sprintf(buffer, "%.0f ms", delta);
-                ss << "Decompressing:          " << buffer;
+                ss << "Decompressing:     " << buffer;
             }
 
             log.println(ss.str().c_str(), true);
