@@ -76,8 +76,8 @@ namespace kanzi
         }
         
         for (int i = 0; i < 3; i++) {
-            if ((key & 0xFFFF) == KEYS16[i])
-                return key & 0xFFFF;
+            if ((key >> 16) == KEYS16[i])
+                return key >> 16;
         }     
 
         return NO_MAGIC;      
