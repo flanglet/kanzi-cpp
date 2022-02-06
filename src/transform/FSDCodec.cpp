@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "FSDCodec.hpp"
 #include "../Global.hpp"
+#include "../Magic.hpp"
 
 using namespace kanzi;
 using namespace std;
@@ -92,6 +93,20 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     byte* in;
     uint histo[6][256];
     memset(&histo[0][0], 0, sizeof(uint) * 6 * 256);
+    uint magic = Magic::getType(src);
+
+    // Skip detection except for a few candidate types
+    switch (magic) {
+        case Magic::BMP_MAGIC:
+        case Magic::RIFF_MAGIC:
+        case Magic::PBM_MAGIC:
+        case Magic::PGM_MAGIC:
+        case Magic::PPM_MAGIC:
+        case Magic::NO_MAGIC:
+           break;
+        default:
+           return false;
+    };
 
     // Check several step values on a sub-block (no memory allocation)
     // Sample 2 sub-blocks
