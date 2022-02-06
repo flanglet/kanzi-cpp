@@ -193,7 +193,7 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
 }
 
 // Analyze the block and return an 8-bit status (see MASK flags constants)
-// The goal is to detect test data amenable to pre-processing.
+// The goal is to detect text data amenable to pre-processing.
 byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool strict)
 {
     if (strict == false) {
