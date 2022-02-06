@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <cstring> // for memcpy
 #include "../Context.hpp"
+#include "../Global.hpp"
 #include "../Transform.hpp"
 #include "../Memory.hpp"
 
@@ -56,6 +57,7 @@ namespace kanzi {
            _hashes = new int32[0];
            _hashSize = 0;
            _tkBuf = new byte[0];
+           _mLenBuf = new byte[0];
            _mBuf = new byte[0];
            _bufferSize = 0;
        }
@@ -65,16 +67,18 @@ namespace kanzi {
            _hashes = new int32[0];
            _hashSize = 0;
            _tkBuf = new byte[0];
+           _mLenBuf = new byte[0];
            _mBuf = new byte[0];
            _bufferSize = 0;
        }
 
        virtual ~LZXCodec()
        {
-           delete[] _hashes;
-           _hashSize = 0;
-           delete[] _mBuf;
            _bufferSize = 0;
+           _hashSize = 0;
+           delete[] _hashes;
+           delete[] _mLenBuf;
+           delete[] _mBuf;
            delete[] _tkBuf;
        }
 
@@ -105,6 +109,7 @@ namespace kanzi {
 
        int32* _hashes;
        int _hashSize;
+       byte* _mLenBuf;
        byte* _mBuf;
        byte* _tkBuf;
        int _bufferSize;
@@ -226,35 +231,43 @@ namespace kanzi {
        return res;
    }
 
+
    template <bool T>
    inline int LZXCodec<T>::findMatch(const byte src[], const int srcIdx, const int ref, const int maxMatch)
    {
-       int bestLen = 0;
+       int n = 0;
 
-       while ((bestLen + 4 < maxMatch) && (memcmp(&src[ref + bestLen], &src[srcIdx + bestLen], 4) == 0))
-           bestLen += 4;
+       while (n + 4 <= maxMatch) {
+           const int32 diff = LittleEndian::readInt32(&src[srcIdx + n]) ^ LittleEndian::readInt32(&src[ref + n]);
 
-       while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))
-           bestLen++;
+           if (diff != 0) {
+               n += (Global::trailingZeros(uint32(diff)) >> 3);
+               break;
+           }
 
-       return bestLen;
+           n += 4;
+       }
+
+       return n;
    }
-
 
 
    inline int LZPCodec::findMatch(const byte src[], const int srcIdx, const int ref, const int maxMatch)
    {
-       int bestLen = 0;
+       int n = 0;
 
-       while ((bestLen + 4 < maxMatch) && (memcmp(&src[ref + bestLen], &src[srcIdx + bestLen], 4) == 0))
-           bestLen += 4;
+       while (n + 8 <= maxMatch) {
+           const int64 diff = LittleEndian::readLong64(&src[srcIdx + n]) ^ LittleEndian::readLong64(&src[ref + n]);
 
-       if (bestLen > MIN_MATCH - 4) {
-           while ((bestLen < maxMatch) && (src[ref + bestLen] == src[srcIdx + bestLen]))
-               bestLen++;
+           if (diff != 0) {
+               n += (Global::trailingZeros(uint64(diff)) >> 3);
+               break;
+           }
+
+           n += 8;
        }
 
-       return bestLen;
+       return n;
    }
 
 }
