@@ -118,6 +118,8 @@ namespace kanzi {
    public:
        ROLZCodec1(uint logPosChecks) THROW;
 
+       ROLZCodec1(Context& ctx) THROW;
+
        ~ROLZCodec1() { delete[] _matches; }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
@@ -133,11 +135,13 @@ namespace kanzi {
    private:
        static const int MIN_MATCH = 3;
        static const int MAX_MATCH = MIN_MATCH + 65535;
+       static const int LOG_POS_CHECKS = 4;
 
        int32* _matches;
        uint8 _counters[65536];
        int _logPosChecks;
        int _posChecks;
+       Context* _pCtx;
        uint8 _maskChecks;
 
        int findMatch(const byte buf[], const int pos, const int end);
@@ -152,6 +156,8 @@ namespace kanzi {
    class ROLZCodec2 : public Transform<byte> {
    public:
        ROLZCodec2(uint logPosChecks) THROW;
+
+       ROLZCodec2(Context& ctx) THROW;
 
        ~ROLZCodec2() { delete[] _matches; }
 
@@ -172,11 +178,13 @@ namespace kanzi {
        static const int LITERAL_FLAG = 1;
        static const int MIN_MATCH = 3;
        static const int MAX_MATCH = MIN_MATCH + 255;
+       static const int LOG_POS_CHECKS = 5;
 
        int32* _matches;
        uint8 _counters[65536];
        int _logPosChecks;
        uint8 _maskChecks;
+       Context* _pCtx;
        int _posChecks;
 
        int findMatch(const byte buf[], const int pos, const int end);
@@ -187,7 +195,7 @@ namespace kanzi {
        friend class ROLZCodec2;
 
    public:
-       ROLZCodec(uint logPosChecks = LOG_POS_CHECKS2) THROW;
+       ROLZCodec(uint logPosChecks = 4) THROW;
 
        ROLZCodec(Context& ctx) THROW;
 
@@ -205,8 +213,6 @@ namespace kanzi {
 
    private:
        static const int HASH_SIZE = 65536;
-       static const int LOG_POS_CHECKS1 = 4;
-       static const int LOG_POS_CHECKS2 = 5;
        static const int CHUNK_SIZE = 64 * 1024 * 1024;
        static const int32 HASH = 200002979;
        static const int32 HASH_MASK = ~(CHUNK_SIZE - 1);

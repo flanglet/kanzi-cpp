@@ -36,8 +36,8 @@ ROLZCodec::ROLZCodec(uint logPosChecks) THROW
 ROLZCodec::ROLZCodec(Context& ctx) THROW
 {
     string transform = ctx.getString("transform", "NONE");
-    _delegate = (transform.find("ROLZX") != string::npos) ? static_cast<Transform<byte>*>(new ROLZCodec2(LOG_POS_CHECKS2)) :
-       static_cast<Transform<byte>*>(new ROLZCodec1(LOG_POS_CHECKS1));
+    _delegate = (transform.find("ROLZX") != string::npos) ? static_cast<Transform<byte>*>(new ROLZCodec2(ctx)) :
+       static_cast<Transform<byte>*>(new ROLZCodec1(ctx));
 }
 
 bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
@@ -101,12 +101,24 @@ ROLZCodec1::ROLZCodec1(uint logPosChecks) THROW
         throw invalid_argument(ss.str());
     }
 
+    _pCtx = nullptr;
     _logPosChecks = logPosChecks;
-    _posChecks = 1 << logPosChecks;
+    _posChecks = 1 << _logPosChecks;
     _maskChecks = uint8(_posChecks - 1);
-    _matches = new int32[ROLZCodec::HASH_SIZE << logPosChecks];
+    _matches = new int32[ROLZCodec::HASH_SIZE << _logPosChecks];
     memset(&_counters[0], 0, sizeof(_counters));
 }
+
+ROLZCodec1::ROLZCodec1(Context& ctx) THROW
+{
+    _pCtx = &ctx;
+    _logPosChecks = LOG_POS_CHECKS;
+    _posChecks = 1 << _logPosChecks;
+    _maskChecks = uint8(_posChecks - 1);
+    _matches = new int32[ROLZCodec::HASH_SIZE << _logPosChecks];
+    memset(&_counters[0], 0, sizeof(_counters));
+}
+
 
 // return position index (_logPosChecks bits) + length (16 bits) or -1
 int ROLZCodec1::findMatch(const byte buf[], const int pos, const int end)
@@ -160,7 +172,7 @@ int ROLZCodec1::findMatch(const byte buf[], const int pos, const int end)
     // Register current position
     _counters[key] = (_counters[key] + 1) & _maskChecks;
     matches[_counters[key]] = hash32 | int32(pos);
-    return (bestLen < ROLZCodec1::MIN_MATCH) ? -1 : (bestIdx << 16) | (bestLen - ROLZCodec1::MIN_MATCH);
+    return (bestLen < MIN_MATCH) ? -1 : (bestIdx << 16) | (bestLen - MIN_MATCH);
 }
 
 bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
@@ -238,7 +250,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             // Emit match index
             mIdxBuf._array[mIdxBuf._index++] = byte(match >> 16);
-            srcIdx += (mLen + ROLZCodec1::MIN_MATCH);
+            srcIdx += (mLen + MIN_MATCH);
             firstLitIdx = srcIdx;
         }
 
@@ -580,10 +592,21 @@ ROLZCodec2::ROLZCodec2(uint logPosChecks) THROW
         throw invalid_argument(ss.str());
     }
 
+    _pCtx = nullptr;
     _logPosChecks = logPosChecks;
-    _posChecks = 1 << logPosChecks;
+    _posChecks = 1 << _logPosChecks;
     _maskChecks = uint8(_posChecks - 1);
-    _matches = new int32[ROLZCodec::HASH_SIZE << logPosChecks];
+    _matches = new int32[ROLZCodec::HASH_SIZE << _logPosChecks];
+    memset(&_counters[0], 0, sizeof(_counters));
+}
+
+ROLZCodec2::ROLZCodec2(Context& ctx) THROW
+{
+    _pCtx = &ctx;
+    _logPosChecks = LOG_POS_CHECKS;
+    _posChecks = 1 << _logPosChecks;
+    _maskChecks = uint8(_posChecks - 1);
+    _matches = new int32[ROLZCodec::HASH_SIZE << _logPosChecks];
     memset(&_counters[0], 0, sizeof(_counters));
 }
 
@@ -639,7 +662,7 @@ int ROLZCodec2::findMatch(const byte buf[], const int pos, const int end)
     // Register current position
     _counters[key] = (_counters[key] + 1) & _maskChecks;
     matches[_counters[key]] = hash32 | int32(pos);
-    return (bestLen < ROLZCodec2::MIN_MATCH) ? -1 : (bestIdx << 16) | (bestLen - ROLZCodec2::MIN_MATCH);
+    return (bestLen < MIN_MATCH) ? -1 : (bestIdx << 16) | (bestLen - MIN_MATCH);
 }
 
 bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
@@ -696,7 +719,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             re.setContext(src[srcIdx - 1]);
             re.encodeBits(matchIdx, _logPosChecks);
             re.setMode(LITERAL_FLAG);
-            srcIdx += (matchLen + ROLZCodec2::MIN_MATCH);
+            srcIdx += (matchLen + MIN_MATCH);
         }
 
         startChunk = endChunk;
