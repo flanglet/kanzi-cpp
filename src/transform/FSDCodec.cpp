@@ -182,7 +182,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             const int delta = int(src[srcIdx]) - int(src[srcIdx - dist]);
 
             if ((delta >= -127) && (delta <= 127)) {
-                dst[dstIdx++] = byte(ZIGZAG[delta+127]); // zigzag encode delta
+                dst[dstIdx++] = byte(ZIGZAG[delta + 127]); // zigzag encode delta
                 srcIdx++;
                 continue;
             }

@@ -197,7 +197,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
 
         // Emit match length
-        if (mLen >= 15) 
+        if (mLen >= 15)
             mLenIdx += emitLength(&_mLenBuf[mLenIdx], mLen - 15);
 
         // Emit distance
