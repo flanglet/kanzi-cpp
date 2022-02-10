@@ -168,8 +168,8 @@ bool X86Codec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int
             // Absolute target address = srcIdx +/- (offet*4)
             const int offset = instr & ARM_B_ADDR_MASK;
             const int sgn = instr & ARM_B_ADDR_SGN_MASK;
-            addr = srcIdx + 4 * ((sgn == 0) ? offset : ARM_B_OPCODE_MASK | offset);
-            
+            addr = srcIdx + 4 * ((sgn == 0) ? offset : -(-offset & ARM_B_ADDR_MASK));
+
             if (addr < 0)
                 addr = 0;
             
