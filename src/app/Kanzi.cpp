@@ -99,14 +99,14 @@ void printHelp(Printer& log, const string& mode)
        log.println("        Providing this option forces entropy and transform.", true);
        log.println("        0=None&None (store), 1=TEXT+LZ&HUFFMAN, 2=TEXT+FSD+LZX&HUFFMAN", true);
        log.println("        3=TEXT+FSD+ROLZ, 4=TEXT+FSD+ROLZX, 5=TEXT+BWT+RANK+ZRLT&ANS0", true);
-       log.println("        6=TEXT+BWT+SRT+ZRLT&FPAQ, 7=LZP+TEXT+BWT+LZP&CM, 8=X86+RLT+TEXT&TPAQ", true);
-       log.println("        9=X86+RLT+TEXT&TPAQX\n", true);
+       log.println("        6=TEXT+BWT+SRT+ZRLT&FPAQ, 7=LZP+TEXT+BWT+LZP&CM, 8=EXE+RLT+TEXT&TPAQ", true);
+       log.println("        9=EXE+RLT+TEXT&TPAQX\n", true);
        log.println("   -e, --entropy=<codec>", true);
        log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]", true);
        log.println("        (default is ANS0)\n", true);
        log.println("   -t, --transform=<codec>", true);
        log.println("        transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
-       log.println("                  [MTFT|RANK|SRT|TEXT|FSD|X86]", true);
+       log.println("                  [MTFT|RANK|SRT|TEXT|FSD|EXE]", true);
        log.println("        EG: BWT+RANK or BWTS+MTFT (default is BWT+RANK+ZRLT)\n", true);
        log.println("   -x, --checksum", true);
        log.println("        enable block checksum\n", true);

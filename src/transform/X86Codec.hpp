@@ -21,7 +21,6 @@ limitations under the License.
 
 namespace kanzi
 {
-   // Adapted from MCM: https://github.com/mathieuchartier/mcm/blob/master/X86Binary.hpp
    class X86Codec : public Transform<byte> {
    public:
        X86Codec() { _pCtx = nullptr; }
@@ -38,18 +37,62 @@ namespace kanzi
 
    private:
 
-      static const byte MASK_JUMP = byte(0xFE);
-      static const byte INSTRUCTION_JUMP = byte(0xE8);
-      static const byte INSTRUCTION_JCC = byte(0x80);
-      static const byte PREFIX_JCC = byte(0x0F);
-      static const byte MASK_JCC = byte(0xF0);
-      static const byte MASK_ADDRESS = byte(0xD5);
-      static const byte ESCAPE = byte(0xF5);
+       static const byte X86_MASK_JUMP = 0xFE;
+       static const byte X86_INSTRUCTION_JUMP = 0xE8;
+       static const byte X86_INSTRUCTION_JCC = 0x80;
+       static const byte X86_TWO_BYTE_PREFIX = 0x0F;
+       static const byte X86_MASK_JCC = 0xF0;
+       static const byte X86_ESCAPE = 0x9B;
+       static const byte NOT_EXE = 0;
+       static const byte X86 = 1;
+       static const byte ARM64 = 2;
+       static const int X86_ADDR_MASK = (1 << 24) - 1;
+       static const int MASK_ADDRESS = 0xF0F0F0F0;
+       static const int ARM_B_ADDR_MASK = (1 << 26) - 1;
+       static const int ARM_B_OPCODE_MASK = 0xFFFFFFFF ^ ARM_B_ADDR_MASK;
+       static const int ARM_B_ADDR_SGN_MASK = 1 << 25;
+       static const int ARM_OPCODE_B = 0x14000000;  // 6 bit opcode
+       static const int ARM_OPCODE_BL = 0x94000000; // 6 bit opcode       
+       static const int ARM_CB_REG_BITS = 5; // lowest bits for register
+       static const int ARM_CB_ADDR_MASK = 0x00FFFFE0; // 18 bit addr mask
+       static const int ARM_CB_ADDR_SGN_MASK = 1 << 18;
+       static const int ARM_CB_OPCODE_MASK = 0x7F000000;
+       static const int ARM_OPCODE_CBZ = 0x34000000;  // 8 bit opcode
+       static const int ARM_OPCODE_CBNZ = 0x3500000; // 8 bit opcode
+       static const int WIN_PE = 0x00004550;
+       static const uint16 WIN_X86_ARCH = 0x014C;
+       static const uint16 WIN_AMD64_ARCH = 0x8664;
+       static const uint16 WIN_ARM64_ARCH = 0xAA64;
+       static const int ELF_X86_ARCH = 0x03;
+       static const int ELF_AMD64_ARCH = 0x3E;  
+       static const int ELF_ARM64_ARCH = 0xB7;
+       static const int MAC_AMD64_ARCH = 0x01000007;
+       static const int MAC_ARM64_ARCH = 0x0100000C;
+       static const int MIN_BLOCK_SIZE = 4096;
+       static const int MAX_BLOCK_SIZE = (1 << (26 + 2)) - 1; // max offset << 2
 
-      bool isExeBlock(byte src[], int end, int count) const;
+
+       bool forwardARM(SliceArray<byte>& source, SliceArray<byte>& destination, int length, int codeStart, int codeEnd);
+
+       bool forwardX86(SliceArray<byte>& source, SliceArray<byte>& destination, int length, int codeStart, int codeEnd);
+
+       bool inverseARM(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
+
+       bool inverseX86(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
+
+       static byte detectType(byte src[], int count, int& codeStart, int& codeEnd);
+       
+       static bool parseHeader(byte src[], int count, uint magic, int& arch, int& codeStart, int& codeEnd);
 
        Context* _pCtx;
    };
+   
+   
+    inline int X86Codec::getMaxEncodedLength(int srcLen) const
+    {
+        // Allocate some extra buffer for incompressible data.
+        return (srcLen <= 256) ? srcLen + 32 : srcLen + srcLen / 8;
+    }   
 
 }
 #endif

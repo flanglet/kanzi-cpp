@@ -38,7 +38,7 @@ namespace kanzi {
 		static const uint64 ZRLT_TYPE = 6; // Zero Run Length
 		static const uint64 MTFT_TYPE = 7; // Move To Front
 		static const uint64 RANK_TYPE = 8; // Rank
-		static const uint64 X86_TYPE = 9; // X86 codec
+		static const uint64 EXE_TYPE = 9; // EXE codec
 		static const uint64 DICT_TYPE = 10; // Text codec
 		static const uint64 ROLZ_TYPE = 11; // ROLZ codec
 		static const uint64 ROLZX_TYPE = 12; // ROLZ Extra codec
@@ -161,8 +161,8 @@ namespace kanzi {
 		if (name == "LZP")
 			return LZP_TYPE;
 
-		if (name == "X86")
-			return X86_TYPE;
+		if (name == "EXE")
+			return EXE_TYPE;
 
 		if (name == "FSD")
 			return FSD_TYPE;
@@ -252,7 +252,7 @@ namespace kanzi {
 		case RLT_TYPE:
 			return new RLT(ctx);
 
-		case X86_TYPE:
+		case EXE_TYPE:
 			return new X86Codec(ctx);
 
 		case FSD_TYPE:
@@ -331,8 +331,8 @@ namespace kanzi {
 		case MTFT_TYPE:
 			return "MTFT";
 
-		case X86_TYPE:
-			return "X86";
+		case EXE_TYPE:
+			return "EXE";
 
 		case FSD_TYPE:
 			return "FSD";
