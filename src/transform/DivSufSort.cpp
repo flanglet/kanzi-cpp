@@ -515,7 +515,7 @@ void DivSufSort::ssSort(const int pa, int first, int last, int buf, int bufSize,
 }
 
 
-int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
+int DivSufSort::ssCompare(int pa, int pb, int p2, const int depth)
 {
     int u1 = depth + pa;
     int u2 = depth + _sa[p2];
@@ -539,7 +539,7 @@ int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
 }
 
 
-int DivSufSort::ssCompare(int p1, int p2, int depth)
+int DivSufSort::ssCompare(int p1, int p2, const int depth)
 {
     int u1 = depth + _sa[p1];
     int u2 = depth + _sa[p2];
@@ -547,7 +547,7 @@ int DivSufSort::ssCompare(int p1, int p2, int depth)
     const int u2n = _sa[p2 + 1] + 2;
 
     if (u1n - u1 > u2n - u2) {
-        while ((u2 < u2n) && (_buffer[u1] == _buffer[u2])) {
+         while ((u2 < u2n) && (_buffer[u1] == _buffer[u2])) {
             u1++;
             u2++;
         }
@@ -563,7 +563,7 @@ int DivSufSort::ssCompare(int p1, int p2, int depth)
 }
 
 
-void DivSufSort::ssInplaceMerge(int pa, int first, int middle, int last, int depth)
+void DivSufSort::ssInplaceMerge(int pa, int first, int middle, int last, const int depth)
 {
     while (true) {
         int p, x;

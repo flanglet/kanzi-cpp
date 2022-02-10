@@ -150,11 +150,11 @@ namespace kanzi
        void ssSort(int pa, int first, int last, int buf, int bufSize,
            int depth, int n, bool lastSuffix);
 
-       int ssCompare(int pa, int pb, int p2, int depth);
+       int ssCompare(int pa, int pb, int p2, const int depth);
 
-       int ssCompare(int p1, int p2, int depth);
+       int ssCompare(int p1, int p2, const int depth);
 
-       void ssInplaceMerge(int pa, int first, int middle, int last, int depth);
+       void ssInplaceMerge(int pa, int first, int middle, int last, const int depth);
 
        void ssRotate(int first, int middle, int last);
 
