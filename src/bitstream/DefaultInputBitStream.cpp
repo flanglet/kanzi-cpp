@@ -108,8 +108,14 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
     }
 
     // Last bytes
+    while (remaining >= 8) {
+        bits[start] = byte(readBits(8));
+        start++;
+        remaining -= 8;
+    }
+
     if (remaining > 0)
-        BigEndian::writeLong64(&bits[start], readBits(remaining) << (64 - remaining));
+        bits[start] = byte(readBits(remaining) << (8 - remaining));
 
     return count;
 }
