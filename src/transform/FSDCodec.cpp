@@ -146,12 +146,12 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             minIdx = i;
     }
 
-    if (_pCtx != nullptr)
-       _pCtx->putInt("dataType", Global::MULTIMEDIA);
-
     // If not better, quick exit
     if (ent[minIdx] >= ent[0])
         return false;
+
+    if (_pCtx != nullptr)
+       _pCtx->putInt("dataType", Global::MULTIMEDIA);
 
     const int dist = (minIdx <= 4) ? minIdx : 8;
     int largeDeltas = 0;
