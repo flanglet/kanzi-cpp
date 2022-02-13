@@ -259,14 +259,14 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
         if (strict == true) {
             notText = ((nbTextChars < (count >> 2)) || (freqs0[0] >= (count / 100)) || ((nbASCII / 95) < (count / 100)));
         } else {
-            notText = ((nbTextChars < (count >> 1)) || (freqs0[32] < (count / 50))); 
+            notText = ((nbTextChars < (count >> 1)) || (freqs0[32] < (count / 50)));
         }
     }
 
-    if (notText == true) 
-        return detectType(freqs0, freqs, count);
-
     byte res = (nbBinChars == 0) ? TextCodec::MASK_FULL_ASCII : byte(0);
+
+    if (notText == true)
+        return res | detectType(freqs0, freqs, count);
 
     if (nbBinChars <= count - count / 10) {
         // Check if likely XML/HTML
@@ -319,7 +319,7 @@ byte TextCodec::detectType(int freqs0[256], int freqs[256][256], int count) {
     for (int i = 0; i < 12; i++)
         sum += freqs0[int(DNA_SYMBOLS[i])];
 
-    if (sum >= (count -  count / 12))
+    if (sum >= (count - count / 12))
         return TextCodec::MASK_DNA;
 
     sum = 0;
@@ -337,7 +337,7 @@ byte TextCodec::detectType(int freqs0[256], int freqs[256][256], int count) {
         sum += freqs0[int(BASE64_SYMBOLS[i])];
 
     if (sum == count)
-        return TextCodec::MASK_BASE64;       
+        return TextCodec::MASK_BASE64;
 
     // Check UTF-8
     // See Unicode 14 Standard - UTF-8 Table 3.7
@@ -353,12 +353,12 @@ byte TextCodec::detectType(int freqs0[256], int freqs[256][256], int count) {
 
     if ((freqs0[0xC0] > 0) || (freqs0[0xC1] > 0))
         return TextCodec::MASK_NOT_TEXT;
-        
+
     for (int i = 0xF5; i <= 0xFF; i++) {
         if (freqs0[i] > 0)
             return TextCodec::MASK_NOT_TEXT;
     }
-          
+   
     sum = 0;
 
     for (int i = 0; i < 256; i++) {
@@ -381,7 +381,7 @@ byte TextCodec::detectType(int freqs0[256], int freqs[256][256], int count) {
         // Count non-primary bytes
         if ((i >= 0x80) && (i <= 0xBF))
            sum += freqs0[i];
-    } 
+    }
 
     // Another ad-hoc threshold
     return (sum < count / 4) ? TextCodec::MASK_NOT_TEXT : TextCodec::MASK_UTF8;
