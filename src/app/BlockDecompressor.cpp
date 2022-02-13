@@ -82,8 +82,14 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
 #ifndef CONCURRENCY_ENABLED
     if (concurrency > 1)
         throw invalid_argument("The number of jobs is limited to 1 in this version");
+
+    concurrency = 1;
 #else
-    if (concurrency > MAX_CONCURRENCY) {
+    if (concurrency == 0) {
+       int cores = max(int(thread::hardware_concurrency()) / 2, 1); // Defaults to half the cores
+       concurrency = min(cores, MAX_CONCURRENCY);   
+    }
+    else if (concurrency > MAX_CONCURRENCY) {
         stringstream ss;
         ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY << endl;
         Printer log(&cerr);
@@ -92,7 +98,7 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
     }
 #endif
 
-    _jobs = (concurrency == 0) ? DEFAULT_CONCURRENCY : concurrency;
+    _jobs = concurrency;
 
     if ((_verbosity > 0) && (args.size() > 0)) {
         Printer log(&cout);

@@ -116,7 +116,11 @@ void printHelp(Printer& log, const string& mode)
 
    log.println("   -j, --jobs=<jobs>", true);
    log.println("        maximum number of jobs the program may start concurrently", true);
-   log.println("        (default is 1, maximum is 64).\n", true);
+   #ifdef CONCURRENCY_ENABLED
+      log.println("        (default is half of available cores, maximum is 64).\n", true);
+   #else
+      log.println("        (always 1 in this version).\n", true);
+   #endif
    log.println("   -v, --verbose=<level>", true);
    log.println("        0=silent, 1=default, 2=display details, 3=display configuration,", true);
    log.println("        4=display block size and timings, 5=display extra information", true);
