@@ -154,22 +154,19 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
             f1[p[1]]++;
             f2[p[2]]++;
             f3[p[3]]++;
-            p += 4;
-            f0[p[0]]++;
-            f1[p[1]]++;
-            f2[p[2]]++;
-            f3[p[3]]++;
-            p += 4;
-            f0[p[0]]++;
-            f1[p[1]]++;
-            f2[p[2]]++;
-            f3[p[3]]++;
-            p += 4;
-            f0[p[0]]++;
-            f1[p[1]]++;
-            f2[p[2]]++;
-            f3[p[3]]++;
-            p += 4;
+            f0[p[4]]++;
+            f1[p[5]]++;
+            f2[p[6]]++;
+            f3[p[7]]++;
+            f0[p[8]]++;
+            f1[p[9]]++;
+            f2[p[10]]++;
+            f3[p[11]]++;
+            f0[p[12]]++;
+            f1[p[13]]++;
+            f2[p[14]]++;
+            f3[p[15]]++;
+            p += 16;
         }
 
         const uint8* end = reinterpret_cast<const uint8*>(&block[length]);
