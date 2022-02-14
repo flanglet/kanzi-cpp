@@ -60,9 +60,10 @@ namespace kanzi {
            _mLenBuf = new byte[0];
            _mBuf = new byte[0];
            _bufferSize = 0;
+           _pCtx = nullptr;
        }
 
-       LZXCodec(Context&)
+       LZXCodec(Context& ctx)
        {
            _hashes = new int32[0];
            _hashSize = 0;
@@ -70,6 +71,7 @@ namespace kanzi {
            _mLenBuf = new byte[0];
            _mBuf = new byte[0];
            _bufferSize = 0;
+           _pCtx = &ctx;
        }
 
        virtual ~LZXCodec()
@@ -102,8 +104,9 @@ namespace kanzi {
        static const uint HASH_MASK2 = (1 << HASH_LOG2) - 1;
        static const int MAX_DISTANCE1 = (1 << 17) - 2;
        static const int MAX_DISTANCE2 = (1 << 24) - 2;
-       static const int MIN_MATCH = 5;
-       static const int MAX_MATCH = 65535 + 254 + 15 + MIN_MATCH;
+       static const int MIN_MATCH1 = 5;
+       static const int MIN_MATCH2 = 9;
+       static const int MAX_MATCH = 65535 + 254 + 15 + MIN_MATCH1;
        static const int MIN_BLOCK_LENGTH = 24;
        static const int MIN_MATCH_MIN_DIST = 1 << 16;
 
@@ -113,6 +116,7 @@ namespace kanzi {
        byte* _mBuf;
        byte* _tkBuf;
        int _bufferSize;
+       Context* _pCtx;
 
        static int emitLength(byte block[], int len);
 

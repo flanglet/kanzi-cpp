@@ -31,11 +31,11 @@ LZCodec::LZCodec(Context& ctx) THROW
     const int lzType = ctx.getInt("lz", TransformFactory<byte>::LZ_TYPE);
 
     if (lzType == TransformFactory<byte>::LZP_TYPE) {
-        _delegate = (Transform<byte>*)new LZPCodec();
+        _delegate = (Transform<byte>*)new LZPCodec(ctx);
     } else if (lzType == TransformFactory<byte>::LZX_TYPE) {
-        _delegate = (Transform<byte>*)new LZXCodec<true>();
+        _delegate = (Transform<byte>*)new LZXCodec<true>(ctx);
     } else {
-        _delegate = (Transform<byte>*)new LZXCodec<false>();
+        _delegate = (Transform<byte>*)new LZXCodec<false>(ctx);
     }
 }
 
@@ -102,6 +102,19 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     byte* src = &input._array[input._index];
     const int maxDist = (srcEnd < 4 * MAX_DISTANCE1) ? MAX_DISTANCE1 : MAX_DISTANCE2;
     dst[12] = (maxDist == MAX_DISTANCE1) ? byte(0) : byte(1);
+    int mm = MIN_MATCH1;
+
+    if (_pCtx != nullptr) {
+       Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
+
+       if (dt == Global::DNA) {
+           // Longer min match for DNA input
+           mm = MIN_MATCH2;
+           dst[12] |= byte(2);
+       }
+    }
+
+    const int minMatch = mm;
     const int dThreshold = (maxDist == MAX_DISTANCE1) ? maxDist + 1 : 1 << 16;
     int srcIdx = 0;
     int dstIdx = 13;
@@ -131,7 +144,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
 
         // No good match ?
-        if ((bestLen < MIN_MATCH) || ((bestLen == MIN_MATCH) && (srcIdx - ref >= MIN_MATCH_MIN_DIST))) {
+        if ((bestLen < minMatch) || ((bestLen == minMatch) && (srcIdx - ref >= MIN_MATCH_MIN_DIST))) {
             srcIdx++;
             continue;
         }
@@ -168,7 +181,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // Token: 3 bits litLen + 1 bit flag + 4 bits mLen (LLLFMMMM)
         // flag = if maxDist = MAX_DISTANCE1, then highest bit of distance
         //        else 1 if dist needs 3 bytes (> 0xFFFF) and 0 otherwise
-        const int mLen = bestLen - MIN_MATCH;
+        const int mLen = bestLen - minMatch;
         const int token = ((dist > 0xFFFF) ? 0x10 : 0x00) | min(mLen, 15);
 
         // Literals to process ?
@@ -294,7 +307,8 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
         return false;
 
     const int srcEnd = tkIdx - 13;
-    const int maxDist = (src[12] == byte(1)) ? MAX_DISTANCE2 : MAX_DISTANCE1;
+    const int maxDist = ((src[12] & 1) == 0) ? MAX_DISTANCE1 : MAX_DISTANCE2;
+    const int minMatch = ((src[12] & 2) == 0) ? MIN_MATCH1 : MIN_MATCH2;
     bool res = true;
     int srcIdx = 13;
     int dstIdx = 0;
@@ -326,7 +340,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
         if (mLen == 15)
             mLen += readLength(src, mLenIdx);
 
-        mLen += MIN_MATCH;
+        mLen += minMatch;
         const int mEnd = dstIdx + mLen;
 
         // Get distance

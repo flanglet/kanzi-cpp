@@ -36,7 +36,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
 #ifdef CONCURRENCY_ENABLED
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
         stringstream ss;
-        ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "]";
+        ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "], got " << tasks;
         throw invalid_argument(ss.str());
     }
 #else
@@ -99,7 +99,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
 #ifdef CONCURRENCY_ENABLED
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
         stringstream ss;
-        ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "]";
+        ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "], got " << tasks;
         throw invalid_argument(ss.str());
     }
 #else
