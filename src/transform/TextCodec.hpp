@@ -185,10 +185,7 @@ namespace kanzi {
        static const int THRESHOLD4 = THRESHOLD3 * 128;
        static const int LOG_HASHES_SIZE = 24; // 16 MB
        static const byte MASK_NOT_TEXT = 0x80;
-       static const byte MASK_DNA = MASK_NOT_TEXT | 0x40;
-       static const byte MASK_UTF8 = MASK_NOT_TEXT | 0x20;
-       static const byte MASK_BASE64 = MASK_NOT_TEXT | 0x10;
-       static const byte MASK_NUMERIC = MASK_NOT_TEXT | 0x08;
+       static const byte MASK_UTF8 = MASK_NOT_TEXT | 0x40;
        static const byte MASK_FULL_ASCII = 0x04;
        static const byte MASK_XML_HTML = 0x02;
        static const byte MASK_CRLF = 0x01;
@@ -201,16 +198,12 @@ namespace kanzi {
 
        static bool sameWords(const byte src[], const byte dst[], int length);
 
-       static byte computeStats(const byte block[], int count, int freqs[], bool strict);
+       static byte computeStats(const byte block[], int count, uint freqs[], bool strict);
 
-       static byte detectType(int freqs0[256], int freqs[256][256], int count);
+       static byte detectType(uint freqs0[256], uint freqs[256][256], int count);
        
        // Common English words.
        static char DICT_EN_1024[];
-
-       static char BASE64_SYMBOLS[];
-       static char DNA_SYMBOLS[];
-       static char NUMERIC_SYMBOLS[];
 
        // Static dictionary of 1024 entries.
        static DictEntry STATIC_DICTIONARY[1024];

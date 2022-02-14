@@ -50,8 +50,10 @@ namespace kanzi
        static const uint PPM_MAGIC = 0x5036; // bin only
        
        static uint getType(const byte src[]);
-       
-       
+
+       static bool isCompressed(uint magic);       
+  
+
     private:
        Magic() {}
        ~Magic() {}        
@@ -96,6 +98,27 @@ namespace kanzi
         }
             
         return NO_MAGIC;      
+    }
+
+
+    inline bool Magic::isCompressed(uint magic) {
+        switch (magic) {
+            case JPG_MAGIC:
+            case GIF_MAGIC:
+            case PNG_MAGIC:
+            case RIFF_MAGIC:
+            case LZMA_MAGIC:
+            case ZSTD_MAGIC:
+            case BROTLI_MAGIC:
+            case CAB_MAGIC:
+            case ZIP_MAGIC:
+            case GZIP_MAGIC:
+            case BZIP2_MAGIC:
+                return true;
+				
+            default:
+                return false;
+        }
     }
 
 }

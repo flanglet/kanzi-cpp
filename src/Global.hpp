@@ -62,6 +62,8 @@ namespace kanzi {
 
        static void computeHistogram(const byte block[], int end, uint freqs[], bool isOrder0=true, bool withTotal=false);
 
+       static DataType detectSimpleType(uint histo[], int count);
+
        // Szudzik pairing
        static void encodePair(int x, int y, int& pair);
 
@@ -77,6 +79,9 @@ namespace kanzi {
        static const Global _singleton;
        static const int* initStretch(int data[]);
        static const int* initSquash(int data[]);
+       static char BASE64_SYMBOLS[];
+       static char DNA_SYMBOLS[];
+       static char NUMERIC_SYMBOLS[];
    };
 
 

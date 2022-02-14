@@ -76,6 +76,13 @@ const int Global::INV_EXP[33] = {
     65536
 };
 
+char Global::BASE64_SYMBOLS[] =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+char Global::NUMERIC_SYMBOLS[] = "0123456789+-*/=,.:; ";
+
+char Global::DNA_SYMBOLS[] = "acgntuACGNTU"; // either T or U and N for unknown
+
 const Global Global::_singleton;
 
 const int* Global::SQUASH = Global::initSquash(_singleton.SQUASH_BUFFER);
@@ -309,4 +316,33 @@ void Global::computeJobsPerTask(int jobsPerTask[], int jobs, int tasks) THROW
         if (n == tasks)
             n = 0;
     }
+}
+
+Global::DataType Global::detectSimpleType(uint freqs0[], int count) {
+    int sum = 0;
+
+    for (int i = 0; i < 12; i++)
+        sum += freqs0[int(DNA_SYMBOLS[i])];
+
+    if (sum >= (count - count / 12))
+        return DNA;
+
+    sum = 0;
+
+    for (int i = 0; i < 20; i++)
+        sum += freqs0[int(NUMERIC_SYMBOLS[i])];
+
+    if (sum >= (count / 100) * 98)
+        return NUMERIC;
+
+    // Last symbol with padding '='
+    sum = (freqs0[0x3D] == 1) ? 1 : 0;
+
+    for (int i = 0; i < 64; i++)
+        sum += freqs0[int(BASE64_SYMBOLS[i])];
+
+    if (sum == count)
+        return BASE64;
+
+    return UNDEFINED;
 }

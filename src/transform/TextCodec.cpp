@@ -113,12 +113,6 @@ rGenerationLeafCopyMatchClaimAnyoneSoftwarePartyDeviceCodeLangua\
 geLinkHoweverConfirmCommentCityAnywhereSomewhereDebateDriveHighe\
 rBeautifulOnlineFanPriorityTraditionalSixUnited";
 
-char TextCodec::BASE64_SYMBOLS[] =
-"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-char TextCodec::NUMERIC_SYMBOLS[] = "0123456789+-*/=,.:; ";
-
-char TextCodec::DNA_SYMBOLS[] = "acgntuACGNTU"; // either T or U and N for unknown
 
 DictEntry TextCodec::STATIC_DICTIONARY[1024] = {};
 bool TextCodec::DELIMITER_CHARS[256] = {};
@@ -194,7 +188,7 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
 
 // Analyze the block and return an 8-bit status (see MASK flags constants)
 // The goal is to detect text data amenable to pre-processing.
-byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool strict)
+byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool strict)
 {
     if (strict == false) {
         // This is going to fail if the block is not the first of the file.
@@ -203,11 +197,11 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
             return TextCodec::MASK_NOT_TEXT;
     }
 
-    int freqs[256][256] = { { 0 } };
-    int f0[256] = { 0 };
-    int f1[256] = { 0 };
-    int f3[256] = { 0 };
-    int f2[256] = { 0 };
+    uint freqs[256][256] = { { 0 } };
+    uint f0[256] = { 0 };
+    uint f1[256] = { 0 };
+    uint f3[256] = { 0 };
+    uint f2[256] = { 0 };
     uint8 prv = 0;
     const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
     const int count4 = count & -4;
@@ -257,9 +251,9 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
 
     if (notText == false) {
         if (strict == true) {
-            notText = ((nbTextChars < (count >> 2)) || (freqs0[0] >= (count / 100)) || ((nbASCII / 95) < (count / 100)));
+            notText = ((nbTextChars < (count >> 2)) || (freqs0[0] >= uint(count / 100)) || ((nbASCII / 95) < (count / 100)));
         } else {
-            notText = ((nbTextChars < (count >> 1)) || (freqs0[32] < (count / 50)));
+            notText = ((nbTextChars < (count >> 1)) || (freqs0[32] < uint(count / 50)));
         }
     }
 
@@ -313,31 +307,9 @@ byte TextCodec::computeStats(const byte block[], int count, int freqs0[], bool s
     return res;
 }
 
-byte TextCodec::detectType(int freqs0[256], int freqs[256][256], int count) {
-    int sum = 0;
-
-    for (int i = 0; i < 12; i++)
-        sum += freqs0[int(DNA_SYMBOLS[i])];
-
-    if (sum >= (count - count / 12))
-        return TextCodec::MASK_DNA;
-
-    sum = 0;
-
-    for (int i = 0; i < 20; i++)
-        sum += freqs0[int(NUMERIC_SYMBOLS[i])];
-
-    if (sum >= (count / 100) * 98)
-        return TextCodec::MASK_NUMERIC;
-
-    // Last symbol with padding '='
-    sum = (freqs0[0x3D] == 1) ? 1 : 0;
-
-    for (int i = 0; i < 64; i++)
-        sum += freqs0[int(BASE64_SYMBOLS[i])];
-
-    if (sum == count)
-        return TextCodec::MASK_BASE64;
+byte TextCodec::detectType(uint freqs0[256], uint freqs[256][256], int count) {
+    if (Global::detectSimpleType(freqs0, count) != Global::UNDEFINED)
+       return TextCodec::MASK_NOT_TEXT;
 
     // Check UTF-8
     // See Unicode 14 Standard - UTF-8 Table 3.7
@@ -359,7 +331,7 @@ byte TextCodec::detectType(int freqs0[256], int freqs[256][256], int count) {
             return TextCodec::MASK_NOT_TEXT;
     }
    
-    sum = 0;
+    int sum = 0;
 
     for (int i = 0; i < 256; i++) {
         // Exclude < 0xE0A0 || > 0xE0BF
@@ -522,29 +494,13 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             return false;
     }
 
-    int freqs[256] = { 0 };
+    uint freqs[256] = { 0 };
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, true);
 
     // Not text ?
-    if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0)) {
-        if (_pCtx != nullptr) {
-           switch (mode) {
-              case TextCodec::MASK_NUMERIC:
-                 _pCtx->putInt("dataType", Global::NUMERIC);
-                 break;
-              case TextCodec::MASK_BASE64:
-                 _pCtx->putInt("dataType", Global::BASE64);
-                 break;
-              case TextCodec::MASK_UTF8:
-                 _pCtx->putInt("dataType", Global::UTF8);
-                 break;
-              case TextCodec::MASK_DNA:
-                 _pCtx->putInt("dataType", Global::DNA);
-                 break;
-              default :
-                 break;
-           }
-        }
+    if ((mode & TextCodec::MASK_NOT_TEXT) == TextCodec::MASK_UTF8) {
+        if (_pCtx != nullptr) 
+            _pCtx->putInt("dataType", Global::UTF8);
 
         return false;
     }
@@ -1001,29 +957,13 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             return false;
     }
 
-    int freqs[256] = { 0 };
+    uint freqs[256] = { 0 };
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, false);
 
     // Not text ?
-    if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0)) {
-        if (_pCtx != nullptr) {
-           switch (mode) {
-              case TextCodec::MASK_NUMERIC:
-                 _pCtx->putInt("dataType", Global::NUMERIC);
-                 break;
-              case TextCodec::MASK_BASE64:
-                 _pCtx->putInt("dataType", Global::BASE64);
-                 break;
-              case TextCodec::MASK_UTF8:
-                 _pCtx->putInt("dataType", Global::UTF8);
-                 break;
-              case TextCodec::MASK_DNA:
-                 _pCtx->putInt("dataType", Global::DNA);
-                 break;
-              default :
-                 break;
-           }
-        }
+    if ((mode & TextCodec::MASK_NOT_TEXT) == TextCodec::MASK_UTF8) {
+        if (_pCtx != nullptr) 
+            _pCtx->putInt("dataType", Global::UTF8);
 
         return false;
     }
