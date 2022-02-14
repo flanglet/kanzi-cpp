@@ -498,8 +498,8 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, true);
 
     // Not text ?
-    if ((mode & TextCodec::MASK_NOT_TEXT) == TextCodec::MASK_UTF8) {
-        if (_pCtx != nullptr) 
+    if ((mode & TextCodec::MASK_NOT_TEXT) != 0) {
+        if ((_pCtx != nullptr) && ((mode & ~TextCodec::MASK_NOT_TEXT) == TextCodec::MASK_UTF8))
             _pCtx->putInt("dataType", Global::UTF8);
 
         return false;
@@ -961,8 +961,8 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, false);
 
     // Not text ?
-    if ((mode & TextCodec::MASK_NOT_TEXT) == TextCodec::MASK_UTF8) {
-        if (_pCtx != nullptr) 
+    if ((mode & TextCodec::MASK_NOT_TEXT) != 0) {
+        if ((_pCtx != nullptr) && ((mode & ~TextCodec::MASK_NOT_TEXT) == TextCodec::MASK_UTF8))
             _pCtx->putInt("dataType", Global::UTF8);
 
         return false;
