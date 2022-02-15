@@ -185,10 +185,9 @@ namespace kanzi {
        static const int THRESHOLD4 = THRESHOLD3 * 128;
        static const int LOG_HASHES_SIZE = 24; // 16 MB
        static const byte MASK_NOT_TEXT = 0x80;
-       static const byte MASK_UTF8 = MASK_NOT_TEXT | 0x40;
-       static const byte MASK_FULL_ASCII = 0x04;
-       static const byte MASK_XML_HTML = 0x02;
-       static const byte MASK_CRLF = 0x01;
+       static const byte MASK_CRLF = 0x40;
+       static const byte MASK_XML_HTML = 0x20;
+       static const byte MASK_DT = 0x0F;
        static const int MASK_LENGTH = 0x0007FFFF; // 19 bits
 
        static bool init(bool delims[256], bool text[256]);

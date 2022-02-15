@@ -257,7 +257,7 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
         }
     }
 
-    byte res = (nbBinChars == 0) ? TextCodec::MASK_FULL_ASCII : byte(0);
+    byte res = 0;
 
     if (notText == true)
         return res | detectType(freqs0, freqs, count);
@@ -308,8 +308,10 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
 }
 
 byte TextCodec::detectType(uint freqs0[256], uint freqs[256][256], int count) {
-    if (Global::detectSimpleType(freqs0, count) != Global::UNDEFINED)
-       return TextCodec::MASK_NOT_TEXT;
+	Global::DataType dt = Global::detectSimpleType(freqs0, count);
+	
+    if (dt != Global::UNDEFINED)
+       return TextCodec::MASK_NOT_TEXT | byte(dt);
 
     // Check UTF-8
     // See Unicode 14 Standard - UTF-8 Table 3.7
@@ -356,7 +358,7 @@ byte TextCodec::detectType(uint freqs0[256], uint freqs[256][256], int count) {
     }
 
     // Another ad-hoc threshold
-    return (sum < count / 4) ? TextCodec::MASK_NOT_TEXT : TextCodec::MASK_UTF8;
+    return (sum < count / 4) ? TextCodec::MASK_NOT_TEXT : TextCodec::MASK_NOT_TEXT | byte(Global::UTF8);
 }
 
 
@@ -499,8 +501,24 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     // Not text ?
     if ((mode & TextCodec::MASK_NOT_TEXT) != 0) {
-        if ((_pCtx != nullptr) && ((mode & ~TextCodec::MASK_NOT_TEXT) == TextCodec::MASK_UTF8))
-            _pCtx->putInt("dataType", Global::UTF8);
+        if (_pCtx != nullptr) {
+           switch (mode & TextCodec::MASK_DT) {
+              case Global::NUMERIC:
+                 _pCtx->putInt("dataType", Global::NUMERIC);
+                 break;
+              case Global::BASE64:
+                 _pCtx->putInt("dataType", Global::BASE64);
+                 break;
+              case Global::UTF8:
+                 _pCtx->putInt("dataType", Global::UTF8);
+                 break;
+              case Global::DNA:
+                 _pCtx->putInt("dataType", Global::DNA);
+                 break;
+              default :
+                 break;
+           }
+        }
 
         return false;
     }
@@ -962,8 +980,24 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     // Not text ?
     if ((mode & TextCodec::MASK_NOT_TEXT) != 0) {
-        if ((_pCtx != nullptr) && ((mode & ~TextCodec::MASK_NOT_TEXT) == TextCodec::MASK_UTF8))
-            _pCtx->putInt("dataType", Global::UTF8);
+        if (_pCtx != nullptr) {
+           switch (mode & TextCodec::MASK_DT) {
+              case Global::NUMERIC:
+                 _pCtx->putInt("dataType", Global::NUMERIC);
+                 break;
+              case Global::BASE64:
+                 _pCtx->putInt("dataType", Global::BASE64);
+                 break;
+              case Global::UTF8:
+                 _pCtx->putInt("dataType", Global::UTF8);
+                 break;
+              case Global::DNA:
+                 _pCtx->putInt("dataType", Global::DNA);
+                 break;
+              default :
+                 break;
+           }
+        }
 
         return false;
     }
