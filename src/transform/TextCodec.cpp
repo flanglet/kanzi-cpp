@@ -501,24 +501,8 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     // Not text ?
     if ((mode & TextCodec::MASK_NOT_TEXT) != 0) {
-        if (_pCtx != nullptr) {
-           switch (mode & TextCodec::MASK_DT) {
-              case Global::NUMERIC:
-                 _pCtx->putInt("dataType", Global::NUMERIC);
-                 break;
-              case Global::BASE64:
-                 _pCtx->putInt("dataType", Global::BASE64);
-                 break;
-              case Global::UTF8:
-                 _pCtx->putInt("dataType", Global::UTF8);
-                 break;
-              case Global::DNA:
-                 _pCtx->putInt("dataType", Global::DNA);
-                 break;
-              default :
-                 break;
-           }
-        }
+        if (_pCtx != nullptr)
+			_pCtx->putInt("dataType", Global::DataType(mode & TextCodec::MASK_DT));
 
         return false;
     }
@@ -980,24 +964,8 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     // Not text ?
     if ((mode & TextCodec::MASK_NOT_TEXT) != 0) {
-        if (_pCtx != nullptr) {
-           switch (mode & TextCodec::MASK_DT) {
-              case Global::NUMERIC:
-                 _pCtx->putInt("dataType", Global::NUMERIC);
-                 break;
-              case Global::BASE64:
-                 _pCtx->putInt("dataType", Global::BASE64);
-                 break;
-              case Global::UTF8:
-                 _pCtx->putInt("dataType", Global::UTF8);
-                 break;
-              case Global::DNA:
-                 _pCtx->putInt("dataType", Global::DNA);
-                 break;
-              default :
-                 break;
-           }
-        }
+        if (_pCtx != nullptr)
+			_pCtx->putInt("dataType", Global::DataType(mode & TextCodec::MASK_DT));
 
         return false;
     }

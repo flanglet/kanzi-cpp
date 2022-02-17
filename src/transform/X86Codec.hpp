@@ -43,9 +43,10 @@ namespace kanzi
        static const byte X86_TWO_BYTE_PREFIX = 0x0F;
        static const byte X86_MASK_JCC = 0xF0;
        static const byte X86_ESCAPE = 0x9B;
-       static const byte NOT_EXE = 0;
-       static const byte X86 = 1;
-       static const byte ARM64 = 2;
+       static const byte NOT_EXE = 0x80;
+       static const byte X86 = 0x40;
+       static const byte ARM64 = 0x20;
+       static const byte MASK_DT = 0x0F;
        static const int X86_ADDR_MASK = (1 << 24) - 1;
        static const int MASK_ADDRESS = 0xF0F0F0F0;
        static const int ARM_B_ADDR_MASK = (1 << 26) - 1;

@@ -344,5 +344,13 @@ Global::DataType Global::detectSimpleType(uint freqs0[], int count) {
     if (sum == count)
         return BASE64;
 
+    sum = 0;
+
+    for (int i = 0; i < 256; i++)
+        sum += (freqs0[i] > 0) ? 1 : 0;
+
+    if (sum == 256)
+        return BIN;
+
     return UNDEFINED;
 }

@@ -48,9 +48,15 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int codeEnd = count - 8;
     byte mode = detectType(&input._array[input._index], count - 8, codeStart, codeEnd);
 
-    if (mode == NOT_EXE)
-       return false;
+    if ((mode & NOT_EXE) != 0) {	
+        if (_pCtx != nullptr)
+            _pCtx->putInt("dataType", Global::DataType(mode&MASK_DT));
+   
+        return false;
+	}
 
+    mode &= ~MASK_DT;
+	
     if (_pCtx != nullptr)
        _pCtx->putInt("dataType", Global::EXE);
 
@@ -396,17 +402,11 @@ byte X86Codec::detectType(byte src[], int count, int& codeStart, int& codeEnd)
     
     int jumpsX86 = 0;
     int jumpsARM64 = 0;
-    int zeros = 0;
-    int smallVals = 0;
+    uint histo[256] = { 0 };
     count = codeEnd - codeStart;
 
     for (int i = codeStart; i < codeEnd; i++) {       
-        if (src[i] < 16) {
-            smallVals++;
-            
-            if (src[i] == 0)
-                zeros++;
-        }
+        histo[src[i]]++;
 
         // X86
         if ((src[i] & X86_MASK_JUMP) == X86_INSTRUCTION_JUMP) {
@@ -442,23 +442,29 @@ byte X86Codec::detectType(byte src[], int count, int& codeStart, int& codeEnd)
            jumpsARM64++;       
     }
 
-    if (zeros < (count / 10))
-        return NOT_EXE;
-    
-    // Filter out (some/many) multimedia files
-    if (smallVals > (count / 2))
-        return NOT_EXE;
-    
-    // Ad-hoc thresholds
-    if (jumpsX86 >= (count / 200)) 
-        return X86;
+    Global::DataType dt = Global::detectSimpleType(histo, count);
+
+    if (dt != Global::BIN)
+		return NOT_EXE | byte(dt);
+	
+	// Filter out (some/many) multimedia files
+	int smallVals = 0;
+	
+	for (int i = 0; i < 16; i++)
+		smallVals += histo[i];
+	
+	if ((histo[0] < uint(count / 10)) || (smallVals > (count / 2)) || (histo[255] < uint(count / 100)))
+		return NOT_EXE | byte(dt);
+
+	// Ad-hoc thresholds
+	if ((jumpsX86 >= (count / 200)) && (histo[255] >= uint(count / 50)))
+		return X86;
     
     if (jumpsARM64 >= (count / 200))
         return ARM64;
 
-    // Number of jump instructions too small => either not a binary
-    // or not worth the change, skip.
-    return NOT_EXE;
+    // Number of jump instructions too small => either not an exe or not worth the change, skip.
+    return NOT_EXE | byte(dt);
 }
 
 // Return true if known header
