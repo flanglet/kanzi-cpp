@@ -643,9 +643,8 @@ bool X86Codec::parseHeader(byte src[], int count, uint magic, int& arch, int& co
 
             codeStart = min(codeStart, count);
             codeEnd = min(codeEnd, count);
-        }
-
-        return true;
+            return true;
+        } 
     }
 
     return false;
