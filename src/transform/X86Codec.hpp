@@ -69,6 +69,9 @@ namespace kanzi
        static const int ELF_ARM64_ARCH = 0xB7;
        static const int MAC_AMD64_ARCH = 0x01000007;
        static const int MAC_ARM64_ARCH = 0x0100000C;
+       static const int MAC_MH_EXECUTE = 0x02;
+       static const int MAC_LC_SEGMENT = 0x01;
+       static const int MAC_LC_SEGMENT64 = 0x19;
        static const int MIN_BLOCK_SIZE = 4096;
        static const int MAX_BLOCK_SIZE = (1 << (26 + 2)) - 1; // max offset << 2
 
