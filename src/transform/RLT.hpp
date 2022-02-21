@@ -32,8 +32,8 @@ namespace kanzi
    class RLT : public Transform<byte>
    {
    public:
-       RLT() {}
-       RLT(Context&) {}
+       RLT() { _pCtx = nullptr; }
+       RLT(Context& ctx) { _pCtx = &ctx; }
        ~RLT() {}
 
        bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;
@@ -51,6 +51,8 @@ namespace kanzi
        static const int MIN_BLOCK_LENGTH = 16;
 
        static int emitRunLength(byte dst[], int length, int run, byte escape, byte val);
+
+       Context* _pCtx;
    };
 
 }

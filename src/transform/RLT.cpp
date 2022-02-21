@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <stdexcept>
 #include "RLT.hpp"
 #include "../Global.hpp"
 
@@ -39,13 +38,24 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    int srcIdx = 0;
-    int dstIdx = 0;
-    const int srcEnd = srcIdx + length;
-    const int srcEnd4 = srcEnd - 4;
-    const int dstEnd = output._length;
+	
+    if (_pCtx != nullptr) {
+        Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
+
+        if ((dt == Global::DNA) || (dt == Global::BASE64) || (dt == Global::UTF8))
+            return false;
+    }
+
     uint freqs[256] = { 0 };
-    Global::computeHistogram(&src[srcIdx], srcEnd, freqs, true, false);
+    Global::computeHistogram(&src[0], length, freqs);
+    Global::DataType dt = Global::detectSimpleType(freqs, length);
+
+    if ((_pCtx != nullptr) && (dt != Global::UNDEFINED))
+        _pCtx->putInt("dataType", dt);
+
+    if ((dt == Global::DNA) || (dt == Global::BASE64) || (dt == Global::UTF8))
+        return false;
+
     int minIdx = 0;
 
     if (freqs[minIdx] > 0) {
@@ -59,6 +69,11 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         }
     }
 
+    int srcIdx = 0;
+    int dstIdx = 0;
+    const int srcEnd = length;
+    const int srcEnd4 = srcEnd - 4;
+    const int dstEnd = output._length;
     bool res = true;
     byte escape = byte(minIdx);
     int run = 0;
