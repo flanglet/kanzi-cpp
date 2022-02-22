@@ -308,7 +308,7 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
 }
 
 byte TextCodec::detectType(uint freqs0[256], uint freqs[256][256], int count) {
-	Global::DataType dt = Global::detectSimpleType(freqs0, count);
+	Global::DataType dt = Global::detectSimpleType(count, freqs0);
 	
     if (dt != Global::UNDEFINED)
        return TextCodec::MASK_NOT_TEXT | byte(dt);

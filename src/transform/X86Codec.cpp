@@ -436,7 +436,7 @@ byte X86Codec::detectType(byte src[], int count, int& codeStart, int& codeEnd)
             jumpsARM64++;
     }
 
-    Global::DataType dt = Global::detectSimpleType(histo, count);
+    Global::DataType dt = Global::detectSimpleType(count, histo);
 
     if (dt != Global::BIN)
         return NOT_EXE | byte(dt);

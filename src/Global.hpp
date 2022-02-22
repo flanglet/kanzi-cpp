@@ -62,7 +62,7 @@ namespace kanzi {
 
        static void computeHistogram(const byte block[], int end, uint freqs[], bool isOrder0=true, bool withTotal=false);
 
-       static DataType detectSimpleType(uint histo[], int count);
+       static DataType detectSimpleType(int count, uint histo[]);
 
        // Szudzik pairing
        static void encodePair(int x, int y, int& pair);

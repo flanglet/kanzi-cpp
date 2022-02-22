@@ -48,7 +48,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     uint freqs[256] = { 0 };
     Global::computeHistogram(&src[0], length, freqs);
-    Global::DataType dt = Global::detectSimpleType(freqs, length);
+    Global::DataType dt = Global::detectSimpleType(length, freqs);
 
     if ((_pCtx != nullptr) && (dt != Global::UNDEFINED))
         _pCtx->putInt("dataType", dt);
