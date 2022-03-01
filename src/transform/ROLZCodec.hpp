@@ -133,8 +133,10 @@ namespace kanzi {
        }
 
    private:
-       static const int MIN_MATCH = 3;
-       static const int MAX_MATCH = MIN_MATCH + 65535;
+       static const int MIN_MATCH3 = 3;
+       static const int MIN_MATCH4 = 4;
+       static const int MIN_MATCH9 = 9;
+       static const int MAX_MATCH = MIN_MATCH3 + 65535;
        static const int LOG_POS_CHECKS = 4;
 
        int32* _matches;
@@ -142,7 +144,8 @@ namespace kanzi {
        int _logPosChecks;
        int _posChecks;
        Context* _pCtx;
-       uint8 _maskChecks;
+       int _minMatch;
+       uint8 _maskChecks;	   
 
        int findMatch(const byte buf[], const int pos, const int end);
 
@@ -176,8 +179,10 @@ namespace kanzi {
    private:
        static const int MATCH_FLAG = 0;
        static const int LITERAL_FLAG = 1;
-       static const int MIN_MATCH = 3;
-       static const int MAX_MATCH = MIN_MATCH + 255;
+       static const int MIN_MATCH3 = 3;
+       static const int MIN_MATCH4 = 4;
+       static const int MIN_MATCH9 = 9;
+       static const int MAX_MATCH = MIN_MATCH3 + 255;
        static const int LOG_POS_CHECKS = 5;
 
        int32* _matches;
@@ -185,6 +190,7 @@ namespace kanzi {
        int _logPosChecks;
        uint8 _maskChecks;
        Context* _pCtx;
+       int _minMatch;
        int _posChecks;
 
        int findMatch(const byte buf[], const int pos, const int end);
@@ -278,12 +284,6 @@ namespace kanzi {
 
    inline int ROLZCodec::emitCopy(byte dst[], int dstIdx, int ref, int matchLen)
    {
-       dst[dstIdx] = dst[ref];
-       dst[dstIdx + 1] = dst[ref + 1];
-       dst[dstIdx + 2] = dst[ref + 2];
-       dstIdx += 3;
-       ref += 3;
-
        while (matchLen >= 8) {
            dst[dstIdx] = dst[ref];
            dst[dstIdx + 1] = dst[ref + 1];
