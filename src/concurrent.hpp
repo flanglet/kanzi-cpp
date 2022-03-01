@@ -65,6 +65,110 @@ public:
 
 
 #ifdef CONCURRENCY_ENABLED
+   #include <vector>
+   #include <queue>
+   #include <memory>
+   #include <thread>
+   #include <mutex>
+   #include <condition_variable>
+   #include <future>
+   #include <functional>
+   #include <stdexcept>
+
+   class ThreadPool {
+   public:
+       ThreadPool(uint threads) THROW;
+       template<class F, class... Args>
+       auto schedule(F&& f, Args&&... args) 
+           -> std::future<typename std::result_of<F(Args...)>::type> THROW;
+       ~ThreadPool();
+   	
+   private:
+       std::vector<std::thread> _workers;
+       std::queue<std::function<void()>> _tasks;
+       std::mutex _mutex;
+       std::condition_variable _condition;
+       bool _stop;
+   };
+    
+    
+   inline ThreadPool::ThreadPool(uint threads) THROW
+       :   _stop(false)
+   {
+       if ((threads == 0) || (threads > 1024))
+           throw std::runtime_error("The number of threads must be in [1..1024]");
+
+       // Start and run threads
+       for (uint i = 0; i < threads; i++)
+           _workers.emplace_back(
+               [this]
+               {
+                   for(;;)
+                   {
+                       std::function<void()> task;
+
+                       {
+                           std::unique_lock<std::mutex> lock(_mutex);
+                           _condition.wait(lock,
+                               [this] { return (_stop == true) || (_tasks.size() > 0); });
+   							
+                           if ((_stop == true) && (_tasks.size() == 0))
+                               return;
+   						
+                           task = std::move(_tasks.front());
+                           _tasks.pop();
+                       }
+
+                       task();
+                   }
+               }
+           );
+   }
+
+
+   template<class F, class... Args>
+   auto ThreadPool::schedule(F&& f, Args&&... args) 
+       -> std::future<typename std::result_of<F(Args...)>::type> THROW
+   {
+       using return_type = typename std::result_of<F(Args...)>::type;
+
+       auto task = std::make_shared< std::packaged_task<return_type()> >(
+               std::bind(std::forward<F>(f), std::forward<Args>(args)...)
+           );
+           
+       std::future<return_type> res = task->get_future();
+   	
+       {
+           std::unique_lock<std::mutex> lock(_mutex);
+
+           if (_stop == true)
+               throw std::runtime_error("ThreadPool stopped");
+
+           _tasks.emplace([task](){ (*task)(); });
+       }
+   	
+       _condition.notify_one();
+       return res;
+   }
+
+
+   // the destructor joins all threads
+   inline ThreadPool::~ThreadPool()
+   {
+       {
+           std::unique_lock<std::mutex> lock(_mutex);
+           _stop = true;
+       }
+   	
+       _condition.notify_all();
+   	
+       for(std::thread& w : _workers)
+           w.join();
+   }
+
+
+
+
 
 	template<class T>
 	class BoundedConcurrentQueue {
