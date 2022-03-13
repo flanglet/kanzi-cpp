@@ -64,9 +64,7 @@ namespace kanzi {
 
        void reset();
 
-       void setMode(int n) { _pIdx = n; }
-
-       void setContext(byte ctx) { _ctx = int32(ctx) << _logSizes[_pIdx]; }
+       void setContext(int n, byte ctx) { _pIdx = n; _ctx = int32(ctx) << _logSizes[_pIdx]; }
    };
 
    class ROLZDecoder {
@@ -108,9 +106,7 @@ namespace kanzi {
 
        void reset();
 
-       void setMode(int n) { _pIdx = n; }
-
-       void setContext(byte ctx) { _ctx = int32(ctx) << _logSizes[_pIdx]; }
+       void setContext(int n, byte ctx) { _pIdx = n; _ctx = int32(ctx) << _logSizes[_pIdx]; }
    };
 
    // Use ANS to encode/decode literals and matches
@@ -179,6 +175,8 @@ namespace kanzi {
    private:
        static const int MATCH_FLAG = 0;
        static const int LITERAL_FLAG = 1;
+       static const int MATCH_CTX = 0;
+       static const int LITERAL_CTX = 1;
        static const int MIN_MATCH3 = 3;
        static const int MIN_MATCH4 = 4;
        static const int MIN_MATCH9 = 9;

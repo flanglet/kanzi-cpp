@@ -721,8 +721,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         srcIdx = 0;
 
         // First literals
-        re.setMode(LITERAL_FLAG);
-        re.setContext(byte(0));
+        re.setContext(LITERAL_CTX, 0);
         re.encode9Bits((LITERAL_FLAG << 8) | int(src[srcIdx]));
         srcIdx++;
 
@@ -732,7 +731,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
 
         while (srcIdx < sizeChunk) {
-            re.setContext(src[srcIdx - 1]);
+            re.setContext(LITERAL_CTX, src[srcIdx - 1]);
             const int match = findMatch(src, srcIdx, sizeChunk);
 
             if (match < 0) {
@@ -746,10 +745,8 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const int matchLen = match & 0xFFFF;
             re.encode9Bits((MATCH_FLAG << 8) | matchLen);
             const int matchIdx = match >> 16;
-            re.setMode(MATCH_FLAG);
-            re.setContext(src[srcIdx - 1]);
+            re.setContext(MATCH_CTX, src[srcIdx - 1]);
             re.encodeBits(matchIdx, _logPosChecks);
-            re.setMode(LITERAL_FLAG);
             srcIdx += (matchLen + _minMatch);
         }
 
@@ -757,10 +754,8 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     }
 
     // Emit last literals
-    re.setMode(LITERAL_FLAG);
-
     for (int i = 0; i < 4; i++, srcIdx++) {
-        re.setContext(src[srcIdx - 1]);
+        re.setContext(LITERAL_CTX, src[srcIdx - 1]);
         re.encode9Bits((LITERAL_FLAG << 8) | int(src[srcIdx]));
     }
 
@@ -802,8 +797,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         int dstIdx = 0;
 
         // First literals
-        rd.setMode(LITERAL_FLAG);
-        rd.setContext(byte(0));
+        rd.setContext(LITERAL_CTX, 0);
         int val = rd.decode9Bits();
 
         // Sanity check
@@ -831,8 +825,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const int savedIdx = dstIdx;
             const uint16 key = ROLZCodec::getKey(&dst[dstIdx - 2]);
             int32* matches = &_matches[key << _logPosChecks];
-            rd.setMode(LITERAL_FLAG);
-            rd.setContext(dst[dstIdx - 1]);
+            rd.setContext(LITERAL_CTX, dst[dstIdx - 1]);
             prefetchRead(&_counters[key]);
             val = rd.decode9Bits();
 
@@ -849,8 +842,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     break;
                 }
 
-                rd.setMode(MATCH_FLAG);
-                rd.setContext(dst[dstIdx - 1]);
+                rd.setContext(MATCH_CTX, dst[dstIdx - 1]);
                 const int32 matchIdx = int32(rd.decodeBits(_logPosChecks));
                 const int32 ref = matches[(_counters[key] - matchIdx) & _maskChecks];
                 dstIdx = ROLZCodec::emitCopy(dst, dstIdx, ref, matchLen + _minMatch);
