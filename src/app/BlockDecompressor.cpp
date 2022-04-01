@@ -233,7 +233,12 @@ int BlockDecompressor::decompress(uint64& inputSize)
         }
     }
 
+#ifdef CONCURRENCY_ENABLED
+    ThreadPool pool(_jobs);
+    Context ctx(&pool);
+#else
     Context ctx;
+#endif
     ctx.putInt("verbosity", _verbosity);
     ctx.putInt("overwrite", (_overwrite == true) ? 1 : 0);
 
@@ -307,7 +312,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
             // Create one worker per job and run it. A worker calls several tasks sequentially.
             for (int i = 0; i < _jobs; i++) {
                 workers.push_back(new FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>(&queue));
-                results.push_back(async(launch::async, &FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>::run, workers[i]));
+                results.push_back(pool.schedule(&FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>::run, workers[i]));
             }
 
             // Wait for results

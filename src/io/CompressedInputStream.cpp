@@ -29,7 +29,12 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+
+#ifdef CONCURRENCY_ENABLED
+CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, ThreadPool* pool)
+#else
 CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
+#endif
     : InputStream(is.rdbuf())
     , _is(is)
 {
@@ -39,6 +44,8 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
         ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "], got " << tasks;
         throw invalid_argument(ss.str());
     }
+
+    _pool = pool; // may be null
 #else
     if (tasks != 1)
         throw invalid_argument("The number of jobs is limited to 1 in this version");
@@ -83,6 +90,8 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
         ss << "The number of jobs must be in [1.." << MAX_CONCURRENCY << "], got " << tasks;
         throw invalid_argument(ss.str());
     }
+
+    _pool = _ctx.getPool(); // may be null
 #else
     if (tasks != 1)
         throw invalid_argument("The number of jobs is limited to 1 in this version");
@@ -353,7 +362,7 @@ int CompressedInputStream::processBlock() THROW
 
             // Assign optimal number of tasks and jobs per task
             if (nbTasks > 1) {
-                // Limit the number of jobs if there are fewer blocks that _jobs
+                // Limit the number of tasks if there are fewer blocks that _jobs
                 // It allows more jobs per task and reduces memory usage.
                 nbTasks = min(_nbInputBlocks, _jobs);
                 Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
@@ -422,7 +431,10 @@ int CompressedInputStream::processBlock() THROW
 
                 // Register task futures and launch tasks in parallel
                 for (uint i = 0; i < tasks.size(); i++) {
-                    futures.push_back(async(&DecodingTask<DecodingTaskResult>::run, tasks[i]));
+                  if (_pool == nullptr)
+                       futures.push_back(async(&DecodingTask<DecodingTaskResult>::run, tasks[i]));
+                    else 
+                       futures.push_back(_pool->schedule(&DecodingTask<DecodingTaskResult>::run, tasks[i]));
                 }
 
                 // Wait for tasks completion and check results

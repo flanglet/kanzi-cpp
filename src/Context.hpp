@@ -18,6 +18,7 @@ limitations under the License.
 
 #include <sstream>
 #include <string>
+#include "concurrent.hpp"
 #include "types.hpp"
 
 #if __cplusplus >= 201103L
@@ -34,7 +35,12 @@ namespace kanzi
    class Context
    {
    public:
+
+#ifndef CONCURRENCY_ENABLED
        Context() {}
+#else
+       Context(ThreadPool* pool=nullptr) { _pool = pool; }
+#endif
        Context(const Context& ctx);
        Context& operator=(const Context& ctx);
        virtual ~Context() {}
@@ -47,21 +53,34 @@ namespace kanzi
        void putLong(const std::string& key, int64 value);
        void putString(const std::string& key, const std::string& value);
 
+#ifdef CONCURRENCY_ENABLED
+       ThreadPool* getPool() { return _pool; }
+#endif
 
    private:
        CTX_MAP<std::string, std::string> _map;
+
+#ifdef CONCURRENCY_ENABLED
+       ThreadPool* _pool;
+#endif
    };
 
 
    inline Context::Context(const Context& ctx)
       : _map(ctx._map)
    {
+#ifdef CONCURRENCY_ENABLED
+       _pool = ctx._pool;
+#endif
    }
 
 
    inline Context& Context::operator=(const Context& ctx)
    {
       _map = ctx._map;
+#ifdef CONCURRENCY_ENABLED
+       _pool = ctx._pool;
+#endif
       return *this;
    }
 
