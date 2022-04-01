@@ -134,6 +134,9 @@ namespace kanzi {
        atomic_int _blockId;
        std::vector<Listener*> _listeners;
        Context _ctx;
+#ifdef CONCURRENCY_ENABLED
+       ThreadPool* _pool;
+#endif
 
        void writeHeader() THROW;
 
@@ -142,8 +145,14 @@ namespace kanzi {
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 
    public:
-       CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform, 
-          int blockSize = 4 * 1024 * 1024, int jobs = 1, bool checksum = false);
+#ifdef CONCURRENCY_ENABLED
+       CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform,
+          int blockSize = 4 * 1024 * 1024, bool checksum = false, int jobs = 1,
+          ThreadPool* pool = nullptr);
+#else          
+       CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform,
+          int blockSize = 4 * 1024 * 1024, bool checksum = false, int jobs = 1);
+#endif
 
 #if __cplusplus >= 201103L
        CompressedOutputStream(OutputStream& os, Context& ctx,

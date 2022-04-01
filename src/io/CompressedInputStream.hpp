@@ -165,6 +165,9 @@ namespace kanzi
        std::vector<Listener*> _listeners;
        std::streamsize _gcount;
        Context _ctx;
+#ifdef CONCURRENCY_ENABLED
+       ThreadPool* _pool;
+#endif
 
        void readHeader() THROW;
 
@@ -175,7 +178,11 @@ namespace kanzi
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 
    public:
-       CompressedInputStream(InputStream& is, int jobs = 1);
+#ifdef CONCURRENCY_ENABLED
+        CompressedInputStream(InputStream& is, int jobs = 1, ThreadPool* pool = nullptr);
+#else
+        CompressedInputStream(InputStream& is, int jobs = 1);
+#endif
 
 #if __cplusplus >= 201103L
        CompressedInputStream(InputStream& is, Context& ctx,
