@@ -52,7 +52,7 @@ LIB_SOURCES=Global.cpp \
 	transform/RLT.cpp \
 	transform/SRT.cpp \
 	transform/TextCodec.cpp \
-	transform/X86Codec.cpp \
+	transform/EXECodec.cpp \
 	transform/ZRLT.cpp
 LIB_OBJECTS=$(LIB_SOURCES:.cpp=.o)
 

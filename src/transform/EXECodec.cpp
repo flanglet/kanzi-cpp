@@ -15,12 +15,12 @@ limitations under the License.
 
 #include "../Global.hpp"
 #include "../Magic.hpp"
-#include "X86Codec.hpp"
+#include "EXECodec.hpp"
 
 using namespace kanzi;
 using namespace std;
 
-bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
     if (count == 0)
         return true;
@@ -69,7 +69,7 @@ bool X86Codec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return false;
 }
 
-bool X86Codec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd) THROW
+bool EXECodec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd) THROW
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -144,7 +144,7 @@ bool X86Codec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-bool X86Codec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd) THROW
+bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd) THROW
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -234,7 +234,7 @@ bool X86Codec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-bool X86Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool EXECodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
     if (count == 0)
         return true;
@@ -256,7 +256,7 @@ bool X86Codec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return false;
 }
 
-bool X86Codec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -308,7 +308,7 @@ bool X86Codec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-bool X86Codec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -370,7 +370,7 @@ bool X86Codec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-byte X86Codec::detectType(byte src[], int count, int& codeStart, int& codeEnd)
+byte EXECodec::detectType(byte src[], int count, int& codeStart, int& codeEnd)
 {
     // Let us check the first bytes ... but this may not be the first block
     // Best effort
@@ -462,7 +462,7 @@ byte X86Codec::detectType(byte src[], int count, int& codeStart, int& codeEnd)
 }
 
 // Return true if known header
-bool X86Codec::parseHeader(byte src[], int count, uint magic, int& arch, int& codeStart, int& codeEnd)
+bool EXECodec::parseHeader(byte src[], int count, uint magic, int& arch, int& codeStart, int& codeEnd)
 {
     if (magic == Magic::WIN_MAGIC) {
         if (count >= 64) {

@@ -8,18 +8,18 @@
 #include "../types.hpp"
 #include "../Context.hpp"
 #include "BWT.hpp"
-#include "BWTS.hpp"
-#include "SBRT.hpp"
 #include "BWTBlockCodec.hpp"
-#include "LZCodec.hpp"
+#include "BWTS.hpp"
+#include "EXECodec.hpp"
 #include "FSDCodec.hpp"
+#include "LZCodec.hpp"
 #include "NullTransform.hpp"
 #include "ROLZCodec.hpp"
 #include "RLT.hpp"
+#include "SBRT.hpp"
 #include "SRT.hpp"
 #include "TextCodec.hpp"
 #include "TransformSequence.hpp"
-#include "X86Codec.hpp"
 #include "ZRLT.hpp"
 
 
@@ -253,7 +253,7 @@ namespace kanzi {
 			return new RLT(ctx);
 
 		case EXE_TYPE:
-			return new X86Codec(ctx);
+			return new EXECodec(ctx);
 
 		case FSD_TYPE:
 			return new FSDCodec(ctx);
