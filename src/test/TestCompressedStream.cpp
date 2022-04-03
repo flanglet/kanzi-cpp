@@ -80,7 +80,7 @@ uint64 compress2(byte block[], uint length)
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
-    CompressedOutputStream* cos = new CompressedOutputStream(ios, "ANS0", "LZX", blockSize, jobs, check);
+    CompressedOutputStream* cos = new CompressedOutputStream(ios, "ANS0", "LZX", blockSize, check, jobs);
     cos->write((const char*)block, length);
     cos->close();
     uint64 written = cos->getWritten();
