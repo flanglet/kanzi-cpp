@@ -21,14 +21,6 @@ limitations under the License.
 #include "types.hpp"
 #include "util.hpp"
 
-#if defined(_MSC_VER)
-   #include <intrin.h>
-#elif defined(__clang__)
-   #ifdef __x86_64__
-      #include <x86intrin.h>
-   #endif
-#endif
-
 namespace kanzi {
 
    class Global {

@@ -41,10 +41,29 @@ limitations under the License.
 		#endif
 	#endif
 
+   #ifdef __SSE__
+      #include <xmmintrin.h> 
+   #endif
+   
+   #ifdef __SSE2__ 
+      #include <emmintrin.h>
+   #endif
 
-	#ifdef __x86_64__
-	   #include <emmintrin.h>
-	#endif
+   #ifdef __SSE3__ 
+      #include <pmmintrin.h>
+   #endif
+
+   #ifdef __SSE4_1__
+       #include <smmintrin.h> 
+   #endif
+
+   #ifdef __AVX__ 
+       #include <immintrin.h>
+   #endif
+
+   #ifdef __AVX2__ 
+       #include <immintrin.h>
+   #endif
 
    /*
    Visual Studio 2019 version 16.10, 16.11  MSVC++ 14.28 _MSC_VER == 1929
