@@ -13,10 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include "../util.hpp" // Visual Studio min/max
-#include "../Memory.hpp"
-#include "TransformFactory.hpp"
 #include "LZCodec.hpp"
+#include "../Memory.hpp"
+#include "../util.hpp" // Visual Studio min/max
+#include "TransformFactory.hpp"
 
 using namespace kanzi;
 using namespace std;
@@ -105,13 +105,13 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     int mm = MIN_MATCH1;
 
     if (_pCtx != nullptr) {
-       Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
+        Global::DataType dt = (Global::DataType)_pCtx->getInt("dataType", Global::UNDEFINED);
 
-       if (dt == Global::DNA) {
-           // Longer min match for DNA input
-           mm = MIN_MATCH2;
-           dst[12] |= byte(2);
-       }
+        if (dt == Global::DNA) {
+            // Longer min match for DNA input
+            mm = MIN_MATCH2;
+            dst[12] |= byte(2);
+        }
     }
 
     const int minMatch = mm;
@@ -122,29 +122,40 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     int mIdx = 0;
     int mLenIdx = 0;
     int tkIdx = 0;
-    int repd0 = 0;
+    int repd0 = count;
     int repd1 = 0;
 
     while (srcIdx < srcEnd) {
         const int minRef = max(srcIdx - maxDist, 0);
         const int32 h0 = hash(&src[srcIdx]);
         const int32 h1 = hash(&src[srcIdx + 1]);
-        int ref = _hashes[h0];
-        _hashes[h0] = srcIdx;
-
-        if (ref <= minRef) {
-            srcIdx++;
-            continue;
-        }
-
+        int ref = srcIdx + 1 - repd0;
         int bestLen = 0;
 
-        if (memcmp(&src[srcIdx], &src[ref], 4) == 0) {
-            bestLen = 4 + findMatch(src, srcIdx + 4, ref + 4, min(srcEnd - srcIdx - 4, MAX_MATCH));
+        if (ref > minRef) {
+            // Check repd0 first
+            if (memcmp(&src[srcIdx + 1], &src[ref], 4) == 0)
+                bestLen = findMatch(src, srcIdx + 1, ref, min(srcEnd - srcIdx - 1, MAX_MATCH));
+        }
+
+        if (bestLen < minMatch) {
+            ref = _hashes[h0];
+            _hashes[h0] = srcIdx;
+
+            if (ref <= minRef) {
+                srcIdx++;
+                continue;
+            }
+
+            if (memcmp(&src[srcIdx], &src[ref], 4) == 0)
+                bestLen = findMatch(src, srcIdx, ref, min(srcEnd - srcIdx, MAX_MATCH));
+        } else {
+            srcIdx++;
+            _hashes[h0] = srcIdx;
         }
 
         // No good match ?
-        if ((bestLen < minMatch) || ((bestLen == minMatch) && (srcIdx - ref >= MIN_MATCH_MIN_DIST))) {
+        if ((bestLen < minMatch) || ((bestLen == minMatch) && (srcIdx - ref >= MIN_MATCH_MIN_DIST) && (srcIdx - ref != repd0))) {
             srcIdx++;
             continue;
         }
@@ -187,8 +198,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // Literals to process ?
         if (anchor == srcIdx) {
             _tkBuf[tkIdx++] = byte(token);
-        }
-        else {
+        } else {
             // Process literals
             const int litLen = srcIdx - anchor;
 
@@ -199,8 +209,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
                 _tkBuf[tkIdx++] = byte((7 << 5) | token);
                 dstIdx += emitLength(&dst[dstIdx], litLen - 7);
-            }
-            else {
+            } else {
                 _tkBuf[tkIdx++] = byte((litLen << 5) | token);
             }
 
@@ -226,7 +235,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             memcpy(&buf[0], &_mBuf[0], _bufferSize);
             delete[] _mBuf;
             _mBuf = buf;
-            
+
             if (mLenIdx >= _bufferSize - 4) {
                 byte* buf = new byte[_bufferSize << 1];
                 memcpy(&buf[0], &_mLenBuf[0], _bufferSize);
@@ -256,8 +265,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     if (litLen >= 7) {
         _tkBuf[tkIdx++] = byte(7 << 5);
         dstIdx += emitLength(&dst[dstIdx], litLen - 7);
-    }
-    else {
+    } else {
         _tkBuf[tkIdx++] = byte(litLen << 5);
     }
 
@@ -279,14 +287,13 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-
 template <bool T>
 bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
 
-    if (count < 13 )
+    if (count < 13)
         return false;
 
     if (!SliceArray<byte>::isValid(input))
@@ -377,8 +384,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
                 ref += 16;
                 dstIdx += 16;
             } while (dstIdx < mEnd);
-        }
-        else {
+        } else {
             const int ref = dstIdx - dist;
 
             for (int i = 0; i < mLen; i++)
@@ -440,7 +446,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         int bestLen = 0;
 
         // Find a match
-        if ((ref > minRef) && (memcmp(&src[ref+MIN_MATCH-4], &src[srcIdx+MIN_MATCH-4], 4) == 0))
+        if ((ref > minRef) && (memcmp(&src[ref + MIN_MATCH - 4], &src[srcIdx + MIN_MATCH - 4], 4) == 0))
             bestLen = findMatch(src, srcIdx, ref, srcEnd - srcIdx);
 
         // No good match ?
