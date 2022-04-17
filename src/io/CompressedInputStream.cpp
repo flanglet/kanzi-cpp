@@ -625,6 +625,7 @@ T DecodingTask<T>::run() THROW
     DefaultInputBitStream ibs(is);
     int checksum1 = 0;
     EntropyDecoder* ed = nullptr;
+    TransformSequence<byte>* transform = nullptr;
 
     try {
         // Extract block header from bitstream
@@ -715,13 +716,14 @@ T DecodingTask<T>::run() THROW
             CompressedInputStream::notifyListeners(_listeners, evt);
         }
 
-        TransformSequence<byte>* transform = TransformFactory<byte>::newTransform(_ctx, _transformType);
+        transform = TransformFactory<byte>::newTransform(_ctx, _transformType);
         transform->setSkipFlags(skipFlags);
         _buffer->_index = 0;
 
         // Inverse transform
         bool res = transform->inverse(*_buffer, *_data, preTransformLength);
         delete transform;
+        transform = nullptr;
 
         if (res == false) {
             return T(*_data, _blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
@@ -747,6 +749,9 @@ T DecodingTask<T>::run() THROW
         // Make sure to unfreeze next block
         if (_processedBlockId->load(memory_order_relaxed) == _blockId - 1)
             (*_processedBlockId)++;
+
+        if (transform != nullptr)
+            delete transform;
 
         if (ed != nullptr)
             delete ed;

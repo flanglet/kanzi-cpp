@@ -481,6 +481,7 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
 template <class T>
 T EncodingTask<T>::run() THROW
 {
+    TransformSequence<byte>* transform = nullptr;
     EntropyEncoder* ee = nullptr;
 
     try {
@@ -530,7 +531,7 @@ T EncodingTask<T>::run() THROW
         }
 
         _ctx.putInt("size", _blockLength);
-        TransformSequence<byte>* transform = TransformFactory<byte>::newTransform(_ctx, _transformType);
+        transform = TransformFactory<byte>::newTransform(_ctx, _transformType);
         const int requiredSize = transform->getMaxEncodedLength(_blockLength);
 
         if (_buffer->_length < requiredSize) {
@@ -547,6 +548,7 @@ T EncodingTask<T>::run() THROW
         const int nbTransforms = transform->getNbTransforms();
         const byte skipFlags = transform->getSkipFlags();
         delete transform;
+        transform = nullptr;
         postTransformLength = _buffer->_index;
 
         if (postTransformLength < 0) {
@@ -673,6 +675,9 @@ T EncodingTask<T>::run() THROW
         // Make sure to unfreeze next block
         if (_processedBlockId->load(memory_order_relaxed) == _blockId - 1)
             (*_processedBlockId)++;
+
+        if (transform != nullptr)
+            delete transform;
 
         if (ee != nullptr)
             delete ee;
