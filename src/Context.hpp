@@ -19,7 +19,7 @@ limitations under the License.
 #include <sstream>
 #include <string>
 #include "concurrent.hpp"
-#include "types.hpp"
+#include "util.hpp"
 
 #if __cplusplus >= 201103L
    #include <unordered_map>
@@ -130,17 +130,13 @@ namespace kanzi
 
    inline void Context::putInt(const std::string& key, int value)
    {
-      std::stringstream ss;
-      ss << value;
-      _map[key] = ss.str();
+      _map[key] = to_string(value);
    }
 
 
    inline void Context::putLong(const std::string& key, int64 value)
    {
-      std::stringstream ss;
-      ss << value;
-      _map[key] = ss.str();
+      _map[key] = to_string(value);
    }
 
 
