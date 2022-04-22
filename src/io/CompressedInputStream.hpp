@@ -31,7 +31,6 @@ limitations under the License.
    #include <functional>
 #endif
 
-using namespace std;
 
 namespace kanzi
 {
@@ -222,7 +221,7 @@ namespace kanzi
    inline int CompressedInputStream::get() THROW
    {
        const int res = _get(1);
-       _gcount = (res != EOF)? 1 : 0;
+       _gcount = (res != EOF) ? 1 : 0;
        return res;
    }
 
@@ -233,25 +232,25 @@ namespace kanzi
 
    inline std::streampos CompressedInputStream::tellg()
    {
-       return _is.tellg();
+       return uint(getRead());
    }
 
    inline std::istream& CompressedInputStream::seekg(std::streampos) THROW
    {
-       setstate(ios::badbit);
-       throw ios_base::failure("Not supported");
+       setstate(std::ios::badbit);
+       throw std::ios_base::failure("Not supported");
    }
 
-   inline istream& CompressedInputStream::putback(char) THROW
+   inline std::istream& CompressedInputStream::putback(char) THROW
    {
-       setstate(ios::badbit);
-       throw ios_base::failure("Not supported");
+       setstate(std::ios::badbit);
+       throw std::ios_base::failure("Not supported");
    }
 
-   inline istream& CompressedInputStream::unget() THROW
+   inline std::istream& CompressedInputStream::unget() THROW
    {
-       setstate(ios::badbit);
-       throw ios_base::failure("Not supported");
+       setstate(std::ios::badbit);
+       throw std::ios_base::failure("Not supported");
    }
 
 }

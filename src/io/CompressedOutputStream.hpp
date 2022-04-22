@@ -31,7 +31,6 @@ limitations under the License.
    #include <functional>
 #endif
 
-using namespace std;
 
 namespace kanzi {
 
@@ -183,31 +182,31 @@ namespace kanzi {
    };
 
 
-   inline streampos CompressedOutputStream::tellp()
+   inline std::streampos CompressedOutputStream::tellp()
    {
-       return _os.tellp();
+       return uint(getWritten());
    }
 
-   inline ostream& CompressedOutputStream::seekp(std::streampos) THROW
+   inline std::ostream& CompressedOutputStream::seekp(std::streampos) THROW
    {
-       setstate(ios::badbit);
-       throw ios_base::failure("Not supported");
+       setstate(std::ios::badbit);
+       throw std::ios_base::failure("Not supported");
    }
 
-   inline ostream& CompressedOutputStream::flush()
+   inline std::ostream& CompressedOutputStream::flush()
    {
        // Let the underlying output stream flush itself when needed
        return *this;
    }
 
-   inline ostream& CompressedOutputStream::put(char c) THROW
+   inline std::ostream& CompressedOutputStream::put(char c) THROW
    {
        try {
            if (_buffers[_bufferId]->_index >= _bufferThreshold) {
                // Current write buffer is full
-               if (_bufferId + 1 < min(_nbInputBlocks, _jobs)) {
+               if (_bufferId + 1 < std::min(_nbInputBlocks, _jobs)) {
                    _bufferId++;
-                   const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
+                   const int bufSize = std::max(_blockSize + (_blockSize >> 6), 65536);
 
                    if (_buffers[_bufferId]->_length == 0) {
                        delete[] _buffers[_bufferId]->_array;
@@ -219,7 +218,7 @@ namespace kanzi {
                }
                else {
                    if (_closed.load(memory_order_relaxed) == true)
-                       throw ios_base::failure("Stream closed");
+                       throw std::ios_base::failure("Stream closed");
 
                    // If all buffers are full, time to encode
                    processBlock();
@@ -229,9 +228,9 @@ namespace kanzi {
            _buffers[_bufferId]->_array[_buffers[_bufferId]->_index++] = byte(c);
            return *this;
        }
-       catch (exception& e) {
-           setstate(ios::badbit);
-           throw ios_base::failure(e.what());
+       catch (std::exception& e) {
+           setstate(std::ios::badbit);
+           throw std::ios_base::failure(e.what());
        }
    }
 }
