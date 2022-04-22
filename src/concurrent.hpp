@@ -168,8 +168,6 @@ public:
 
 
 
-
-
 	template<class T>
 	class BoundedConcurrentQueue {
 	public:
@@ -186,6 +184,9 @@ public:
 		int _size;
 		T* _data;
 	};
+
+   #define ATOMIC_INT std::atomic_int
+   #define ATOMIC_BOOL std::atomic_bool
 
 #elif (__cplusplus && __cplusplus < 201103L) || (_MSC_VER && _MSC_VER < 1700)
 	// ! Stubs for NON CONCURRENT USAGE !
@@ -244,6 +245,10 @@ public:
 			return b;
 		}
 	};
+
+   #define ATOMIC_INT atomic_int
+   #define ATOMIC_BOOL atomic_bool
+
 #endif //   (__cplusplus && __cplusplus < 201103L) || (_MSC_VER && _MSC_VER < 1700)
 
 

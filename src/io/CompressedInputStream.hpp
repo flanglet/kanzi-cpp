@@ -112,7 +112,7 @@ namespace kanzi
        int _blockId;
        InputBitStream* _ibs;
        XXHash32* _hasher;
-       atomic_int* _processedBlockId;
+       ATOMIC_INT* _processedBlockId;
        std::vector<Listener*> _listeners;
        Context _ctx;
 
@@ -120,7 +120,7 @@ namespace kanzi
        DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int blockSize,
            uint64 transformType, short entropyType, int blockId,
            InputBitStream* ibs, XXHash32* hasher,
-           atomic_int* processedBlockId, std::vector<Listener*>& listeners,
+           ATOMIC_INT* processedBlockId, std::vector<Listener*>& listeners,
            const Context& ctx);
 
        ~DecodingTask(){}
@@ -158,9 +158,9 @@ namespace kanzi
        uint64 _transformType;
        InputBitStream* _ibs;
        InputStream& _is;
-       atomic_bool _initialized;
-       atomic_bool _closed;
-       atomic_int _blockId;
+       ATOMIC_BOOL _initialized;
+       ATOMIC_BOOL _closed;
+       ATOMIC_INT _blockId;
        std::vector<Listener*> _listeners;
        std::streamsize _gcount;
        Context _ctx;

@@ -85,7 +85,7 @@ namespace kanzi {
        int _blockId;
        OutputBitStream* _obs;
        XXHash32* _hasher;
-       atomic_int* _processedBlockId;
+       ATOMIC_INT* _processedBlockId;
        std::vector<Listener*> _listeners;
        Context _ctx;
 
@@ -93,7 +93,7 @@ namespace kanzi {
        EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int length,
            uint64 transformType, short entropyType, int blockId,
            OutputBitStream* obs, XXHash32* hasher,
-           atomic_int* processedBlockId, std::vector<Listener*>& listeners,
+           ATOMIC_INT* processedBlockId, std::vector<Listener*>& listeners,
            const Context& ctx);
 
        ~EncodingTask(){}
@@ -128,9 +128,9 @@ namespace kanzi {
        uint64 _transformType;
        OutputBitStream* _obs;
        OutputStream& _os;
-       atomic_bool _initialized;
-       atomic_bool _closed;
-       atomic_int _blockId;
+       ATOMIC_BOOL _initialized;
+       ATOMIC_BOOL _closed;
+       ATOMIC_INT _blockId;
        std::vector<Listener*> _listeners;
        Context _ctx;
 #ifdef CONCURRENCY_ENABLED
@@ -217,7 +217,7 @@ namespace kanzi {
                    _buffers[_bufferId]->_index = 0;
                }
                else {
-                   if (_closed.load(memory_order_relaxed) == true)
+                   if (_closed.load() == true)
                        throw std::ios_base::failure("Stream closed");
 
                    // If all buffers are full, time to encode
