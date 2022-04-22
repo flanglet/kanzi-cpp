@@ -17,7 +17,7 @@ endif
 
 LIB_SOURCES=Global.cpp \
 	Event.cpp \
-	api/libapi.cpp \	
+	api/libapi.cpp \
 	bitstream/DebugInputBitStream.cpp \
 	bitstream/DebugOutputBitStream.cpp \
 	bitstream/DefaultInputBitStream.cpp \
