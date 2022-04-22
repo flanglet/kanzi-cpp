@@ -283,10 +283,8 @@ int CDECL decompress(struct dContext* pCtx, BYTE* dst, int* inSize, int* outSize
 }
 
 // Cleanup allocated internal data structures
-int CDECL disposeDecompressor(struct dContext* pCtx, int* outSize)
+int CDECL disposeDecompressor(struct dContext* pCtx)
 {
-	 *outSize = 0;
-
     if (pCtx == nullptr)
         return Error::ERR_INVALID_PARAM;
 
@@ -294,9 +292,7 @@ int CDECL disposeDecompressor(struct dContext* pCtx, int* outSize)
 
     try {
         if (pCis != nullptr) {
-            const uint64 r = pCis->getRead();
             pCis->close();
-            *outSize = int(pCis->getRead() - r);
         }
     }
     catch (exception&) {

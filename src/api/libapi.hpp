@@ -117,12 +117,10 @@
     *  Dispose the decompressor and cleanup memory resources.
     *
     *  @param ctx [IN] - the compression context created during initialization
-    *  @param outSize [IN|OUT] - the number of bytes written to the destination
-    *                            (the decompressor may flush internal data)
     *
     *  @return 0 in case of success
     */
-   int CDECL disposeDecompressor(struct dContext* ctx, int* outSize);
+   int CDECL disposeDecompressor(struct dContext* ctx);
 
 #ifdef __cplusplus
    }
