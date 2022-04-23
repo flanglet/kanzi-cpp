@@ -191,7 +191,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     memset(&_counters[0], 0, sizeof(_counters));
     bool success = true;
     const int litOrder = (count < (1 << 17)) ? 0 : 1;
-    byte flags = byte(litOrder);
+    int flags = litOrder;
     stringbuf buffer;
     iostream os(&buffer);
     _minMatch = MIN_MATCH3;
@@ -208,7 +208,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
     }
 	
-    dst[4] = flags;
+    dst[4] = byte(flags);
 	
     // Main loop
     while (startChunk < srcEnd) {
@@ -342,8 +342,8 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int srcIdx = 5;
     int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
-    byte flags = src[4];
-    const int litOrder = int(flags) & 1;
+    int flags = int(src[4]);
+    const int litOrder = flags & 1;
     _minMatch = MIN_MATCH3;
 	
     if ((flags & 6) == 2) 
@@ -690,7 +690,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte* dst = &output._array[output._index];
     BigEndian::writeInt32(&dst[0], count);
     _minMatch = MIN_MATCH3;
-    byte flags = 0;
+    int flags = 0;
 
     if (_pCtx != nullptr) {
        Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
@@ -704,7 +704,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
        }
     }
 	
-    dst[4] = flags;
+    dst[4] = byte(flags);
     int srcIdx = 0;
     int dstIdx = 5;
     int sizeChunk = min(count, ROLZCodec::CHUNK_SIZE);
@@ -721,7 +721,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         srcIdx = 0;
 
         // First literals
-        re.setContext(LITERAL_CTX, 0);
+        re.setContext(LITERAL_CTX, byte(0));
         re.encode9Bits((LITERAL_FLAG << 8) | int(src[srcIdx]));
         srcIdx++;
 
@@ -780,9 +780,9 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int startChunk = 0;
     _minMatch = MIN_MATCH3;
 
-    if (src[4] == 1)
+    if (src[4] == byte(1))
         _minMatch = MIN_MATCH4;
-    else if (src[4] == 2)
+    else if (src[4] == byte(2))
         _minMatch = MIN_MATCH9;
 
     ROLZDecoder rd(9, _logPosChecks, &src[0], srcIdx);
@@ -797,7 +797,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         int dstIdx = 0;
 
         // First literals
-        rd.setContext(LITERAL_CTX, 0);
+        rd.setContext(LITERAL_CTX, byte(0));
         int val = rd.decode9Bits();
 
         // Sanity check

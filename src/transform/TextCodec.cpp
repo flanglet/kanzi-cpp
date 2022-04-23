@@ -257,7 +257,7 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
         }
     }
 
-    byte res = 0;
+    byte res = byte(0);
 
     if (notText == true)
         return res | detectType(freqs0, freqs, count);
@@ -500,7 +500,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, true);
 
     // Not text ?
-    if ((mode & TextCodec::MASK_NOT_TEXT) != 0) {
+    if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0)) {
         if (_pCtx != nullptr)
 			_pCtx->putInt("dataType", Global::DataType(mode & TextCodec::MASK_DT));
 
@@ -963,7 +963,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, false);
 
     // Not text ?
-    if ((mode & TextCodec::MASK_NOT_TEXT) != 0) {
+    if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0)) {
         if (_pCtx != nullptr)
 			_pCtx->putInt("dataType", Global::DataType(mode & TextCodec::MASK_DT));
 

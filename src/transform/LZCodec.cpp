@@ -314,8 +314,8 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
         return false;
 
     const int srcEnd = tkIdx - 13;
-    const int maxDist = ((src[12] & 1) == 0) ? MAX_DISTANCE1 : MAX_DISTANCE2;
-    const int minMatch = ((src[12] & 2) == 0) ? MIN_MATCH1 : MIN_MATCH2;
+    const int maxDist = ((int(src[12]) & 1) == 0) ? MAX_DISTANCE1 : MAX_DISTANCE2;
+    const int minMatch = ((int(src[12]) & 2) == 0) ? MIN_MATCH1 : MIN_MATCH2;
     bool res = true;
     int srcIdx = 13;
     int dstIdx = 0;

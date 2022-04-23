@@ -140,12 +140,12 @@ namespace kanzi {
        static const int MAX_WORD_LENGTH = 31; // must be less than 128
        static const int MIN_BLOCK_SIZE = 1024;
        static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB
-       static const byte ESCAPE_TOKEN1 = 0x0F; // dictionary word preceded by space symbol
-       static const byte ESCAPE_TOKEN2 = 0x0E; // toggle upper/lower case of first word char
-       static const byte MASK_1F = 0x1F;
-       static const byte MASK_20 = 0x20;
-       static const byte MASK_40 = 0x40;
-       static const byte MASK_80 = 0x80;
+       static const byte ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
+       static const byte ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
+       static const byte MASK_1F = byte(0x1F);
+       static const byte MASK_20 = byte(0x20);
+       static const byte MASK_40 = byte(0x40);
+       static const byte MASK_80 = byte(0x80);
 
        TextCodec();
 
@@ -176,18 +176,18 @@ namespace kanzi {
    private:
        static const int HASH1 = 0x7FEB352D;
        static const int HASH2 = 0x846CA68B;
-       static const byte CR = 0x0D;
-       static const byte LF = 0x0A;
-       static const byte SP = 0x20;
+       static const byte CR = byte(0x0D);
+       static const byte LF = byte(0x0A);
+       static const byte SP = byte(0x20);
        static const int THRESHOLD1 = 128;
        static const int THRESHOLD2 = THRESHOLD1 * THRESHOLD1;
        static const int THRESHOLD3 = 32;
        static const int THRESHOLD4 = THRESHOLD3 * 128;
        static const int LOG_HASHES_SIZE = 24; // 16 MB
-       static const byte MASK_NOT_TEXT = 0x80;
-       static const byte MASK_CRLF = 0x40;
-       static const byte MASK_XML_HTML = 0x20;
-       static const byte MASK_DT = 0x0F;
+       static const byte MASK_NOT_TEXT = byte(0x80);
+       static const byte MASK_CRLF = byte(0x40);
+       static const byte MASK_XML_HTML = byte(0x20);
+       static const byte MASK_DT = byte(0x0F);
        static const int MASK_LENGTH = 0x0007FFFF; // 19 bits
 
        static bool init(bool delims[256], bool text[256]);

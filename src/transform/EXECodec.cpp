@@ -48,7 +48,7 @@ bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int codeEnd = count - 8;
     byte mode = detectType(&input._array[input._index], count - 8, codeStart, codeEnd);
 
-    if ((mode & NOT_EXE) != 0) {
+    if ((mode & NOT_EXE) != byte(0)) {
         if (_pCtx != nullptr)
             _pCtx->putInt("dataType", Global::DataType(mode & MASK_DT));
 
@@ -400,7 +400,7 @@ byte EXECodec::detectType(byte src[], int count, int& codeStart, int& codeEnd)
     count = codeEnd - codeStart;
 
     for (int i = codeStart; i < codeEnd; i++) {
-        histo[src[i]]++;
+        histo[int(src[i])]++;
 
         // X86
         if ((src[i] & X86_MASK_JUMP) == X86_INSTRUCTION_JUMP) {
@@ -484,7 +484,7 @@ bool EXECodec::parseHeader(byte src[], int count, uint magic, int& arch, int& co
             codeStart = 0;
 
             if (isLittleEndian == true) {
-                if (src[4] == 2) {
+                if (src[4] == byte(2)) {
                     // 64 bits
                     int nbEntries = int(LittleEndian::readInt16(&src[0x3C]));
                     int szEntry = int(LittleEndian::readInt16(&src[0x3A]));
@@ -534,7 +534,7 @@ bool EXECodec::parseHeader(byte src[], int count, uint magic, int& arch, int& co
 
                 arch = LittleEndian::readInt16(&src[18]);
             } else {
-                if (src[4] == 2) {
+                if (src[4] == byte(2)) {
                     // 64 bits
                     int nbEntries = int(BigEndian::readInt16(&src[0x3C]));
                     int szEntry = int(BigEndian::readInt16(&src[0x3A]));

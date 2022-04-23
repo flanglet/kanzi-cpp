@@ -37,16 +37,16 @@ namespace kanzi
 
    private:
 
-       static const byte X86_MASK_JUMP = 0xFE;
-       static const byte X86_INSTRUCTION_JUMP = 0xE8;
-       static const byte X86_INSTRUCTION_JCC = 0x80;
-       static const byte X86_TWO_BYTE_PREFIX = 0x0F;
-       static const byte X86_MASK_JCC = 0xF0;
-       static const byte X86_ESCAPE = 0x9B;
-       static const byte NOT_EXE = 0x80;
-       static const byte X86 = 0x40;
-       static const byte ARM64 = 0x20;
-       static const byte MASK_DT = 0x0F;
+       static const byte X86_MASK_JUMP = byte(0xFE);
+       static const byte X86_INSTRUCTION_JUMP = byte(0xE8);
+       static const byte X86_INSTRUCTION_JCC = byte(0x80);
+       static const byte X86_TWO_BYTE_PREFIX = byte(0x0F);
+       static const byte X86_MASK_JCC = byte(0xF0);
+       static const byte X86_ESCAPE = byte(0x9B);
+       static const byte NOT_EXE = byte(0x80);
+       static const byte X86 = byte(0x40);
+       static const byte ARM64 = byte(0x20);
+       static const byte MASK_DT = byte(0x0F);
        static const int X86_ADDR_MASK = (1 << 24) - 1;
        static const int MASK_ADDRESS = 0xF0F0F0F0;
        static const int ARM_B_ADDR_MASK = (1 << 26) - 1;
