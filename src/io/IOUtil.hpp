@@ -20,7 +20,6 @@ limitations under the License.
 #include <algorithm>
 #include <vector>
 #include "IOException.hpp"
-#include "../util.hpp"
 #include "../Error.hpp"
 
 #ifdef _MSC_VER

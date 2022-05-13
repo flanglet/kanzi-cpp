@@ -19,7 +19,6 @@ limitations under the License.
 #include <string>
 #include "../transform/BWT.hpp"
 #include "../Context.hpp"
-#include "../Transform.hpp"
 
 
 namespace kanzi {

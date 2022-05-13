@@ -18,7 +18,6 @@ limitations under the License.
 
 #include <string>
 #include <stdexcept>
-#include "types.hpp"
 #include "util.hpp"
 
 

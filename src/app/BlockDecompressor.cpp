@@ -19,10 +19,8 @@ limitations under the License.
 #include "BlockDecompressor.hpp"
 #include "InfoPrinter.hpp"
 #include "../SliceArray.hpp"
-#include "../Error.hpp"
 #include "../io/IOException.hpp"
 #include "../io/IOUtil.hpp"
-#include "../io/NullOutputStream.hpp"
 #include "../io/NullOutputStream.hpp"
 
 #ifdef CONCURRENCY_ENABLED

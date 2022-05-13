@@ -308,7 +308,7 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
 }
 
 byte TextCodec::detectType(uint freqs0[256], uint freqs[256][256], int count) {
-	Global::DataType dt = Global::detectSimpleType(count, freqs0);
+    Global::DataType dt = Global::detectSimpleType(count, freqs0);
 	
     if (dt != Global::UNDEFINED)
        return TextCodec::MASK_NOT_TEXT | byte(dt);
@@ -319,7 +319,7 @@ byte TextCodec::detectType(uint freqs0[256], uint freqs[256][256], int count) {
     // U+0080..U+07FF          C2..DF 80..BF
     // U+0800..U+0FFF          E0 A0..BF 80..BF
     // U+1000..U+CFFF          E1..EC 80..BF 80..BF
-    // U+D000..U+D7FF          ED 80..9F 80..BF
+    // U+D000..U+D7FF          ED 80..9F 80..BF 80..BF
     // U+E000..U+FFFF          EE..EF 80..BF 80..BF
     // U+10000..U+3FFFF        F0 90..BF 80..BF 80..BF
     // U+40000..U+FFFFF        F1..F3 80..BF 80..BF 80..BF
