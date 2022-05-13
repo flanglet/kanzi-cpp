@@ -17,9 +17,6 @@ limitations under the License.
 #define _InfoPrinter_
 
 #include <map>
-#include <ostream>
-#include "../concurrent.hpp"
-#include "../types.hpp"
 #include "../util.hpp"
 #include "../Listener.hpp"
 #include "../OutputStream.hpp"
