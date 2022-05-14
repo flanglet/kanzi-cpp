@@ -24,7 +24,7 @@
 	   char entropy[64];        /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
 	   unsigned int blockSize;  /* size of block in bytes */
 	   unsigned int jobs;       /* max number of concurrent tasks */
-	   int checksum;            /* bool to indicate use of block checksum */ 
+	   int checksum;            /* bool to indicate use of block checksum */
    };
 
    /**
@@ -53,7 +53,7 @@
     *
     *  @param ctx [IN] - the compression context created during initialization
     *  @param src [IN] - the source block of data to compress
-    *  @param inSize [IN|OUT] - the size of the source block to compress. 
+    *  @param inSize [IN|OUT] - the size of the source block to compress.
                                 Updated to reflect the number bytes written to the destination.
     *  @param outSize [OUT] - the size of the compressed data
     *
@@ -96,7 +96,7 @@
     *  @param src [IN] - the source stream of compressed data
     *  @param ctx [IN|OUT] - a pointer to the decompression context created by the call
     *
-    *  @return 0 in case of success 
+    *  @return 0 in case of success
     */
    int CDECL initDecompressor(struct dData* dParam, FILE* src, struct dContext** ctx);
 
@@ -105,8 +105,8 @@
     *
     *  @param ctx [IN] - the decompression context created during initialization
     *  @param dst [IN] - the destination block of decompressed data
-    *  @param inSize [OUT] - the number of bytes read from source.                         
-    *  @param outSize [IN|OUT] - the size of the block to decompress. 
+    *  @param inSize [OUT] - the number of bytes read from source.            
+    *  @param outSize [IN|OUT] - the size of the block to decompress.
     *                            Updated to reflect the number of decompressed bytes
     *
     *  @return 0 in case of success

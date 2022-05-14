@@ -433,7 +433,7 @@ int CompressedInputStream::processBlock() THROW
                 for (uint i = 0; i < tasks.size(); i++) {
                   if (_pool == nullptr)
                        futures.push_back(async(&DecodingTask<DecodingTaskResult>::run, tasks[i]));
-                    else 
+                    else
                        futures.push_back(_pool->schedule(&DecodingTask<DecodingTaskResult>::run, tasks[i]));
                 }
 

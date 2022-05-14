@@ -148,14 +148,14 @@ namespace kanzi {
        CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform,
           int blockSize = 4 * 1024 * 1024, bool checksum = false, int jobs = 1,
           ThreadPool* pool = nullptr);
-#else          
+#else
        CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform,
           int blockSize = 4 * 1024 * 1024, bool checksum = false, int jobs = 1);
 #endif
 
 #if __cplusplus >= 201103L
        CompressedOutputStream(OutputStream& os, Context& ctx,
-          std::function<OutputBitStream*(OutputStream&)>* createBitStream=nullptr);
+          std::function<OutputBitStream*(OutputStream&)>* createBitStream = nullptr);
 #else
        CompressedOutputStream(OutputStream& os, Context& ctx);
 #endif

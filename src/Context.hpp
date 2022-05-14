@@ -39,16 +39,16 @@ namespace kanzi
 #ifndef CONCURRENCY_ENABLED
        Context() {}
 #else
-       Context(ThreadPool* pool=nullptr) { _pool = pool; }
+       Context(ThreadPool* pool = nullptr) { _pool = pool; }
 #endif
        Context(const Context& ctx);
        Context& operator=(const Context& ctx);
        virtual ~Context() {}
 
        bool has(const std::string& key);
-       int getInt(const std::string& key, int defValue=0);
-       int64 getLong(const std::string& key, int64 defValue=0);
-       const char* getString(const std::string& key, const std::string& defValue="");
+       int getInt(const std::string& key, int defValue = 0);
+       int64 getLong(const std::string& key, int64 defValue = 0);
+       const char* getString(const std::string& key, const std::string& defValue = "");
        void putInt(const std::string& key, int value);
        void putLong(const std::string& key, int64 value);
        void putString(const std::string& key, const std::string& value);

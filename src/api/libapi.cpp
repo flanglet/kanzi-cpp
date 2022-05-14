@@ -25,7 +25,7 @@ using namespace kanzi;
 
 namespace kanzi {
    // Utility classes to map C FILEs to C++ streams
-   class ofstreambuf : public streambuf 
+   class ofstreambuf : public streambuf
    {
      public:
         ofstreambuf (int fd) : _fd(fd) { }
@@ -40,7 +40,7 @@ namespace kanzi {
             char d = c;
             return (WRITE(_fd, &d, 1) == 1) ? c : EOF;
         }
-       
+
         virtual streamsize xsputn(const char* s, streamsize sz) {
             return WRITE(_fd, s, sz);
         }
@@ -55,7 +55,7 @@ namespace kanzi {
 
      private:
        static const int BUF_SIZE = 1024 + 4;
-       int _fd;   
+       int _fd;
        char _buffer[BUF_SIZE];
 
        virtual int_type underflow() {
@@ -75,7 +75,7 @@ namespace kanzi {
     };
 
 
-    class FileOutputStream : public ostream 
+    class FileOutputStream : public ostream
     {
        private:
           ofstreambuf _buf;
@@ -86,8 +86,8 @@ namespace kanzi {
           }
     };
 
-    
-    class FileInputStream : public istream 
+
+    class FileInputStream : public istream
     {
        private:
           ifstreambuf _buf;
@@ -188,7 +188,7 @@ int CDECL disposeCompressor(struct cContext* pCtx, int* outSize)
     catch (exception&) {
         return Error::ERR_UNKNOWN;
     }
- 
+
     try {
         if (pCos != nullptr)
             delete pCos;
@@ -243,7 +243,7 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
         dctx->pCis = new CompressedInputStream(*fis, pData->jobs);
         dctx->bufferSize = pData->bufferSize;
         dctx->fis = fis;
-        *pCtx = dctx; 
+        *pCtx = dctx;
     }
     catch (exception&) {
         return Error::ERR_CREATE_DECOMPRESSOR;
