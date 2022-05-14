@@ -193,29 +193,17 @@ int CDECL disposeCompressor(struct cContext* pCtx, int* outSize)
         if (pCos != nullptr)
             delete pCos;
 
-        pCos = nullptr;
+        if (pCtx->fos != nullptr)
+            delete (FileOutputStream*)pCtx->fos;
 
-        if (pCtx != nullptr) {
-           if (pCtx->fos != nullptr)
-               delete (FileOutputStream*)pCtx->fos;
-
-           pCtx->fos = nullptr;
-           delete pCtx;
-           pCtx = nullptr;
-        }
+        pCtx->fos = nullptr;
+        delete pCtx;
     }
     catch (exception&) {
-        pCos = nullptr;
+        if (pCtx->fos != nullptr)
+            delete (FileOutputStream*)pCtx->fos;
 
-        if (pCtx != nullptr) {
-           if (pCtx->fos != nullptr)
-               delete (FileOutputStream*)pCtx->fos;
-
-           pCtx->fos = nullptr;
-           delete pCtx;
-           pCtx = nullptr;
-        }
-
+        delete pCtx;
         return Error::ERR_UNKNOWN;
     }
 
@@ -303,32 +291,19 @@ int CDECL disposeDecompressor(struct dContext* pCtx)
         if (pCis != nullptr)
             delete pCis;
 
-        if (pCtx != nullptr) {
-           if (pCtx->fis != nullptr)
-               delete (FileInputStream*)pCtx->fis;
+        if (pCtx->fis != nullptr)
+            delete (FileInputStream*)pCtx->fis;
 
-           pCtx->fis = nullptr;
-           delete pCtx;
-           pCtx = nullptr;
-        }
+        pCtx->fis = nullptr;
+        delete pCtx;
     }
     catch (exception&) {
-        pCis = nullptr;
+        if (pCtx->fis != nullptr)
+            delete (FileInputStream*)pCtx->fis;
 
-        if (pCtx != nullptr) {
-           if (pCtx->fis != nullptr)
-               delete (FileInputStream*)pCtx->fis;
-
-           pCtx->fis = nullptr;
-           delete pCtx;
-           pCtx = nullptr;
-        }
-
-        pCtx = nullptr;
+        delete pCtx;
         return Error::ERR_UNKNOWN;
     }
 
-    pCis = nullptr;
-    pCtx = nullptr;
     return 0;
 }
