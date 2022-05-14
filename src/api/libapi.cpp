@@ -10,14 +10,14 @@
 
 #ifdef _MSC_VER
    #include <io.h>
-   #define FILENO _fileno
-   #define READ _read
-   #define WRITE _write
+   #define FILENO(f) _fileno(f)
+   #define READ(fd, buf, n) _read(fd, buf, uint(n))
+   #define WRITE(fd, buf, n) _write(fd, buf, uint(n))
 #else
    #include <unistd.h>
-   #define FILENO fileno
-   #define READ read
-   #define WRITE write
+   #define FILENO(f) fileno(f)
+   #define READ(fd, buf, n) read(fd, buf, n)
+   #define WRITE(fd, buf, n) write(fd, buf, n)
 #endif
 
 using namespace std;
