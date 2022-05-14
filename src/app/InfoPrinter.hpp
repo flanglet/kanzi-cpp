@@ -20,9 +20,6 @@ limitations under the License.
 #include "../util.hpp"
 #include "../Listener.hpp"
 #include "../OutputStream.hpp"
-#ifdef CONCURRENCY_ENABLED
-#include <mutex>
-#endif
 
 
 
@@ -53,9 +50,6 @@ namespace kanzi
    private:
        std::ostream& _os;
        std::map<int, BlockInfo*> _map;
-   #ifdef CONCURRENCY_ENABLED
-       std::mutex _mutex;
-   #endif
        Event::Type _thresholds[6];
        InfoPrinter::Type _type;
        int _level;
