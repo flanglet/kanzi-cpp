@@ -115,7 +115,7 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         strncpy(pData->transform, transform.data(), mLen);
         pData->transform[mLen + 1] = 0;
         string entropy = EntropyCodecFactory::getName(EntropyCodecFactory::getType(pData->entropy));
-        mLen = min(int(entropy.length()), 63);
+        mLen = min(int(entropy.length()), 15);
         strncpy(pData->entropy, entropy.data(), mLen);
         pData->entropy[mLen + 1] = 0;
         pData->blockSize = (pData->blockSize + 15) & -16;

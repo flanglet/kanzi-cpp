@@ -18,11 +18,9 @@ limitations under the License.
 #include "BlockCompressor.hpp"
 #include "InfoPrinter.hpp"
 #include "../SliceArray.hpp"
-#include "../Error.hpp"
 #include "../transform/TransformFactory.hpp"
 #include "../io/IOException.hpp"
 #include "../io/IOUtil.hpp"
-#include "../io/NullOutputStream.hpp"
 #include "../io/NullOutputStream.hpp"
 
 #ifdef CONCURRENCY_ENABLED
@@ -536,42 +534,42 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         break;
 
     case 2:
-        tranformAndCodec[0] = "TEXT+FSD+LZX";
+        tranformAndCodec[0] = "TEXT+UTF+FSD+LZX";
         tranformAndCodec[1] = "HUFFMAN";
         break;
 
     case 3:
-        tranformAndCodec[0] = "TEXT+FSD+ROLZ";
+        tranformAndCodec[0] = "TEXT+UTF+FSD+ROLZ";
         tranformAndCodec[1] = "NONE";
         break;
 
     case 4:
-        tranformAndCodec[0] = "TEXT+FSD+ROLZX";
+        tranformAndCodec[0] = "TEXT+UTF+FSD+ROLZX";
         tranformAndCodec[1] = "NONE";
         break;
 
     case 5:
-        tranformAndCodec[0] = "TEXT+BWT+RANK+ZRLT";
+        tranformAndCodec[0] = "TEXT+UTF+BWT+RANK+ZRLT";
         tranformAndCodec[1] = "ANS0";
         break;
 
     case 6:
-        tranformAndCodec[0] = "TEXT+BWT+SRT+ZRLT";
+        tranformAndCodec[0] = "TEXT+UTF+BWT+SRT+ZRLT";
         tranformAndCodec[1] = "FPAQ";
         break;
 
     case 7:
-        tranformAndCodec[0] = "LZP+TEXT+BWT+LZP";
+        tranformAndCodec[0] = "LZP+TEXT+UTF+BWT+LZP";
         tranformAndCodec[1] = "CM";
         break;
 
     case 8:
-        tranformAndCodec[0] = "EXE+RLT+TEXT";
+        tranformAndCodec[0] = "EXE+RLT+UTF+TEXT";
         tranformAndCodec[1] = "TPAQ";
         break;
 
     case 9:
-        tranformAndCodec[0] = "EXE+RLT+TEXT";
+        tranformAndCodec[0] = "EXE+RLT+UTF+TEXT";
         tranformAndCodec[1] = "TPAQX";
         break;
 

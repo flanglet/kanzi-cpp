@@ -20,8 +20,8 @@
     */
    struct cData {
 	   char transform[64];      /* name of transforms  [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX]
-                                                      [RLT|ZRLT|MTFT|RANK|SRT|TEXT|FSD|EXE] */
-	   char entropy[64];        /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
+                                                      [RLT|ZRLT|MTFT|RANK|SRT|TEXT|FSD|EXE|UTF] */
+	   char entropy[16];        /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
 	   unsigned int blockSize;  /* size of block in bytes */
 	   unsigned int jobs;       /* max number of concurrent tasks */
 	   int checksum;            /* bool to indicate use of block checksum */

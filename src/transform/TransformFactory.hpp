@@ -20,6 +20,7 @@
 #include "SRT.hpp"
 #include "TextCodec.hpp"
 #include "TransformSequence.hpp"
+#include "UTFCodec.hpp"
 #include "ZRLT.hpp"
 
 
@@ -46,12 +47,13 @@ namespace kanzi {
 		static const uint64 LZP_TYPE = 14; // Lempel Ziv Predict
 		static const uint64 FSD_TYPE = 15; // Fixed Shift Delta codec
 		static const uint64 LZX_TYPE = 16; // Lempel Ziv Extra
-		static const uint64 RESERVED1 = 17; // Reserved
-		static const uint64 RESERVED2 = 18; // Reserved
-		static const uint64 RESERVED3 = 19; // Reserved
-		static const uint64 RESERVED4 = 20; // Reserved
-		static const uint64 RESERVED5 = 21; // Reserved
-		static const uint64 RESERVED6 = 22; // Reserved
+		static const uint64 UTF_TYPE = 17; // UTF Codec
+		static const uint64 RESERVED1 = 18; // Reserved
+		static const uint64 RESERVED2 = 19; // Reserved
+		static const uint64 RESERVED3 = 20; // Reserved
+		static const uint64 RESERVED4 = 21; // Reserved
+		static const uint64 RESERVED5 = 22; // Reserved
+
 
 		static uint64 getType(const char* tName) THROW;
 
@@ -164,6 +166,9 @@ namespace kanzi {
 		if (name == "EXE")
 			return EXE_TYPE;
 
+		if (name == "UTF")
+			return UTF_TYPE;
+
 		if (name == "FSD")
 			return FSD_TYPE;
 
@@ -255,6 +260,9 @@ namespace kanzi {
 		case EXE_TYPE:
 			return new EXECodec(ctx);
 
+		case UTF_TYPE:
+			return new UTFCodec(ctx);
+
 		case FSD_TYPE:
 			return new FSDCodec(ctx);
 
@@ -333,6 +341,9 @@ namespace kanzi {
 
 		case EXE_TYPE:
 			return "EXE";
+
+		case UTF_TYPE:
+			return "UTF";
 
 		case FSD_TYPE:
 			return "FSD";
