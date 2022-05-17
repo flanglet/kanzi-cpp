@@ -168,8 +168,14 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     const int start = int(src[0]);
     const int adjust = int(src[1]); // adjust end of regular processing
     const int n = (int(src[2]) << 8) + int(src[3]);
+
+    // Protect against invalid map size value
+    if ((n >= 32768) || (3 * n >= count))
+       return false;
+
+    // Fill map with invalid value
+    uint32 m[32768] = { 0xFFFFFFFF }; 
     int srcIdx = 4;
-    uint32 m[32768];
 
     // Build inverse mapping
     for (int i = 0; i < n; i++) {
