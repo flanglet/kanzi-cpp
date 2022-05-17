@@ -112,7 +112,7 @@ public:
                            _condition.wait(lock,
                                [this] { return (_stop == true) || (_tasks.size() > 0); });
    							
-                           if ((_stop == true) && (_tasks.size() == 0))
+                           if (_stop == true)
                                return;
    						
                            task = std::move(_tasks.front());
@@ -188,7 +188,7 @@ public:
    #define ATOMIC_INT std::atomic_int
    #define ATOMIC_BOOL std::atomic_bool
 
-#elif (__cplusplus && __cplusplus < 201103L) || (_MSC_VER && _MSC_VER < 1700)
+#else
 	// ! Stubs for NON CONCURRENT USAGE !
 	// Used to compile and provide a non concurrent version AND
 	// when atomic.h is not available (VS C++)
