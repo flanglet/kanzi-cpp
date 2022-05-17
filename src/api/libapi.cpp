@@ -119,7 +119,7 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         strncpy(pData->entropy, entropy.data(), mLen);
         pData->entropy[mLen + 1] = 0;
         pData->blockSize = (pData->blockSize + 15) & -16;
-        cContext* cctx = new cContext();
+        *pCtx = nullptr;
         const int fd = FILENO(dst);
 
         if (fd == -1)
@@ -127,6 +127,7 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
 
         // Create compression stream and update context
         FileOutputStream* fos = new FileOutputStream(fd);
+        cContext* cctx = new cContext();
         cctx->pCos = new CompressedOutputStream(*fos, pData->entropy, pData->transform, pData->blockSize, bool(pData->checksum & 1), pData->jobs);
         cctx->blockSize = pData->blockSize;
         cctx->fos = fos;
@@ -220,6 +221,7 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
         return Error::ERR_INVALID_PARAM;
 
     try {
+        *pCtx = nullptr;
         const int fd = FILENO(src);
 
         if (fd == -1)
