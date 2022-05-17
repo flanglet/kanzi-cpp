@@ -105,6 +105,7 @@ ROLZCodec1::ROLZCodec1(uint logPosChecks) THROW
     _logPosChecks = logPosChecks;
     _posChecks = 1 << _logPosChecks;
     _maskChecks = uint8(_posChecks - 1);
+    _minMatch = MIN_MATCH3;
     _matches = new int32[ROLZCodec::HASH_SIZE << _logPosChecks];
     memset(&_counters[0], 0, sizeof(_counters));
 }
@@ -115,6 +116,7 @@ ROLZCodec1::ROLZCodec1(Context& ctx) THROW
     _logPosChecks = LOG_POS_CHECKS;
     _posChecks = 1 << _logPosChecks;
     _maskChecks = uint8(_posChecks - 1);
+    _minMatch = MIN_MATCH3;
     _matches = new int32[ROLZCodec::HASH_SIZE << _logPosChecks];
     memset(&_counters[0], 0, sizeof(_counters));
 }
@@ -614,6 +616,7 @@ ROLZCodec2::ROLZCodec2(uint logPosChecks) THROW
     _logPosChecks = logPosChecks;
     _posChecks = 1 << _logPosChecks;
     _maskChecks = uint8(_posChecks - 1);
+    _minMatch = MIN_MATCH3;
     _matches = new int32[ROLZCodec::HASH_SIZE << _logPosChecks];
     memset(&_counters[0], 0, sizeof(_counters));
 }
@@ -624,6 +627,7 @@ ROLZCodec2::ROLZCodec2(Context& ctx) THROW
     _logPosChecks = LOG_POS_CHECKS;
     _posChecks = 1 << _logPosChecks;
     _maskChecks = uint8(_posChecks - 1);
+    _minMatch = MIN_MATCH3;
     _matches = new int32[ROLZCodec::HASH_SIZE << _logPosChecks];
     memset(&_counters[0], 0, sizeof(_counters));
 }
