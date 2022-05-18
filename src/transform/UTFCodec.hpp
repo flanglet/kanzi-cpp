@@ -52,7 +52,6 @@ namespace kanzi
 
         static const int MIN_BLOCK_SIZE = 1024;
         static const int SIZES[16];
-        static const uint32 MASKS[16];
 
         Context* _pCtx;
        
