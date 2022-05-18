@@ -99,7 +99,7 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
 
     // Last bytes
     if (remaining > 0)
-         writeBits(uint64(BigEndian::readLong64(&bits[start])) >> (64 - remaining), remaining);
+         writeBits(uint64(bits[start]) >> (8 - remaining), remaining);
 
     return count;
 }
