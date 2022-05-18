@@ -22,7 +22,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-const int  UTFCodec::SIZES[16] = { 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 3, 4 };
+const int UTFCodec::SIZES[16] = { 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 3, 4 };
 
 
 bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
@@ -84,7 +84,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             if (++n >= 32768) {
                 res = false;
                 break;
-            };
+            }
         }
 
         aliasMap[val]++;
@@ -92,12 +92,12 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     }
 
     if ((res == false) || (n == 0)) {
-       delete[] aliasMap;
-       return false;
+        delete[] aliasMap;
+        return false;
     }
 
     for (int i = 0; i < n; i++)
-       symb[i].freq = aliasMap[symb[i].sym];
+        symb[i].freq = aliasMap[symb[i].sym];
 
     // Sort ranks by increasing frequencies
     SortRanks sortRanks(symb);
@@ -149,7 +149,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     delete[] aliasMap;
     input._index += srcIdx;
     output._index += dstIdx;
-    return (res == true) && (dstIdx < (count - count / 10));
+    return dstIdx < (count - count / 10);
 }
 
 bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
