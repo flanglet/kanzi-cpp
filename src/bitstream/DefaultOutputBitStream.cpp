@@ -98,8 +98,14 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
     }
 
     // Last bytes
+    while (remaining >= 8) {
+        writeBits(uint64(bits[start]), 8);
+        start++;
+        remaining -= 8;
+    }
+
     if (remaining > 0)
-         writeBits(uint64(bits[start]) >> (8 - remaining), remaining);
+        writeBits(uint64(bits[start]) >> (8 - remaining), remaining);
 
     return count;
 }
