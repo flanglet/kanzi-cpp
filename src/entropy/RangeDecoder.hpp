@@ -14,6 +14,7 @@ limitations under the License.
 */
 
 
+#pragma once
 #ifndef _RangeDecoder_
 #define _RangeDecoder_
 
