@@ -42,6 +42,9 @@ InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os
         _thresholds[4] = Event::AFTER_TRANSFORM;
         _thresholds[5] = Event::DECOMPRESSION_END;
     }
+	
+	for (int i = 0; i < 1024; i++)
+		_map[i] = nullptr;
 }
 
 void InfoPrinter::processEvent(const Event& evt)
@@ -56,19 +59,17 @@ void InfoPrinter::processEvent(const Event& evt)
         if (_type == InfoPrinter::ENCODING)
             bi->_stage0Size = evt.getSize();
 
-        _map.insert(pair<int, BlockInfo*>(currentBlockId, bi));
+        _map[hash(currentBlockId)] = bi;
 
         if (_level >= 5) {
             _os << evt.toString() << endl;
         }
     }
     else if (evt.getType() == _thresholds[2]) {
-        map<int, BlockInfo*>::iterator it = _map.find(currentBlockId);
+        BlockInfo* bi = _map[hash(currentBlockId)];
 
-        if (it == _map.end())
+        if (bi == nullptr)
             return;
-
-        BlockInfo* bi = it->second;
 
         if (_type == InfoPrinter::DECODING)
             bi->_stage0Size = evt.getSize();
@@ -83,12 +84,11 @@ void InfoPrinter::processEvent(const Event& evt)
         }
     }
     else if (evt.getType() == _thresholds[3]) {
-        map<int, BlockInfo*>::iterator it = _map.find(currentBlockId);
+        BlockInfo* bi = _map[hash(currentBlockId)];
 
-        if (it == _map.end())
+        if (bi == nullptr)
             return;
 
-        BlockInfo* bi = it->second;
         _clock23.stop();
         _clock34.start();
         bi->_stage1Size = evt.getSize();
@@ -98,18 +98,17 @@ void InfoPrinter::processEvent(const Event& evt)
         }
     }
     else if (evt.getType() == _thresholds[4]) {
-        map<int, BlockInfo*>::iterator it = _map.find(currentBlockId);
+        BlockInfo* bi = _map[hash(currentBlockId)];
 
-        if (it == _map.end())
+        if (bi == nullptr)
             return;
 
         if (_level < 3) {
-            delete it->second;
-            _map.erase(it);
+            delete bi;
+            _map[hash(currentBlockId)] = nullptr;
             return;
         }
 
-        BlockInfo* bi = it->second;
         int64 stage2Size = evt.getSize();
         _clock34.stop();
         stringstream ss;
@@ -143,10 +142,8 @@ void InfoPrinter::processEvent(const Event& evt)
             _os << ss.str() << endl;
         }
 
-        if (bi != nullptr)
-            delete bi;
-
-        _map.erase(it);
+        delete bi;
+        _map[hash(currentBlockId)] = nullptr;
     }
     else if ((evt.getType() == Event::AFTER_HEADER_DECODING) && (_level >= 3)) {
         _os << evt.toString() << endl;

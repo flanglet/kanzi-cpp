@@ -50,13 +50,15 @@ namespace kanzi
 
    private:
        std::ostream& _os;
-       std::map<int, BlockInfo*> _map;
+       BlockInfo* _map[1024];
        Event::Type _thresholds[6];
        InfoPrinter::Type _type;
        int _level;
        Clock _clock12;
        Clock _clock23;
        Clock _clock34;
+	   
+       static int hash(int id) { return (id * 0x1E35A7BD) & 0x03FF; }
    };
 }
 #endif
