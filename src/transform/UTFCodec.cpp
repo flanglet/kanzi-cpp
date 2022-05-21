@@ -91,7 +91,9 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         i += s;
     }
 
-    if ((res == false) || (n == 0)) {
+    const int dstEnd = count - (count / 10);
+
+    if ((res == false) || (n == 0) || ((3 * n + 6) >= dstEnd)) {
         delete[] aliasMap;
         return false;
     }
@@ -109,6 +111,8 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     dst[dstIdx++] = byte(n >> 8);
     dst[dstIdx++] = byte(n);
 
+    int estimate = dstIdx + 6;
+
     for (int i = 0; i < n; i++) {
         const uint16 r = ranks[n - 1 - i];
         const uint32 s = symb[r].sym;
@@ -117,6 +121,13 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         dst[dstIdx + 1] = byte(s >> 8);
         dst[dstIdx + 2] = byte(s);
         dstIdx += 3;
+        estimate += ((i < 128) ? symb[r].freq : 2 * symb[r].freq);
+    }
+
+    if (estimate >= dstEnd) {
+        // Not worth it
+        delete[] aliasMap;
+        return false;
     }
 
     // Emit first (possibly) invalid symbols (due to block truncation)
@@ -149,7 +160,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     delete[] aliasMap;
     input._index += srcIdx;
     output._index += dstIdx;
-    return dstIdx < (count - count / 10);
+    return dstIdx < dstEnd;
 }
 
 bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW

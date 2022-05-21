@@ -26,11 +26,19 @@ namespace kanzi
     typedef struct ss { uint32 sym, freq; } sd;
 
     struct SortRanks {
-            sd* _symb;
-            
-            bool operator() (int i, int j) const { return _symb[i].freq < _symb[j].freq; }
-            
-            SortRanks(sd symb[]) { _symb = symb; };
+        sd* _symb;
+         
+        bool operator() (int i, int j) const 
+        { 
+            int r;
+		  
+            if ((r = _symb[i].freq - _symb[j].freq) == 0)
+               return _symb[i].sym < _symb[j].sym;
+		  
+            return r < 0;
+        }
+         
+        SortRanks(sd symb[]) { _symb = symb; };
     };
 
     
@@ -47,7 +55,7 @@ namespace kanzi
 
         bool inverse(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
 
-        int getMaxEncodedLength(int srcLen) const { return srcLen + ((srcLen < 32768) ? 4096 : srcLen / 10); }
+        int getMaxEncodedLength(int srcLen) const { return srcLen + 8192; }
 
     private:
 
@@ -74,7 +82,7 @@ namespace kanzi
            break;
 
        case 2:
-	       out = (1 << 21) | (uint32(in[0]) << 8) | uint32(in[1]);
+           out = (1 << 21) | (uint32(in[0]) << 8) | uint32(in[1]);
            break; 
 
        case 3:
