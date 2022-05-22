@@ -564,12 +564,12 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         break;
 
     case 8:
-        tranformAndCodec[0] = "EXE+RLT+UTF+TEXT";
+        tranformAndCodec[0] = "EXE+RLT+TEXT+UTF";
         tranformAndCodec[1] = "TPAQ";
         break;
 
     case 9:
-        tranformAndCodec[0] = "EXE+RLT+UTF+TEXT";
+        tranformAndCodec[0] = "EXE+RLT+TEXT+UTF";
         tranformAndCodec[1] = "TPAQX";
         break;
 
