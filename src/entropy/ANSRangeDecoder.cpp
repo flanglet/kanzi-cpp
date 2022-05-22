@@ -49,7 +49,7 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
     _bufferSize = 0;
     _f2s = new uint8[0];
     _f2sSize = 0;
-    _logRange = 9;
+    _logRange = DEFAULT_LOG_RANGE;
 }
 
 ANSRangeDecoder::~ANSRangeDecoder()
