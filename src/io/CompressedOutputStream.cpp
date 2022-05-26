@@ -80,6 +80,11 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _jobs = tasks;
     _buffers = new SliceArray<byte>*[2 * _jobs];
+    _ctx.putInt("blockSize", _blockSize);
+    _ctx.putString("checksum", (checksum == true) ? STR_TRUE : STR_FALSE);
+    _ctx.putString("codec", entropyCodec);
+    _ctx.putString("transform", transform);
+    _ctx.putString("extra", _entropyType == EntropyCodecFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
 
     // Allocate first buffer and add padding for incompressible blocks 
     const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
