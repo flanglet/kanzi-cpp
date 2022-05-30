@@ -132,7 +132,7 @@ namespace kanzi {
    private:
        static const int MIN_MATCH3 = 3;
        static const int MIN_MATCH4 = 4;
-       static const int MIN_MATCH9 = 9;
+       static const int MIN_MATCH7 = 7;
        static const int MAX_MATCH = MIN_MATCH3 + 65535;
        static const int LOG_POS_CHECKS = 4;
 
@@ -144,7 +144,7 @@ namespace kanzi {
        int _minMatch;
        uint8 _maskChecks;	   
 
-       int findMatch(const byte buf[], const int pos, const int end);
+       int findMatch(const byte buf[], int pos, int end, uint32 key);
 
        int emitLength(byte block[], int length);
 
@@ -180,7 +180,7 @@ namespace kanzi {
        static const int LITERAL_CTX = 1;
        static const int MIN_MATCH3 = 3;
        static const int MIN_MATCH4 = 4;
-       static const int MIN_MATCH9 = 9;
+       static const int MIN_MATCH7 = 7;
        static const int MAX_MATCH = MIN_MATCH3 + 255;
        static const int LOG_POS_CHECKS = 5;
 
@@ -192,7 +192,7 @@ namespace kanzi {
        int _minMatch;
        int _posChecks;
 
-       int findMatch(const byte buf[], const int pos, const int end);
+       int findMatch(const byte buf[], int pos, int end, uint32 key);
    };
 
    class ROLZCodec : public Transform<byte> {
@@ -226,9 +226,14 @@ namespace kanzi {
 
        Transform<byte>* _delegate;
 
-       static uint16 getKey(const byte* p)
+       static uint32 getKey1(const byte* p)
        {
-           return uint16(LittleEndian::readInt16(p));
+           return uint32(LittleEndian::readInt16(p)) & 0xFFFF;
+       }
+
+       static uint32 getKey2(const byte* p)
+       {
+           return uint32((LittleEndian::readLong64(p) * HASH) >> 40) & 0xFFFF;
        }
 
        static int32 hash(const byte* p)
