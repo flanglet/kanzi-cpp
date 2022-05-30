@@ -736,7 +736,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         srcIdx = 0;
 
         // First literals
-        const int n = min(srcEnd - startChunk, 8);
+        const int n = min(srcEnd - startChunk, mm);
         re.setContext(LITERAL_CTX, byte(0));
 
         for (int j = 0; j < n; j++) {
@@ -814,7 +814,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         // First literals
         rd.setContext(LITERAL_CTX, byte(0));
-        const int n = min(dstEnd - output._index, 8);
+        const int n = min(dstEnd - output._index, mm);
 
         for (int j = 0; j < n; j++) {
             int val = rd.decode9Bits();
