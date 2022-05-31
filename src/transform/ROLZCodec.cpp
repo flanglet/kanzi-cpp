@@ -225,7 +225,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         sizeChunk = endChunk - startChunk;
         byte* buf = &src[startChunk];
         int srcIdx = 0;
-        const int n = min(srcEnd - startChunk, mm);
+        const int n = min(srcEnd - startChunk, 8);
 
         for (int j = 0; j < n; j++)
             litBuf._array[litBuf._index++] = buf[srcIdx++];
@@ -405,7 +405,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         byte* buf = &output._array[output._index];
         int dstIdx = 0;
-        const int n = min(dstEnd - output._index, mm);
+        const int n = min(dstEnd - output._index, 8);
 
         for (int j = 0; j < n; j++)
             buf[dstIdx++] = litBuf._array[litBuf._index++];
@@ -736,7 +736,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         srcIdx = 0;
 
         // First literals
-        const int n = min(srcEnd - startChunk, mm);
+        const int n = min(srcEnd - startChunk, 8);
         re.setContext(LITERAL_CTX, byte(0));
 
         for (int j = 0; j < n; j++) {
@@ -814,7 +814,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         // First literals
         rd.setContext(LITERAL_CTX, byte(0));
-        const int n = min(dstEnd - output._index, mm);
+        const int n = min(dstEnd - output._index, 8);
 
         for (int j = 0; j < n; j++) {
             int val = rd.decode9Bits();
