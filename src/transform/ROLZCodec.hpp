@@ -179,7 +179,6 @@ namespace kanzi {
        static const int MATCH_CTX = 0;
        static const int LITERAL_CTX = 1;
        static const int MIN_MATCH3 = 3;
-       static const int MIN_MATCH4 = 4;
        static const int MIN_MATCH7 = 7;
        static const int MAX_MATCH = MIN_MATCH3 + 255;
        static const int LOG_POS_CHECKS = 5;

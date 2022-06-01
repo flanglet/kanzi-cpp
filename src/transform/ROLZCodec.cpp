@@ -711,9 +711,6 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
        if (dt == Global::DNA) {
            _minMatch = MIN_MATCH7;
-           flags = 2;
-       } else if (dt == Global::MULTIMEDIA) {
-           _minMatch = MIN_MATCH4;
            flags = 1;
        }
     }
@@ -796,8 +793,6 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     _minMatch = MIN_MATCH3;
 
     if (src[4] == byte(1))
-        _minMatch = MIN_MATCH4;
-    else if (src[4] == byte(2))
         _minMatch = MIN_MATCH7;
 
     const int mm = _minMatch;
