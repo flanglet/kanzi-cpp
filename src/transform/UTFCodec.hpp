@@ -74,23 +74,35 @@ namespace kanzi
 
     inline int UTFCodec::pack(byte in[], uint32& out) 
     {   
-       int s = SIZES[uint8(in[0]) >> 4];
+       int s;
 
-       switch (s) {
+       switch (in[0] >> 4) {
+       case 0:
        case 1:
+       case 2:
+       case 3:
+       case 4:
+       case 5:
+       case 6:
+       case 7:
            out = uint32(in[0]);
+           s = 1;
            break;
 
-       case 2:
+       case 12:
+       case 13:
            out = (1 << 21) | (uint32(in[0]) << 8) | uint32(in[1]);
+           s = 2;
            break; 
 
-       case 3:
+       case 14:
            out = (2 << 21) | ((uint32(in[0]) & 0x0F) << 12) | ((uint32(in[1]) & 0x3F) << 6) | (uint32(in[2]) & 0x3F);
+           s = 3;
            break;
 
-       case 4:
+       case 15:
            out = (3 << 21) | ((uint32(in[0]) & 0x07) << 18) | ((uint32(in[1]) & 0x3F) << 12) | ((uint32(in[2]) & 0x3F) << 6) | (uint32(in[3]) & 0x3F);
+           s = 4;
            break;
 
        default:
@@ -105,29 +117,33 @@ namespace kanzi
 
     inline int UTFCodec::unpack(uint32 in, byte out[]) 
     { 
-       int s = int(in >> 21) + 1;
+       int s;
        
-       switch (s) {
-       case 1:
+       switch (in >> 21) {
+       case 0:
            out[0] = byte(in);
+           s = 1;
+           break;
+
+       case 1:
+           out[0] = byte(in >> 8);
+           out[1] = byte(in);
+           s = 2;
            break;
 
        case 2:
-           out[0] = byte(in >> 8);
-           out[1] = byte(in);
-           break;
-
-       case 3:
            out[0] = byte(((in >> 12) & 0x0F) | 0xE0);
            out[1] = byte(((in >> 6) & 0x3F) | 0x80);
            out[2] = byte((in & 0x3F) | 0x80);
+           s = 3;
            break;
 
-       case 4:	  
+       case 3:	  
            out[0] = byte(((in >> 18) & 0x07) | 0xF0);
            out[1] = byte(((in >> 12) & 0x3F) | 0x80);
            out[2] = byte(((in >> 6) & 0x3F) | 0x80);
            out[3] = byte((in & 0x3F) | 0x80);
+           s = 4;
            break;
 
        default:
