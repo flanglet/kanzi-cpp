@@ -76,7 +76,7 @@ namespace kanzi
     {   
        int s;
 
-       switch (in[0] >> 4) {
+       switch (int(in[0]) >> 4) {
        case 0:
        case 1:
        case 2:
