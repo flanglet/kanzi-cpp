@@ -1501,9 +1501,10 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
 {
     int x = 0;
     int b = middle;
+    const int* p = &_sa[isad];
 
     while (b < last) {
-        x = _sa[isad + _sa[b]];
+        x = p[ _sa[b]];
 
         if (x != v)
             break;
@@ -1514,7 +1515,7 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
     int a = b;
 
     if ((a < last) && (x < v)) {
-        while ((++b < last) && ((x = _sa[isad + _sa[b]]) <= v)) {
+        while ((++b < last) && ((x = p[_sa[b]]) <= v)) {
             if (x == v) {
                 std::swap(_sa[a], _sa[b]);
                 a++;
@@ -1525,7 +1526,7 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
     int c = last - 1;
 
     while (c > b) {
-        x = _sa[isad + _sa[c]];
+        x = p[_sa[c]];
 
         if (x != v)
             break;
@@ -1536,7 +1537,7 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
     int d = c;
 
     if ((b < d) && (x > v)) {
-        while ((--c > b) && ((x = _sa[isad + _sa[c]]) >= v)) {
+        while ((--c > b) && ((x = p[_sa[c]]) >= v)) {
             if (x == v) {
                 std::swap(_sa[c], _sa[d]);
                 d--;
@@ -1547,14 +1548,14 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
     while (b < c) {
         std::swap(_sa[c], _sa[b]);
 
-        while ((++b < c) && ((x = _sa[isad + _sa[b]]) <= v)) {
+        while ((++b < c) && ((x = p[_sa[b]]) <= v)) {
             if (x == v) {
                 std::swap(_sa[a], _sa[b]);
                 a++;
             }
         }
 
-        while ((--c > b) && ((x = _sa[isad + _sa[c]]) >= v)) {
+        while ((--c > b) && ((x = p[_sa[c]]) >= v)) {
             if (x == v) {
                 std::swap(_sa[c], _sa[d]);
                 d--;
