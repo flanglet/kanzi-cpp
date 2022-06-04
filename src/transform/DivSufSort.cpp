@@ -17,6 +17,7 @@ limitations under the License.
 #include <cstring>
 #include <stddef.h>
 #include "DivSufSort.hpp"
+#include "../util.hpp"
 
 using namespace kanzi;
 
@@ -515,8 +516,9 @@ void DivSufSort::ssSort(const int pa, int first, int last, int buf, int bufSize,
 }
 
 
-int DivSufSort::ssCompare(int pa, int pb, int p2, const int depth)
+int DivSufSort::ssCompare(int pa, int pb, int p2, int depth)
 {
+    prefetchRead(&_sa[p2]);
     int u1 = depth + pa;
     int u2 = depth + _sa[p2];
     const int u1n = pb + 2;
@@ -539,8 +541,10 @@ int DivSufSort::ssCompare(int pa, int pb, int p2, const int depth)
 }
 
 
-int DivSufSort::ssCompare(int p1, int p2, const int depth)
+int DivSufSort::ssCompare(int p1, int p2, int depth)
 {
+    prefetchRead(&_sa[p1]);
+    prefetchRead(&_sa[p2]);
     int u1 = depth + _sa[p1];
     int u2 = depth + _sa[p2];
     const int u1n = _sa[p1 + 1] + 2;
@@ -563,7 +567,7 @@ int DivSufSort::ssCompare(int p1, int p2, const int depth)
 }
 
 
-void DivSufSort::ssInplaceMerge(int pa, int first, int middle, int last, const int depth)
+void DivSufSort::ssInplaceMerge(int pa, int first, int middle, int last, int depth)
 {
     while (true) {
         int p, x;
@@ -689,10 +693,8 @@ void DivSufSort::ssSwapMerge(int pa, int first, int middle, int last, int buf,
             if ((first < middle) && (middle < last))
                 ssMergeBackward(pa, first, middle, last, buf, depth);
 
-            if (((check & 1) != 0)
-                || (((check & 2) != 0) && (ssCompare(pa + getIndex(_sa[first - 1]),
-                                               pa + _sa[first], depth)
-                                              == 0))) {
+            if (((check & 1) != 0) || 
+                (((check & 2) != 0) && (ssCompare(pa + getIndex(_sa[first - 1]), pa + _sa[first], depth) == 0))) {
                 _sa[first] = ~_sa[first];
             }
 
@@ -718,9 +720,7 @@ void DivSufSort::ssSwapMerge(int pa, int first, int middle, int last, int buf,
                 ssMergeForward(pa, first, middle, last, buf, depth);
 
             if (((check & 1) != 0)
-                || (((check & 2) != 0) && (ssCompare(pa + getIndex(_sa[first - 1]),
-                                               pa + _sa[first], depth)
-                                              == 0))) {
+                || (((check & 2) != 0) && (ssCompare(pa + getIndex(_sa[first - 1]), pa + _sa[first], depth) == 0))) {
                 _sa[first] = ~_sa[first];
             }
 
@@ -815,7 +815,7 @@ void DivSufSort::ssSwapMerge(int pa, int first, int middle, int last, int buf,
                 _sa[last] = ~_sa[last];
             }
 
-            StackElement* se = _mergeStack->pop();
+            const StackElement* se = _mergeStack->pop();
 
             if (se == nullptr)
                 return;
@@ -1075,8 +1075,9 @@ void DivSufSort::ssInsertionSort(int pa, int first, int last, int depth)
 }
 
 
-void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int depth)
+void DivSufSort::ssMultiKeyIntroSort(int pa, int first, int last, int depth)
 {
+    const int* sapa = &_sa[pa];
     int limit = ssIlg(last - first);
     int x = 0;
 
@@ -1085,7 +1086,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
             if (last - first > 1)
                 ssInsertionSort(pa, first, last, depth);
 
-            StackElement* se = _ssStack->pop();
+            const StackElement* se = _ssStack->pop();
 
             if (se == nullptr)
                 return;
@@ -1098,7 +1099,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
         }
 
         const int idx = depth;
-        uint8* p = &_buffer[idx];
+        const uint8* p = &_buffer[idx];
 
         if (limit == 0)
             ssHeapSort(idx, pa, first, last - first);
@@ -1107,10 +1108,10 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
         int a;
 
         if (limit < 0) {
-            int v = p[_sa[pa + _sa[first]]];
+            int v = p[sapa[_sa[first]]];
 
             for (a = first + 1; a < last; a++) {
-                if ((x = p[_sa[pa + _sa[a]]]) != v) {
+                if ((x = p[sapa[_sa[a]]]) != v) {
                     if (a - first > 1)
                         break;
 
@@ -1119,7 +1120,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
                 }
             }
 
-            if (p[_sa[pa + _sa[first]] - 1] < v)
+            if (p[sapa[_sa[first]] - 1] < v)
                 first = ssPartition(pa, first, a, depth);
 
             if (a - first <= last - a) {
@@ -1152,13 +1153,13 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
 
         // choose pivot
         a = ssPivot(idx, pa, first, last);
-        const int v = p[_sa[pa + _sa[a]]];
+        const int v = p[sapa[_sa[a]]];
         std::swap(_sa[first], _sa[a]);
         int b = first;
 
         // partition
         while (++b < last) {
-            if ((x = p[_sa[pa + _sa[b]]]) != v)
+            if ((x = p[sapa[_sa[b]]]) != v)
                 break;
         }
 
@@ -1166,7 +1167,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
 
         if ((a < last) && (x < v)) {
             while (++b < last) {
-                if ((x = p[_sa[pa + _sa[b]]]) > v)
+                if ((x = p[sapa[_sa[b]]]) > v)
                     break;
 
                 if (x == v) {
@@ -1179,7 +1180,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
         int c = last;
 
         while (--c > b) {
-            if ((x = p[_sa[pa + _sa[c]]]) != v)
+            if ((x = p[sapa[_sa[c]]]) != v)
                 break;
         }
 
@@ -1187,7 +1188,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
 
         if ((b < d) && (x > v)) {
             while (--c > b) {
-                if ((x = p[_sa[pa + _sa[c]]]) < v)
+                if ((x = p[sapa[_sa[c]]]) < v)
                     break;
 
                 if (x == v) {
@@ -1201,7 +1202,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
             std::swap(_sa[b], _sa[c]);
 
             while (++b < c) {
-                if ((x = p[_sa[pa + _sa[b]]]) > v)
+                if ((x = p[sapa[_sa[b]]]) > v)
                     break;
 
                 if (x == v) {
@@ -1211,7 +1212,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
             }
 
             while (--c > b) {
-                if ((x = p[_sa[pa + _sa[c]]]) < v)
+                if ((x = p[sapa[_sa[c]]]) < v)
                     break;
 
                 if (x == v) {
@@ -1235,7 +1236,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
 
             a = first + (b - a);
             c = last - (d - c);
-            b = (v <= p[_sa[pa + _sa[a]] - 1]) ? a : ssPartition(pa, a, c, depth);
+            b = (v <= p[sapa[_sa[a]] - 1]) ? a : ssPartition(pa, a, c, depth);
 
             if (a - first <= last - c) {
                 if (last - c <= c - b) {
@@ -1279,7 +1280,7 @@ void DivSufSort::ssMultiKeyIntroSort(const int pa, int first, int last, int dept
             }
         }
         else {
-            if (p[_sa[pa + _sa[first]] - 1] < v) {
+            if (p[sapa[_sa[first]] - 1] < v) {
                 first = ssPartition(pa, first, last, depth);
                 limit = ssIlg(last - first);
             }
@@ -1753,7 +1754,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                             limit = -3;
                         }
                         else {
-                            StackElement* se = _trStack->pop();
+                            const StackElement* se = _trStack->pop();
 
                             if (se == nullptr)
                                 return;
@@ -1767,7 +1768,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                     }
                 }
                 else {
-                    StackElement* se = _trStack->pop();
+                    const StackElement* se = _trStack->pop();
 
                     if (se == nullptr)
                         return;
@@ -1930,7 +1931,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                         first = b;
                     }
                     else {
-                        StackElement* se = _trStack->pop();
+                        const StackElement* se = _trStack->pop();
 
                         if (se == nullptr)
                             return;
@@ -1951,7 +1952,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                         last = a;
                     }
                     else {
-                        StackElement* se = _trStack->pop();
+                        const StackElement* se = _trStack->pop();
 
                         if (se == nullptr)
                             return;
@@ -1974,7 +1975,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                 if (trlink >= 0)
                     _trStack->get(trlink)->_d = -1;
 
-                StackElement* se = _trStack->pop();
+                const StackElement* se = _trStack->pop();
 
                 if (se == nullptr)
                     return;
