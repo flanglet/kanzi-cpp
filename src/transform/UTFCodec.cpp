@@ -184,17 +184,27 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if ((n >= 32768) || (3 * n >= count))
        return false;
 
-    // Fill map with invalid value
-    uint32 m[32768] = { 0xFFFFFFFF }; 
+    struct symb {
+       uint32 val;
+       uint8 len;
+    };
+
+    symb m[32768]; 
     int srcIdx = 4;
 
     // Build inverse mapping
     for (int i = 0; i < n; i++) {
-        m[i] = (uint32(src[srcIdx]) << 16) | (uint32(src[srcIdx + 1]) << 8) | uint32(src[srcIdx + 2]);
+        int s = (uint32(src[srcIdx]) << 16) | (uint32(src[srcIdx + 1]) << 8) | uint32(src[srcIdx + 2]);
+        const int sl = unpack(s, (byte*)&m[i].val);
+
+        if (sl == 0) {
+            return false;
+        }
+
+        m[i].len = uint8(sl);
         srcIdx += 3;
     }
 
-    bool res = true;
     int dstIdx = 0;
     const int srcEnd = count - 4 + adjust;
 
@@ -208,14 +218,9 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         if (alias >= 128)
            alias = (int(src[srcIdx++]) << 7) + (alias & 0x7F);
 
-        int s = unpack(m[alias], &dst[dstIdx]);
-
-        if (s == 0) {
-           res = false;
-           break;
-        }
-
-        dstIdx += s;
+        symb& s = m[alias];
+        memcpy(&dst[dstIdx], &s.val, 4);
+        dstIdx += s.len;
     }
 
     for (int i = srcEnd; i < count; i++)
@@ -223,7 +228,7 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     input._index = srcIdx;
     output._index = dstIdx;
-    return (res == true) && (srcIdx == count);
+    return srcIdx == count;
 }
 
 
