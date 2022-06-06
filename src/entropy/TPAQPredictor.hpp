@@ -535,20 +535,16 @@ namespace kanzi
 
        // Detect match
        if ((_matchPos != 0) && (_pos - _matchPos <= _bufferMask)) {
-           int r = 2;
-           int p = _pos - 2;
-           int q = _matchPos - 2;
+           int r = _matchLen + 2;
 
            while (r <= MAX_LENGTH) {
-                if ((_buffer[(p - 1) & _bufferMask]) != (_buffer[(q - 1) & _bufferMask]))
+               if ((_buffer[(_pos - r - 1) & _bufferMask]) != (_buffer[(_matchPos - r - 1) & _bufferMask]))
                    break;
 
-                if ((_buffer[(p) & _bufferMask]) != (_buffer[(q) & _bufferMask]))
+               if ((_buffer[(_pos - r) & _bufferMask]) != (_buffer[(_matchPos - r) & _bufferMask]))
                    break;
 
-                r += 2;
-                p -= 2;
-                q -= 2;
+               r += 2;
            }
 
            _matchLen = r - 2;
