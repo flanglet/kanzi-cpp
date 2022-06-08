@@ -78,7 +78,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
 
         if (aliasMap[val] == 0) {
-            ranks[n] = n;
+            ranks[n] = uint16(n);
             symb[n].sym = val;
 
             if (++n >= 32768) {

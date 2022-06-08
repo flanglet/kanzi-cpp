@@ -651,8 +651,8 @@ T EncodingTask<T>::run() THROW
 
         if (_listeners.size() > 0) {
             // Notify after entropy
-            Event evt(Event::AFTER_ENTROPY,
-                int64(_blockId), int((written + 7) >> 3), checksum, _hasher != nullptr, clock());
+            Event evt(Event::AFTER_ENTROPY, _blockId,
+                int64((written + 7) >> 3), checksum, _hasher != nullptr, clock());
 
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }

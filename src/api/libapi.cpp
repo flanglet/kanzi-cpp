@@ -52,7 +52,7 @@ namespace kanzi {
             if (c == EOF)
                return EOF;
 
-            char d = c;
+            char d = char(c);
             return (WRITE(_fd, &d, 1) == 1) ? c : EOF;
         }
 
