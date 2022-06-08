@@ -78,8 +78,8 @@ std::string Event::toString() const
 std::string Event::getTypeAsString() const
 {
     switch (_type) {
-    case COMPRESSION_START:
-        return "COMPRESSION_START";
+    case AFTER_HEADER_DECODING:
+        return "AFTER_HEADER_DECODING";
 
     case COMPRESSION_END:
         return "COMPRESSION_END";
@@ -101,6 +101,9 @@ std::string Event::getTypeAsString() const
 
     case DECOMPRESSION_END:
         return "DECOMPRESSION_END";
+
+    case COMPRESSION_START:
+        return "COMPRESSION_START";
 
     default:
         return "Unknown Type";
