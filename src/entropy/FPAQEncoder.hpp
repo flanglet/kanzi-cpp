@@ -58,7 +58,7 @@ namespace kanzi
 
        int encode(const byte block[], uint blkptr, uint count) THROW;
 
-       OutputBitStream& getBitStream() const { return _bitstream; };
+       OutputBitStream& getBitStream() const { return _bitstream; }
 
        void dispose() { _dispose(); }
 

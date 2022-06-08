@@ -44,7 +44,7 @@ namespace kanzi
        // Number of bits written
        virtual uint64 written() const = 0;
 
-       OutputBitStream(){};
+       OutputBitStream(){}
 
        virtual ~OutputBitStream(){}
    };

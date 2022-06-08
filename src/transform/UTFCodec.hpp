@@ -38,7 +38,7 @@ namespace kanzi
             return r < 0;
         }
          
-        SortRanks(sd symb[]) { _symb = symb; };
+        SortRanks(sd symb[]) { _symb = symb; }
     };
 
     
