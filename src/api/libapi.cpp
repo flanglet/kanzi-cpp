@@ -79,7 +79,7 @@ namespace kanzi {
 
            const int pbSz = min(int(gptr() - eback()), BUF_SIZE - 4);
            memmove(&_buffer[BUF_SIZE - pbSz], gptr() - pbSz, pbSz);
-           const int r = READ(_fd, &_buffer[4], BUF_SIZE - 4);
+           const int r = int(READ(_fd, &_buffer[4], BUF_SIZE - 4));
 
            if (r <= 0)
                return EOF;
