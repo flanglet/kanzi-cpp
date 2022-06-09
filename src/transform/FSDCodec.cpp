@@ -106,7 +106,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
            break;
         default:
            return false;
-    };
+    }
 
     // Check several step values on a sub-block (no memory allocation)
     // Sample 2 sub-blocks
