@@ -96,7 +96,7 @@ namespace kanzi {
           ofstreambuf _buf;
 
        public:
-          FileOutputStream(int fd) : ostream(0), _buf(fd) {
+          FileOutputStream(int fd) : ostream(nullptr), _buf(fd) {
               rdbuf(&_buf);
           }
     };
@@ -108,7 +108,7 @@ namespace kanzi {
           ifstreambuf _buf;
 
        public:
-          FileInputStream(int fd) : istream(0), _buf(fd) {
+          FileInputStream(int fd) : istream(nullptr), _buf(fd) {
              rdbuf(&_buf);
           }
     };
