@@ -231,16 +231,16 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         if (mIdx >= _bufferSize - 8) {
             // Expand match buffer
-            byte* buf = new byte[_bufferSize << 1];
-            memcpy(&buf[0], &_mBuf[0], _bufferSize);
+            byte* mBuf = new byte[_bufferSize << 1];
+            memcpy(&mBuf[0], &_mBuf[0], _bufferSize);
             delete[] _mBuf;
-            _mBuf = buf;
+            _mBuf = mBuf;
 
             if (mLenIdx >= _bufferSize - 4) {
-                byte* buf = new byte[_bufferSize << 1];
-                memcpy(&buf[0], &_mLenBuf[0], _bufferSize);
+                byte* mLenBuf = new byte[_bufferSize << 1];
+                memcpy(&mLenBuf[0], &_mLenBuf[0], _bufferSize);
                 delete[] _mLenBuf;
-                _mLenBuf = buf;
+                _mLenBuf = mLenBuf;
             }
 
             _bufferSize <<= 1;

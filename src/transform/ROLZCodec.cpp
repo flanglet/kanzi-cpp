@@ -424,18 +424,18 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             memcpy(&buf[dstIdx], &litBuf._array[litBuf._index], litLen);
 
             if (mm == MIN_MATCH3) {
-                 for (int n = 0; n < litLen; n++) {
-                    const uint32 key = ROLZCodec::getKey1(&buf[dstIdx + n - 2]);
+                 for (int k = 0; k < litLen; k++) {
+                    const uint32 key = ROLZCodec::getKey1(&buf[dstIdx + k - 2]);
                     int32* matches = &_matches[key << _logPosChecks];
                     _counters[key] = (_counters[key] + 1) & _maskChecks;
-                    matches[_counters[key]] = dstIdx + n;
+                    matches[_counters[key]] = dstIdx + k;
                 }
             } else {
-                 for (int n = 0; n < litLen; n++) {
-                    const uint32 key = ROLZCodec::getKey2(&buf[dstIdx + n - 8]);
+                 for (int k = 0; k < litLen; k++) {
+                    const uint32 key = ROLZCodec::getKey2(&buf[dstIdx + k - 8]);
                     int32* matches = &_matches[key << _logPosChecks];
                     _counters[key] = (_counters[key] + 1) & _maskChecks;
-                    matches[_counters[key]] = dstIdx + n;
+                    matches[_counters[key]] = dstIdx + k;
                 }
             }
 
