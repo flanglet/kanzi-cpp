@@ -21,7 +21,7 @@ limitations under the License.
 #include <algorithm>
 #include <vector>
 #include "IOException.hpp"
-#include "../Error.hpp"
+
 
 #ifdef _MSC_VER
 #include "../msvc_dirent.hpp"
@@ -31,7 +31,6 @@ limitations under the License.
 #endif
 
 
-using namespace kanzi;
 
 class FileData {
    public:
@@ -67,7 +66,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
     if (STAT(target.c_str(), &buffer) != 0) {
         std::stringstream ss;
         ss << "Cannot access input file '" << target << "'";
-        throw IOException(ss.str(), Error::ERR_OPEN_FILE);
+        throw kanzi::IOException(ss.str(), kanzi::Error::ERR_OPEN_FILE);
     }
 
     if ((buffer.st_mode & S_IFREG) != 0) {
@@ -82,7 +81,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
         // Target is neither regular file nor directory
         std::stringstream ss;
         ss << "Invalid file type '" << target << "'";
-        throw IOException(ss.str(), Error::ERR_OPEN_FILE);
+        throw kanzi::IOException(ss.str(), kanzi::Error::ERR_OPEN_FILE);
     }
 
     bool isRecursive = (target.size() <= 2) || (target[target.size()-1] != '.') ||
@@ -109,7 +108,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
             if (STAT(fullpath.c_str(), &buffer) != 0) {
                 std::stringstream ss;
                 ss << "Cannot access input file '" << target << ent->d_name << "'";
-                throw IOException(ss.str(), Error::ERR_OPEN_FILE);
+                throw kanzi::IOException(ss.str(), kanzi::Error::ERR_OPEN_FILE);
             }
 
             if (ent->d_name[0] != '.')
@@ -128,7 +127,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
     else {
         std::stringstream ss;
         ss << "Cannot read directory '" << target << "'";
-        throw IOException(ss.str(), Error::ERR_READ_FILE);
+        throw kanzi::IOException(ss.str(), kanzi::Error::ERR_READ_FILE);
     }
 }
 
