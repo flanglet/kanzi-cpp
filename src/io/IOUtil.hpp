@@ -31,9 +31,7 @@ limitations under the License.
 #endif
 
 
-
-class FileData {
-   public:
+struct FileData {
       std::string _fullPath;
       std::string _path;
       std::string _name;
@@ -51,8 +49,6 @@ class FileData {
             _name = _fullPath;
          }
       }
-
-      ~FileData() {}
 };
 
 
