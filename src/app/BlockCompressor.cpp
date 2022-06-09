@@ -784,7 +784,7 @@ T FileCompressTask<T>::run()
     if (verbosity >= 1) {
         log.println("", verbosity > 1);
         ss.str(string());
-        float f = float(_cos->getWritten()) / float(read);
+        double f = double(_cos->getWritten()) / double(read);
         char buffer[32];
 
         if (verbosity > 1) {
