@@ -145,7 +145,7 @@ bool TextCodec::init(bool delims[256], bool text[256])
             }
         }
 
-        text[i] = isUpperCase(byte(i)) | isLowerCase(byte(i));
+        text[i] = isUpperCase(byte(i)) || isLowerCase(byte(i));
     }
 
     return true;
