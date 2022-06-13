@@ -166,7 +166,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     else if (concurrency > MAX_CONCURRENCY) {
         stringstream ss;
         ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY << endl;
-        Printer log(&cerr);
+        Printer log(&cout);
         log.println(ss.str().c_str(), _verbosity > 0);
         concurrency = MAX_CONCURRENCY;
     }
