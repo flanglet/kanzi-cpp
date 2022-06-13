@@ -196,7 +196,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 return Error::ERR_INVALID_PARAM;
             }
 
-            mode = "c";
+            mode = 'c';
             continue;
         }
 
@@ -206,7 +206,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 return Error::ERR_INVALID_PARAM;
             }
 
-            mode = "d";
+            mode = 'd';
             continue;
         }
 
@@ -241,7 +241,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if (str == "STDOUT") {
             verbose = 0;
-            strVerbose = "0";
+            strVerbose = '0';
         }
     }
 
@@ -329,7 +329,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println(ss.str().c_str(), verbose > 0);
             }
 
-            strOverwrite = STR_TRUE;
+            strOverwrite = string(STR_TRUE);
             ctx = -1;
             continue;
         }
@@ -353,7 +353,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println(ss.str().c_str(), verbose > 0);
             }
 
-            strChecksum = STR_TRUE;
+            strChecksum = string(STR_TRUE);
             ctx = -1;
             continue;
         }
