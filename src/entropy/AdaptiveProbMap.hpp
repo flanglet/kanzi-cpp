@@ -27,9 +27,15 @@ namespace kanzi {
    template <int RATE>
    class LinearAdaptiveProbMap {
    public:
+#if __cplusplus >= 202002L // simple-template-id in ctors and dtors rejected in C++20
+       LinearAdaptiveProbMap(int n);
+
+       ~LinearAdaptiveProbMap() { delete[] _data; }
+#else
        LinearAdaptiveProbMap<RATE>(int n);
 
        ~LinearAdaptiveProbMap<RATE>() { delete[] _data; }
+#endif
 
        int get(int bit, int pr, int ctx);
 
@@ -76,9 +82,15 @@ namespace kanzi {
    template <bool FAST, int RATE>
    class LogisticAdaptiveProbMap {
    public:
+#if __cplusplus >= 202002L // simple-template-id in ctors and dtors rejected in C++20
+       LogisticAdaptiveProbMap(int n);
+
+       ~LogisticAdaptiveProbMap() { delete[] _data; }
+#else
        LogisticAdaptiveProbMap<FAST, RATE>(int n);
 
        ~LogisticAdaptiveProbMap<FAST, RATE>() { delete[] _data; }
+#endif
 
        int get(int bit, int pr, int ctx);
 
