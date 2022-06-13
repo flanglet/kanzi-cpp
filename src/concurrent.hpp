@@ -81,7 +81,11 @@ public:
        ThreadPool(uint threads) THROW;
        template<class F, class... Args>
        auto schedule(F&& f, Args&&... args) 
+#if __cplusplus >= 201703L // result_of deprecated from C++17
+           -> std::future<typename std::invoke_result<F, Args...>::type> THROW;
+#else
            -> std::future<typename std::result_of<F(Args...)>::type> THROW;
+#endif
        ~ThreadPool();
    	
    private:
@@ -129,9 +133,15 @@ public:
 
    template<class F, class... Args>
    auto ThreadPool::schedule(F&& f, Args&&... args) 
+#if __cplusplus >= 201703L // result_of deprecated from C++17
+       -> std::future<typename std::invoke_result<F, Args...>::type> THROW
+   {
+       using return_type = typename std::invoke_result<F, Args...>::type;
+#else
        -> std::future<typename std::result_of<F(Args...)>::type> THROW
    {
        using return_type = typename std::result_of<F(Args...)>::type;
+#endif
 
        auto task = std::make_shared< std::packaged_task<return_type()> >(
                std::bind(std::forward<F>(f), std::forward<Args>(args)...)
