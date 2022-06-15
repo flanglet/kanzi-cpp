@@ -80,11 +80,10 @@ public:
    public:
        ThreadPool(uint threads) THROW;
        template<class F, class... Args>
-       auto schedule(F&& f, Args&&... args) 
 #if __cplusplus >= 201703L // result_of deprecated from C++17
-           -> std::future<typename std::invoke_result<F, Args...>::type> THROW;
+       std::future<typename std::invoke_result<F, Args...>::type> schedule(F&& f, Args&&... args) THROW;
 #else
-           -> std::future<typename std::result_of<F(Args...)>::type> THROW;
+       std::future<typename std::result_of<F(Args...)>::type> schedule(F&& f, Args&&... args) THROW;
 #endif
        ~ThreadPool();
    	
@@ -132,13 +131,12 @@ public:
 
 
    template<class F, class... Args>
-   auto ThreadPool::schedule(F&& f, Args&&... args) 
 #if __cplusplus >= 201703L // result_of deprecated from C++17
-       -> std::future<typename std::invoke_result<F, Args...>::type> THROW
+   std::future<typename std::invoke_result<F, Args...>::type> ThreadPool::schedule(F&& f, Args&&... args) THROW
    {
        using return_type = typename std::invoke_result<F, Args...>::type;
 #else
-       -> std::future<typename std::result_of<F(Args...)>::type> THROW
+   std::future<typename std::result_of<F(Args...)>::type> ThreadPool::schedule(F&& f, Args&&... args) THROW
    {
        using return_type = typename std::result_of<F(Args...)>::type;
 #endif
