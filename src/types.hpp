@@ -67,6 +67,9 @@ limitations under the License.
    #endif
 
    /*
+   Visual Studio 2022 17.2                  MSVC++ 14.28 _MSC_VER == 1932
+   Visual Studio 2022 17.1                  MSVC++ 14.28 _MSC_VER == 1931
+   Visual Studio 2022 17.0                  MSVC++ 14.28 _MSC_VER == 1930
    Visual Studio 2019 version 16.10, 16.11  MSVC++ 14.28 _MSC_VER == 1929
    Visual Studio 2019 version 16.8, 16.9    MSVC++ 14.28 _MSC_VER == 1928
    Visual Studio 2019 version 16.7          MSVC++ 14.27 _MSC_VER == 1927
@@ -102,38 +105,34 @@ limitations under the License.
    */
 
    #ifdef _MSC_VER
-      #if _MSC_VER == 1300
-         #define _MSC_VER_STR 2003
-      #endif
-      #if _MSC_VER == 1400
-         #define _MSC_VER_STR 2005
-      #endif
-      #if _MSC_VER == 1500
-         #define _MSC_VER_STR 2008
-      #endif
-      #if _MSC_VER == 1600
-         #define _MSC_VER_STR 2010
-      #endif
-      #if _MSC_VER == 1700
-         #define _MSC_VER_STR 2012
-      #endif
-      #if _MSC_VER == 1800
-         #define _MSC_VER_STR 2013
-      #endif
-      #if _MSC_VER == 1900
-         #define _MSC_VER_STR 2015
-      #endif
-      #if _MSC_VER >= 1910 && _MSC_VER <= 1916
-         #define _MSC_VER_STR 2017
-      #endif
-      #if _MSC_VER >= 1920
+      #if _MSC_VER >= 1930 
+         #define _MSC_VER_STR 2022
+      #elif _MSC_VER >= 1920
          #define _MSC_VER_STR 2019
+      #elif _MSC_VER >= 1910
+         #define _MSC_VER_STR 2017
+      #elif _MSC_VER == 1900
+         #define _MSC_VER_STR 2015
+      #elif _MSC_VER == 1800
+         #define _MSC_VER_STR 2013
+      #elif _MSC_VER == 1700
+         #define _MSC_VER_STR 2012
+      #elif _MSC_VER == 1600
+         #define _MSC_VER_STR 2010
+      #elif _MSC_VER == 1500
+         #define _MSC_VER_STR 2008
+      #elif _MSC_VER == 1400
+         #define _MSC_VER_STR 2005
+      #elif _MSC_VER == 1300
+         #define _MSC_VER_STR 2003
+      #elif _MSC_VER == 1200
+         #define _MSC_VER_STR 2002
       #endif
    #endif
 
 	#ifndef _GLIBCXX_USE_NOEXCEPT
-	#define _GLIBCXX_USE_NOEXCEPT
-	//#define _GLIBCXX_USE_NOEXCEPT throw()
+	   #define _GLIBCXX_USE_NOEXCEPT
+	   //#define _GLIBCXX_USE_NOEXCEPT throw()
 	#endif
 
 	#ifndef THROW
