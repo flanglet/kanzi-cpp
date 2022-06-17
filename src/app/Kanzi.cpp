@@ -378,7 +378,10 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if ((arg.compare(0, 9, "--output=") == 0) || (ctx == ARG_IDX_OUTPUT)) {
             string name = (arg.compare(0, 9, "--output=") == 0) ? arg.substr(9) : arg;
-            name = rtrim(name); // ltrim of spaces already done
+            int j = arg.length() - 1;
+
+            while ((j > 0) && (arg[j] == 0x20)) // trim only spaces
+                j--;
 
             if (outputName != "") {
                 cout << "Warning: ignoring duplicate output name: " << name << endl;
@@ -395,7 +398,12 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if ((arg.compare(0, 8, "--input=") == 0) || (ctx == ARG_IDX_INPUT)) {
             string name = (arg.compare(0, 8, "--input=") == 0) ? arg.substr(8) : arg;
-            name = rtrim(name); // ltrim of spaces already done
+            int j = arg.length() - 1;
+
+            while ((j > 0) && (arg[j] == 0x20)) // trim only spaces
+                j--;
+
+            arg = arg.substr(0, j + 1);
 
             if (inputName != "") {
                 cout << "Warning: ignoring duplicate input name: " << name << endl;
