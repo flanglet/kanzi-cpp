@@ -304,7 +304,13 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
     for (int i = 1; i < argc; i++) {
         string arg(argv[i]);
-        arg = trim(arg);
+        size_t k = 0;
+
+        // Left trim limited to spaces (due to possible unicode chars in names)
+        while ((k < arg.length()) && (arg[k] == 0x20))
+           k++;
+
+        arg = arg.substr(k);
 
         if ((arg == "--help") || (arg == "-h")) {
             printHelp(log, mode);
@@ -359,28 +365,27 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if (ctx == -1) {
-            int idx = -1;
-
             for (int j = 0; j < 10; j++) {
                 if (arg == CMD_LINE_ARGS[j]) {
-                    idx = j;
+                    ctx = j;
                     break;
                 }
             }
 
-            if (idx != -1) {
-                ctx = idx;
+            if (ctx != -1) 
                 continue;
-            }
         }
 
         if ((arg.compare(0, 9, "--output=") == 0) || (ctx == ARG_IDX_OUTPUT)) {
             string name = (arg.compare(0, 9, "--output=") == 0) ? arg.substr(9) : arg;
-            name = trim(name);
+            name = rtrim(name); // ltrim of spaces already done
 
             if (outputName != "") {
-                cerr << "Warning: ignoring duplicate output name: " << name << endl;
+                cout << "Warning: ignoring duplicate output name: " << name << endl;
             } else {
+                if ((name[0] == '.') && (name[1] == PATH_SEPARATOR)) 
+                    name = name.substr(2);
+
                 outputName = name;
             }
 
@@ -388,13 +393,16 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             continue;
         }
 
-        if ((arg.compare(0, 8, "--input=") == 0) | (ctx == ARG_IDX_INPUT)) {
+        if ((arg.compare(0, 8, "--input=") == 0) || (ctx == ARG_IDX_INPUT)) {
             string name = (arg.compare(0, 8, "--input=") == 0) ? arg.substr(8) : arg;
-            name = trim(name);
+            name = rtrim(name); // ltrim of spaces already done
 
             if (inputName != "") {
-                cerr << "Warning: ignoring duplicate input name: " << name << endl;
+                cout << "Warning: ignoring duplicate input name: " << name << endl;
             } else {
+                if ((name[0] == '.') && (name[1] == PATH_SEPARATOR)) 
+                    name = name.substr(2);
+
                 inputName = name;
             }
 
@@ -407,7 +415,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (codec != "") {
-                cerr << "Warning: ignoring duplicate entropy: " << name << endl;
+                cout << "Warning: ignoring duplicate entropy: " << name << endl;
             } else {
                 codec = name;
                 transform(codec.begin(), codec.end(), codec.begin(), ::toupper);
@@ -422,7 +430,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (transf != "") {
-                cerr << "Warning: ignoring duplicate transform: " << name << endl;
+                cout << "Warning: ignoring duplicate transform: " << name << endl;
             } else {
                 transf = name;
                 transform(transf.begin(), transf.end(), transf.begin(), ::toupper);
@@ -445,7 +453,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (strLevel != "-1") {
-                cerr << "Warning: ignoring duplicate level: " << name << endl;
+                cout << "Warning: ignoring duplicate level: " << name << endl;
             } else {
                 if (name.length() != 1) {
                     cerr << "Invalid compression level provided on command line: " << arg << endl;
@@ -470,7 +478,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (strBlockSize != "") {
-                cerr << "Warning: ignoring duplicate block size: " << name << endl;
+                cout << "Warning: ignoring duplicate block size: " << name << endl;
                 ctx = -1;
                 continue;
             }
@@ -520,7 +528,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (strTasks != "0") {
-                cerr << "Warning: ignoring duplicate jobs: " << name << endl;
+                cout << "Warning: ignoring duplicate jobs: " << name << endl;
                 ctx = -1;
                 continue;
             }
@@ -547,7 +555,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (strFrom != "") {
-                cerr << "Warning: ignoring duplicate start block: " << name << endl;
+                cout << "Warning: ignoring duplicate start block: " << name << endl;
             } else {
                 strFrom = name;
                 from = atoi(strFrom.c_str());
@@ -571,7 +579,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (strTo != "") {
-                cerr << "Warning: ignoring duplicate end block: " << name << endl;
+                cout << "Warning: ignoring duplicate end block: " << name << endl;
             } else {
                 strTo = name;
                 to = atoi(strTo.c_str());
