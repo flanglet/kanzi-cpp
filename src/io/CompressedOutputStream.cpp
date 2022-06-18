@@ -517,20 +517,18 @@ T EncodingTask<T>::run() THROW
             mode |= CompressedOutputStream::COPY_BLOCK_MASK;
         }
         else {
-            if (_ctx.has("skipBlocks")) {
-                string str = _ctx.getString("skipBlocks");
+            string str = _ctx.getString("skipBlocks", STR_FALSE);
 
-                if (str == STR_TRUE) {
-                    uint histo[256] = { 0 };
-                    Global::computeHistogram(&_data->_array[_data->_index], _blockLength, histo);
-                    const int entropy = Global::computeFirstOrderEntropy1024(_blockLength, histo);
-                    //_ctx.putString("histo0", toString(histo, 256));
+            if (str == STR_TRUE) {
+                uint histo[256] = { 0 };
+                Global::computeHistogram(&_data->_array[_data->_index], _blockLength, histo);
+                const int entropy = Global::computeFirstOrderEntropy1024(_blockLength, histo);
+                //_ctx.putString("histo0", toString(histo, 256));
 
-                    if (entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD) {
-                        _transformType = TransformFactory<byte>::NONE_TYPE;
-                        _entropyType = EntropyCodecFactory::NONE_TYPE;
-                        mode |= CompressedOutputStream::COPY_BLOCK_MASK;
-                    }
+                if (entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD) {
+                    _transformType = TransformFactory<byte>::NONE_TYPE;
+                    _entropyType = EntropyCodecFactory::NONE_TYPE;
+                    mode |= CompressedOutputStream::COPY_BLOCK_MASK;
                 }
             }
         }
