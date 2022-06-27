@@ -255,9 +255,6 @@ int BlockCompressor::compress(uint64& outputSize)
         ss.str(string());
     }
 
-    string outputName = _outputName;
-    transform(outputName.begin(), outputName.end(), outputName.begin(), ::toupper);
-
     // Limit verbosity level when files are processed concurrently
     if ((_jobs > 1) && (nbFiles > 1) && (_verbosity > 1)) {
         log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", _verbosity > 1);
@@ -280,16 +277,16 @@ int BlockCompressor::compress(uint64& outputSize)
     transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), ::toupper);
     bool specialOutput = (upperOutputName.compare(0, 4, "NONE") == 0) || (upperOutputName.compare(0, 6, "STDOUT") == 0);
 
+    // Need to strip path separator at the end to make 'stat()' happy
+    if ((formattedOutName.size() != 0) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
+        formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
+    }
+
     if (isStdIn == false) {
         struct STAT buffer;
 
-        // Need to strip path separator at the end to make 'stat()' happy
         if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
             formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
-        }
-
-        if ((formattedOutName.size() != 0) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
-            formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
         }
 
         if (STAT(formattedInName.c_str(), &buffer) != 0) {
