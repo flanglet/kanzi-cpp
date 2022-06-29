@@ -68,8 +68,11 @@ std::string to_string(T value)
 
 inline std::string __trim(std::string& str, bool left, bool right)
 {
+    if (str.empty())
+        return str;
+
     std::string::size_type begin = 0;
-    std::string::size_type end = str.size() - 1;
+    std::string::size_type end = str.length() - 1;
 
     if (left) {
        while (begin <= end && (str[begin] <= 0x20 || str[begin] == 0x7F))
