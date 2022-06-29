@@ -493,7 +493,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
             transform(name.begin(), name.end(), name.begin(), ::toupper);
             char lastChar = (name.length() == 0) ? ' ' : name[name.length() - 1];
-            int scale = 1;
+            uint64 scale = 1;
 
             // Process K or M or G suffix
             if ('K' == lastChar) {
@@ -509,24 +509,45 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 name = name.substr(0, name.length() - 1);
             }
 
-            int64 bk;
-            stringstream ss;
-            ss << name;
-            ss >> bk;
+            size_t k = 0;
 
-            if (bk <= 0) {
+            while ((k < name.length()) && (name[k] == '0'))
+                k++;
+
+            name = name.substr(k);
+
+            if (name.length() == 0) {
                 cerr << "Invalid block size provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
-            } else if (lastChar != ' ') {
-                if (int(bk) != bk) {
-                    cerr << "Invalid block size provided on command line: " << arg << endl;
-                    return Error::ERR_INVALID_PARAM;
-                }
             }
 
+            uint64 bk;
+            stringstream ss1;
+            ss1 << name;
+            ss1 >> bk;
+
+            if (scale != 1) {
+                k = 0;
+
+		while ((k < name.length()) && ((name[k] >= '0') && (name[k] <= '9')))
+                    k++;
+		
+		if (k < name.length()) {
+                    cerr << "Invalid block size provided on command line: " << arg << endl;
+                    return Error::ERR_INVALID_PARAM;
+		}
+            }
+
+            bk *= scale;
             stringstream ss2;
-            ss2 << (scale * int(bk));
-            strBlockSize = ss2.str();
+            ss2 << bk;
+            ss2 >> strBlockSize;
+
+            if ((scale == 1) && (strBlockSize.compare(ss1.str()) != 0)) {
+                cerr << "Invalid block size provided on command line: " << arg << endl;
+                return Error::ERR_INVALID_PARAM;
+            }
+
             ctx = -1;
             continue;
         }

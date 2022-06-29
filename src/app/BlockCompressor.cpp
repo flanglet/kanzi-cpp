@@ -99,24 +99,26 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
             _blockSize = (_level >= 9) ? 4 * DEFAULT_BLOCK_SIZE : 2 * DEFAULT_BLOCK_SIZE;
     }
     else {
-        _blockSize = atoi(it->second.c_str());
+        string strBlkSz = it->second;
         args.erase(it);
+        uint64 bl = uint64(atoll(strBlkSz.c_str()));
 
-        if (_blockSize < MIN_BLOCK_SIZE) {
+        if (bl < MIN_BLOCK_SIZE) {
             stringstream sserr;
             sserr << "Minimum block size is " << (MIN_BLOCK_SIZE / 1024) << " KB (";
-            sserr << MIN_BLOCK_SIZE << " bytes), got " << _blockSize << " bytes";
+            sserr << MIN_BLOCK_SIZE << " bytes), got " << strBlkSz.c_str();
+            sserr << ((bl > 1) ? " bytes" : " byte");
             throw invalid_argument(sserr.str().c_str());
         }
 
-        if (_blockSize > MAX_BLOCK_SIZE) {
+        if (bl > MAX_BLOCK_SIZE) {
             stringstream sserr;
             sserr << "Maximum block size is " << (MAX_BLOCK_SIZE / (1024 * 1024 * 1024)) << " GB (";
-            sserr << MAX_BLOCK_SIZE << " bytes), got " << _blockSize << " bytes";
+            sserr << MAX_BLOCK_SIZE << " bytes), got " << strBlkSz.c_str() << " bytes";
             throw invalid_argument(sserr.str().c_str());
         }
 
-        _blockSize = min((_blockSize + 15) & -16, MAX_BLOCK_SIZE);
+        _blockSize = min((int(bl) + 15) & -16, MAX_BLOCK_SIZE);
     }
 
     it = args.find("transform");
