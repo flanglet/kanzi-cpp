@@ -425,6 +425,11 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             if (codec != "") {
                 cout << "Warning: ignoring duplicate entropy: " << name << endl;
             } else {
+                if (name.length() == 0) {
+                    cerr << "Invalid empty entropy provided on command line" << endl;
+                    return Error::ERR_INVALID_PARAM;
+                }
+
                 codec = name;
                 transform(codec.begin(), codec.end(), codec.begin(), ::toupper);
             }
@@ -440,6 +445,11 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             if (transf != "") {
                 cout << "Warning: ignoring duplicate transform: " << name << endl;
             } else {
+                if (name.length() == 0) {
+                    cerr << "Invalid empty transform provided on command line" << endl;
+                    return Error::ERR_INVALID_PARAM;
+                }
+
                 transf = name;
                 transform(transf.begin(), transf.end(), transf.begin(), ::toupper);
             }
