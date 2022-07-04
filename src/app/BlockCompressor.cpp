@@ -99,24 +99,26 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
             _blockSize = (_level >= 9) ? 4 * DEFAULT_BLOCK_SIZE : 2 * DEFAULT_BLOCK_SIZE;
     }
     else {
-        _blockSize = atoi(it->second.c_str());
+        string strBlkSz = it->second;
         args.erase(it);
+        uint64 bl = uint64(atoll(strBlkSz.c_str()));
 
-        if (_blockSize < MIN_BLOCK_SIZE) {
+        if (bl < MIN_BLOCK_SIZE) {
             stringstream sserr;
             sserr << "Minimum block size is " << (MIN_BLOCK_SIZE / 1024) << " KB (";
-            sserr << MIN_BLOCK_SIZE << " bytes), got " << _blockSize << " bytes";
+            sserr << MIN_BLOCK_SIZE << " bytes), got " << strBlkSz.c_str();
+            sserr << ((bl > 1) ? " bytes" : " byte");
             throw invalid_argument(sserr.str().c_str());
         }
 
-        if (_blockSize > MAX_BLOCK_SIZE) {
+        if (bl > MAX_BLOCK_SIZE) {
             stringstream sserr;
             sserr << "Maximum block size is " << (MAX_BLOCK_SIZE / (1024 * 1024 * 1024)) << " GB (";
-            sserr << MAX_BLOCK_SIZE << " bytes), got " << _blockSize << " bytes";
+            sserr << MAX_BLOCK_SIZE << " bytes), got " << strBlkSz.c_str() << " bytes";
             throw invalid_argument(sserr.str().c_str());
         }
 
-        _blockSize = min((_blockSize + 15) & -16, MAX_BLOCK_SIZE);
+        _blockSize = min((int(bl) + 15) & -16, MAX_BLOCK_SIZE);
     }
 
     it = args.find("transform");
@@ -255,9 +257,6 @@ int BlockCompressor::compress(uint64& outputSize)
         ss.str(string());
     }
 
-    string outputName = _outputName;
-    transform(outputName.begin(), outputName.end(), outputName.begin(), ::toupper);
-
     // Limit verbosity level when files are processed concurrently
     if ((_jobs > 1) && (nbFiles > 1) && (_verbosity > 1)) {
         log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", _verbosity > 1);
@@ -280,16 +279,16 @@ int BlockCompressor::compress(uint64& outputSize)
     transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), ::toupper);
     bool specialOutput = (upperOutputName.compare(0, 4, "NONE") == 0) || (upperOutputName.compare(0, 6, "STDOUT") == 0);
 
+    // Need to strip path separator at the end to make 'stat()' happy
+    if ((formattedOutName.size() != 0) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
+        formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
+    }
+
     if (isStdIn == false) {
         struct STAT buffer;
 
-        // Need to strip path separator at the end to make 'stat()' happy
         if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
             formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
-        }
-
-        if ((formattedOutName.size() != 0) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
-            formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
         }
 
         if (STAT(formattedInName.c_str(), &buffer) != 0) {
