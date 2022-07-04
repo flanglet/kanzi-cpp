@@ -779,6 +779,7 @@ T FileCompressTask<T>::run()
         stringstream sserr;
         sserr << "Input file " << inputName << " is empty ... nothing to do";
         log.println(sserr.str().c_str(), verbosity > 0);
+        remove(outputName.c_str()); // best effort to delete output file, ignore return code
         return T(0, read, _cos->getWritten(), sserr.str().c_str());
     }
 
