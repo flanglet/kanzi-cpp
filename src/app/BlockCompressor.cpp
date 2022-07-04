@@ -101,7 +101,12 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     else {
         string strBlkSz = it->second;
         args.erase(it);
+
+#ifdef _MSC_VER
+        uint64 bl = uint64(_atoi64(strBlkSz.c_str()));
+#else
         uint64 bl = uint64(atoll(strBlkSz.c_str()));
+#endif
 
         if (bl < MIN_BLOCK_SIZE) {
             stringstream sserr;
