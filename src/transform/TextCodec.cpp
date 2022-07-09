@@ -157,29 +157,29 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
     int delimAnchor = 0;
     int h = HASH1;
     int nbWords = startWord;
+    byte* src = reinterpret_cast<byte*>(words);
 
     for (int i = 0; ((i < dictSize) && (nbWords < maxWords)); i++) {
-        const byte b = byte(words[i]);
+        const byte b = src[i];
 
         if (isText(b) == false)
             continue;
 
         if (isUpperCase(b)) {
-            if (i > delimAnchor) {
-                dict[nbWords] = DictEntry(reinterpret_cast<byte*>(&words[delimAnchor]), h, nbWords, i - delimAnchor);
+                dict[nbWords] = DictEntry(&src[delimAnchor], h, nbWords, i - delimAnchor);
                 nbWords++;
                 delimAnchor = i;
                 h = HASH1;
             }
 
-            words[i] ^= 0x20;
+            src[i] ^= byte(0x20);
         }
 
-        h = h * HASH1 ^ int(words[i]) * HASH2;
+        h = h * HASH1 ^ int(src[i]) * HASH2;
     }
 
     if (nbWords < maxWords) {
-        dict[nbWords] = DictEntry(reinterpret_cast<byte*>(&words[delimAnchor]), h, nbWords, dictSize - 1 - delimAnchor);
+        dict[nbWords] = DictEntry(&src[delimAnchor], h, nbWords, dictSize - 1 - delimAnchor);
         nbWords++;
     }
 
@@ -433,8 +433,7 @@ TextCodec1::TextCodec1(Context& ctx)
     // Actual block size
     const int blockSize = ctx.getInt("blockSize", 0);
     const int log = (blockSize >= 8) ? max(min(Global::log2(blockSize / 8), 26), 13) : 13;
-    const int extra = ctx.getInt("extra", 0);
-    _logHashSize = (extra == 0) ? log : log + 1;
+    _logHashSize = (ctx.getInt("extra", 0) == 0) ? log : log + 1;
     _dictSize = 1 << 13;
     _dictMap = nullptr;
     _dictList = nullptr;
@@ -449,8 +448,8 @@ TextCodec1::TextCodec1(Context& ctx)
 void TextCodec1::reset(int count)
 {
     // Select an appropriate initial dictionary size
-    const int log = (count < 8) ? 13 : max(min(Global::log2(count / 8), 22), 17);
-    _dictSize = 1 << (log - 4);
+    const int log = (count < 1024) ? 13 : max(min(Global::log2(count / 128), 18), 13);
+    _dictSize = 1 << log;
     const int mapSize = 1 << _logHashSize;
 
     if (_dictMap == nullptr)
@@ -502,7 +501,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     // Not text ?
     if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0)) {
         if (_pCtx != nullptr)
-			_pCtx->putInt("dataType", Global::DataType(mode & TextCodec::MASK_DT));
+            _pCtx->putInt("dataType", Global::DataType(mode & TextCodec::MASK_DT));
 
         return false;
     }
@@ -562,8 +561,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 // Check for hash collisions
                 if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length))
                     pe = pe1;
-
-                if (pe == nullptr) {
+                else {
                     prefetchRead(&_dictMap[h2 & _hashMask]);
                     DictEntry* pe2 = _dictMap[h2 & _hashMask];
 
@@ -904,8 +902,7 @@ TextCodec2::TextCodec2(Context& ctx)
 {
     const int blockSize = ctx.getInt("blockSize", 0);
     const int log = (blockSize >= 32) ? max(min(Global::log2(blockSize / 32), 24), 13) : 13;
-    const int extra = ctx.getInt("extra", 0);
-    _logHashSize = (extra == 0) ? log : log + 1;
+    _logHashSize = (ctx.getInt("extra", 0) == 0) ? log : log + 1;
     _dictSize = 1 << 13;
     _dictMap = nullptr;
     _dictList = nullptr;
@@ -918,8 +915,8 @@ TextCodec2::TextCodec2(Context& ctx)
 void TextCodec2::reset(int count)
 {
     // Select an appropriate initial dictionary size
-    const int log = (count < 8) ? 13 : max(min(Global::log2(count / 8), 22), 17);
-    _dictSize = 1 << (log - 4);
+    const int log = (count < 1024) ? 13 : max(min(Global::log2(count / 128), 18), 13);
+    _dictSize = 1 << log;
     const int mapSize = 1 << _logHashSize;
 
     if (_dictMap == nullptr)
@@ -965,7 +962,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     // Not text ?
     if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0)) {
         if (_pCtx != nullptr)
-			_pCtx->putInt("dataType", Global::DataType(mode & TextCodec::MASK_DT));
+            _pCtx->putInt("dataType", Global::DataType(mode & TextCodec::MASK_DT));
 
         return false;
     }
@@ -1000,7 +997,6 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
 
         if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(src[srcIdx])) {
-            const byte val = src[delimAnchor + 1];
             const int length = srcIdx - delimAnchor - 1;
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
@@ -1025,8 +1021,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 // Check for hash collisions
                 if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length))
                     pe = pe1;
-
-                if (pe == nullptr) {
+                else {
                     prefetchRead(&_dictMap[h2 & _hashMask]);
                     DictEntry* pe2 = _dictMap[h2 & _hashMask];
 
