@@ -166,6 +166,7 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
             continue;
 
         if (isUpperCase(b)) {
+            if (i > delimAnchor) {
                 dict[nbWords] = DictEntry(&src[delimAnchor], h, nbWords, i - delimAnchor);
                 nbWords++;
                 delimAnchor = i;
@@ -997,6 +998,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
 
         if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(src[srcIdx])) {
+            const byte val = src[delimAnchor + 1];
             const int length = srcIdx - delimAnchor - 1;
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
