@@ -492,7 +492,8 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     if (_pCtx != nullptr) {
         Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
 
-        if ((dt != Global::UNDEFINED) && (dt != Global::TEXT))
+        // Filter out most types. Still check binaries which may contain significant parts of text
+        if ((dt != Global::UNDEFINED) && (dt != Global::TEXT) && (dt != Global::BIN))
             return false;
     }
 
@@ -953,7 +954,8 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     if (_pCtx != nullptr) {
         Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
 
-        if ((dt != Global::UNDEFINED) && (dt != Global::TEXT))
+        // Filter out most types. Still check binaries which may contain significant parts of text
+        if ((dt != Global::UNDEFINED) && (dt != Global::TEXT) && (dt != Global::BIN))
             return false;
     }
 
