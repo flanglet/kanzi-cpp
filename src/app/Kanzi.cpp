@@ -97,7 +97,7 @@ void printHelp(Printer& log, const string& mode)
        log.println("   -l, --level=<compression>", true);
        log.println("        set the compression level [0..9]", true);
        log.println("        Providing this option forces entropy and transform.", true);
-       log.println("        0=None&None (store), 1=TEXT+LZ&HUFFMAN, 2=TEXT+UTF+FSD+LZX&HUFFMAN", true);
+       log.println("        0=None&None (store), 1=LZ&HUFFMAN, 2=TEXT+UTF+FSD+LZX&HUFFMAN", true);
        log.println("        3=TEXT+UTF+FSD+ROLZ, 4=TEXT+UTF+FSD+ROLZX, 5=TEXT+UTF+BWT+RANK+ZRLT&ANS0", true);
        log.println("        6=TEXT+UTF+BWT+SRT+ZRLT&FPAQ, 7=LZP+TEXT+UTF+BWT+LZP&CM, 8=EXE+RLT+TEXT+UTF&TPAQ", true);
        log.println("        9=EXE+RLT+TEXT+UTF&TPAQX\n", true);
@@ -378,7 +378,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if ((arg.compare(0, 9, "--output=") == 0) || (ctx == ARG_IDX_OUTPUT)) {
             string name = (arg.compare(0, 9, "--output=") == 0) ? arg.substr(9) : arg;
-            int j = arg.length() - 1;
+            int j = int(arg.length() - 1);
 
             while ((j > 0) && (arg[j] == 0x20)) // trim only spaces
                 j--;
@@ -398,7 +398,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if ((arg.compare(0, 8, "--input=") == 0) || (ctx == ARG_IDX_INPUT)) {
             string name = (arg.compare(0, 8, "--input=") == 0) ? arg.substr(8) : arg;
-            int j = arg.length() - 1;
+            int j = int(arg.length() - 1);
 
             while ((j > 0) && (arg[j] == 0x20)) // trim only spaces
                 j--;
@@ -539,13 +539,13 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             if (scale != 1) {
                 k = 0;
 
-		while ((k < name.length()) && ((name[k] >= '0') && (name[k] <= '9')))
+                while ((k < name.length()) && ((name[k] >= '0') && (name[k] <= '9')))
                     k++;
 		
-		if (k < name.length()) {
+                if (k < name.length()) {
                     cerr << "Invalid block size provided on command line: " << arg << endl;
                     return Error::ERR_INVALID_PARAM;
-		}
+                }
             }
 
             bk *= scale;

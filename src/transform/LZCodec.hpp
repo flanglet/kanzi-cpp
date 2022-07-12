@@ -97,7 +97,7 @@ namespace kanzi {
 
    private:
        static const uint HASH_SEED = 0x1E35A7BD;
-       static const uint HASH_LOG1 = 16;
+       static const uint HASH_LOG1 = 17;
        static const uint HASH_SHIFT1 = 40 - HASH_LOG1;
        static const uint HASH_MASK1 = (1 << HASH_LOG1) - 1;
        static const uint HASH_LOG2 = 21;

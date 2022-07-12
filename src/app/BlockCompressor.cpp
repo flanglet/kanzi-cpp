@@ -533,7 +533,7 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         break;
 
     case 1:
-        tranformAndCodec[0] = "TEXT+LZ";
+        tranformAndCodec[0] = "LZ";
         tranformAndCodec[1] = "HUFFMAN";
         break;
 
