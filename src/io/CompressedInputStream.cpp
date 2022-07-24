@@ -156,7 +156,6 @@ void CompressedInputStream::readHeader() THROW
 
     // Sanity check
     if (type != BITSTREAM_TYPE) {
-        stringstream ss;
         throw IOException("Invalid stream type", Error::ERR_INVALID_FILE);
     }
 
@@ -176,14 +175,28 @@ void CompressedInputStream::readHeader() THROW
     if (_ibs->readBit() == 1)
         _hasher = new XXHash32(BITSTREAM_TYPE);
 
-    // Read entropy codec
-    _entropyType = short(_ibs->readBits(5));
-    _ctx.putString("codec", EntropyCodecFactory::getName(_entropyType));
-    _ctx.putString("extra", _entropyType == EntropyCodecFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
+    try {
+        // Read entropy codec
+        _entropyType = short(_ibs->readBits(5));
+        _ctx.putString("codec", EntropyCodecFactory::getName(_entropyType));
+        _ctx.putString("extra", _entropyType == EntropyCodecFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
+    }
+    catch (invalid_argument&) {
+        stringstream err;
+        err << "Invalid bitstream, unknown entropy type: " << _entropyType;
+        throw IOException(err.str(), Error::ERR_INVALID_CODEC);
+    }
 
-    // Read transform: 8*6 bits
-    _transformType = _ibs->readBits(48);
-    _ctx.putString("transform", TransformFactory<byte>::getName(_transformType));
+    try {
+        // Read transform: 8*6 bits
+        _transformType = _ibs->readBits(48);
+        _ctx.putString("transform", TransformFactory<byte>::getName(_transformType));
+    }
+    catch (invalid_argument&) {
+        stringstream err;
+        err << "Invalid bitstream, unknown transform type: " << _transformType;
+        throw IOException(err.str(), Error::ERR_INVALID_CODEC);
+    }
 
     // Read block size
     _blockSize = int(_ibs->readBits(28)) << 4;
@@ -201,7 +214,7 @@ void CompressedInputStream::readHeader() THROW
 
     // 0 means 'unknown' and 63 means 63 or more.
     if (_nbInputBlocks == 0)
-       _nbInputBlocks = UNKNOWN_NB_BLOCKS;
+        _nbInputBlocks = UNKNOWN_NB_BLOCKS;
 
     // Read reserved bits
     _ibs->readBits(4);
@@ -210,26 +223,10 @@ void CompressedInputStream::readHeader() THROW
         stringstream ss;
         ss << "Checksum set to " << (_hasher != nullptr ? "true" : "false") << endl;
         ss << "Block size set to " << _blockSize << " bytes" << endl;
-
-        try {
-            string w1 = EntropyCodecFactory::getName(_entropyType);
-            ss << "Using " << ((w1 == "NONE") ? "no" : w1) << " entropy codec (stage 1)" << endl;
-        }
-        catch (invalid_argument&) {
-            stringstream err;
-            err << "Invalid bitstream, unknown entropy codec type: " << _entropyType;
-            throw IOException(err.str(), Error::ERR_INVALID_CODEC);
-        }
-
-        try {
-            string w2 = TransformFactory<byte>::getName(_transformType);
-            ss << "Using " << ((w2 == "NONE") ? "no" : w2) << " transform (stage 2)" << endl;
-        }
-        catch (invalid_argument&) {
-            stringstream err;
-            err << "Invalid bitstream, unknown transform type: " << _transformType;
-            throw IOException(err.str(), Error::ERR_INVALID_CODEC);
-        }
+        string w1 = EntropyCodecFactory::getName(_entropyType);
+        ss << "Using " << ((w1 == "NONE") ? "no" : w1) << " entropy codec (stage 1)" << endl;
+        string w2 = TransformFactory<byte>::getName(_transformType);
+        ss << "Using " << ((w2 == "NONE") ? "no" : w2) << " transform (stage 2)" << endl;
 
         // Protect against future concurrent modification of the list of block listeners
         vector<Listener*> blockListeners(_listeners);
