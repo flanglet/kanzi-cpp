@@ -342,6 +342,10 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     const int dstEnd = BigEndian::readInt32(&src[0]) - 4;
+
+    if ((dstEnd <= 0) || (dstEnd > output._length - output._index))
+        return false;
+
     int srcIdx = 5;
     int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
@@ -787,6 +791,10 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     byte* src = &input._array[input._index];
     const int dstEnd = BigEndian::readInt32(&src[0]);
+    
+    if ((dstEnd <= 0) || (dstEnd > output._length - output._index))
+        return false;
+
     int srcIdx = 5;
     int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
