@@ -149,7 +149,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     const int64 fileSize = ctx.getLong("fileSize", int64(UNKNOWN_NB_BLOCKS));
     const int nbBlocks = (fileSize == int64(UNKNOWN_NB_BLOCKS)) ? UNKNOWN_NB_BLOCKS : 
                            int((fileSize + int64(bSize - 1)) / int64(bSize));
-    _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
+    _nbInputBlocks = max(min(nbBlocks, MAX_CONCURRENCY - 1), 1);
     _jobs = tasks;
     _blockId = 0;
     _bufferId = 0;
