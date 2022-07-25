@@ -231,8 +231,17 @@ void CompressedOutputStream::writeHeader() THROW
     if (_obs->writeBits(_nbInputBlocks & (MAX_CONCURRENCY - 1), 6) != 6)
         throw IOException("Cannot write number of blocks to header", Error::ERR_WRITE_FILE);
 
-    if (_obs->writeBits(uint64(0), 4) != 4)
-        throw IOException("Cannot write reserved bits to header", Error::ERR_WRITE_FILE);
+    const uint32 HASH = 0x1E35A7BD;
+    uint32 cksum = HASH * BITSTREAM_FORMAT_VERSION;
+    cksum ^= (HASH * uint32(_entropyType));
+    cksum ^= (HASH * uint32(_transformType >> 32));
+    cksum ^= (HASH * uint32(_transformType));
+    cksum ^= (HASH * uint32(_blockSize));
+    cksum ^= (HASH * uint32(_nbInputBlocks));
+    cksum = (cksum >> 23) ^ (cksum >> 3);
+
+    if (_obs->writeBits(cksum, 4) != 4)
+        throw IOException("Cannot write checksum to header", Error::ERR_WRITE_FILE);
 }
 
 bool CompressedOutputStream::addListener(Listener& bl)
