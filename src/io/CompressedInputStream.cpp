@@ -575,56 +575,57 @@ T DecodingTask<T>::run() THROW
         CPU_PAUSE();
     }
 
-    // Read shared bitstream sequentially (each task is gated by _processedBlockId)
-    const uint lr = 3 + uint(_ibs->readBits(5));
-    uint64 read = _ibs->readBits(lr);
-
-    if (read == 0) {
-        _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
-        return T(*_data, _blockId, 0, 0, 0, "Success");
-    }
-
-    if (read > (uint64(1) << 34)) {
-        _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
-        return T(*_data, _blockId, 0, 0, Error::ERR_BLOCK_SIZE, "Invalid block size");
-    }
-
-    const int r = int((read + 7) >> 3);
-
-    if (_data->_length < max(_blockLength, r)) {
-        _data->_length = max(_blockLength, r);
-        delete[] _data->_array;
-        _data->_array = new byte[_data->_length];
-    }
-
-    for (int n = 0; read > 0; ) {
-        const uint chkSize = uint(min(read, uint64(1) << 30));
-        _ibs->readBits(&_data->_array[n], chkSize);
-        n += ((chkSize + 7) >> 3);
-        read -= uint64(chkSize);
-    }
-
-    // After completion of the bitstream reading, increment the block id.
-    // It unblocks the task processing the next block (if any)
-    (*_processedBlockId)++;
-
-    const int from = _ctx.getInt("from", 0);
-    const int to = _ctx.getInt("to", CompressedInputStream::MAX_BLOCK_ID);
-
-    // Check if the block must be skipped
-    if ((_blockId < from) || (_blockId >= to)) {
-        return T(*_data, _blockId, 0, 0, 0, "Skipped", true);
-    }
-
-    // Create an InputBitstream local to the task
-    istreambuf<char> buf(reinterpret_cast<char*>(&_data->_array[0]), streamsize(r));
-    iostream is(&buf);
-    DefaultInputBitStream ibs(is);
     int checksum1 = 0;
     EntropyDecoder* ed = nullptr;
     TransformSequence<byte>* transform = nullptr;
 
     try {
+        // Read shared bitstream sequentially (each task is gated by _processedBlockId)
+        const uint lr = 3 + uint(_ibs->readBits(5));
+        uint64 read = _ibs->readBits(lr);
+
+        if (read == 0) {
+            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
+            return T(*_data, _blockId, 0, 0, 0, "Success");
+        }
+
+        if (read > (uint64(1) << 34)) {
+            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
+            return T(*_data, _blockId, 0, 0, Error::ERR_BLOCK_SIZE, "Invalid block size");
+        }
+
+        const int r = int((read + 7) >> 3);
+
+        if (_data->_length < max(_blockLength, r)) {
+            _data->_length = max(_blockLength, r);
+            delete[] _data->_array;
+            _data->_array = new byte[_data->_length];
+        }
+
+        for (int n = 0; read > 0; ) {
+            const uint chkSize = uint(min(read, uint64(1) << 30));
+            _ibs->readBits(&_data->_array[n], chkSize);
+            n += ((chkSize + 7) >> 3);
+            read -= uint64(chkSize);
+        }
+
+        // After completion of the bitstream reading, increment the block id.
+        // It unblocks the task processing the next block (if any)
+        (*_processedBlockId)++;
+
+        const int from = _ctx.getInt("from", 0);
+        const int to = _ctx.getInt("to", CompressedInputStream::MAX_BLOCK_ID);
+
+        // Check if the block must be skipped
+        if ((_blockId < from) || (_blockId >= to)) {
+            return T(*_data, _blockId, 0, 0, 0, "Skipped", true);
+        }
+
+        // Create an InputBitstream local to the task
+        istreambuf<char> buf(reinterpret_cast<char*>(&_data->_array[0]), streamsize(r));
+        iostream is(&buf);
+        DefaultInputBitStream ibs(is);
+
         // Extract block header from bitstream
         byte mode = byte(ibs.readBits(8));
         byte skipFlags = byte(0);
