@@ -56,8 +56,11 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
 {
     struct STAT buffer;
 
-    if (target[target.size()-1] == PATH_SEPARATOR)
-        target = target.substr(0, target.size()-1);
+    if (target.size() == 0)
+        return;
+
+    if (target[target.size() - 1] == PATH_SEPARATOR)
+        target = target.substr(0, target.size() - 1);
 
     if (STAT(target.c_str(), &buffer) != 0) {
         std::stringstream ss;
@@ -80,17 +83,17 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
         throw kanzi::IOException(ss.str(), kanzi::Error::ERR_OPEN_FILE);
     }
 
-    bool isRecursive = (target.size() <= 2) || (target[target.size()-1] != '.') ||
-               (target[target.size()-2] != PATH_SEPARATOR);
+    bool isRecursive = (target.size() <= 2) || (target[target.size() - 1] != '.') ||
+               (target[target.size() - 2] != PATH_SEPARATOR);
 
     if (isRecursive) {
-       if (target[target.size()-1] != PATH_SEPARATOR) {
+       if (target[target.size() - 1] != PATH_SEPARATOR) {
           std::stringstream ss;
           ss << target << PATH_SEPARATOR;
           target = ss.str();
        }
     } else {
-       target = target.substr(0, target.size()-1);
+       target = target.substr(0, target.size() - 1);
     }
 
     DIR* dir = opendir(target.c_str());
