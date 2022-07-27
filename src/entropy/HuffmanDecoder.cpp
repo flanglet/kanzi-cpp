@@ -43,9 +43,6 @@ HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) THROW :
 
 bool HuffmanDecoder::reset()
 {
-    _state = 0;
-    _bits = 64;
-
     // Default lengths & canonical codes
     for (int i = 0; i < 256; i++) {
         _codes[i] = i;
@@ -162,17 +159,20 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
 
         const int szChunk = max(int(endChunk - startChunk - padding), 0);
         const uint endChunk4 = startChunk + uint(szChunk & -4);
+        uint64 state = 0; // holds bits read from bitstream
+        int bits = 64; // hold number of used bits in 'state'
 
         for (uint i = startChunk; i < endChunk4; i += 4) {
-            fetchBits();
-            const uint16 val0 = _table[(_state >> (64 - DECODING_BATCH_SIZE - _bits)) & TABLE_MASK];
-            _bits += uint8(val0);
-            const uint16 val1 = _table[(_state >> (64 - DECODING_BATCH_SIZE - _bits)) & TABLE_MASK];
-            _bits += uint8(val1);
-            const uint16 val2 = _table[(_state >> (64 - DECODING_BATCH_SIZE - _bits)) & TABLE_MASK];
-            _bits += uint8(val2);
-            const uint16 val3 = _table[(_state >> (64 - DECODING_BATCH_SIZE - _bits)) & TABLE_MASK];
-            _bits += uint8(val3);
+            state = ((state << (bits - 1)) << 1) | _bitstream.readBits(bits); // Handle _bits == 64 case
+            bits = 0;
+            const uint16 val0 = _table[(state >> (64 - DECODING_BATCH_SIZE - bits)) & TABLE_MASK];
+            bits += uint8(val0);
+            const uint16 val1 = _table[(state >> (64 - DECODING_BATCH_SIZE - bits)) & TABLE_MASK];
+            bits += uint8(val1);
+            const uint16 val2 = _table[(state >> (64 - DECODING_BATCH_SIZE - bits)) & TABLE_MASK];
+            bits += uint8(val2);
+            const uint16 val3 = _table[(state >> (64 - DECODING_BATCH_SIZE - bits)) & TABLE_MASK];
+            bits += uint8(val3);
             block[i] = byte(val0 >> 8);
             block[i + 1] = byte(val1 >> 8);
             block[i + 2] = byte(val2 >> 8);
@@ -181,7 +181,7 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
 
         // Fallback to regular decoding
         for (uint i = endChunk4; i < endChunk; i++)
-            block[i] = slowDecodeByte();
+            block[i] = slowDecodeByte(state, bits);
 
         startChunk = endChunk;
     }
@@ -189,7 +189,7 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
     return count;
 }
 
-byte HuffmanDecoder::slowDecodeByte() THROW
+byte HuffmanDecoder::slowDecodeByte(uint64& state, int& bits) THROW
 {
     int code = 0;
     uint8 codeLen = 0;
@@ -197,12 +197,12 @@ byte HuffmanDecoder::slowDecodeByte() THROW
     while (codeLen < HuffmanCommon::MAX_SYMBOL_SIZE) {
         codeLen++;
 
-        if (_bits == 64) {
+        if (bits == 64) {
             code = (code << 1) | _bitstream.readBit();
         }
         else {
-            _bits++;
-            code = (code << 1) | int((_state >> (64 -_bits)) & 1);
+            bits++;
+            code = (code << 1) | int((state >> (64 -bits)) & 1);
         }
 
         const int idx = code << (DECODING_BATCH_SIZE - codeLen);
