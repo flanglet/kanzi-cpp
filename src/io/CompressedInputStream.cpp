@@ -219,20 +219,18 @@ void CompressedInputStream::readHeader() THROW
     // Read checksum
     const uint32 cksum1 = uint32(_ibs->readBits(4));
 
-    if (bsVersion >= 3) {
-        // Verify checksum from bitstream version 3
-        const uint32 HASH = 0x1E35A7BD;
-        uint32 cksum2 = HASH * uint32(bsVersion);
-        cksum2 ^= (HASH * uint32(_entropyType));
-        cksum2 ^= (HASH * uint32(_transformType >> 32));
-        cksum2 ^= (HASH * uint32(_transformType));
-        cksum2 ^= (HASH * uint32(_blockSize));
-        cksum2 ^= (HASH * uint32(_nbInputBlocks));
-        cksum2 = (cksum2 >> 23) ^ (cksum2 >> 3);
+    // Verify checksum
+    const uint32 HASH = 0x1E35A7BD;
+    uint32 cksum2 = HASH * uint32(bsVersion);
+    cksum2 ^= (HASH * uint32(_entropyType));
+    cksum2 ^= (HASH * uint32(_transformType >> 32));
+    cksum2 ^= (HASH * uint32(_transformType));
+    cksum2 ^= (HASH * uint32(_blockSize));
+    cksum2 ^= (HASH * uint32(_nbInputBlocks));
+    cksum2 = (cksum2 >> 23) ^ (cksum2 >> 3);
 
-        if (cksum1 != (cksum2 & 0x0F))
-            throw IOException("Invalid bitstream, corrupted header", Error::ERR_CRC_CHECK);
-    }
+    if (cksum1 != (cksum2 & 0x0F))
+        throw IOException("Invalid bitstream, corrupted header", Error::ERR_CRC_CHECK);
 
     if (_listeners.size() > 0) {
         stringstream ss;
