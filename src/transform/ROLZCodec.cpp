@@ -825,7 +825,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             // Sanity check
             if ((val >> 8) == MATCH_FLAG) {
                 output._index += dstIdx;
-                break;
+                return false;
             }
 
             dst[dstIdx++] = byte(val);
@@ -850,7 +850,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 // Sanity check
                 if (dstIdx + matchLen + 3 > dstEnd) {
                     output._index += dstIdx;
-                    break;
+                    return false;
                 }
 
                 rd.setContext(MATCH_CTX, dst[dstIdx - 1]);
