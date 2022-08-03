@@ -47,8 +47,6 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW 
 
 bool HuffmanEncoder::reset()
 {
-    _maxCodeLen = 0;
-
     // Default frequencies, sizes and codes
     for (int i = 0; i < 256; i++) {
         _freqs[i] = 1;
@@ -78,9 +76,9 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
     int retries = 0;
 
     while (true) {
-        computeCodeLengths(frequencies, sizes, alphabet, count);
+        const uint maxCodeLen = computeCodeLengths(frequencies, sizes, alphabet, count);
 
-        if (_maxCodeLen <= HuffmanCommon::MAX_SYMBOL_SIZE) {
+        if (maxCodeLen <= HuffmanCommon::MAX_SYMBOL_SIZE) {
             // Usual case
             HuffmanCommon::generateCanonicalCodes(sizes, _codes, _sranks, count);
             break;
@@ -133,13 +131,12 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
     return count;
 }
 
-void HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], uint alphabet[], int count) THROW
+uint HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], uint alphabet[], int count) THROW
 {
     if (count == 1) {
         _sranks[0] = alphabet[0];
         sizes[alphabet[0]] = 1;
-        _maxCodeLen = 1;
-        return;
+        return 1;
     }
 
     // Sort _sranks by increasing frequencies (first key) and increasing value (second key)
@@ -159,7 +156,7 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], uint
     // by Alistair Moffat & Jyrki Katajainen
     computeInPlaceSizesPhase1(buffer, count);
     computeInPlaceSizesPhase2(buffer, count);
-    _maxCodeLen = 0;
+    uint maxCodeLen = 0;
 
     for (int i = 0; i < count; i++) {
         const uint codeLen = buffer[i];
@@ -167,11 +164,17 @@ void HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], uint
         if (codeLen == 0)
             throw invalid_argument("Could not generate Huffman codes: invalid code length 0");
 
-        if (_maxCodeLen < codeLen)
-            _maxCodeLen = codeLen;
+        if (maxCodeLen < codeLen) {
+            maxCodeLen = codeLen;
+
+            if (maxCodeLen > HuffmanCommon::MAX_SYMBOL_SIZE)
+                break;
+        }
 
         sizes[_sranks[i]] = uint16(codeLen);
     }
+
+    return maxCodeLen;
 }
 
 void HuffmanEncoder::computeInPlaceSizesPhase1(uint data[], int n)

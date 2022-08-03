@@ -96,8 +96,6 @@ int HuffmanDecoder::readLengths() THROW
         throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
     }
 
-    // Build decoding tables
-    buildDecodingTable(count);
     return count;
 }
 
@@ -150,6 +148,8 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
             continue;
         }
 
+        buildDecodingTable(alphabetSize);
+
         // Compute minimum number of bits required in bitstream for fast decoding
         const uint minCodeLen = uint(_sizes[_alphabet[0]]); // not 0
         uint padding = 64 / minCodeLen;
@@ -160,7 +160,7 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
         const int szChunk = max(int(endChunk - startChunk - padding), 0);
         const uint endChunk4 = startChunk + uint(szChunk & -4);
         uint64 state = 0; // holds bits read from bitstream
-        int bits = 64; // hold number of used bits in 'state'
+        int bits = 64; // holds number of used bits in 'state'
 
         for (uint i = startChunk; i < endChunk4; i += 4) {
             state = ((state << (bits - 1)) << 1) | _bitstream.readBits(bits); // Handle _bits == 64 case

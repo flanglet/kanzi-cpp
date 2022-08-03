@@ -24,12 +24,11 @@ limitations under the License.
 namespace kanzi
 {
 
-   // Implementation of a static Huffman encoder.
-   // Uses in place generation of canonical codes instead of a tree
+   // Implementation of a static Huffman coder.
    class HuffmanDecoder : public EntropyDecoder
    {
    public:
-       HuffmanDecoder(InputBitStream& bitstream, int chunkSize=HuffmanCommon::MAX_CHUNK_SIZE) THROW;
+       HuffmanDecoder(InputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE) THROW;
 
        ~HuffmanDecoder() { _dispose(); }
 
