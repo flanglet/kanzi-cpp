@@ -205,11 +205,9 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     const int delta = int(sumScaledFreq - scale);
 
     if (abs(delta) * 100 < int(freqs[idxMax]) * 5) {
-        // Fast path: just adjust the max frequency (or fallback to slow path)
-        if (int(freqs[idxMax]) > delta) {
-            freqs[idxMax] -= delta;
-            return alphabetSize;
-        }
+        // Fast path: just adjust the max frequency 
+        freqs[idxMax] -= delta;
+        return alphabetSize;
     }
 
     // Slow path: spread error across frequencies
