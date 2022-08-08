@@ -29,7 +29,6 @@ using namespace std;
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats. 0 means that frequencies calculated at the
 // beginning of the block apply to the whole block.
-// The default chunk size is 65536 bytes.
 HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW : _bitstream(bitstream)
 {
     if (chunkSize < 1024)
@@ -47,45 +46,51 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW 
 
 bool HuffmanEncoder::reset()
 {
-    // Default frequencies, sizes and codes
-    for (int i = 0; i < 256; i++) {
-        _freqs[i] = 1;
+    for (int i = 0; i < 256; i++)
         _codes[i] = i;
-    }
 
-    memset(_sranks, 0, sizeof(_sranks));
     return true;
 }
 
 // Rebuild Huffman codes
-int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
+int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
 {
     int count = 0;
-    uint16 sizes[256];
+    uint16 sizes[256] = { 0 };
     uint alphabet[256] = { 0 };
 
     for (int i = 0; i < 256; i++) {
-        sizes[i] = 0;
         _codes[i] = 0;
 
-        if (frequencies[i] > 0)
+        if (freqs[i] > 0)
             alphabet[count++] = i;
     }
 
     EntropyUtils::encodeAlphabet(_bitstream, alphabet, 256, count);
     int retries = 0;
+    uint ranks[256]; // sorted ranks
 
     while (true) {
-        const uint maxCodeLen = computeCodeLengths(frequencies, sizes, alphabet, count);
-
-        if (maxCodeLen <= HuffmanCommon::MAX_SYMBOL_SIZE) {
-            // Usual case
-            HuffmanCommon::generateCanonicalCodes(sizes, _codes, _sranks, count);
+        if (count == 1) {
+            _codes[alphabet[0]] = 1 << 24;
             break;
         }
+        else {
+            // Sort ranks by increasing freqs (first key) and increasing value (second key)
+            for (int i = 0; i < count; i++)
+                ranks[i] = (freqs[alphabet[i]] << 8) | alphabet[i];
 
-        // Rare: some codes exceed the budget for the max code length => normalize
-        // frequencies (it boosts the smallest frequencies) and try once more.
+            const uint maxCodeLen = computeCodeLengths(sizes, ranks, count);
+
+            if (maxCodeLen <= HuffmanCommon::MAX_SYMBOL_SIZE) {
+                // Usual case
+                HuffmanCommon::generateCanonicalCodes(sizes, _codes, ranks, count);
+                break;
+            }
+        }
+
+        // Rare: some codes exceed the budget for the max code length => scale down
+        // and normalize frequencies (to boost the smallest freqs) and try once more.
         if (retries > 2) {
             stringstream ss;
             ss << "Could not generate Huffman codes: max code length (";
@@ -98,7 +103,7 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
         uint totalFreq = 0;
 
         for (int i = 0; i < count; i++) {
-            f[i] = frequencies[alphabet[i]];
+            f[i] = freqs[alphabet[i]];
             totalFreq += f[i];
         }
 
@@ -112,10 +117,10 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
            HuffmanCommon::MAX_CHUNK_SIZE >> (2 * retries));
 
         for (int i = 0; i < count; i++)
-           frequencies[alphabet[i]] = f[i];
+           freqs[alphabet[i]] = f[i];
     }
 
-    // Transmit code lengths only, frequencies and codes do not matter
+    // Transmit code lengths only, freqs and codes do not matter
     ExpGolombEncoder egenc(_bitstream, true);
     uint16 prevSize = 2;
 
@@ -131,35 +136,25 @@ int HuffmanEncoder::updateFrequencies(uint frequencies[]) THROW
     return count;
 }
 
-uint HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], uint alphabet[], int count) THROW
+uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count) THROW
 {
-    if (count == 1) {
-        _sranks[0] = alphabet[0];
-        sizes[alphabet[0]] = 1;
-        return 1;
-    }
-
-    // Sort _sranks by increasing frequencies (first key) and increasing value (second key)
-    for (int i = 0; i < count; i++)
-        _sranks[i] = (frequencies[alphabet[i]] << 8) | alphabet[i];
-
-    vector<uint> v(_sranks, _sranks + count);
+    vector<uint> v(ranks, ranks + count);
     sort(v.begin(), v.end());
-    uint buffer[256] = { 0 };
+    uint freqs[256] = { 0 };
 
     for (int i = 0; i < count; i++) {
-        buffer[i] = v[i] >> 8;
-        _sranks[i] = v[i] & 0xFF;
+        freqs[i] = v[i] >> 8;
+        ranks[i] = v[i] & 0xFF;
     }
 
     // See [In-Place Calculation of Minimum-Redundancy Codes]
     // by Alistair Moffat & Jyrki Katajainen
-    computeInPlaceSizesPhase1(buffer, count);
-    computeInPlaceSizesPhase2(buffer, count);
+    computeInPlaceSizesPhase1(freqs, count);
+    computeInPlaceSizesPhase2(freqs, count);
     uint maxCodeLen = 0;
 
     for (int i = 0; i < count; i++) {
-        const uint codeLen = buffer[i];
+        const uint codeLen = freqs[i];
 
         if (codeLen == 0)
             throw invalid_argument("Could not generate Huffman codes: invalid code length 0");
@@ -171,7 +166,7 @@ uint HuffmanEncoder::computeCodeLengths(uint frequencies[], uint16 sizes[], uint
                 break;
         }
 
-        sizes[_sranks[i]] = uint16(codeLen);
+        sizes[ranks[i]] = uint16(codeLen);
     }
 
     return maxCodeLen;
@@ -235,14 +230,15 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
 
     const uint end = blkptr + count;
     uint startChunk = blkptr;
+    uint freqs[256];
 
     while (startChunk < end) {
         // Update frequencies and rebuild Huffman codes
         const uint endChunk = min(startChunk + _chunkSize, end);
-        memset(_freqs, 0, sizeof(_freqs));
-        Global::computeHistogram(&block[startChunk], endChunk - startChunk, _freqs);
+        memset(freqs, 0, sizeof(freqs));
+        Global::computeHistogram(&block[startChunk], endChunk - startChunk, freqs);
 
-        if (updateFrequencies(_freqs) <= 1) {
+        if (updateFrequencies(freqs) <= 1) {
            // Skip chunk if only one symbol
            startChunk = endChunk;
            continue;

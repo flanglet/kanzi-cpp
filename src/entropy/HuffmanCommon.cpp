@@ -18,7 +18,8 @@ limitations under the License.
 using namespace kanzi;
 
 // Return the number of codes generated
-int HuffmanCommon::generateCanonicalCodes(uint16 sizes[], uint codes[], uint symbols[], int count)
+// codes and symbols are updated
+int HuffmanCommon::generateCanonicalCodes(const uint16 sizes[], uint codes[], uint symbols[], int count)
 {
     if (count > 1) {
         byte buf[BUFFER_SIZE] = { byte(0) };

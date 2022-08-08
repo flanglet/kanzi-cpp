@@ -30,7 +30,7 @@ namespace kanzi
        static const int MAX_CHUNK_SIZE = 1 << LOG_MAX_CHUNK_SIZE;
        static const int MAX_SYMBOL_SIZE = LOG_MAX_CHUNK_SIZE;
 
-       static int generateCanonicalCodes(uint16 sizes[], uint codes[], uint ranks[], int count);
+       static int generateCanonicalCodes(const uint16 sizes[], uint codes[], uint ranks[], int count);
 
    private:
        static const int BUFFER_SIZE = (MAX_SYMBOL_SIZE << 8) + 256;

@@ -30,12 +30,10 @@ namespace kanzi
    {
    private:
        OutputBitStream& _bitstream;
-       uint _freqs[256];
        uint _codes[256];
-       uint _sranks[256]; // sorted ranks
        int _chunkSize;
 
-       uint computeCodeLengths(uint frequencies[], uint16 sizes[], uint alphabet[], int count) THROW;
+       uint computeCodeLengths(uint16 sizes[], uint sranks[], int count) THROW;
 
        bool reset();
 
