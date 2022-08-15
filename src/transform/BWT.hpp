@@ -116,8 +116,6 @@ namespace kanzi {
 
        int getMaxEncodedLength(int srcLen) const { return srcLen; }
 
-       static int maxBlockSize() { return MAX_BLOCK_SIZE; }
-
        static int getBWTChunks(int size);
    };
 
