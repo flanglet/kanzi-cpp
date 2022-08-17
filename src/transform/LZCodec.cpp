@@ -169,7 +169,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
                 int bestLen1 = findMatch(src, srcIdx + 1, ref1, min(srcEnd - srcIdx - 1, MAX_MATCH));
 
                 // Select best match
-                if ((bestLen1 > bestLen) || ((bestLen1 == bestLen) && ((srcIdx + 1 - ref1) < (srcIdx - ref)))) {
+                if ((bestLen1 > bestLen) || ((bestLen1 == bestLen) && (ref1 > ref + 1))) {
                     ref = ref1;
                     bestLen = bestLen1;
                     srcIdx++;
