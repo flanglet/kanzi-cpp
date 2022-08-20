@@ -29,7 +29,7 @@ namespace kanzi
        static const uint GIF_MAGIC = 0x47494638;
        static const uint PDF_MAGIC = 0x25504446;
        static const uint ZIP_MAGIC = 0x504B0304; // Works for jar & office docs
-       static const uint LZMA_MAGIC = 0x377ABCAF;
+       static const uint LZMA_MAGIC = 0x377ABCAF; // Works for 7z  37 7A BC AF 27 1C 
        static const uint PNG_MAGIC = 0x89504E47;
        static const uint ELF_MAGIC = 0x7F454C46;
        static const uint MAC_MAGIC32 = 0xFEEDFACE;
@@ -38,10 +38,13 @@ namespace kanzi
        static const uint MAC_CIGAM64 = 0xCFFAEDFE;
        static const uint ZSTD_MAGIC = 0x28B52FFD;
        static const uint BROTLI_MAGIC = 0x81CFB2CE;
-       static const uint RIFF_MAGIC = 0x04524946;
+       static const uint RIFF_MAGIC = 0x52494646; // WAV, AVI, WEBP
        static const uint CAB_MAGIC = 0x4D534346;
+       static const uint FLAC_MAGIC = 0x664C6143;
+       static const uint XZ_MAGIC = 0xFD377A58; // FD 37 7A 58 5A 00
 
        static const uint BZIP2_MAGIC = 0x425A68;
+       static const uint MP3_ID3_MAGIC = 0x494433;
 
        static const uint GZIP_MAGIC = 0x1F8B;
        static const uint BMP_MAGIC = 0x424D;
@@ -62,12 +65,14 @@ namespace kanzi
     }; 
     
        
+    // 4 bytes must be readable in src
     inline uint Magic::getType(const byte src[]) 
     {
-        static const uint KEYS32[14] = { 
+        static const uint KEYS32[16] = { 
             GIF_MAGIC, PDF_MAGIC, ZIP_MAGIC, LZMA_MAGIC, PNG_MAGIC,
             ELF_MAGIC, MAC_MAGIC32, MAC_CIGAM32, MAC_MAGIC64, MAC_CIGAM64,
-            ZSTD_MAGIC, BROTLI_MAGIC, CAB_MAGIC, RIFF_MAGIC
+            ZSTD_MAGIC, BROTLI_MAGIC, CAB_MAGIC, RIFF_MAGIC, FLAC_MAGIC,
+            XZ_MAGIC
         };
 
         static const uint KEYS16[3] = { 
@@ -76,10 +81,15 @@ namespace kanzi
     
         const uint key = uint(BigEndian::readInt32(&src[0]));
        
-        if (((key & ~0x0F) == JPG_MAGIC) || ((key >> 8) == BZIP2_MAGIC))
+        if ((key & ~0x0F) == JPG_MAGIC)
             return key;
+
+        if (((key >> 8) == BZIP2_MAGIC)  || ((key >> 8) == MP3_ID3_MAGIC))
+            return key >> 8;
        
-        for (int i = 0; i < 14; i++) {
+        const int n = sizeof(KEYS32) / sizeof(uint);
+
+        for (int i = 0; i < n; i++) {
             if (key == KEYS32[i])
                return key;
         }
@@ -115,6 +125,9 @@ namespace kanzi
             case ZIP_MAGIC:
             case GZIP_MAGIC:
             case BZIP2_MAGIC:
+            case FLAC_MAGIC:
+            case MP3_ID3_MAGIC:
+            case XZ_MAGIC:
                 return true;
 				
             default:

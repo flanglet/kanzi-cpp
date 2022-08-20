@@ -17,6 +17,7 @@ limitations under the License.
 #include "CompressedOutputStream.hpp"
 #include "IOException.hpp"
 #include "../Error.hpp"
+#include "../Magic.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../entropy/EntropyCodecFactory.hpp"
 #include "../entropy/EntropyUtils.hpp"
@@ -526,15 +527,21 @@ T EncodingTask<T>::run() THROW
             mode |= CompressedOutputStream::COPY_BLOCK_MASK;
         }
         else {
-            string str = _ctx.getString("skipBlocks", STR_FALSE);
+            string strSkip = _ctx.getString("skipBlocks", STR_FALSE);
 
-            if (str == STR_TRUE) {
-                uint histo[256] = { 0 };
-                Global::computeHistogram(&_data->_array[_data->_index], _blockLength, histo);
-                const int entropy = Global::computeFirstOrderEntropy1024(_blockLength, histo);
-                //_ctx.putString("histo0", toString(histo, 256));
+            if (strSkip == STR_TRUE) {
+                bool skip = (_blockLength >= 8) ? Magic::isCompressed(Magic::getType(&_data->_array[_data->_index]))
+                  : false;
 
-                if (entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD) {
+                if (skip == false) {
+                    uint histo[256] = { 0 };
+                    Global::computeHistogram(&_data->_array[_data->_index], _blockLength, histo);
+                    const int entropy = Global::computeFirstOrderEntropy1024(_blockLength, histo);
+                    skip = entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD;
+                    //_ctx.putString("histo0", toString(histo, 256));
+                }
+
+                if (skip == true) {
                     _transformType = TransformFactory<byte>::NONE_TYPE;
                     _entropyType = EntropyCodecFactory::NONE_TYPE;
                     mode |= CompressedOutputStream::COPY_BLOCK_MASK;
