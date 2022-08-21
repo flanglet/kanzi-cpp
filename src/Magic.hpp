@@ -42,6 +42,7 @@ namespace kanzi
        static const uint CAB_MAGIC = 0x4D534346;
        static const uint FLAC_MAGIC = 0x664C6143;
        static const uint XZ_MAGIC = 0xFD377A58; // FD 37 7A 58 5A 00
+       static const uint KNZ_MAGIC = 0x4B414E5A;
 
        static const uint BZIP2_MAGIC = 0x425A68;
        static const uint MP3_ID3_MAGIC = 0x494433;
@@ -68,11 +69,11 @@ namespace kanzi
     // 4 bytes must be readable in src
     inline uint Magic::getType(const byte src[]) 
     {
-        static const uint KEYS32[16] = { 
+        static const uint KEYS32[17] = { 
             GIF_MAGIC, PDF_MAGIC, ZIP_MAGIC, LZMA_MAGIC, PNG_MAGIC,
             ELF_MAGIC, MAC_MAGIC32, MAC_CIGAM32, MAC_MAGIC64, MAC_CIGAM64,
             ZSTD_MAGIC, BROTLI_MAGIC, CAB_MAGIC, RIFF_MAGIC, FLAC_MAGIC,
-            XZ_MAGIC
+            XZ_MAGIC, KNZ_MAGIC
         };
 
         static const uint KEYS16[3] = { 
@@ -128,6 +129,7 @@ namespace kanzi
             case FLAC_MAGIC:
             case MP3_ID3_MAGIC:
             case XZ_MAGIC:
+            case KNZ_MAGIC:
                 return true;
 				
             default:
