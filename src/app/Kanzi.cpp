@@ -165,6 +165,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     string strOverwrite = STR_FALSE;
     string strChecksum = STR_FALSE;
     string strSkip = STR_FALSE;
+    string strReorder = STR_TRUE;
     string codec;
     string transf;
     int verbose = 1;
@@ -335,7 +336,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println(ss.str().c_str(), verbose > 0);
             }
 
-            strOverwrite = string(STR_TRUE);
+            strOverwrite = STR_TRUE;
             ctx = -1;
             continue;
         }
@@ -359,7 +360,19 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println(ss.str().c_str(), verbose > 0);
             }
 
-            strChecksum = string(STR_TRUE);
+            strChecksum = STR_TRUE;
+            ctx = -1;
+            continue;
+        }
+
+        if (arg == "--no-file-reorder") {
+            if (ctx != -1) {
+                stringstream ss;
+                ss << "Warning: ignoring option [" << CMD_LINE_ARGS[ctx] << "] with no value.";
+                log.println(ss.str().c_str(), verbose > 0);
+            }
+
+            strReorder = STR_FALSE;
             ctx = -1;
             continue;
         }
@@ -684,7 +697,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         map["level"] = strLevel;
 
     if (strOverwrite == STR_TRUE)
-        map["overwrite"] = strOverwrite;
+        map["overwrite"] = STR_TRUE;
 
     map["inputName"] = inputName;
     map["outputName"] = outputName;
@@ -696,10 +709,13 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         map["transform"] = transf;
 
     if (strChecksum == STR_TRUE)
-        map["checksum"] = strChecksum;
+        map["checksum"] = STR_TRUE;
 
     if (strSkip == STR_TRUE)
-        map["skipBlocks"] = strSkip;
+        map["skipBlocks"] = STR_TRUE;
+
+    if (strReorder == STR_FALSE)
+        map["fileReorder"] = STR_FALSE;
 
     if (from >= 0)
         map["from"] = strFrom;

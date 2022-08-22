@@ -41,6 +41,9 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     else {
         _level = atoi(it->second.c_str());
         args.erase(it);
+
+        if ((_level < 0) || (_level > 9))
+            throw invalid_argument("Invalid compression level");
     }
 
     it = args.find("overwrite");
@@ -148,7 +151,6 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     }
     else {
         string str = it->second;
-        transform(str.begin(), str.end(), str.begin(), ::toupper);
         _checksum = str == STR_TRUE;
         args.erase(it);
     }
@@ -189,6 +191,17 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
             ss << "Ignoring invalid option [" << it->first << "]";
             log.println(ss.str().c_str(), _verbosity > 0);
         }
+    }
+
+    it = args.find("fileReorder");
+
+    if (it == args.end()) {
+        _reorderFiles = true;
+    }
+    else {
+        string str = it->second;
+        _reorderFiles = str == STR_TRUE;
+        args.erase(it);
     }
 }
 
@@ -386,7 +399,9 @@ int BlockCompressor::compress(uint64& outputSize)
         int* jobsPerTask = new int[nbFiles];
         Global::computeJobsPerTask(jobsPerTask, _jobs, nbFiles);
         int n = 0;
-        sortFilesByPathAndSize(files, true);
+
+        if (_reorderFiles == true)
+            sortFilesByPathAndSize(files, true);
 
         // Create one task per file
         for (int i = 0; i < nbFiles; i++) {

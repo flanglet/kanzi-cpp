@@ -150,6 +150,7 @@ namespace kanzi {
        int _level; // command line compression level
        int _jobs;
        std::vector<Listener*> _listeners;
+       bool _reorderFiles;
 
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 
