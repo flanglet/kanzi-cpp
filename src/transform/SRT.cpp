@@ -196,7 +196,12 @@ int SRT::preprocess(int freqs[], uint8 symbols[])
             uint8 t = symbols[i];
             int b;
 
-            for (b = i - h; (b >= 0) && ((freqs[symbols[b]] < freqs[t]) || ((t < symbols[b]) && (freqs[t] == freqs[symbols[b]]))); b -= h) {
+            for (b = i - h; b >= 0; b -= h) {
+                const int val = freqs[symbols[b]] - freqs[t];
+                
+                if (((val >= 0) && ((val == 0) || (t >= symbols[b]))))
+                   break;
+
                 symbols[b + h] = symbols[b];
             }
 
