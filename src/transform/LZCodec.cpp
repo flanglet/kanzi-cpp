@@ -111,6 +111,8 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             // Longer min match for DNA input
             mm = MIN_MATCH2;
             dst[12] |= byte(2);
+        } else if (dt == Global::SMALL_ALPHABET) {
+            return false;
         }
     }
 

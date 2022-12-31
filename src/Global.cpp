@@ -352,5 +352,8 @@ Global::DataType Global::detectSimpleType(int count, uint freqs0[]) {
     if (sum == 256)
         return BIN;
 
+    if (sum <= 4)
+        return SMALL_ALPHABET;
+
     return UNDEFINED;
 }
