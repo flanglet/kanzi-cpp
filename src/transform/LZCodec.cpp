@@ -152,8 +152,8 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             if (memcmp(&src[srcIdx], &src[ref], 4) == 0)
                 bestLen = findMatch(src, srcIdx, ref, min(srcEnd - srcIdx, MAX_MATCH));
         } else {
-            srcIdx++;
             _hashes[h0] = srcIdx;
+            srcIdx++;
         }
 
         // No good match ?
