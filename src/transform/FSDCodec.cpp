@@ -87,7 +87,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     byte* dst = &output._array[output._index];
     byte* src = &input._array[input._index];
     const int srcEnd = count;
-    const int dstEnd = output._length;
+    const int dstEnd = getMaxEncodedLength(count);
     const int count5 = count / 5;
     const int count10 = count / 10;
     byte* in;
@@ -148,7 +148,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     if (_pCtx != nullptr) 
         _pCtx->putInt("dataType", Global::detectSimpleType(count5, histo[0]));
-   
+
     // If not better, quick exit
     if (ent[minIdx] >= ent[0])
         return false;
