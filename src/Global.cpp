@@ -324,7 +324,7 @@ Global::DataType Global::detectSimpleType(int count, uint freqs0[]) {
     for (int i = 0; i < 12; i++)
         sum += freqs0[int(DNA_SYMBOLS[i])];
 
-    if (sum >= (count - count / 12))
+    if (sum > (count - count / 12))
         return DNA;
 
     sum = 0;
@@ -332,7 +332,7 @@ Global::DataType Global::detectSimpleType(int count, uint freqs0[]) {
     for (int i = 0; i < 20; i++)
         sum += freqs0[int(NUMERIC_SYMBOLS[i])];
 
-    if (sum >= (count / 100) * 98)
+    if (sum == count)
         return NUMERIC;
 
     // Last symbol with padding '='
@@ -346,8 +346,16 @@ Global::DataType Global::detectSimpleType(int count, uint freqs0[]) {
 
     sum = 0;
 
-    for (int i = 0; i < 256; i++)
-        sum += (freqs0[i] > 0) ? 1 : 0;
+    for (int i = 0; i < 256; i += 8) {
+        sum += (freqs0[i+0] > 0) ? 1 : 0;
+        sum += (freqs0[i+1] > 0) ? 1 : 0;
+        sum += (freqs0[i+2] > 0) ? 1 : 0;
+        sum += (freqs0[i+3] > 0) ? 1 : 0;
+        sum += (freqs0[i+4] > 0) ? 1 : 0;
+        sum += (freqs0[i+5] > 0) ? 1 : 0;
+        sum += (freqs0[i+6] > 0) ? 1 : 0;
+        sum += (freqs0[i+7] > 0) ? 1 : 0;
+    }
 
     if (sum == 256)
         return BIN;
