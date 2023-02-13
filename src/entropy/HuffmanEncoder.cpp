@@ -114,7 +114,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
 
         // Normalize to a smaller scale
         EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq,
-           HuffmanCommon::MAX_CHUNK_SIZE >> (2 * retries));
+           HuffmanCommon::MAX_CHUNK_SIZE >> retries);
 
         for (int i = 0; i < count; i++)
            freqs[alphabet[i]] = f[i];
