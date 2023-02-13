@@ -216,32 +216,27 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
 
     // Create sorted queue of present symbols
     for (int i = 0; i < alphabetSize; i++) {
-        queue.push_back(new FreqSortData(freqs, alphabet[i]));
+        // Do not zero out any frequency
+        if (int(freqs[alphabet[i]]) != -inc) 
+            queue.push_back(new FreqSortData(freqs, alphabet[i]));
     }
 
     sort(queue.begin(), queue.end(), FreqDataComparator());
 
+    while (sumScaledFreq != scale) {
+        // Remove next symbol
+        FreqSortData* fsd = queue.front();
+        queue.pop_front();
+
+        // Distort frequency and re-enqueue
+        freqs[fsd->_symbol] += inc;
+        sumScaledFreq += inc;
+        queue.push_back(fsd);
+    }
+    
     while (queue.size() > 0) {
-        if (sumScaledFreq != scale) {
-            // Remove symbol with highest frequency
-            FreqSortData* fsd = queue.front();
-            queue.pop_front();
-
-            // Do not zero out any frequency
-            if (int(freqs[fsd->_symbol]) == -inc) {
-               delete fsd;
-               continue;
-            }
-
-            // Distort frequency
-            freqs[fsd->_symbol] += inc;
-            sumScaledFreq += inc;
-            queue.push_back(fsd);
-            continue;
-        }
-
-        FreqSortData* fsd = queue.back();
-        queue.pop_back();
+        FreqSortData* fsd = queue.front();
+        queue.pop_front();
         delete fsd;
     }
 
