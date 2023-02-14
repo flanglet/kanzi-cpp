@@ -350,7 +350,6 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
             mLen += readLength(src, mLenIdx);
 
         mLen += minMatch;
-        const int mEnd = dstIdx + mLen;
 
         // Get distance
         int d = (int(src[mIdx]) << 8) | int(src[mIdx + 1]);
@@ -370,16 +369,17 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
             repd0 = dist;
         }
 
+        const int mEnd = dstIdx + mLen;
+        int ref = dstIdx - dist;
+
         // Sanity check
-        if ((dstIdx < dist) || (dist > maxDist) || (mEnd > dstEnd + 16)) {
+        if ((ref < 0) || (dist > maxDist) || (mEnd > dstEnd + 16)) {
             res = false;
             goto exit;
         }
 
         // Copy match
         if (dist >= 16) {
-            int ref = dstIdx - dist;
-
             do {
                 // No overlap
                 memcpy(&dst[dstIdx], &dst[ref], 16);
@@ -387,8 +387,6 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
                 dstIdx += 16;
             } while (dstIdx < mEnd);
         } else {
-            const int ref = dstIdx - dist;
-
             for (int i = 0; i < mLen; i++)
                 dst[dstIdx + i] = dst[ref + i];
         }
