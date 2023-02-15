@@ -25,11 +25,11 @@ using namespace std;
 class FreqSortData {
 public:
     uint _symbol;
-    uint _frequency;
+    uint* _freq;
 
-    FreqSortData(uint frequency, int symbol)
+    FreqSortData(uint* freq, int symbol)
     {
-        _frequency = frequency;
+        _freq = freq;
         _symbol = symbol;
     }
 };
@@ -38,10 +38,7 @@ struct FreqDataComparator {
     bool operator()(FreqSortData* fd1, FreqSortData* fd2) const
     {
         // Decreasing frequency then decreasing symbol
-        if (fd1->_frequency == fd2->_frequency)
-            return fd1->_symbol > fd2->_symbol;
-
-        return fd1->_frequency > fd2->_frequency;
+        return (*fd1->_freq == *fd2->_freq) ? fd1->_symbol > fd2->_symbol: *fd1->_freq > *fd2->_freq;
     }
 };
 
@@ -217,7 +214,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     // Create sorted queue of present symbols
     for (int i = 0; i < alphabetSize; i++) {
         if (int(freqs[alphabet[i]]) != -inc) 
-            queue.push_back(new FreqSortData(freqs[alphabet[i]], alphabet[i]));
+            queue.push_back(new FreqSortData(&freqs[alphabet[i]], alphabet[i]));
     }
 
     sort(queue.begin(), queue.end(), FreqDataComparator());
@@ -228,11 +225,11 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         queue.pop_front();
 
         // Do not zero out any frequency
-        if (int(fsd->_frequency) == -inc)
+        if (int(*fsd->_freq) == -inc)
             continue;
            
         // Distort frequency and re-enqueue
-        fsd->_frequency += inc;
+        *fsd->_freq += inc;
         sumScaledFreq += inc;
         queue.push_back(fsd);
     }
