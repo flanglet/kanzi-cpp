@@ -57,6 +57,10 @@ namespace kanzi
        static uint getType(const byte src[]);
 
        static bool isCompressed(uint magic);       
+
+       static bool isMultimedia(uint magic);       
+
+       static bool isExecutable(uint magic);       
   
 
     private:
@@ -118,7 +122,7 @@ namespace kanzi
             case JPG_MAGIC:
             case GIF_MAGIC:
             case PNG_MAGIC:
-            case RIFF_MAGIC:
+            //case RIFF_MAGIC: may or may not be
             case LZMA_MAGIC:
             case ZSTD_MAGIC:
             case BROTLI_MAGIC:
@@ -130,6 +134,40 @@ namespace kanzi
             case MP3_ID3_MAGIC:
             case XZ_MAGIC:
             case KNZ_MAGIC:
+                return true;
+				
+            default:
+                return false;
+        }
+    }
+
+    inline bool Magic::isMultimedia(uint magic) {
+        switch (magic) {
+            case JPG_MAGIC:
+            case GIF_MAGIC:
+            case PNG_MAGIC:
+            case RIFF_MAGIC:
+            case FLAC_MAGIC:
+            case MP3_ID3_MAGIC:
+            case BMP_MAGIC:
+            case PBM_MAGIC:
+            case PGM_MAGIC:
+            case PPM_MAGIC:
+                return true;
+				
+            default:
+                return false;
+        }
+    }
+
+    inline bool Magic::isExecutable(uint magic) {
+        switch (magic) {
+            case ELF_MAGIC:
+            case WIN_MAGIC:
+            case MAC_MAGIC32:
+            case MAC_CIGAM32:
+            case MAC_MAGIC64:
+            case MAC_CIGAM64:
                 return true;
 				
             default:
