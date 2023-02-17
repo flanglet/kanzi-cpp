@@ -553,6 +553,17 @@ T EncodingTask<T>::run() THROW
         transform = TransformFactory<byte>::newTransform(_ctx, _transformType);
         const int requiredSize = transform->getMaxEncodedLength(_blockLength);
 
+        if (_blockLength >= 4) {
+           uint magic = Magic::getType(_data->_array);
+
+           if (Magic::isCompressed(magic) == true)
+               _ctx.putInt("dataType", Global::BIN);
+           else if (Magic::isMultimedia(magic) == true)
+               _ctx.putInt("dataType", Global::MULTIMEDIA);
+           else if (Magic::isExecutable(magic) == true)
+               _ctx.putInt("dataType", Global::EXE);
+        }
+
         if (_buffer->_length < requiredSize) {
             delete[] _buffer->_array;
             _buffer->_array = new byte[requiredSize];
