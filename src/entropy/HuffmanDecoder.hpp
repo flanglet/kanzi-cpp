@@ -39,8 +39,6 @@ namespace kanzi
        void dispose() { _dispose(); }
 
    private:
-       static const int LOG_MAX_CHUNK_SIZE = 14;
-       static const int MAX_CHUNK_SIZE = 1 << LOG_MAX_CHUNK_SIZE;
        static const int DECODING_BATCH_SIZE = 12; // ensures decoding table fits in L1 cache
        static const int TABLE_MASK = (1 << DECODING_BATCH_SIZE) - 1;
 
