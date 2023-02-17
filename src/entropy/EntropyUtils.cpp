@@ -225,8 +225,10 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         queue.pop_front();
 
         // Do not zero out any frequency
-        if (int(*fsd->_freq) == -inc)
+        if (int(*fsd->_freq) == -inc) {
+            delete fsd;
             continue;
+        }
            
         // Distort frequency and re-enqueue
         *fsd->_freq += inc;
