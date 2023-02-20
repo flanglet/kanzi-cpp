@@ -39,6 +39,9 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("Invalid output block");
 
+    if (output._length - output._index < getMaxEncodedLength(count))
+        return false;
+
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     bool mustValidate = true;
