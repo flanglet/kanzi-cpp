@@ -196,14 +196,26 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     stringbuf buffer;
     iostream os(&buffer);
     _minMatch = MIN_MATCH3;
+    int delta = 2;
 
     if (_pCtx != nullptr) {
-         Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
+        Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
 
-        if (dt == Global::DNA) {
+        if (dt == Global::UNDEFINED) {
+            uint freqs0[256] = { 0 };
+            Global::computeHistogram(&src[0], count, freqs0);
+            dt = Global::detectSimpleType(count, freqs0);
+        }
+
+        if (dt == Global::EXE) {
+            delta = 3;
+            flags |= 8;
+        } else if (dt == Global::DNA) {
+            delta = 8;
             _minMatch = MIN_MATCH7;
             flags |= 4;
         } else if (dt == Global::MULTIMEDIA) {
+            delta = 8;
             _minMatch = MIN_MATCH4;
             flags |= 2;
         }
@@ -211,6 +223,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	
     dst[4] = byte(flags);
     const int mm = _minMatch;
+    const int dt = delta;
 	
     // Main loop
     while (startChunk < srcEnd) {
@@ -233,8 +246,8 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         int firstLitIdx = srcIdx;
 
         while (srcIdx < sizeChunk) {
-            const int match = (mm == MIN_MATCH3) ? findMatch(buf, srcIdx, sizeChunk, ROLZCodec::getKey1(&buf[srcIdx - 2])) 
-               : findMatch(buf, srcIdx, sizeChunk, ROLZCodec::getKey2(&buf[srcIdx - 8]));
+            const int match = (mm == MIN_MATCH3) ? findMatch(buf, srcIdx, sizeChunk, ROLZCodec::getKey1(&buf[srcIdx - dt])) 
+               : findMatch(buf, srcIdx, sizeChunk, ROLZCodec::getKey2(&buf[srcIdx - dt]));
 
             if (match < 0) {
                 srcIdx++;
@@ -349,16 +362,23 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int srcIdx = 5;
     int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
-    int flags = int(src[4]);
+    const int flags = int(src[4]);
     const int litOrder = flags & 1;
     _minMatch = MIN_MATCH3;
+    int delta = 2;
 	
-    if ((flags & 6) == 2) 
+    if ((flags & 0x0E) == 2) {
         _minMatch = MIN_MATCH4;
-    else if ((flags & 6) == 4) 
+        delta = 8;
+    } else if ((flags & 0x0E) == 4) {
         _minMatch = MIN_MATCH7;
+        delta = 8;
+    } else if ((flags & 0x0E) == 8) {
+        delta = 3;
+    }
 
     const int mm = _minMatch;
+    const int dt = delta;
     SliceArray<byte> litBuf(new byte[getMaxEncodedLength(sizeChunk)], getMaxEncodedLength(sizeChunk));
     SliceArray<byte> lenBuf(new byte[sizeChunk / 5], sizeChunk / 5);
     SliceArray<byte> mIdxBuf(new byte[sizeChunk / 4], sizeChunk / 4);
@@ -429,14 +449,14 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             if (mm == MIN_MATCH3) {
                  for (int k = 0; k < litLen; k++) {
-                    const uint32 key = ROLZCodec::getKey1(&buf[dstIdx + k - 2]);
+                    const uint32 key = ROLZCodec::getKey1(&buf[dstIdx + k - dt]);
                     int32* matches = &_matches[key << _logPosChecks];
                     _counters[key] = (_counters[key] + 1) & _maskChecks;
                     matches[_counters[key]] = dstIdx + k;
                 }
             } else {
                  for (int k = 0; k < litLen; k++) {
-                    const uint32 key = ROLZCodec::getKey2(&buf[dstIdx + k - 8]);
+                    const uint32 key = ROLZCodec::getKey2(&buf[dstIdx + k - dt]);
                     int32* matches = &_matches[key << _logPosChecks];
                     _counters[key] = (_counters[key] + 1) & _maskChecks;
                     matches[_counters[key]] = dstIdx + k;
@@ -463,7 +483,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 goto End;
             }
 
-            const uint32 key = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&buf[dstIdx - 2]) : ROLZCodec::getKey2(&buf[dstIdx - 8]);
+            const uint32 key = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&buf[dstIdx - dt]) : ROLZCodec::getKey2(&buf[dstIdx - dt]);
             prefetchRead(&_counters[key]);
             const uint8 matchIdx = uint8(mIdxBuf._array[mIdxBuf._index++]);
             int32* matches = &_matches[key << _logPosChecks];
@@ -709,17 +729,29 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     BigEndian::writeInt32(&dst[0], count);
     _minMatch = MIN_MATCH3;
     int flags = 0;
+    int delta = 2;
 
     if (_pCtx != nullptr) {
-       Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
+        Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
 
-       if (dt == Global::DNA) {
-           _minMatch = MIN_MATCH7;
-           flags = 1;
-       }
+        if (dt == Global::UNDEFINED) {
+            uint freqs0[256] = { 0 };
+            Global::computeHistogram(&src[0], count, freqs0);
+            dt = Global::detectSimpleType(count, freqs0);
+        }
+
+        if (dt == Global::EXE) {
+            delta = 3;
+            flags |= 8;
+        } else if (dt == Global::DNA) {
+            delta = 8;
+            _minMatch = MIN_MATCH7;
+            flags |= 4;
+        }
     }
 	
     const int mm = _minMatch;
+    const int dt = delta;
     dst[4] = byte(flags);
     int srcIdx = 0;
     int dstIdx = 5;
@@ -747,8 +779,8 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         while (srcIdx < sizeChunk) {
             re.setContext(LITERAL_CTX, src[srcIdx - 1]);
-            const int match = (mm == MIN_MATCH3) ? findMatch(src, srcIdx, sizeChunk, ROLZCodec::getKey1(&src[srcIdx - 2])) :
-               findMatch(src, srcIdx, sizeChunk, ROLZCodec::getKey2(&src[srcIdx - 8]));
+            const int match = (mm == MIN_MATCH3) ? findMatch(src, srcIdx, sizeChunk, ROLZCodec::getKey1(&src[srcIdx - dt])) :
+               findMatch(src, srcIdx, sizeChunk, ROLZCodec::getKey2(&src[srcIdx - dt]));
 
             if (match < 0) {
                 // Emit one literal
@@ -799,11 +831,18 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
     _minMatch = MIN_MATCH3;
+    const int flags = int(src[4]);
+    int delta = 2;
 
-    if (src[4] == byte(1))
+    if ((flags & 0x0E) == 8) {
+        delta = 3;
+    } else if ((flags & 0x0E) == 4) {
+        delta = 8;
         _minMatch = MIN_MATCH7;
+    }
 
     const int mm = _minMatch;
+    const int dt = delta;
     ROLZDecoder rd(9, _logPosChecks, &src[0], srcIdx);
     memset(&_counters[0], 0, sizeof(_counters));
 
@@ -834,7 +873,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         // Next chunk
         while (dstIdx < sizeChunk) {
             const int savedIdx = dstIdx;
-            const uint32 key = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&dst[dstIdx - 2]) : ROLZCodec::getKey2(&dst[dstIdx - 8]);
+            const uint32 key = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&dst[dstIdx - dt]) : ROLZCodec::getKey2(&dst[dstIdx - dt]);
             int32* matches = &_matches[key << _logPosChecks];
             rd.setContext(LITERAL_CTX, dst[dstIdx - 1]);
             prefetchRead(&_counters[key]);
