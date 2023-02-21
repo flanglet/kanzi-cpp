@@ -89,8 +89,8 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
             }
         }
 
-        // Rare: some codes exceed the budget for the max code length => scale down
-        // and normalize frequencies (to boost the smallest freqs) and try once more.
+        // Sometimes, codes exceed the budget for the max code length => scale down
+        // and normalize frequencies (boost the smallest freqs) and try once more.
         if (retries > 2) {
             stringstream ss;
             ss << "Could not generate Huffman codes: max code length (";
