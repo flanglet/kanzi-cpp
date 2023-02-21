@@ -66,7 +66,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     uint* aliasMap = new uint[1 << 23]; // 2 bit size + (7 or 11 or 16 or 21) bit payload
     memset(aliasMap, 0, size_t((1 << 23) * sizeof(uint)));
-    sd symb[32768];
+    sdUTF symb[32768];
     vector<uint16> ranks(32768);
     int n = 0;
     bool res = true;
@@ -82,7 +82,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         if (aliasMap[val] == 0) {
             ranks[n] = uint16(n);
-            symb[n].sym = val;
+            symb[n].val = val;
 
             if (++n >= 32768) {
                 res = false;
@@ -102,10 +102,10 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     }
 
     for (int i = 0; i < n; i++)
-        symb[i].freq = aliasMap[symb[i].sym];
+        symb[i].freq = aliasMap[symb[i].val];
 
     // Sort ranks by increasing frequencies
-    SortRanks sortRanks(symb);
+    SortUTFRanks sortRanks(symb);
     ranks.resize(n);
     sort(ranks.begin(), ranks.end(), sortRanks);
     int dstIdx = 2;
@@ -118,7 +118,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     for (int i = 0; i < n; i++) {
         const uint16 r = ranks[n - 1 - i];
-        const uint32 s = symb[r].sym;
+        const uint32 s = symb[r].val;
         aliasMap[s] = i;
         dst[dstIdx] = byte(s >> 16);
         dst[dstIdx + 1] = byte(s >> 8);

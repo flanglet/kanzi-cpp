@@ -23,22 +23,22 @@ limitations under the License.
 
 namespace kanzi
 {
-    typedef struct ss { uint32 sym, freq; } sd;
+    typedef struct ssUTF { uint32 val, freq; } sdUTF;
 
-    struct SortRanks {
-        sd* _symb;
+    struct SortUTFRanks {
+        sdUTF* _symb;
          
         bool operator() (int i, int j) const 
         { 
             int r;
 		  
             if ((r = _symb[i].freq - _symb[j].freq) == 0)
-               return _symb[i].sym < _symb[j].sym;
+               return _symb[i].val < _symb[j].val;
 		  
             return r < 0;
         }
          
-        SortRanks(sd symb[]) { _symb = symb; }
+        SortUTFRanks(sdUTF symb[]) { _symb = symb; }
     };
 
     
