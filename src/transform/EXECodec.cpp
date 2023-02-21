@@ -40,7 +40,7 @@ bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (_pCtx != nullptr) {
         Global::DataType dt = (Global::DataType)_pCtx->getInt("dataType", Global::UNDEFINED);
 
-        if ((dt != Global::UNDEFINED) && (dt != Global::EXE))
+        if ((dt != Global::UNDEFINED) && (dt != Global::EXE) && (dt != Global::BIN))
             return false;
     }
 
