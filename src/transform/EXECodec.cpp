@@ -29,10 +29,10 @@ bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     if (!SliceArray<byte>::isValid(input))
-        throw std::invalid_argument("Invalid input block");
+        throw std::invalid_argument("EXECodec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw std::invalid_argument("Invalid output block");
+        throw std::invalid_argument("EXECodec: Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(count))
         return false;
@@ -240,10 +240,10 @@ bool EXECodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw std::invalid_argument("Invalid input block");
+        throw std::invalid_argument("EXECodec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw std::invalid_argument("Invalid output block");
+        throw std::invalid_argument("EXECodec: Invalid output block");
 
     byte mode = input._array[input._index];
 

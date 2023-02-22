@@ -384,10 +384,10 @@ bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
         return false;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+       throw invalid_argument("TextCodec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw invalid_argument("TextCodec: Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -404,10 +404,10 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
         return false;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+        throw invalid_argument("TextCodec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw invalid_argument("TextCodec: Invalid output block");
 
     if (input._array == output._array)
         return false;

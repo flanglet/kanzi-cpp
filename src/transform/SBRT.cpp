@@ -42,10 +42,10 @@ bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw std::invalid_argument("Invalid input block");
+        throw std::invalid_argument("SBRT: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw std::invalid_argument("Invalid output block");
+        throw std::invalid_argument("SBRT: Invalid output block");
 
     // Aliasing
     byte* src = &input._array[input._index];
@@ -90,10 +90,10 @@ bool SBRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw std::invalid_argument("Invalid input block");
+        throw std::invalid_argument("SBRT: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw std::invalid_argument("Invalid output block");
+        throw std::invalid_argument("SBRT: Invalid output block");
 
     // Aliasing
     byte* src = &input._array[input._index];

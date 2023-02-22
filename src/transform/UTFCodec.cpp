@@ -34,10 +34,10 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+        throw invalid_argument("UTFCodec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw invalid_argument("UTFCodec: Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(count))
         return false;
@@ -172,10 +172,10 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+       throw invalid_argument("UTFCodec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw invalid_argument("UTFCodec: Invalid output block");
 
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
