@@ -32,10 +32,10 @@ bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, i
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw std::invalid_argument("Invalid input block");
+        throw std::invalid_argument("BWTBlockCodec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw std::invalid_argument("Invalid output block");
+        throw std::invalid_argument("BWTBlockCodec: Invalid output block");
 
     if (input._array == output._array)
         return false;
@@ -110,10 +110,10 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw std::invalid_argument("Invalid input block");
+        throw std::invalid_argument("BWTBlockCodec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw std::invalid_argument("Invalid output block");
+        throw std::invalid_argument("BWTBlockCodec: Invalid output block");
 
     if (input._array == output._array)
         return false;

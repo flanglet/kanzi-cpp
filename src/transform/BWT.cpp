@@ -67,10 +67,10 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+       throw invalid_argument("BWT: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
+        throw invalid_argument("BWT: Invalid output block");
 
     if (count > MAX_BLOCK_SIZE) {
         // Not a recoverable error: instead of silently fail the transform,
@@ -111,18 +111,10 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
         return true;
 
     if (!SliceArray<byte>::isValid(input))
-        throw invalid_argument("Invalid input block");
+        throw invalid_argument("BWT: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
-        throw invalid_argument("Invalid output block");
-
-    if (count > MAX_BLOCK_SIZE) {
-        // Not a recoverable error: instead of silently fail the transform,
-        // issue a fatal error.
-        stringstream ss;
-        ss << "The max BWT block size is " << MAX_BLOCK_SIZE << ", got " << count;
-        throw invalid_argument(ss.str());
-    }
+        throw invalid_argument("BWT: Invalid output block");
 
     if (count < 2) {
         if (count == 1)
