@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef _CMPredictor_
 #define _CMPredictor_
 
+#include "../util.hpp"
 #include "../Predictor.hpp"
 
 namespace kanzi
@@ -79,6 +80,7 @@ namespace kanzi
    // Return the split value representing the probability of 1 in the [0..4095] range.
    inline int CMPredictor::get()
    {
+       prefetchRead(&_counter1[_ctx]);
        _pc1 = _counter1[_ctx];
        const int p = (13 * (_pc1[256] + _pc1[_c1]) + 6 * _pc1[_c2]) >> 5;
        _pc2 = &_counter2[_ctx | _runMask][p >> 12];
