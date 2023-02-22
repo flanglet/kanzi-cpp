@@ -205,6 +205,9 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             uint freqs0[256] = { 0 };
             Global::computeHistogram(&src[0], count, freqs0);
             dt = Global::detectSimpleType(count, freqs0);
+
+            if (dt != Global::UNDEFINED)
+                _pCtx->putInt("dataType", dt);
         }
 
         if (dt == Global::EXE) {
@@ -738,6 +741,9 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             uint freqs0[256] = { 0 };
             Global::computeHistogram(&src[0], count, freqs0);
             dt = Global::detectSimpleType(count, freqs0);
+
+            if (dt != Global::UNDEFINED)
+                _pCtx->putInt("dataType", dt);
         }
 
         if (dt == Global::EXE) {
