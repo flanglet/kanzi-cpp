@@ -309,10 +309,16 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
     byte* src = &input._array[input._index];
 
     int tkIdx = int(LittleEndian::readInt32(&src[0]));
-    int mIdx = tkIdx + int(LittleEndian::readInt32(&src[4]));
-    int mLenIdx = mIdx + int(LittleEndian::readInt32(&src[8]));
+    int mIdx = int(LittleEndian::readInt32(&src[4]));
+    int mLenIdx = int(LittleEndian::readInt32(&src[8]));
 
-    if ((tkIdx < 0) || (mIdx < 0) || (mLenIdx < 0) || (mLenIdx > count))
+    if ((tkIdx < 0) || (mIdx < 0) || (mLenIdx < 0))
+        return false;
+
+    mIdx += tkIdx;
+    mLenIdx += mIdx;
+
+    if ((tkIdx > count) || (mIdx > count) || (mLenIdx > count))
         return false;
 
     const int srcEnd = tkIdx - 13;
@@ -404,6 +410,9 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 {
     if (count == 0)
         return true;
+
+    if (count < 4)
+        return false;
 
     if (!SliceArray<byte>::isValid(input))
         throw invalid_argument("LZP codec: Invalid input block");
