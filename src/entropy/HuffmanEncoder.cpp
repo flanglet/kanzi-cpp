@@ -73,6 +73,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
     while (true) {
         if (count == 1) {
             _codes[alphabet[0]] = 1 << 24;
+            sizes[alphabet[0]] = 1;
             break;
         }
         else {
