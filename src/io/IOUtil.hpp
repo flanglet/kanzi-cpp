@@ -17,11 +17,10 @@ limitations under the License.
 #ifndef _IOUtil_
 #define _IOUtil_
 
-#include <errno.h>
 #include <algorithm>
+#include <errno.h>
+#include <ios>
 #include <vector>
-#include "IOException.hpp"
-
 
 #ifdef _MSC_VER
 #include "../msvc_dirent.hpp"
@@ -65,7 +64,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
     if (STAT(target.c_str(), &buffer) != 0) {
         std::stringstream ss;
         ss << "Cannot access input file '" << target << "'";
-        throw kanzi::IOException(ss.str(), kanzi::Error::ERR_OPEN_FILE);
+        throw std::ios_base::failure(ss.str());
     }
 
     if ((buffer.st_mode & S_IFREG) != 0) {
@@ -80,7 +79,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
         // Target is neither regular file nor directory
         std::stringstream ss;
         ss << "Invalid file type '" << target << "'";
-        throw kanzi::IOException(ss.str(), kanzi::Error::ERR_OPEN_FILE);
+        throw std::ios_base::failure(ss.str());
     }
 
     bool isRecursive = (target.size() <= 2) || (target[target.size() - 1] != '.') ||
@@ -107,7 +106,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
             if (STAT(fullpath.c_str(), &buffer) != 0) {
                 std::stringstream ss;
                 ss << "Cannot access input file '" << target << ent->d_name << "'";
-                throw kanzi::IOException(ss.str(), kanzi::Error::ERR_OPEN_FILE);
+                throw std::ios_base::failure(ss.str());
             }
 
             if (ent->d_name[0] != '.')
@@ -126,7 +125,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
     else {
         std::stringstream ss;
         ss << "Cannot read directory '" << target << "'";
-        throw kanzi::IOException(ss.str(), kanzi::Error::ERR_READ_FILE);
+        throw std::ios_base::failure(ss.str());
     }
 }
 
@@ -161,7 +160,7 @@ static int mkdirAll(const std::string& path) {
     errno = 0;
 
     // Scan path, ignoring potential PATH_SEPARATOR at position 0
-    for (uint i=1; i<path.size(); i++) {
+    for (uint i = 1; i < path.size(); i++) {
         if (path[i] == PATH_SEPARATOR) {
             std::string curPath = path.substr(0, i);
 
