@@ -370,7 +370,7 @@ int BlockCompressor::compress(uint64& outputSize)
         string iName = "STDIN";
 
         if (isStdIn == false) {
-            iName = files[0]._fullPath;
+            iName = files[0].fullPath();
             ctx.putLong("fileSize", files[0]._size);
 
             if (oName.length() == 0) {
@@ -406,7 +406,7 @@ int BlockCompressor::compress(uint64& outputSize)
         // Create one task per file
         for (int i = 0; i < nbFiles; i++) {
             string oName = formattedOutName;
-            string iName = files[i]._fullPath;
+            string iName = files[i].fullPath();
 
             if (oName.length() == 0) {
                 oName = iName + ".knz";
@@ -548,22 +548,22 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         break;
 
     case 1:
-        tranformAndCodec[0] = "LZ";
-        tranformAndCodec[1] = "HUFFMAN";
+        tranformAndCodec[0] = "ALIAS+LZ";
+        tranformAndCodec[1] = "NONE";
         break;
 
     case 2:
-        tranformAndCodec[0] = "TEXT+UTF+FSD+LZX";
+        tranformAndCodec[0] = "ALIAS+LZ";
         tranformAndCodec[1] = "HUFFMAN";
         break;
 
     case 3:
-        tranformAndCodec[0] = "TEXT+UTF+FSD+ROLZ";
-        tranformAndCodec[1] = "NONE";
+        tranformAndCodec[0] = "TEXT+UTF+ALIAS+FSD+LZX";
+        tranformAndCodec[1] = "HUFFMAN";
         break;
 
     case 4:
-        tranformAndCodec[0] = "TEXT+UTF+FSD+ROLZX";
+        tranformAndCodec[0] = "TEXT+UTF+EXE+ALIAS+FSD+ROLZ";
         tranformAndCodec[1] = "NONE";
         break;
 

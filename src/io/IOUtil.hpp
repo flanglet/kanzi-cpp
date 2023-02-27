@@ -31,26 +31,28 @@ limitations under the License.
 
 
 struct FileData {
-      std::string _fullPath;
       std::string _path;
       std::string _name;
       int64 _size;
       int64 _modifTime;
 
       FileData(std::string& path, int64 size, int64 _modifTime = 0) 
-         : _fullPath(path)
-         , _size(size)
+         : _size(size)
          , _modifTime(_modifTime)
       {
-         int idx = int(_fullPath.find_last_of(PATH_SEPARATOR));
+         int idx = int(path.find_last_of(PATH_SEPARATOR));
 
          if (idx > 0) {
-            _path = _fullPath.substr(0, idx+1);
-            _name = _fullPath.substr(idx+1);
+            _path = path.substr(0, idx+1);
+            _name = path.substr(idx+1);
          } else {
             _path = "";
-            _name = _fullPath;
+            _name = path;
          }
+      }
+
+      std::string fullPath() const {
+         return (_path.length() == 0) ? _name : _path + _name;
       }
 };
 
@@ -141,7 +143,7 @@ struct FileDataComparator
     bool operator() (const FileData& f1, const FileData& f2)
     {
         if (_sortBySize == false)
-           return f1._fullPath < f2._fullPath;
+           return f1.fullPath() < f2.fullPath();
 
         // First, compare parent directory paths
         if (f1._path != f2._path)

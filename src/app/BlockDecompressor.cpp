@@ -258,7 +258,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         string iName = "STDIN";
 
         if (isStdIn == false) {
-            iName = files[0]._fullPath;
+            iName = files[0].fullPath();
             ctx.putLong("fileSize", files[0]._size);
 
             if (oName.length() == 0) {
@@ -291,7 +291,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         //  Create one task per file
         for (int i = 0; i < nbFiles; i++) {
             string oName = formattedOutName;
-            string iName = files[i]._fullPath;
+            string iName = files[i].fullPath();
 
             if (oName.length() == 0) {
                 oName = iName + ".bak";
