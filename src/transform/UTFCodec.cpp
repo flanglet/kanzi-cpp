@@ -171,6 +171,9 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (count == 0)
         return true;
 
+    if (count < 4)
+        return false;
+
     if (!SliceArray<byte>::isValid(input))
        throw invalid_argument("UTFCodec: Invalid input block");
 
