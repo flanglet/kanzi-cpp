@@ -35,8 +35,12 @@ struct FileData {
       std::string _path;
       std::string _name;
       int64 _size;
+      int64 _modifTime;
 
-      FileData(std::string& path, int64 size) : _fullPath(path), _size(size)
+      FileData(std::string& path, int64 size, int64 _modifTime = 0) 
+         : _fullPath(path)
+         , _size(size)
+         , _modifTime(_modifTime)
       {
          int idx = int(_fullPath.find_last_of(PATH_SEPARATOR));
 
@@ -70,7 +74,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
     if ((buffer.st_mode & S_IFREG) != 0) {
         // Target is regular file
         if (target[0] != '.')
-           files.push_back(FileData(target, buffer.st_size));
+           files.push_back(FileData(target, buffer.st_size, buffer.st_mtime));
 
         return;
     }
@@ -112,7 +116,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
             if (ent->d_name[0] != '.')
             {
                if ((buffer.st_mode & S_IFREG) != 0){
-                   files.push_back(FileData(fullpath, buffer.st_size));
+                   files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
                }
                else if ((isRecursive) && ((buffer.st_mode & S_IFDIR) != 0)) {
                    createFileList(fullpath, files);
