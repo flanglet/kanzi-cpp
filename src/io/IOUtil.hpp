@@ -29,7 +29,7 @@ limitations under the License.
 #include <dirent.h>
 #endif
 
-#include "util.hpp"
+#include "../util.hpp"
 
 
 struct FileData {
@@ -45,8 +45,8 @@ struct FileData {
          int idx = int(path.find_last_of(PATH_SEPARATOR));
 
          if (idx > 0) {
-            _path = path.substr(0, idx+1);
-            _name = path.substr(idx+1);
+            _path = path.substr(0, idx + 1);
+            _name = path.substr(idx + 1);
          } else {
             _path = "";
             _name = path;
