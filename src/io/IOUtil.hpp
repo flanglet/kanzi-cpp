@@ -29,6 +29,8 @@ limitations under the License.
 #include <dirent.h>
 #endif
 
+#include "util.hpp"
+
 
 struct FileData {
       std::string _path;
