@@ -396,6 +396,8 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             while ((j > 0) && (arg[j] == 0x20)) // trim only spaces
                 j--;
 
+            arg = arg.substr(0, j + 1);
+
             if (outputName != "") {
                 cout << "Warning: ignoring duplicate output name: " << name << endl;
             } else {
