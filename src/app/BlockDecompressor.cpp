@@ -132,18 +132,15 @@ int BlockDecompressor::decompress(uint64& inputSize)
     bool isStdIn = str.compare(0, 5, "STDIN") == 0;
 
     if (isStdIn == false) {
-        vector<string> errors;
-        string suffix(1 ,PATH_SEPARATOR);
-        suffix += ".";
-        bool isRecursive = (_inputName.length() < 2) 
-           || (_inputName.substr(_inputName.length() - 2) != suffix);
-        FileListConfig cfg = { isRecursive, false, false };
-        createFileList(_inputName, files, cfg, errors);
-        
-        if (errors.size() > 0) {
-            for (size_t i = 0; i < errors.size(); i++)
-               cerr << errors[i] << endl;
-
+        try {
+            string suffix(1 ,PATH_SEPARATOR);
+            suffix += ".";
+            bool isRecursive = (_inputName.length() < 2) 
+               || (_inputName.substr(_inputName.length() - 2) != suffix);
+            createFileList(_inputName, files, isRecursive);
+        }
+        catch (IOException& e) {
+            cerr << e.what() << endl;
             return Error::ERR_OPEN_FILE;
         }
 

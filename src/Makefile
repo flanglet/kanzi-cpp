@@ -42,7 +42,6 @@ LIB_SOURCES=Global.cpp \
 	entropy/FPAQEncoder.cpp \
 	entropy/CMPredictor.cpp \
 	entropy/TPAQPredictor.cpp \
-	transform/AliasCodec.cpp \
 	transform/BWT.cpp \
 	transform/BWTS.cpp \
 	transform/DivSufSort.cpp \
