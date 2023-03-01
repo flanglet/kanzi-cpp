@@ -133,7 +133,11 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     if (isStdIn == false) {
         try {
-            createFileList(_inputName, files);
+            string suffix(1 ,PATH_SEPARATOR);
+            suffix += ".";
+            bool isRecursive = (_inputName.length() < 2) 
+               || (_inputName.substr(_inputName.length() - 2) != suffix);
+            createFileList(_inputName, files, isRecursive);
         }
         catch (IOException& e) {
             cerr << e.what() << endl;

@@ -47,7 +47,8 @@ struct FileData {
          if (idx > 0) {
             _path = path.substr(0, idx + 1);
             _name = path.substr(idx + 1);
-         } else {
+         } 
+         else {
             _path = "";
             _name = path;
          }
@@ -59,15 +60,15 @@ struct FileData {
 };
 
 
-static inline void createFileList(std::string& target, std::vector<FileData>& files) THROW
+static inline void createFileList(std::string& target, std::vector<FileData>& files, bool isRecursive = true) THROW
 {
-    struct STAT buffer;
-
     if (target.size() == 0)
         return;
 
     if (target[target.size() - 1] == PATH_SEPARATOR)
         target = target.substr(0, target.size() - 1);
+
+    struct STAT buffer;
 
     if (STAT(target.c_str(), &buffer) != 0) {
         std::stringstream ss;
@@ -84,22 +85,14 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
     }
 
     if ((buffer.st_mode & S_IFDIR) == 0) {
-        // Target is neither regular file nor directory
-        std::stringstream ss;
-        ss << "Invalid file type '" << target << "'";
-        throw std::ios_base::failure(ss.str());
+        // Target is neither regular file nor directory, ignore
+        return;
     }
 
-    bool isRecursive = (target.size() <= 2) || (target[target.size() - 1] != '.') ||
-               (target[target.size() - 2] != PATH_SEPARATOR);
-
     if (isRecursive) {
-       if (target[target.size() - 1] != PATH_SEPARATOR) {
-          std::stringstream ss;
-          ss << target << PATH_SEPARATOR;
-          target = ss.str();
-       }
-    } else {
+       target += PATH_SEPARATOR;
+    } 
+    else {
        target = target.substr(0, target.size() - 1);
     }
 
@@ -109,15 +102,16 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
         struct dirent* ent;
 
         while ((ent = readdir(dir)) != nullptr) {
-            std::string fullpath = target + ent->d_name;
+            std::string dirName = ent->d_name;
+            std::string fullpath = target + dirName;
 
             if (STAT(fullpath.c_str(), &buffer) != 0) {
                 std::stringstream ss;
-                ss << "Cannot access input file '" << target << ent->d_name << "'";
+                ss << "Cannot access input file '" << fullpath << "'";
                 throw std::ios_base::failure(ss.str());
             }
 
-            if (ent->d_name[0] != '.')
+            if ((dirName != ".") && (dirName != ".."))
             {
                if ((buffer.st_mode & S_IFREG) != 0){
                    files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
