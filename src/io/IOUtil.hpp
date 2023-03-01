@@ -60,7 +60,16 @@ struct FileData {
 };
 
 
-static inline void createFileList(std::string& target, std::vector<FileData>& files, bool isRecursive = true) THROW
+struct FileListConfig
+{
+   bool _recursive;
+   bool _followLinks;
+   bool _continueOnErrors;
+};
+
+
+static inline void createFileList(std::string& target, std::vector<FileData>& files, FileListConfig cfg, 
+                                  std::vector<std::string>& errors)
 {
     if (target.size() == 0)
         return;
@@ -69,18 +78,20 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
         target = target.substr(0, target.size() - 1);
 
     struct STAT buffer;
+    int res = (cfg._followLinks) ? STAT(target.c_str(), &buffer) : LSTAT(target.c_str(), &buffer);
 
-    if (STAT(target.c_str(), &buffer) != 0) {
+    if (res != 0) {
         std::stringstream ss;
         ss << "Cannot access input file '" << target << "'";
-        throw std::ios_base::failure(ss.str());
+        errors.push_back(ss.str());
+
+        if (cfg._continueOnErrors)
+           return;
     }
 
     if ((buffer.st_mode & S_IFREG) != 0) {
         // Target is regular file
-        if (target[0] != '.')
-           files.push_back(FileData(target, buffer.st_size, buffer.st_mtime));
-
+        files.push_back(FileData(target, buffer.st_size, buffer.st_mtime));
         return;
     }
 
@@ -89,7 +100,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
         return;
     }
 
-    if (isRecursive) {
+    if (cfg._recursive) {
        target += PATH_SEPARATOR;
     } 
     else {
@@ -104,20 +115,25 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
         while ((ent = readdir(dir)) != nullptr) {
             std::string dirName = ent->d_name;
             std::string fullpath = target + dirName;
+            res = (cfg._followLinks) ? STAT(fullpath.c_str(), &buffer) :
+               LSTAT(fullpath.c_str(), &buffer);
 
-            if (STAT(fullpath.c_str(), &buffer) != 0) {
+            if (res != 0) {
                 std::stringstream ss;
                 ss << "Cannot access input file '" << fullpath << "'";
-                throw std::ios_base::failure(ss.str());
+                errors.push_back(ss.str());
+
+                if (cfg._continueOnErrors)
+                    return;
             }
 
             if ((dirName != ".") && (dirName != ".."))
             {
-               if ((buffer.st_mode & S_IFREG) != 0){
+               if ((buffer.st_mode & S_IFREG) != 0) {
                    files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
                }
-               else if ((isRecursive) && ((buffer.st_mode & S_IFDIR) != 0)) {
-                   createFileList(fullpath, files);
+               else if ((cfg._recursive) && ((buffer.st_mode & S_IFDIR) != 0)) {
+                   createFileList(fullpath, files, cfg, errors);
                }
             }
         }
@@ -127,7 +143,7 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
     else {
         std::stringstream ss;
         ss << "Cannot read directory '" << target << "'";
-        throw std::ios_base::failure(ss.str());
+        errors.push_back(ss.str());
     }
 }
 
