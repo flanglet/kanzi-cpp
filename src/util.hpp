@@ -31,10 +31,21 @@ limitations under the License.
 #ifdef _MSC_VER
    #define STAT _stat64
 #else
-   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__MINGW32__)
       #define STAT stat
    #else
       #define STAT stat64
+   #endif
+#endif
+
+
+#ifdef _MSC_VER
+   #define LSTAT _stat64
+#else
+   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__MINGW32__)
+      #define LSTAT stat
+   #else
+      #define LSTAT lstat64
    #endif
 #endif
 
