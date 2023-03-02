@@ -423,13 +423,14 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             while ((j > 0) && (arg[j] == 0x20)) // trim only spaces
                 j--;
 
-            arg = arg.substr(0, j + 1);
+            name = arg.substr(0, j + 1);
 
             if (outputName != "") {
                 cout << "Warning: ignoring duplicate output name: " << name << endl;
             } else {
-                if ((name[0] == '.') && (name[1] == PATH_SEPARATOR)) 
-                    name = name.substr(2);
+                if ((name.length() >= 2) && (name[0] == '.') && (name[1] == PATH_SEPARATOR)) {
+                   name = (name.length() == 2) ? name.substr(0, 1) : name.substr(2);
+                }
 
                 outputName = name;
             }
@@ -445,13 +446,14 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             while ((j > 0) && (arg[j] == 0x20)) // trim only spaces
                 j--;
 
-            arg = arg.substr(0, j + 1);
+            name = arg.substr(0, j + 1);
 
             if (inputName != "") {
                 cout << "Warning: ignoring duplicate input name: " << name << endl;
             } else {
-                if ((name[0] == '.') && (name[1] == PATH_SEPARATOR)) 
-                    name = name.substr(2);
+                if ((name.length() >= 2) && (name[0] == '.') && (name[1] == PATH_SEPARATOR)) {
+                   name = (name.length() == 2) ? name.substr(0, 1) : name.substr(2);
+                }
 
                 inputName = name;
             }
