@@ -65,6 +65,7 @@ struct FileListConfig
    bool _recursive;
    bool _followLinks;
    bool _continueOnErrors;
+   bool _ignoreDotFiles;
 };
 
 
@@ -91,6 +92,17 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
 
     if ((buffer.st_mode & S_IFREG) != 0) {
         // Target is regular file
+        if (cfg._ignoreDotFiles == true) {
+           int idx = target.rfind(PATH_SEPARATOR);
+
+           if (idx > 0) {
+               std::string shortName = target.substr(idx + 1);
+
+               if (shortName[0] == '.')
+                  return;
+           }
+        }
+
         files.push_back(FileData(target, buffer.st_size, buffer.st_mtime));
         return;
     }
@@ -114,6 +126,10 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
 
         while ((ent = readdir(dir)) != nullptr) {
             std::string dirName = ent->d_name;
+
+            if ((dirName == ".") || (dirName == ".."))
+               continue;
+
             std::string fullpath = target + dirName;
             res = (cfg._followLinks) ? STAT(fullpath.c_str(), &buffer) :
                LSTAT(fullpath.c_str(), &buffer);
@@ -127,13 +143,36 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
                     return;
             }
 
-            if ((dirName != ".") && (dirName != ".."))
+            //if ((dirName != ".") && (dirName != ".."))
             {
                if ((buffer.st_mode & S_IFREG) != 0) {
-                   files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
+                  // Target is regular file
+                  if (cfg._ignoreDotFiles == true) {
+                     int idx = fullpath.rfind(PATH_SEPARATOR);
+
+                     if (idx > 0) {
+                         std::string shortName = fullpath.substr(idx + 1);
+
+                         if (shortName[0] == '.')
+                            continue;
+                     }
+                  }
+                 
+                  files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
                }
                else if ((cfg._recursive) && ((buffer.st_mode & S_IFDIR) != 0)) {
-                   createFileList(fullpath, files, cfg, errors);
+                  if (cfg._ignoreDotFiles == true) {
+                     int idx = fullpath.rfind(PATH_SEPARATOR);
+
+                     if (idx > 0) {
+                         std::string shortName = fullpath.substr(idx + 1);
+
+                         if (shortName[0] == '.')
+                            continue;
+                     }
+                  }
+                   
+                  createFileList(fullpath, files, cfg, errors);
                }
             }
         }

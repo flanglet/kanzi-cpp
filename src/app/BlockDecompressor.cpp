@@ -137,7 +137,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         suffix += ".";
         bool isRecursive = (_inputName.length() < 2) 
            || (_inputName.substr(_inputName.length() - 2) != suffix);
-        FileListConfig cfg = { isRecursive, false, false };
+        FileListConfig cfg = { isRecursive, false, false, false };
         createFileList(_inputName, files, cfg, errors);
         
         if (errors.size() > 0) {

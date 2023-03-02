@@ -151,6 +151,7 @@ namespace kanzi {
        int _jobs;
        std::vector<Listener*> _listeners;
        bool _reorderFiles;
+       bool _noDotFile;
 
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 

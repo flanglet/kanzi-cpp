@@ -166,6 +166,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     string strChecksum = STR_FALSE;
     string strSkip = STR_FALSE;
     string strReorder = STR_TRUE;
+    string strNoDotFile = STR_FALSE;
     string codec;
     string transf;
     int verbose = 1;
@@ -372,7 +373,33 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println(ss.str().c_str(), verbose > 0);
             }
 
+            if (mode != "c") {
+                stringstream ss;
+                ss << "Warning: ignoring option [" << arg << "]. Only applicable in compress mode.";
+                log.println(ss.str().c_str(), verbose > 0);
+                continue;
+            }
+
             strReorder = STR_FALSE;
+            ctx = -1;
+            continue;
+        }
+
+        if (arg == "--no-dot-file") {
+            if (ctx != -1) {
+                stringstream ss;
+                ss << "Warning: ignoring option [" << CMD_LINE_ARGS[ctx] << "] with no value.";
+                log.println(ss.str().c_str(), verbose > 0);
+            }
+
+            if (mode != "c") {
+                stringstream ss;
+                ss << "Warning: ignoring option [" << arg << "]. Only applicable in compress mode.";
+                log.println(ss.str().c_str(), verbose > 0);
+                continue;
+            }
+
+            strNoDotFile = STR_TRUE;
             ctx = -1;
             continue;
         }
@@ -718,6 +745,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
     if (strReorder == STR_FALSE)
         map["fileReorder"] = STR_FALSE;
+
+    if (strNoDotFile == STR_TRUE)
+        map["noDotFile"] = STR_TRUE;
 
     if (from >= 0)
         map["from"] = strFrom;

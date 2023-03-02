@@ -183,15 +183,6 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
 
     _jobs = concurrency;
 
-    if ((_verbosity > 0) && (args.size() > 0)) {
-        Printer log(&cout);
-
-        for (it = args.begin(); it != args.end(); ++it) {
-            stringstream ss;
-            ss << "Ignoring invalid option [" << it->first << "]";
-            log.println(ss.str().c_str(), _verbosity > 0);
-        }
-    }
 
     it = args.find("fileReorder");
 
@@ -202,6 +193,27 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         string str = it->second;
         _reorderFiles = str == STR_TRUE;
         args.erase(it);
+    }
+
+    it = args.find("noDotFile");
+
+    if (it == args.end()) {
+        _noDotFile = false;
+    }
+    else {
+        string str = it->second;
+        _noDotFile = str == STR_TRUE;
+        args.erase(it);
+    }
+
+    if ((_verbosity > 0) && (args.size() > 0)) {
+        Printer log(&cout);
+
+        for (it = args.begin(); it != args.end(); ++it) {
+            stringstream ss;
+            ss << "Ignoring invalid option [" << it->first << "]";
+            log.println(ss.str().c_str(), _verbosity > 0);
+        }
     }
 }
 
@@ -232,7 +244,7 @@ int BlockCompressor::compress(uint64& outputSize)
         suffix += ".";
         bool isRecursive = (_inputName.length() < 2) 
            || (_inputName.substr(_inputName.length() - 2) != suffix);
-        FileListConfig cfg = { isRecursive, false, false };
+        FileListConfig cfg = { isRecursive, false, false, _noDotFile };
         createFileList(_inputName, files, cfg, errors);
        
         if (errors.size() > 0) {
