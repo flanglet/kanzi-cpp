@@ -373,6 +373,8 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println(ss.str().c_str(), verbose > 0);
             }
 
+            ctx = -1;
+
             if (mode != "c") {
                 stringstream ss;
                 ss << "Warning: ignoring option [" << arg << "]. Only applicable in compress mode.";
@@ -381,7 +383,6 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             }
 
             strReorder = STR_FALSE;
-            ctx = -1;
             continue;
         }
 
@@ -392,6 +393,8 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 log.println(ss.str().c_str(), verbose > 0);
             }
 
+            ctx = -1;
+
             if (mode != "c") {
                 stringstream ss;
                 ss << "Warning: ignoring option [" << arg << "]. Only applicable in compress mode.";
@@ -400,7 +403,6 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             }
 
             strNoDotFile = STR_TRUE;
-            ctx = -1;
             continue;
         }
 
