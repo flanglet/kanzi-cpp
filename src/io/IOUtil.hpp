@@ -77,6 +77,11 @@ static inline void createFileList(std::string& target, std::vector<FileData>& fi
 
     // Note: old version of Windows/Visual Studio require a trailing '/' to stat network folders !
     // In this scenario, "//PC/share" does not work but "//PC/share/" does
+#ifndef _MSC_VER
+    if (target[target.size() - 1] == PATH_SEPARATOR)
+        target = target.substr(0, target.size() - 1);
+#endif
+
     struct STAT buffer;
     int res = (cfg._followLinks) ? STAT(target.c_str(), &buffer) : LSTAT(target.c_str(), &buffer);
 
