@@ -133,7 +133,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     if (isStdIn == false) {
         vector<string> errors;
-        string suffix(1 ,PATH_SEPARATOR);
+        string suffix(1, PATH_SEPARATOR);
         suffix += ".";
         bool isRecursive = (_inputName.length() < 2) 
            || (_inputName.substr(_inputName.length() - 2) != suffix);
@@ -191,14 +191,14 @@ int BlockDecompressor::decompress(uint64& inputSize)
     bool specialOutput = (upperOutputName.compare(0, 4, "NONE") == 0) || (upperOutputName.compare(0, 6, "STDOUT") == 0);
 
     // Need to strip path separator at the end to make 'stat()' happy
-    if ((formattedOutName.size() != 0) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
+    if ((formattedOutName.size() > 1) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
         formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
     }
 
     if (isStdIn == false) {
         struct STAT buffer;
 
-        if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
+        if ((formattedInName.size() > 1) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
             formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
         }
 
