@@ -98,12 +98,10 @@ namespace kanzi
        if ((buffer.st_mode & S_IFREG) != 0) {
            // Target is regular file
            if (cfg._ignoreDotFiles == true) {
-              int idx = target.rfind(PATH_SEPARATOR);
+              size_t idx = target.rfind(PATH_SEPARATOR);
 
-              if (idx > 0) {
-                  std::string shortName = target.substr(idx + 1);
-
-                  if (shortName[0] == '.')
+              if ((idx != std::string::npos) && (idx < target.length() - 1)) {
+                  if (target[idx + 1] == '.')
                      return;
               }
            }
@@ -118,7 +116,8 @@ namespace kanzi
        }
 
        if (cfg._recursive) {
-          target += PATH_SEPARATOR;
+          if (target[target.size() - 1] != PATH_SEPARATOR)
+             target += PATH_SEPARATOR;
        } 
        else {
           target = target.substr(0, target.size() - 1);
@@ -148,37 +147,30 @@ namespace kanzi
                        return;
                }
 
-               //if ((dirName != ".") && (dirName != ".."))
-               {
-                  if ((buffer.st_mode & S_IFREG) != 0) {
-                     // Target is regular file
-                     if (cfg._ignoreDotFiles == true) {
-                        int idx = fullpath.rfind(PATH_SEPARATOR);
+               if ((buffer.st_mode & S_IFREG) != 0) {
+                  // Target is regular file
+                  if (cfg._ignoreDotFiles == true) {
+                     size_t idx = fullpath.rfind(PATH_SEPARATOR);
 
-                        if (idx > 0) {
-                            std::string shortName = fullpath.substr(idx + 1);
-
-                            if (shortName[0] == '.')
-                               continue;
-                        }
+                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1)) {
+                         if (fullpath[idx + 1] == '.')
+                            continue;
                      }
-                    
-                     files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
                   }
-                  else if ((cfg._recursive) && ((buffer.st_mode & S_IFDIR) != 0)) {
-                     if (cfg._ignoreDotFiles == true) {
-                        int idx = fullpath.rfind(PATH_SEPARATOR);
+                 
+                  files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
+               }
+               else if ((cfg._recursive) && ((buffer.st_mode & S_IFDIR) != 0)) {
+                  if (cfg._ignoreDotFiles == true) {
+                     size_t idx = fullpath.rfind(PATH_SEPARATOR);
 
-                        if (idx > 0) {
-                            std::string shortName = fullpath.substr(idx + 1);
-
-                            if (shortName[0] == '.')
-                               continue;
-                        }
+                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1)) {
+                         if (fullpath[idx + 1] == '.')
+                            continue;
                      }
-                      
-                     createFileList(fullpath, files, cfg, errors);
                   }
+                   
+                  createFileList(fullpath, files, cfg, errors);
                }
            }
 
