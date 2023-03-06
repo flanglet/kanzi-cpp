@@ -137,6 +137,20 @@ else
 	install -d $(INSTALL_DIR)/lib
 	install -m 644 ../lib/$(STATIC_LIB) $(INSTALL_DIR)/lib
 	install -m 644 ../lib/$(SHARED_LIB) $(INSTALL_DIR)/lib
+	install -d $(INSTALL_DIR)/include/kanzi
+	install -m 644 ./*.hpp $(INSTALL_DIR)/include/kanzi
+	install -d $(INSTALL_DIR)/include/kanzi/api
+	install -m 644 ./api/*.hpp $(INSTALL_DIR)/include/kanzi/api
+	install -d $(INSTALL_DIR)/include/kanzi/io
+	install -m 644 ./io/*.hpp $(INSTALL_DIR)/include/kanzi/io
+	install -d $(INSTALL_DIR)/include/kanzi/entropy
+	install -m 644 ./entropy/*.hpp $(INSTALL_DIR)/include/kanzi/entropy
+	install -d $(INSTALL_DIR)/include/kanzi/bitstream
+	install -m 644 ./bitstream/*.hpp $(INSTALL_DIR)/include/kanzi/bitstream
+	install -d $(INSTALL_DIR)/include/kanzi/transform
+	install -m 644 ./transform/*.hpp $(INSTALL_DIR)/include/kanzi/transform
+	install -d $(INSTALL_DIR)/include/kanzi/util
+	install -m 644 ./util/*.hpp $(INSTALL_DIR)/include/kanzi/util
 	install -d $(INSTALL_DIR)/bin
 	install -m577 ../bin/$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)/bin
 endif
