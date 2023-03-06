@@ -129,15 +129,16 @@ else
       INSTALL_DIR=/usr/local
 endif
 
+# Install may require sudo or admin rights
 install: $(STATIC_LIB) $(SHARED_LIB) $(APP)
 ifeq ($(OS),Windows_NT)
-        copy /y ..\bin\$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)
+	copy /y ..\bin\$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)
 else
-        install -d $(INSTALL_DIR)/lib
-        install -m 644 ../lib/$(STATIC_LIB) $(INSTALL_DIR)/lib
-        install -m 644 ../lib/$(SHARED_LIB) $(INSTALL_DIR)/lib
-        install -d $(INSTALL_DIR)/bin
-        install -m577 ../bin/$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)/bin
+	install -d $(INSTALL_DIR)/lib
+	install -m 644 ../lib/$(STATIC_LIB) $(INSTALL_DIR)/lib
+	install -m 644 ../lib/$(SHARED_LIB) $(INSTALL_DIR)/lib
+	install -d $(INSTALL_DIR)/bin
+	install -m577 ../bin/$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)/bin
 endif
 
 clean: 
