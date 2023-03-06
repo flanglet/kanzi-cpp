@@ -123,6 +123,23 @@ testCompressedStream: $(LIB_OBJECTS) test/TestCompressedStream.o
 kanzi: $(OBJECTS) app/Kanzi.o
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
+ifeq ($(OS),Windows_NT)
+      INSTALL_DIR="C:\Program Files"
+else
+      INSTALL_DIR=/usr/local
+endif
+
+install: $(STATIC_LIB) $(SHARED_LIB) $(APP)
+ifeq ($(OS),Windows_NT)
+        copy /y ..\bin\$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)
+else
+        install -d $(INSTALL_DIR)/lib
+        install -m 644 ../lib/$(STATIC_LIB) $(INSTALL_DIR)/lib
+        install -m 644 ../lib/$(SHARED_LIB) $(INSTALL_DIR)/lib
+        install -d $(INSTALL_DIR)/bin
+        install -m577 ../bin/$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)/bin
+endif
+
 clean: 
 ifeq ($(OS),Windows_NT)
 	del /S *.o *.obj ..\bin\$(APP)$(PROG_SUFFIX) ..\lib\$(STATIC_LIB) ..\lib\$(SHARED_LIB)
