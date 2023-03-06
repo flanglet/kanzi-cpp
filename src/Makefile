@@ -132,7 +132,7 @@ endif
 # Install may require sudo or admin rights
 install: $(STATIC_LIB) $(SHARED_LIB) $(APP)
 ifeq ($(OS),Windows_NT)
-	copy /y ..\bin\$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)
+	copy /Y ..\bin\$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)
 else
 	install -d $(INSTALL_DIR)/lib
 	install -m 644 ../lib/$(STATIC_LIB) $(INSTALL_DIR)/lib
@@ -153,6 +153,17 @@ else
 	install -m 644 ./util/*.hpp $(INSTALL_DIR)/include/kanzi/util
 	install -d $(INSTALL_DIR)/bin
 	install -m577 ../bin/$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)/bin
+endif
+
+# Uninstall may require sudo or admin rights
+uninstall:
+ifeq ($(OS),Windows_NT)
+	del /Q $(INSTALL_DIR)\$(APP)$(PROG_SUFFIX)
+else
+	rm -f -r $(INSTALL_DIR)/include/kanzi
+	rm -f $(INSTALL_DIR)/lib/$(STATIC_LIB)
+	rm -f $(INSTALL_DIR)/lib/$(SHARED_LIB)
+	rm -f $(INSTALL_DIR)/bin/$(APP)$(PROG_SUFFIX)
 endif
 
 clean: 
