@@ -46,10 +46,10 @@ namespace kanzi
        Context& operator=(const Context& ctx);
        virtual ~Context() {}
 
-       bool has(const std::string& key);
-       int getInt(const std::string& key, int defValue = 0);
-       int64 getLong(const std::string& key, int64 defValue = 0);
-       const char* getString(const std::string& key, const std::string& defValue = "");
+       bool has(const std::string& key) const;
+       int getInt(const std::string& key, int defValue = 0) const;
+       int64 getLong(const std::string& key, int64 defValue = 0) const;
+       const char* getString(const std::string& key, const std::string& defValue = "") const;
        void putInt(const std::string& key, int value);
        void putLong(const std::string& key, int64 value);
        void putString(const std::string& key, const std::string& value);
@@ -86,15 +86,15 @@ namespace kanzi
    }
 
 
-   inline bool Context::has(const std::string& key)
+   inline bool Context::has(const std::string& key) const
    {
       return _map.find(key) != _map.end();
    }
 
 
-   inline int Context::getInt(const std::string& key, int defValue)
+   inline int Context::getInt(const std::string& key, int defValue) const
    {
-      CTX_MAP<std::string, std::string>::iterator it = _map.find(key);
+      CTX_MAP<std::string, std::string>::const_iterator it = _map.find(key);
 
       if (it == _map.end())
           return defValue;
@@ -107,9 +107,9 @@ namespace kanzi
    }
 
 
-   inline int64 Context::getLong(const std::string& key, int64 defValue)
+   inline int64 Context::getLong(const std::string& key, int64 defValue) const
    {
-      CTX_MAP<std::string, std::string>::iterator it = _map.find(key);
+      CTX_MAP<std::string, std::string>::const_iterator it = _map.find(key);
 
       if (it == _map.end())
           return defValue;
@@ -122,9 +122,9 @@ namespace kanzi
    }
 
 
-   inline const char* Context::getString(const std::string& key, const std::string& defValue)
+   inline const char* Context::getString(const std::string& key, const std::string& defValue) const
    {
-      CTX_MAP<std::string, std::string>::iterator it = _map.find(key);
+      CTX_MAP<std::string, std::string>::const_iterator it = _map.find(key);
       return (it == _map.end()) ? defValue.c_str() : it->second.c_str();
    }
 
