@@ -205,7 +205,9 @@ namespace kanzi {
        try {
            if (_buffers[_bufferId]->_index >= _bufferThreshold) {
                // Current write buffer is full
-               if (_bufferId + 1 < std::min(_nbInputBlocks, _jobs)) {
+               const int jobs = (_jobs < _nbInputBlocks) ? _jobs : _nbInputBlocks;
+
+               if (_bufferId + 1 < jobs) {
                    _bufferId++;
                    const int bufSize = std::max(_blockSize + (_blockSize >> 6), 65536);
 
