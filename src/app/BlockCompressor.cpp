@@ -804,9 +804,28 @@ T FileCompressTask<T>::run()
     // Close streams to ensure all data are flushed
     dispose();
 
+    uint64 encoded = _cos->getWritten();
+
     // os destructor will call close if ofstream
     if ((os != &cout) && (os != nullptr))
         delete os;
+
+    // Clean up resources at the end of the method as the task may be
+    // recycled in a threadpool and the destructor not called.
+    if (_cos != nullptr) {
+        delete _cos;
+        _cos = nullptr;
+    }
+
+    try {
+        if ((_is != nullptr) && (_is != &cin)) {
+            delete _is;
+        }
+
+        _is = nullptr;
+    }
+    catch (exception&) {
+    }
 
     if (read == 0) {
         delete[] buf;
@@ -814,7 +833,7 @@ T FileCompressTask<T>::run()
         sserr << "Input file " << inputName << " is empty ... nothing to do";
         log.println(sserr.str().c_str(), verbosity > 0);
         remove(outputName.c_str()); // best effort to delete output file, ignore return code
-        return T(0, read, _cos->getWritten(), sserr.str().c_str());
+        return T(0, read, encoded, sserr.str().c_str());
     }
 
     stopClock.stop();
@@ -823,7 +842,7 @@ T FileCompressTask<T>::run()
     if (verbosity >= 1) {
         log.println("", verbosity > 1);
         ss.str(string());
-        double f = double(_cos->getWritten()) / double(read);
+        double f = double(encoded) / double(read);
         char buffer[32];
 
         if (verbosity > 1) {
@@ -841,7 +860,7 @@ T FileCompressTask<T>::run()
             ss << "Input size:        " << read;
             log.println(ss.str().c_str(), true);
             ss.str(string());
-            ss << "Output size:       " << _cos->getWritten();
+            ss << "Output size:       " << encoded;
             log.println(ss.str().c_str(), true);
             ss.str(string());
             ss << "Compression ratio: " << f;
@@ -850,7 +869,7 @@ T FileCompressTask<T>::run()
         }
 
         if (verbosity == 1) {
-            ss << "Compressing " << inputName << ": " << read << " => " << _cos->getWritten();
+            ss << "Compressing " << inputName << ": " << read << " => " << encoded;
 
             if (delta >= 1e5) {
                 sprintf(buffer, " (%.2f%%) in %.1f s", 100 * f, delta / 1000);
@@ -875,12 +894,12 @@ T FileCompressTask<T>::run()
     }
 
     if (_listeners.size() > 0) {
-        Event evt(Event::COMPRESSION_END, -1, int64(_cos->getWritten()), clock());
+        Event evt(Event::COMPRESSION_END, -1, int64(encoded), clock());
         BlockCompressor::notifyListeners(_listeners, evt);
     }
 
     delete[] buf;
-    return T(0, read, _cos->getWritten(), "");
+    return T(0, read, encoded, "");
 }
 
 template <class T>

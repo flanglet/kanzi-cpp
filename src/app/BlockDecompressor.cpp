@@ -653,9 +653,28 @@ T FileDecompressTask<T>::run()
     // Close streams to ensure all data are flushed
     dispose();
 
+    uint64 decoded = _cis->getRead();
+
     // is destructor will call close if ifstream
     if ((is != &cin) && (is != nullptr))
         delete is;
+
+    // Clean up resources at the end of the method as the task may be
+    // recycled in a threadpool and the destructor not called.
+    if (_cis != nullptr) {
+        delete _cis;
+        _cis = nullptr;
+    }
+
+    try {
+        if ((_os != nullptr) && (_os != &cout)) {
+            delete _os;
+        }
+
+        _os = nullptr;
+    }
+    catch (exception&) {
+    }
 
     stopClock.stop();
     double delta = stopClock.elapsed();
@@ -677,7 +696,7 @@ T FileDecompressTask<T>::run()
 
             log.println(ss.str().c_str(), true);
             ss.str(string());
-            ss << "Input size:        " << _cis->getRead();
+            ss << "Input size:        " << decoded;
             log.println(ss.str().c_str(), true);
             ss.str(string());
             ss << "Output size:       " << read;
@@ -686,7 +705,7 @@ T FileDecompressTask<T>::run()
         }
 
         if (verbosity == 1) {
-            ss << "Decompressing " << inputName << ": " << _cis->getRead() << " => " << read;
+            ss << "Decompressing " << inputName << ": " << decoded << " => " << read;
 
             if (delta >= 1e5) {
                 sprintf(buffer, "%.1f s", delta / 1000);
@@ -712,7 +731,7 @@ T FileDecompressTask<T>::run()
     }
 
     if (_listeners.size() > 0) {
-        Event evt(Event::DECOMPRESSION_END, -1, int64(_cis->getRead()), clock());
+        Event evt(Event::DECOMPRESSION_END, -1, int64(decoded), clock());
         BlockDecompressor::notifyListeners(_listeners, evt);
     }
 
