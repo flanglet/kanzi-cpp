@@ -20,6 +20,7 @@ limitations under the License.
 #include "../OutputStream.hpp"
 #include "../OutputBitStream.hpp"
 #include "../Memory.hpp"
+#include "../util/strings.hpp"
 
 
 namespace kanzi

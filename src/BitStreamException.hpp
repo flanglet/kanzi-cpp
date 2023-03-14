@@ -19,7 +19,7 @@ limitations under the License.
 
 #include <string>
 #include <stdexcept>
-#include "util.hpp"
+#include "types.hpp"
 
 
 namespace kanzi

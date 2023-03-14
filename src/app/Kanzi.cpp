@@ -19,8 +19,8 @@ limitations under the License.
 
 #include "BlockCompressor.hpp"
 #include "BlockDecompressor.hpp"
-#include "../util.hpp"
 #include "../Error.hpp"
+#include "../util/Printer.hpp"
 
 using namespace kanzi;
 using namespace std;

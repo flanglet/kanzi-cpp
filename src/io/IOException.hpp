@@ -20,7 +20,8 @@ limitations under the License.
 #include <string>
 #include <stdexcept>
 #include "../Error.hpp"
-#include "../Global.hpp"
+#include "../types.hpp"
+#include "../util/strings.hpp"
 
 
 namespace kanzi

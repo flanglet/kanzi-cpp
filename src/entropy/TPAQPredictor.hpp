@@ -19,6 +19,7 @@ limitations under the License.
 
 #include "../Context.hpp"
 #include "../Predictor.hpp"
+#include "../util.hpp"
 #include "AdaptiveProbMap.hpp"
 
 

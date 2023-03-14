@@ -20,7 +20,7 @@ limitations under the License.
 #include <sstream>
 #include <string>
 #include "concurrent.hpp"
-#include "util.hpp"
+#include "util/strings.hpp"
 
 #if __cplusplus >= 201103L
    #include <unordered_map>

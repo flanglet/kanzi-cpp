@@ -17,10 +17,8 @@ limitations under the License.
 #ifndef _IOUtil_
 #define _IOUtil_
 
-#include <algorithm>
-#include <errno.h>
-#include <ios>
 #include <vector>
+#include <sys/stat.h>
 
 #ifdef _MSC_VER
 #include "../msvc_dirent.hpp"
@@ -29,7 +27,28 @@ limitations under the License.
 #include <dirent.h>
 #endif
 
-#include "../util.hpp"
+
+#ifdef _MSC_VER
+   #define STAT _stat64
+#else
+   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__MINGW32__)
+      #define STAT stat
+   #else
+      #define STAT stat64
+   #endif
+#endif
+
+
+#ifdef _MSC_VER
+   #define LSTAT _stat64
+#else
+   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__MINGW32__)
+      #define LSTAT stat
+   #else
+      #define LSTAT lstat64
+   #endif
+#endif
+
 
 namespace kanzi
 {
@@ -243,6 +262,56 @@ namespace kanzi
        }
 
        return 0;
+   }
+
+
+   static inline bool samePaths(std::string& f1, std::string& f2)
+   {
+      if (f1.compare(f2) == 0)
+         return true;
+
+      struct STAT buf1;
+      int s1 = STAT(f1.c_str(), &buf1);
+      struct STAT buf2;
+      int s2 = STAT(f2.c_str(), &buf2);
+
+      if (s1 != s2)
+         return false;
+
+      if (buf1.st_dev != buf2.st_dev)
+         return false;
+
+      if (buf1.st_ino != buf2.st_ino)
+         return false;
+
+      if (buf1.st_mode != buf2.st_mode)
+         return false;
+
+      if (buf1.st_nlink != buf2.st_nlink)
+         return false;
+
+      if (buf1.st_uid != buf2.st_uid)
+         return false;
+
+      if (buf1.st_gid != buf2.st_gid)
+         return false;
+
+      if (buf1.st_rdev != buf2.st_rdev)
+         return false;
+
+      if (buf1.st_size != buf2.st_size)
+         return false;
+
+      if (buf1.st_atime != buf2.st_atime)
+         return false;
+
+      if (buf1.st_mtime != buf2.st_mtime)
+         return false;
+
+      if (buf1.st_ctime != buf2.st_ctime)
+         return false;
+
+      return true;
    }
 
 }

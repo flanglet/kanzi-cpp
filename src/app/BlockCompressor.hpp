@@ -20,10 +20,7 @@ limitations under the License.
 #include <map>
 #include <vector>
 
-#include "../concurrent.hpp"
-#include "../Context.hpp"
 #include "../InputStream.hpp"
-#include "../Listener.hpp"
 #include "../io/CompressedOutputStream.hpp"
 
 namespace kanzi {

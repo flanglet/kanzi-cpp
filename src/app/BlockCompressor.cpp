@@ -14,6 +14,7 @@ limitations under the License.
 */
 
 #include <algorithm>
+#include <iostream>
 #include <time.h>
 #include "BlockCompressor.hpp"
 #include "InfoPrinter.hpp"
@@ -22,6 +23,8 @@ limitations under the License.
 #include "../io/IOException.hpp"
 #include "../io/IOUtil.hpp"
 #include "../io/NullOutputStream.hpp"
+#include "../util/Clock.hpp"
+#include "../util/Printer.hpp"
 
 #ifdef CONCURRENCY_ENABLED
 #include <future>

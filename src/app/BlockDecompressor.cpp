@@ -15,13 +15,17 @@ limitations under the License.
 
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <time.h>
 #include "BlockDecompressor.hpp"
 #include "InfoPrinter.hpp"
+#include "../Global.hpp"
 #include "../SliceArray.hpp"
 #include "../io/IOException.hpp"
 #include "../io/IOUtil.hpp"
 #include "../io/NullOutputStream.hpp"
+#include "../util/Clock.hpp"
+#include "../util/Printer.hpp"
 
 #ifdef CONCURRENCY_ENABLED
 #include <future>

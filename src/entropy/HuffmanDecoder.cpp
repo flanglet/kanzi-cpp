@@ -69,9 +69,9 @@ int HuffmanDecoder::readLengths() THROW
         const uint s = _alphabet[i];
 
         if (s > 255) {
-            string msg = "Invalid bitstream: incorrect Huffman symbol ";
-            msg += to_string(s);
-            throw BitStreamException(msg, BitStreamException::INVALID_STREAM);
+            stringstream ss;
+            ss << "Invalid bitstream: incorrect Huffman symbol " << s;
+            throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
         }
 
         _codes[s] = 0;

@@ -17,10 +17,10 @@ limitations under the License.
 #ifndef _DefaultInputBitStream_
 #define _DefaultInputBitStream_
 
-#include <istream>
 #include "../InputBitStream.hpp"
 #include "../InputStream.hpp"
 #include "../Memory.hpp"
+#include "../util/strings.hpp"
 
 
 namespace kanzi {

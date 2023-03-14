@@ -19,7 +19,7 @@ limitations under the License.
 
 #include <cmath>
 #include <cstring>
-#include "util.hpp"
+#include "types.hpp"
 
 namespace kanzi {
 

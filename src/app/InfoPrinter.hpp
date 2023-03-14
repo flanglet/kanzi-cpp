@@ -18,10 +18,9 @@ limitations under the License.
 #define _InfoPrinter_
 
 #include <map>
-#include "../util.hpp"
 #include "../Listener.hpp"
 #include "../OutputStream.hpp"
-
+#include "../util/Clock.hpp"
 
 
 namespace kanzi
@@ -49,7 +48,7 @@ namespace kanzi
        void processEvent(const Event& evt);
 
    private:
-       std::ostream& _os;
+       OutputStream& _os;
        BlockInfo* _map[1024];
        Event::Type _thresholds[6];
        InfoPrinter::Type _type;

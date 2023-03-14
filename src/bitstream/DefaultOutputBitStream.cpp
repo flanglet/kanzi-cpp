@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #include "DefaultOutputBitStream.hpp"
+#include "../util.hpp"
 #include "../io/IOException.hpp"
-#include <fstream>
 
 using namespace kanzi;
 using namespace std;
