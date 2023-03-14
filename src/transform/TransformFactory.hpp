@@ -23,6 +23,7 @@ limitations under the License.
 #include <cstring>
 #include "../types.hpp"
 #include "../Context.hpp"
+#include "AliasCodec.hpp"
 #include "BWT.hpp"
 #include "BWTBlockCodec.hpp"
 #include "BWTS.hpp"
@@ -64,7 +65,7 @@ namespace kanzi {
 		static const uint64 FSD_TYPE = 15; // Fixed Shift Delta codec
 		static const uint64 LZX_TYPE = 16; // Lempel Ziv Extra
 		static const uint64 UTF_TYPE = 17; // UTF Codec
-		static const uint64 RESERVED1 = 18; // Reserved
+		static const uint64 ALIAS_TYPE = 18; // Alias Codec
 		static const uint64 RESERVED2 = 19; // Reserved
 		static const uint64 RESERVED3 = 20; // Reserved
 		static const uint64 RESERVED4 = 21; // Reserved
@@ -185,6 +186,9 @@ namespace kanzi {
 		if (name == "UTF")
 			return UTF_TYPE;
 
+		if (name == "ALIAS")
+			return ALIAS_TYPE;
+
 		if (name == "FSD")
 			return FSD_TYPE;
 
@@ -279,6 +283,9 @@ namespace kanzi {
 		case UTF_TYPE:
 			return new UTFCodec(ctx);
 
+		case ALIAS_TYPE:
+			return new AliasCodec(ctx);
+
 		case FSD_TYPE:
 			return new FSDCodec(ctx);
 
@@ -357,6 +364,9 @@ namespace kanzi {
 
 		case EXE_TYPE:
 			return "EXE";
+
+		case ALIAS_TYPE:
+			return "ALIAS";
 
 		case UTF_TYPE:
 			return "UTF";

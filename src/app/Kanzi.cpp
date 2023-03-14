@@ -97,10 +97,10 @@ void printHelp(Printer& log, const string& mode)
        log.println("   -l, --level=<compression>", true);
        log.println("        set the compression level [0..9]", true);
        log.println("        Providing this option forces entropy and transform.", true);
-       log.println("        0=None&None (store), 1=LZ&HUFFMAN, 2=TEXT+UTF+FSD+LZX&HUFFMAN", true);
-       log.println("        3=TEXT+UTF+FSD+ROLZ, 4=TEXT+UTF+FSD+ROLZX, 5=TEXT+UTF+BWT+RANK+ZRLT&ANS0", true);
-       log.println("        6=TEXT+UTF+BWT+SRT+ZRLT&FPAQ, 7=LZP+TEXT+UTF+BWT+LZP&CM", true);
-       log.println("        8=EXE+RLT+TEXT+UTF&TPAQ, 9=EXE+RLT+TEXT+UTF&TPAQX\n", true);
+       log.println("        0=NONE&NONE (store), 1=ALIAS+LZ&NONE, 2=ALIAS+LZ&HUFFMAN", true);
+       log.println("        3=TEXT+UTF+ALIAS+FSD+LZX&HUFFMAN, 4=TEXT+UTF+EXE+ALIAS+FSD+ROLZ&NONE", true);
+       log.println("        5=TEXT+UTF+BWT+RANK+ZRLT&ANS0, 6=TEXT+UTF+BWT+SRT+ZRLT&FPAQ", true);
+       log.println("        7=LZP+TEXT+UTF+BWT+LZP&CM, 8=EXE+RLT+TEXT+UTF&TPAQ, 9=EXE+RLT+TEXT+UTF&TPAQX\n", true);
        log.println("   -e, --entropy=<codec>", true);
        log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]", true);
        log.println("        (default is ANS0)\n", true);
