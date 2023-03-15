@@ -169,7 +169,10 @@ limitations under the License.
 
 	   typedef signed __int64 int64_t;
 	   typedef unsigned __int64 uint64_t;
-	   #define nullptr NULL
+
+      #if !defined(_MSC_VER) || _MSC_VER < 1920 
+	      #define nullptr NULL
+      #endif
 	#endif
 
 #if __cplusplus >= 201703L
