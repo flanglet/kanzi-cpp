@@ -34,17 +34,11 @@ namespace kanzi
    // See also https://code.google.com/p/libdivsufsort/source/browse/wiki/SACA_Benchmarks.wiki
    // for comparison of different suffix array construction algorithms.
    // It is used to implement the forward stage of the BWT in linear time.
-   class StackElement
+   struct StackElement
    {
-       friend class DivSufSort;
-       friend class Stack;
-
-   private:
        int _a, _b, _c, _d, _e;
 
        StackElement() { _a = _b = _c = _d = _e = 0; }
-
-       ~StackElement() {}
    };
 
    // A stack of pre-allocated elements
