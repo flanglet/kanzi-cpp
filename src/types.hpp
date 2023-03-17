@@ -194,7 +194,7 @@ limitations under the License.
 	typedef uint64_t uint64;
 
 
-   #if defined(WIN32) || defined(_WIN32)
+   #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
       #define PATH_SEPARATOR '\\'
    #else
       #define PATH_SEPARATOR '/'

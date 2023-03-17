@@ -230,24 +230,38 @@ namespace kanzi
 
 
    static inline int mkdirAll(const std::string& path) {
-       errno = 0;
+      errno = 0;
+   #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+      bool foundDrive = false;
+   #endif
 
-       // Scan path, ignoring potential PATH_SEPARATOR at position 0
-       for (uint i = 1; i < path.size(); i++) {
-           if (path[i] == PATH_SEPARATOR) {
-               std::string curPath = path.substr(0, i);
+      // Scan path, ignoring potential PATH_SEPARATOR at position 0
+      for (uint i = 1; i < path.size(); i++) {
+          if (path[i] == PATH_SEPARATOR) {
+             std::string curPath = path.substr(0, i);
+
+             if (curPath.length() == 0)
+                 continue;
+
+   #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+             //Skip if drive
+             if ((foundDrive == false) && (curPath.length() == 2) && (curPath[1] == ':')) {
+                 foundDrive = true;
+                 continue;
+             }
+   #endif
 
    #if defined(_MSC_VER)
-               if (_mkdir(curPath.c_str()) != 0) {
+             if (_mkdir(curPath.c_str()) != 0) {
    #elif defined(__MINGW32__)
-               if (mkdir(curPath.c_str()) != 0) {
+             if (mkdir(curPath.c_str()) != 0) {
    #else
-               if (mkdir(curPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
+             if (mkdir(curPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
    #endif
-                   if (errno != EEXIST)
-                       return -1;
-               }
-           }
+                if (errno != EEXIST)
+                    return -1;
+             }
+          }
        }
 
    #if defined(_MSC_VER)
