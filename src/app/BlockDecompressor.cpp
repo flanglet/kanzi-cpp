@@ -94,7 +94,7 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
     else if (concurrency > MAX_CONCURRENCY) {
         stringstream ss;
         ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY << endl;
-        Printer log(&cout);
+        Printer log(cout);
         log.println(ss.str().c_str(), _verbosity > 0);
         concurrency = MAX_CONCURRENCY;
     }
@@ -103,7 +103,7 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
     _jobs = concurrency;
 
     if ((_verbosity > 0) && (args.size() > 0)) {
-        Printer log(&cout);
+        Printer log(cout);
 
         for (it = args.begin(); it != args.end(); ++it) {
             stringstream ss;
@@ -129,7 +129,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     uint64 read = 0;
     Clock stopClock;
     int nbFiles = 1;
-    Printer log(&cout);
+    Printer log(cout);
     stringstream ss;
     string str = _inputName;
     transform(str.begin(), str.end(), str.begin(), ::toupper);
@@ -374,7 +374,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     stopClock.stop();
 
     if (nbFiles > 1) {
-        Printer out(&cout);
+        Printer out(cout);
         double delta = stopClock.elapsed();
         out.println("", _verbosity > 0);
         char buf[32];
@@ -460,7 +460,7 @@ FileDecompressTask<T>::~FileDecompressTask()
 template <class T>
 T FileDecompressTask<T>::run()
 {
-    Printer log(&cout);
+    Printer log(cout);
     int verbosity = _ctx.getInt("verbosity");
     string inputName = _ctx.getString("inputName");
     string outputName = _ctx.getString("outputName");

@@ -178,7 +178,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     else if (concurrency > MAX_CONCURRENCY) {
         stringstream ss;
         ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY << endl;
-        Printer log(&cout);
+        Printer log(cout);
         log.println(ss.str().c_str(), _verbosity > 0);
         concurrency = MAX_CONCURRENCY;
     }
@@ -210,7 +210,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     }
 
     if ((_verbosity > 0) && (args.size() > 0)) {
-        Printer log(&cout);
+        Printer log(cout);
 
         for (it = args.begin(); it != args.end(); ++it) {
             stringstream ss;
@@ -235,7 +235,7 @@ int BlockCompressor::compress(uint64& outputSize)
     vector<FileData> files;
     Clock stopClock;
     int nbFiles = 1;
-    Printer log(&cout);
+    Printer log(cout);
     stringstream ss;
     string str = _inputName;
     transform(str.begin(), str.end(), str.begin(), ::toupper);
@@ -378,7 +378,7 @@ int BlockCompressor::compress(uint64& outputSize)
     Context ctx;
 #endif
     ctx.putInt("verbosity", _verbosity);
-    ctx.putString("overwrite", (_overwrite == true) ? STR_TRUE : STR_FALSE);
+    ctx.putInt("overwrite", (_overwrite == true) ? 1 : 0);
     ctx.putInt("blockSize", _blockSize);
     ctx.putString("skipBlocks", (_skipBlocks == true) ? STR_TRUE : STR_FALSE);
     ctx.putString("checksum", (_checksum == true) ? STR_TRUE : STR_FALSE);
@@ -632,7 +632,7 @@ FileCompressTask<T>::FileCompressTask(Context& ctx, vector<Listener*>& listeners
 template <class T>
 T FileCompressTask<T>::run()
 {
-    Printer log(&cout);
+    Printer log(cout);
     int verbosity = _ctx.getInt("verbosity");
     string inputName = _ctx.getString("inputName");
     string outputName = _ctx.getString("outputName");
@@ -647,9 +647,7 @@ T FileCompressTask<T>::run()
         ss.str(string());
     }
 
-    string strOverwrite = _ctx.getString("overwrite");
-    bool overwrite = strOverwrite == STR_TRUE;
-
+    bool overwrite = _ctx.getInt("overwrite") != 0;
     OutputStream* os = nullptr;
 
     try {

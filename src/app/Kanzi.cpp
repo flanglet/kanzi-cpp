@@ -175,7 +175,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     int from = -1;
     int to = -1;
     string mode = " ";
-    Printer log(&cout);
+    Printer log(cout);
 
     for (int i = 1; i < argc; i++) {
         string arg(argv[i]);

@@ -29,8 +29,17 @@ namespace kanzi
    class Printer
    {
       public:
-         Printer(std::ostream* os) { _os = os; }
+         Printer(std::ostream& os) { _os = &os; }
          ~Printer() {}
+
+         void print(const char* msg, bool print) {
+            if ((print == true) && (msg != nullptr)) {
+   #ifdef CONCURRENCY_ENABLED
+               std::lock_guard<std::mutex> lock(_mtx);
+   #endif
+               (*_os) << msg ;
+            }
+         }
 
          void println(const char* msg, bool print) {
             if ((print == true) && (msg != nullptr)) {
@@ -41,7 +50,7 @@ namespace kanzi
             }
          }
 
-      private:
+   private:
    #ifdef CONCURRENCY_ENABLED
          static std::mutex _mtx;
    #endif
