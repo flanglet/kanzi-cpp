@@ -200,7 +200,8 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
             return TextCodec::MASK_NOT_TEXT;
     }
 
-    uint freqs[256][256] = { { 0 } };
+    uint* freqs1 = new uint[65536];
+    memset(&freqs1[0], 0, 65536 * sizeof(uint));
     uint f0[256] = { 0 };
     uint f1[256] = { 0 };
     uint f3[256] = { 0 };
@@ -219,16 +220,16 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
         f1[cur1]++;
         f2[cur2]++;
         f3[cur3]++;
-        freqs[prv][cur0]++;
-        freqs[cur0][cur1]++;
-        freqs[cur1][cur2]++;
-        freqs[cur2][cur3]++;
+        freqs1[(prv  * 256) + cur0]++;
+        freqs1[(cur0 * 256) + cur1]++;
+        freqs1[(cur1 * 256) + cur2]++;
+        freqs1[(cur2 * 256) + cur3]++;
         prv = cur3;
     }
 
     for (int i = count4; i < count; i++) {
         freqs0[data[i]]++;
-        freqs[prv][data[i]]++;
+        freqs1[(prv * 256) + data[i]]++;
         prv = data[i];
     }
 
@@ -262,8 +263,11 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
 
     byte res = byte(0);
 
-    if (notText == true)
-        return res | detectType(freqs0, freqs, count);
+    if (notText == true) {
+        res |= detectType(freqs0, freqs1, count);
+        delete[] freqs1;
+        return res;
+    }
 
     if (nbBinChars <= count - count / 10) {
         // Check if likely XML/HTML
@@ -272,7 +276,8 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
         // Getting this flag wrong results in a very small compression speed degradation.
         const int f60 = freqs0[60]; // '<'
         const int f62 = freqs0[62]; // '>'
-        const int f38 = freqs[38][97] + freqs[38][103] + freqs[38][108] + freqs[38][113]; // '&a', '&g', '&l', '&q'
+        const int f38 = freqs1[38 * 256 + 97]  + freqs1[38 * 256 + 103] + 
+                        freqs1[38 * 256 + 108] + freqs1[38 * 256 + 113]; // '&a', '&g', '&l', '&q'
         const int minFreq = max((count - nbBinChars) >> 9, 2);
 
         if ((f60 >= minFreq) && (f62 >= minFreq) && (f38 > 0)) {
@@ -295,22 +300,23 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
         res |= TextCodec::MASK_CRLF;
 
         for (int i = 0; i < 256; i++) {
-            if ((i != lf) && (freqs[cr][i]) != 0) {
+            if ((i != lf) && (freqs1[(cr * 256) + i]) != 0) {
                 res &= ~TextCodec::MASK_CRLF;
                 break;
             }
 
-            if ((i != cr) && (freqs[i][lf]) != 0) {
+            if ((i != cr) && (freqs1[(i * 256) + lf]) != 0) {
                 res &= ~TextCodec::MASK_CRLF;
                 break;
             }
         }
     }
 
+    delete[] freqs1;
     return res;
 }
 
-byte TextCodec::detectType(uint freqs0[256], uint freqs[256][256], int count) {
+byte TextCodec::detectType(uint freqs0[], uint freqs1[], int count) {
     Global::DataType dt = Global::detectSimpleType(count, freqs0);
 	
     if (dt != Global::UNDEFINED)
@@ -340,19 +346,19 @@ byte TextCodec::detectType(uint freqs0[256], uint freqs[256][256], int count) {
 
     for (int i = 0; i < 256; i++) {
         // Exclude < 0xE0A0 || > 0xE0BF
-        if (((i < 0xA0) || (i > 0xBF)) && (freqs[0xE0][i] > 0))
+        if (((i < 0xA0) || (i > 0xBF)) && (freqs1[(0xE0 << 8) + i] > 0))
             return TextCodec::MASK_NOT_TEXT;
 
         // Exclude < 0xED80 || > 0xEDE9F
-        if (((i < 0x80) || (i > 0x9F)) && (freqs[0xED][i] > 0))
+        if (((i < 0x80) || (i > 0x9F)) && (freqs1[(0xED << 8) + i] > 0))
             return TextCodec::MASK_NOT_TEXT;
 
         // Exclude < 0xF090 || > 0xF0BF
-        if (((i < 0x90) || (i > 0xBF)) && (freqs[0xF0][i] > 0))
+        if (((i < 0x90) || (i > 0xBF)) && (freqs1[(0xF0 << 8) + i] > 0))
             return TextCodec::MASK_NOT_TEXT;
 
         // Exclude < 0xF480 || > 0xF4BF
-        if (((i < 0x80) || (i > 0xBF)) && (freqs[0xF4][i] > 0))
+        if (((i < 0x80) || (i > 0xBF)) && (freqs1[(0xF4 << 8) + i] > 0))
             return TextCodec::MASK_NOT_TEXT;
 
         // Count non-primary bytes

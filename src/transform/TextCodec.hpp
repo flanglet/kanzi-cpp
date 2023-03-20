@@ -200,7 +200,7 @@ namespace kanzi {
 
        static byte computeStats(const byte block[], int count, uint freqs[], bool strict);
 
-       static byte detectType(uint freqs0[256], uint freqs[256][256], int count);
+       static byte detectType(uint freqs0[], uint freqs1[], int count);
        
        // Common English words.
        static char DICT_EN_1024[];

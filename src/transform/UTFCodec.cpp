@@ -241,7 +241,8 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 bool UTFCodec::validate(byte block[], int count) 
 {
     uint freqs0[256] = { 0 };
-    uint freqs[256][256] = { { 0 } };
+    uint* freqs1 = new uint[65536];
+    memset(&freqs1[0], 0, 65536 * sizeof(uint));
     uint f0[256] = { 0 };
     uint f1[256] = { 0 };
     uint f3[256] = { 0 };
@@ -260,16 +261,16 @@ bool UTFCodec::validate(byte block[], int count)
         f1[cur1]++;
         f2[cur2]++;
         f3[cur3]++;
-        freqs[prv][cur0]++;
-        freqs[cur0][cur1]++;
-        freqs[cur1][cur2]++;
-        freqs[cur2][cur3]++;
+        freqs1[(prv  * 256) + cur0]++;
+        freqs1[(cur0 * 256) + cur1]++;
+        freqs1[(cur1 * 256) + cur2]++;
+        freqs1[(cur2 * 256) + cur3]++;
         prv = cur3;
     }
 
     for (int i = count4; i < count; i++) {
         freqs0[data[i]]++;
-        freqs[prv][data[i]]++;
+        freqs1[(prv * 256) + data[i]]++;
         prv = data[i];
     }
 
@@ -301,25 +302,27 @@ bool UTFCodec::validate(byte block[], int count)
 
     for (int i = 0; i < 256; i++) {
         // Exclude < 0xE0A0 || > 0xE0BF
-        if (((i < 0xA0) || (i > 0xBF)) && (freqs[0xE0][i] > 0))
+        if (((i < 0xA0) || (i > 0xBF)) && (freqs1[(0xE0 * 256) + i] > 0))
             return false;
 
         // Exclude < 0xED80 || > 0xEDE9F
-        if (((i < 0x80) || (i > 0x9F)) && (freqs[0xED][i] > 0))
+        if (((i < 0x80) || (i > 0x9F)) && (freqs1[(0xED * 256) + i] > 0))
             return false;
 
         // Exclude < 0xF090 || > 0xF0BF
-        if (((i < 0x90) || (i > 0xBF)) && (freqs[0xF0][i] > 0))
+        if (((i < 0x90) || (i > 0xBF)) && (freqs1[(0xF0 * 256) + i] > 0))
             return false;
 
         // Exclude < 0xF480 || > 0xF4BF
-        if (((i < 0x80) || (i > 0xBF)) && (freqs[0xF4][i] > 0))
+        if (((i < 0x80) || (i > 0xBF)) && (freqs1[(0xF4 * 256) + i] > 0))
             return false;
 
         // Count non-primary bytes
         if ((i >= 0x80) && (i <= 0xBF))
            sum += freqs0[i];
     }
+
+    delete[] freqs1;
 
     // Ad-hoc threshold
     return sum >= (count / 4);
