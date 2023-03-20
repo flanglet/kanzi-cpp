@@ -156,9 +156,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 {
     string inputName;
     string outputName;
-    string strLevel = "-1";
-    string strVerbose = "1";
-    string strTasks = "0";
+    string strLevel = "";
+    string strVerbose = "";
+    string strTasks = "";
     string strBlockSize = "";
     string strFrom = "";
     string strTo = "";
@@ -213,19 +213,24 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg.compare(0, 10, "--verbose=") == 0) || (ctx == ARG_IDX_VERBOSE)) {
-            strVerbose = (arg.compare(0, 10, "--verbose=") == 0) ? arg.substr(10) : arg;
-            strVerbose = trim(strVerbose);
-
-            if (strVerbose.length() != 1) {
-                cerr << "Invalid verbosity level provided on command line: " << arg << endl;
-                return Error::ERR_INVALID_PARAM;
+           if (strVerbose != "") {
+                cout << "Warning: ignoring verbosity level: " << arg << endl;
             }
+            else {
+               strVerbose = (arg.compare(0, 10, "--verbose=") == 0) ? arg.substr(10) : arg;
+               strVerbose = trim(strVerbose);
 
-            verbose = atoi(strVerbose.c_str());
+               if (strVerbose.length() != 1) {
+                   cerr << "Invalid verbosity level provided on command line: " << arg << endl;
+                   return Error::ERR_INVALID_PARAM;
+               }
 
-            if ((verbose < 0) || (verbose > 5)) {
-                cerr << "Invalid verbosity level provided on command line: " << arg << endl;
-                return Error::ERR_INVALID_PARAM;
+               verbose = atoi(strVerbose.c_str());
+
+               if ((verbose < 0) || (verbose > 5)) {
+                   cerr << "Invalid verbosity level provided on command line: " << arg << endl;
+                   return Error::ERR_INVALID_PARAM;
+               }
             }
         }
         else if ((arg.compare(0, 9, "--output=") == 0) || (ctx == ARG_IDX_OUTPUT)) {
@@ -243,7 +248,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if (str == "STDOUT") {
             verbose = 0;
-            strVerbose = '0';
+            strVerbose = "0";
         }
     }
 
@@ -516,7 +521,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             string name = (arg.compare(0, 8, "--level=") == 0) ? arg.substr(8) : arg;
             name = trim(name);
 
-            if (strLevel != "-1") {
+            if (strLevel != "") {
                 cout << "Warning: ignoring duplicate level: " << name << endl;
             } else {
                 if (name.length() != 1) {
@@ -612,7 +617,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             string name = (arg.compare(0, 7, "--jobs=") == 0) ? arg.substr(7) : arg;
             name = trim(name);
 
-            if (strTasks != "0") {
+            if (strTasks != "") {
                 cout << "Warning: ignoring duplicate jobs: " << name << endl;
                 ctx = -1;
                 continue;
@@ -723,10 +728,10 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     if (strBlockSize.length() > 0)
         map["block"] = strBlockSize;
 
-    map["verbose"] = strVerbose;
+    map["verbose"] = (strVerbose == "") ? "1" : strVerbose;
     map["mode"] = mode;
 
-    if ((mode == "c") && (strLevel != "-1"))
+    if ((mode == "c") && (strLevel != ""))
         map["level"] = strLevel;
 
     if (strOverwrite == STR_TRUE)
@@ -759,7 +764,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     if (to >= 0)
         map["to"] = strTo;
 
-    map["jobs"] = strTasks;
+    map["jobs"] = (strTasks == "") ? "0" : strTasks;
     return 0;
 }
 
