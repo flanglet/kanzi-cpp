@@ -67,26 +67,4 @@ inline void split(std::string str, std::vector<std::string>& v, char token)
       v.push_back(s);   
 }    
 
-
-#if __cplusplus >= 201103L || _MSC_VER >= 1700
-#include <locale>
-#include <codecvt>
-
-// convert UTF-8 string to wstring
-static inline std::wstring utf8_to_wstring(const std::string& str)
-{
-   std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-   return myconv.from_bytes(str);
-}
-
-
-// convert wstring to UTF-8 string
-static inline std::string wstring_to_utf8(const std::wstring& str)
-{
-   std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
-   return myconv.to_bytes(str);
-}  
-
-#endif
-
 #endif
