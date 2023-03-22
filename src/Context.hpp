@@ -49,7 +49,7 @@ namespace kanzi
        bool has(const std::string& key) const;
        int getInt(const std::string& key, int defValue = 0) const;
        int64 getLong(const std::string& key, int64 defValue = 0) const;
-       const char* getString(const std::string& key, std::string defValue = "") const;
+       const char* getString(const std::string& key, const char* defValue = nullptr) const;
        void putInt(const std::string& key, int value);
        void putLong(const std::string& key, int64 value);
        void putString(const std::string& key, const std::string& value);
@@ -122,10 +122,10 @@ namespace kanzi
    }
 
 
-   inline const char* Context::getString(const std::string& key, std::string defValue) const
+   inline const char* Context::getString(const std::string& key, const char* defValue) const
    {
       CTX_MAP<std::string, std::string>::const_iterator it = _map.find(key);
-      return (it == _map.end()) ? defValue.c_str() : it->second.c_str();
+      return (it == _map.end()) ? (defValue == nullptr ? "" : defValue) : it->second.c_str();
    }
 
 
