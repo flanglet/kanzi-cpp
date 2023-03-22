@@ -135,6 +135,10 @@ limitations under the License.
 	   //#define _GLIBCXX_USE_NOEXCEPT throw()
 	#endif
 
+    // Notice: in Visual Studio (prior to VS2017 version 15.7)
+    // __cplusplus always defaults to 199711L (aka C++98) !!! (unless
+    // the extra option /Zc:__cplusplus is added to the command line).
+    // Otherwise, using the _MSVC_LANG macro returns the proper C++ version.
 	#ifndef THROW
 	   #if __cplusplus >= 201103L
 	      #define THROW
