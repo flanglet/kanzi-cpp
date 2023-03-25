@@ -183,9 +183,10 @@ limitations under the License.
 	// byte is defined in C++17 and above
 	#include <cstddef>
 namespace kanzi {
+	typedef std::byte byte;
 #else
 namespace kanzi {
-   typedef uint8_t byte;
+	typedef uint8_t byte;
 #endif
 
 	typedef int8_t int8;
