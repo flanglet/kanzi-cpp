@@ -78,7 +78,7 @@ public:
 
    class ThreadPool {
    public:
-       ThreadPool(uint threads) THROW;
+       ThreadPool(uint32_t threads) THROW;
        template<class F, class... Args>
 #if __cplusplus >= 201703L // result_of deprecated from C++17
        std::future<typename std::invoke_result<F, Args...>::type> schedule(F&& f, Args&&... args) THROW;
@@ -96,14 +96,14 @@ public:
    };
     
     
-   inline ThreadPool::ThreadPool(uint threads) THROW
+   inline ThreadPool::ThreadPool(uint32_t threads) THROW
        :   _stop(false)
    {
        if ((threads == 0) || (threads > 1024))
            throw std::runtime_error("The number of threads must be in [1..1024]");
 
        // Start and run threads
-       for (uint i = 0; i < threads; i++)
+       for (uint32_t i = 0; i < threads; i++)
            _workers.emplace_back(
                [this]
                {

@@ -178,9 +178,10 @@ limitations under the License.
 #if __cplusplus >= 201703L
 	// byte is defined in C++17 and above
 	#include <cstddef>
-	typedef std::byte byte;
+namespace kanzi {
 #else
-	typedef uint8_t byte;
+namespace kanzi {
+   typedef uint8_t byte;
 #endif
 
 	typedef int8_t int8;
@@ -192,7 +193,7 @@ limitations under the License.
 	typedef uint32_t uint;
 	typedef uint32_t uint32;
 	typedef uint64_t uint64;
-
+}
 
    #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
       #define PATH_SEPARATOR '\\'
