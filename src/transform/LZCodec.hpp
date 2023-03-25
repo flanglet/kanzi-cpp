@@ -24,7 +24,8 @@ limitations under the License.
 #include "../Memory.hpp"
 
 namespace kanzi {
-   class LZCodec : public Transform<byte> {
+
+   class LZCodec FINAL : public Transform<byte> {
 
    public:
        LZCodec() THROW;
@@ -51,7 +52,7 @@ namespace kanzi {
    // It is a based on a heavily modified LZ4 with a bigger window, a bigger
    // hash map, 3+n*8 bit literal lengths and 17 or 24 bit match lengths.
    template <bool T>
-   class LZXCodec : public Transform<byte> {
+   class LZXCodec FINAL : public Transform<byte> {
    public:
        LZXCodec()
        {
@@ -130,7 +131,7 @@ namespace kanzi {
        static int32 hash(const byte* p);
    };
 
-   class LZPCodec : public Transform<byte> {
+   class LZPCodec FINAL : public Transform<byte> {
    public:
        LZPCodec()
        {

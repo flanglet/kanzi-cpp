@@ -80,7 +80,7 @@ namespace kanzi {
 
 #ifdef CONCURRENCY_ENABLED
    template <class T, class R>
-   class FileCompressWorker : public Task<R> {
+   class FileCompressWorker FINAL : public Task<R> {
    public:
        FileCompressWorker(BoundedConcurrentQueue<T>* queue) { _queue = queue; }
 
@@ -94,7 +94,7 @@ namespace kanzi {
 #endif
 
    template <class T>
-   class FileCompressTask : public Task<T> {
+   class FileCompressTask FINAL : public Task<T> {
    public:
        static const int DEFAULT_BUFFER_SIZE = 65536;
 

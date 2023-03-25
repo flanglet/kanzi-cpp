@@ -26,7 +26,7 @@ namespace kanzi
 {
 
    // This class is a generic implementation of a bool entropy decoder
-   class BinaryEntropyDecoder : public EntropyDecoder
+   class BinaryEntropyDecoder FINAL : public EntropyDecoder
    {
    private:
        static const uint64 TOP = 0x00FFFFFFFFFFFFFF;

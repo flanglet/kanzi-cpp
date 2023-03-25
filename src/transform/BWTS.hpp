@@ -31,7 +31,7 @@ namespace kanzi
    // Forward transform based on the code at https://code.google.com/p/mk-bwts/
    // by Neal Burns and DivSufSort (port of libDivSufSort by Yuta Mori)
 
-   class BWTS : public Transform<byte> {
+   class BWTS FINAL : public Transform<byte> {
 
    private:
        static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB

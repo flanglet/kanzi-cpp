@@ -32,7 +32,7 @@ namespace kanzi
    // SBR(0)= Move to Front Transform
    // SBR(1)= Time Stamp Transform
    // This code implements SBR(0), SBR(1/2) and SBR(1). Code derived from openBWT
-   class SBRT : public Transform<byte>
+   class SBRT FINAL : public Transform<byte>
    {
    public:
        static const int MODE_MTF = 1; // alpha = 0

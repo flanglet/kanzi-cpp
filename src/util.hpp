@@ -23,6 +23,7 @@ limitations under the License.
 #include "types.hpp"
 
 
+
 // Ahem ... Visual Studio
 // This ostreambuf class is required because Microsoft cannot bother to implement
 // streambuf::pubsetbuf().

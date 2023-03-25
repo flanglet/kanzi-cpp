@@ -111,7 +111,7 @@ namespace kanzi {
    };
 
    // Use ANS to encode/decode literals and matches
-   class ROLZCodec1 : public Transform<byte> {
+   class ROLZCodec1 FINAL : public Transform<byte> {
    public:
        ROLZCodec1(uint logPosChecks) THROW;
 
@@ -153,7 +153,7 @@ namespace kanzi {
 
    // Use CM (ROLZEncoder/ROLZDecoder) to encode/decode literals and matches
    // Code loosely based on 'balz' by Ilya Muravyov
-   class ROLZCodec2 : public Transform<byte> {
+   class ROLZCodec2 FINAL : public Transform<byte> {
    public:
        ROLZCodec2(uint logPosChecks) THROW;
 
@@ -194,7 +194,7 @@ namespace kanzi {
        int findMatch(const byte buf[], int pos, int end, uint32 key);
    };
 
-   class ROLZCodec : public Transform<byte> {
+   class ROLZCodec FINAL : public Transform<byte> {
        friend class ROLZCodec1;
        friend class ROLZCodec2;
 

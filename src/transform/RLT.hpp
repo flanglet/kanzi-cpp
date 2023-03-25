@@ -30,7 +30,7 @@ namespace kanzi
    // 228  <= runLen < 6944+228   -> 2 bytes
    // 7172 <= runLen < 65535+7172 -> 3 bytes
 
-   class RLT : public Transform<byte>
+   class RLT FINAL : public Transform<byte>
    {
    public:
        RLT() { _pCtx = nullptr; }

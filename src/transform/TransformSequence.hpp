@@ -25,7 +25,7 @@ namespace kanzi {
 
    // Encapsulates a sequence of transforms in a transform
    template <class T>
-   class TransformSequence : public Transform<T> {
+   class TransformSequence FINAL : public Transform<T> {
    public:
        TransformSequence(Transform<T>* transforms[8], bool deallocate = true) THROW;
 

@@ -59,7 +59,7 @@ namespace kanzi {
 // indexes (based on input block size). Each primary index corresponds to a data chunk.
 // Chunks may be inverted concurrently.
    template <class T>
-   class InverseBiPSIv2Task : public Task<T> {
+   class InverseBiPSIv2Task FINAL : public Task<T> {
    private:
        uint* _data;
        uint* _buckets;
@@ -80,7 +80,7 @@ namespace kanzi {
        T run() THROW;
    };
 
-   class BWT : public Transform<byte> {
+   class BWT FINAL : public Transform<byte> {
 
    private:
        static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB

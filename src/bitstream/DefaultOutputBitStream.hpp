@@ -26,7 +26,7 @@ limitations under the License.
 namespace kanzi
 {
 
-   class DefaultOutputBitStream : public OutputBitStream
+   class DefaultOutputBitStream FINAL : public OutputBitStream
    {
    private:
        OutputStream& _os;

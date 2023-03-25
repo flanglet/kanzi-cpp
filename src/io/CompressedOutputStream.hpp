@@ -76,7 +76,7 @@ namespace kanzi {
    // A task used to encode a block
    // Several tasks (transform+entropy) may run in parallel
    template <class T>
-   class EncodingTask : public Task<T> {
+   class EncodingTask FINAL : public Task<T> {
    private:
        SliceArray<byte>* _data;
        SliceArray<byte>* _buffer;
@@ -102,7 +102,7 @@ namespace kanzi {
        T run() THROW;
    };
 
-   class CompressedOutputStream : public OutputStream {
+   class CompressedOutputStream FINAL : public OutputStream {
        friend class EncodingTask<EncodingTaskResult>;
 
    private:

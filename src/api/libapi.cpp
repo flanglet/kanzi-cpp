@@ -90,7 +90,7 @@ namespace kanzi {
     };
 
 
-    class FileOutputStream : public ostream
+    class FileOutputStream FINAL : public ostream
     {
        private:
           ofstreambuf _buf;
@@ -102,7 +102,7 @@ namespace kanzi {
     };
 
 
-    class FileInputStream : public istream
+    class FileInputStream FINAL : public istream
     {
        private:
           ifstreambuf _buf;

@@ -143,13 +143,20 @@ limitations under the License.
 	   #if __cplusplus >= 201103L
 	      #define THROW
 	   #else
-          #if defined(__GNUC__)
-		     #define THROW
-          #else
-	         #define THROW throw(...)
-          #endif
+           #if defined(__GNUC__)
+              #define THROW
+           #else
+              #define THROW throw(...)
+           #endif
 	   #endif
 	#endif
+
+	#if __cplusplus >= 201103L
+	   // C++ 11
+           #define FINAL final
+        #else
+           #define FINAL
+        #endif
 
 	#if __cplusplus >= 201103L
 	   // C++ 11
@@ -182,10 +189,12 @@ limitations under the License.
 #if __cplusplus >= 201703L
 	// byte is defined in C++17 and above
 	#include <cstddef>
-namespace kanzi {
+namespace kanzi 
+{
 	typedef std::byte byte;
 #else
-namespace kanzi {
+namespace kanzi 
+{
 	typedef uint8_t byte;
 #endif
 

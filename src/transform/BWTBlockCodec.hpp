@@ -37,7 +37,7 @@ namespace kanzi {
    //         bits 5-0 contain 6 most significant bits of primary index
    //   primary index: remaining bits (up to 3 bytes)
 
-   class BWTBlockCodec : public Transform<byte> {
+   class BWTBlockCodec FINAL : public Transform<byte> {
    public:
        BWTBlockCodec(Context& ctx);
 

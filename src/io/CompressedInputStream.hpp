@@ -103,7 +103,7 @@ namespace kanzi
    // A task used to decode a block
    // Several tasks (transform+entropy) may run in parallel
    template <class T>
-   class DecodingTask : public Task<T> {
+   class DecodingTask FINAL : public Task<T> {
    private:
        SliceArray<byte>* _data;
        SliceArray<byte>* _buffer;
@@ -129,7 +129,7 @@ namespace kanzi
        T run() THROW;
    };
 
-   class CompressedInputStream : public InputStream {
+   class CompressedInputStream FINAL : public InputStream {
        friend class DecodingTask<DecodingTaskResult>;
 
    private:

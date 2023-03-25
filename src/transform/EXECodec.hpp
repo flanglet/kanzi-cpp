@@ -22,7 +22,7 @@ limitations under the License.
 
 namespace kanzi
 {
-   class EXECodec : public Transform<byte> {
+   class EXECodec FINAL : public Transform<byte> {
    public:
        EXECodec() { _pCtx = nullptr; }
 

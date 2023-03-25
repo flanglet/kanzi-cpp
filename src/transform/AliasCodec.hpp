@@ -36,7 +36,7 @@ namespace kanzi {
    };
 
    // Simple codec replacing 2-byte symbols with 1-byte aliases whenever possible
-   class AliasCodec : public Transform<byte> {
+   class AliasCodec FINAL : public Transform<byte> {
 
    public:
        AliasCodec() { _pCtx = nullptr; }

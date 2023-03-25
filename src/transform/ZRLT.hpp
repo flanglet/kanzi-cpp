@@ -28,7 +28,7 @@ namespace kanzi
    // encoded in a different way (each digit in a different byte)
    // This algorithm is well adapted to process post BWT/MTFT data.
 
-   class ZRLT : public Transform<byte>
+   class ZRLT FINAL : public Transform<byte>
    {
    public:
        ZRLT() {}

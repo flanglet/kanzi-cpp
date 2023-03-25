@@ -24,7 +24,8 @@ limitations under the License.
 // Fixed Step Delta codec
 // Decorrelate values separated by a constant distance (step) and encode residuals
 namespace kanzi {
-   class FSDCodec : public Transform<byte> {
+
+   class FSDCodec FINAL : public Transform<byte> {
 
    public:
        FSDCodec() { _pCtx = nullptr; }

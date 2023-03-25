@@ -25,7 +25,7 @@ namespace kanzi
 {
 
    template <class T>
-   class NullTransform : public Transform<T> {
+   class NullTransform FINAL : public Transform<T> {
    public:
        NullTransform() {}
        NullTransform(Context&) {}

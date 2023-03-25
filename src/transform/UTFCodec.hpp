@@ -43,7 +43,7 @@ namespace kanzi
 
     
     // UTF8 encoder/decoder
-    class UTFCodec : public Transform<byte> {
+    class UTFCodec FINAL : public Transform<byte> {
     public:
         UTFCodec() { _pCtx = nullptr; }
 

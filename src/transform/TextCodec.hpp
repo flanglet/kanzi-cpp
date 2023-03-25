@@ -22,6 +22,7 @@ limitations under the License.
 
 
 namespace kanzi {
+
    class DictEntry {
    public:
        int _hash; // full word hash
@@ -50,7 +51,7 @@ namespace kanzi {
    };
 
    // Encode word indexes using a token
-   class TextCodec1 : public Transform<byte> {
+   class TextCodec1 FINAL : public Transform<byte> {
    public:
        TextCodec1();
 
@@ -91,7 +92,7 @@ namespace kanzi {
    };
 
    // Encode word indexes using a mask (0x80)
-   class TextCodec2 : public Transform<byte> {
+   class TextCodec2 FINAL : public Transform<byte> {
    public:
        TextCodec2();
 
@@ -132,7 +133,7 @@ namespace kanzi {
 
    // Simple one-pass text codec that replaces words with indexes.
    // Generates a dynamic dictionary.
-   class TextCodec : public Transform<byte> {
+   class TextCodec FINAL : public Transform<byte> {
        friend class TextCodec1;
        friend class TextCodec2;
 
