@@ -152,11 +152,11 @@ limitations under the License.
 	#endif
 
 	#if __cplusplus >= 201103L
-	   // C++ 11
-           #define FINAL final
-        #else
-           #define FINAL
-        #endif
+      // C++ 11
+      #define FINAL final
+   #else
+      #define FINAL
+   #endif
 
 	#if __cplusplus >= 201103L
 	   // C++ 11

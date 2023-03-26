@@ -292,6 +292,9 @@ namespace kanzi
       if (s1 != s2)
          return false;
 
+      if ((s1 < 0) && (s2 < 0))
+         return false;
+
       if (buf1.st_dev != buf2.st_dev)
          return false;
 
