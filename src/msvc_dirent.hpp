@@ -126,37 +126,37 @@ limitations under the License.
 
 /* Execute user permission */
 #if !defined(S_IXUSR)
-#   define S_IXUSR 0
+#   define S_IXUSR S_IEXEC
 #endif
 
 /* Read group permission */
 #if !defined(S_IRGRP)
-#   define S_IRGRP 0
+#   define S_IRGRP 0x20
 #endif
 
 /* Write group permission */
 #if !defined(S_IWGRP)
-#   define S_IWGRP 0
+#   define S_IWGRP 0x10
 #endif
 
 /* Execute group permission */
 #if !defined(S_IXGRP)
-#   define S_IXGRP 0
+#   define S_IXGRP 0x08
 #endif
 
 /* Read others permission */
 #if !defined(S_IROTH)
-#   define S_IROTH 0
+#   define S_IROTH 0x04
 #endif
 
 /* Write others permission */
 #if !defined(S_IWOTH)
-#   define S_IWOTH 0
+#   define S_IWOTH 0x02
 #endif
 
 /* Execute others permission */
 #if !defined(S_IXOTH)
-#   define S_IXOTH 0
+#   define S_IXOTH 0x01
 #endif
 
 /* Maximum length of file name */
