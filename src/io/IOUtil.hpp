@@ -17,8 +17,12 @@ limitations under the License.
 #ifndef _IOUtil_
 #define _IOUtil_
 
+#include <algorithm>
+#include <sstream>
 #include <vector>
 #include <sys/stat.h>
+
+#include "../types.hpp"
 
 #ifdef _MSC_VER
 #include "../msvc_dirent.hpp"
