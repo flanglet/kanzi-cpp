@@ -66,9 +66,9 @@ namespace kanzi
             : _size(size)
             , _modifTime(_modifTime)
          {
-            int idx = int(path.find_last_of(PATH_SEPARATOR));
+            size_t idx = path.find_last_of(PATH_SEPARATOR);
 
-            if (idx > 0) {
+            if (idx != std::string::npos) {
                _path = path.substr(0, idx + 1);
                _name = path.substr(idx + 1);
             } 

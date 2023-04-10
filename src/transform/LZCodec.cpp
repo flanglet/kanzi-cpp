@@ -157,7 +157,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
 
         // No good match ?
-        if ((bestLen < minMatch) || ((bestLen == minMatch) && (srcIdx - ref >= MIN_MATCH_MIN_DIST) && (srcIdx - ref != repd0))) {
+        if (bestLen < minMatch) {
             srcIdx++;
             continue;
         }
@@ -233,19 +233,19 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         if (mIdx >= _bufferSize - 8) {
             // Expand match buffer
-            byte* mBuf = new byte[_bufferSize << 1];
+            byte* mBuf = new byte[(_bufferSize * 3) / 2];
             memcpy(&mBuf[0], &_mBuf[0], _bufferSize);
             delete[] _mBuf;
             _mBuf = mBuf;
 
             if (mLenIdx >= _bufferSize - 4) {
-                byte* mLenBuf = new byte[_bufferSize << 1];
+                byte* mLenBuf = new byte[(_bufferSize * 3) / 2];
                 memcpy(&mLenBuf[0], &_mLenBuf[0], _bufferSize);
                 delete[] _mLenBuf;
                 _mLenBuf = mLenBuf;
             }
 
-            _bufferSize <<= 1;
+            _bufferSize = (_bufferSize * 3) / 2;
         }
 
         // Fill _hashes and update positions
