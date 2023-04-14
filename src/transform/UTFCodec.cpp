@@ -64,10 +64,9 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if ((mustValidate == true) && (validate(&src[start], count - start - 4)) == false)
         return false;
 
-    uint* aliasMap = new uint[1 << 23]; // 2 bit size + (7 or 11 or 16 or 21) bit payload
-    memset(aliasMap, 0, size_t((1 << 23) * sizeof(uint)));
-    sdUTF symb[32768];
-    vector<uint16> ranks(32768);
+    uint32* aliasMap = new uint32[1 << 23]; // 2 bit size + (7 or 11 or 16 or 21) bit payload
+    memset(aliasMap, 0, size_t(1 << 23) * sizeof(uint32));
+    vector<sdUTF> v;
     int n = 0;
     bool res = true;
 
@@ -81,8 +80,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
 
         if (aliasMap[val] == 0) {
-            ranks[n] = uint16(n);
-            symb[n].val = val;
+            v.push_back({ val, 0 });
 
             if (++n >= 32768) {
                 res = false;
@@ -102,12 +100,11 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     }
 
     for (int i = 0; i < n; i++)
-        symb[i].freq = aliasMap[symb[i].val];
+        v[i].freq = aliasMap[v[i].val];
 
-    // Sort ranks by increasing frequencies
-    SortUTFRanks sortRanks(symb);
-    ranks.resize(n);
-    sort(ranks.begin(), ranks.end(), sortRanks);
+    // Sort ranks by decreasing frequencies;
+    sort(v.begin(), v.end());
+
     int dstIdx = 2;
 
     // Emit map length then map data
@@ -117,15 +114,14 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int estimate = dstIdx + 6;
 
     for (int i = 0; i < n; i++) {
-        const uint16 r = ranks[n - 1 - i];
-        const uint32 s = symb[r].val;
+        estimate += int((i < 128) ? v[i].freq : 2 * v[i].freq);
+        const uint32 s = v[i].val;
         aliasMap[s] = i;
         dst[dstIdx] = byte(s >> 16);
         dst[dstIdx + 1] = byte(s >> 8);
         dst[dstIdx + 2] = byte(s);
         dstIdx += 3;
-        estimate += ((i < 128) ? symb[r].freq : 2 * symb[r].freq);
-    }
+   }
 
     if (estimate >= dstEnd) {
         // Not worth it
@@ -133,10 +129,11 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
     }
 
-    // Emit first (possibly) invalid symbols (due to block truncation)
+    // Emit first (possibly invalid) symbols (due to block truncation)
     for (int i = 0; i < start; i++)
         dst[dstIdx++] = src[i];
 
+    v.clear();
     int srcIdx = start;
 
     // Emit aliases
@@ -156,7 +153,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     dst[0] = byte(start);
     dst[1] = byte(srcIdx - (count - 4));
 
-    // Emit last (possibly) invalid symbols (due to block truncation)
+    // Emit last (possibly invalid) symbols (due to block truncation)
     while (srcIdx < count)
         dst[dstIdx++] = src[srcIdx++];
 
@@ -190,6 +187,7 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if ((n >= 32768) || (3 * n >= count))
        return false;
 
+    #pragma pack(1)
     struct symb {
        uint32 val;
        uint8 len;

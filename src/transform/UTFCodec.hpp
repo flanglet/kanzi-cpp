@@ -23,23 +23,16 @@ limitations under the License.
 
 namespace kanzi
 {
-    typedef struct ssUTF { uint32 val, freq; } sdUTF;
+    typedef struct ssUTF
+    {
+        uint32 val;
+        uint32 freq;
 
-    struct SortUTFRanks {
-        sdUTF* _symb;
-         
-        bool operator() (int i, int j) const 
-        { 
+        friend bool operator< (ssUTF const& lhs, ssUTF const& rhs) {
             int r;
-		  
-            if ((r = _symb[i].freq - _symb[j].freq) == 0)
-               return _symb[i].val < _symb[j].val;
-		  
-            return r < 0;
+            return ((r = lhs.freq - rhs.freq) != 0) ? r > 0 : lhs.val > rhs.val;
         }
-         
-        SortUTFRanks(sdUTF symb[]) { _symb = symb; }
-    };
+    } sdUTF;
 
     
     // UTF8 encoder/decoder
