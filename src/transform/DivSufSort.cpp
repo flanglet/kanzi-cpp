@@ -61,6 +61,11 @@ DivSufSort::DivSufSort()
     _mergeStack = new Stack(SS_SMERGE_STACKSIZE);
     _sa = nullptr;
     _buffer = nullptr;
+    _ssStack->_index = 0;
+    _trStack->_index = 0;
+    _mergeStack->_index = 0;
+    memset(&_bucketA[0], 0, sizeof(int) * 256);
+    memset(&_bucketB[0], 0, sizeof(int) * 65536);
 }
 
 DivSufSort::~DivSufSort()
