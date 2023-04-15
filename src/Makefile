@@ -15,31 +15,11 @@ else
 	endif
 endif	
 
-LIB_SOURCES=Global.cpp \
+LIB_COMMON_SOURCES=Global.cpp \
 	Event.cpp \
 	api/libapi.cpp \
-	bitstream/DebugInputBitStream.cpp \
-	bitstream/DebugOutputBitStream.cpp \
-	bitstream/DefaultInputBitStream.cpp \
-	bitstream/DefaultOutputBitStream.cpp \
-	io/CompressedInputStream.cpp \
-	io/CompressedOutputStream.cpp \
-	entropy/ANSRangeDecoder.cpp \
-	entropy/ANSRangeEncoder.cpp \
-	entropy/BinaryEntropyDecoder.cpp \
-	entropy/BinaryEntropyEncoder.cpp \
 	entropy/EntropyUtils.cpp \
-	entropy/ExpGolombDecoder.cpp \
-	entropy/ExpGolombEncoder.cpp \
 	entropy/HuffmanCommon.cpp \
-	entropy/HuffmanDecoder.cpp \
-	entropy/HuffmanEncoder.cpp \
-	entropy/RangeDecoder.cpp \
-	entropy/RangeEncoder.cpp \
-	entropy/RiceGolombDecoder.cpp \
-	entropy/RiceGolombEncoder.cpp \
-	entropy/FPAQDecoder.cpp \
-	entropy/FPAQEncoder.cpp \
 	entropy/CMPredictor.cpp \
 	entropy/TPAQPredictor.cpp \
 	transform/AliasCodec.cpp \
@@ -57,7 +37,35 @@ LIB_SOURCES=Global.cpp \
 	transform/UTFCodec.cpp \
 	transform/EXECodec.cpp \
 	transform/ZRLT.cpp
-LIB_OBJECTS=$(LIB_SOURCES:.cpp=.o)
+LIB_COMMON_OBJECTS=$(LIB_COMMON_SOURCES:.cpp=.o)
+
+LIB_COMP_SOURCES=bitstream/DebugOutputBitStream.cpp \
+	bitstream/DefaultOutputBitStream.cpp \
+	io/CompressedOutputStream.cpp \
+	entropy/ANSRangeEncoder.cpp \
+	entropy/BinaryEntropyEncoder.cpp \
+	entropy/ExpGolombEncoder.cpp \
+	entropy/FPAQEncoder.cpp \
+	entropy/HuffmanEncoder.cpp \
+	entropy/RangeEncoder.cpp \
+	entropy/RiceGolombEncoder.cpp
+LIB_COMP_OBJECTS=$(LIB_COMP_SOURCES:.cpp=.o)
+
+LIB_DECOMP_SOURCES= bitstream/DebugInputBitStream.cpp \
+	bitstream/DefaultInputBitStream.cpp \
+	io/CompressedInputStream.cpp \
+	entropy/ANSRangeDecoder.cpp \
+	entropy/BinaryEntropyDecoder.cpp \
+	entropy/ExpGolombDecoder.cpp \
+	entropy/FPAQDecoder.cpp \
+	entropy/HuffmanDecoder.cpp \
+	entropy/RangeDecoder.cpp \
+	entropy/RiceGolombDecoder.cpp
+LIB_DECOMP_OBJECTS=$(LIB_DECOMP_SOURCES:.cpp=.o)
+
+LIB_SOURCES=$(LIB_COMMON_SOURCES) $(LIB_COMP_SOURCES) $(LIB_DECOMP_SOURCES)
+
+LIB_OBJECTS=$(LIB_COMMON_OBJECTS) $(LIB_COMP_OBJECTS) $(LIB_DECOMP_OBJECTS)
 
 TEST_SOURCES=test/TestEntropyCodec.cpp \
 	test/TestBWT.cpp \
@@ -75,9 +83,6 @@ APP_OBJECTS=$(APP_SOURCES:.cpp=.o)
 SOURCES=$(LIB_SOURCES) $(APP_SOURCES)
 OBJECTS=$(SOURCES:.cpp=.o)
 RPTS=$(SOURCES:.cpp=.optrpt)
-TESTS=testBWT testTransforms \
-	testEntropyCodec testDefaultBitStream \
-	testCompressedStream
 	
 APP=kanzi
 	
@@ -94,15 +99,34 @@ endif
 
 STATIC_LIB := lib$(APP)$(STATIC_LIB_SUFFIX)
 SHARED_LIB := lib$(APP)$(SHARED_LIB_SUFFIX)
+STATIC_COMP_LIB := lib$(APP)comp$(STATIC_LIB_SUFFIX)
+STATIC_DECOMP_LIB := lib$(APP)decomp$(STATIC_LIB_SUFFIX)
+SHARED_COMP_LIB := lib$(APP)comp$(SHARED_LIB_SUFFIX)
+SHARED_DECOMP_LIB := lib$(APP)decomp$(SHARED_LIB_SUFFIX)
 
-all: $(STATIC_LIB) $(SHARED_LIB) $(APP) $(TESTS)
+libcomp: $(STATIC_COMP_LIB) $(SHARED_COMP_LIB)
 
-# Create static library
+libdecomp: $(STATIC_DECOMP_LIB) $(SHARED_DECOMP_LIB)
+
+lib: $(STATIC_LIB) $(SHARED_LIB)
+
 $(STATIC_LIB):$(LIB_OBJECTS)
 	$(AR) cr ../lib/$@ $+
 
-# Create shared library
+$(STATIC_COMP_LIB):$(LIB_COMP_OBJECTS)
+	$(AR) cr ../lib/$@ $+
+
+$(STATIC_DECOMP_LIB):$(LIB_DECOMP_OBJECTS)
+	$(AR) cr ../lib/$@ $+
+
+# Create shared libraries
 $(SHARED_LIB):$(LIB_OBJECTS)
+	$(CXX) -o ../lib/$@ $(LDFLAGS) -shared $+
+
+$(SHARED_COMP_LIB):$(LIB_COMP_OBJECTS)
+	$(CXX) -o ../lib/$@ $(LDFLAGS) -shared $+
+
+$(SHARED_DECOMP_LIB):$(LIB_DECOMP_OBJECTS)
 	$(CXX) -o ../lib/$@ $(LDFLAGS) -shared $+
 
 
@@ -121,6 +145,11 @@ testDefaultBitStream: $(LIB_OBJECTS) test/TestDefaultBitStream.o
 testCompressedStream: $(LIB_OBJECTS) test/TestCompressedStream.o
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
+test: testBWT testTransforms testEntropyCodec testDefaultBitStream testCompressedStream
+
+all: lib test $(APP)
+
+# Create static libraries
 kanzi: $(OBJECTS) app/Kanzi.o
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
@@ -169,10 +198,15 @@ endif
 
 clean: 
 ifeq ($(OS),Windows_NT)
-	del /S *.o *.obj ..\bin\$(APP)$(PROG_SUFFIX) ..\lib\$(STATIC_LIB) ..\lib\$(SHARED_LIB)
+	del /S *.o *.obj ..\bin\$(APP)$(PROG_SUFFIX) ..\bin\test*$(PROG_SUFFIX) \
+	..\lib\$(STATIC_LIB) ..\lib\$(SHARED_LIB) \
+	..\lib\$(STATIC_COMP_LIB) ..\lib\$(STATIC_DECOMP_LIB) \
+	..\lib\$(SHARED_COMP_LIB) ..\lib\$(SHARED_DECOMP_LIB)
 else
 	rm -f ../bin/test*$(PROG_SUFFIX) $(OBJECTS) $(RPTS) $(TEST_OBJECTS) \
-        ../bin/$(APP)$(PROG_SUFFIX) ../lib/$(STATIC_LIB) ../lib/$(SHARED_LIB)
+        ../bin/$(APP)$(PROG_SUFFIX) ../lib/$(STATIC_LIB) ../lib/$(SHARED_LIB) \
+	../lib/$(STATIC_COMP_LIB) ../lib/$(STATIC_DECOMP_LIB) \
+	../lib/$(SHARED_COMP_LIB) ../lib/$(SHARED_DECOMP_LIB)
 endif
 
 .cpp.o:
