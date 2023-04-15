@@ -64,8 +64,14 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if ((mustValidate == true) && (validate(&src[start], count - start - 4)) == false)
         return false;
 
-    uint32* aliasMap = new uint32[1 << 23]; // 2 bit size + (7 or 11 or 16 or 21) bit payload
-    memset(aliasMap, 0, size_t(1 << 23) * sizeof(uint32));
+    // 1-3 bit size + (7 or 11 or 16 or 21) bit payload
+    // 3 MSBs indicate symbol size (limit map size to 22 bits)
+    // 000 -> 7 bits
+    // 001 -> 11 bits
+    // 010 -> 16 bits
+    // 1xx -> 21 bits
+    uint32* aliasMap = new uint32[1 << 22];
+    memset(aliasMap, 0, size_t(1 << 22) * sizeof(uint32));
     vector<sdUTF> v;
     int n = 0;
     bool res = true;

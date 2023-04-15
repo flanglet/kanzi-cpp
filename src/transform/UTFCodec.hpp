@@ -84,17 +84,17 @@ namespace kanzi
 
        case 12:
        case 13:
-           out = (1 << 21) | (uint32(in[0]) << 8) | uint32(in[1]);
+           out = (1 << 19) | (uint32(in[0]) << 8) | uint32(in[1]);
            s = 2;
            break; 
 
        case 14:
-           out = (2 << 21) | ((uint32(in[0]) & 0x0F) << 12) | ((uint32(in[1]) & 0x3F) << 6) | (uint32(in[2]) & 0x3F);
+           out = (2 << 19) | ((uint32(in[0]) & 0x0F) << 12) | ((uint32(in[1]) & 0x3F) << 6) | (uint32(in[2]) & 0x3F);
            s = 3;
            break;
 
        case 15:
-           out = (3 << 21) | ((uint32(in[0]) & 0x07) << 18) | ((uint32(in[1]) & 0x3F) << 12) | ((uint32(in[2]) & 0x3F) << 6) | (uint32(in[3]) & 0x3F);
+           out = (4 << 19) | ((uint32(in[0]) & 0x07) << 18) | ((uint32(in[1]) & 0x3F) << 12) | ((uint32(in[2]) & 0x3F) << 6) | (uint32(in[3]) & 0x3F);
            s = 4;
            break;
 
@@ -112,7 +112,7 @@ namespace kanzi
     { 
        int s;
        
-       switch (in >> 21) {
+       switch (in >> 19) {
        case 0:
            out[0] = byte(in);
            s = 1;
@@ -131,7 +131,10 @@ namespace kanzi
            s = 3;
            break;
 
-       case 3:	  
+       case 4:
+       case 5:
+       case 6:
+       case 7:
            out[0] = byte(((in >> 18) & 0x07) | 0xF0);
            out[1] = byte(((in >> 12) & 0x3F) | 0x80);
            out[2] = byte(((in >> 6) & 0x3F) | 0x80);
