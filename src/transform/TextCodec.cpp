@@ -956,8 +956,6 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    int srcIdx = 0;
-    int dstIdx = 0;
 
     if (_pCtx != nullptr) {
         Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
@@ -968,7 +966,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     }
 
     uint freqs[256] = { 0 };
-    byte mode = TextCodec::computeStats(&src[srcIdx], count, freqs, false);
+    byte mode = TextCodec::computeStats(&src[0], count, freqs, false);
 
     // Not text ?
     if ((mode & TextCodec::MASK_NOT_TEXT) != byte(0)) {
@@ -990,8 +988,10 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     // DOS encoded end of line (CR+LF) ?
     _isCRLF = (mode & TextCodec::MASK_CRLF) != byte(0);
-    dst[dstIdx++] = mode;
+    dst[0] = mode;
     bool res = true;
+    int srcIdx = 0;
+    int dstIdx = 1;
 
     while ((srcIdx < srcEnd) && (src[srcIdx] == TextCodec::SP)) {
         dst[dstIdx++] = TextCodec::SP;
@@ -1091,7 +1091,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     }
 
                     dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & TextCodec::MASK_LENGTH, (pe == pe1) ? 0 : 32);
-                    emitAnchor = delimAnchor + 1 + int(pe->_data >> 24);
+                    emitAnchor = delimAnchor + 1 + (pe->_data >> 24);
                 }
             }
         }

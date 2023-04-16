@@ -48,7 +48,6 @@ public:
 
 
 
-
 #ifdef __x86_64__
    #ifdef __clang__
 	   #define CPU_PAUSE() __builtin_ia32_pause()
@@ -198,65 +197,70 @@ public:
    #define ATOMIC_BOOL std::atomic_bool
 
 #else
-	// ! Stubs for NON CONCURRENT USAGE !
-	// Used to compile and provide a non concurrent version AND
-	// when atomic.h is not available (VS C++)
-	const int memory_order_relaxed = 0;
-	const int memory_order_acquire = 2;
-	const int memory_order_release = 3;
-	#include <iostream>
+   #if __cplusplus < 201103L 
+		// ! Stubs for NON CONCURRENT USAGE !
+		// Used to compile and provide a non concurrent version AND
+		// when atomic.h is not available (VS C++)
+		const int memory_order_relaxed = 0;
+		const int memory_order_acquire = 2;
+		const int memory_order_release = 3;
+		#include <iostream>
 
-	class atomic_int {
-	private:
-		int _n;
+		class atomic_int {
+		private:
+			int _n;
 
-	public:
-		atomic_int(int n=0) { _n = n; }
-		atomic_int& operator=(int n) {
-			_n = n;
-			return *this;
-		}
-		int load(int mo = memory_order_relaxed) const { return _n; }
-		void store(int n, int mo = memory_order_release) { _n = n; }
-		atomic_int& operator++(int) {
-			_n++;
-			return *this;
-		}
-		atomic_int fetch_add(atomic_int) {
-		   _n++;
-		   return atomic_int(_n-1);
-		}
-		bool compare_exchange_strong(int& expected, int desired) {
-		   if (_n == expected) {
-			   _n = desired;
-			   return true;
-		   }
+		public:
+			atomic_int(int n=0) { _n = n; }
+			atomic_int& operator=(int n) {
+				_n = n;
+				return *this;
+			}
+			int load(int mo = memory_order_relaxed) const { return _n; }
+			void store(int n, int mo = memory_order_release) { _n = n; }
+			atomic_int& operator++(int) {
+				_n++;
+				return *this;
+			}
+			atomic_int fetch_add(atomic_int) {
+			   _n++;
+			   return atomic_int(_n-1);
+			}
+			bool compare_exchange_strong(int& expected, int desired) {
+			   if (_n == expected) {
+				   _n = desired;
+				   return true;
+			   }
 
-		   return false;
-		}
-	};
+			   return false;
+			}
+		};
 
-	class atomic_bool {
-	private:
-		bool _b;
+		class atomic_bool {
+		private:
+			bool _b;
 
-	public:
-		atomic_bool(bool b=false) { _b = b; }
-		atomic_bool& operator=(bool b) {
-			_b = b;
-			return *this;
-		}
-		bool load(int mo = memory_order_relaxed) const { return _b; }
-		void store(bool b, int mo = memory_order_release) { _b = b; }
-		bool exchange(bool expected, int mo = memory_order_acquire) {
-			bool b = _b;
-			_b = expected;
-			return b;
-		}
-	};
+		public:
+			atomic_bool(bool b=false) { _b = b; }
+			atomic_bool& operator=(bool b) {
+				_b = b;
+				return *this;
+			}
+			bool load(int mo = memory_order_relaxed) const { return _b; }
+			void store(bool b, int mo = memory_order_release) { _b = b; }
+			bool exchange(bool expected, int mo = memory_order_acquire) {
+				bool b = _b;
+				_b = expected;
+				return b;
+			}
+		};
 
-   #define ATOMIC_INT atomic_int
-   #define ATOMIC_BOOL atomic_bool
+		#define ATOMIC_INT atomic_int
+		#define ATOMIC_BOOL atomic_bool
+   #else
+	    #define ATOMIC_INT std::atomic_int
+	    #define ATOMIC_BOOL std::atomic_bool
+   #endif
 
 #endif //   (__cplusplus && __cplusplus < 201103L) || (_MSC_VER && _MSC_VER < 1700)
 
