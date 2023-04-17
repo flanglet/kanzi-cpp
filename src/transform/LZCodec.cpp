@@ -144,39 +144,36 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             ref = _hashes[h0];
             _hashes[h0] = srcIdx;
 
-            if (ref <= minRef) {
+            if (ref > minRef) {
+                if (memcmp(&src[srcIdx], &src[ref], 4) == 0)
+                    bestLen = findMatch(src, srcIdx, ref, min(srcEnd - srcIdx, MAX_MATCH));
+            }
+
+            // No good match ?
+            if (bestLen < minMatch) {
                 srcIdx++;
                 continue;
             }
 
-            if (memcmp(&src[srcIdx], &src[ref], 4) == 0)
-                bestLen = findMatch(src, srcIdx, ref, min(srcEnd - srcIdx, MAX_MATCH));
+            if (ref != srcIdx - repd0) {
+                // Check if better match at next position
+                const int ref1 = _hashes[h1];
+                _hashes[h1] = srcIdx + 1;
+
+                if (ref1 > minRef + 1) {
+                    const int bestLen1 = findMatch(src, srcIdx + 1, ref1, min(srcEnd - srcIdx - 1, MAX_MATCH));
+
+                    // Select best match
+                    if ((bestLen1 > bestLen) || ((bestLen1 == bestLen) && (ref1 > ref))) {
+                        ref = ref1;
+                        bestLen = bestLen1;
+                        srcIdx++;
+                    }
+                }
+            }
         } else {
             _hashes[h0] = srcIdx;
             srcIdx++;
-        }
-
-        // No good match ?
-        if (bestLen < minMatch) {
-            srcIdx++;
-            continue;
-        }
-
-        if (ref != srcIdx - repd0) {
-            // Check if better match at next position
-            const int ref1 = _hashes[h1];
-            _hashes[h1] = srcIdx + 1;
-
-            if (ref1 > minRef + 1) {
-                int bestLen1 = findMatch(src, srcIdx + 1, ref1, min(srcEnd - srcIdx - 1, MAX_MATCH));
-
-                // Select best match
-                if ((bestLen1 > bestLen) || ((bestLen1 == bestLen) && (ref1 > ref + 1))) {
-                    ref = ref1;
-                    bestLen = bestLen1;
-                    srcIdx++;
-                }
-            }
         }
 
         const int d = srcIdx - ref;
