@@ -110,6 +110,7 @@ libdecomp: $(STATIC_DECOMP_LIB) $(SHARED_DECOMP_LIB)
 
 lib: $(STATIC_LIB) $(SHARED_LIB)
 
+# Create static libraries
 $(STATIC_LIB):$(LIB_OBJECTS)
 	$(AR) cr ../lib/$@ $+
 
@@ -147,19 +148,18 @@ testCompressedStream: $(LIB_OBJECTS) test/TestCompressedStream.o
 
 test: testBWT testTransforms testEntropyCodec testDefaultBitStream testCompressedStream
 
-all: lib test $(APP)
-
-# Create static libraries
 kanzi: $(OBJECTS) app/Kanzi.o
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
+all: lib test $(APP)
+
+# Install / uninstall (may require sudo or admin rights)
 ifeq ($(OS),Windows_NT)
       INSTALL_DIR="C:\Program Files"
 else
       INSTALL_DIR=/usr/local
 endif
 
-# Install may require sudo or admin rights
 install: $(STATIC_LIB) $(SHARED_LIB) $(APP)
 ifeq ($(OS),Windows_NT)
 	copy /Y ..\bin\$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)
