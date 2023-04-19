@@ -14,30 +14,24 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _EntropyCodecFactory_
-#define _EntropyCodecFactory_
+#ifndef _EntropyDecoderFactory_
+#define _EntropyDecoderFactory_
 
 #include <algorithm>
 #include "../Context.hpp"
 #include "ANSRangeDecoder.hpp"
-#include "ANSRangeEncoder.hpp"
 #include "BinaryEntropyDecoder.hpp"
-#include "BinaryEntropyEncoder.hpp"
 #include "HuffmanDecoder.hpp"
-#include "HuffmanEncoder.hpp"
 #include "NullEntropyDecoder.hpp"
-#include "NullEntropyEncoder.hpp"
 #include "RangeDecoder.hpp"
-#include "RangeEncoder.hpp"
 #include "CMPredictor.hpp"
 #include "FPAQDecoder.hpp"
-#include "FPAQEncoder.hpp"
 #include "TPAQPredictor.hpp"
 
 
 namespace kanzi {
 
-   class EntropyCodecFactory {
+   class EntropyDecoderFactory {
    public:
        static const short NONE_TYPE = 0; // No compression
        static const short HUFFMAN_TYPE = 1; // Huffman
@@ -58,14 +52,12 @@ namespace kanzi {
 
        static EntropyDecoder* newDecoder(InputBitStream& ibs, Context& ctx, short entropyType) THROW;
 
-       static EntropyEncoder* newEncoder(OutputBitStream& obs, Context& ctx, short entropyType) THROW;
-
        static const char* getName(short entropyType) THROW;
 
        static short getType(const char* name) THROW;
    };
 
-   inline EntropyDecoder* EntropyCodecFactory::newDecoder(InputBitStream& ibs, Context& ctx, short entropyType) THROW
+   inline EntropyDecoder* EntropyDecoderFactory::newDecoder(InputBitStream& ibs, Context& ctx, short entropyType) THROW
    {
        switch (entropyType) {
        // Each block is decoded separately
@@ -105,45 +97,8 @@ namespace kanzi {
        }
    }
 
-   inline EntropyEncoder* EntropyCodecFactory::newEncoder(OutputBitStream& obs, Context& ctx, short entropyType) THROW
-   {
-       switch (entropyType) {
-       case HUFFMAN_TYPE:
-           return new HuffmanEncoder(obs);
 
-       case ANS0_TYPE:
-           return new ANSRangeEncoder(obs, 0);
-
-       case ANS1_TYPE:
-           return new ANSRangeEncoder(obs, 1);
-
-       case RANGE_TYPE:
-           return new RangeEncoder(obs);
-
-       case FPAQ_TYPE:
-           return new FPAQEncoder(obs);
-
-       case CM_TYPE:
-           return new BinaryEntropyEncoder(obs, new CMPredictor());
-
-       case TPAQ_TYPE:
-           return new BinaryEntropyEncoder(obs, new TPAQPredictor<false>(&ctx));
-
-       case TPAQX_TYPE:
-           return new BinaryEntropyEncoder(obs, new TPAQPredictor<true>(&ctx));
-
-       case NONE_TYPE:
-           return new NullEntropyEncoder(obs);
-
-       default:
-           std::string msg = "Unknown entropy codec type: '";
-           msg += char(entropyType);
-           msg += '\'';
-           throw std::invalid_argument(msg);
-       }
-   }
-
-   inline const char* EntropyCodecFactory::getName(short entropyType) THROW
+   inline const char* EntropyDecoderFactory::getName(short entropyType) THROW
    {
        switch (entropyType) {
        case HUFFMAN_TYPE:
@@ -181,7 +136,8 @@ namespace kanzi {
        }
    }
 
-   inline short EntropyCodecFactory::getType(const char* str) THROW
+
+   inline short EntropyDecoderFactory::getType(const char* str) THROW
    {
        std::string name = str;
        transform(name.begin(), name.end(), name.begin(), ::toupper);

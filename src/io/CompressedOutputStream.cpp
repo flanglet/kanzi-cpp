@@ -19,7 +19,7 @@ limitations under the License.
 #include "../Error.hpp"
 #include "../Magic.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
-#include "../entropy/EntropyCodecFactory.hpp"
+#include "../entropy/EntropyEncoderFactory.hpp"
 #include "../entropy/EntropyUtils.hpp"
 #include "../transform/TransformFactory.hpp"
 
@@ -76,7 +76,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _initialized = false;
     _closed = false;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
-    _entropyType = EntropyCodecFactory::getType(entropyCodec.c_str());
+    _entropyType = EntropyEncoderFactory::getType(entropyCodec.c_str());
     _transformType = TransformFactory<byte>::getType(transform.c_str());
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _jobs = tasks;
@@ -85,7 +85,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _ctx.putString("checksum", (checksum == true) ? STR_TRUE : STR_FALSE);
     _ctx.putString("codec", entropyCodec);
     _ctx.putString("transform", transform);
-    _ctx.putString("extra", _entropyType == EntropyCodecFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
+    _ctx.putString("extra", _entropyType == EntropyEncoderFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
 
     // Allocate first buffer and add padding for incompressible blocks 
     const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
@@ -167,7 +167,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
 #endif
 
-    _entropyType = EntropyCodecFactory::getType(entropyCodec.c_str());
+    _entropyType = EntropyEncoderFactory::getType(entropyCodec.c_str());
     _transformType = TransformFactory<byte>::getType(transform.c_str());
     string str = ctx.getString("checksum");
     bool checksum = str == STR_TRUE;
@@ -523,7 +523,7 @@ T EncodingTask<T>::run() THROW
 
         if (_blockLength <= CompressedOutputStream::SMALL_BLOCK_SIZE) {
             _transformType = TransformFactory<byte>::NONE_TYPE;
-            _entropyType = EntropyCodecFactory::NONE_TYPE;
+            _entropyType = EntropyEncoderFactory::NONE_TYPE;
             mode |= CompressedOutputStream::COPY_BLOCK_MASK;
         }
         else {
@@ -543,7 +543,7 @@ T EncodingTask<T>::run() THROW
 
                 if (skip == true) {
                     _transformType = TransformFactory<byte>::NONE_TYPE;
-                    _entropyType = EntropyCodecFactory::NONE_TYPE;
+                    _entropyType = EntropyEncoderFactory::NONE_TYPE;
                     mode |= CompressedOutputStream::COPY_BLOCK_MASK;
                 }
             }
@@ -644,7 +644,7 @@ T EncodingTask<T>::run() THROW
 
         // Each block is encoded separately
         // Rebuild the entropy encoder to reset block statistics
-        ee = EntropyCodecFactory::newEncoder(obs, _ctx, _entropyType);
+        ee = EntropyEncoderFactory::newEncoder(obs, _ctx, _entropyType);
 
         // Entropy encode block
         if (ee->encode(_buffer->_array, 0, postTransformLength) != postTransformLength) {

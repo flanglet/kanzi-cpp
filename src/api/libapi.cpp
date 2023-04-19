@@ -19,7 +19,7 @@ limitations under the License.
 #include "../io/CompressedInputStream.hpp"
 #include "../io/CompressedOutputStream.hpp"
 #include "../transform/TransformFactory.hpp"
-#include "../entropy/EntropyCodecFactory.hpp"
+#include "../entropy/EntropyEncoderFactory.hpp"
 
 #include <errno.h>
 
@@ -129,7 +129,7 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         mLen = min(int(transform.length()), 63);
         strncpy(pData->transform, transform.data(), mLen);
         pData->transform[mLen + 1] = 0;
-        string entropy = EntropyCodecFactory::getName(EntropyCodecFactory::getType(pData->entropy));
+        string entropy = EntropyEncoderFactory::getName(EntropyEncoderFactory::getType(pData->entropy));
         mLen = min(int(entropy.length()), 15);
         strncpy(pData->entropy, entropy.data(), mLen);
         pData->entropy[mLen + 1] = 0;

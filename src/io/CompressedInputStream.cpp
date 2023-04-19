@@ -19,7 +19,7 @@ limitations under the License.
 #include "IOException.hpp"
 #include "../Error.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
-#include "../entropy/EntropyCodecFactory.hpp"
+#include "../entropy/EntropyDecoderFactory.hpp"
 #include "../transform/TransformFactory.hpp"
 
 #ifdef CONCURRENCY_ENABLED
@@ -57,7 +57,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
     _blockSize = 0;
     _bufferThreshold = 0;
     _available = 0;
-    _entropyType = EntropyCodecFactory::NONE_TYPE;
+    _entropyType = EntropyDecoderFactory::NONE_TYPE;
     _transformType = TransformFactory<byte>::NONE_TYPE;
     _initialized = false;
     _closed = false;
@@ -103,7 +103,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
     _blockSize = 0;
     _bufferThreshold = 0;
     _available = 0;
-    _entropyType = EntropyCodecFactory::NONE_TYPE;
+    _entropyType = EntropyDecoderFactory::NONE_TYPE;
     _transformType = TransformFactory<byte>::NONE_TYPE;
     _initialized = false;
     _closed = false;
@@ -178,8 +178,8 @@ void CompressedInputStream::readHeader() THROW
     try {
         // Read entropy codec
         _entropyType = short(_ibs->readBits(5));
-        _ctx.putString("codec", EntropyCodecFactory::getName(_entropyType));
-        _ctx.putString("extra", _entropyType == EntropyCodecFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
+        _ctx.putString("codec", EntropyDecoderFactory::getName(_entropyType));
+        _ctx.putString("extra", _entropyType == EntropyDecoderFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
     }
     catch (invalid_argument&) {
         stringstream err;
@@ -236,7 +236,7 @@ void CompressedInputStream::readHeader() THROW
         stringstream ss;
         ss << "Checksum set to " << (_hasher != nullptr ? "true" : "false") << endl;
         ss << "Block size set to " << _blockSize << " bytes" << endl;
-        string w1 = EntropyCodecFactory::getName(_entropyType);
+        string w1 = EntropyDecoderFactory::getName(_entropyType);
         ss << "Using " << ((w1 == "NONE") ? "no" : w1) << " entropy codec (stage 1)" << endl;
         string w2 = TransformFactory<byte>::getName(_transformType);
         ss << "Using " << ((w2 == "NONE") ? "no" : w2) << " transform (stage 2)" << endl;
@@ -645,7 +645,7 @@ T DecodingTask<T>::run() THROW
 
         if ((mode & CompressedInputStream::COPY_BLOCK_MASK) != byte(0)) {
             _transformType = TransformFactory<byte>::NONE_TYPE;
-            _entropyType = EntropyCodecFactory::NONE_TYPE;
+            _entropyType = EntropyDecoderFactory::NONE_TYPE;
         }
         else {
             if ((mode & CompressedInputStream::TRANSFORMS_MASK) != byte(0))
@@ -696,7 +696,7 @@ T DecodingTask<T>::run() THROW
 
         // Each block is decoded separately
         // Rebuild the entropy decoder to reset block statistics
-        ed = EntropyCodecFactory::newDecoder(ibs, _ctx, _entropyType);
+        ed = EntropyDecoderFactory::newDecoder(ibs, _ctx, _entropyType);
 
         // Block entropy decode
         if (ed->decode(_buffer->_array, 0, preTransformLength) != preTransformLength) {
