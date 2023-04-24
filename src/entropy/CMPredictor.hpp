@@ -17,7 +17,6 @@ limitations under the License.
 #ifndef _CMPredictor_
 #define _CMPredictor_
 
-#include "../util.hpp"
 #include "../Predictor.hpp"
 
 namespace kanzi

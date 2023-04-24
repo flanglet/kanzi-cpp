@@ -76,20 +76,23 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
             sizes[alphabet[0]] = 1;
             break;
         }
-        else {
-            // Sort ranks by increasing freqs (first key) and increasing value (second key)
-            for (int i = 0; i < count; i++)
-                ranks[i] = (freqs[alphabet[i]] << 8) | alphabet[i];
+   
+        // Sort ranks by increasing freqs (first key) and increasing value (second key)
+        for (int i = 0; i < count; i++)
+            ranks[i] = (freqs[alphabet[i]] << 8) | alphabet[i];
 
-            const uint maxCodeLen = computeCodeLengths(sizes, ranks, count);
+        const uint maxCodeLen = computeCodeLengths(sizes, ranks, count);
 
-            if (maxCodeLen <= HuffmanCommon::MAX_SYMBOL_SIZE) {
-                // Usual case
-                HuffmanCommon::generateCanonicalCodes(sizes, _codes, ranks, count);
-                break;
-            }
+        if (maxCodeLen == 0) {
+            throw invalid_argument("Could not generate Huffman codes: invalid code length 0");
         }
 
+        if (maxCodeLen <= HuffmanCommon::MAX_SYMBOL_SIZE) {
+            // Usual case
+            HuffmanCommon::generateCanonicalCodes(sizes, _codes, ranks, count);
+            break;
+        }
+  
         // Sometimes, codes exceed the budget for the max code length => scale down
         // and normalize frequencies (boost the smallest freqs) and try once more.
         if (retries > 2) {
@@ -100,6 +103,8 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
             throw invalid_argument(ss.str());
         }
 
+        retries++;
+        uint alpha[256] = { 0 };
         uint f[256];
         uint totalFreq = 0;
 
@@ -107,11 +112,6 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
             f[i] = freqs[alphabet[i]];
             totalFreq += f[i];
         }
-
-        // Copy alphabet (modified by normalizeFrequencies)
-        uint alpha[256];
-        memcpy(alpha, alphabet, sizeof(alphabet));
-        retries++;
 
         // Normalize to a smaller scale
         EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq,
@@ -137,7 +137,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
     return count;
 }
 
-uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count) THROW
+uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count)
 {
     vector<uint> v(ranks, ranks + count);
     sort(v.begin(), v.end());
@@ -146,6 +146,9 @@ uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count)
     for (int i = 0; i < count; i++) {
         freqs[i] = v[i] >> 8;
         ranks[i] = v[i] & 0xFF;
+
+        if (freqs[i] == 0)
+            return 0;
     }
 
     // See [In-Place Calculation of Minimum-Redundancy Codes]
@@ -156,9 +159,6 @@ uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count)
 
     for (int i = 0; i < count; i++) {
         const uint codeLen = freqs[i];
-
-        if (codeLen == 0)
-            throw invalid_argument("Could not generate Huffman codes: invalid code length 0");
 
         if (maxCodeLen < codeLen) {
             maxCodeLen = codeLen;

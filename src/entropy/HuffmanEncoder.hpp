@@ -33,7 +33,7 @@ namespace kanzi
        uint _codes[256];
        int _chunkSize;
 
-       uint computeCodeLengths(uint16 sizes[], uint sranks[], int count) THROW;
+       uint computeCodeLengths(uint16 sizes[], uint sranks[], int count);
 
        bool reset();
 
