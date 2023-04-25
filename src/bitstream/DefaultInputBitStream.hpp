@@ -31,7 +31,7 @@ namespace kanzi {
        InputStream& _is;
        byte* _buffer;
        int _position; // index of current byte (consumed if bitIndex == -1)
-       int _availBits; // bits not consumed in _current
+       uint _availBits; // bits not consumed in _current
        int64 _read;
        uint64 _current;
        bool _closed;
@@ -86,7 +86,7 @@ namespace kanzi {
        if ((count == 0) || (count > 64))
            throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
 
-       if (int(count) <= _availBits) {
+       if (count <= _availBits) {
            // Enough spots available in 'current'
            _availBits -= count;
            return (_current >> _availBits) & (uint64(-1) >> (64 - count));
@@ -110,7 +110,7 @@ namespace kanzi {
            if (_position + 7 > _maxPosition) {
                // End of stream: overshoot max position => adjust bit index
                uint shift = uint(_maxPosition - _position) * 8;
-               _availBits = int(shift + 8);
+               _availBits = shift + 8;
                uint64 val = 0;
 
                while (_position <= _maxPosition) {
