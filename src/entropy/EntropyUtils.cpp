@@ -214,7 +214,12 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
 
     // Create sorted queue of present symbols
     for (int i = 0; i < alphabetSize; i++) {
-        if (int(freqs[alphabet[i]]) != -inc) 
+        if (int(freqs[alphabet[i]]) == -inc)
+            continue;
+        
+        if (alphabetSize * freqs[alphabet[i]] >= scale)
+            queue.push_front(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
+        else
             queue.push_back(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
     }
 

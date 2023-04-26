@@ -82,14 +82,14 @@ int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
 
         for (uint i = startChunk; i < endChunk; i++) {
             _ctx = 1;
-            decodeBit(int(_p[_ctx] >> 4));
-            decodeBit(int(_p[_ctx] >> 4));
-            decodeBit(int(_p[_ctx] >> 4));
-            decodeBit(int(_p[_ctx] >> 4));
-            decodeBit(int(_p[_ctx] >> 4));
-            decodeBit(int(_p[_ctx] >> 4));
-            decodeBit(int(_p[_ctx] >> 4));
-            decodeBit(int(_p[_ctx] >> 4));
+            decodeBit(int(_p[_ctx]));
+            decodeBit(int(_p[_ctx]));
+            decodeBit(int(_p[_ctx]));
+            decodeBit(int(_p[_ctx]));
+            decodeBit(int(_p[_ctx]));
+            decodeBit(int(_p[_ctx]));
+            decodeBit(int(_p[_ctx]));
+            decodeBit(int(_p[_ctx]));
             block[i] = byte(_ctx);
             _p = _probs[(_ctx & 0xFF) >> 6];
         }

@@ -70,10 +70,10 @@ namespace kanzi
    {
        // Update probabilities
        if (bit == 0) {
-          _low = _low + ((((_high - _low) >> 4) * uint64(prob >> 4)) >> 8) + 1;
+          _low = _low + ((((_high - _low) >> 8) * uint64(prob)) >> 8) + 1;
           prob -= uint16(prob >> 6);
        } else  {
-          _high = _low + ((((_high - _low) >> 4) * uint64(prob >> 4)) >> 8);
+          _high = _low + ((((_high - _low) >> 8) * uint64(prob)) >> 8);
           prob -= uint16((prob - PSCALE + 64) >> 6);
        }
 

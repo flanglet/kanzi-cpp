@@ -71,7 +71,7 @@ namespace kanzi
    {
        // Calculate interval split
        // Written in a way to maximize accuracy of multiplication/division
-       const uint64 split = ((((_high - _low) >> 4) * uint64(prob)) >> 8) + _low;
+       const uint64 split = ((((_high - _low) >> 8) * uint64(prob)) >> 8) + _low;
        int bit;
 
        // Update probabilities
