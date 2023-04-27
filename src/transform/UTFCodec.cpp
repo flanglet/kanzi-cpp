@@ -45,16 +45,16 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     bool mustValidate = true;
-    
+
     if (_pCtx != nullptr) {
-        Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
+        Global::DataType dt = (Global::DataType)_pCtx->getInt("dataType", Global::UNDEFINED);
 
         if ((dt != Global::UNDEFINED) && (dt != Global::UTF8))
             return false;
-        
+
         mustValidate = dt != Global::UTF8;
     }
-            
+
     int start = 0;
 
     // First (possibly) invalid symbols (due to block truncation)
@@ -79,10 +79,10 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     for (int i = start; i < count - 4; ) {
         uint32 val;
         const int s = pack(&src[i], val);
-        
+
         if (s == 0) {
-           res = false;
-           break;
+            res = false;
+            break;
         }
 
         if (aliasMap[val] == 0) {
@@ -122,12 +122,12 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     for (int i = 0; i < n; i++) {
         estimate += int((i < 128) ? v[i].freq : 2 * v[i].freq);
         const uint32 s = v[i].val;
-        aliasMap[s] = i;
+        aliasMap[s] = (i < 128) ? i : 0x10080 | ((i << 1) & 0xFF00) | (i & 0x7F);
         dst[dstIdx] = byte(s >> 16);
         dst[dstIdx + 1] = byte(s >> 8);
         dst[dstIdx + 2] = byte(s);
         dstIdx += 3;
-   }
+    }
 
     if (estimate >= dstEnd) {
         // Not worth it
@@ -146,14 +146,10 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     while (srcIdx < count - 4) {
         uint32 val;
         srcIdx += pack(&src[srcIdx], val);
-        uint32 alias = aliasMap[val];
-
-        if (alias >= 128) {
-            dst[dstIdx++] = byte(alias | 0x80);
-            alias >>= 7;
-        }
-
+        const uint32 alias = aliasMap[val];
         dst[dstIdx++] = byte(alias);
+        dst[dstIdx] = byte(alias >> 8);
+        dstIdx += (alias >> 16);
     }
 
     dst[0] = byte(start);
@@ -178,7 +174,7 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     if (!SliceArray<byte>::isValid(input))
-       throw invalid_argument("UTFCodec: Invalid input block");
+        throw invalid_argument("UTFCodec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("UTFCodec: Invalid output block");
@@ -191,15 +187,15 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     // Protect against invalid map size value
     if ((n >= 32768) || (3 * n >= count))
-       return false;
+        return false;
 
-    #pragma pack(1)
+#pragma pack(1)
     struct symb {
-       uint32 val;
-       uint8 len;
+        uint32 val;
+        uint8 len;
     };
 
-    symb m[32768]; 
+    symb m[32768];
     int srcIdx = 4;
 
     // Build inverse mapping
@@ -226,7 +222,7 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         int alias = int(src[srcIdx++]);
 
         if (alias >= 128)
-           alias = (int(src[srcIdx++]) << 7) + (alias & 0x7F);
+            alias = (int(src[srcIdx++]) << 7) + (alias & 0x7F);
 
         symb& s = m[alias];
         memcpy(&dst[dstIdx], &s.val, 4);
@@ -242,7 +238,7 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 }
 
 
-bool UTFCodec::validate(byte block[], int count) 
+bool UTFCodec::validate(byte block[], int count)
 {
     uint freqs0[256] = { 0 };
     uint* freqs1 = new uint[65536];
@@ -265,7 +261,7 @@ bool UTFCodec::validate(byte block[], int count)
         f1[cur1]++;
         f2[cur2]++;
         f3[cur3]++;
-        freqs1[(prv  * 256) + cur0]++;
+        freqs1[(prv * 256) + cur0]++;
         freqs1[(cur0 * 256) + cur1]++;
         freqs1[(cur1 * 256) + cur2]++;
         freqs1[(cur2 * 256) + cur3]++;
@@ -281,7 +277,7 @@ bool UTFCodec::validate(byte block[], int count)
     for (int i = 0; i < 256; i++) {
         freqs0[i] += (f0[i] + f1[i] + f2[i] + f3[i]);
     }
-    
+
     // Check UTF-8
     // See Unicode 14 Standard - UTF-8 Table 3.7
     // U+0000..U+007F          00..7F
@@ -293,7 +289,6 @@ bool UTFCodec::validate(byte block[], int count)
     // U+10000..U+3FFFF        F0 90..BF 80..BF 80..BF
     // U+40000..U+FFFFF        F1..F3 80..BF 80..BF 80..BF
     // U+100000..U+10FFFF      F4 80..8F 80..BF 80..BF
-
     if ((freqs0[0xC0] > 0) || (freqs0[0xC1] > 0))
         return false;
 
@@ -301,7 +296,7 @@ bool UTFCodec::validate(byte block[], int count)
         if (freqs0[i] > 0)
             return false;
     }
-   
+
     int sum = 0;
 
     for (int i = 0; i < 256; i++) {
@@ -323,7 +318,7 @@ bool UTFCodec::validate(byte block[], int count)
 
         // Count non-primary bytes
         if ((i >= 0x80) && (i <= 0xBF))
-           sum += freqs0[i];
+            sum += freqs0[i];
     }
 
     delete[] freqs1;
@@ -331,4 +326,3 @@ bool UTFCodec::validate(byte block[], int count)
     // Ad-hoc threshold
     return sum >= (count / 4);
 }
-
