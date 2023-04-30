@@ -100,10 +100,9 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
 
     if (it == args.end()) {
         switch (_level) {
-        case 6:
+        case 7:
             _blockSize = 2 * DEFAULT_BLOCK_SIZE;
             break;
-        case 7:
         case 8:
             _blockSize = 4 * DEFAULT_BLOCK_SIZE;
             break;
