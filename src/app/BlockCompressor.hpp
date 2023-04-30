@@ -144,6 +144,7 @@ namespace kanzi {
        std::string _codec;
        std::string _transform;
        int _blockSize;
+       bool _autoBlockSize; // derive block size from input size and jobs
        int _level; // command line compression level
        int _jobs;
        std::vector<Listener*> _listeners;

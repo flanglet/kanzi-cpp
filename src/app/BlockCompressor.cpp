@@ -195,7 +195,6 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
 
     _jobs = concurrency;
 
-
     it = args.find("fileReorder");
 
     if (it == args.end()) {
@@ -215,6 +214,16 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     else {
         string str = it->second;
         _noDotFile = str == STR_TRUE;
+        args.erase(it);
+    }
+
+    it = args.find("autoBlock");
+
+    if (it == args.end()) {
+        _autoBlockSize = false;
+    }
+    else {
+        _autoBlockSize = it->second == STR_TRUE;
         args.erase(it);
     }
 
@@ -279,7 +288,11 @@ int BlockCompressor::compress(uint64& outputSize)
     }
 
     if (_verbosity > 2) {
-        ss << "Block size set to " << _blockSize << " bytes";
+        if (_autoBlockSize == true)
+            ss << "Block size set to 'auto'";
+        else
+            ss << "Block size set to " << _blockSize << " bytes";
+
         log.println(ss.str().c_str(), true);
         ss.str(string());
         ss << "Verbosity set to " << _verbosity;
@@ -388,7 +401,6 @@ int BlockCompressor::compress(uint64& outputSize)
 #endif
     ctx.putInt("verbosity", _verbosity);
     ctx.putInt("overwrite", (_overwrite == true) ? 1 : 0);
-    ctx.putInt("blockSize", _blockSize);
     ctx.putString("skipBlocks", (_skipBlocks == true) ? STR_TRUE : STR_FALSE);
     ctx.putString("checksum", (_checksum == true) ? STR_TRUE : STR_FALSE);
     ctx.putString("codec", _codec);
@@ -404,6 +416,12 @@ int BlockCompressor::compress(uint64& outputSize)
             iName = files[0].fullPath();
             ctx.putLong("fileSize", files[0]._size);
 
+            // Set the block size to optimize compression ratio when possible
+            if ((_autoBlockSize == true) && (_jobs > 0)) {
+                const int64 bl = files[0]._size / _jobs;
+                _blockSize = int(max(min((bl + 63) & ~63, MAX_BLOCK_SIZE), MIN_BLOCK_SIZE));
+            }
+
             if (oName.length() == 0) {
                 oName = iName + ".knz";
             }
@@ -414,6 +432,7 @@ int BlockCompressor::compress(uint64& outputSize)
 
         ctx.putString("inputName", iName);
         ctx.putString("outputName", oName);
+        ctx.putInt("blockSize", _blockSize);
         ctx.putInt("jobs", _jobs);
         FileCompressTask<FileCompressResult> task(ctx, _listeners);
         FileCompressResult fcr = task.run();
@@ -446,10 +465,17 @@ int BlockCompressor::compress(uint64& outputSize)
                 oName = formattedOutName + iName.substr(formattedInName.size()) + ".knz";
             }
 
+            // Set the block size to optimize compression ratio when possible
+            if ((_autoBlockSize == true) && (_jobs > 0)) {
+                const int64 bl = files[i]._size / _jobs;
+                _blockSize = int(max(min((bl + 63) & ~63, MAX_BLOCK_SIZE), MIN_BLOCK_SIZE));
+            }
+
             Context taskCtx(ctx);
             taskCtx.putLong("fileSize", files[i]._size);
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
+            taskCtx.putInt("blockSize", _blockSize);
             taskCtx.putInt("jobs", jobsPerTask[n++]);
             ss.str(string());
             FileCompressTask<FileCompressResult>* task = new FileCompressTask<FileCompressResult>(taskCtx, _listeners);

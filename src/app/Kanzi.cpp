@@ -175,6 +175,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     string strNoDotFile = STR_FALSE;
     string codec;
     string transf;
+    bool autoBlockSize = false;
     int verbose = 1;
     int ctx = -1;
     int level = -1;
@@ -552,7 +553,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             string name = (arg.compare(0, 8, "--block=") == 0) ? arg.substr(8) : arg;
             name = trim(name);
 
-            if (strBlockSize != "") {
+            if ((strBlockSize != "") || (autoBlockSize == true)) {
                 cout << "Warning: ignoring duplicate block size: " << name << endl;
                 ctx = -1;
                 continue;
@@ -588,31 +589,36 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 return Error::ERR_INVALID_PARAM;
             }
 
-            uint64 bk;
-            stringstream ss1;
-            ss1 << name;
-            ss1 >> bk;
+            if (name == "AUTO") {
+                autoBlockSize = true;
+            }
+            else {
+                uint64 bk;
+                stringstream ss1;
+                ss1 << name;
+                ss1 >> bk;
 
-            if (scale != 1) {
-                k = 0;
+                if (scale != 1) {
+                    k = 0;
 
-                while ((k < name.length()) && ((name[k] >= '0') && (name[k] <= '9')))
-                    k++;
+                    while ((k < name.length()) && ((name[k] >= '0') && (name[k] <= '9')))
+                        k++;
 		
-                if (k < name.length()) {
+                    if (k < name.length()) {
+                        cerr << "Invalid block size provided on command line: " << arg << endl;
+                        return Error::ERR_INVALID_PARAM;
+                    }
+                }
+
+                bk *= scale;
+                stringstream ss2;
+                ss2 << bk;
+                ss2 >> strBlockSize;
+
+                if ((scale == 1) && (strBlockSize.compare(ss1.str()) != 0)) {
                     cerr << "Invalid block size provided on command line: " << arg << endl;
                     return Error::ERR_INVALID_PARAM;
                 }
-            }
-
-            bk *= scale;
-            stringstream ss2;
-            ss2 << bk;
-            ss2 >> strBlockSize;
-
-            if ((scale == 1) && (strBlockSize.compare(ss1.str()) != 0)) {
-                cerr << "Invalid block size provided on command line: " << arg << endl;
-                return Error::ERR_INVALID_PARAM;
             }
 
             ctx = -1;
@@ -733,6 +739,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
     if (strBlockSize.length() > 0)
         map["block"] = strBlockSize;
+
+    if (autoBlockSize == true)
+        map["autoBlock"] = STR_TRUE;
 
     map["verbose"] = (strVerbose == "") ? "1" : strVerbose;
     map["mode"] = mode;
