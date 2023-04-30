@@ -419,7 +419,7 @@ int BlockCompressor::compress(uint64& outputSize)
             // Set the block size to optimize compression ratio when possible
             if ((_autoBlockSize == true) && (_jobs > 0)) {
                 const int64 bl = files[0]._size / _jobs;
-                _blockSize = int(max(min((bl + 63) & ~63, MAX_BLOCK_SIZE), MIN_BLOCK_SIZE));
+                _blockSize = int(max(min((bl + 63) & ~63, int64(MAX_BLOCK_SIZE)), int64(MIN_BLOCK_SIZE)));
             }
 
             if (oName.length() == 0) {
@@ -468,7 +468,7 @@ int BlockCompressor::compress(uint64& outputSize)
             // Set the block size to optimize compression ratio when possible
             if ((_autoBlockSize == true) && (_jobs > 0)) {
                 const int64 bl = files[i]._size / _jobs;
-                _blockSize = int(max(min((bl + 63) & ~63, MAX_BLOCK_SIZE), MIN_BLOCK_SIZE));
+                _blockSize = int(max(min((bl + 63) & ~63, int64(MAX_BLOCK_SIZE)), int64(MIN_BLOCK_SIZE)));
             }
 
             Context taskCtx(ctx);
