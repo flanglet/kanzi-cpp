@@ -57,13 +57,8 @@ bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
     if (input._array == output._array)
         return false;
 
-    if (count > MAX_BLOCK_SIZE) {
-        // Not a recoverable error: instead of silently fail the transform,
-        // issue a fatal error.
-        stringstream ss;
-        ss << "The max ROLZ codec block size is " << MAX_BLOCK_SIZE << ", got " << count;
-        throw invalid_argument(ss.str());
-    }
+    if (count > MAX_BLOCK_SIZE)
+        return false;
 
     return _delegate->forward(input, output, count);
 }
@@ -82,13 +77,8 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
     if (input._array == output._array)
         return false;
 
-    if (count > MAX_BLOCK_SIZE) {
-        // Not a recoverable error: instead of silently fail the transform,
-        // issue a fatal error.
-        stringstream ss;
-        ss << "The max ROLZ codec block size is " << MAX_BLOCK_SIZE << ", got " << count;
-        throw invalid_argument(ss.str());
-    }
+    if (count > MAX_BLOCK_SIZE)
+        return false;
 
     return _delegate->inverse(input, output, count);
 }
