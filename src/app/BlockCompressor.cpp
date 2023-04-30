@@ -99,10 +99,20 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     it = args.find("block");
 
     if (it == args.end()) {
-        if (_level < 7)
+        switch (_level) {
+        case 6:
+            _blockSize = 2 * DEFAULT_BLOCK_SIZE;
+            break;
+        case 7:
+        case 8:
+            _blockSize = 4 * DEFAULT_BLOCK_SIZE;
+            break;
+        case 9:
+            _blockSize = 8 * DEFAULT_BLOCK_SIZE;
+            break;
+        default:
             _blockSize = DEFAULT_BLOCK_SIZE;
-        else // level 7 or 8
-            _blockSize = (_level >= 9) ? 4 * DEFAULT_BLOCK_SIZE : 2 * DEFAULT_BLOCK_SIZE;
+        }
     }
     else {
         string strBlkSz = it->second;
