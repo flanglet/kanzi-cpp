@@ -162,12 +162,10 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
     byte* src = reinterpret_cast<byte*>(words);
 
     for (int i = 0; ((i < dictSize) && (nbWords < maxWords)); i++) {
-        const byte b = src[i];
-
-        if (isText(b) == false)
+        if (isText(src[i]) == false)
             continue;
 
-        if (isUpperCase(b)) {
+        if (isUpperCase(src[i])) {
             if (i > delimAnchor) {
                 dict[nbWords] = DictEntry(&src[delimAnchor], h, nbWords, i - delimAnchor);
                 nbWords++;
@@ -757,20 +755,20 @@ int TextCodec1::emitWordIndex(byte dst[], int val)
 
 bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
+    reset(output._length);
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    int srcIdx = 0;
+    _isCRLF = int(src[0] & TextCodec::MASK_CRLF) != 0;
+    int srcIdx = 1;
     int dstIdx = 0;
-    reset(output._length);
     const int srcEnd = count;
     const int dstEnd = output._length;
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
     int words = _staticDictSize;
     bool wordRun = false;
-    _isCRLF = int(src[srcIdx++] & TextCodec::MASK_CRLF) != 0;
 
     while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
-        byte cur = src[srcIdx];
+        const byte cur = src[srcIdx];
 
         if (TextCodec::isText(cur)) {
             dst[dstIdx] = cur;
@@ -833,15 +831,15 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             int idx = int(src[srcIdx++]);
 
             if (idx >= 128) {
-                idx &= 0x7F;
-                int idx2 = int(src[srcIdx++]);
+                const int idx2 = int(src[srcIdx++]);
 
                 if (idx2 >= 128) {
-                    idx = ((idx & 0x1F) << 7) | (idx2 & 0x7F);
-                    idx2 = int(src[srcIdx++]);
+                    idx = ((idx & 0x1F) << 14) | ((idx2 & 0x7F) << 7) | int(src[srcIdx]);
+                    srcIdx++;
                 }
-
-                idx = (idx << 7) | idx2;
+                else {
+                    idx = ((idx & 0x7F) << 7) | idx2;
+	        }
 
                 if (idx >= _dictSize)
                     break;
@@ -1253,20 +1251,20 @@ int TextCodec2::emitWordIndex(byte dst[], int val, int mask)
 
 bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
+    reset(output._length);
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    int srcIdx = 0;
+    _isCRLF = (src[0] & TextCodec::MASK_CRLF) != byte(0);
+    int srcIdx = 1;
     int dstIdx = 0;
-    reset(output._length);
     const int srcEnd = count;
     const int dstEnd = output._length;
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
     int words = _staticDictSize;
     bool wordRun = false;
-    _isCRLF = (src[srcIdx++] & TextCodec::MASK_CRLF) != byte(0);
 
     while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
-        byte cur = src[srcIdx];
+        const byte cur = src[srcIdx];
 
         if (TextCodec::isText(cur)) {
             dst[dstIdx] = cur;
@@ -1329,14 +1327,15 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             int idx = int(cur & TextCodec::MASK_1F);
 
             if ((cur & TextCodec::MASK_40) != byte(0)) {
-                int idx2 = int(src[srcIdx++]);
+                const int idx2 = int(src[srcIdx++]);
 
                 if (idx2 >= 128) {
-                    idx = (idx << 7) | (idx2 & 0x7F);
-                    idx2 = int(src[srcIdx++]);
+                    idx = (idx << 14) | ((idx2 & 0x7F) << 7) | int(src[srcIdx]);
+                    srcIdx++;
                 }
-
-                idx = (idx << 7) | idx2;
+                else {
+                    idx = (idx << 7) | idx2;
+		}
 
                 if (idx >= _dictSize)
                     break;
