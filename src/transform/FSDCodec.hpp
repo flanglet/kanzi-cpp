@@ -49,7 +49,8 @@ namespace kanzi {
        static const byte ESCAPE_TOKEN = byte(255);
        static const byte DELTA_CODING = byte(0);
        static const byte XOR_CODING = byte(1);
-       static const uint8 ZIGZAG[255];
+       static const uint8 ZIGZAG1[256];
+       static const int8 ZIGZAG2[256];
 
        Context* _pCtx;
    };

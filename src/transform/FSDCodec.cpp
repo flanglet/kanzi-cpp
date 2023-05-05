@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <cstring>
+
 #include "FSDCodec.hpp"
 #include "../Global.hpp"
 #include "../Magic.hpp"
@@ -20,7 +22,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-const uint8 FSDCodec::ZIGZAG[255] = {
+const uint8 FSDCodec::ZIGZAG1[256] = {
 	   253,   251,   249,   247,   245,   243,   241,   239,
 	   237,   235,   233,   231,   229,   227,   225,   223,
 	   221,   219,   217,   215,   213,   211,   209,   207,
@@ -52,9 +54,44 @@ const uint8 FSDCodec::ZIGZAG[255] = {
 	   194,   196,   198,   200,   202,   204,   206,   208,
 	   210,   212,   214,   216,   218,   220,   222,   224,
 	   226,   228,   230,   232,   234,   236,   238,   240,
-	   242,   244,   246,   248,   250,   252,   254
+	   242,   244,   246,   248,   250,   252,   254,   255,
 };
 
+
+const int8 FSDCodec::ZIGZAG2[256] = {
+             0,    -1,     1,    -2,     2,     -3,    3,    -4,
+             4,    -5,     5,    -6,     6,     -7,    7,    -8,
+             8,    -9,     9,   -10,    10,    -11,   11,   -12,
+            12,   -13,    13,   -14,    14,    -15,   15,   -16,
+            16,   -17,    17,   -18,    18,    -19,   19,   -20,
+            20,   -21,    21,   -22,    22,    -23,   23,   -24,
+            24,   -25,    25,   -26,    26,    -27,   27,   -28,
+            28,   -29,    29,   -30,    30,    -31,   31,   -32,
+            32,   -33,    33,   -34,    34,    -35,   35,   -36,
+            36,   -37,    37,   -38,    38,    -39,   39,   -40,
+            40,   -41,    41,   -42,    42,    -43,   43,   -44,
+            44,   -45,    45,   -46,    46,    -47,   47,   -48,
+            48,   -49,    49,   -50,    50,    -51,   51,   -52,
+            52,   -53,    53,   -54,    54,    -55,   55,   -56,
+            56,   -57,    57,   -58,    58,    -59,   59,   -60,
+            60,   -61,    61,   -62,    62,    -63,   63,   -64,
+            64,   -65,    65,   -66,    66,    -67,   67,   -68,
+            68,   -69,    69,   -70,    70,    -71,   71,   -72,
+            72,   -73,    73,   -74,    74,    -75,   75,   -76,
+            76,   -77,    77,   -78,    78,    -79,   79,   -80,
+            80,   -81,    81,   -82,    82,    -83,   83,   -84,
+            84,   -85,    85,   -86,    86,    -87,   87,   -88,
+            88,   -89,    89,   -90,    90,    -91,   91,   -92,
+            92,   -93,    93,   -94,    94,    -95,   95,   -96,
+            96,   -97,    97,   -98,    98,    -99,   99,  -100,
+           100,  -101,   101,  -102,   102,   -103,  103,  -104,
+           104,  -105,   105,  -106,   106,   -107,  107,  -108,
+           108,  -109,   109,  -110,   110,   -111,  111,  -112,
+           112,  -113,   113,  -114,   114,   -115,  115,  -116,
+           116,  -117,   117,  -118,   118,   -119,  119,  -120,
+           120,  -121,   121,  -122,   122,   -123,  123,  -124,
+           124,  -125,   125,  -126,   126,   -127,  127,  -128,
+};
 
 bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
@@ -86,13 +123,6 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     byte* dst = &output._array[output._index];
     byte* src = &input._array[input._index];
-    const int srcEnd = count;
-    const int dstEnd = getMaxEncodedLength(count);
-    const int count5 = count / 5;
-    const int count10 = count / 10;
-    byte* in;
-    uint histo[6][256];
-    memset(&histo[0][0], 0, sizeof(uint) * 6 * 256);
     uint magic = Magic::getType(src);
 
     // Skip detection except for a few candidate types
@@ -108,55 +138,61 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
            return false;
     }
 
+    const int srcEnd = count;
+    const int dstEnd = getMaxEncodedLength(count);
+    const int count5 = count / 5;
+    const int count10 = count / 10;
+    uint histo[7][256];
+    memset(&histo[0][0], 0, sizeof(uint) * 7 * 256);
+
     // Check several step values on a sub-block (no memory allocation)
     // Sample 2 sub-blocks
-    in = &src[count5 * 3];
+    const byte* in1 = &src[count5 * 1];
+    const byte* in2 = &src[count5 * 3];
 
     for (int i = 0; i < count10; i++) {
-        const byte b = in[i];
-        histo[0][int(b)]++;
-        histo[1][int(b ^ in[i - 1])]++;
-        histo[2][int(b ^ in[i - 2])]++;
-        histo[3][int(b ^ in[i - 3])]++;
-        histo[4][int(b ^ in[i - 4])]++;
-        histo[5][int(b ^ in[i - 8])]++;
-    }
-
-    in = &src[count5 * 1];
-
-    for (int i = 0; i < count10; i++) {
-        const byte b = in[i];
-        histo[0][int(b)]++;
-        histo[1][int(b ^ in[i - 1])]++;
-        histo[2][int(b ^ in[i - 2])]++;
-        histo[3][int(b ^ in[i - 3])]++;
-        histo[4][int(b ^ in[i - 4])]++;
-        histo[5][int(b ^ in[i - 8])]++;
+        const byte b1 = in1[i];
+        histo[0][int(b1)]++;
+        histo[1][int(b1 ^ in1[i - 1])]++;
+        histo[2][int(b1 ^ in1[i - 2])]++;
+        histo[3][int(b1 ^ in1[i - 3])]++;
+        histo[4][int(b1 ^ in1[i - 4])]++;
+        histo[5][int(b1 ^ in1[i - 8])]++;
+        histo[6][int(b1 ^ in1[i - 16])]++;
+        const byte b2 = in2[i];
+        histo[0][int(b2)]++;
+        histo[1][int(b2 ^ in2[i - 1])]++;
+        histo[2][int(b2 ^ in2[i - 2])]++;
+        histo[3][int(b2 ^ in2[i - 3])]++;
+        histo[4][int(b2 ^ in2[i - 4])]++;
+        histo[5][int(b2 ^ in2[i - 8])]++;
+        histo[6][int(b2 ^ in2[i - 16])]++;
     }
 
     // Find if entropy is lower post transform
     int minIdx = 0;
-    int ent[6];
-    ent[0] = Global::computeFirstOrderEntropy1024(count5, histo[0]);
+    int ent[7];
 
-    for (int i = 1; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         ent[i] = Global::computeFirstOrderEntropy1024(count5, histo[i]);
 
         if (ent[i] < ent[minIdx])
             minIdx = i;
     }
 
-    if (_pCtx != nullptr) 
-        _pCtx->putInt("dataType", Global::detectSimpleType(count5, histo[0]));
-
     // If not better, quick exit
-    if (ent[minIdx] >= ent[0])
+    if (ent[minIdx] >= ent[0]) {
+        if (_pCtx != nullptr)
+            _pCtx->putInt("dataType", Global::detectSimpleType(count5, histo[0]));
+
         return false;
+    }
 
     if (_pCtx != nullptr)
        _pCtx->putInt("dataType", Global::MULTIMEDIA);
 
-    const int dist = (minIdx <= 4) ? minIdx : 8;
+    const int distances[7] = { 0, 1, 2, 3, 4, 8, 16 };
+    const int dist = distances[minIdx];
     int largeDeltas = 0;
 
     // Detect best coding by sampling for large deltas
@@ -185,7 +221,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             const int delta = int(src[srcIdx]) - int(src[srcIdx - dist]);
 
             if ((delta >= -127) && (delta <= 127)) {
-                dst[dstIdx++] = byte(ZIGZAG[delta + 127]); // zigzag encode delta
+                dst[dstIdx++] = byte(ZIGZAG1[delta + 127]); // zigzag encode delta
                 srcIdx++;
                 continue;
             }
@@ -251,7 +287,7 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     const int dist = int(src[1]);
 
     // Sanity check
-    if ((dist < 1) || ((dist > 4) && (dist != 8)))
+    if ((dist < 1) || ((dist > 4) && (dist != 8) && (dist != 16)))
         return false;
 
     int srcIdx = 2;
@@ -265,8 +301,7 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (mode == DELTA_CODING) {
         while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
             if (src[srcIdx] != ESCAPE_TOKEN) {
-                const int delta = int(src[srcIdx] >> 1) ^ -int((src[srcIdx] & byte(1))); // zigzag decode delta
-                dst[dstIdx] = byte(int(dst[dstIdx - dist]) + delta);
+                dst[dstIdx] = byte(int(dst[dstIdx - dist]) + ZIGZAG2[int(src[srcIdx])]);
                 srcIdx++;
                 dstIdx++;
                 continue;
