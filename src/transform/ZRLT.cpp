@@ -100,7 +100,7 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
 
     input._index = srcIdx;
     output._index = dstIdx;
-    return res & (srcIdx == srcEnd);
+    return res && (srcIdx == srcEnd);
 }
 
 bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
