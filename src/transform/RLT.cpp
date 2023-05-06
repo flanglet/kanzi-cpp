@@ -13,8 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <cstring>
+
 #include "RLT.hpp"
 #include "../Global.hpp"
+
 
 using namespace kanzi;
 using namespace std;
@@ -38,9 +41,10 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-	
+    Global::DataType dt = Global::UNDEFINED;
+
     if (_pCtx != nullptr) {
-        Global::DataType dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
+        dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
 
         if ((dt == Global::DNA) || (dt == Global::BASE64) || (dt == Global::UTF8))
             return false;
@@ -48,13 +52,16 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     uint freqs[256] = { 0 };
     Global::computeHistogram(&src[0], length, freqs);
-    Global::DataType dt = Global::detectSimpleType(length, freqs);
 
-    if ((_pCtx != nullptr) && (dt != Global::UNDEFINED))
-        _pCtx->putInt("dataType", dt);
+    if (dt == Global::UNDEFINED) {
+        dt = Global::detectSimpleType(length, freqs);
 
-    if ((dt == Global::DNA) || (dt == Global::BASE64) || (dt == Global::UTF8))
-        return false;
+        if ((_pCtx != nullptr) && (dt != Global::UNDEFINED))
+            _pCtx->putInt("dataType", dt);
+
+        if ((dt == Global::DNA) || (dt == Global::BASE64) || (dt == Global::UTF8))
+            return false;
+    }
 
     int minIdx = 0;
 
@@ -184,10 +191,9 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         res &= (srcIdx == srcEnd);
     }
 
-    res &= (dstIdx < srcIdx);
     input._index += srcIdx;
     output._index += dstIdx;
-    return res;
+    return res && (dstIdx < srcIdx);
 }
 
 int RLT::emitRunLength(byte dst[], int length, int run, byte escape, byte val) {
@@ -324,5 +330,5 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     input._index += srcIdx;
     output._index += dstIdx;
-    return res & (srcIdx == srcEnd);
+    return res && (srcIdx == srcEnd);
 }
