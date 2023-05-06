@@ -17,8 +17,9 @@ limitations under the License.
 #ifndef _BWT_
 #define _BWT_
 
-#include "../Transform.hpp"
 #include "../concurrent.hpp"
+#include "../Context.hpp"
+#include "../Transform.hpp"
 #include "DivSufSort.hpp"
 
 
@@ -77,7 +78,7 @@ namespace kanzi {
            int* primaryIndexes, int total, int start, int ckSize, int firstChunk, int lastChunk);
        ~InverseBiPSIv2Task() {}
 
-       T run() THROW;
+       T run();
    };
 
    class BWT FINAL : public Transform<byte> {
@@ -94,6 +95,7 @@ namespace kanzi {
        int _primaryIndexes[8];
        DivSufSort _saAlgo;
        int _jobs;
+       ThreadPool* _pool;
 
        bool inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int count);
 
@@ -103,6 +105,8 @@ namespace kanzi {
        static const int MASK_FASTBITS = (1 << NB_FASTBITS) - 1;
 
        BWT(int jobs = 1);
+
+       BWT(Context& ctx);
 
        ~BWT();
 

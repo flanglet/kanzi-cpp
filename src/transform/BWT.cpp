@@ -29,18 +29,40 @@ using namespace std;
 
 BWT::BWT(int jobs) THROW
 {
-    if (jobs < 1)
-        throw invalid_argument("The number of jobs must be at least 1");
-
     _buffer = nullptr;
     _sa = nullptr;
     _bufferSize = 0;
 
-#ifndef CONCURRENCY_ENABLED
+#ifdef CONCURRENCY_ENABLED
+    if (jobs < 1)
+        throw invalid_argument("The number of jobs must be at least 1");
+#else
     if (jobs != 1)
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
+    _pool = nullptr;
+    _jobs = jobs;
+    memset(_primaryIndexes, 0, sizeof(int) * 8);
+}
+
+
+BWT::BWT(Context& ctx) THROW
+{
+    _buffer = nullptr;
+    _sa = nullptr;
+    _bufferSize = 0;
+    int jobs = ctx.getInt("jobs", 1);
+
+#ifdef CONCURRENCY_ENABLED
+    if (jobs < 1)
+        throw invalid_argument("The number of jobs must be at least 1");
+#else
+    if (jobs != 1)
+        throw invalid_argument("The number of jobs is limited to 1 in this version");
+#endif
+
+    _pool = ctx.getPool(); // can be null
     _jobs = jobs;
     memset(_primaryIndexes, 0, sizeof(int) * 8);
 }
@@ -74,13 +96,8 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("BWT: Invalid output block");
 
-    if (count > MAX_BLOCK_SIZE) {
-        // Not a recoverable error: instead of silently fail the transform,
-        // issue a fatal error.
-        stringstream ss;
-        ss << "The max BWT block size is " << MAX_BLOCK_SIZE << ", got " << count;
-        throw invalid_argument(ss.str());
-    }
+    if (count > MAX_BLOCK_SIZE)
+        return false;
 
     if (count < 2) {
         if (count == 1)
@@ -387,7 +404,12 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
             InverseBiPSIv2Task<int>* task = new InverseBiPSIv2Task<int>(_buffer, buckets, fastBits, dst, _primaryIndexes,
                 count, c * ckSize, ckSize, c, c + jobsPerTask[j]);
             tasks.push_back(task);
-            futures.push_back(async(launch::async, &InverseBiPSIv2Task<int>::run, task));
+
+            if (_pool == nullptr)
+               futures.push_back(async(launch::async, &InverseBiPSIv2Task<int>::run, task));
+            else
+               futures.push_back(_pool->schedule(&InverseBiPSIv2Task<int>::run, task));
+
             c += jobsPerTask[j];
         }
 
@@ -431,7 +453,7 @@ InverseBiPSIv2Task<T>::InverseBiPSIv2Task(uint* buf, uint* buckets, uint16* fast
 }
 
 template <class T>
-T InverseBiPSIv2Task<T>::run() THROW
+T InverseBiPSIv2Task<T>::run()
 {
     int shift = 0;
 

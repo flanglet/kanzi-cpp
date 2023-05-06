@@ -20,8 +20,7 @@ using namespace kanzi;
 
 BWTBlockCodec::BWTBlockCodec(Context& ctx)
 {
-	int jobs = ctx.getInt("jobs", 1);
-	_pBWT = new BWT(jobs);
+	_pBWT = new BWT(ctx);
 }
 
 // Return true if the compression chain succeeded. In this case, the input data
