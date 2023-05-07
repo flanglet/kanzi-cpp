@@ -87,7 +87,7 @@ namespace kanzi {
        static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB
        static const int NB_FASTBITS = 17;
        static const int BLOCK_SIZE_THRESHOLD1 = 256;
-       static const int BLOCK_SIZE_THRESHOLD2 = 8 * 1024 * 1024;
+       static const int BLOCK_SIZE_THRESHOLD2 = 2 * 1024 * 1024;
 
        uint* _buffer;
        int* _sa;
