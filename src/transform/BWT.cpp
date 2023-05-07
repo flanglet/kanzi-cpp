@@ -19,6 +19,7 @@ limitations under the License.
 
 #include "BWT.hpp"
 #include "../Global.hpp"
+#include "../util.hpp"
 
 #ifdef CONCURRENCY_ENABLED
 #include <future>
@@ -455,11 +456,12 @@ InverseBiPSIv2Task<T>::InverseBiPSIv2Task(uint* buf, uint* buckets, uint16* fast
 template <class T>
 T InverseBiPSIv2Task<T>::run()
 {
-    int shift = 0;
+    uint s = 0;
 
-    while ((_total >> shift) > BWT::MASK_FASTBITS)
-        shift++;
+    while ((_total >> s) > BWT::MASK_FASTBITS)
+        s++;
 
+    const uint shift = s;
     int c = _firstChunk;
 
     if (_start + 4 * _ckSize < _total) {
@@ -471,6 +473,10 @@ T InverseBiPSIv2Task<T>::run()
             uint p3 = _primaryIndexes[c + 3];
 
             for (int i = _start + 1; i <= end; i += 2) {
+                prefetchRead(&_data[p0]);
+                prefetchRead(&_data[p1]);
+                prefetchRead(&_data[p2]);
+                prefetchRead(&_data[p3]);
                 uint16 s0 = _fastBits[p0 >> shift];
                 uint16 s1 = _fastBits[p1 >> shift];
                 uint16 s2 = _fastBits[p2 >> shift];
@@ -490,8 +496,8 @@ T InverseBiPSIv2Task<T>::run()
 
                 _dst[i - 1] = byte(s0 >> 8);
                 _dst[i] = byte(s0);
-                _dst[_ckSize + i - 1] = byte(s1 >> 8);
-                _dst[_ckSize + i] = byte(s1);
+                _dst[1 * _ckSize + i - 1] = byte(s1 >> 8);
+                _dst[1 * _ckSize + i] = byte(s1);
                 _dst[2 * _ckSize + i - 1] = byte(s2 >> 8);
                 _dst[2 * _ckSize + i] = byte(s2);
                 _dst[3 * _ckSize + i - 1] = byte(s3 >> 8);
