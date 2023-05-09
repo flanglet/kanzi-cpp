@@ -40,7 +40,8 @@ namespace kanzi {
 
        int readFromInputStream(uint count) THROW;
 
-       void pullCurrent();
+       // return number of available bits
+       uint pullCurrent();
 
        void _close() THROW;
 
@@ -75,9 +76,10 @@ namespace kanzi {
    inline int DefaultInputBitStream::readBit() THROW
    {
        if (_availBits == 0)
-           pullCurrent(); // Triggers an exception if stream is closed
+           _availBits = pullCurrent() - 1; // Triggers an exception if stream is closed
+       else
+           _availBits--;
 
-       _availBits--;
        return int(_current >> _availBits) & 1;
    }
 
@@ -95,13 +97,12 @@ namespace kanzi {
        // Not enough spots available in 'current'
        count -= _availBits;
        const uint64 res = _current & ((uint64(1) << _availBits) - 1);
-       pullCurrent();
-       _availBits -= count;
+       _availBits = pullCurrent() - count;
        return (res << count) | (_current >> _availBits);
    }
 
    // Pull 64 bits of current value from buffer.
-   inline void DefaultInputBitStream::pullCurrent()
+   inline uint DefaultInputBitStream::pullCurrent()
    {
        if (_position + 7 > _maxPosition) {
            if (_position > _maxPosition)
@@ -119,14 +120,14 @@ namespace kanzi {
                }
 
                _current = val;
-               return;
+               return _availBits;
            }
        }
 
        // Regular processing, buffer length is multiple of 8
        _current = BigEndian::readLong64(&_buffer[_position]);
-       _availBits = 64;
        _position += 8;
+       return 64;
    }
 }
 #endif

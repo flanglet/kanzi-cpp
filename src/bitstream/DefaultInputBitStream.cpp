@@ -61,7 +61,7 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
     // Byte aligned cursor ?
     if ((_availBits & 7) == 0) {
         if (_availBits == 0)
-            pullCurrent();
+            _availBits = pullCurrent();
 
         // Empty _current
         while ((_availBits > 0) && (remaining >= 8)) {
@@ -94,15 +94,31 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
             remaining -= (r << 3);
         }
     }
-    else {
+    else if (remaining >= 64) {
         // Not byte aligned
         const uint r = 64 - _availBits;
 
+        while (remaining >= 256) {
+            const uint64 v1 = _current << r;
+            _availBits = pullCurrent() - r;
+            BigEndian::writeLong64(&bits[start], v1 | (_current >> _availBits));
+            const uint64 v2 = _current << r;
+            _availBits = pullCurrent() - r;
+            BigEndian::writeLong64(&bits[start + 8], v2 | (_current >> _availBits));
+            const uint64 v3 = _current << r;
+            _availBits = pullCurrent() - r;
+            BigEndian::writeLong64(&bits[start + 16], v3 | (_current >> _availBits));
+            const uint64 v4 = _current << r;
+            _availBits = pullCurrent() - r;
+            BigEndian::writeLong64(&bits[start + 24], v4 | (_current >> _availBits));
+            start += 32;
+            remaining -= 256;
+        }
+
         while (remaining >= 64) {
-            const uint64 v = _current;
-            pullCurrent();
-            _availBits -= r;
-            BigEndian::writeLong64(&bits[start], (v << r) | (_current >> _availBits));
+            const uint64 v = _current << r;
+            _availBits = pullCurrent() - r;
+            BigEndian::writeLong64(&bits[start], v | (_current >> _availBits));
             start += 8;
             remaining -= 64;
         }
