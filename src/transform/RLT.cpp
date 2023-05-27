@@ -94,9 +94,15 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     // Main loop
     while (true) {
         if (prev == src[srcIdx]) {
-            srcIdx++; run++;
+            const uint32 v = 0x01010101 * uint32(v);
 
-            if (prev == src[srcIdx]) {
+            if (memcmp(&v, &src[srcIdx], 4) == 0) {
+                srcIdx += 4; run += 4;
+
+                if ((run < MAX_RUN4) && (srcIdx < srcEnd4))
+                    continue;
+            }
+            else if (prev == src[srcIdx]) {
                 srcIdx++; run++;
 
                 if (prev == src[srcIdx]) {
