@@ -94,7 +94,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     // Main loop
     while (true) {
         if (prev == src[srcIdx]) {
-            const uint32 v = 0x01010101 * uint32(v);
+            const uint32 v = 0x01010101 * uint32(prev);
 
             if (memcmp(&v, &src[srcIdx], 4) == 0) {
                 srcIdx += 4; run += 4;
