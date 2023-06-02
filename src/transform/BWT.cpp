@@ -241,6 +241,15 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
 
             if (ptr7 < 0)
                 break;
+
+            prefetchRead(&_buffer[t0]);
+            prefetchRead(&_buffer[t1]);
+            prefetchRead(&_buffer[t2]);
+            prefetchRead(&_buffer[t3]);
+            prefetchRead(&_buffer[t4]);
+            prefetchRead(&_buffer[t5]);
+            prefetchRead(&_buffer[t6]);
+            prefetchRead(&_buffer[t7]);
         }
 
         while (n < ckSize) {
