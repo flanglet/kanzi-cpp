@@ -159,13 +159,7 @@ int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint count)
 
     while (startChunk < end) {
         const uint sizeChunk = min(sz, end - startChunk);
-        uint lr = _logRange;
-
-        // Lower log range if the size of the data chunk is small
-        while ((lr > 8) && (uint(1 << lr) > sizeChunk))
-            lr--;
-
-        const int alphabetSize = rebuildStatistics(&block[startChunk], sizeChunk, lr);
+        const int alphabetSize = rebuildStatistics(&block[startChunk], sizeChunk, _logRange);
 
         // Skip chunk if only one symbol
         if ((alphabetSize <= 1) && (_order == 0)) {
