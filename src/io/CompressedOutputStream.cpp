@@ -554,7 +554,7 @@ T EncodingTask<T>::run() THROW
         const int requiredSize = transform->getMaxEncodedLength(_blockLength);
 
         if (_blockLength >= 4) {
-           uint magic = Magic::getType(_data->_array);
+           uint magic = Magic::getType(&_data->_array[_data->_index]);
 
            if (Magic::isCompressed(magic) == true)
                _ctx.putInt("dataType", Global::BIN);
@@ -571,9 +571,8 @@ T EncodingTask<T>::run() THROW
         }
 
         // Forward transform (ignore error, encode skipFlags)
-        _buffer->_index = 0;
-
         // _data->_length is at least _blockLength
+        _buffer->_index = 0;
         transform->forward(*_data, *_buffer, _blockLength);
         const int nbTransforms = transform->getNbTransforms();
         const byte skipFlags = transform->getSkipFlags();
@@ -608,7 +607,7 @@ T EncodingTask<T>::run() THROW
         if (_data->_length < postTransformLength) {
             // Rare case where the transform expanded the input
             delete[] _data->_array;
-            _data->_length = max(1024, postTransformLength + (postTransformLength >> 5));
+            _data->_length = max(65536, postTransformLength + (postTransformLength >> 6));
             _data->_array = new byte[_data->_length];
         }
 
@@ -660,6 +659,14 @@ T EncodingTask<T>::run() THROW
         obs.close();
         uint64 written = obs.written();
 
+        if (_listeners.size() > 0) {
+            // Notify after entropy
+            Event evt(Event::AFTER_ENTROPY, _blockId,
+                int64((written + 7) >> 3), checksum, _hasher != nullptr, clock());
+
+            CompressedOutputStream::notifyListeners(_listeners, evt);
+        }
+
         // Lock free synchronization
         while (true) {
             const int taskId = _processedBlockId->load(memory_order_relaxed);
@@ -672,14 +679,6 @@ T EncodingTask<T>::run() THROW
 
             // Back-off improves performance
             CPU_PAUSE();
-        }
-
-        if (_listeners.size() > 0) {
-            // Notify after entropy
-            Event evt(Event::AFTER_ENTROPY, _blockId,
-                int64((written + 7) >> 3), checksum, _hasher != nullptr, clock());
-
-            CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
         // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
