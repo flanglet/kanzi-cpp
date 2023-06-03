@@ -34,7 +34,7 @@ uint64 compress1(byte block[], uint length)
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
-    CompressedOutputStream* cos = new CompressedOutputStream(ios, "HUFFMAN", "RLT+TEXT", blockSize, 1, false);
+    CompressedOutputStream* cos = new CompressedOutputStream(ios, "HUFFMAN", "RLT+TEXT", blockSize, false, 1);
     cos->write((const char*)block, length);
     cos->close();
     uint64 written = cos->getWritten();
@@ -115,7 +115,7 @@ uint64 compress3(byte block[], uint length)
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
-    CompressedOutputStream* cos = new CompressedOutputStream(ios, "FPAQ", "LZP+ZRLT", blockSize, 1, true);
+    CompressedOutputStream* cos = new CompressedOutputStream(ios, "FPAQ", "LZP+ZRLT", blockSize, true, 1);
     cos->write((const char*)block, length);
     cos->close();
     uint64 written = cos->getWritten();
@@ -151,7 +151,7 @@ uint64 compress4(byte block[], uint length)
         cout << "Test - write after close" << endl;
         stringbuf buffer;
         iostream os(&buffer);
-        cos = new CompressedOutputStream(os, "HUFFMAN", "TEXT", 4 * 1024 * 1024, 1, false);
+        cos = new CompressedOutputStream(os, "HUFFMAN", "TEXT", 4 * 1024 * 1024, false, 1);
         cos->write((const char*)block, length);
         cos->close();
         //cos->write((const char*) block, length);
@@ -178,7 +178,7 @@ uint64 compress5(byte block[], uint length)
         cout << "Test - read after close" << endl;
         stringbuf buffer;
         iostream ios(&buffer);
-        cos = new CompressedOutputStream(ios, "HUFFMAN", "TEXT", 4 * 1024 * 1024, 1, false);
+        cos = new CompressedOutputStream(ios, "HUFFMAN", "TEXT", 4 * 1024 * 1024, false, 1);
         cos->write((const char*)block, length);
         cos->close();
         ios.seekg(0);
