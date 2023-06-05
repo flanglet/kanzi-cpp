@@ -659,14 +659,6 @@ T EncodingTask<T>::run() THROW
         obs.close();
         uint64 written = obs.written();
 
-        if (_listeners.size() > 0) {
-            // Notify after entropy
-            Event evt(Event::AFTER_ENTROPY, _blockId,
-                int64((written + 7) >> 3), checksum, _hasher != nullptr, clock());
-
-            CompressedOutputStream::notifyListeners(_listeners, evt);
-        }
-
         // Lock free synchronization
         while (true) {
             const int taskId = _processedBlockId->load(memory_order_relaxed);
@@ -679,6 +671,14 @@ T EncodingTask<T>::run() THROW
 
             // Back-off improves performance
             CPU_PAUSE();
+        }
+
+        if (_listeners.size() > 0) {
+            // Notify after entropy
+            Event evt(Event::AFTER_ENTROPY, _blockId,
+                int64((written + 7) >> 3), checksum, _hasher != nullptr, clock());
+
+            CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
         // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
