@@ -245,19 +245,20 @@ namespace kanzi {
 
    inline int ROLZCodec1::emitLength(byte block[], int length)
    {
-       int idx = 0;
-
-       if (length >= 1 << 7) {
-           if (length >= 1 << 14) {
-               if (length >= 1 << 21)
-                   block[idx++] = byte(0x80 | (length >> 21));
-
-               block[idx++] = byte(0x80 | (length >> 14));
-           }
-
-           block[idx++] = byte(0x80 | (length >> 7));
+       if (length < 1 << 7) {
+           block[0] = byte(length);
+           return 1;
        }
 
+       int idx = 0;
+
+       if (length >= 1 << 14) {       
+            block[idx] = byte(0x80 | (length >> 21));
+            idx += ((length >= 1 << 21) ? 1 : 0);
+            block[idx++] = byte(0x80 | (length >> 14));
+        }
+
+       block[idx++] = byte(0x80 | (length >> 7));
        block[idx++] = byte(length & 0x7F);
        return idx;
    }
@@ -265,40 +266,51 @@ namespace kanzi {
    inline int ROLZCodec1::readLength(byte block[], int& pos)
    {
        int next = int(block[pos++]);
+
+       if (next < 128)
+          return next;
+
        int length = next & 0x7F;
+       next = int(block[pos++]);
+       length = (length << 7) | (next & 0x7F);
 
        if (next >= 128) {
            next = int(block[pos++]);
            length = (length << 7) | (next & 0x7F);
 
            if (next >= 128) {
-               next = int(block[pos++]);
-               length = (length << 7) | (next & 0x7F);
-
-               if (next >= 128) {
-                   next = int(block[pos++]);
-                   length = (length << 7) | (next & 0x7F);
-               }
+                next = int(block[pos++]);
+                length = (length << 7) | (next & 0x7F);
            }
        }
-
+ 
        return length;
    }
 
    inline int ROLZCodec::emitCopy(byte dst[], int dstIdx, int ref, int matchLen)
    {
-       while (matchLen >= 8) {
-           dst[dstIdx] = dst[ref];
-           dst[dstIdx + 1] = dst[ref + 1];
-           dst[dstIdx + 2] = dst[ref + 2];
-           dst[dstIdx + 3] = dst[ref + 3];
-           dst[dstIdx + 4] = dst[ref + 4];
-           dst[dstIdx + 5] = dst[ref + 5];
-           dst[dstIdx + 6] = dst[ref + 6];
-           dst[dstIdx + 7] = dst[ref + 7];
-           dstIdx += 8;
-           ref += 8;
-           matchLen -= 8;
+       if (dstIdx >= ref + 8) {
+           while (matchLen >= 8) {
+               memcpy(&dst[dstIdx], &dst[ref], 8);
+               dstIdx += 8;
+               ref += 8;
+               matchLen -= 8;
+           }
+       }
+       else {
+           while (matchLen >= 8) {
+               dst[dstIdx] = dst[ref];
+               dst[dstIdx + 1] = dst[ref + 1];
+               dst[dstIdx + 2] = dst[ref + 2];
+               dst[dstIdx + 3] = dst[ref + 3];
+               dst[dstIdx + 4] = dst[ref + 4];
+               dst[dstIdx + 5] = dst[ref + 5];
+               dst[dstIdx + 6] = dst[ref + 6];
+               dst[dstIdx + 7] = dst[ref + 7];
+               dstIdx += 8;
+               ref += 8;
+               matchLen -= 8;
+           }
        }
 
        while (matchLen != 0) {
