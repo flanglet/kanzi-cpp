@@ -46,7 +46,7 @@ bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     int codeStart = 0;
     int codeEnd = count - 8;
-    byte mode = detectType(&input._array[input._index], count - 8, codeStart, codeEnd);
+    byte mode = detectType(&input._array[input._index], count - 4, codeStart, codeEnd);
 
     if ((mode & NOT_EXE) != byte(0)) {
         if (_pCtx != nullptr)
