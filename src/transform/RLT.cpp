@@ -42,38 +42,53 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     Global::DataType dt = Global::UNDEFINED;
+    bool findBestEscape = true;
 
     if (_pCtx != nullptr) {
         dt = (Global::DataType) _pCtx->getInt("dataType", Global::UNDEFINED);
 
         if ((dt == Global::DNA) || (dt == Global::BASE64) || (dt == Global::UTF8))
             return false;
+
+        std::string entropyType = _pCtx->getString("codec");
+        transform(entropyType.begin(), entropyType.end(), entropyType.begin(), ::toupper);
+
+        // Fast track is fast entropy coder is used
+        if ((entropyType == "NONE") || (entropyType == "ANS0") ||
+            (entropyType == "HUFFMAN") || (entropyType == "RANGE"))
+            findBestEscape = false;
     }
 
-    uint freqs[256] = { 0 };
-    Global::computeHistogram(&src[0], length, freqs);
+    byte escape = DEFAULT_ESCAPE;
 
-    if (dt == Global::UNDEFINED) {
-        dt = Global::detectSimpleType(length, freqs);
+    if (findBestEscape == true) {
+        uint freqs[256] = { 0 };
+        Global::computeHistogram(&src[0], length, freqs);
 
-        if ((_pCtx != nullptr) && (dt != Global::UNDEFINED))
-            _pCtx->putInt("dataType", dt);
+        if (dt == Global::UNDEFINED) {
+            dt = Global::detectSimpleType(length, freqs);
 
-        if ((dt == Global::DNA) || (dt == Global::BASE64) || (dt == Global::UTF8))
-            return false;
-    }
+            if ((_pCtx != nullptr) && (dt != Global::UNDEFINED))
+                _pCtx->putInt("dataType", dt);
 
-    int minIdx = 0;
+            if ((dt == Global::DNA) || (dt == Global::BASE64) || (dt == Global::UTF8))
+                return false;
+        }
 
-    if (freqs[minIdx] > 0) {
-        for (int i = 1; i < 256; i++) {
-            if (freqs[i] < freqs[minIdx]) {
-                minIdx = i;
+        int minIdx = 0;
 
-                if (freqs[i] == 0)
-                    break;
+        if (freqs[minIdx] > 0) {
+            for (int i = 1; i < 256; i++) {
+                if (freqs[i] < freqs[minIdx]) {
+                    minIdx = i;
+
+                    if (freqs[i] == 0)
+                        break;
+                }
             }
         }
+
+        escape = byte(minIdx);
     }
 
     int srcIdx = 0;
@@ -82,7 +97,6 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     const int srcEnd4 = srcEnd - 4;
     const int dstEnd = output._length;
     bool res = true;
-    byte escape = byte(minIdx);
     int run = 0;
     byte prev = src[srcIdx++];
     dst[dstIdx++] = escape;
@@ -119,14 +133,12 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         }
 
         if (run > RUN_THRESHOLD) {
-            const int dIdx = emitRunLength(&dst[dstIdx], dstEnd - dstIdx, run, escape, prev);
-
-            if (dIdx < 0) {
-               res = false;
-               break;
+            if (dstIdx + 6 >= dstEnd) {
+                res = false;
+                break;
             }
 
-            dstIdx += dIdx;
+            dstIdx += emitRunLength(&dst[dstIdx], run, escape, prev);
         }
         else if (prev != escape) {
             if (dstIdx + run >= dstEnd) {
@@ -202,31 +214,20 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     return res && (dstIdx < srcIdx);
 }
 
-int RLT::emitRunLength(byte dst[], int length, int run, byte escape, byte val) {
-    int dstIdx = 1;
+int RLT::emitRunLength(byte dst[], int run, byte escape, byte val) {
     dst[0] = val;
-
-    if (val == escape) {
-        dst[1] = byte(0);
-        dstIdx = 2;
-    }
-
+    dst[1] = byte(0);
+    int dstIdx = (val == escape) ? 2 : 1;
     dst[dstIdx++] = escape;
     run -= RUN_THRESHOLD;
 
     // Encode run length
     if (run >= RUN_LEN_ENCODE1) {
         if (run < RUN_LEN_ENCODE2) {
-            if (dstIdx >= length - 2)
-                return -1;
-
             run -= RUN_LEN_ENCODE1;
             dst[dstIdx++] = byte(RUN_LEN_ENCODE1 + (run >> 8));
         }
         else {
-            if (dstIdx >= length - 3)
-                return -1;
-
             run -= RUN_LEN_ENCODE2;
             dst[dstIdx++] = byte(0xFF);
             dst[dstIdx++] = byte(run >> 8);
@@ -255,7 +256,7 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     const int srcEnd = srcIdx + length;
     const int dstEnd = output._length;
     bool res = true;
-    byte escape = src[srcIdx++];
+    const byte escape = src[srcIdx++];
 
     if (src[srcIdx] == escape) {
         srcIdx++;
@@ -273,8 +274,8 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         if (src[srcIdx] != escape) {
             // Literal
             if (dstIdx >= dstEnd) {
-                  res = false;
-                  break;
+                res = false;
+                break;
             }
 
             dst[dstIdx++] = src[srcIdx++];
