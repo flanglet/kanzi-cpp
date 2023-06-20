@@ -23,12 +23,12 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
+bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if (length == 0)
+    if (count == 0)
         return true;
 
-    if (length < MIN_BLOCK_LENGTH)
+    if (count < MIN_BLOCK_LENGTH)
         return false;
 
     if (!SliceArray<byte>::isValid(input))
@@ -37,7 +37,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("RLT: Invalid output block");
 
-    if (output._length - output._index < getMaxEncodedLength(length))
+    if (output._length - output._index < getMaxEncodedLength(count))
         return false;
 
     byte* src = &input._array[input._index];
@@ -54,7 +54,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
         std::string entropyType = _pCtx->getString("codec");
         transform(entropyType.begin(), entropyType.end(), entropyType.begin(), ::toupper);
 
-        // Fast track is fast entropy coder is used
+        // Fast track if fast entropy coder is used
         if ((entropyType == "NONE") || (entropyType == "ANS0") ||
             (entropyType == "HUFFMAN") || (entropyType == "RANGE"))
             findBestEscape = false;
@@ -64,10 +64,10 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     if (findBestEscape == true) {
         uint freqs[256] = { 0 };
-        Global::computeHistogram(&src[0], length, freqs);
+        Global::computeHistogram(&src[0], count, freqs);
 
         if (dt == Global::UNDEFINED) {
-            dt = Global::detectSimpleType(length, freqs);
+            dt = Global::detectSimpleType(count, freqs);
 
             if ((_pCtx != nullptr) && (dt != Global::UNDEFINED))
                 _pCtx->putInt("dataType", dt);
@@ -94,7 +94,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     int srcIdx = 0;
     int dstIdx = 0;
-    const int srcEnd = length;
+    const int srcEnd = count;
     const int srcEnd4 = srcEnd - 4;
     const int dstEnd = output._length;
     bool res = true;
@@ -239,9 +239,9 @@ int RLT::emitRunLength(byte dst[], int run, byte escape, byte val) {
     return dstIdx + 1;
 }
 
-bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
+bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
 {
-    if (length == 0)
+    if (count == 0)
         return true;
 
     if (!SliceArray<byte>::isValid(input))
@@ -254,7 +254,7 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;
-    const int srcEnd = srcIdx + length;
+    const int srcEnd = srcIdx + count;
     const int dstEnd = output._length;
     bool res = true;
     const byte escape = src[srcIdx++];

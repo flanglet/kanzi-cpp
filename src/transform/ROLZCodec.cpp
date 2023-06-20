@@ -872,7 +872,6 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const uint32 key = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&dst[dstIdx - dt]) : ROLZCodec::getKey2(&dst[dstIdx - dt]);
             int32* matches = &_matches[key << _logPosChecks];
             rd.setContext(LITERAL_CTX, dst[dstIdx - 1]);
-            prefetchRead(&_counters[key]);
             int val = rd.decode9Bits();
 
             if ((val >> 8) == LITERAL_FLAG) {
@@ -881,6 +880,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             else {
                 // Read one match length and index
                 const int matchLen = val & 0xFF;
+                prefetchRead(&_counters[key]);
 
                 // Sanity check
                 if (dstIdx + matchLen + 3 > dstEnd) {

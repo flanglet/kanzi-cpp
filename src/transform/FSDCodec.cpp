@@ -290,12 +290,10 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if ((dist < 1) || ((dist > 4) && (dist != 8) && (dist != 16)))
         return false;
 
-    int srcIdx = 2;
-    int dstIdx = 0;
-
     // Emit first bytes
-    for (int i = 0; i < dist; i++)
-        dst[dstIdx++] = src[srcIdx++];
+    memcpy(&dst[0], &src[2], dist);
+    int srcIdx = dist + 2;
+    int dstIdx = dist;
 
     // Recover original bytes
     if (mode == DELTA_CODING) {
