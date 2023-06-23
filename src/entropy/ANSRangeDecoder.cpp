@@ -103,7 +103,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
             // Read frequencies size for current chunk
             const int logMax = int(_bitstream.readBits(llr));
 
-            if ((1 << logMax) > scale) {
+            if (logMax > _logRange) {
                 stringstream ss;
                 ss << "Invalid bitstream: incorrect frequency size ";
                 ss << logMax << " in ANS range decoder";
@@ -240,22 +240,18 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
         int prv0 = 0, prv1 = 0, prv2 = 0, prv3 = 0;
 
         for ( ; i0 < quarter; i0++, i1++, i2++, i3++) {
-            ANSDecSymbol* symbols3 = &_symbols[prv3 << 8];
-            ANSDecSymbol* symbols2 = &_symbols[prv2 << 8];
-            ANSDecSymbol* symbols1 = &_symbols[prv1 << 8];
-            ANSDecSymbol* symbols0 = &_symbols[prv0 << 8];
             const uint8 cur3 = _f2s[(prv3 << _logRange) + (st3 & mask)];
             block[i3] = byte(cur3);
-            st3 = decodeSymbol(p, st3, symbols3[cur3], mask);
+            st3 = decodeSymbol(p, st3, _symbols[(prv3 << 8) | cur3], mask);
             const uint8 cur2 = _f2s[(prv2 << _logRange) + (st2 & mask)];
             block[i2] = byte(cur2);
-            st2 = decodeSymbol(p, st2, symbols2[cur2], mask);
+            st2 = decodeSymbol(p, st2, _symbols[(prv2 << 8) | cur2], mask);
             const uint8 cur1 = _f2s[(prv1 << _logRange) + (st1 & mask)];
             block[i1] = byte(cur1);
-            st1 = decodeSymbol(p, st1, symbols1[cur1], mask);
+            st1 = decodeSymbol(p, st1, _symbols[(prv1 << 8) | cur1], mask);
             const uint8 cur0 = _f2s[(prv0 << _logRange) + (st0 & mask)];
             block[i0] = byte(cur0);
-            st0 = decodeSymbol(p, st0, symbols0[cur0], mask);
+            st0 = decodeSymbol(p, st0, _symbols[(prv0 << 8) | cur0], mask);
             prv3 = cur3;
             prv2 = cur2;
             prv1 = cur1;
