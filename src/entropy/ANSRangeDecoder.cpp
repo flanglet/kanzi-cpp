@@ -101,7 +101,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
         // Decode all frequencies (but the first one) by chunks
         for (int i = 1; i < alphabetSize; i += chkSize) {
             // Read frequencies size for current chunk
-            const int logMax = int(_bitstream.readBits(llr));
+            const uint logMax = uint(_bitstream.readBits(llr));
 
             if (logMax > _logRange) {
                 stringstream ss;
