@@ -68,15 +68,6 @@ const int Global::LOG2_4096[257] = {
     32628, 32651, 32675, 32698, 32722, 32745, 32768
 };
 
-//  65536 /(1 + exp(-alpha*x)) with alpha ~= 0.54
-const int Global::INV_EXP[33] = {
-    0, 8, 22, 47, 88, 160, 283, 492,
-    848, 1451, 2459, 4117, 6766, 10819, 16608, 24127,
-    32768, 41409, 48928, 54717, 58770, 61419, 63077, 64085,
-    64688, 65044, 65253, 65376, 65448, 65489, 65514, 65528,
-    65536
-};
-
 char Global::BASE64_SYMBOLS[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -86,35 +77,38 @@ char Global::DNA_SYMBOLS[] = "acgntuACGNTU"; // either T or U and N for unknown
 
 const Global Global::_singleton;
 
-const int* Global::SQUASH = Global::initSquash(_singleton.SQUASH_BUFFER);
+int Global::SQUASH[4096];
 
-const int* Global::initSquash(int data[])
+int Global::STRETCH[4096];
+
+Global::Global()
 {
+    //  65536 /(1 + exp(-alpha*x)) with alpha ~= 0.54
+    const int INV_EXP[33] = {
+        0, 8, 22, 47, 88, 160, 283, 492,
+        848, 1451, 2459, 4117, 6766, 10819, 16608, 24127,
+        32768, 41409, 48928, 54717, 58770, 61419, 63077, 64085,
+        64688, 65044, 65253, 65376, 65448, 65489, 65514, 65528,
+        65536
+    };
+
     for (int x = 1; x < 4096; x++) {
         const int w = x & 127;
         const int y = x >> 7;
-        data[x - 1] = (INV_EXP[y] * (128 - w) + INV_EXP[y + 1] * w) >> 11;
+        SQUASH[x - 1] = (INV_EXP[y] * (128 - w) + INV_EXP[y + 1] * w) >> 11;
     }
 
-    data[4095] = 4095;
-    return data;
-}
-
-const int* Global::STRETCH = Global::initStretch(_singleton.STRETCH_BUFFER);
-
-const int* Global::initStretch(int data[])
-{
+    SQUASH[4095] = 4095;
     int n = 0;
 
     for (int x = -2047; (x <= 2047) && (n < 4096); x++) {
         const int sq = squash(x);
 
         while (n <= sq)
-            data[n++] = x;
+            STRETCH[n++] = x;
     }
 
-    data[4095] = 2047;
-    return data;
+    STRETCH[4095] = 2047;
 }
 
 // Return 1024 * log2(x). Max error is around 0.1%

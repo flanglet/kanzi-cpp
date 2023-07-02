@@ -27,14 +27,12 @@ namespace kanzi {
    public:
        enum DataType { UNDEFINED, TEXT, MULTIMEDIA, EXE, NUMERIC, BASE64, DNA, BIN, UTF8, SMALL_ALPHABET };
 
-       static const int INV_EXP[33]; //  65536 * 1/(1 + exp(-alpha*x)) with alpha = 0.54
        static const int LOG2_4096[257]; // 4096*Math.log2(x)
        static const int LOG2[256]; // int(Math.log2(x-1))
 
-       static const int* STRETCH;
-       static const int* SQUASH;
-
        static int squash(int d);
+
+       static int stretch(int d);
 
        static int log2(uint32 x) THROW; // fast, integer rounded
 
@@ -63,14 +61,12 @@ namespace kanzi {
        static void decodePair(int& x, int& y, int pair);
 
    private:
-       Global() { STRETCH_BUFFER = new int[4096]; SQUASH_BUFFER = new int[4096]; }
-       ~Global() { delete[] STRETCH_BUFFER; delete[] SQUASH_BUFFER; }
+       Global();
+       ~Global() {};
 
-       int* STRETCH_BUFFER;
-       int* SQUASH_BUFFER;
        static const Global _singleton;
-       static const int* initStretch(int data[]);
-       static const int* initSquash(int data[]);
+       static int STRETCH[4096];
+       static int SQUASH[4096];
        static char BASE64_SYMBOLS[];
        static char DNA_SYMBOLS[];
        static char NUMERIC_SYMBOLS[];
@@ -86,6 +82,10 @@ namespace kanzi {
        return (d <= -2048) ? 0 : SQUASH[d + 2047];
    }
 
+   inline int Global::stretch(int d)
+   {
+       return STRETCH[d];
+   }
 
    // x cannot be 0
    inline int Global::_log2(uint32 x)

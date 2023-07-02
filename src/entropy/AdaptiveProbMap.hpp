@@ -124,14 +124,14 @@ namespace kanzi {
 
        if (FAST == false) {
            _data[_index + 1] += (((g - int(_data[_index + 1])) >> RATE) + bit);
-           pr = Global::STRETCH[pr];
+           pr = Global::stretch(pr);
            _index = ((pr + 2048) >> 7) + 33 * ctx;
 
            // Return interpolated probabibility
            const uint16 w = uint16(pr & 127);
            return int(_data[_index] * (128 - w) + _data[_index + 1] * w) >> 11;
        } else {
-           _index = ((Global::STRETCH[pr] + 2048) >> 7) + 32 * ctx;
+           _index = ((Global::stretch(pr) + 2048) >> 7) + 32 * ctx;
            return int(_data[_index]) >> 4;
        }
    }

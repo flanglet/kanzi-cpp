@@ -262,25 +262,25 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
 
         while (n < ckSize) {
             const int ptr0 = _buffer[t0];
-            dst[n] = byte(ptr0);
+            d0[n] = byte(ptr0);
             t0 = ptr0 >> 8;
             const int ptr1 = _buffer[t1];
-            dst[n + ckSize * 1] = byte(ptr1);
+            d1[n] = byte(ptr1);
             t1 = ptr1 >> 8;
             const int ptr2 = _buffer[t2];
-            dst[n + ckSize * 2] = byte(ptr2);
+            d2[n] = byte(ptr2);
             t2 = ptr2 >> 8;
             const int ptr3 = _buffer[t3];
-            dst[n + ckSize * 3] = byte(ptr3);
+            d3[n] = byte(ptr3);
             t3 = ptr3 >> 8;
             const int ptr4 = _buffer[t4];
-            dst[n + ckSize * 4] = byte(ptr4);
+            d4[n] = byte(ptr4);
             t4 = ptr4 >> 8;
             const int ptr5 = _buffer[t5];
-            dst[n + ckSize * 5] = byte(ptr5);
+            d5[n] = byte(ptr5);
             t5 = ptr5 >> 8;
             const int ptr6 = _buffer[t6];
-            dst[n + ckSize * 6] = byte(ptr6);
+            d6[n] = byte(ptr6);
             t6 = ptr6 >> 8;
             n++;
         }
