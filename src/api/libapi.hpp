@@ -35,7 +35,7 @@ limitations under the License.
     *  Compression parameters
     */
    struct cData {
-	   char transform[64];      /* name of transforms  [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX]
+	   char transform[64];      /* name of transforms  [None|ALIAS|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX]
                                                       [RLT|ZRLT|MTFT|RANK|SRT|TEXT|FSD|EXE|UTF] */
 	   char entropy[16];        /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
 	   unsigned int blockSize;  /* size of block in bytes */

@@ -93,7 +93,9 @@ void printHelp(Printer& log, const string& mode)
 
    if (mode.compare(0, 1, "c") == 0) {
        log.println("   -b, --block=<size>", true);
-       log.println("        size of blocks (default 4|8|16 MB based on level, max 1 GB, min 1 KB).\n", true);
+       log.println("        size of blocks (default 4|8|16|32 MB based on level, max 1 GB, min 1 KB).\n", true);
+       log.println("        'auto' means that the compressor derives the best value\n", true);
+       log.println("        based on input size (when available) and number of jobs.\n", true);
        log.println("   -l, --level=<compression>", true);
        log.println("        set the compression level [0..9]", true);
        log.println("        Providing this option forces entropy and transform.", true);
@@ -112,7 +114,7 @@ void printHelp(Printer& log, const string& mode)
        log.println("        (default is ANS0)\n", true);
        log.println("   -t, --transform=<codec>", true);
        log.println("        transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
-       log.println("                  [MTFT|RANK|SRT|TEXT|FSD|EXE|UTF]", true);
+       log.println("                  [MTFT|RANK|SRT|TEXT|FSD|EXE|UTF|ALIAS]", true);
        log.println("        EG: BWT+RANK or BWTS+MTFT (default is BWT+RANK+ZRLT)\n", true);
        log.println("   -x, --checksum", true);
        log.println("        enable block checksum\n", true);
