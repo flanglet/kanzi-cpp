@@ -21,22 +21,23 @@ limitations under the License.
 #include "../Transform.hpp"
 
 namespace kanzi {
-    typedef struct ssAlias { uint32 val, freq; } sdAlias;
+    typedef struct ssAlias
+    {
+        uint32 val;
+        uint32 freq;
 
-    struct SortAliasRanks {
-        sdAlias* _symb;
+        ssAlias(uint32 v, uint32 f) : val(v), freq(f) { }
 
-        bool operator() (int i, int j) const
-        {
+        friend bool operator< (ssAlias const& lhs, ssAlias const& rhs) {
             int r;
-            return ((r = _symb[i].freq - _symb[j].freq) != 0) ? r > 0 : i > j;
+            return ((r = lhs.freq - rhs.freq) != 0) ? r > 0 : lhs.val > rhs.val;
         }
+    } sdAlias;
 
-        SortAliasRanks(sdAlias symb[]) { _symb = symb; }
-   };
 
-   // Simple codec replacing 2-byte symbols with 1-byte aliases whenever possible
-   class AliasCodec FINAL : public Transform<byte> {
+   // Simple codec replacing large symbols with small aliases whenever possible
+   class AliasCodec FINAL : public Transform<byte> 
+   {
 
    public:
        AliasCodec() { _pCtx = nullptr; }

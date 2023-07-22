@@ -165,7 +165,7 @@ void DefaultOutputBitStream::_close() THROW
     try {
         _os.flush();
 
-        if (!_os.good())
+        if (_os.bad())
             throw BitStreamException("Write to bitstream failed.", BitStreamException::INPUT_OUTPUT);
     }
     catch (ios_base::failure& e) {
@@ -195,7 +195,7 @@ void DefaultOutputBitStream::flush() THROW
         if (_position > 0) {
             _os.write(reinterpret_cast<char*>(_buffer), _position);
 
-            if (!_os.good())
+            if (_os.bad())
                 throw BitStreamException("Write to bitstream failed", BitStreamException::INPUT_OUTPUT);
 
             _written += (int64(_position) << 3);
