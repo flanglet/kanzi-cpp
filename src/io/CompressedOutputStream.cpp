@@ -604,10 +604,13 @@ T EncodingTask<T>::run() THROW
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
-        if (_data->_length < max(512 * 1024, postTransformLength + (postTransformLength >> 6))) {
-            // Rare case where the transform expanded the input
+        const int bufSize =  max(512 * 1024, max(postTransformLength, _blockLength + (_blockLength >> 3)));
+        
+        if (_data->_length < bufSize) {
+            // Rare case where the transform expanded the input or
+            // entropy coder may expand size.
             delete[] _data->_array;
-            _data->_length = max(512 * 1024, postTransformLength + (postTransformLength >> 6));
+            _data->_length = bufSize;
             _data->_array = new byte[_data->_length];
         }
 
