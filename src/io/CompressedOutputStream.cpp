@@ -604,10 +604,10 @@ T EncodingTask<T>::run() THROW
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
-        if (_data->_length < postTransformLength) {
+        if (_data->_length < max(512 * 1024, postTransformLength + (postTransformLength >> 6))) {
             // Rare case where the transform expanded the input
             delete[] _data->_array;
-            _data->_length = max(65536, postTransformLength + (postTransformLength >> 6));
+            _data->_length = max(512 * 1024, postTransformLength + (postTransformLength >> 6));
             _data->_array = new byte[_data->_length];
         }
 
