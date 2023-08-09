@@ -202,8 +202,8 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             dst[dstIdx++] = src[srcIdx++];
     }
 
-    input._index = srcIdx;
-    output._index = dstIdx;
+    input._index += srcIdx;
+    output._index += dstIdx;
     return dstIdx < count;
 }
 
@@ -325,7 +325,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
     }
 
-    output._index = dstIdx;
-    input._index = srcIdx;
+    input._index += srcIdx;
+    output._index += dstIdx;
     return true;
 }

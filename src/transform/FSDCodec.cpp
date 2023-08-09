@@ -255,8 +255,8 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (entropy >= ent[0])
         return false;
 
-    input._index = srcIdx;
-    output._index = dstIdx;
+    input._index += srcIdx;
+    output._index += dstIdx;
     return true; // Allowed to expand
 }
 
@@ -323,7 +323,7 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
     }
 
-    input._index = srcIdx;
-    output._index = dstIdx;
+    input._index += srcIdx;
+    output._index += dstIdx;
     return srcIdx == srcEnd;
 }

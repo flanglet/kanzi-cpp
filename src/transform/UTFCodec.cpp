@@ -232,8 +232,8 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     for (int i = srcEnd; i < count; i++)
         dst[dstIdx++] = src[srcIdx++];
 
-    input._index = srcIdx;
-    output._index = dstIdx;
+    input._index += srcIdx;
+    output._index += dstIdx;
     return srcIdx == count;
 }
 

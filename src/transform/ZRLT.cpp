@@ -98,8 +98,8 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
         dstIdx++;
     }
 
-    input._index = srcIdx;
-    output._index = dstIdx;
+    input._index += srcIdx;
+    output._index += dstIdx;
     return res && (srcIdx == srcEnd);
 }
 
@@ -179,7 +179,7 @@ End:
     while (dstIdx < end)
         dst[dstIdx++] = byte(0);
 
-    input._index = srcIdx;
-    output._index = dstIdx;
+    input._index += srcIdx;
+    output._index += dstIdx;
     return srcIdx == srcEnd;
 }
