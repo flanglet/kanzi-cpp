@@ -49,10 +49,10 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
     }
 
     it = args.find("inputName");
-    _inputName = it->second;
+    _inputName = (it->second == "") ? "STDIN" : it->second;
     args.erase(it);
     it = args.find("outputName");
-    _outputName = it->second;
+    _outputName = (it->second == "") ? "STDOUT" : it->second;
     args.erase(it);
     it = args.find("verbose");
     _verbosity = atoi(it->second.c_str());
@@ -133,7 +133,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     stringstream ss;
     string str = _inputName;
     transform(str.begin(), str.end(), str.begin(), ::toupper);
-    bool isStdIn = str.compare(0, 5, "STDIN") == 0;
+    bool isStdIn = str == "STDIN";
 
     if (isStdIn == false) {
         vector<string> errors;
@@ -163,6 +163,20 @@ int BlockDecompressor::decompress(uint64& inputSize)
         ss.str(string());
     }
 
+    string upperOutputName = _outputName;
+    transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), ::toupper);
+    bool isStdOut = upperOutputName == "STDOUT";
+
+    // Limit verbosity level when output is stdout
+    if (isStdOut == true)
+        _verbosity = 0;
+
+    // Limit verbosity level when files are processed concurrently
+    if ((_verbosity > 1) && (_jobs > 1) && (nbFiles > 1)) {
+        log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", _verbosity > 1);
+        _verbosity = 1;
+    }
+    
     if (_verbosity > 2) {
         ss << "Verbosity set to " << _verbosity;
         log.println(ss.str().c_str(), true);
@@ -175,12 +189,6 @@ int BlockDecompressor::decompress(uint64& inputSize)
         ss.str(string());
     }
 
-    // Limit verbosity level when files are processed concurrently
-    if ((_jobs > 1) && (nbFiles > 1) && (_verbosity > 1)) {
-        log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", _verbosity > 1);
-        _verbosity = 1;
-    }
-
     InfoPrinter listener(_verbosity, InfoPrinter::DECODING, cout);
 
     if (_verbosity > 2)
@@ -190,9 +198,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     bool inputIsDir = false;
     string formattedOutName = _outputName;
     string formattedInName = _inputName;
-    string upperOutputName = _outputName;
-    transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), ::toupper);
-    bool specialOutput = (upperOutputName.compare(0, 4, "NONE") == 0) || (upperOutputName.compare(0, 6, "STDOUT") == 0);
+    bool specialOutput = (isStdOut == true) || (upperOutputName == "NONE");
 
     // Need to strip path separator at the end to make 'stat()' happy
     if ((formattedOutName.size() > 1) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
@@ -214,7 +220,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         if ((buffer.st_mode & S_IFDIR) != 0) {
             inputIsDir = true;
 
-            if (formattedInName[formattedInName.size() - 1] == '.') {
+            if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == '.')) {
                 formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
             }
 

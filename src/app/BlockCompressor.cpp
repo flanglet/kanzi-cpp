@@ -70,10 +70,10 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     }
 
     it = args.find("inputName");
-    _inputName = it->second;
+    _inputName = (it->second == "") ? "STDIN" : it->second;
     args.erase(it);
     it = args.find("outputName");
-    _outputName = it->second;
+    _outputName = (it->second == "") ? "STDOUT" : it->second;
     args.erase(it);
     string strCodec;
     string strTransf;
@@ -260,7 +260,7 @@ int BlockCompressor::compress(uint64& outputSize)
     stringstream ss;
     string str = _inputName;
     transform(str.begin(), str.end(), str.begin(), ::toupper);
-    bool isStdIn = str.compare(0, 5, "STDIN") == 0;
+    bool isStdIn = str == "STDIN";
 
     if (isStdIn == false) {
         vector<string> errors;
@@ -288,6 +288,20 @@ int BlockCompressor::compress(uint64& outputSize)
         ss << nbFiles << strFiles << " to compress\n";
         log.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
+    }
+
+    string upperOutputName = _outputName;
+    transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), ::toupper);
+    bool isStdOut = upperOutputName == "STDOUT";
+
+    // Limit verbosity level when output is stdout
+    if (isStdOut == true)
+        _verbosity = 0;
+
+    // Limit verbosity level when files are processed concurrently
+    if ((_verbosity > 1) && (_jobs > 1) && (nbFiles > 1)) {
+        log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", _verbosity > 1);
+        _verbosity = 1;
     }
 
     if (_verbosity > 2) {
@@ -322,12 +336,6 @@ int BlockCompressor::compress(uint64& outputSize)
         ss.str(string());
     }
 
-    // Limit verbosity level when files are processed concurrently
-    if ((_jobs > 1) && (nbFiles > 1) && (_verbosity > 1)) {
-        log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", _verbosity > 1);
-        _verbosity = 1;
-    }
-
     InfoPrinter listener(_verbosity, InfoPrinter::ENCODING, cout);
 
     if (_verbosity > 2)
@@ -340,9 +348,7 @@ int BlockCompressor::compress(uint64& outputSize)
     bool inputIsDir = false;
     string formattedOutName = _outputName;
     string formattedInName = _inputName;
-    string upperOutputName = _outputName;
-    transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), ::toupper);
-    bool specialOutput = (upperOutputName.compare(0, 4, "NONE") == 0) || (upperOutputName.compare(0, 6, "STDOUT") == 0);
+    bool specialOutput = (isStdOut == true) || (upperOutputName == "NONE");
 
     // Need to strip path separator at the end to make 'stat()' happy
     if ((formattedOutName.size() > 1) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
@@ -364,7 +370,7 @@ int BlockCompressor::compress(uint64& outputSize)
         if ((buffer.st_mode & S_IFDIR) != 0) {
             inputIsDir = true;
 
-            if (formattedInName[formattedInName.size() - 1] == '.') {
+            if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == '.')) {
                 formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
             }
 
