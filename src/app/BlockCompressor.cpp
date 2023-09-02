@@ -866,7 +866,7 @@ T FileCompressTask<T>::run()
     // Clean up resources at the end of the method as the task may be
     // recycled in a threadpool and the destructor not called.
     delete _cos;
-    cos = nullptr;
+    _cos = nullptr;
 
     try {
         if ((_is != nullptr) && (_is != &cin)) {
