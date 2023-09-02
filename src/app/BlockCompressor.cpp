@@ -731,6 +731,9 @@ T FileCompressTask<T>::run()
                           << "line option has not been provided";
                     return T(Error::ERR_OVERWRITE_FILE, 0, 0, sserr.str().c_str());
                 }
+
+                // Delete output file to ensure consistent performance
+                remove(outputName.c_str());
             }
 
             os = new ofstream(outputName.c_str(), ofstream::out | ofstream::binary);
