@@ -681,10 +681,8 @@ T FileDecompressTask<T>::run()
 
     // Clean up resources at the end of the method as the task may be
     // recycled in a threadpool and the destructor not called.
-    if (_cis != nullptr) {
-        delete _cis;
-        _cis = nullptr;
-    }
+    delete _cis;
+    _cis = nullptr;
 
     try {
         if ((_os != nullptr) && (_os != &cout)) {
