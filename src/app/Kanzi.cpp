@@ -673,8 +673,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg.compare(0, 7, "--from=") == 0) && (ctx == -1)) {
-            string name = (arg.compare(0, 7, "--from=") == 0) ? arg.substr(7) : arg;
-            name = trim(name);
+            string name = trim(arg);
 
             if (strFrom != "") {
                 cout << "Warning: ignoring duplicate start block: " << name << endl;
@@ -697,8 +696,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg.compare(0, 5, "--to=") == 0) && (ctx == -1)) {
-            string name = (arg.compare(0, 5, "--to=") == 0) ? arg.substr(5) : arg;
-            name = trim(name);
+            string name = trim(arg);
 
             if (strTo != "") {
                 cout << "Warning: ignoring duplicate end block: " << name << endl;
