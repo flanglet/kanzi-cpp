@@ -166,8 +166,10 @@ namespace kanzi
                    ss << "Cannot access input file '" << fullpath << "'";
                    errors.push_back(ss.str());
 
-                   if (cfg._continueOnErrors)
+                   if (cfg._continueOnErrors) {
+                       closedir(dir);
                        return;
+                   }
                }
 
                if ((buffer.st_mode & S_IFREG) != 0) {

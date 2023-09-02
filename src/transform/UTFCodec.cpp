@@ -293,8 +293,10 @@ bool UTFCodec::validate(byte block[], int count)
         return false;
 
     for (int i = 0xF5; i <= 0xFF; i++) {
-        if (freqs0[i] > 0)
+        if (freqs0[i] > 0) {
+            delete[] freqs1;
             return false;
+        }
     }
 
     int sum = 0;
