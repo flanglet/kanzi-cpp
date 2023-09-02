@@ -52,7 +52,7 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
     _inputName = (it->second == "") ? "STDIN" : it->second;
     args.erase(it);
     it = args.find("outputName");
-    _outputName = (it->second == "") ? "STDOUT" : it->second;
+    _outputName = ((it->second == "") && (_inputName == "STDIN")) ? "STDOUT" : it->second;
     args.erase(it);
     it = args.find("verbose");
     _verbosity = atoi(it->second.c_str());
@@ -168,6 +168,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     bool isStdOut = upperOutputName == "STDOUT";
 
     // Limit verbosity level when output is stdout
+    // Logic is duplicated here to avoid dependency to Kanzi.cpp
     if (isStdOut == true)
         _verbosity = 0;
 
@@ -274,7 +275,13 @@ int BlockDecompressor::decompress(uint64& inputSize)
         string oName = formattedOutName;
         string iName = "STDIN";
 
-        if (isStdIn == false) {
+
+        if (isStdIn == true) {
+            if (oName.length() == 0) {
+                oName = "STDOUT";
+            }
+        }
+        else {
             iName = files[0].fullPath();
             ctx.putLong("fileSize", files[0]._size);
 

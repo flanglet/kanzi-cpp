@@ -93,8 +93,8 @@ void printHelp(Printer& log, const string& mode)
 
    if (mode.compare(0, 1, "c") == 0) {
        log.println("   -b, --block=<size>", true);
-       log.println("        size of blocks (default 4|8|16|32 MB based on level, max 1 GB, min 1 KB).\n", true);
-       log.println("        'auto' means that the compressor derives the best value\n", true);
+       log.println("        size of blocks (default 4|8|16|32 MB based on level, max 1 GB, min 1 KB).", true);
+       log.println("        'auto' means that the compressor derives the best value", true);
        log.println("        based on input size (when available) and number of jobs.\n", true);
        log.println("   -l, --level=<compression>", true);
        log.println("        set the compression level [0..9]", true);
@@ -200,6 +200,16 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             continue;
         }
 
+        if ((arg.compare(0, 8, "--input=") == 0) || (arg.compare(0, 2, "-i") == 0)) {
+            ctx = ARG_IDX_INPUT;
+            continue;
+        }
+
+        if ((arg.compare(0, 9, "--output=") == 0) || (arg.compare(0, 2, "-o") == 0)) {
+            ctx = ARG_IDX_OUTPUT;
+            continue;
+        }
+
         // Extract verbosity, output and mode first
         if ((arg.compare(0, 10, "--compress") == 0) || (arg.compare(0, 2, "-c") == 0)) {
             if (mode == "d") {
@@ -242,16 +252,23 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                }
             }
         }
-        else if ((arg.compare(0, 9, "--output=") == 0) || (ctx == ARG_IDX_OUTPUT)) {
-            arg = (arg.compare(0, 9, "--output=") == 0) ? arg.substr(9) : arg;
+        else if (ctx == ARG_IDX_OUTPUT) {
             outputName = trim(arg);
+        }
+        else if (ctx == ARG_IDX_INPUT) {
+            inputName = trim(arg);
         }
 
         ctx = -1;
     }
 
     // Overwrite verbosity if the output goes to stdout
-    if (outputName.length() != 0) {
+    if ((inputName.length() == 0) && (outputName.length() == 0)) {
+        outputName = "STDOUT";
+        verbose = 0;
+        strVerbose = "0";
+    }
+    else {
         string str = outputName;
         transform(str.begin(), str.end(), str.begin(), ::toupper);
 
@@ -310,6 +327,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         log.println("", true);
     }
 
+    inputName = "";
     outputName = "";
     ctx = -1;
 
@@ -704,11 +722,6 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         ctx = -1;
-    }
-
-    if (inputName.length() == 0) {
-        cerr << "Missing input file name, exiting ..." << endl;
-        return Error::ERR_MISSING_PARAM;
     }
 
     if (ctx != -1) {
