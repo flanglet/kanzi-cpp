@@ -597,7 +597,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 name = name.substr(0, name.length() - 1);
             }
 
-            size_t k = 0;
+            k = 0;
 
             while ((k < name.length()) && (name[k] == '0'))
                 k++;
