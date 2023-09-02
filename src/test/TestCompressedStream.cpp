@@ -214,7 +214,7 @@ int testCorrectness(int, const char*[])
     const int length0 = 65536;
     byte* incompressible = new byte[length0 << 6];
     byte* values = new byte[length0 << 6];
-    int res = 0;
+    bool res = true;
     srand((uint)time(nullptr));
 
     for (int test = 1; test <= 50; test++) {
@@ -227,25 +227,30 @@ int testCorrectness(int, const char*[])
 
         cout << endl;
         cout << "Iteration " << test << " (size " << length << ")" << endl;
-        uint64 res;
-        res = compress1(values, length);
-        cout << ((res == 0) ? "Success" : "Failure") << endl;
-        res = compress2(values, length);
-        cout << ((res == 0) ? "Success" : "Failure") << endl;
-        res = compress3(incompressible, length);
-        cout << ((res == 0) ? "Success" : "Failure") << endl;
+        uint64 cres;
+        cres = compress1(values, length);
+        cout << ((cres == 0) ? "Success" : "Failure") << endl;
+        res &= (cres == 0);
+        cres = compress2(values, length);
+        cout << ((cres == 0) ? "Success" : "Failure") << endl;
+        res &= (cres == 0);
+        cres = compress3(incompressible, length);
+        cout << ((cres == 0) ? "Success" : "Failure") << endl;
+        res &= (cres == 0);
 
         if (test == 1) {
-            res = compress4(values, length);
-            cout << ((res == 0) ? "Success" : "Failure") << endl;
-            res = compress5(values, length);
-            cout << ((res == 0) ? "Success" : "Failure") << endl;
+            cres = compress4(values, length);
+            cout << ((cres == 0) ? "Success" : "Failure") << endl;
+            res &= (cres == 0);
+            cres = compress5(values, length);
+            cout << ((cres == 0) ? "Success" : "Failure") << endl;
+            res &= (cres == 0);
         }
     }
 
     delete[] incompressible;
     delete[] values;
-    return res;
+    return (res == true) ? 0 : 1;
 }
 
 #ifdef __GNUG__
