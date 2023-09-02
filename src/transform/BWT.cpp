@@ -473,12 +473,12 @@ InverseBiPSIv2Task<T>::InverseBiPSIv2Task(uint* buf, uint* buckets, uint16* fast
 template <class T>
 T InverseBiPSIv2Task<T>::run()
 {
-    uint s = 0;
+    uint sh = 0;
 
-    while ((_total >> s) > BWT::MASK_FASTBITS)
-        s++;
+    while ((_total >> sh) > BWT::MASK_FASTBITS)
+        sh++;
 
-    const uint shift = s;
+    const uint shift = sh;
     int c = _firstChunk;
 
     if (_start + 4 * _ckSize < _total) {
