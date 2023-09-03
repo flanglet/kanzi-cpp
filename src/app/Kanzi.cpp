@@ -611,7 +611,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 ss1 >> bk;
 
                 if (scale != 1) {
-                    k = 0;
+                    size_t k = 0;
 
                     while ((k < name.length()) && ((name[k] >= '0') && (name[k] <= '9')))
                         k++;
