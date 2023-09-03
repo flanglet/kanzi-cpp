@@ -295,10 +295,10 @@ namespace kanzi
       struct STAT buf2;
       int s2 = STAT(f2.c_str(), &buf2);
 
-      if (s1 != s2)
+      if ((s1 < 0) && (s2 < 0))
          return false;
 
-      if ((s1 < 0) && (s2 < 0))
+      if (s1 != s2)
          return false;
 
       if (buf1.st_dev != buf2.st_dev)

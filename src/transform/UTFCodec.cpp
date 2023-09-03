@@ -219,10 +219,10 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     // Emit data
     while (srcIdx < srcEnd) {
-        int alias = int(src[srcIdx++]);
+        uint alias = uint(src[srcIdx++]);
 
         if (alias >= 128)
-            alias = (int(src[srcIdx++]) << 7) + (alias & 0x7F);
+            alias = (uint(src[srcIdx++]) << 7) + (alias & 0x7F);
 
         symb& s = m[alias];
         memcpy(&dst[dstIdx], &s.val, 4);
