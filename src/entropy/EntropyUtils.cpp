@@ -27,10 +27,10 @@ public:
     uint _symbol;
     uint* _freq;
 
-    FreqSortData(uint* freq, int symbol)
+    FreqSortData(uint* freq, int symbol) :
+         _freq(freq)
+       , _symbol(symbol)
     {
-        _freq = freq;
-        _symbol = symbol;
     }
 };
 
