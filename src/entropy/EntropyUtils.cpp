@@ -24,8 +24,8 @@ using namespace std;
 
 class FreqSortData {
 public:
-    uint _symbol;
     uint* _freq;
+    uint _symbol;
 
     FreqSortData(uint* freq, int symbol) :
          _freq(freq)
@@ -35,7 +35,7 @@ public:
 };
 
 struct FreqDataComparator {
-    bool operator()(FreqSortData& fd1, FreqSortData& fd2) const
+    bool operator()(const FreqSortData& fd1, const FreqSortData& fd2) const
     {
         // Decreasing frequency then decreasing symbol
         int r;

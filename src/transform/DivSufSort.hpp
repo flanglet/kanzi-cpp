@@ -194,9 +194,9 @@ namespace kanzi
 
        int trPivot(int arr[], int isad, int first, int last);
 
-       int trMedian5(int arr[], int isad, int v1, int v2, int v3, int v4, int v5);
+       int trMedian5(const int arr[], int isad, int v1, int v2, int v3, int v4, int v5);
 
-       int trMedian3(int arr[], int isad, int v1, int v2, int v3);
+       int trMedian3(const int arr[], int isad, int v1, int v2, int v3);
 
        void trHeapSort(int isad, int saIdx, int size);
 
@@ -249,7 +249,7 @@ namespace kanzi
    }
 
 
-   inline int DivSufSort::trMedian5(int sa[], int isad, int v1, int v2, int v3, int v4, int v5)
+   inline int DivSufSort::trMedian5(const int sa[], int isad, int v1, int v2, int v3, int v4, int v5)
    {
        if (sa[isad + sa[v2]] > sa[isad + sa[v3]]) {
            std::swap(v2, v3);
@@ -282,7 +282,7 @@ namespace kanzi
    }
 
 
-   inline int DivSufSort::trMedian3(int sa[], int isad, int v1, int v2, int v3)
+   inline int DivSufSort::trMedian3(const int sa[], int isad, int v1, int v2, int v3)
    {
        if (sa[isad + sa[v1]] > sa[isad + sa[v2]]) {
            std::swap(v1, v2);
