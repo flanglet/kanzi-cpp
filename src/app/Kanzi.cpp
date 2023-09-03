@@ -264,7 +264,6 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
     // Overwrite verbosity if the output goes to stdout
     if ((inputName.length() == 0) && (outputName.length() == 0)) {
-        outputName = "STDOUT";
         verbose = 0;
         strVerbose = "0";
     }
@@ -338,13 +337,16 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
     for (int i = 1; i < argc; i++) {
         string arg(argv[i]);
-        size_t k = 0;
 
-        // Left trim limited to spaces (due to possible unicode chars in names)
-        while ((k < arg.length()) && (arg[k] == 0x20))
-           k++;
+        if (arg[0] == 0x20) {
+           size_t k = 1;
 
-        arg = arg.substr(k);
+           // Left trim limited to spaces (due to possible unicode chars in names)
+           while ((k < arg.length()) && (arg[k] == 0x20))
+              k++;
+
+           arg = arg.substr(k);
+        }
 
         if ((arg == "--help") || (arg == "-h")) {
             printHelp(log, mode);
@@ -452,12 +454,6 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if ((arg.compare(0, 9, "--output=") == 0) || (ctx == ARG_IDX_OUTPUT)) {
             string name = (arg.compare(0, 9, "--output=") == 0) ? arg.substr(9) : arg;
-            int j = int(arg.length() - 1);
-
-            while ((j > 0) && (arg[j] == 0x20)) // trim only spaces
-                j--;
-
-            name = arg.substr(0, j + 1);
 
             if (outputName != "") {
                 cout << "Warning: ignoring duplicate output name: " << name << endl;
@@ -475,12 +471,6 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if ((arg.compare(0, 8, "--input=") == 0) || (ctx == ARG_IDX_INPUT)) {
             string name = (arg.compare(0, 8, "--input=") == 0) ? arg.substr(8) : arg;
-            int j = int(arg.length() - 1);
-
-            while ((j > 0) && (arg[j] == 0x20)) // trim only spaces
-                j--;
-
-            name = arg.substr(0, j + 1);
 
             if (inputName != "") {
                 cout << "Warning: ignoring duplicate input name: " << name << endl;
@@ -597,12 +587,14 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 name = name.substr(0, name.length() - 1);
             }
 
-            k = 0;
+            if (name[0] == '0') {
+                size_t k = 1;
 
-            while ((k < name.length()) && (name[k] == '0'))
-                k++;
+                while ((k < name.length()) && (name[k] == '0'))
+                    k++;
 
-            name = name.substr(k);
+                name = name.substr(k);
+            }
 
             if (name.length() == 0) {
                 cerr << "Invalid block size provided on command line: " << arg << endl;

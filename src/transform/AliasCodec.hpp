@@ -44,7 +44,7 @@ namespace kanzi {
 
        AliasCodec(Context& ctx) { _pCtx = &ctx; }
 
-       virtual ~AliasCodec() {}
+       ~AliasCodec() {}
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
