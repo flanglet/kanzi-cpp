@@ -255,6 +255,7 @@ bool UTFCodec::validate(byte block[], int count)
     uint8 prv = 0;
     const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
     const int count4 = count & -4;
+    bool res = true;
 
     // Unroll loop
     for (int i = 0; i < count4; i += 4) {
@@ -283,6 +284,8 @@ bool UTFCodec::validate(byte block[], int count)
         freqs0[i] += (f0[i] + f1[i] + f2[i] + f3[i]);
     }
 
+    int sum = 0;
+
     // Check UTF-8
     // See Unicode 14 Standard - UTF-8 Table 3.7
     // U+0000..U+007F          00..7F
@@ -294,42 +297,51 @@ bool UTFCodec::validate(byte block[], int count)
     // U+10000..U+3FFFF        F0 90..BF 80..BF 80..BF
     // U+40000..U+FFFFF        F1..F3 80..BF 80..BF 80..BF
     // U+100000..U+10FFFF      F4 80..8F 80..BF 80..BF
-    if ((freqs0[0xC0] > 0) || (freqs0[0xC1] > 0))
-        return false;
+    if ((freqs0[0xC0] > 0) || (freqs0[0xC1] > 0)) {
+        res = false;
+        goto end;
+    }
 
     for (int i = 0xF5; i <= 0xFF; i++) {
         if (freqs0[i] > 0) {
-            delete[] freqs1;
-            return false;
+            res = false;
+            goto end;
         }
     }
 
-    int sum = 0;
-
     for (int i = 0; i < 256; i++) {
         // Exclude < 0xE0A0 || > 0xE0BF
-        if (((i < 0xA0) || (i > 0xBF)) && (freqs1[(0xE0 * 256) + i] > 0))
-            return false;
+        if (((i < 0xA0) || (i > 0xBF)) && (freqs1[(0xE0 * 256) + i] > 0)) {
+            res = false;
+            goto end;
+        }
 
         // Exclude < 0xED80 || > 0xEDE9F
-        if (((i < 0x80) || (i > 0x9F)) && (freqs1[(0xED * 256) + i] > 0))
-            return false;
+        if (((i < 0x80) || (i > 0x9F)) && (freqs1[(0xED * 256) + i] > 0)) {
+            res = false;
+            goto end;
+        }
 
         // Exclude < 0xF090 || > 0xF0BF
-        if (((i < 0x90) || (i > 0xBF)) && (freqs1[(0xF0 * 256) + i] > 0))
-            return false;
+        if (((i < 0x90) || (i > 0xBF)) && (freqs1[(0xF0 * 256) + i] > 0)) {
+            res = false;
+            goto end;
+        }
 
         // Exclude < 0xF480 || > 0xF4BF
-        if (((i < 0x80) || (i > 0xBF)) && (freqs1[(0xF4 * 256) + i] > 0))
-            return false;
+        if (((i < 0x80) || (i > 0xBF)) && (freqs1[(0xF4 * 256) + i] > 0)) {
+            res = false;
+            goto end;
+        }
 
         // Count non-primary bytes
         if ((i >= 0x80) && (i <= 0xBF))
             sum += freqs0[i];
     }
 
+end:
     delete[] freqs1;
 
     // Ad-hoc threshold
-    return sum >= (count / 4);
+    return (res == true) && (sum >= (count / 4));
 }
