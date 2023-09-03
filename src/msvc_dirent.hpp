@@ -892,7 +892,6 @@ scandir(
 {
     struct dirent **files = NULL;
     size_t size = 0;
-    size_t allocated = 0;
     const size_t init_size = 1;
     DIR *dir = NULL;
     struct dirent *entry;
@@ -902,6 +901,7 @@ scandir(
     /* Open directory stream */
     dir = opendir (dirname);
     if (dir) {
+        size_t allocated = 0;
 
         /* Read directory entries to memory */
         while (1) {
