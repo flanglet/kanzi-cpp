@@ -143,7 +143,13 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 if (freqs1[i] == 0)
                     continue;
 
+#if __cplusplus >= 201103L
                 v.emplace_back(i, freqs1[i]);
+#else
+                sdAlias a(i, freqs1[i]);
+                v.push_back(a);
+#endif
+
                 n1++;
             }
 

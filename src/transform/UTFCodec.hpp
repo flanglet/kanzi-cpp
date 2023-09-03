@@ -28,6 +28,8 @@ namespace kanzi
         uint32 val;
         uint32 freq;
 
+        ssUTF(uint32 v, uint32 f) : val(v), freq(f) { }
+
         friend bool operator< (ssUTF const& lhs, ssUTF const& rhs) {
             int r;
             return ((r = lhs.freq - rhs.freq) != 0) ? r > 0 : lhs.val > rhs.val;

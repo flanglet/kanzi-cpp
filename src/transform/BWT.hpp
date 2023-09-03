@@ -95,7 +95,9 @@ namespace kanzi {
        int _primaryIndexes[8];
        DivSufSort _saAlgo;
        int _jobs;
+#ifdef CONCURRENCY_ENABLED
        ThreadPool* _pool;
+#endif
 
        bool inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int count);
 

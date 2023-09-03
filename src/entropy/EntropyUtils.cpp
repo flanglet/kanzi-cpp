@@ -35,7 +35,7 @@ public:
 };
 
 struct FreqDataComparator {
-    bool operator()(const FreqSortData& fd1, const FreqSortData& fd2) const
+    bool operator()(FreqSortData const& fd1, FreqSortData const& fd2) const
     {
         // Decreasing frequency then decreasing symbol
         int r;

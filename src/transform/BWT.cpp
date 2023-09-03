@@ -35,6 +35,8 @@ BWT::BWT(int jobs) THROW
     _bufferSize = 0;
 
 #ifdef CONCURRENCY_ENABLED
+    _pool = nullptr;
+
     if (jobs < 1)
         throw invalid_argument("The number of jobs must be at least 1");
 #else
@@ -42,7 +44,6 @@ BWT::BWT(int jobs) THROW
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
-    _pool = nullptr;
     _jobs = jobs;
     memset(_primaryIndexes, 0, sizeof(int) * 8);
 }
@@ -56,6 +57,8 @@ BWT::BWT(Context& ctx) THROW
     int jobs = ctx.getInt("jobs", 1);
 
 #ifdef CONCURRENCY_ENABLED
+    _pool = ctx.getPool(); // can be null
+
     if (jobs < 1)
         throw invalid_argument("The number of jobs must be at least 1");
 #else
@@ -63,7 +66,6 @@ BWT::BWT(Context& ctx) THROW
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
-    _pool = ctx.getPool(); // can be null
     _jobs = jobs;
     memset(_primaryIndexes, 0, sizeof(int) * 8);
 }

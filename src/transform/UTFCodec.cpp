@@ -86,7 +86,12 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
 
         if (aliasMap[val] == 0) {
-            v.push_back({ val, 0 });
+#if __cplusplus >= 201103L
+            v.emplace_back(val, 0);
+#else
+            sdUTF u(val, 0);
+            v.push_back(u);
+#endif
 
             if (++n >= 32768) {
                 res = false;
