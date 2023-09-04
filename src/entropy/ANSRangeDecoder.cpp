@@ -83,7 +83,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
 
     for (int k = 0; k < dim; k++) {
         uint* f = &frequencies[k << 8];
-        int alphabetSize = EntropyUtils::decodeAlphabet(_bitstream, alphabet);
+        const int alphabetSize = EntropyUtils::decodeAlphabet(_bitstream, alphabet);
 
         if (alphabetSize == 0)
             continue;

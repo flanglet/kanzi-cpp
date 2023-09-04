@@ -81,6 +81,10 @@ bool RangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequenc
         return true;
 
     _bitstream.writeBits(lr - 8, 3); // logRange
+
+    if (encoded == 1)
+        return true;
+
     int chkSize = (alphabetSize >= 64) ? 8 : 6;
     int llr = 3;
 

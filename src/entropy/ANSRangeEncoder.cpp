@@ -82,12 +82,13 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], uint lr)
         if (alphabetSize > 0) {
             int sum = 0;
 
-            for (int i = 0; i < 256; i++) {
+            for (int i = 0, count = 0; (i < 256) && (count < alphabetSize); i++) {
                 if (f[i] == 0)
                     continue;
 
                 symb[i].reset(sum, f[i], lr);
                 sum += f[i];
+                count++;
             }
         }
 
@@ -106,7 +107,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
     if (encoded < 0)
         return false;
 
-    if (encoded == 0)
+    if (encoded <= 1)
         return true;
 
     const int chkSize = (alphabetSize >= 64) ? 8 : 6;
