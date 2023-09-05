@@ -173,7 +173,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int minIdx = 0;
     int ent[7];
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 7; i++) {
         ent[i] = Global::computeFirstOrderEntropy1024(count5, histo[i]);
 
         if (ent[i] < ent[minIdx])
@@ -246,11 +246,16 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     // Extra check that the transform makes sense
-    bool isFast = (_pCtx == nullptr) ? true : _pCtx->getInt("fullFSD") == 0;
-    const int length = (isFast == true) ? dstIdx >> 1 : dstIdx;
-    memset(histo[0], 0, sizeof(histo[0]));
-    Global::computeHistogram(&dst[(dstIdx - length) >> 1], length, histo[0]);
-    const int entropy = Global::computeFirstOrderEntropy1024(length, histo[0]);
+    memset(&histo[0][0], 0, sizeof(uint) * 256);
+    const byte* out1 = &dst[count5 * 1];
+    const byte* out2 = &dst[count5 * 3];
+
+    for (int i = 0; i < count10; i++) {
+        histo[0][int(out1[i])]++;
+        histo[0][int(out2[i])]++;
+    }
+
+    const int entropy = Global::computeFirstOrderEntropy1024(count5, histo[0]);
 
     if (entropy >= ent[0])
         return false;

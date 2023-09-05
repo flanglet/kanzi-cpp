@@ -45,7 +45,7 @@ namespace kanzi {
        }
 
    private:
-       static const int MIN_LENGTH = 128;
+       static const int MIN_LENGTH = 1024;
        static const byte ESCAPE_TOKEN = byte(255);
        static const byte DELTA_CODING = byte(0);
        static const byte XOR_CODING = byte(1);
