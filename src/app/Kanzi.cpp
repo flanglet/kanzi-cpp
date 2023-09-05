@@ -190,11 +190,6 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         string arg(argv[i]);
         arg = trim(arg);
 
-        if ((arg.compare(0, 9, "--output=") == 0) || (arg.compare(0, 2, "-o") == 0)) {
-            ctx = ARG_IDX_OUTPUT;
-            continue;
-        }
-
         if ((arg.compare(0, 10, "--verbose=") == 0) || (arg.compare(0, 2, "-v") == 0)) {
             ctx = ARG_IDX_VERBOSE;
             continue;
