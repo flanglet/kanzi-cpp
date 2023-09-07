@@ -477,6 +477,11 @@ int TestTransforms_main(int argc, const char* argv[])
             res |= testTransformsSpeed("ROLZX");
             cout << endl
                  << endl
+                 << "TestRLT" << endl;
+            res |= testTransformsCorrectness("RLT");
+            res |= testTransformsSpeed("RLT");
+            cout << endl
+                 << endl
                  << "TestZRLT" << endl;
             res |= testTransformsCorrectness("ZRLT");
             res |= testTransformsSpeed("ZRLT");
@@ -495,11 +500,6 @@ int TestTransforms_main(int argc, const char* argv[])
                  << "TestMTFT" << endl;
             res |= testTransformsCorrectness("MTFT");
             res |= testTransformsSpeed("MTFT");
-            cout << endl
-                 << endl
-                 << "TestBWTS" << endl;
-            res |= testTransformsCorrectness("BWTS");
-            res |= testTransformsSpeed("BWTS");
             cout << endl
                  << endl
                  << "TestFSD" << endl;
