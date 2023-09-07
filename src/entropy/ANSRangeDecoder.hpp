@@ -106,8 +106,8 @@ namespace kanzi
 
       // Normalize
       if (st < ANS_TOP) {
-	      st = (st << 8) | int(*p++);
-	      st = (st << 8) | int(*p++);
+	      st = (st << 16) | (int(p[0]) << 8) | int(p[1]);
+	      p += 2;
       }
 
       return st;
