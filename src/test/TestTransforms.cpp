@@ -33,7 +33,7 @@ limitations under the License.
 using namespace std;
 using namespace kanzi;
 
-static Transform<byte>* getByteTransform(string name)
+static Transform<byte>* getByteTransform(string name, Context& ctx)
 {
     if (name.compare("SRT") == 0)
         return new SRT();
@@ -48,13 +48,11 @@ static Transform<byte>* getByteTransform(string name)
         return new LZCodec();
 
     if (name.compare("LZX") == 0){
-        Context ctx;
         ctx.putInt("lz", TransformFactory<byte>::LZX_TYPE);
         return new LZCodec(ctx);
     }
 
     if (name.compare("LZP") == 0){
-        Context ctx;
         ctx.putInt("lz", TransformFactory<byte>::LZP_TYPE);
         return new LZCodec(ctx);
     }
@@ -63,7 +61,6 @@ static Transform<byte>* getByteTransform(string name)
         return new ROLZCodec();
 
     if (name.compare("ROLZX") == 0) {
-        Context ctx;
         ctx.putString("transform", "ROLZX");
         return new ROLZCodec(ctx);
     }
@@ -73,6 +70,9 @@ static Transform<byte>* getByteTransform(string name)
 
     if (name.compare("MTFT") == 0)
        return new SBRT(SBRT::MODE_MTF);
+
+    if (name.compare("FSD") == 0)
+       return new FSDCodec();
 
     cout << "No such byte transform: " << name << endl;
     return nullptr;
@@ -200,8 +200,9 @@ int testTransformsCorrectness(const string& name)
             memcpy(values, &arr[0], size);
         }
 
-        Transform<byte>* ff = getByteTransform(name);
-        Transform<byte>* fi = getByteTransform(name);
+        Context ctx;
+        Transform<byte>* ff = getByteTransform(name, ctx);
+        Transform<byte>* fi = getByteTransform(name, ctx);
 
         if ((ff == nullptr) || (fi == nullptr))
             return 1;
@@ -326,7 +327,8 @@ int testTransformsSpeed(const string& name)
     byte input[50000] = { byte(0) };
     byte output[50000] = { byte(0) };
     byte reverse[50000] = { byte(0) };
-    Transform<byte>* f = getByteTransform(name);
+    Context ctx;
+    Transform<byte>* f = getByteTransform(name, ctx);
 
     if (f == nullptr)
         return 1;
@@ -357,7 +359,7 @@ int testTransformsSpeed(const string& name)
         double delta2 = 0;
 
         for (int ii = 0; ii < iter; ii++) {
-            Transform<byte>* ff = getByteTransform(name);
+            Transform<byte>* ff = getByteTransform(name, ctx);
             iba1._index = 0;
             iba2._index = 0;
             before = clock();
@@ -380,7 +382,7 @@ int testTransformsSpeed(const string& name)
         }
 
         for (int ii = 0; ii < iter; ii++) {
-            Transform<byte>* fi = getByteTransform(name);
+            Transform<byte>* fi = getByteTransform(name, ctx);
             int count = iba2._index;
             iba3._index = 0;
             iba2._index = 0;
