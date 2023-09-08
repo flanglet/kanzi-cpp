@@ -81,22 +81,24 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
         _f2s = new uint8[_f2sSize];
     }
 
+    int llr = 3;
+
+    while (uint(1 << llr) <= _logRange)
+        llr++;
+
     for (int k = 0; k < dim; k++) {
-        uint* f = &frequencies[k << 8];
         const int alphabetSize = EntropyUtils::decodeAlphabet(_bitstream, alphabet);
 
         if (alphabetSize == 0)
             continue;
 
+        uint* f = &frequencies[k << 8];
+ 
         if (alphabetSize != 256)
             memset(f, 0, sizeof(uint) * 256);
 
         const int chkSize = (alphabetSize >= 64) ? 8 : 6;
         int sum = 0;
-        int llr = 3;
-
-        while (uint(1 << llr) <= _logRange)
-            llr++;
 
         // Decode all frequencies (but the first one) by chunks
         for (int i = 1; i < alphabetSize; i += chkSize) {

@@ -98,7 +98,7 @@ namespace kanzi {
 	#endif
 
 
-   static inline bool IsBigEndian() {
+   static inline bool isBigEndian() {
       #if defined(IS_BIG_ENDIAN)
          return IS_BIG_ENDIAN == 1;
       #else
