@@ -24,6 +24,13 @@ using namespace kanzi;
 using namespace std;
 
 
+AliasCodec::AliasCodec(Context& ctx) : 
+          _pCtx(&ctx) 
+{
+   _order = _pCtx->getInt("alias", 1);
+}
+
+
 bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
@@ -129,6 +136,9 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
     }
     else {
+        if (_order == 0)
+            return false;
+
         // Digram encoding
         vector<sdAlias> v;
         

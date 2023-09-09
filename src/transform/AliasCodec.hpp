@@ -40,9 +40,9 @@ namespace kanzi {
    {
 
    public:
-       AliasCodec() { _pCtx = nullptr; }
+       AliasCodec(int order = 1) : _pCtx(nullptr),  _order(order) { }
 
-       AliasCodec(Context& ctx) { _pCtx = &ctx; }
+       AliasCodec(Context& ctx);
 
        ~AliasCodec() {}
 
@@ -61,6 +61,7 @@ namespace kanzi {
        static const int MIN_BLOCK_SIZE = 1024;
 
        Context* _pCtx;
+       int _order;
    };
 }
 
