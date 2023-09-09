@@ -619,22 +619,22 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         break;
 
     case 1:
-        tranformAndCodec[0] = "ALIAS+LZ";
+        tranformAndCodec[0] = "PACK+LZ";
         tranformAndCodec[1] = "NONE";
         break;
 
     case 2:
-        tranformAndCodec[0] = "ALIAS+LZ";
+        tranformAndCodec[0] = "PACK+LZ";
         tranformAndCodec[1] = "HUFFMAN";
         break;
 
     case 3:
-        tranformAndCodec[0] = "TEXT+UTF+ALIAS+FSD+LZX";
+        tranformAndCodec[0] = "TEXT+UTF+PACK+MM+LZX";
         tranformAndCodec[1] = "HUFFMAN";
         break;
 
     case 4:
-        tranformAndCodec[0] = "TEXT+UTF+EXE+ALIAS+FSD+ROLZ";
+        tranformAndCodec[0] = "TEXT+UTF+EXE+PACK+MM+ROLZ";
         tranformAndCodec[1] = "NONE";
         break;
 

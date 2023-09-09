@@ -62,10 +62,10 @@ namespace kanzi {
 		static const uint64 ROLZX_TYPE = 12; // ROLZ Extra codec
 		static const uint64 SRT_TYPE = 13; // Sorted Rank
 		static const uint64 LZP_TYPE = 14; // Lempel Ziv Predict
-		static const uint64 FSD_TYPE = 15; // Fixed Shift Delta codec
+		static const uint64 MM_TYPE = 15; // Multimedia (FSD) codec
 		static const uint64 LZX_TYPE = 16; // Lempel Ziv Extra
 		static const uint64 UTF_TYPE = 17; // UTF Codec
-		static const uint64 ALIAS_TYPE = 18; // Alias Codec
+		static const uint64 PACK_TYPE = 18; // Alias Codec
 		static const uint64 RESERVED2 = 19; // Reserved
 		static const uint64 RESERVED3 = 20; // Reserved
 		static const uint64 RESERVED4 = 21; // Reserved
@@ -186,11 +186,11 @@ namespace kanzi {
 		if (name == "UTF")
 			return UTF_TYPE;
 
-		if (name == "ALIAS")
-			return ALIAS_TYPE;
+		if (name == "PACK")
+			return PACK_TYPE;
 
-		if (name == "FSD")
-			return FSD_TYPE;
+		if (name == "MM")
+			return MM_TYPE;
 
 		if (name == "NONE")
 			return NONE_TYPE;
@@ -283,10 +283,10 @@ namespace kanzi {
 		case UTF_TYPE:
 			return new UTFCodec(ctx);
 
-		case ALIAS_TYPE:
+		case PACK_TYPE:
 			return new AliasCodec(ctx);
 
-		case FSD_TYPE:
+		case MM_TYPE:
 			return new FSDCodec(ctx);
 
 		case NONE_TYPE:
@@ -365,14 +365,14 @@ namespace kanzi {
 		case EXE_TYPE:
 			return "EXE";
 
-		case ALIAS_TYPE:
-			return "ALIAS";
+		case PACK_TYPE:
+			return "PACK";
 
 		case UTF_TYPE:
 			return "UTF";
 
-		case FSD_TYPE:
-			return "FSD";
+		case MM_TYPE:
+			return "MM";
 
 		case NONE_TYPE:
 			return "NONE";

@@ -100,10 +100,10 @@ void printHelp(Printer& log, const string& mode)
        log.println("        set the compression level [0..9]", true);
        log.println("        Providing this option forces entropy and transform.", true);
        log.println("        0 = NONE&NONE (store)", true);
-       log.println("        1 = ALIAS+LZ&NONE", true);
-       log.println("        2 = ALIAS+LZ&HUFFMAN", true);
-       log.println("        3 = TEXT+UTF+ALIAS+FSD+LZX&HUFFMAN", true);
-       log.println("        4 = TEXT+UTF+EXE+ALIAS+FSD+ROLZ&NONE", true);
+       log.println("        1 = PACK+LZ&NONE", true);
+       log.println("        2 = PACK+LZ&HUFFMAN", true);
+       log.println("        3 = TEXT+UTF+PACK+MM+LZX&HUFFMAN", true);
+       log.println("        4 = TEXT+UTF+EXE+PACK+MM+ROLZ&NONE", true);
        log.println("        5 = TEXT+UTF+BWT+RANK+ZRLT&ANS0", true);
        log.println("        6 = TEXT+UTF+BWT+SRT+ZRLT&FPAQ", true);
        log.println("        7 = LZP+TEXT+UTF+BWT+LZP&CM", true);
@@ -114,7 +114,7 @@ void printHelp(Printer& log, const string& mode)
        log.println("        (default is ANS0)\n", true);
        log.println("   -t, --transform=<codec>", true);
        log.println("        transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
-       log.println("                  [MTFT|RANK|SRT|TEXT|FSD|EXE|UTF|ALIAS]", true);
+       log.println("                  [MTFT|RANK|SRT|TEXT|MM|EXE|UTF|PACK]", true);
        log.println("        EG: BWT+RANK or BWTS+MTFT (default is BWT+RANK+ZRLT)\n", true);
        log.println("   -x, --checksum", true);
        log.println("        enable block checksum\n", true);

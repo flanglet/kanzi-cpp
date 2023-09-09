@@ -71,7 +71,7 @@ static Transform<byte>* getByteTransform(string name, Context& ctx)
     if (name.compare("MTFT") == 0)
        return new SBRT(SBRT::MODE_MTF);
 
-    if (name.compare("FSD") == 0)
+    if (name.compare("MM") == 0)
        return new FSDCodec();
 
     cout << "No such byte transform: " << name << endl;
@@ -502,9 +502,9 @@ int TestTransforms_main(int argc, const char* argv[])
             res |= testTransformsSpeed("MTFT");
             cout << endl
                  << endl
-                 << "TestFSD" << endl;
-            res |= testTransformsCorrectness("FSD");
-            //res |= testTransformsSpeed("FSD"); skip no good data
+                 << "TestMM" << endl;
+            res |= testTransformsCorrectness("MM");
+            //res |= testTransformsSpeed("MM"); skip no good data
         }
         else {
             cout << "Test" << str << endl;
