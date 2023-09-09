@@ -31,13 +31,13 @@ namespace kanzi
    class ANSEncSymbol
    {
    public:
-      ANSEncSymbol()
+      ANSEncSymbol() :
+         _xMax(0)
+       , _bias(0)
+       , _cmplFreq(0)
+       , _invShift(0)
+       , _invFreq(0)
       {
-         _xMax = 0;
-         _bias = 0;
-         _cmplFreq = 0;
-         _invShift = 0;
-         _invFreq = 0;
       }
 
       ~ANSEncSymbol() { }

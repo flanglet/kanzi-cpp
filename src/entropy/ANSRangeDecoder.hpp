@@ -32,10 +32,10 @@ namespace kanzi
    class ANSDecSymbol
    {
    public:
-      ANSDecSymbol()
+      ANSDecSymbol() :
+            _cumFreq(0)
+         ,  _freq(0)
       {
-		  _freq = 0;
-		  _cumFreq = 0;
       }
 
       ~ANSDecSymbol() { }
@@ -83,7 +83,7 @@ namespace kanzi
 
 	   void decodeChunk(byte block[], int end);
 
-	   int decodeSymbol(byte*& p, int st, const ANSDecSymbol& sym, const int mask);
+	   int decodeSymbol(byte*& p, int& st, const ANSDecSymbol& sym, const int mask);
 
 	   int decodeHeader(uint frequencies[], uint alphabet[]);
 
@@ -98,19 +98,19 @@ namespace kanzi
    }
 
 
-   inline int ANSRangeDecoder::decodeSymbol(byte*& p, int st, const ANSDecSymbol& sym, const int mask)
+   inline int ANSRangeDecoder::decodeSymbol(byte*& p, int& st, const ANSDecSymbol& sym, const int mask)
    {
       // Compute next ANS state
       // D(x) = (s, q_s (x/M) + mod(x,M) - b_s) where s is such b_s <= x mod M < b_{s+1}
-      int res = int(sym._freq) * (st >> _logRange) + (st & mask) - int(sym._cumFreq);
+      st = int(sym._freq) * (st >> _logRange) + (st & mask) - int(sym._cumFreq);
 
       // Normalize
-      if (res < ANS_TOP) {
-	      res = (res << 16) | (int(p[0]) << 8) | int(p[1]);
+      if (st < ANS_TOP) {
+	      st = (st << 16) | (int(p[0]) << 8) | int(p[1]);
 	      p += 2;
       }
 
-      return res;
+      return st;
    }
 
 }
