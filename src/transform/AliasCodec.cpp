@@ -105,16 +105,11 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         if (n0 >= 252) {
             // 4 symbols or less
-            dst[dstIdx++] = byte(count & 3);
-
-            if ((count & 3) > 2)
-                dst[dstIdx++] = src[srcIdx++];
-
-            if ((count & 3) > 1)
-                dst[dstIdx++] = src[srcIdx++];
-
-            if ((count & 3) > 0)
-                dst[dstIdx++] = src[srcIdx++];
+            const int c3 = count & 3;
+            dst[dstIdx++] = byte(c3);
+            memcpy(&dst[dstIdx], &src[srcIdx], c3);
+            srcIdx += c3;
+            dstIdx += c3;
 
             while (srcIdx < count) {
                 dst[dstIdx++] = (map8[int(src[srcIdx + 0])] << 6) | (map8[int(src[srcIdx + 1])] << 4) |
@@ -181,7 +176,7 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
  
         // Build map symbol -> alias
         for (int i = 0; i < 65536; i++)
-            map16[i] = int16(i >> 8) | 0x100;
+            map16[i] = 0x100 | int16(i >> 8);
 
         int savings = 0;
         dst[0] = byte(n0);
@@ -282,14 +277,9 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     decodeMap[i] = val;
                 }
 
-                if (adjust > 0)
-                    dst[dstIdx++] = src[srcIdx++];
-
-                if (adjust > 1)
-                    dst[dstIdx++] = src[srcIdx++];
-
-                if (adjust > 2)
-                    dst[dstIdx++] = src[srcIdx++];
+                memcpy(&dst[dstIdx], &src[srcIdx], adjust);
+                srcIdx += adjust;
+                dstIdx += adjust;
 
                 while (srcIdx < count) {
                     LittleEndian::writeInt32(&dst[dstIdx], decodeMap[int(src[srcIdx++])]);
@@ -312,8 +302,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     dst[dstIdx++] = src[srcIdx++];
 
                 while (srcIdx < count) {
-                    const int16 val = decodeMap[int(src[srcIdx++])];
-                    LittleEndian::writeInt16(&dst[dstIdx], val);
+                    LittleEndian::writeInt16(&dst[dstIdx], decodeMap[int(src[srcIdx++])]);
                     dstIdx += 2;
                 }
             }
