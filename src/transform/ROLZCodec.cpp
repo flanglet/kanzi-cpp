@@ -115,8 +115,10 @@ ROLZCodec1::ROLZCodec1(Context& ctx) THROW
 // return position index (_logPosChecks bits) + length (16 bits) or -1
 int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 key)
 {
-    prefetchRead(&_counters[key]);
-    const int counter = _counters[key];
+    uint8* counter = &_counters[key];
+    prefetchRead(counter);
+    const int s = int(*counter);
+    const int e = s - _posChecks;
     int32* matches = &_matches[key << _logPosChecks];
     prefetchRead(matches);
     const byte* curBuf = &buf[pos];
@@ -126,7 +128,7 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 key)
     const int maxMatch = min(ROLZCodec1::MAX_MATCH, end - pos);
 
     // Check all recorded positions
-    for (int i = counter; i > counter - _posChecks; i--) {
+    for (int i = s; i > e; i--) {
         int32 ref = matches[i & _maskChecks];
 
         // Hash check may save a memory access ...
@@ -152,15 +154,15 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 key)
         }
 
         if (n > bestLen) {
-            bestIdx = counter - i;
+            bestIdx = i;
             bestLen = n;
         }
     }
 
     // Register current position
-    _counters[key] = (_counters[key] + 1) & _maskChecks;
-    matches[_counters[key]] = hash32 | int32(pos);
-    return (bestLen < _minMatch) ? -1 : (bestIdx << 16) | (bestLen - _minMatch);
+    *counter = (*counter + 1) & _maskChecks;
+    matches[*counter] = hash32 | int32(pos);
+    return (bestLen < _minMatch) ? -1 : ((s - bestIdx) << 16) | (bestLen - _minMatch);
 }
 
 bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
