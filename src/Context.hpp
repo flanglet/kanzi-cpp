@@ -37,10 +37,10 @@ namespace kanzi
    {
    public:
 
-#ifndef CONCURRENCY_ENABLED
-       Context() {}
-#else
+#ifdef CONCURRENCY_ENABLED
        Context(ThreadPool* pool = nullptr) { _pool = pool; }
+#else
+       Context() {}
 #endif
        Context(const Context& ctx);
        Context& operator=(const Context& ctx);
