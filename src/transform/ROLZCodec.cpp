@@ -103,14 +103,7 @@ ROLZCodec1::ROLZCodec1(uint logPosChecks) THROW
 ROLZCodec1::ROLZCodec1(Context& ctx) THROW
 {
     _pCtx = &ctx;
-    _logPosChecks = ctx.getInt("rolz", LOG_POS_CHECKS);
-
-    if ((_logPosChecks < 2) || (_logPosChecks > 8)) {
-        stringstream ss;
-        ss << "ROLZ codec: Invalid logPosChecks parameter: " << _logPosChecks << " (must be in [2..8])";
-        throw invalid_argument(ss.str());
-    }
-
+    _logPosChecks = LOG_POS_CHECKS;
     _posChecks = 1 << _logPosChecks;
     _maskChecks = uint8(_posChecks - 1);
     _minMatch = MIN_MATCH3;
