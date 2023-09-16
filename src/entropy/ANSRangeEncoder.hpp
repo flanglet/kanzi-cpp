@@ -28,7 +28,7 @@ limitations under the License.
 namespace kanzi
 {
 
-   class ANSEncSymbol
+   class ANSEncSymbol FINAL
    {
    public:
       ANSEncSymbol() :

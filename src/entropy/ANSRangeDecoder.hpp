@@ -29,14 +29,10 @@ limitations under the License.
 namespace kanzi
 {
 
-   class ANSDecSymbol
+   class ANSDecSymbol FINAL
    {
    public:
-      ANSDecSymbol() :
-            _cumFreq(0)
-         ,  _freq(0)
-      {
-      }
+      ANSDecSymbol() :  _cumFreq(0),  _freq(0)  { }
 
       ~ANSDecSymbol() { }
 
