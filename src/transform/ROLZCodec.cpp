@@ -103,7 +103,14 @@ ROLZCodec1::ROLZCodec1(uint logPosChecks) THROW
 ROLZCodec1::ROLZCodec1(Context& ctx) THROW
 {
     _pCtx = &ctx;
-    _logPosChecks = LOG_POS_CHECKS;
+    _logPosChecks = ctx.getInt("rolz", LOG_POS_CHECKS);
+
+    if ((_logPosChecks < 2) || (_logPosChecks > 8)) {
+        stringstream ss;
+        ss << "ROLZ codec: Invalid logPosChecks parameter: " << _logPosChecks << " (must be in [2..8])";
+        throw invalid_argument(ss.str());
+    }
+
     _posChecks = 1 << _logPosChecks;
     _maskChecks = uint8(_posChecks - 1);
     _minMatch = MIN_MATCH3;
@@ -116,7 +123,6 @@ ROLZCodec1::ROLZCodec1(Context& ctx) THROW
 int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 key)
 {
     uint8* counter = &_counters[key];
-    prefetchRead(counter);
     const int s = int(*counter);
     const int e = s - _posChecks;
     int32* matches = &_matches[key << _logPosChecks];
@@ -445,16 +451,18 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             if (mm == MIN_MATCH3) {
                  for (int k = 0; k < litLen; k++) {
                     const uint32 key = ROLZCodec::getKey1(&buf[dstIdx + k - dt]);
+                    uint8* counter = &_counters[key];
                     int32* matches = &_matches[key << _logPosChecks];
-                    _counters[key] = (_counters[key] + 1) & _maskChecks;
-                    matches[_counters[key]] = dstIdx + k;
+                    *counter = (*counter + 1) & _maskChecks;
+                    matches[*counter] = dstIdx + k;
                 }
             } else {
                  for (int k = 0; k < litLen; k++) {
                     const uint32 key = ROLZCodec::getKey2(&buf[dstIdx + k - dt]);
+                    uint8* counter = &_counters[key];
                     int32* matches = &_matches[key << _logPosChecks];
-                    _counters[key] = (_counters[key] + 1) & _maskChecks;
-                    matches[_counters[key]] = dstIdx + k;
+                    *counter = (*counter + 1) & _maskChecks;
+                    matches[*counter] = dstIdx + k;
                 }
             }
 
@@ -493,7 +501,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     }
 
 End:
-    if (success) {
+    if (success == true) {
         // Emit last chunk literals
         dst[output._index++] = src[srcIdx++];
         dst[output._index++] = src[srcIdx++];
@@ -665,7 +673,6 @@ ROLZCodec2::ROLZCodec2(Context& ctx) THROW
 // return position index (_logPosChecks bits) + length (16 bits) or -1
 int ROLZCodec2::findMatch(const byte buf[], int pos, int end, uint32 key)
 {
-    prefetchRead(&_counters[key]);
     const int counter = _counters[key];
     int32* matches = &_matches[key << _logPosChecks];
     prefetchRead(matches);

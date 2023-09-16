@@ -217,7 +217,7 @@ namespace kanzi {
 
    private:
        static const int HASH_SIZE = 65536;
-       static const int CHUNK_SIZE = 64 * 1024 * 1024;
+       static const int CHUNK_SIZE = 16 * 1024 * 1024;
        static const int32 HASH = 200002979;
        static const int32 HASH_MASK = ~(CHUNK_SIZE - 1);
        static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024;
@@ -292,21 +292,6 @@ namespace kanzi {
        if (dstIdx >= ref + 8) {
            while (matchLen >= 8) {
                memcpy(&dst[dstIdx], &dst[ref], 8);
-               dstIdx += 8;
-               ref += 8;
-               matchLen -= 8;
-           }
-       }
-       else {
-           while (matchLen >= 8) {
-               dst[dstIdx] = dst[ref];
-               dst[dstIdx + 1] = dst[ref + 1];
-               dst[dstIdx + 2] = dst[ref + 2];
-               dst[dstIdx + 3] = dst[ref + 3];
-               dst[dstIdx + 4] = dst[ref + 4];
-               dst[dstIdx + 5] = dst[ref + 5];
-               dst[dstIdx + 6] = dst[ref + 6];
-               dst[dstIdx + 7] = dst[ref + 7];
                dstIdx += 8;
                ref += 8;
                matchLen -= 8;
