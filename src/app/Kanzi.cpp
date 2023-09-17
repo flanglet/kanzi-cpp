@@ -228,7 +228,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if ((arg.compare(0, 10, "--verbose=") == 0) || (ctx == ARG_IDX_VERBOSE)) {
            if (strVerbose != "") {
-                cout << "Warning: ignoring verbosity level: " << arg << endl;
+                stringstream ss;
+                ss << "Warning: ignoring verbosity level: " << arg;
+                log.println(ss.str().c_str(), verbose > 0);
             }
             else {
                strVerbose = (arg.compare(0, 10, "--verbose=") == 0) ? arg.substr(10) : arg;
@@ -451,7 +453,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             string name = (arg.compare(0, 9, "--output=") == 0) ? arg.substr(9) : arg;
 
             if (outputName != "") {
-                cout << "Warning: ignoring duplicate output name: " << name << endl;
+                stringstream ss;
+                ss << "Warning: ignoring duplicate output name: " << name;
+                log.println(ss.str().c_str(), verbose > 0);
             } else {
                 if ((name.length() >= 2) && (name[0] == '.') && (name[1] == PATH_SEPARATOR)) {
                    name = (name.length() == 2) ? name.substr(0, 1) : name.substr(2);
@@ -468,7 +472,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             string name = (arg.compare(0, 8, "--input=") == 0) ? arg.substr(8) : arg;
 
             if (inputName != "") {
-                cout << "Warning: ignoring duplicate input name: " << name << endl;
+                stringstream ss;
+                ss << "Warning: ignoring duplicate input name: " << name;
+                log.println(ss.str().c_str(), verbose > 0);
             } else {
                 if ((name.length() >= 2) && (name[0] == '.') && (name[1] == PATH_SEPARATOR)) {
                    name = (name.length() == 2) ? name.substr(0, 1) : name.substr(2);
@@ -486,7 +492,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (codec != "") {
-                cout << "Warning: ignoring duplicate entropy: " << name << endl;
+                stringstream ss;
+                ss << "Warning: ignoring duplicate entropy: " << name;
+                log.println(ss.str().c_str(), verbose > 0);
             } else {
                 if (name.length() == 0) {
                     cerr << "Invalid empty entropy provided on command line" << endl;
@@ -506,7 +514,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (transf != "") {
-                cout << "Warning: ignoring duplicate transform: " << name << endl;
+                stringstream ss;
+                ss << "Warning: ignoring duplicate transform: " << name;
+                log.println(ss.str().c_str(), verbose > 0);
             } else {
                 if (name.length() == 0) {
                     cerr << "Invalid empty transform provided on command line" << endl;
@@ -530,11 +540,19 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg.compare(0, 8, "--level=") == 0) || (ctx == ARG_IDX_LEVEL)) {
+            if (mode != "c"){
+                log.println("Warning: ignoring level (only valid for compression)", verbose > 0);
+                ctx = -1;
+                continue;
+            }
+
             string name = (arg.compare(0, 8, "--level=") == 0) ? arg.substr(8) : arg;
             name = trim(name);
 
             if (strLevel != "") {
-                cout << "Warning: ignoring duplicate level: " << name << endl;
+                stringstream ss;
+                ss << "Warning: ignoring duplicate level: " << name;
+                log.println(ss.str().c_str(), verbose > 0);
             } else {
                 if (name.length() != 1) {
                     cerr << "Invalid compression level provided on command line: " << arg << endl;
@@ -559,7 +577,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if ((strBlockSize != "") || (autoBlockSize == true)) {
-                cout << "Warning: ignoring duplicate block size: " << name << endl;
+                stringstream ss;
+                ss << "Warning: ignoring duplicate block size: " << name;
+                log.println(ss.str().c_str(), verbose > 0);
                 ctx = -1;
                 continue;
             }
@@ -637,7 +657,9 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             name = trim(name);
 
             if (strTasks != "") {
-                cout << "Warning: ignoring duplicate jobs: " << name << endl;
+                stringstream ss;
+                ss << "Warning: ignoring duplicate jobs: " << name;
+                log.println(ss.str().c_str(), verbose > 0);
                 ctx = -1;
                 continue;
             }
@@ -660,10 +682,17 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg.compare(0, 7, "--from=") == 0) && (ctx == -1)) {
-            string name = trim(arg);
+            string name = trim(arg.substr(7));
+
+            if (mode != "d"){
+                log.println("Warning: ignoring start block (only valid for decompression)", verbose > 0);
+                continue;
+            }
 
             if (strFrom != "") {
-                cout << "Warning: ignoring duplicate start block: " << name << endl;
+                stringstream ss;
+                ss << "Warning: ignoring duplicate start block: " << name;
+                log.println(ss.str().c_str(), verbose > 0);
             } else {
                 strFrom = name;
                 from = atoi(strFrom.c_str());
@@ -683,10 +712,17 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg.compare(0, 5, "--to=") == 0) && (ctx == -1)) {
-            string name = trim(arg);
+            string name = trim(arg.substr(5));
+
+            if (mode != "d"){
+                log.println("Warning: ignoring end block (only valid for decompression)", verbose > 0);
+                continue;
+            }
 
             if (strTo != "") {
-                cout << "Warning: ignoring duplicate end block: " << name << endl;
+                stringstream ss;
+                ss << "Warning: ignoring duplicate end block: " << name;
+                log.println(ss.str().c_str(), verbose > 0);
             } else {
                 strTo = name;
                 to = atoi(strTo.c_str());
@@ -726,14 +762,6 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             stringstream ss;
             ss << "Warning: providing the 'level' option forces the transform. Ignoring [" << transf << "]";
             log.println(ss.str().c_str(), verbose > 0);
-        }
-    }
-
-    if ((strFrom != "") || (strTo != "")) {
-        if (mode != "d"){
-            log.println("Warning: ignoring start/end block (only valid for decompression)", verbose > 0);
-            from = -1;
-            to = -1;
         }
     }
 
