@@ -682,7 +682,8 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg.compare(0, 7, "--from=") == 0) && (ctx == -1)) {
-            string name = trim(arg.substr(7));
+            string name = arg.substr(7)
+            name = trim(name);
 
             if (mode != "d"){
                 log.println("Warning: ignoring start block (only valid for decompression)", verbose > 0);
@@ -712,7 +713,8 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg.compare(0, 5, "--to=") == 0) && (ctx == -1)) {
-            string name = trim(arg.substr(5));
+            string name = arg.substr(5);
+            name = trim(name);
 
             if (mode != "d"){
                 log.println("Warning: ignoring end block (only valid for decompression)", verbose > 0);
