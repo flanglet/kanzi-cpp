@@ -682,7 +682,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg.compare(0, 7, "--from=") == 0) && (ctx == -1)) {
-            string name = arg.substr(7)
+            string name = arg.substr(7);
             name = trim(name);
 
             if (mode != "d"){
