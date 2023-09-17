@@ -235,7 +235,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
 
         for (it = args.begin(); it != args.end(); ++it) {
             stringstream ss;
-            ss << "Ignoring invalid option [" << it->first << "]";
+            ss << "Warning: ignoring invalid option [" << it->first << "]";
             log.println(ss.str().c_str(), _verbosity > 0);
         }
     }
