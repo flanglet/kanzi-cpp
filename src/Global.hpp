@@ -27,9 +27,6 @@ namespace kanzi {
    public:
        enum DataType { UNDEFINED, TEXT, MULTIMEDIA, EXE, NUMERIC, BASE64, DNA, BIN, UTF8, SMALL_ALPHABET };
 
-       static const int LOG2_4096[257]; // 4096*Math.log2(x)
-       static const int LOG2[256]; // int(Math.log2(x-1))
-
        static int squash(int d);
 
        static int stretch(int d);
@@ -65,6 +62,8 @@ namespace kanzi {
        ~Global() {};
 
        static const Global _singleton;
+       static const int LOG2_4096[257]; // 4096*Math.log2(x)
+       static const int LOG2[256]; // int(Math.log2(x-1))
        static int STRETCH[4096];
        static int SQUASH[4096];
        static char BASE64_SYMBOLS[];
