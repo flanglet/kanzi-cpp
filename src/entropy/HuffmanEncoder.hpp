@@ -32,6 +32,8 @@ namespace kanzi
        OutputBitStream& _bitstream;
        uint _codes[256];
        int _chunkSize;
+       byte* _buffer;
+       uint _bufferSize;
 
        uint computeCodeLengths(uint16 sizes[], uint sranks[], int count);
 
@@ -46,7 +48,7 @@ namespace kanzi
    public:
        HuffmanEncoder(OutputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE) THROW;
 
-       ~HuffmanEncoder() { _dispose(); }
+       ~HuffmanEncoder() { _dispose(); delete[] _buffer; }
 
        int updateFrequencies(uint frequencies[]) THROW;
 

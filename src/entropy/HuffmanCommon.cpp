@@ -21,8 +21,11 @@ using namespace kanzi;
 // codes and symbols are updated
 int HuffmanCommon::generateCanonicalCodes(const uint16 sizes[], uint codes[], uint symbols[], int count)
 {
+    if (count == 0)
+        return 0;
+
     if (count > 1) {
-        byte buf[BUFFER_SIZE] = { byte(0) };
+        int8 buf[BUFFER_SIZE] = { int8(0) };
 
         for (int i = 0; i < count; i++) {
             const uint s = symbols[i];
@@ -30,14 +33,12 @@ int HuffmanCommon::generateCanonicalCodes(const uint16 sizes[], uint codes[], ui
             if ((s > 255) || (sizes[s] > MAX_SYMBOL_SIZE))
                 return -1;
 
-            buf[((sizes[s] - 1) << 8) | s] = byte(1);
+            buf[((sizes[s] - 1) << 8) | s] = int8(1);
         }
 
         for (int i = 0, n = 0; n < count; i++) {
-            if (buf[i] == byte(0))
-                continue;
-
-            symbols[n++] = i & 0xFF;
+            symbols[n] = i & 0xFF;
+            n += buf[i];
         }
     }
 

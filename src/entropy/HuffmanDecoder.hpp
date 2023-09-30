@@ -30,7 +30,7 @@ namespace kanzi
    public:
        HuffmanDecoder(InputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE) THROW;
 
-       ~HuffmanDecoder() { _dispose(); }
+       ~HuffmanDecoder() { _dispose(); delete[] _buffer; }
 
        int decode(byte block[], uint blkptr, uint len);
 
@@ -43,6 +43,8 @@ namespace kanzi
        static const int TABLE_MASK = (1 << DECODING_BATCH_SIZE) - 1;
 
        InputBitStream& _bitstream;
+       byte* _buffer;
+       uint _bufferSize;
        uint _codes[256];
        uint _alphabet[256];
        uint16 _sizes[256];
@@ -52,10 +54,6 @@ namespace kanzi
        int readLengths() THROW;
 
        void buildDecodingTable(int count);
-
-       byte slowDecodeByte(uint64& state, int& bits) THROW;
-
-       void fetchBits();
 
        bool reset();
 

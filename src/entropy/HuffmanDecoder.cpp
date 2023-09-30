@@ -20,6 +20,8 @@ limitations under the License.
 #include "EntropyUtils.hpp"
 #include "ExpGolombDecoder.hpp"
 #include "../BitStreamException.hpp"
+#include "../util.hpp"
+#include "../Memory.hpp"
 
 using namespace kanzi;
 using namespace std;
@@ -38,6 +40,8 @@ HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) THROW :
     }
 
     _chunkSize = chunkSize;
+    _buffer = new byte[0];
+    _bufferSize = 0;
     reset();
 }
 
@@ -62,7 +66,7 @@ int HuffmanDecoder::readLengths() THROW
         return 0;
 
     ExpGolombDecoder egdec(_bitstream, true);
-    int curSize = 2;
+    int8 curSize = 2;
 
     // Read lengths from bitstream
     for (int i = 0; i < count; i++) {
@@ -150,70 +154,84 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
 
         buildDecodingTable(alphabetSize);
 
-        // Compute minimum number of bits required in bitstream for fast decoding
-        const uint minCodeLen = uint(_sizes[_alphabet[0]]); // not 0
-        uint padding = 64 / minCodeLen;
+        // Read number of streams. Only 1 steam supported for now
+        if (_bitstream.readBits(2) != 0)
+            return -1;
 
-        if (minCodeLen * padding != 64)
-            padding++;
+        // Read chunk size
+        const int szBits = EntropyUtils::readVarInt(_bitstream);
 
-        const int szChunk = max(int(endChunk - startChunk - padding), 0);
-        const uint endChunk5 = startChunk + uint(szChunk - szChunk % 5);
-        uint64 state = 0; // holds bits read from bitstream
-        int bits = 64; // holds number of used bits in 'state'
+        if (szBits < 0)
+            return -1;
 
-        for (uint i = startChunk; i < endChunk5; i += 5) {
-            state = ((state << (bits - 1)) << 1) | _bitstream.readBits(bits); // Handle _bits == 64 case
-            bits = 0;
-            const uint16 val0 = _table[(state >> (64 - DECODING_BATCH_SIZE - bits)) & TABLE_MASK];
-            bits += uint8(val0);
-            const uint16 val1 = _table[(state >> (64 - DECODING_BATCH_SIZE - bits)) & TABLE_MASK];
-            bits += uint8(val1);
-            const uint16 val2 = _table[(state >> (64 - DECODING_BATCH_SIZE - bits)) & TABLE_MASK];
-            bits += uint8(val2);
-            const uint16 val3 = _table[(state >> (64 - DECODING_BATCH_SIZE - bits)) & TABLE_MASK];
-            bits += uint8(val3);
-            const uint16 val4 = _table[(state >> (64 - DECODING_BATCH_SIZE - bits)) & TABLE_MASK];
-            bits += uint8(val4);
-            block[i] = byte(val0 >> 8);
-            block[i + 1] = byte(val1 >> 8);
-            block[i + 2] = byte(val2 >> 8);
-            block[i + 3] = byte(val3 >> 8);
-            block[i + 4] = byte(val4 >> 8);
+        // Read compressed data from bitstream
+        if (szBits != 0) {
+            const int sz = (szBits + 7) >> 3;
+            const uint minLenBuf = uint(max(sz + (sz >> 3), 1024));
+
+            if (_bufferSize < minLenBuf) {
+                delete[] _buffer;
+                _bufferSize = minLenBuf;
+                _buffer = new byte[_bufferSize];
+            }
+
+            _bitstream.readBits(&_buffer[0], szBits);
+
+            uint64 state = 0; // holds bits read from bitstream
+            uint8 bits = 0; // number of available bits in state
+            int idx = 0;
+            uint n = startChunk;
+
+            while (idx < sz - 8) {
+                const uint8 shift = (56 - bits) & -8;
+                state = (state << shift) | (uint64(BigEndian::readLong64(&_buffer[idx])) >> (63 - shift) >> 1); // handle shift = 0
+                uint8 bs = bits + shift - DECODING_BATCH_SIZE;
+                idx += (shift >> 3);
+                const uint16 val0 = _table[(state >> bs) & TABLE_MASK];
+                bs -= uint8(val0);
+                const uint16 val1 = _table[(state >> bs) & TABLE_MASK];
+                bs -= uint8(val1);
+                const uint16 val2 = _table[(state >> bs) & TABLE_MASK];
+                bs -= uint8(val2);
+                const uint16 val3 = _table[(state >> bs) & TABLE_MASK];
+                bs -= uint8(val3);
+                block[n + 0] = byte(val0 >> 8);
+                block[n + 1] = byte(val1 >> 8);
+                block[n + 2] = byte(val2 >> 8);
+                block[n + 3] = byte(val3 >> 8);
+                n += 4;
+                bits = bs + DECODING_BATCH_SIZE;
+            }
+
+            // Last bytes
+            uint nbBits = idx * 8;
+
+            while (n < endChunk) {
+                while ((bits < HuffmanCommon::MAX_SYMBOL_SIZE) && (idx < sz)) {
+                    state = (state << 8) | uint64(_buffer[idx] & byte(0xFF));
+                    idx++;;
+                    nbBits = (idx == sz) ? szBits : nbBits + 8;
+
+                    // 'bits' may overshoot when idx == sz due to padding state bits
+                    // It is necessary to compute proper _table indexes
+                    // and has no consequence (except bits != 0 at end of chunk)
+                    bits += 8;
+                }
+
+                uint16 val;
+
+                if (bits >= DECODING_BATCH_SIZE)
+                    val = _table[(state >> (bits - DECODING_BATCH_SIZE)) & TABLE_MASK];
+                else
+                    val = _table[(state << (DECODING_BATCH_SIZE - bits)) & TABLE_MASK];
+
+                bits -= uint8(val);
+                block[n++] = byte(val >> 8);
+            }
         }
-
-        // Fallback to regular decoding
-        for (uint i = endChunk5; i < endChunk; i++)
-            block[i] = slowDecodeByte(state, bits);
 
         startChunk = endChunk;
     }
 
     return count;
-}
-
-byte HuffmanDecoder::slowDecodeByte(uint64& state, int& bits) THROW
-{
-    int code = 0;
-    uint8 codeLen = 0;
-
-    while (codeLen < HuffmanCommon::MAX_SYMBOL_SIZE) {
-        codeLen++;
-
-        if (bits == 64) {
-            code = (code << 1) | _bitstream.readBit();
-        }
-        else {
-            bits++;
-            code = (code << 1) | int((state >> (64 -bits)) & 1);
-        }
-
-        const int idx = code << (DECODING_BATCH_SIZE - codeLen);
-
-        if (uint8(_table[idx]) == codeLen)
-            return byte(_table[idx] >> 8);
-    }
-
-    throw BitStreamException("Invalid bitstream: incorrect Huffman code",
-        BitStreamException::INVALID_STREAM);
 }
