@@ -373,7 +373,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     const int mm = _minMatch;
     const int dt = delta;
-    SliceArray<byte> litBuf(new byte[getMaxEncodedLength(sizeChunk)], getMaxEncodedLength(sizeChunk));
+    SliceArray<byte> litBuf(new byte[sizeChunk], sizeChunk);
     SliceArray<byte> lenBuf(new byte[sizeChunk / 5], sizeChunk / 5);
     SliceArray<byte> mIdxBuf(new byte[sizeChunk / 4], sizeChunk / 4);
     SliceArray<byte> tkBuf(new byte[sizeChunk / 4], sizeChunk / 4);
