@@ -30,8 +30,8 @@ using namespace std;
 
 BWT::BWT(int jobs) THROW
 {
-    _buffer = nullptr;
-    _sa = nullptr;
+    _buffer = new uint[0];
+    _sa = new int[0];
     _bufferSize = 0;
 
 #ifdef CONCURRENCY_ENABLED
@@ -51,8 +51,8 @@ BWT::BWT(int jobs) THROW
 
 BWT::BWT(Context& ctx) THROW
 {
-    _buffer = nullptr;
-    _sa = nullptr;
+    _buffer = new uint[0];
+    _sa = new int[0];
     _bufferSize = 0;
     int jobs = ctx.getInt("jobs", 1);
 
@@ -72,11 +72,8 @@ BWT::BWT(Context& ctx) THROW
 
 BWT::~BWT()
 {
-    if (_buffer != nullptr)
-        delete[] _buffer;
-
-    if (_sa != nullptr)
-        delete[] _sa;
+    delete[] _buffer;
+    delete[] _sa;
 }
 
 bool BWT::setPrimaryIndex(int n, int primaryIndex)
@@ -113,10 +110,8 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     byte* dst = &output._array[output._index];
 
     // Lazy dynamic memory allocation
-    if ((_sa == nullptr) || (_bufferSize < count)) {
-        if (_sa != nullptr)
-            delete[] _sa;
-
+    if (_bufferSize < count) {
+         delete[] _sa;
         _bufferSize = count;
         _sa = new int[_bufferSize];
     }
@@ -156,11 +151,9 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
 bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     // Lazy dynamic memory allocation
-    if ((_buffer == nullptr) || (_bufferSize < count)) {
-        if (_buffer != nullptr)
-            delete[] _buffer;
-
-        _bufferSize = max(count, 64);
+    if (_bufferSize < count) {
+        delete[] _buffer;
+        _bufferSize = max(count, 256);
         _buffer = new uint[_bufferSize];
     }
 
@@ -297,11 +290,9 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
 bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     // Lazy dynamic memory allocations
-    if ((_buffer == nullptr) || (_bufferSize < count + 1)) {
-        if (_buffer != nullptr)
-            delete[] _buffer;
-
-        _bufferSize = max(count + 1, 64);
+    if (_bufferSize < count + 1) {
+        delete[] _buffer;
+        _bufferSize = max(count + 1, 256);
         _buffer = new uint[_bufferSize];
     }
 
@@ -413,7 +404,7 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
 #ifdef CONCURRENCY_ENABLED
         // Several chunks may be decoded concurrently (depending on the availability
         // of jobs per block).
-        int* jobsPerTask = new int[nbTasks];
+        int jobsPerTask[64];
         Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
         vector<future<int> > futures;
         vector<InverseBiPSIv2Task<int>*> tasks;
@@ -440,8 +431,6 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
         // Cleanup
         for (InverseBiPSIv2Task<int>* task : tasks)
             delete task;
-
-        delete[] jobsPerTask;
 #else
         // nbTasks > 1 but concurrency is not enabled (should never happen)
         throw invalid_argument("Error during BWT inverse: concurrency not supported");
@@ -458,18 +447,18 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
 template <class T>
 InverseBiPSIv2Task<T>::InverseBiPSIv2Task(uint* buf, uint* buckets, uint16* fastBits, byte* output,
-    int* primaryIndexes, int total, int start, int ckSize, int firstChunk, int lastChunk)
+                                          int* primaryIndexes, int total, int start, int ckSize, int firstChunk, int lastChunk)
+                                          : _data(buf)
+                                          , _buckets(buckets)
+                                          , _fastBits(fastBits)
+                                          , _primaryIndexes(primaryIndexes)
+                                          , _dst(output)
+                                          , _total(total)
+                                          , _start(start)
+                                          , _ckSize(ckSize)
+                                          , _firstChunk(firstChunk)
+                                          , _lastChunk(lastChunk)
 {
-    _data = buf;
-    _fastBits = fastBits;
-    _buckets = buckets;
-    _primaryIndexes = primaryIndexes;
-    _dst = output;
-    _total = total;
-    _start = start;
-    _ckSize = ckSize;
-    _firstChunk = firstChunk;
-    _lastChunk = lastChunk;
 }
 
 template <class T>
