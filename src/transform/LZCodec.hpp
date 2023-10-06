@@ -104,7 +104,7 @@ namespace kanzi {
        static const uint HASH_LOG2 = 21;
        static const uint HASH_SHIFT2 = 48 - HASH_LOG2;
        static const uint HASH_MASK2 = (1 << HASH_LOG2) - 1;
-       static const int MAX_DISTANCE1 = (1 << 17) - 2;
+       static const int MAX_DISTANCE1 = (1 << 16) - 2;
        static const int MAX_DISTANCE2 = (1 << 24) - 2;
        static const int MIN_MATCH1 = 5;
        static const int MIN_MATCH2 = 9;
@@ -185,11 +185,8 @@ namespace kanzi {
    template <bool T>
    inline int32 LZXCodec<T>::hash(const byte* p)
    {
-       if (T == true) {
-           return ((LittleEndian::readLong64(p) * HASH_SEED) >> HASH_SHIFT2) & HASH_MASK2;
-       } else {
-           return ((LittleEndian::readLong64(p) * HASH_SEED) >> HASH_SHIFT1) & HASH_MASK1;
-       }
+       return (T == true) ? ((LittleEndian::readLong64(p) * HASH_SEED) >> HASH_SHIFT2) & HASH_MASK2 :
+           ((LittleEndian::readLong64(p) * HASH_SEED) >> HASH_SHIFT1) & HASH_MASK1;
    }
 
    template <bool T>
@@ -201,18 +198,13 @@ namespace kanzi {
        }
 
        if (length < 65536 + 254) {
-           length -= 254;
-           block[0] = byte(254);
-           block[1] = byte(length >> 8);
-           block[2] = byte(length);
+           length = (length - 254) | 0x00FE0000;
+           kanzi::BigEndian::writeInt32(&block[0], length << 8);
            return 3;
        }
 
-       length -= 255;
-       block[0] = byte(255);
-       block[1] = byte(length >> 16);
-       block[2] = byte(length >> 8);
-       block[3] = byte(length);
+       length = (length - 255) | 0xFF000000;
+       kanzi::BigEndian::writeInt32(&block[0], length);
        return 4;
    }
 
@@ -225,14 +217,12 @@ namespace kanzi {
            return res;
 
        if (res == 254) {
-           res += (int(block[pos++]) << 8);
-           res += int(block[pos++]);
+           res += ((kanzi::BigEndian::readInt16(&block[pos])) & 0xFFFF);
+           pos += 2;
            return res;
        }
 
-       res += (int(block[pos]) << 16);
-       res += (int(block[pos + 1]) << 8);
-       res += int(block[pos + 2]);
+       res += ((kanzi::BigEndian::readInt32(&block[pos])) >> 8);
        pos += 3;
        return res;
    }
