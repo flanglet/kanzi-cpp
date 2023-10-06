@@ -141,7 +141,8 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 key)
 
         int n = 0;
 
-        while (n + 4 < maxMatch) {
+        do
+        {
             const int32 diff = LittleEndian::readInt32(&buf[ref + n]) ^ LittleEndian::readInt32(&curBuf[n]);
 
             if (diff != 0) {
@@ -151,6 +152,7 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 key)
 
             n += 4;
         }
+        while (n < maxMatch);
 
         if (n > bestLen) {
             bestIdx = i;
@@ -227,7 +229,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         mIdxBuf._index = 0;
         tkBuf._index = 0;
 
-        memset(&_matches[0], 0, sizeof(int32) * (ROLZCodec::HASH_SIZE << _logPosChecks));
+        memset(&_matches[0], 0, sizeof(int32) * size_t(ROLZCodec::HASH_SIZE << _logPosChecks));
         const int endChunk = min(startChunk + sizeChunk, srcEnd);
         sizeChunk = endChunk - startChunk;
         byte* buf = &src[startChunk];
@@ -335,7 +337,7 @@ End:
         }
     }
 
-    output._index = dstIdx;
+    output._index += dstIdx;
     delete[] litBuf._array;
     delete[] lenBuf._array;
     delete[] mIdxBuf._array;
@@ -386,7 +388,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         lenBuf._index = 0;
         mIdxBuf._index = 0;
         tkBuf._index = 0;
-        memset(&_matches[0], 0, sizeof(int32) * (ROLZCodec::HASH_SIZE << _logPosChecks));
+        memset(&_matches[0], 0, sizeof(int32) * size_t(ROLZCodec::HASH_SIZE << _logPosChecks));
         const int endChunk = min(startChunk + sizeChunk, dstEnd);
         sizeChunk = endChunk - startChunk;
 
@@ -502,7 +504,7 @@ End:
         dst[output._index++] = src[srcIdx++];
     }
 
-    input._index = srcIdx;
+    input._index += srcIdx;
     delete[] litBuf._array;
     delete[] lenBuf._array;
     delete[] mIdxBuf._array;
@@ -690,7 +692,7 @@ int ROLZCodec2::findMatch(const byte buf[], int pos, int end, uint32 key)
 
         int n = 0;
 
-        while (n + 4 < maxMatch) {
+        do {
             const int32 diff = LittleEndian::readInt32(&buf[ref + n]) ^ LittleEndian::readInt32(&curBuf[n]);
 
             if (diff != 0) {
@@ -699,7 +701,8 @@ int ROLZCodec2::findMatch(const byte buf[], int pos, int end, uint32 key)
             }
 
             n += 4;
-        }
+        } 
+        while (n < maxMatch);
 
         if (n > bestLen) {
             bestIdx = counter - i;
@@ -759,7 +762,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     memset(&_counters[0], 0, sizeof(_counters));
 
     while (startChunk < srcEnd) {
-        memset(&_matches[0], 0, sizeof(int32) * (ROLZCodec::HASH_SIZE << _logPosChecks));
+        memset(&_matches[0], 0, sizeof(int32) * size_t(ROLZCodec::HASH_SIZE << _logPosChecks));
         const int endChunk = min(startChunk + sizeChunk, srcEnd);
         sizeChunk = endChunk - startChunk;
         re.reset();

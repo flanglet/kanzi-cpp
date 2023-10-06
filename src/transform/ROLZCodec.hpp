@@ -227,12 +227,12 @@ namespace kanzi {
 
        static uint32 getKey1(const byte* p)
        {
-           return uint32(LittleEndian::readInt16(p)) & 0xFFFF;
+           return uint32(LittleEndian::readInt16(p)) & (HASH_SIZE - 1);
        }
 
        static uint32 getKey2(const byte* p)
        {
-           return uint32((LittleEndian::readLong64(p) * HASH) >> 40) & 0xFFFF;
+           return uint32((LittleEndian::readLong64(p) * HASH) >> 40) & (HASH_SIZE - 1);
        }
 
        static int32 hash(const byte* p)
