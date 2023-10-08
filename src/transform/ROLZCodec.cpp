@@ -124,7 +124,7 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 key)
     const int32 hash32 = ROLZCodec::hash(curBuf);
     int bestLen = 0;
     int bestIdx = -1;
-    const int maxMatch = min(ROLZCodec1::MAX_MATCH, end - pos);
+    const int maxMatch = min(ROLZCodec1::MAX_MATCH, end - pos) - 4;
 
     // Check all recorded positions
     for (int i = s; i > e; i--) {
@@ -141,8 +141,7 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 key)
 
         int n = 0;
 
-        do
-        {
+        while (n < maxMatch) {
             const int32 diff = LittleEndian::readInt32(&buf[ref + n]) ^ LittleEndian::readInt32(&curBuf[n]);
 
             if (diff != 0) {
@@ -152,7 +151,6 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 key)
 
             n += 4;
         }
-        while (n < maxMatch);
 
         if (n > bestLen) {
             bestIdx = i;
@@ -675,7 +673,7 @@ int ROLZCodec2::findMatch(const byte buf[], int pos, int end, uint32 key)
     const int32 hash32 = ROLZCodec::hash(curBuf);
     int bestLen = 0;
     int bestIdx = -1;
-    const int maxMatch = min(ROLZCodec2::MAX_MATCH, end - pos);
+    const int maxMatch = min(ROLZCodec2::MAX_MATCH, end - pos) - 4;
 
     // Check all recorded positions
     for (int i = counter; i > counter - _posChecks; i--) {
@@ -692,7 +690,7 @@ int ROLZCodec2::findMatch(const byte buf[], int pos, int end, uint32 key)
 
         int n = 0;
 
-        do {
+        while (n < maxMatch) {
             const int32 diff = LittleEndian::readInt32(&buf[ref + n]) ^ LittleEndian::readInt32(&curBuf[n]);
 
             if (diff != 0) {
@@ -702,7 +700,6 @@ int ROLZCodec2::findMatch(const byte buf[], int pos, int end, uint32 key)
 
             n += 4;
         } 
-        while (n < maxMatch);
 
         if (n > bestLen) {
             bestIdx = counter - i;
