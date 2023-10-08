@@ -104,14 +104,14 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     byte* src = &input._array[input._index];
     const int maxDist = (srcEnd < 4 * MAX_DISTANCE1) ? MAX_DISTANCE1 : MAX_DISTANCE2;
     dst[12] = (maxDist == MAX_DISTANCE1) ? byte(0) : byte(1);
-    int mm = MIN_MATCH1;
+    int mm = MIN_MATCH4;
 
     if (_pCtx != nullptr) {
         Global::DataType dt = (Global::DataType)_pCtx->getInt("dataType", Global::UNDEFINED);
 
         if (dt == Global::DNA) {
             // Longer min match for DNA input
-            mm = MIN_MATCH2;
+            mm = MIN_MATCH9;
             dst[12] |= byte(2);
         }
         else if (dt == Global::SMALL_ALPHABET) {
@@ -128,29 +128,30 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     int mLenIdx = 0;
     int tkIdx = 0;
     int repd[] = { count, count };
-    int srcInc = 0;
     int repIdx = 0;
+    int srcInc = 0;
 
     while (srcIdx < srcEnd) {
         const int minRef = max(srcIdx - maxDist, 0);
-        const int32 h0 = hash(&src[srcIdx]);
-        const int32 h1 = hash(&src[srcIdx + 1]);
         int bestLen = 0;
         int ref = srcIdx + 1 - repd[repIdx];
 
-        // Check repd first
         if ((ref > minRef) && (memcmp(&src[srcIdx + 1], &src[ref], 4) == 0)) {
+            // Check repd first
             bestLen = findMatch(src, srcIdx + 1, ref, min(srcEnd - srcIdx - 1, MAX_MATCH));
-        }
-        else {
-            ref = srcIdx + 1 - repd[1 - repIdx];
 
-            if ((ref > minRef) && (memcmp(&src[srcIdx + 1], &src[ref], 4) == 0)) {
-                bestLen = findMatch(src, srcIdx + 1, ref, min(srcEnd - srcIdx - 1, MAX_MATCH));
+            if (bestLen < minMatch) {
+                ref = srcIdx + 1 - repd[1 - repIdx];
+
+                if ((ref > minRef) && (memcmp(&src[srcIdx + 1], &src[ref], 4) == 0)) {
+                    bestLen = findMatch(src, srcIdx + 1, ref, min(srcEnd - srcIdx - 1, MAX_MATCH));
+                }
             }
         }
 
         if (bestLen < minMatch) {
+            // Check match at position in hash table
+            const int32 h0 = hash(&src[srcIdx]);
             ref = _hashes[h0];
             _hashes[h0] = srcIdx;
 
@@ -169,6 +170,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
             if ((ref != srcIdx - repd[0]) && (ref != srcIdx - repd[1])) {
                 // Check if better match at next position
+                const int32 h1 = hash(&src[srcIdx + 1]);
                 const int ref1 = _hashes[h1];
                 _hashes[h1] = srcIdx + 1;
 
@@ -191,6 +193,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             }
         }
         else {
+            const int32 h0 = hash(&src[srcIdx]);
             _hashes[h0] = srcIdx;
 
             if ((src[srcIdx] == src[ref - 1]) && (bestLen < MAX_MATCH)) {
@@ -199,10 +202,12 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             }
             else {
                 srcIdx++;
+                const int32 h1 = hash(&src[srcIdx]);
                 _hashes[h1] = srcIdx;
             }
         }
 
+        // Emit match
         srcInc = 0;
 
         // Token: 3 bits litLen + 1 bit flag + 4 bits mLen (LLLFMMMM)
@@ -212,7 +217,8 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // F    : if MMMM == 15, flag = 0 if dist == repd0 and 1 if dist == repd1
         //        else flag = 1 if dist >= dThreshold and 0 otherwise
         const int dist = srcIdx - ref;
-        int mLen = bestLen - minMatch;
+        const int mLen = bestLen - minMatch;
+        const int litLen = srcIdx - anchor;
         int token;
 
         if (dist == repd[0]) {
@@ -224,6 +230,20 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             mLenIdx += emitLength(&_mLenBuf[mLenIdx], mLen);
         }
         else {
+            // Emit distance (since not repeat)
+            if (maxDist == MAX_DISTANCE2) {
+                if (dist >= 65536)
+                    _mBuf[mIdx++] = byte(dist >> 16);
+
+                _mBuf[mIdx++] = byte(dist >> 8);
+            }
+            else {
+                if (dist >= 256)
+                    _mBuf[mIdx++] = byte(dist >> 8);
+            }
+
+            _mBuf[mIdx++] = byte(dist);
+            
             // Emit match length
             if (mLen >= 14) {
                 if (mLen == 14) {
@@ -239,20 +259,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             else {
                 token = (dist >= dThreshold) ? 0x10 | mLen : mLen;
             }
-
-            // Emit distance (since not repeat)
-            if (maxDist == MAX_DISTANCE2) {
-                if (dist >= 65536)
-                    _mBuf[mIdx++] = byte(dist >> 16);
-
-                _mBuf[mIdx++] = byte(dist >> 8);
-            }
-            else {
-                if (dist >= 256)
-                    _mBuf[mIdx++] = byte(dist >> 8);
-            }
-
-            _mBuf[mIdx++] = byte(dist);
         }
 
         repd[1] = repd[0];
@@ -261,13 +267,10 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         // Emit token
         // Literals to process ?
-        if (anchor == srcIdx) {
+        if (litLen == 0) {
             _tkBuf[tkIdx++] = byte(token);
         }
         else {
-            // Process literals
-            int litLen = srcIdx - anchor;
-
             // Emit literal length
             if (litLen >= 7) {
                 if (litLen >= (1 << 24))
@@ -304,11 +307,10 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         // Fill _hashes and update positions
         anchor = srcIdx + bestLen;
-        srcIdx++;
 
-        while (srcIdx < anchor) {
-            _hashes[hash(&src[srcIdx])] = srcIdx;
-            srcIdx++;
+        while (++srcIdx < anchor) {
+            const int32 h = hash(&src[srcIdx]);
+            _hashes[h] = srcIdx;
         }
 
         prefetchRead(&src[srcIdx + 64]);
@@ -381,7 +383,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
     const int srcEnd = tkIdx - 13;
     const int mFlag = int(src[12]) & 1;
     const int maxDist = (mFlag == 0) ? MAX_DISTANCE1 : MAX_DISTANCE2;
-    const int minMatch = ((int(src[12]) & 2) == 0) ? MIN_MATCH1 : MIN_MATCH2;
+    const int minMatch = ((int(src[12]) & 2) == 0) ? MIN_MATCH4 : MIN_MATCH9;
     bool res = true;
     int srcIdx = 13;
     int dstIdx = 0;
@@ -421,14 +423,10 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
         else {
             // Read mLen remainder (if any) outside of token
             mLen = (mLen == 14) ? 14 + minMatch + readLength(src, mLenIdx) : mLen + minMatch;
- 
-            if (mFlag == 0) {
-                dist = int(src[mIdx++]);
-            }
-            else {
-                dist = (int(src[mIdx]) << 8) | int(src[mIdx + 1]);
-                mIdx += 2;
-            }
+            dist = int(src[mIdx++]);
+
+            if (mFlag != 0)
+                dist = (dist << 8) | int(src[mIdx++]);
 
             //if ((token & 0x10) != 0) {
             //    dist = (dist << 8) | int(src[mIdx++]);
@@ -620,20 +618,17 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         _hashes[h] = dstIdx;
 
         if ((ref == 0) || (src[srcIdx] != byte(MATCH_FLAG))) {
-            dst[dstIdx] = src[srcIdx];
-            ctx = (ctx << 8) | int32(dst[dstIdx]);
-            srcIdx++;
-            dstIdx++;
+            ctx = (ctx << 8) | int32(src[srcIdx]);
+            dst[dstIdx++] = src[srcIdx++];
             continue;
         }
 
         srcIdx++;
 
         if (src[srcIdx] == byte(0xFF)) {
-            dst[dstIdx] = byte(MATCH_FLAG);
             ctx = (ctx << 8) | int32(MATCH_FLAG);
+            dst[dstIdx++] = byte(MATCH_FLAG);
             srcIdx++;
-            dstIdx++;
             continue;
         }
 
