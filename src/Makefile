@@ -1,7 +1,7 @@
 #CXX=clang++
 
 ifeq ($(OS),Windows_NT)
-	CFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti
+	CXXFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti
 	#LDFLAGS=-static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
 	LDFLAGS=-static-libgcc -static-libstdc++ -lpthread
 else
@@ -9,15 +9,14 @@ else
 	ARCH ?= $(shell uname -m)
 
 	ifeq ($(ARCH),x86_64)
-		CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti
+		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti
 	else
-		CFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti
+		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti
 	endif
 endif	
 
 LIB_COMMON_SOURCES=Global.cpp \
 	Event.cpp \
-	api/libapi.cpp \
 	entropy/EntropyUtils.cpp \
 	entropy/HuffmanCommon.cpp \
 	entropy/CMPredictor.cpp \
@@ -39,7 +38,8 @@ LIB_COMMON_SOURCES=Global.cpp \
 	transform/ZRLT.cpp
 LIB_COMMON_OBJECTS=$(LIB_COMMON_SOURCES:.cpp=.o)
 
-LIB_COMP_SOURCES=bitstream/DebugOutputBitStream.cpp \
+LIB_COMP_SOURCES=api/Compressor.cpp \
+	bitstream/DebugOutputBitStream.cpp \
 	bitstream/DefaultOutputBitStream.cpp \
 	io/CompressedOutputStream.cpp \
 	entropy/ANSRangeEncoder.cpp \
@@ -51,7 +51,8 @@ LIB_COMP_SOURCES=bitstream/DebugOutputBitStream.cpp \
 	entropy/RiceGolombEncoder.cpp
 LIB_COMP_OBJECTS=$(LIB_COMP_SOURCES:.cpp=.o)
 
-LIB_DECOMP_SOURCES= bitstream/DebugInputBitStream.cpp \
+LIB_DECOMP_SOURCES=api/Decompressor.cpp \
+	bitstream/DebugInputBitStream.cpp \
 	bitstream/DefaultInputBitStream.cpp \
 	io/CompressedInputStream.cpp \
 	entropy/ANSRangeDecoder.cpp \
@@ -210,4 +211,4 @@ else
 endif
 
 .cpp.o:
-	$(CXX) $(CFLAGS) $< -o $@
+	$(CXX) $(CXXFLAGS) $< -o $@
