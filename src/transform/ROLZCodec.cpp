@@ -303,8 +303,6 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             mEnc.encode(lenBuf._array, 0, lenBuf._index);
             mEnc.encode(mIdxBuf._array, 0, mIdxBuf._index);
             mEnc.dispose();
-            obs.close();
-            os.flush();
         }
 
         // Copy bitstream array to output
@@ -418,7 +416,6 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             mDec.dispose();
 
             srcIdx += int((ibs.read() + 7) >> 3);
-            ibs.close();
         }
 
         byte* buf = &output._array[output._index];
@@ -439,49 +436,50 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             // Emit literals
             const int litLen = (mode < 0xF8) ? mode >> 3 : readLength(lenBuf._array, lenBuf._index) + 31;
-            memcpy(&buf[dstIdx], &litBuf._array[litBuf._index], litLen);
 
-            if (mm == MIN_MATCH3) {
-                 for (int k = 0; k < litLen; k++) {
-                    const uint32 key = ROLZCodec::getKey1(&buf[dstIdx + k - dt]);
-                    uint8* counter = &_counters[key];
-                    int32* matches = &_matches[key << _logPosChecks];
-                    *counter = (*counter + 1) & _maskChecks;
-                    matches[*counter] = dstIdx + k;
+            if (litLen > 0) {
+                memcpy(&buf[dstIdx], &litBuf._array[litBuf._index], litLen);
+
+                if (mm == MIN_MATCH3) {
+                     for (int k = 0; k < litLen; k++) {
+                        const uint32 key = ROLZCodec::getKey1(&buf[dstIdx + k - dt]);
+                        uint8* counter = &_counters[key];
+                        int32* matches = &_matches[key << _logPosChecks];
+                        *counter = (*counter + 1) & _maskChecks;
+                        matches[*counter] = dstIdx + k;
+                    }
+                } else {
+                     for (int k = 0; k < litLen; k++) {
+                        const uint32 key = ROLZCodec::getKey2(&buf[dstIdx + k - dt]);
+                        uint8* counter = &_counters[key];
+                        int32* matches = &_matches[key << _logPosChecks];
+                        *counter = (*counter + 1) & _maskChecks;
+                        matches[*counter] = dstIdx + k;
+                    }
                 }
-            } else {
-                 for (int k = 0; k < litLen; k++) {
-                    const uint32 key = ROLZCodec::getKey2(&buf[dstIdx + k - dt]);
-                    uint8* counter = &_counters[key];
-                    int32* matches = &_matches[key << _logPosChecks];
-                    *counter = (*counter + 1) & _maskChecks;
-                    matches[*counter] = dstIdx + k;
+
+                litBuf._index += litLen;
+                dstIdx += litLen;
+
+                if (dstIdx >= sizeChunk) {
+                    // Last chunk literals not followed by match
+                    if (dstIdx == sizeChunk)
+                        break;
+
+                    output._index += dstIdx;
+                    success = false;
+                    goto End;
                 }
-            }
-
-            litBuf._index += litLen;
-            dstIdx += litLen;
-
-            if (dstIdx >= sizeChunk) {
-                // Last chunk literals not followed by match
-                if (dstIdx == sizeChunk)
-                    break;
-
-                output._index += dstIdx;
-                success = false;
-                goto End;
             }
 
             // Sanity check
             if (output._index + dstIdx + matchLen + _minMatch > dstEnd) {
-                output._index += dstIdx;
                 success = false;
                 goto End;
             }
 
-            const uint32 key = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&buf[dstIdx - dt]) : ROLZCodec::getKey2(&buf[dstIdx - dt]);
-            prefetchRead(&_counters[key]);
             const uint8 matchIdx = uint8(mIdxBuf._array[mIdxBuf._index++]);
+            const uint32 key = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&buf[dstIdx - dt]) : ROLZCodec::getKey2(&buf[dstIdx - dt]);
             int32* matches = &_matches[key << _logPosChecks];
             const int32 ref = matches[(_counters[key] - matchIdx) & _maskChecks];
             _counters[key] = (_counters[key] + 1) & _maskChecks;

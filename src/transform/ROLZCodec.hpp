@@ -134,7 +134,7 @@ namespace kanzi {
        static const int MIN_MATCH4 = 4;
        static const int MIN_MATCH7 = 7;
        static const int MAX_MATCH = MIN_MATCH3 + 65535;
-       static const int LOG_POS_CHECKS = 4;
+       static const int LOG_POS_CHECKS = 5;
 
        int32* _matches;
        uint8 _counters[65536];
