@@ -406,6 +406,13 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const int mLenLen = int(ibs.readBits(32));
             const int mIdxLen = int(ibs.readBits(32));
 
+            if ((litLen < 0) || (tkLen < 0) || (mLenLen < 0) || (mIdxLen < 0)) {
+                input._index = srcIdx;
+                output._index = startChunk;
+                success = false;
+                goto End;
+            }
+
             if ((litLen > sizeChunk) || (tkLen > sizeChunk) || (mLenLen > sizeChunk) || (mIdxLen > sizeChunk)) {
                 input._index = srcIdx;
                 output._index = startChunk;

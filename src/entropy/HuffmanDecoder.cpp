@@ -209,7 +209,7 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
             while (n < endChunk) {
                 while ((bits < HuffmanCommon::MAX_SYMBOL_SIZE) && (idx < sz)) {
                     state = (state << 8) | uint64(_buffer[idx] & byte(0xFF));
-                    idx++;;
+                    idx++;
                     nbBits = (idx == sz) ? szBits : nbBits + 8;
 
                     // 'bits' may overshoot when idx == sz due to padding state bits
