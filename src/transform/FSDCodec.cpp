@@ -150,7 +150,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     const byte* in1 = &src[count5 * 1];
     const byte* in2 = &src[count5 * 3];
 
-    for (int i = 0; i < count10; i++) {
+    for (int i = 16; i < count10; i++) {
         const byte b1 = in1[i];
         histo[0][int(b1)]++;
         histo[1][int(b1 ^ in1[i - 1])]++;
