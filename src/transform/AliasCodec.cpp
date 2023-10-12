@@ -96,9 +96,9 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         if (n0 == 255) {
             // One symbol
-            dst[dstIdx++] = src[0];
-            LittleEndian::writeInt32(&dst[dstIdx], count);
-            dstIdx += 4;
+            dst[1] = src[0];
+            LittleEndian::writeInt32(&dst[2], count);
+            dstIdx = 6;
             srcIdx = count;
         }
         else {
@@ -168,18 +168,18 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 n1++;
             }
 
+            delete[] freqs1;
+
             if (n1 < n0) {
                 // Fewer distinct 2-byte symbols than 1-byte symbols
                 n0 = n1;
 
-                if (n0 < 16) {
-                    delete[] freqs1;
+                if (n0 < 16) 
                     return false;
-                }
             }   
 
-            sort(v.begin(), v.end());
-            delete[] freqs1;
+            // Sort by decreasing order 1 frequencies
+            sort(v.begin(), v.end());  
         }
 
         int16 map16[65536];
@@ -244,7 +244,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     byte* src = &input._array[input._index];
     int n = int(src[0]);
 
-    if ((n < 16) || (n >= 256))
+    if (n < 16)
         return false;
 
     int srcIdx;
