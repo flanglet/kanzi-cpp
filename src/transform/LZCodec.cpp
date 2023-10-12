@@ -367,9 +367,9 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
     byte* dst = &output._array[output._index];
     byte* src = &input._array[input._index];
 
-    int tkIdx = int(LittleEndian::readInt32(&src[0]));
-    int mIdx = int(LittleEndian::readInt32(&src[4]));
-    int mLenIdx = int(LittleEndian::readInt32(&src[8]));
+    int tkIdx = LittleEndian::readInt32(&src[0]);
+    int mIdx = LittleEndian::readInt32(&src[4]);
+    int mLenIdx = LittleEndian::readInt32(&src[8]);
 
     if ((tkIdx < 0) || (mIdx < 0) || (mLenIdx < 0))
         return false;

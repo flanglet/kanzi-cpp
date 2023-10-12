@@ -91,42 +91,52 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
  
     if (n0 >= 240) {
         // Small alphabet => pack bits
-        byte map8[256] = { byte(0) };
         dst[0] = byte(n0);
-        srcIdx = 0;
         dstIdx = 1;
 
-        for (int i = 0, j = 0; i < 256; i++) {
-            if (freqs0[i] != 0) {
-                dst[dstIdx++] = byte(i);
-                map8[i] = byte(j++);
-            }
-        }
-
-        if (n0 >= 252) {
-            // 4 symbols or less
-            const int c3 = count & 3;
-            dst[dstIdx++] = byte(c3);
-            memcpy(&dst[dstIdx], &src[srcIdx], c3);
-            srcIdx += c3;
-            dstIdx += c3;
-
-            while (srcIdx < count) {
-                dst[dstIdx++] = (map8[int(src[srcIdx + 0])] << 6) | (map8[int(src[srcIdx + 1])] << 4) |
-                                (map8[int(src[srcIdx + 2])] << 2) |  map8[int(src[srcIdx + 3]) ];
-                srcIdx += 4;
-            }
+        if (n0 == 255) {
+            // One symbol
+            dst[dstIdx++] = src[0];
+            LittleEndian::writeInt32(&dst[dstIdx], count);
+            dstIdx += 4;
+            srcIdx = count;
         }
         else {
-            // 16 symbols or less
-            dst[dstIdx++] = byte(count & 1);
+            srcIdx = 0;
+            byte map8[256] = { byte(0) };
 
-            if ((count & 1) != 0)
-                dst[dstIdx++] = src[srcIdx++];
+            for (int i = 0, j = 0; i < 256; i++) {
+                if (freqs0[i] != 0) {
+                    dst[dstIdx++] = byte(i);
+                    map8[i] = byte(j++);
+                }
+            }
 
-            while (srcIdx < count) {
-                dst[dstIdx++] = (map8[int(src[srcIdx])] << 4) | map8[int(src[srcIdx + 1])];
-                srcIdx += 2;
+            if (n0 >= 252) {
+                // 4 symbols or less
+                const int c3 = count & 3;
+                dst[dstIdx++] = byte(c3);
+                memcpy(&dst[dstIdx], &src[srcIdx], c3);
+                srcIdx += c3;
+                dstIdx += c3;
+
+                while (srcIdx < count) {
+                    dst[dstIdx++] = (map8[int(src[srcIdx + 0])] << 6) | (map8[int(src[srcIdx + 1])] << 4) |
+                        (map8[int(src[srcIdx + 2])] << 2) | map8[int(src[srcIdx + 3])];
+                    srcIdx += 4;
+                }
+            }
+            else {
+                // 16 symbols or less
+                dst[dstIdx++] = byte(count & 1);
+
+                if ((count & 1) != 0)
+                    dst[dstIdx++] = src[srcIdx++];
+
+                while (srcIdx < count) {
+                    dst[dstIdx++] = (map8[int(src[srcIdx])] << 4) | map8[int(src[srcIdx + 1])];
+                    srcIdx += 2;
+                }
             }
         }
     }
@@ -242,20 +252,27 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     if (n >= 240) {
         n = 256 - n; 
-        byte idx2symb[16] = { byte(0) };
         srcIdx = 1;
-
-        // Rebuild map alias -> symbol
-        for (int i = 0; i < n; i++)
-            idx2symb[i] = src[srcIdx++];
 
         if (n == 1) {
             // One symbol
-            memset(&dst[dstIdx], int(idx2symb[0]), count);
-            srcIdx += count;
-            dstIdx += count;
+            const byte val = src[1];
+            const int oSize = LittleEndian::readInt32(&src[2]);
+
+            if (output._index + oSize > output._length)
+                return false;
+
+            memset(&dst[0], int(val), oSize);
+            srcIdx = count;
+            dstIdx = oSize;
         }
         else {
+            // Rebuild map alias -> symbol
+            byte idx2symb[16] = { byte(0) };
+
+            for (int i = 0; i < n; i++)
+                idx2symb[i] = src[srcIdx++];
+
             const int adjust = int(src[srcIdx++]);
 
             if ((adjust < 0) || (adjust >= 4))
@@ -312,7 +329,6 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         // Rebuild map alias -> symbol
         int map16[256] = { 0 };
         srcIdx = 1;
-        const int srcEnd = count;
 
         for (int i = 0; i < 256; i++)
             map16[i] = 0x10000 | i;
@@ -322,7 +338,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             srcIdx += 3;
         }
 
-        while (srcIdx < srcEnd) {
+        while (srcIdx < count) {
             const int val = map16[int(src[srcIdx++])];
             dst[dstIdx] = byte(val);
             dst[dstIdx + 1] = byte(val >> 8);
