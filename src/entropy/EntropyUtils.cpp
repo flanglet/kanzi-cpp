@@ -223,11 +223,20 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
             queue.push_back(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
     }
 
+    if (queue.empty()) {
+        freqs[idxMax] -= delta;
+        return alphabetSize;
+    }
+
     sort(queue.begin(), queue.end(), FreqDataComparator());
 
     while (sumScaledFreq != scale) {
         // Remove next symbol
-        FreqSortData& fsd = queue.front();
+#if __cplusplus >= 201103L
+        FreqSortData fsd = move(queue.front());
+#else
+        FreqSortData fsd = queue.front();
+#endif
         queue.pop_front();
 
         // Do not zero out any frequency
