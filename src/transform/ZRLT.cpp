@@ -119,11 +119,14 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
     int srcIdx = 0;
     int dstIdx = 0;
     const int srcEnd = length;
-    const int dstEnd = output._length;
+    const int dstEnd = output._length - 1;
     int runLength = 1;
 
-    while (dstIdx < dstEnd) {
+    while (true) {
         if (runLength > 1) {
+            if (dstIdx + runLength > dstEnd)
+                goto End;
+
             memset(&dst[dstIdx], 0, size_t(runLength));
             dstIdx += (runLength - 1);
             runLength = 0;
@@ -154,7 +157,7 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
             srcIdx++;
 
             if (srcIdx >= srcEnd)
-                break;
+                goto End;
 
             dst[dstIdx] = byte(0xFE + int(src[srcIdx]));
         }
@@ -170,14 +173,14 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
     }
 
 End:
-    // If runLength is not 1, add trailing 0s
-    const int end = dstIdx + runLength - 1;
+    if (runLength > 1) {
+        // If runLength is not 1, add trailing 0s
+        if (dstIdx + runLength > dstEnd)
+            return false;
 
-    if (end > dstEnd)
-        return false;
-
-    while (dstIdx < end)
-        dst[dstIdx++] = byte(0);
+        memset(&dst[dstIdx], 0, size_t(runLength));
+        dstIdx += (runLength - 1);
+    }
 
     input._index += srcIdx;
     output._index += dstIdx;
