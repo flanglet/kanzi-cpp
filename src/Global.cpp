@@ -313,7 +313,7 @@ void Global::computeJobsPerTask(int jobsPerTask[], int jobs, int tasks) THROW
     }
 }
 
-Global::DataType Global::detectSimpleType(int count, uint freqs0[]) {
+Global::DataType Global::detectSimpleType(int count, const uint freqs0[]) {
     int sum = 0;
 
     for (int i = 0; i < 12; i++)

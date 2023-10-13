@@ -22,33 +22,33 @@ Event::Event(Event::Type type, int id, int64 size, clock_t evtTime)
     : _type(type)
     , _time(evtTime)
     , _msg()
+    , _id(id)
+    , _size(size)
+    , _hash(0)
+    ,_hashing(false)
 {
-    _id = id;
-    _size = size;
-    _hash = 0;
-    _hashing = false;
 }
 
 Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
     : _type(type)
     , _time(evtTime)
     , _msg(msg)
+    , _id(id)
+    , _size(0)
+    , _hash(0)
+    , _hashing(false)
 {
-    _id = id;
-    _size = 0;
-    _hash = 0;
-    _hashing = false;
 }
 
 Event::Event(Event::Type type, int id, int64 size, int hash, bool hashing, clock_t evtTime)
     : _type(type)
     , _time(evtTime)
     , _msg()
+    , _id(id)
+    , _size(size)
+    , _hash(hash)
+    , _hashing(hashing)
 {
-    _id = id;
-    _size = size;
-    _hash = hash;
-    _hashing = hashing;
 }
 
 std::string Event::toString() const
