@@ -61,13 +61,13 @@ namespace kanzi
           std::string toString() const;
 
       private:
+          Event::Type _type;
+          clock_t _time;
+          std::string _msg;
           int _id;
           int64 _size;
           int _hash;
-          Event::Type _type;
           bool _hashing;
-          clock_t _time;
-          std::string _msg;
       };
 }
 #endif
