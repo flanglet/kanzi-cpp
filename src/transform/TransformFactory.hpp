@@ -302,7 +302,8 @@ namespace kanzi {
 	template <class T>
 	std::string TransformFactory<T>::getName(uint64 functionType) THROW
 	{
-		std::string res;
+		std::stringstream res;
+		bool first = true;
 
 		for (int i = 0; i < 8; i++) {
 			const uint64 t = (functionType >> (MAX_SHIFT - ONE_SHIFT * i)) & MASK;
@@ -310,13 +311,14 @@ namespace kanzi {
 			if (t == NONE_TYPE)
 				continue;
 
-			if (res.length() > 0)
-				res += '+';
+			if (first == false)
+				res << '+';
 
-			res += getNameToken(t);
+			res << getNameToken(t);
+			first = false;
 		}
 
-		return (res.length() == 0) ? getNameToken(NONE_TYPE) : res;
+		return (first == true) ? getNameToken(NONE_TYPE) : res.str();
 	}
 
 	template <class T>

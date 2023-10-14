@@ -151,14 +151,15 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
             strTransf = "BWT+RANK+ZRLT";
     }
     else {
-        if (strTransf.length() == 0)
-            strTransf = it->second;
+        if (strTransf.length() == 0) {
+            // Extract transform names. Curate input (EG. NONE+NONE+xxxx => xxxx)
+            strTransf = TransformFactory<byte>::getName(TransformFactory<byte>::getType(it->second.c_str()));
+        }
 
         args.erase(it);
     }
 
-    // Extract transform names. Curate input (EG. NONE+NONE+xxxx => xxxx)
-    _transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(strTransf.c_str()));
+    _transform = strTransf;
     it = args.find("checksum");
 
     if (it == args.end()) {

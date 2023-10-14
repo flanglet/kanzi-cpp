@@ -93,7 +93,7 @@ namespace kanzi
    };
 
 
-   static inline void createFileList(std::string& target, std::vector<FileData>& files, FileListConfig cfg, 
+   static inline void createFileList(std::string& target, std::vector<FileData>& files, const FileListConfig& cfg, 
                                      std::vector<std::string>& errors)
    {
        if (target.size() == 0)
@@ -114,7 +114,7 @@ namespace kanzi
            ss << "Cannot access input file '" << target << "'";
            errors.push_back(ss.str());
 
-           if (cfg._continueOnErrors)
+           if (cfg._continueOnErrors == false)
               return;
        }
 
@@ -166,7 +166,7 @@ namespace kanzi
                    ss << "Cannot access input file '" << fullpath << "'";
                    errors.push_back(ss.str());
 
-                   if (cfg._continueOnErrors) {
+                   if (cfg._continueOnErrors == false) {
                        closedir(dir);
                        return;
                    }
