@@ -13,6 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <iomanip>
+#include <ios>
 #include <sstream>
 #include "Event.hpp"
 
@@ -66,9 +68,8 @@ std::string Event::toString() const
     ss << ", \"time\":" << getTime();
 
     if (_hashing == true) {
-        char buf[32];
-        sprintf(buf, "%08X", getHash());
-        ss << ", \"hash\":" << buf;
+        ss << ", \"hash\":";
+        ss << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << getHash();
     }
 
     ss << " }";
