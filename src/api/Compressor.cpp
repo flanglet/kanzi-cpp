@@ -80,17 +80,21 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         return Error::ERR_INVALID_PARAM;
 
     try {
-        int mLen;
-
         // Process params
         string transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(pData->transform));
-        mLen = min(int(transform.length()), 63);
-        strncpy(pData->transform, transform.data(), mLen);
-        pData->transform[mLen + 1] = 0;
+        
+        if (transform.length() >= 63)
+            return Error::ERR_INVALID_PARAM;
+
+        strncpy(pData->transform, transform.data(), transform.length());
+        pData->transform[transform.length() + 1] = 0;
         string entropy = EntropyEncoderFactory::getName(EntropyEncoderFactory::getType(pData->entropy));
-        mLen = min(int(entropy.length()), 15);
-        strncpy(pData->entropy, entropy.data(), mLen);
-        pData->entropy[mLen + 1] = 0;
+
+        if (entropy.length() >= 15)
+            return Error::ERR_INVALID_PARAM;
+        
+        strncpy(pData->entropy, entropy.data(), entropy.length());
+        pData->entropy[entropy.length() + 1] = 0;
         pData->blockSize = (pData->blockSize + 15) & -16;
         *pCtx = nullptr;
         const int fd = FILENO(dst);
