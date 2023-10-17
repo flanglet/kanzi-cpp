@@ -387,25 +387,27 @@ int BlockDecompressor::decompress(uint64& inputSize)
     stopClock.stop();
 
     if (nbFiles > 1) {
-        Printer out(cout);
         double delta = stopClock.elapsed();
-        out.println("", _verbosity > 0);
-        char buf[32];
 
-        if (delta >= 1e5) {
-            sprintf(buf, "%.1f s", delta / 1000);
-            ss << "Total decompression time: " << buf;
-        }
-        else {
-            sprintf(buf, "%.0f ms", delta);
-            ss << "Total decompression time: " << buf;
-        }
+        if (_verbosity > 0) {
+            log.println("", true);
+            ss << "Total decompression time: ";
 
-        out.println(ss.str().c_str(), _verbosity > 0);
-        ss.str(string());
-        ss << "Total output size: " << read;
-        out.println(ss.str().c_str(), _verbosity > 0);
-        ss.str(string());
+            if (delta >= 1e5) {
+                ss.precision(1);
+                ss.setf(ios::fixed);
+                ss << (delta / 1000) << " s";
+            }
+            else {
+                ss << int(delta) << " ms";
+            }
+
+            log.println(ss.str().c_str(), _verbosity > 0);
+            ss.str(string());
+            ss << "Total output size: " << read << ((read > 1) ? " bytes" : " byte");
+            log.println(ss.str().c_str(), _verbosity > 0);
+            ss.str(string());
+        }
     }
 
     if (_verbosity > 2)
@@ -700,16 +702,15 @@ T FileDecompressTask<T>::run()
     if (verbosity >= 1) {
         log.println("", verbosity > 1);
         ss.str(string());
-        char buffer[32];
 
         if (verbosity > 1) {
             if (delta >= 1e5) {
-                sprintf(buffer, "%.1f s", delta / 1000);
-                ss << "Decompressing:     " << buffer;
+                ss.precision(1);
+                ss.setf(ios::fixed);
+                ss << "Decompressing:     " << (delta / 1000) << " s";
             }
             else {
-                sprintf(buffer, "%.0f ms", delta);
-                ss << "Decompressing:     " << buffer;
+                ss << "Decompressing:     " << int(delta) << " ms";
             }
 
             log.println(ss.str().c_str(), true);
@@ -726,12 +727,12 @@ T FileDecompressTask<T>::run()
             ss << "Decompressing " << inputName << ": " << decoded << " => " << read;
 
             if (delta >= 1e5) {
-                sprintf(buffer, "%.1f s", delta / 1000);
-                ss << " bytes in " << buffer;
+                ss.precision(1);
+                ss.setf(ios::fixed);
+                ss << " bytes in " << (delta / 1000) << " s";
             }
             else {
-                sprintf(buffer, "%.0f ms", delta);
-                ss << " bytes in " << buffer;
+                ss << " bytes in " << int(delta) << " ms";
             }
 
             log.println(ss.str().c_str(), true);

@@ -554,23 +554,26 @@ int BlockCompressor::compress(uint64& outputSize)
 
     if (nbFiles > 1) {
         double delta = stopClock.elapsed();
-        log.println("", _verbosity > 0);
-        char buffer[32];
 
-        if (delta >= 1e5) {
-            sprintf(buffer, "%.1f s", delta / 1000);
-            ss << "Total compression time: " << buffer;
-        }
-        else {
-            sprintf(buffer, "%.0f ms", delta);
-            ss << "Total compression time: " << buffer;
-        }
+        if (_verbosity > 0) {
+            log.println("", true);
+            ss << "Total compression time: ";
 
-        log.println(ss.str().c_str(), _verbosity > 0);
-        ss.str(string());
-        ss << "Total output size: " << written << ((written > 1) ? " bytes" : " byte");
-        log.println(ss.str().c_str(), _verbosity > 0);
-        ss.str(string());
+            if (delta >= 1e5) {
+                ss.precision(1);
+                ss.setf(ios::fixed);
+                ss << (delta / 1000) << " s";
+            }
+            else {
+                ss << int(delta) << " ms";
+            }
+
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+            ss << "Total output size: " << written << ((written > 1) ? " bytes" : " byte");
+            log.println(ss.str().c_str(), true);
+            ss.str(string());
+        }
 
         if (read > 0) {
             ss << "Compression ratio: " << float(written) / float(read);
@@ -894,17 +897,15 @@ T FileCompressTask<T>::run()
     if (verbosity >= 1) {
         log.println("", verbosity > 1);
         ss.str(string());
-        double f = double(encoded) / double(read);
-        char buffer[32];
 
         if (verbosity > 1) {
             if (delta >= 1e5) {
-                sprintf(buffer, "%.1f s", delta / 1000);
-                ss << "Compressing:       " << buffer;
+                ss.precision(1);
+                ss.setf(ios::fixed);
+                ss << "Compressing:       " << (delta / 1000) << " s";
             }
             else {
-                sprintf(buffer, "%.0f ms", delta);
-                ss << "Compressing:       " << buffer;
+                ss << "Compressing:       " << int(delta) << " ms";
             }
 
             log.println(ss.str().c_str(), true);
@@ -915,22 +916,26 @@ T FileCompressTask<T>::run()
             ss << "Output size:       " << encoded;
             log.println(ss.str().c_str(), true);
             ss.str(string());
-            ss << "Compression ratio: " << f;
+            ss << "Compression ratio: " << (double(encoded) / double(read));
             log.println(ss.str().c_str(), true);
             ss.str(string());
         }
 
         if (verbosity == 1) {
             ss << "Compressing " << inputName << ": " << read << " => " << encoded;
+            ss.precision(2);
+            ss.setf(ios::fixed);
+            const double r = double(encoded) / double(read);
+            ss << " (" << (100 * r);
 
             if (delta >= 1e5) {
-                sprintf(buffer, " (%.2f%%) in %.1f s", 100 * f, delta / 1000);
+                ss.precision(1);
+                ss << "%) in " << (delta / 1000) << " s";
             }
             else {
-                sprintf(buffer, " (%.2f%%) in %.0f ms", 100 * f, delta);
+                ss << "%) in " << int(delta) << " ms";
             }
 
-            ss << buffer;
             log.println(ss.str().c_str(), true);
             ss.str(string());
         }
