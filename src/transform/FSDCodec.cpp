@@ -143,14 +143,22 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     const int count5 = count / 5;
     const int count10 = count / 10;
     uint histo[7][256];
-    memset(&histo[0][0], 0, sizeof(uint) * 7 * 256);
+    memset(&histo[0][0], 0, sizeof(histo));
 
-    // Check several step values on a sub-block (no memory allocation)
-    // Sample 2 sub-blocks
-    const byte* in1 = &src[count5 * 1];
-    const byte* in2 = &src[count5 * 3];
+    // Check several step values on a few sub-blocks (no memory allocation)
+    const byte* in0 = &src[count5 * 0];
+    const byte* in1 = &src[count5 * 2];
+    const byte* in2 = &src[count5 * 4];
 
-    for (int i = 16; i < count10; i++) {
+    for (int i = count10; i < count5; i++) {
+        const byte b0 = in0[i];
+        histo[0][int(b0)]++;
+        histo[1][int(b0 ^ in0[i - 1])]++;
+        histo[2][int(b0 ^ in0[i - 2])]++;
+        histo[3][int(b0 ^ in0[i - 3])]++;
+        histo[4][int(b0 ^ in0[i - 4])]++;
+        histo[5][int(b0 ^ in0[i - 8])]++;
+        histo[6][int(b0 ^ in0[i - 16])]++;       
         const byte b1 = in1[i];
         histo[0][int(b1)]++;
         histo[1][int(b1 ^ in1[i - 1])]++;
@@ -174,7 +182,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int ent[7];
 
     for (int i = 0; i < 7; i++) {
-        ent[i] = Global::computeFirstOrderEntropy1024(count5, histo[i]);
+        ent[i] = Global::computeFirstOrderEntropy1024(3 * count10, histo[i]);
 
         if (ent[i] < ent[minIdx])
             minIdx = i;
@@ -183,7 +191,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     // If not better, quick exit
     if (ent[minIdx] >= ent[0]) {
         if (_pCtx != nullptr)
-            _pCtx->putInt("dataType", Global::detectSimpleType(count5, histo[0]));
+            _pCtx->putInt("dataType", Global::detectSimpleType(3 * count10, histo[0]));
 
         return false;
     }
@@ -217,17 +225,14 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     // Emit modified bytes
     if (mode == DELTA_CODING) {
-        while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
-            const int delta = int(src[srcIdx]) - int(src[srcIdx - dist]);
+        while ((srcIdx < srcEnd) && (dstIdx < dstEnd - 1)) {
+            const int delta = 127 + int(src[srcIdx]) - int(src[srcIdx - dist]);
 
-            if ((delta >= -127) && (delta <= 127)) {
-                dst[dstIdx++] = byte(ZIGZAG1[delta + 127]); // zigzag encode delta
+            if ((delta >= 0) && (delta < 255)) {
+                dst[dstIdx++] = byte(ZIGZAG1[delta]); // zigzag encode delta
                 srcIdx++;
                 continue;
             }
-
-            if (dstIdx == dstEnd - 1)
-                break;
 
             // Skip delta, encode with escape
             dst[dstIdx++] = ESCAPE_TOKEN;
