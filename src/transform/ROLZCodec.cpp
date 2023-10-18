@@ -304,7 +304,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             ANSRangeEncoder litEnc(obs, litOrder);
             litEnc.encode(litBuf._array, 0, litBuf._index);
             litEnc.dispose();
-            ANSRangeEncoder mEnc(obs, 0);
+            ANSRangeEncoder mEnc(obs, 0, 32768);
             mEnc.encode(tkBuf._array, 0, tkBuf._index);
             mEnc.encode(lenBuf._array, 0, lenBuf._index);
             mEnc.encode(mIdxBuf._array, 0, mIdxBuf._index);
@@ -423,7 +423,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             ANSRangeDecoder litDec(ibs, litOrder);
             litDec.decode(litBuf._array, 0, litLen);
             litDec.dispose();
-            ANSRangeDecoder mDec(ibs, 0);
+            ANSRangeDecoder mDec(ibs, 0, 32768);
             mDec.decode(tkBuf._array, 0, tkLen);
             mDec.decode(lenBuf._array, 0, mLenLen);
             mDec.decode(mIdxBuf._array, 0, mIdxLen);

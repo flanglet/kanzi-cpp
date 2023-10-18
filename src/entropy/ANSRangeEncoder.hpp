@@ -74,10 +74,10 @@ namespace kanzi
 
 
    private:
-	   static const int DEFAULT_ANS0_CHUNK_SIZE = 1 << 15; // 32 KB by default
-	   static const int DEFAULT_LOG_RANGE = 12;
-	   static const int MIN_CHUNK_SIZE = 1024;
-	   static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
+       static const int DEFAULT_ANS0_CHUNK_SIZE = 16384;
+       static const int DEFAULT_LOG_RANGE = 12;
+       static const int MIN_CHUNK_SIZE = 1024;
+       static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
 
 	   ANSEncSymbol* _symbols;
 	   uint* _freqs;
