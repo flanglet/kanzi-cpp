@@ -464,14 +464,13 @@ void TextCodec1::reset(int count)
 
     if (_dictList == nullptr) {
         _dictList = new DictEntry[_dictSize];
-        const int nbEntries = min(TextCodec::STATIC_DICT_WORDS, _dictSize);
-        memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], nbEntries * sizeof(DictEntry));
+        _staticDictSize = min(TextCodec::STATIC_DICT_WORDS, _dictSize);
+        memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], _staticDictSize * sizeof(DictEntry));
 
-        // Add special entries at start of map
-        const int nbWords = TextCodec::STATIC_DICT_WORDS;
-        _dictList[nbWords] = DictEntry(&_escapes[0], 0, nbWords, 1);
-        _dictList[nbWords + 1] = DictEntry(&_escapes[1], 0, nbWords + 1, 1);
-        _staticDictSize = nbWords + 2;
+        // Add special entries at end of static dictionary
+        _dictList[_staticDictSize] = DictEntry(&_escapes[0], 0, _staticDictSize, 1);
+        _dictList[_staticDictSize + 1] = DictEntry(&_escapes[1], 0, _staticDictSize + 1, 1);
+        _staticDictSize += 2;
     }
 
     for (int i = 0; i < _staticDictSize; i++)

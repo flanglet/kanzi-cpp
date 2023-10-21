@@ -13,8 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <iomanip>
 #include <sstream>
 #include "InfoPrinter.hpp"
+#include <ios>
 
 using namespace kanzi;
 using namespace std;
@@ -125,17 +127,14 @@ void InfoPrinter::processEvent(const Event& evt)
             // Add compression ratio for encoding
             if (_type == InfoPrinter::ENCODING) {
                 if (bi->_stage0Size != 0) {
-                    char buf[32];
-                    sprintf(buf, " (%u%%)", uint(double(stage2Size) * double(100) / double(bi->_stage0Size)));
-                    ss << buf;
+                    ss << " (" << uint(double(stage2Size) * double(100) / double(bi->_stage0Size));
+                    ss << " %)";
                 }
             }
 
             // Optionally add hash
             if (evt.getHash() != 0) {
-                char buf[32];
-                sprintf(buf, " [%08X]", evt.getHash());
-                ss << buf;
+                ss << std::uppercase << std::hex << " [" << evt.getHash() << "]";
             }
 
             _os << ss.str() << endl;
