@@ -23,7 +23,7 @@ limitations under the License.
 
 namespace kanzi {
 
-   class DictEntry {
+   class DictEntry FINAL {
    public:
        int _hash; // full word hash
        int _data; // packed word length (8 MSB) + index in dictionary (24 LSB)
@@ -215,17 +215,17 @@ namespace kanzi {
    };
 
    inline DictEntry::DictEntry()
-   {
-       _ptr = nullptr;
-       _hash = 0;
-       _data = 0;
+       : _ptr(nullptr)
+       , _hash(0)
+       , _data(0)
+   { 
    }
 
    inline DictEntry::DictEntry(const byte* ptr, int hash, int idx, int length = 0)
+       : _ptr(ptr)
+       , _hash(hash)
+       , _data((length << 24) | idx)
    {
-       _ptr = ptr;
-       _hash = hash;
-       _data = (length << 24) | idx;
    }
 
 #if __cplusplus < 201103L
