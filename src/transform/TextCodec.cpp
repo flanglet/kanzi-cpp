@@ -453,7 +453,7 @@ void TextCodec1::reset(int count)
 {
     // Select an appropriate initial dictionary size
     const int log = (count < 1024) ? 13 : max(min(Global::log2(count / 128), 18), 13);
-    _dictSize = 1 << log;
+    _dictSize = max(TextCodec::STATIC_DICT_WORDS + 2, 1 << log);
     const int mapSize = 1 << _logHashSize;
 
     if (_dictMap == nullptr)
@@ -464,10 +464,10 @@ void TextCodec1::reset(int count)
 
     if (_dictList == nullptr) {
         _dictList = new DictEntry[_dictSize];
-        _staticDictSize = min(TextCodec::STATIC_DICT_WORDS, _dictSize);
-        memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], _staticDictSize * sizeof(DictEntry));
+        memcpy(&_dictList[0], &TextCodec::STATIC_DICTIONARY[0], sizeof(TextCodec::STATIC_DICTIONARY));
 
         // Add special entries at end of static dictionary
+        _staticDictSize = TextCodec::STATIC_DICT_WORDS;
         _dictList[_staticDictSize] = DictEntry(&_escapes[0], 0, _staticDictSize, 1);
         _dictList[_staticDictSize + 1] = DictEntry(&_escapes[1], 0, _staticDictSize + 1, 1);
         _staticDictSize += 2;
@@ -920,7 +920,7 @@ void TextCodec2::reset(int count)
 {
     // Select an appropriate initial dictionary size
     const int log = (count < 1024) ? 13 : max(min(Global::log2(count / 128), 18), 13);
-    _dictSize = 1 << log;
+    _dictSize = max(TextCodec::STATIC_DICT_WORDS, 1 << log);
     const int mapSize = 1 << _logHashSize;
 
     if (_dictMap == nullptr)
@@ -931,8 +931,7 @@ void TextCodec2::reset(int count)
 
     if (_dictList == nullptr) {
         _dictList = new DictEntry[_dictSize];
-        const int nbEntries = min(TextCodec::STATIC_DICT_WORDS, _dictSize);
-        memcpy(static_cast<void*>(&_dictList[0]), &TextCodec::STATIC_DICTIONARY[0], nbEntries * sizeof(DictEntry));
+        memcpy(&_dictList[0], &TextCodec::STATIC_DICTIONARY[0],  sizeof(TextCodec::STATIC_DICTIONARY));
     }
 
     for (int i = 0; i < _staticDictSize; i++)
