@@ -14,7 +14,6 @@ limitations under the License.
 */
 
 #include <sstream>
-#include <cstdio>
 #include "InfoPrinter.hpp"
 
 using namespace kanzi;

@@ -18,7 +18,6 @@ limitations under the License.
 #define _Global_
 
 #include <cmath>
-#include <cstring>
 #include "types.hpp"
 
 namespace kanzi {

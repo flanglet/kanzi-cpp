@@ -17,7 +17,6 @@ limitations under the License.
 #ifndef _TransformSequence_
 #define _TransformSequence_
 
-#include <cstring>
 #include <stdexcept>
 #include "../Transform.hpp"
 

@@ -13,11 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <algorithm>
-#include <cstring>
 #include <stdexcept>
-#include <sstream>
-
 #include "TextCodec.hpp"
 #include "../Global.hpp"
 #include "../Magic.hpp"

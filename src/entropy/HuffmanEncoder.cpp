@@ -13,14 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <cstring>
 #include <sstream>
 #include <algorithm>
 #include <vector>
 #include "HuffmanEncoder.hpp"
 #include "EntropyUtils.hpp"
 #include "ExpGolombEncoder.hpp"
-#include "../BitStreamException.hpp"
 #include "../Global.hpp"
 #include "../Memory.hpp"
 

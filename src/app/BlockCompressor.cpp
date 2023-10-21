@@ -14,6 +14,7 @@ limitations under the License.
 */
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <time.h>
 #include "BlockCompressor.hpp"

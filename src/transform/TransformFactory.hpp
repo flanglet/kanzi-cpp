@@ -18,13 +18,10 @@ limitations under the License.
 #define _TransformFactory_
 
 #include <iostream>
-#include <fstream>
 #include <algorithm>
-#include <cstring>
 #include "../types.hpp"
 #include "../Context.hpp"
 #include "AliasCodec.hpp"
-#include "BWT.hpp"
 #include "BWTBlockCodec.hpp"
 #include "BWTS.hpp"
 #include "EXECodec.hpp"

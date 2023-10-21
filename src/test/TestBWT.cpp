@@ -14,12 +14,6 @@ limitations under the License.
 */
 
 #include <iostream>
-#include <fstream>
-#include <ctime>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <algorithm>
 #include "../types.hpp"
 #include "../transform/BWT.hpp"
 #include "../transform/BWTS.hpp"

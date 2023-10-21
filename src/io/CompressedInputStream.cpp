@@ -14,7 +14,6 @@ limitations under the License.
 */
 
 #include <sstream>
-#include <iomanip>
 #include "CompressedInputStream.hpp"
 #include "IOException.hpp"
 #include "../Error.hpp"

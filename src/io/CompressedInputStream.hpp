@@ -23,7 +23,6 @@ limitations under the License.
 #include "../Context.hpp"
 #include "../Listener.hpp"
 #include "../InputStream.hpp"
-#include "../OutputStream.hpp"
 #include "../InputBitStream.hpp"
 #include "../SliceArray.hpp"
 #include "../util/XXHash32.hpp"

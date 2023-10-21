@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef _DefaultInputBitStream_
 #define _DefaultInputBitStream_
 
+#include "../BitStreamException.hpp"
 #include "../InputBitStream.hpp"
 #include "../InputStream.hpp"
 #include "../Memory.hpp"

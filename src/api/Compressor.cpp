@@ -20,7 +20,6 @@ limitations under the License.
 #include "../transform/TransformFactory.hpp"
 #include "../entropy/EntropyEncoderFactory.hpp"
 
-#include <errno.h>
 
 #ifdef _MSC_VER
    #include <io.h>

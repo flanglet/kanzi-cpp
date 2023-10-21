@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <algorithm>
 #include <sstream>
+#include "../BitStreamException.hpp"
 #include "ANSRangeDecoder.hpp"
 #include "EntropyUtils.hpp"
 

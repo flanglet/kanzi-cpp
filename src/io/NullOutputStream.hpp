@@ -17,8 +17,6 @@ limitations under the License.
 #ifndef _NullOutputStream_
 #define _NullOutputStream_
 
-#include "../OutputStream.hpp"
-
 namespace kanzi
 {
    template <class T, class traits = std::char_traits<T> >

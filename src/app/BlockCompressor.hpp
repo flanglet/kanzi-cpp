@@ -19,7 +19,6 @@ limitations under the License.
 
 #include <map>
 #include <vector>
-
 #include "../InputStream.hpp"
 #include "../io/CompressedOutputStream.hpp"
 

@@ -17,9 +17,7 @@ limitations under the License.
 #include "../types.hpp"
 #include "../Error.hpp"
 #include "../io/CompressedInputStream.hpp"
-#include "../transform/TransformFactory.hpp"
 
-#include <errno.h>
 
 #ifdef _MSC_VER
    #include <io.h>

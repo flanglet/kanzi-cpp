@@ -14,10 +14,6 @@ limitations under the License.
 */
 
 #include <iostream>
-#include <fstream>
-#include <ctime>
-#include <cstdio>
-#include <cstdlib>
 #include <algorithm>
 #include "../types.hpp"
 #include "../entropy/HuffmanEncoder.hpp"
@@ -30,7 +26,6 @@ limitations under the License.
 #include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../bitstream/DebugOutputBitStream.hpp"
-#include "../bitstream/DebugInputBitStream.hpp"
 #include "../entropy/HuffmanDecoder.hpp"
 #include "../entropy/RangeDecoder.hpp"
 #include "../entropy/ANSRangeDecoder.hpp"

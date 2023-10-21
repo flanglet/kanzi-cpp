@@ -15,10 +15,6 @@ limitations under the License.
 
 #include <iostream>
 #include <fstream>
-#include <ctime>
-#include <cstdio>
-#include <cstdlib>
-#include "../bitstream/DebugInputBitStream.hpp"
 #include "../bitstream/DebugOutputBitStream.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"

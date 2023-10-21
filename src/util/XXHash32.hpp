@@ -17,7 +17,6 @@ limitations under the License.
 #ifndef _XXHash32_
 #define _XXHash32_
 
-#include <ctime>
 #include "../Memory.hpp"
 
 

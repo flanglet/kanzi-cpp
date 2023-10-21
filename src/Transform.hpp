@@ -17,7 +17,6 @@ limitations under the License.
 #ifndef _Transform_
 #define _Transform_
 
-#include "types.hpp"
 #include "SliceArray.hpp"
 
 namespace kanzi

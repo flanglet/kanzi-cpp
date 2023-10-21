@@ -18,7 +18,6 @@ limitations under the License.
 #define _BinaryEntropyDecoder_
 
 #include "../EntropyDecoder.hpp"
-#include "../Memory.hpp"
 #include "../Predictor.hpp"
 #include "../SliceArray.hpp"
 

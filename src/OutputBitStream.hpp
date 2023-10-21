@@ -17,7 +17,6 @@ limitations under the License.
 #ifndef _OutputBitStream_
 #define _OutputBitStream_
 
-#include "BitStreamException.hpp"
 #include "types.hpp"
 
 namespace kanzi

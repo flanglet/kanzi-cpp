@@ -14,13 +14,8 @@ limitations under the License.
 */
 
 #include <iostream>
-#include <fstream>
-#include <ctime>
-#include <cstdio>
-#include <cstdlib>
 #include "../io/CompressedInputStream.hpp"
 #include "../io/CompressedOutputStream.hpp"
-#include "../io/IOException.hpp"
 
 using namespace std;
 using namespace kanzi;

@@ -17,7 +17,6 @@ limitations under the License.
 #ifndef _InfoPrinter_
 #define _InfoPrinter_
 
-#include <map>
 #include "../Listener.hpp"
 #include "../OutputStream.hpp"
 #include "../util/Clock.hpp"

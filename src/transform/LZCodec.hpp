@@ -17,7 +17,6 @@ limitations under the License.
 #ifndef _LZCodec_
 #define _LZCodec_
 
-#include <cstring> // for memcpy
 #include "../Context.hpp"
 #include "../Global.hpp"
 #include "../Transform.hpp"

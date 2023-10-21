@@ -17,7 +17,6 @@ limitations under the License.
 #ifndef _BWTBlockCodec_
 #define _BWTBlockCodec_
 
-#include <string>
 #include "../transform/BWT.hpp"
 #include "../Context.hpp"
 

@@ -13,8 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <algorithm>
+#include <stdexcept>
 #include "BinaryEntropyDecoder.hpp"
+#include "../Memory.hpp"
 #include "EntropyUtils.hpp"
 
 using namespace kanzi;

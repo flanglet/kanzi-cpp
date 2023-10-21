@@ -17,8 +17,6 @@ limitations under the License.
 #ifndef _DebugInputBitStream_
 #define _DebugInputBitStream_
 
-#include <ostream>
-#include "../io/IOException.hpp"
 #include "../InputBitStream.hpp"
 #include "../OutputStream.hpp"
 

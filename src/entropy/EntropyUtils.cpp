@@ -17,7 +17,6 @@ limitations under the License.
 #include <deque>
 #include <sstream>
 #include "EntropyUtils.hpp"
-#include "../Global.hpp"
 
 using namespace kanzi;
 using namespace std;
