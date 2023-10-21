@@ -33,12 +33,12 @@ namespace kanzi {
 
        DictEntry(const byte* ptr, int hash, int idx, int length);
 
-       ~DictEntry() {}
-
 #if __cplusplus < 201103L
        DictEntry(const DictEntry& de);
 
        DictEntry& operator=(const DictEntry& de);
+
+       ~DictEntry() {}
 #else
        DictEntry(const DictEntry& de) = delete;
 
@@ -47,6 +47,8 @@ namespace kanzi {
        DictEntry(DictEntry&& de) = default;
 
        DictEntry& operator=(DictEntry&& de) = default;
+
+       ~DictEntry() = default;
 #endif
    };
 
