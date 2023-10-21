@@ -233,9 +233,9 @@ int testBWTSpeed(bool isBWT, int iter, bool isSmallSize)
         if (bwt != nullptr)
             delete bwt;
 
-        delete input;
-        delete output;
-        delete reverse;
+        delete[] input;
+        delete[] output;
+        delete[] reverse;
 
         double prod = double(iter) * double(size);
         double b2KB = double(1) / double(1024);
