@@ -25,10 +25,10 @@ namespace kanzi {
 
    class DictEntry FINAL {
    public:
+       const byte* _ptr; // text data
        int _hash; // full word hash
        int _data; // packed word length (8 MSB) + index in dictionary (24 LSB)
-       const byte* _ptr; // text data
-
+   
        DictEntry();
 
        DictEntry(const byte* ptr, int hash, int idx, int length);
