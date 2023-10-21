@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <cstring>
 #include <stdexcept>
 #include "TextCodec.hpp"
 #include "../Global.hpp"

@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef _TPAQPredictor_
 #define _TPAQPredictor_
 
+#include <cstring>
 #include "../Context.hpp"
 #include "../Predictor.hpp"
 #include "../util.hpp"

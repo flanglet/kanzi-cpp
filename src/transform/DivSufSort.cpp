@@ -14,6 +14,7 @@ limitations under the License.
 */
 
 
+#include <cstring>
 #include "DivSufSort.hpp"
 #include "../util.hpp"
 
