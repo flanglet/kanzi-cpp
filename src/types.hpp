@@ -18,7 +18,6 @@ limitations under the License.
 #define _types_
 
 #include <cstddef>
-#include <stdlib.h>
 
     #ifdef _MSC_VER
         #if !defined(__x86_64__)

@@ -17,7 +17,6 @@ limitations under the License.
 #ifndef _Global_
 #define _Global_
 
-#include <cmath>
 #include "types.hpp"
 
 namespace kanzi {
@@ -49,12 +48,6 @@ namespace kanzi {
        static void computeHistogram(const byte block[], int end, uint freqs[], bool isOrder0=true, bool withTotal=false);
 
        static DataType detectSimpleType(int count, const uint histo[]);
-
-       // Szudzik pairing
-       static void encodePair(int x, int y, int& pair);
-
-       // Szudzik pairing
-       static void decodePair(int& x, int& y, int pair);
 
    private:
        Global();
@@ -179,28 +172,6 @@ namespace kanzi {
        #else
            return _log2((x & (~x + 1)) - 1);
        #endif
-   }
-
-
-   inline void Global::encodePair(int x, int y, int& pair)
-   {
-      pair = (x >= y) ? x * x + x + y : y * y + x;
-   }
-
-
-   inline void Global::decodePair(int& x, int& y, int pair)
-   {
-      const int s = int(sqrt(double(pair)));
-      pair -= s * s;
-
-      if (pair >= s) {
-         x = s;
-         y = pair - s;
-      }
-      else {
-         x = pair;
-         y = s;
-      }
    }
 }
 #endif
