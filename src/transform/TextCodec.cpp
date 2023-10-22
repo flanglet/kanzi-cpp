@@ -464,7 +464,12 @@ void TextCodec1::reset(int count)
 
     if (_dictList == nullptr) {
         _dictList = new DictEntry[_dictSize];
+#if __cplusplus >= 201103L
         memcpy(&_dictList[0], &TextCodec::STATIC_DICTIONARY[0], sizeof(TextCodec::STATIC_DICTIONARY));
+#else
+	for (int i = 0; i < TextCodec::STATIC_DICT_WORDS; i++)
+            _dictList[i] = TextCodec::STATIC_DICTIONARY[i];
+#endif
 
         // Add special entries at end of static dictionary
         _staticDictSize = TextCodec::STATIC_DICT_WORDS;
@@ -931,7 +936,12 @@ void TextCodec2::reset(int count)
 
     if (_dictList == nullptr) {
         _dictList = new DictEntry[_dictSize];
-        memcpy(&_dictList[0], &TextCodec::STATIC_DICTIONARY[0],  sizeof(TextCodec::STATIC_DICTIONARY));
+#if __cplusplus >= 201103L
+        memcpy(&_dictList[0], &TextCodec::STATIC_DICTIONARY[0], sizeof(TextCodec::STATIC_DICTIONARY));
+#else
+	for (int i = 0; i < TextCodec::STATIC_DICT_WORDS; i++)
+            _dictList[i] = TextCodec::STATIC_DICTIONARY[i];
+#endif
     }
 
     for (int i = 0; i < _staticDictSize; i++)

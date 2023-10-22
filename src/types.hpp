@@ -20,27 +20,27 @@ limitations under the License.
 #include <cstddef>
 #include <stdlib.h>
 
-	#ifdef _MSC_VER
-		#if !defined(__x86_64__)
-			#define __x86_64__  _M_X64
-		#endif
-		#if !defined(__i386__)
-			#define __i386__  _M_IX86
-		#endif
-	#endif
+    #ifdef _MSC_VER
+        #if !defined(__x86_64__)
+            #define __x86_64__  _M_X64
+        #endif
+        #if !defined(__i386__)
+            #define __i386__  _M_IX86
+        #endif
+    #endif
 
 
-	#ifdef _MSC_VER
-		#include <intrin.h>
-		#define popcount __popcnt
-	#else
-		#ifdef  __INTEL_COMPILER
-			#include <intrin.h>
-			#define popcount _popcnt32
-		#else
-			#define popcount __builtin_popcount
-		#endif
-	#endif
+    #ifdef _MSC_VER
+        #include <intrin.h>
+        #define popcount __popcnt
+    #else
+        #ifdef  __INTEL_COMPILER
+            #include <intrin.h>
+            #define popcount _popcnt32
+        #else
+            #define popcount __builtin_popcount
+        #endif
+    #endif
 
    #ifdef __SSE__
       #include <xmmintrin.h> 
@@ -130,83 +130,94 @@ limitations under the License.
       #endif
    #endif
 
-	#ifndef _GLIBCXX_USE_NOEXCEPT
-	   #define _GLIBCXX_USE_NOEXCEPT
-	   //#define _GLIBCXX_USE_NOEXCEPT throw()
-	#endif
+    #ifndef _GLIBCXX_USE_NOEXCEPT
+       #define _GLIBCXX_USE_NOEXCEPT
+       //#define _GLIBCXX_USE_NOEXCEPT throw()
+    #endif
 
     // Notice: in Visual Studio (prior to VS2017 version 15.7)
     // __cplusplus always defaults to 199711L (aka C++98) !!! (unless
     // the extra option /Zc:__cplusplus is added to the command line).
     // Otherwise, using the _MSVC_LANG macro returns the proper C++ version.
-	#ifndef THROW
-	   #if __cplusplus >= 201103L
-	      #define THROW
-	   #else
+    #ifndef THROW
+       #if __cplusplus >= 201103L
+          #define THROW
+       #else
            #if defined(__GNUC__)
               #define THROW
            #else
               #define THROW throw(...)
            #endif
-	   #endif
-	#endif
+       #endif
+    #endif
 
-	#if __cplusplus >= 201103L
+    #if __cplusplus >= 201103L
       // C++ 11
       #define FINAL final
    #else
       #define FINAL
    #endif
 
-	#if __cplusplus >= 201103L
-	   // C++ 11
-	   #include <cstdint>
-	#else
-	   #if defined(_MSC_VER) && _MSC_VER < 1300
-	      typedef signed char int8_t;
-	      typedef signed short int16_t;
-	      typedef signed int int32_t;
-	      typedef unsigned char uint8_t;
-	      typedef unsigned short uint16_t;
-	      typedef unsigned int uint32_t;
-	   #else
-	      typedef signed __int8 int8_t;
-	      typedef signed __int16 int16_t;
-	      typedef signed __int32 int32_t;
-	      typedef unsigned __int8 uint8_t;
-	      typedef unsigned __int16 uint16_t;
-	      typedef unsigned __int32 uint32_t;
-	   #endif
+    #if __cplusplus >= 201103L
+       // C++ 11
+       #include <cstdint>
+    #else
+       #if defined(_MSC_VER)
+              #if _MSC_VER < 1300
+             typedef signed char int8_t;
+                 typedef signed short int16_t;
+             typedef signed int int32_t;
+             typedef unsigned char uint8_t;
+             typedef unsigned short uint16_t;
+             typedef unsigned int uint32_t;
+          #else
+             typedef signed __int8 int8_t;
+                 typedef signed __int16 int16_t;
+             typedef signed __int32 int32_t;
+             typedef unsigned __int8 uint8_t;
+             typedef unsigned __int16 uint16_t;
+             typedef unsigned __int32 uint32_t;
+             typedef signed __int64 int64_t;
+             typedef unsigned __int64 uint64_t;
+          #endif
+           #else
+             typedef signed char int8_t;
+                 typedef signed short int16_t;
+             typedef signed int int32_t;
+             typedef unsigned char uint8_t;
+             typedef unsigned short uint16_t;
+             typedef unsigned int uint32_t;
+             typedef signed long int64_t;
+             typedef unsigned long uint64_t;
+       #endif
 
-	   typedef signed __int64 int64_t;
-	   typedef unsigned __int64 uint64_t;
 
       #if !defined(_MSC_VER) || _MSC_VER < 1920 
-	      #define nullptr NULL
+          #define nullptr NULL
       #endif
-	#endif
+    #endif
 
 #if __cplusplus >= 201703L
-	// byte is defined in C++17 and above
-	#include <cstddef>
+    // byte is defined in C++17 and above
+    #include <cstddef>
 namespace kanzi 
 {
-	typedef std::byte byte;
+    typedef std::byte byte;
 #else
 namespace kanzi 
 {
-	typedef uint8_t byte;
+    typedef uint8_t byte;
 #endif
 
-	typedef int8_t int8;
-	typedef uint8_t uint8;
-	typedef int16_t int16;
-	typedef int32_t int32;
-	typedef int64_t int64;
-	typedef uint16_t uint16;
-	typedef uint32_t uint;
-	typedef uint32_t uint32;
-	typedef uint64_t uint64;
+    typedef int8_t int8;
+    typedef uint8_t uint8;
+    typedef int16_t int16;
+    typedef int32_t int32;
+    typedef int64_t int64;
+    typedef uint16_t uint16;
+    typedef uint32_t uint;
+    typedef uint32_t uint32;
+    typedef uint64_t uint64;
 }
 
    #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
@@ -234,3 +245,4 @@ namespace kanzi
    #endif
 
 #endif
+

@@ -110,3 +110,4 @@ std::string Event::getTypeAsString() const
         return "Unknown Type";
     }
 }
+

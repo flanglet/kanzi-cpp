@@ -124,3 +124,4 @@ void BinaryEntropyEncoder::encodeByte(byte val)
     encodeBit(int(val) & 0x02, _predictor->get());
     encodeBit(int(val) & 0x01, _predictor->get());
 }
+

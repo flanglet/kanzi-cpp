@@ -48,3 +48,4 @@ namespace kanzi {
    };
 }
 #endif
+

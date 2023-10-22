@@ -385,3 +385,4 @@ namespace kanzi {
 }
 
 #endif
+

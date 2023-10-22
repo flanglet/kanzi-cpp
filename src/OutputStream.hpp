@@ -25,3 +25,4 @@ namespace kanzi
    typedef std::ostream OutputStream;
 }
 #endif
+

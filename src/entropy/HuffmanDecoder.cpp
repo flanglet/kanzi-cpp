@@ -232,3 +232,4 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
 
     return count;
 }
+

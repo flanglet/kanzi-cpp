@@ -118,3 +118,4 @@ byte BinaryEntropyDecoder::decodeByte()
         | (decodeBit(_predictor->get()) << 1)
         |  decodeBit(_predictor->get()));
 }
+

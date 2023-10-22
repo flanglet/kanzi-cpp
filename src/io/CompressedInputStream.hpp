@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef _CompressedInputStream_
 #define _CompressedInputStream_
 
+#include <cstdio> // definition of EOF
 #include <string>
 #include <vector>
 #include "../concurrent.hpp"
@@ -255,3 +256,4 @@ namespace kanzi
 
 }
 #endif
+
