@@ -36,7 +36,7 @@ limitations under the License.
 namespace kanzi
 {
 
-   class DecodingTaskResult {
+   class DecodingTaskResult FINAL {
    public:
        int _blockId;
        int _decoded;
@@ -49,39 +49,39 @@ namespace kanzi
 
        DecodingTaskResult()
            : _blockId(-1)
+           , _decoded(0)
+           , _data(nullptr)
+           , _error(0)
            , _msg()
+           , _checksum(0)
+           , _skipped(false)
            , _completionTime(clock())
        {
-          _data = nullptr;
-          _decoded = 0;
-          _error = 0;
-          _checksum = 0;
-          _skipped = false;
        }
 
        DecodingTaskResult(const SliceArray<byte>& data, int blockId, int decoded, int checksum,
           int error, const std::string& msg, bool skipped = false)
-           : _msg(msg)
+           : _blockId(blockId)
+           , _decoded(decoded)
+           , _data(data._array)
+           , _error(error)
+           , _msg(msg)
+           , _checksum(checksum)
+           , _skipped(skipped)
            , _completionTime(clock())
        {
-           _data = data._array;
-           _blockId = blockId;
-           _error = error;
-           _decoded = decoded;
-           _checksum = checksum;
-           _skipped = skipped;
        }
 
        DecodingTaskResult(const DecodingTaskResult& result)
-           : _msg(result._msg)
+           : _blockId(result._blockId)
+           , _decoded(result._decoded)
+           , _data(result._data)
+           , _error(result._error)
+           , _msg(result._msg)
+           , _checksum(result._checksum)
+           , _skipped(result._skipped)
            , _completionTime(result._completionTime)
        {
-           _data = result._data;
-           _blockId = result._blockId;
-           _error = result._error;
-           _decoded = result._decoded;
-           _checksum = result._checksum;
-           _skipped = result._skipped;
        }
 
        DecodingTaskResult& operator = (const DecodingTaskResult& result)
@@ -158,7 +158,6 @@ namespace kanzi
        short _entropyType;
        uint64 _transformType;
        InputBitStream* _ibs;
-       InputStream& _is;
        ATOMIC_BOOL _initialized;
        ATOMIC_BOOL _closed;
        ATOMIC_INT _blockId;

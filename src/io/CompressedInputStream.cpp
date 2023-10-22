@@ -35,7 +35,6 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, ThreadP
 CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
 #endif
     : InputStream(is.rdbuf())
-    , _is(is)
 {
 #ifdef CONCURRENCY_ENABLED
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
@@ -78,7 +77,6 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx,
 CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
 #endif
     : InputStream(is.rdbuf())
-    , _is(is)
     , _ctx(ctx)
 {
     int tasks = ctx.getInt("jobs", 1);
@@ -111,7 +109,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
 #if __cplusplus >= 201103L
     // A hook can be provided by the caller to customize the instantiation of the
     // input bitstream.
-    _ibs = (createBitStream == nullptr) ? new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE) : (*createBitStream)(_is);
+    _ibs = (createBitStream == nullptr) ? new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE) : (*createBitStream)(is);
 #else
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
 #endif

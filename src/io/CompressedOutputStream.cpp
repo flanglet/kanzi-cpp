@@ -38,7 +38,6 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
           const string& transform, int bSize, bool checksum, int tasks)
 #endif
     : OutputStream(os.rdbuf())
-    , _os(os)
 {
 #ifdef CONCURRENCY_ENABLED
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
@@ -105,7 +104,6 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx,
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
 #endif
     : OutputStream(os.rdbuf())
-    , _os(os)
     , _ctx(ctx)
 {
     int tasks = ctx.getInt("jobs", 1);
@@ -162,7 +160,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
 #if __cplusplus >= 201103L
     // A hook can be provided by the caller to customize the instantiation of the
     // output bitstream.
-    _obs = (createBitStream == nullptr) ? new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE) : (*createBitStream)(_os);
+    _obs = (createBitStream == nullptr) ? new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE) : (*createBitStream)(os);
 #else
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
 #endif

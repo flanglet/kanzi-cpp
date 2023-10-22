@@ -35,31 +35,31 @@ limitations under the License.
 
 namespace kanzi {
 
-   class EncodingTaskResult {
+   class EncodingTaskResult FINAL {
    public:
        int _blockId;
        int _error; // 0 = OK
        std::string _msg;
 
        EncodingTaskResult()
-           : _msg("")
+           : _blockId(-1)
+           , _error(0)
+           , _msg()
        {
-           _blockId = -1;
-           _error = 0;
        }
 
        EncodingTaskResult(int blockId, int error, const std::string& msg)
-           : _msg(msg)
+           : _blockId(blockId)
+           , _error(error)
+           , _msg(msg)
        {
-           _blockId = blockId;
-           _error = error;
        }
 
        EncodingTaskResult(const EncodingTaskResult& result)
-           : _msg(result._msg)
+           : _blockId(result._blockId)
+           , _error(result._error)
+           , _msg(result._msg)
        {
-           _blockId = result._blockId;
-           _error = result._error;
        }
 
        EncodingTaskResult& operator = (const EncodingTaskResult& result)
@@ -128,7 +128,6 @@ namespace kanzi {
        short _entropyType;
        uint64 _transformType;
        OutputBitStream* _obs;
-       OutputStream& _os;
        ATOMIC_BOOL _initialized;
        ATOMIC_BOOL _closed;
        ATOMIC_INT _blockId;
