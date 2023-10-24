@@ -428,83 +428,40 @@ int main(int argc, const char* argv[])
 int TestTransforms_main(int argc, const char* argv[])
 #endif
 {
-    string str;
-
-    if (argc == 1) {
-        str = "-TYPE=ALL";
-    }
-    else {
-        str = argv[1];
-    }
-
-    transform(str.begin(), str.end(), str.begin(), ::toupper);
     int res = 0;
 
-    if (str.compare(0, 6, "-TYPE=") == 0) {
-        str = str.substr(6);
+    try {
+        vector<string> codecs;
 
-        if (str.compare("ALL") == 0) {
-            cout << endl
-                 << endl
-                 << "TestLZ" << endl;
-            res |= testTransformsCorrectness("LZ");
-            res |= testTransformsSpeed("LZ");
-            cout << endl
-                 << endl
-                 << "TestLZX" << endl;
-            res |= testTransformsCorrectness("LZX");
-            res |= testTransformsSpeed("LZX");
-            cout << endl
-                 << endl
-                 << "TestLZP" << endl;
-            res |= testTransformsCorrectness("LZP");
-            //res |= testTransformsSpeed("LZP"); skip (returns false if not good enough compression)
-            cout << endl
-                 << endl
-                 << "TestROLZ" << endl;
-            res |= testTransformsCorrectness("ROLZ");
-            res |= testTransformsSpeed("ROLZ");
-            cout << endl
-                 << endl
-                 << "TestROLZX" << endl;
-            res |= testTransformsCorrectness("ROLZX");
-            res |= testTransformsSpeed("ROLZX");
-            cout << endl
-                 << endl
-                 << "TestRLT" << endl;
-            res |= testTransformsCorrectness("RLT");
-            res |= testTransformsSpeed("RLT");
-            cout << endl
-                 << endl
-                 << "TestZRLT" << endl;
-            res |= testTransformsCorrectness("ZRLT");
-            res |= testTransformsSpeed("ZRLT");
-            cout << endl
-                 << endl
-                 << "TestRANK" << endl;
-            res |= testTransformsCorrectness("RANK");
-            res |= testTransformsSpeed("RANK");
-            cout << endl
-                 << endl
-                 << "TestSRT" << endl;
-            res |= testTransformsCorrectness("SRT");
-            res |= testTransformsSpeed("SRT");
-            cout << endl
-                 << endl
-                 << "TestMTFT" << endl;
-            res |= testTransformsCorrectness("MTFT");
-            res |= testTransformsSpeed("MTFT");
-            cout << endl
-                 << endl
-                 << "TestMM" << endl;
-            res |= testTransformsCorrectness("MM");
-            //res |= testTransformsSpeed("MM"); skip no good data
+        if (argc == 1) {
+            codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "MTFT", "MM" };
         }
         else {
-            cout << "Test" << str << endl;
-            res |= testTransformsCorrectness(str);
-            res |= testTransformsSpeed(str);
+            string str = argv[1];
+            transform(str.begin(), str.end(), str.begin(), ::toupper);
+
+            if (str == "-TYPE=ALL") {
+                codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "MTFT", "MM" };
+            }
+            else {
+                codecs = { str.substr(6) };
+            }
         }
+
+        for (vector<string>::iterator it = codecs.begin(); it != codecs.end(); ++it) {
+            cout << endl
+                << endl
+                << "Test" << *it << endl;
+            res |= testTransformsCorrectness(*it);
+
+            if ((*it != "LZP") && (*it != "MM")) // skip no good data
+               res |= testTransformsSpeed(*it);
+        }
+    
+    }
+    catch (exception& e) {
+        cout << e.what() << endl;
+        res = 123;
     }
 
     return res;

@@ -78,10 +78,10 @@ static EntropyEncoder* getEncoder(string name, OutputBitStream& obs, Predictor* 
 
     if (predictor != nullptr) {
        if (name.compare("TPAQ") == 0)
-           return new BinaryEntropyEncoder(obs, predictor, false);
+           return new BinaryEntropyEncoder(obs, predictor, true);
 
        if (name.compare("CM") == 0)
-           return new BinaryEntropyEncoder(obs, predictor, false);
+           return new BinaryEntropyEncoder(obs, predictor, true);
     }
 
     cout << "No such entropy encoder: " << name << endl;
@@ -102,17 +102,16 @@ static EntropyDecoder* getDecoder(string name, InputBitStream& ibs, Predictor* p
     if (name.compare("RANGE") == 0)
         return new RangeDecoder(ibs);
 
-    if (name.compare("TPAQ") == 0)
-        return new BinaryEntropyDecoder(ibs, predictor, false);
-
     if (name.compare("FPAQ") == 0)
         return new FPAQDecoder(ibs);
 
-    if (name.compare("TPAQX") == 0)
-        return new BinaryEntropyDecoder(ibs, predictor, false);
+    if (predictor != nullptr) {
+        if (name.compare("TPAQ") == 0)
+            return new BinaryEntropyDecoder(ibs, predictor, true);
 
-    if (name.compare("CM") == 0)
-        return new BinaryEntropyDecoder(ibs, predictor, false);
+        if (name.compare("CM") == 0)
+            return new BinaryEntropyDecoder(ibs, predictor, true);
+    }
 
     if (name.compare("EXPGOLOMB") == 0)
         return new ExpGolombDecoder(ibs);
@@ -232,7 +231,6 @@ int testEntropyCodecSpeed(const string& name)
     int res = 0;
 
     srand((uint)time(nullptr));
-    Predictor* predictor;
     byte values1[500000];
     byte values2[500000];
 
@@ -243,6 +241,8 @@ int testEntropyCodecSpeed(const string& name)
 
         for (int ii = 0; ii < iter; ii++) {
             int idx = 0;
+            memset(values1, 0x00, size);
+            memset(values2, 0xAA, size);
 
             for (int i = 0; i < size; i++) {
                 int i0 = i;
@@ -263,8 +263,7 @@ int testEntropyCodecSpeed(const string& name)
             stringbuf buffer;
             iostream ios(&buffer);
             DefaultOutputBitStream obs(ios, 16384);
-            predictor = getPredictor(name);
-            EntropyEncoder* ec = getEncoder(name, obs, predictor);
+            EntropyEncoder* ec = getEncoder(name, obs, getPredictor(name));
 
             if (ec == nullptr)
                  return 1;
@@ -283,14 +282,10 @@ int testEntropyCodecSpeed(const string& name)
             delete ec;
             obs.close();
 
-            if (predictor)
-                delete predictor;
-
             // Decode
             ios.rdbuf()->pubseekpos(0);
             DefaultInputBitStream ibs(ios, 16384);
-            predictor = getPredictor(name);
-            EntropyDecoder* ed = getDecoder(name, ibs, predictor);
+            EntropyDecoder* ed = getDecoder(name, ibs, getPredictor(name));
 
             if (ed == nullptr)
                  return 1;
@@ -308,9 +303,6 @@ int testEntropyCodecSpeed(const string& name)
             delta2 += (after2 - before2);
             delete ed;
             ibs.close();
-
-            if (predictor)
-                delete predictor;
 
             // Sanity check
             for (int i = 0; i < size; i++) {
@@ -344,78 +336,34 @@ int TestEntropyCodec_main(int argc, const char* argv[])
     int res = 0;
 
     try {
-        string str;
+        vector<string> codecs;
 
         if (argc == 1) {
-            str = "-TYPE=ALL";
+            codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
         }
         else {
-            str = argv[1];
-        }
+            string str = argv[1];
+            transform(str.begin(), str.end(), str.begin(), ::toupper);
 
-        transform(str.begin(), str.end(), str.begin(), ::toupper);
-
-        if (str.compare(0, 6, "-TYPE=") == 0) {
-            str = str.substr(6);
-
-            if (str.compare("ALL") == 0) {
-                cout << endl
-                     << endl
-                     << "TestHuffmanCodec" << endl;
-                res |= testEntropyCodecCorrectness("HUFFMAN");
-                res |= testEntropyCodecSpeed("HUFFMAN");
-                cout << endl
-                     << endl
-                     << "TestANS0Codec" << endl;
-                res |= testEntropyCodecCorrectness("ANS0");
-                res |= testEntropyCodecSpeed("ANS0");
-                cout << endl
-                     << endl
-                     << "TestANS1Codec" << endl;
-                res |= testEntropyCodecCorrectness("ANS1");
-                res |= testEntropyCodecSpeed("ANS1");
-                cout << endl
-                     << endl
-                     << "TestRangeCodec" << endl;
-                res |= testEntropyCodecCorrectness("RANGE");
-                res |= testEntropyCodecSpeed("RANGE");
-                cout << endl
-                     << endl
-                     << "TestFPAQCodec" << endl;
-                res |= testEntropyCodecCorrectness("FPAQ");
-                res |= testEntropyCodecSpeed("FPAQ");
-                cout << endl
-                     << endl
-                     << "TestCMCodec" << endl;
-                res |= testEntropyCodecCorrectness("CM");
-                res |= testEntropyCodecSpeed("CM");
-                cout << endl
-                     << endl
-                     << "TestTPAQCodec" << endl;
-                res |= testEntropyCodecCorrectness("TPAQ");
-                res |= testEntropyCodecSpeed("TPAQ");
-                cout << endl
-                     << endl
-                     << "TestExpGolombCodec" << endl;
-                res |= testEntropyCodecCorrectness("EXPGOLOMB");
-                res |= testEntropyCodecSpeed("EXPGOLOMB");
-                cout << endl
-                     << endl
-                     << "TestRiceGolombCodec" << endl;
-                res |= testEntropyCodecCorrectness("RICEGOLOMB");
-                res |= testEntropyCodecSpeed("RICEGOLOMB");
+            if (str == "-TYPE=ALL") {
+                codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
             }
             else {
-                cout << endl
-                     << endl
-                     << "Test" << str << "EntropyCodec" << endl;
-                res |= testEntropyCodecCorrectness(str);
-                res |= testEntropyCodecSpeed(str);
+                codecs = { str.substr(6) };
             }
+        }
+
+        for (vector<string>::iterator it = codecs.begin(); it != codecs.end(); ++it) {
+            cout << endl
+                 << endl
+                 << "Test" << *it << endl;
+            res |= testEntropyCodecCorrectness(*it);
+            res |= testEntropyCodecSpeed(*it);
         }
     }
     catch (exception& e) {
         cout << e.what() << endl;
+        res = 123;
     }
 
     return res;
