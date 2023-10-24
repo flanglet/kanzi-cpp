@@ -52,6 +52,8 @@ static const char* APP_HEADER = "Kanzi 2.1 (c) Frederic Langlet";
 void printHelp(Printer& log, const string& mode)
 {
    log.println("", true);
+   log.println(APP_HEADER, true);
+   log.println("", true);
    log.println("Credits: Matt Mahoney, Yann Collet, Jan Ondrus, Yuta Mori, Ilya Muravyov,", true);
    log.println("         Neal Burns, Fabian Giesen, Jarek Duda, Ilya Grebnov", true);
    log.println("", true);
