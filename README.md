@@ -162,13 +162,13 @@ targets.
 
 ### Makefile targets
 ```
-clean:     remove objects, libraries and binaries
+clean:     removes objects, libraries and binaries
 kanzi:     builds the kanzi executable
 lib:       builds static and dynamic libraries
 test:      builds test binaries
 all:       kanzi + lib + test
-install:   installs libraries, code and executable
-uninstall: removes installed libraries, code and executable
+install:   installs libraries, headers and executable
+uninstall: removes installed libraries, headers and executable
 ```
 
 
