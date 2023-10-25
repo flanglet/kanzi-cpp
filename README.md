@@ -37,7 +37,8 @@ Disclaimer
 Use at your own risk. Always keep a backup of your files.
 
 ![Build Status](https://github.com/flanglet/kanzi-cpp/actions/workflows/c-cpp.yml/badge.svg)
-
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=flanglet_kanzi-cpp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=flanglet_kanzi-cpp)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=flanglet_kanzi-cpp&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=flanglet_kanzi-cpp)
 <a href="https://scan.coverity.com/projects/flanglet-kanzi-cpp">
   <img alt="Coverity Scan Build Status"
        src="https://img.shields.io/coverity/scan/16859.svg"/>
@@ -146,15 +147,28 @@ The project generates a Windows 64 binary. Multithreading is supported with this
 ### mingw-w64
 Go to the source directory and run 'make clean && mingw32-make.exe'. The Makefile contains 
 all the necessary targets. Tested successfully on Win64 with mingw-w64 g++ 8.1.0. 
-Multithreading is supported. Compiled successfully with C++11, C++14, C++17.
+Multithreading is supported. Builds successfully with C++11, C++14, C++17.
 
 ### Linux
 Go to the source directory and run 'make clean && make'. The Makefile contains all the necessary
-targets. Build successfully on Ubuntu with g++ 8.4.0, g++ 9.3.0, g++ 10.3.0, clang++ 10.0.0
-and icc 19.0.0.117. Multithreading is supported with g++ version 5.0.0 or newer.
-Compiled successfully with C++11, C++14, C++17, C++20.
+targets. Build successfully on Ubuntu with many versions of g++ and clang++.
+Multithreading is supported with g++ version 5.0.0 or newer.
+Builds successfully with C++98, C++11, C++14, C++17, C++20.
 
 ### BSD
 The makefile uses the gnu-make syntax. First, make sure gmake is present (or install it: 'pkg_add gmake').
 Go to the source directory and run 'gmake clean && gmake'. The Makefile contains all the necessary
 targets.
+
+### Makefile targets
+```
+clean:     remove objects, libraries and binaries
+kanzi:     builds the kanzi executable
+lib:       builds static and dynamic libraries
+test:      builds test binaries
+all:       kanzi + lib + test
+install:   installs libraries, code and executable
+uninstall: removes installed libraries, code and executable
+```
+
+
