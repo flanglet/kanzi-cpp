@@ -131,7 +131,7 @@ public:
 
    template<class F, class... Args>
 #if __cplusplus >= 201703L // result_of deprecated from C++17
-   std::future<typename std::invoke_result<F, Args...>::type> ThreadPool::schedule(F&& f, Args&&... args) THROW
+   std::future<typename std::invoke_result_t<F, Args...> > ThreadPool::schedule(F&& f, Args&&... args) THROW
    {
        using return_type = typename std::invoke_result<F, Args...>::type;
 #else
