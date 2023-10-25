@@ -269,7 +269,7 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
 
 // Return the zero order entropy scaled to the [0..1024] range
 // Incoming array size must be 256
-int Global::computeFirstOrderEntropy1024(int blockLen, uint histo[])
+int Global::computeFirstOrderEntropy1024(int blockLen, const uint histo[])
 {
     if (blockLen == 0)
         return 0;

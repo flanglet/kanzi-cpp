@@ -29,26 +29,26 @@ namespace kanzi {
        uint64 _read;
        std::string _errMsg;
 
-       FileDecompressResult() :
-           _errMsg("")
+       FileDecompressResult()
+          : _code(0)
+          , _read(0)        
+          , _errMsg()
        {
-           _code = 0;
-           _read = 0;
        }
 
-       FileDecompressResult(int code, uint64 read, const std::string& errMsg):
-           _errMsg(errMsg)
+       FileDecompressResult(int code, uint64 read, const std::string& errMsg)
+           : _code(code)
+           , _read(read)  
+           , _errMsg(errMsg)
        {
-           _code = code;
-           _read = read;
        }
 
 #if __cplusplus < 201103L
-       FileDecompressResult(const FileDecompressResult& fdr) :
-           _errMsg(fdr._errMsg)
+       FileDecompressResult(const FileDecompressResult& fdr)
+           : _code(fdr._code)
+           , _read(fdr._read)
+           , _errMsg(fdr._errMsg)
        {
-           _code = fdr._code;
-           _read = fdr._read;
        }
 
        FileDecompressResult& operator=(const FileDecompressResult& fdr)
@@ -58,6 +58,8 @@ namespace kanzi {
            _read = fdr._read;
            return *this;
        }
+
+       ~FileDecompressResult() {}
 #else
        FileDecompressResult(const FileDecompressResult& fcr) = delete;
        
@@ -66,15 +68,16 @@ namespace kanzi {
        FileDecompressResult(FileDecompressResult&& fcr) = default;
 
        FileDecompressResult& operator=(FileDecompressResult&& fcr) = default;
+
+       ~FileDecompressResult() = default;
 #endif
-       ~FileDecompressResult() {}
    };
 
 #ifdef CONCURRENCY_ENABLED
    template <class T, class R>
    class FileDecompressWorker FINAL : public Task<R> {
    public:
-       FileDecompressWorker(BoundedConcurrentQueue<T>* queue) { _queue = queue; }
+       FileDecompressWorker(BoundedConcurrentQueue<T>* queue) : _queue(queue) { }
 
        ~FileDecompressWorker() {}
 

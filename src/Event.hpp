@@ -56,7 +56,7 @@ namespace kanzi
 
           clock_t getTime() const { return _time; }
 
-          int getHash() const { return (_hashing) ? _hash : 0; }
+          int getHash() const { return _hashing ? _hash : 0; }
 
           std::string toString() const;
 

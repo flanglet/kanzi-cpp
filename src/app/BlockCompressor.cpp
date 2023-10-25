@@ -609,9 +609,7 @@ bool BlockCompressor::removeListener(Listener& bl)
 
 void BlockCompressor::notifyListeners(vector<Listener*>& listeners, const Event& evt)
 {
-    vector<Listener*>::iterator it;
-
-    for (it = listeners.begin(); it != listeners.end(); ++it)
+    for (vector<Listener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->processEvent(evt);
 }
 
@@ -978,6 +976,7 @@ FileCompressTask<T>::~FileCompressTask()
         _is = nullptr;
     }
     catch (exception&) {
+        // Ignore: best effort
     }
 }
 

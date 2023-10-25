@@ -31,29 +31,29 @@ namespace kanzi {
        uint64 _written;
        std::string _errMsg;
 
-       FileCompressResult():
-           _errMsg("")
+       FileCompressResult()
+          : _code(0)
+          , _read(0)
+          , _written(0)
+          , _errMsg()
        {
-           _code = 0;
-           _read = 0;
-           _written = 0;
        }
 
-       FileCompressResult(int code, uint64 read, uint64 written, const std::string& errMsg) :
-           _errMsg(errMsg)
+       FileCompressResult(int code, uint64 read, uint64 written, const std::string& errMsg)
+           : _code(code)
+           , _read(read)
+           , _written(written)
+           , _errMsg(errMsg)
        {
-           _code = code;
-           _read = read;
-           _written = written;
        }
 
 #if __cplusplus < 201103L
-       FileCompressResult(const FileCompressResult& fcr) :
-           _errMsg(fcr._errMsg)
+       FileCompressResult(const FileCompressResult& fcr)
+           : _code(fcr._code)
+           , _read(fcr._read)
+           , _written(fcr._written)
+           , _errMsg(fcr._errMsg)
        {
-           _code = fcr._code;
-           _read = fcr._read;
-           _written = fcr._written;
        }
 
        FileCompressResult& operator=(const FileCompressResult& fcr)
@@ -64,6 +64,8 @@ namespace kanzi {
            _written = fcr._written;
            return *this;
        }
+
+       ~FileCompressResult() {}
 #else
        FileCompressResult(const FileCompressResult& fdr) = delete;
        
@@ -72,16 +74,16 @@ namespace kanzi {
        FileCompressResult(FileCompressResult&& fdr) = default;
 
        FileCompressResult& operator=(FileCompressResult&& fdr) = default;
-#endif
 
-       ~FileCompressResult() {}
+       ~FileCompressResult() = default;
+#endif 
    };
 
 #ifdef CONCURRENCY_ENABLED
    template <class T, class R>
    class FileCompressWorker FINAL : public Task<R> {
    public:
-       FileCompressWorker(BoundedConcurrentQueue<T>* queue) { _queue = queue; }
+       FileCompressWorker(BoundedConcurrentQueue<T>* queue) : _queue(queue) { }
 
        ~FileCompressWorker() {}
 

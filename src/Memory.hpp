@@ -20,6 +20,13 @@ limitations under the License.
 #include <cstring>
 #include "types.hpp"
 
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__DragonFly__) || defined(BSD)
+	#include <machine/endian.h>
+#elif defined(__linux__) || defined(__linux) || defined(__gnu_linux__)
+	#include <endian.h>
+#endif
+
+
 namespace kanzi {
 
    static inline uint32 bswap32(uint32 x) {
@@ -71,12 +78,6 @@ namespace kanzi {
    #endif
 	}
 
-
-	#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__DragonFly__) || defined(BSD)
-		#include <machine/endian.h>
-	#elif defined(__linux__) || defined(__linux) || defined(__gnu_linux__)
-		#include <endian.h>
-	#endif
 
 	#ifndef IS_BIG_ENDIAN
 		#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \

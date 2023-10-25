@@ -69,10 +69,10 @@ namespace kanzi
 
    inline Context::Context(const Context& ctx)
       : _map(ctx._map)
-   {
 #ifdef CONCURRENCY_ENABLED
-       _pool = ctx._pool;
+      , _pool(ctx._pool)
 #endif
+   {
    }
 
 

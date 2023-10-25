@@ -80,7 +80,7 @@ public:
        ThreadPool(uint32_t threads = 8) THROW;
        template<class F, class... Args>
 #if __cplusplus >= 201703L // result_of deprecated from C++17
-       std::future<typename std::invoke_result<F, Args...>::type> schedule(F&& f, Args&&... args) THROW;
+       std::future<typename std::invoke_result_t<F, Args...>> schedule(F&& f, Args&&... args) THROW;
 #else
        std::future<typename std::result_of<F(Args...)>::type> schedule(F&& f, Args&&... args) THROW;
 #endif
