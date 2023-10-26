@@ -38,11 +38,11 @@ namespace kanzi
        int getMaxEncodedLength(int inputLen) const { return inputLen; }
 
    private:
-       bool doCopy(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
+       bool doCopy(SliceArray<byte>& input, SliceArray<byte>& output, int length) const THROW;
 
    };
 
-   inline bool NullTransform::doCopy(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
+   inline bool NullTransform::doCopy(SliceArray<byte>& input, SliceArray<byte>& output, int length) const THROW
    {
        if (length == 0)
            return true;
