@@ -238,7 +238,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         for (it = args.begin(); it != args.end(); ++it) {
             stringstream ss;
             ss << "Warning: ignoring invalid option [" << it->first << "]";
-            log.println(ss.str().c_str(), _verbosity > 0);
+            log.println(ss.str().c_str(), true);
         }
     }
 }
@@ -303,7 +303,7 @@ int BlockCompressor::compress(uint64& outputSize)
 
     // Limit verbosity level when files are processed concurrently
     if ((_verbosity > 1) && (_jobs > 1) && (nbFiles > 1)) {
-        log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", _verbosity > 1);
+        log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", true);
         _verbosity = 1;
     }
 
@@ -355,14 +355,14 @@ int BlockCompressor::compress(uint64& outputSize)
 
     // Need to strip path separator at the end to make 'stat()' happy
     if ((formattedOutName.size() > 1) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
-        formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
+        formattedOutName.resize(formattedOutName.size() - 1);
     }
 
     if (isStdIn == false) {
         struct STAT buffer;
 
         if ((formattedInName.size() > 1) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
-            formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
+            formattedInName.resize(formattedInName.size() - 1);
         }
 
         if (STAT(formattedInName.c_str(), &buffer) != 0) {
@@ -374,7 +374,7 @@ int BlockCompressor::compress(uint64& outputSize)
             inputIsDir = true;
 
             if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == '.')) {
-                formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
+                formattedInName.resize(formattedInName.size() - 1);
             }
 
             if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] != PATH_SEPARATOR)) {
@@ -554,9 +554,8 @@ int BlockCompressor::compress(uint64& outputSize)
     stopClock.stop();
 
     if (nbFiles > 1) {
-        double delta = stopClock.elapsed();
-
         if (_verbosity > 0) {
+            double delta = stopClock.elapsed();
             log.println("", true);
             ss << "Total compression time: ";
 
@@ -748,7 +747,7 @@ T FileCompressTask<T>::run()
                     size_t idx = outputName.find_last_of(PATH_SEPARATOR);
 
                     if (idx != string::npos) {
-                        parentDir = parentDir.substr(0, idx);
+                        parentDir.resize(idx);
                     }
 
                     if (mkdirAll(parentDir) == 0) {

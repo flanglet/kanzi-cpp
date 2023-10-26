@@ -81,9 +81,7 @@ namespace kanzi
        _pc1 = _counter1[_ctx];
        const int p = (13 * (_pc1[256] + _pc1[_c1]) + 6 * _pc1[_c2]) >> 5;
        _pc2 = &_counter2[_ctx | _runMask][p >> 12];
-       const int x1 = _pc2[0];
-       const int x2 = _pc2[1];
-       return (p + 3 * ((x1 + x2) >> 1) + 32) >> 6; // rescale to [0..4095]
+       return (p + 3 * ((_pc2[0] + _pc2[1]) >> 1) + 32) >> 6; // rescale to [0..4095]
    }
 }
 #endif

@@ -174,7 +174,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     // Limit verbosity level when files are processed concurrently
     if ((_verbosity > 1) && (_jobs > 1) && (nbFiles > 1)) {
-        log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", _verbosity > 1);
+        log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", true);
         _verbosity = 1;
     }
     
@@ -203,14 +203,14 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     // Need to strip path separator at the end to make 'stat()' happy
     if ((formattedOutName.size() > 1) && (formattedOutName[formattedOutName.size() - 1] == PATH_SEPARATOR)) {
-        formattedOutName = formattedOutName.substr(0, formattedOutName.size() - 1);
+        formattedOutName.resize(formattedOutName.size() - 1);
     }
 
     if (isStdIn == false) {
         struct STAT buffer;
 
         if ((formattedInName.size() > 1) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
-            formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
+            formattedInName.resize(formattedInName.size() - 1);
         }
 
         if (STAT(formattedInName.c_str(), &buffer) != 0) {
@@ -222,7 +222,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
             inputIsDir = true;
 
             if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] == '.')) {
-                formattedInName = formattedInName.substr(0, formattedInName.size() - 1);
+                formattedInName.resize(formattedInName.size() - 1);
             }
 
             if ((formattedInName.size() != 0) && (formattedInName[formattedInName.size() - 1] != PATH_SEPARATOR)) {
@@ -387,9 +387,8 @@ int BlockDecompressor::decompress(uint64& inputSize)
     stopClock.stop();
 
     if (nbFiles > 1) {
-        double delta = stopClock.elapsed();
-
         if (_verbosity > 0) {
+            double delta = stopClock.elapsed();
             log.println("", true);
             ss << "Total decompression time: ";
 
@@ -547,7 +546,7 @@ T FileDecompressTask<T>::run()
                     size_t idx = outputName.find_last_of(PATH_SEPARATOR);
 
                     if (idx != string::npos) {
-                        parentDir = parentDir.substr(0, idx);
+                        parentDir.resize(idx);
                     }
 
                     if (mkdirAll(parentDir) == 0) {

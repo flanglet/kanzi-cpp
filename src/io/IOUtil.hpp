@@ -103,7 +103,7 @@ namespace kanzi
        // In this scenario, "//PC/share" does not work but "//PC/share/" does
    #ifndef _MSC_VER
        if (target[target.size() - 1] == PATH_SEPARATOR)
-           target = target.substr(0, target.size() - 1);
+           target.resize(target.size() - 1);
    #endif
 
        struct STAT buffer;
@@ -143,7 +143,7 @@ namespace kanzi
              target += PATH_SEPARATOR;
        } 
        else {
-          target = target.substr(0, target.size() - 1);
+          target.resize(target.size() - 1);
        }
 
        DIR* dir = opendir(target.c_str());
@@ -244,7 +244,8 @@ namespace kanzi
       // Scan path, ignoring potential PATH_SEPARATOR at position 0
       for (uint i = 1; i < path.size(); i++) {
           if (path[i] == PATH_SEPARATOR) {
-             std::string curPath = path.substr(0, i);
+              std::string curPath = path;
+              curPath.resize(i);
 
              if (curPath.length() == 0)
                  continue;
