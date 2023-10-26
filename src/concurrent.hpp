@@ -179,7 +179,7 @@ public:
     template<class T>
     class BoundedConcurrentQueue {
     public:
-        BoundedConcurrentQueue(int nbItems, T* data) : _index(0), _data(data), _size(nbItems) {}
+        BoundedConcurrentQueue(int nbItems, T* data) : _index(0), _size(nbItems), _data(data) {}
 
         ~BoundedConcurrentQueue() { }
 
