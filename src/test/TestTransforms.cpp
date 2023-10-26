@@ -94,6 +94,9 @@ int testTransformsCorrectness(const string& name)
         int size = 80000;
         byte values[80000] = { byte(0xAA) };
 
+        if (name == "ALIAS")
+          mod = 15 + 12 * ii;
+
         if (ii == 0) {
             size = 32;
             byte arr[32] = {
@@ -346,6 +349,9 @@ int testTransformsSpeed(const string& name)
         // Generate random data with runs
         // Leave zeros at the beginning for ZRLT to succeed
         int n = iter / 20;
+
+        if (name == "ALIAS")
+            mod = 5 + 80 * jj;
 
         while (n < size) {
             byte val = byte(rand() % mod);
