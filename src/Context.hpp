@@ -38,10 +38,11 @@ namespace kanzi
    public:
 
 #ifdef CONCURRENCY_ENABLED
-       Context(ThreadPool* pool = nullptr) { _pool = pool; }
+       Context(ThreadPool* pool = nullptr) : _pool(pool) {}
 #else
        Context() {}
 #endif
+
        Context(const Context& ctx);
        Context& operator=(const Context& ctx);
        virtual ~Context() {}
@@ -55,7 +56,7 @@ namespace kanzi
        void putString(const std::string& key, const std::string& value);
 
 #ifdef CONCURRENCY_ENABLED
-       ThreadPool* getPool() { return _pool; }
+       ThreadPool* getPool() const { return _pool; }
 #endif
 
    private:
@@ -65,7 +66,6 @@ namespace kanzi
        ThreadPool* _pool;
 #endif
    };
-
 
    inline Context::Context(const Context& ctx)
       : _map(ctx._map)
@@ -78,7 +78,7 @@ namespace kanzi
 
    inline Context& Context::operator=(const Context& ctx)
    {
-      _map = ctx._map;
+       _map = ctx._map;
 #ifdef CONCURRENCY_ENABLED
        _pool = ctx._pool;
 #endif

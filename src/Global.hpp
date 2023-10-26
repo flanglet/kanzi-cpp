@@ -25,9 +25,9 @@ namespace kanzi {
    public:
        enum DataType { UNDEFINED, TEXT, MULTIMEDIA, EXE, NUMERIC, BASE64, DNA, BIN, UTF8, SMALL_ALPHABET };
 
-       static int squash(int d);
+       static int stretch(int d); // ln(x / (1 - x))
 
-       static int stretch(int d);
+       static int squash(int d); // 1 / (1 + e-x)  (inverse of stretch)
 
        static int log2(uint32 x) THROW; // fast, integer rounded
 

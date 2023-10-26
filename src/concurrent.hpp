@@ -75,7 +75,7 @@ public:
    #include <functional>
    #include <stdexcept>
 
-   class ThreadPool {
+   class ThreadPool FINAL {
    public:
        ThreadPool(uint32_t threads = 8) THROW;
        template<class F, class... Args>
@@ -170,7 +170,7 @@ public:
 
        _condition.notify_all();
 
-       for(std::thread& w : _workers)
+       for (std::thread& w : _workers)
            w.join();
    }
 
@@ -179,7 +179,7 @@ public:
     template<class T>
     class BoundedConcurrentQueue {
     public:
-        BoundedConcurrentQueue(int nbItems, T* data) { _index = 0; _data = data; _size = nbItems; }
+        BoundedConcurrentQueue(int nbItems, T* data) : _index(0), _data(data), _size(nbItems) {}
 
         ~BoundedConcurrentQueue() { }
 
