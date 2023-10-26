@@ -287,7 +287,7 @@ namespace kanzi {
 			return new FSDCodec(ctx);
 
 		case NONE_TYPE:
-			return new NullTransform<T>(ctx);
+			return new NullTransform(ctx);
 
 		default:
 			std::stringstream ss;

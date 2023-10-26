@@ -16,7 +16,10 @@ limitations under the License.
 #include <iostream>
 #include <algorithm>
 #include "../types.hpp"
+#include "../transform/AliasCodec.hpp"
+#include "../transform/FSDCodec.hpp"
 #include "../transform/LZCodec.hpp"
+#include "../transform/NullTransform.hpp"
 #include "../transform/RLT.hpp"
 #include "../transform/ROLZCodec.hpp"
 #include "../transform/SBRT.hpp"
@@ -30,16 +33,16 @@ using namespace kanzi;
 static Transform<byte>* getByteTransform(string name, Context& ctx)
 {
     if (name.compare("SRT") == 0)
-        return new SRT();
+        return new SRT(ctx);
 
     if (name.compare("RLT") == 0)
-        return new RLT();
+        return new RLT(ctx);
 
     if (name.compare("ZRLT") == 0)
-        return new ZRLT();
+        return new ZRLT(ctx);
 
     if (name.compare("LZ") == 0)
-        return new LZCodec();
+        return new LZCodec(ctx);
 
     if (name.compare("LZX") == 0){
         ctx.putInt("lz", TransformFactory<byte>::LZX_TYPE);
@@ -52,21 +55,25 @@ static Transform<byte>* getByteTransform(string name, Context& ctx)
     }
 
     if (name.compare("ROLZ") == 0)
-        return new ROLZCodec();
-
-    if (name.compare("ROLZX") == 0) {
-        ctx.putString("transform", "ROLZX");
         return new ROLZCodec(ctx);
-    }
+
+    if (name.compare("ROLZX") == 0)
+        return new ROLZCodec(ctx);
 
     if (name.compare("RANK") == 0)
-        return new SBRT(SBRT::MODE_RANK);
+        return new SBRT(SBRT::MODE_RANK, ctx);
 
     if (name.compare("MTFT") == 0)
-       return new SBRT(SBRT::MODE_MTF);
+       return new SBRT(SBRT::MODE_MTF, ctx);
 
     if (name.compare("MM") == 0)
-       return new FSDCodec();
+        return new FSDCodec(ctx);
+
+    if (name.compare("NONE") == 0)
+        return new NullTransform(ctx);
+
+    if (name.compare("ALIAS") == 0)
+        return new AliasCodec(ctx);
 
     cout << "No such byte transform: " << name << endl;
     return nullptr;
@@ -195,6 +202,8 @@ int testTransformsCorrectness(const string& name)
         }
 
         Context ctx;
+        ctx.putInt("bsVersion", 4);
+        ctx.putString("transform", name);
         Transform<byte>* ff = getByteTransform(name, ctx);
         Transform<byte>* fi = getByteTransform(name, ctx);
 
@@ -434,14 +443,14 @@ int TestTransforms_main(int argc, const char* argv[])
         vector<string> codecs;
 
         if (argc == 1) {
-            codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "MTFT", "MM" };
+            codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MTFT", "MM" };
         }
         else {
             string str = argv[1];
             transform(str.begin(), str.end(), str.begin(), ::toupper);
 
             if (str == "-TYPE=ALL") {
-                codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "MTFT", "MM" };
+                codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MTFT", "MM" };
             }
             else {
                 codecs = { str.substr(6) };

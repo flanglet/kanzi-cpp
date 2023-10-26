@@ -24,27 +24,25 @@ limitations under the License.
 namespace kanzi
 {
 
-   template <class T>
-   class NullTransform FINAL : public Transform<T> {
+   class NullTransform FINAL : public Transform<byte> {
    public:
        NullTransform() {}
        NullTransform(Context&) {}
        ~NullTransform() {}
 
-       bool forward(SliceArray<T>& input, SliceArray<T>& output, int length) THROW { return doCopy(input, output, length); }
+       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW { return doCopy(input, output, length); }
 
-       bool inverse(SliceArray<T>& input, SliceArray<T>& output, int length) THROW { return doCopy(input, output, length); }
+       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW { return doCopy(input, output, length); }
 
        // Required encoding output buffer size
        int getMaxEncodedLength(int inputLen) const { return inputLen; }
 
    private:
-       static bool doCopy(SliceArray<T>& input, SliceArray<T>& output, int length) THROW;
+       bool doCopy(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 
    };
 
-   template <class T>
-   bool NullTransform<T>::doCopy(SliceArray<T>& input, SliceArray<T>& output, int length) THROW
+   inline bool NullTransform::doCopy(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
    {
        if (length == 0)
            return true;
