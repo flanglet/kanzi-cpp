@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <algorithm>
 #include <stdexcept>
 #include "BinaryEntropyEncoder.hpp"
 #include "../Memory.hpp"

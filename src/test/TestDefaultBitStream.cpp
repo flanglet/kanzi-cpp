@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <iostream>
 #include <fstream>
+#include <time.h>
 #include "../bitstream/DebugOutputBitStream.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
