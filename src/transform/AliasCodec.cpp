@@ -190,8 +190,9 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         int savings = 0;
         dst[0] = byte(n0);
+        dst[1] = byte(0);
         srcIdx = 0;
-        dstIdx = 1;
+        dstIdx = 2;
 
         // Header: emit map data
         for (int i = 0; i < n0; i++) {
@@ -219,8 +220,10 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             srcIdx += (alias >> 8);
         }
 
-        if (srcIdx != count)
+        if (srcIdx != count) {
+            dst[1] = byte(1);
             dst[dstIdx++] = src[srcIdx++];
+        }
     }
 
     input._index += srcIdx;
@@ -328,7 +331,8 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     else {
         // Rebuild map alias -> symbol
         int map16[256] = { 0 };
-        srcIdx = 1;
+        const int srcEnd = count - int(src[1]);
+        srcIdx = 2;
 
         for (int i = 0; i < 256; i++)
             map16[i] = 0x10000 | i;
@@ -338,12 +342,15 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             srcIdx += 3;
         }
 
-        while (srcIdx < count) {
+        while (srcIdx < srcEnd) {
             const int val = map16[int(src[srcIdx++])];
             dst[dstIdx] = byte(val);
             dst[dstIdx + 1] = byte(val >> 8);
             dstIdx += (val >> 16);
         }
+
+        if (src[1] != byte(0))
+            dst[dstIdx++] = src[srcIdx++];
     }
 
     input._index += srcIdx;
