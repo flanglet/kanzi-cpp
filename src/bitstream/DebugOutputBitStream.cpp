@@ -66,20 +66,12 @@ void DebugOutputBitStream::writeBit(int bit) THROW
     if (_mark == true)
         _out << "w";
 
-    if (_width != -1) {
-        if ((_idx - 1) % _width == _width - 1) {
-            if (showByte())
-                printByte(_current);
+    if ((_width != -1) && ((_idx - 1) % _width == _width - 1)) {
+        if (showByte())
+            printByte(_current);
 
-            _out << endl;
-            _idx = 0;
-        }
-        else if ((_idx & 7) == 0) {
-            if (showByte())
-                printByte(_current);
-            else
-                _out << " ";
-        }
+        _out << endl;
+        _idx = 0;
     }
     else if ((_idx & 7) == 0) {
         if (showByte())
@@ -105,20 +97,12 @@ uint DebugOutputBitStream::writeBits(uint64 bits, uint count) THROW
         if ((_mark == true) && (i == res))
             _out << "w";
 
-        if (_width != -1) {
-            if (_idx % _width == 0) {
-                if (showByte())
-                    printByte(_current);
+        if ((_width != -1) && (_idx % _width == 0)) {
+             if (showByte())
+                printByte(_current);
 
-                _out << endl;
-                _idx = 0;
-            }
-            else if ((_idx & 7) == 0) {
-                if (showByte())
-                    printByte(_current);
-                else
-                    _out << " ";
-            }
+            _out << endl;
+            _idx = 0;
         }
         else if ((_idx & 7) == 0) {
             if (showByte())
@@ -147,20 +131,12 @@ uint DebugOutputBitStream::writeBits(const byte bits[], uint count) THROW
            if ((_mark == true) && (i == res))
                _out << "w";
 
-           if (_width != -1) {
-               if (_idx % _width == 0) {
-                   if (showByte())
-                       printByte(_current);
+           if ((_width != -1) && (_idx % _width == 0)) {
+                if (showByte())
+                    printByte(_current);
 
-                   _out << endl;
-                   _idx = 0;
-               }
-               else if ((_idx & 7) == 0) {
-                   if (showByte())
-                       printByte(_current);
-                   else
-                       _out << " ";
-               }
+                _out << endl;
+                _idx = 0;
            }
            else if ((_idx & 7) == 0) {
                if (showByte())
@@ -176,7 +152,7 @@ uint DebugOutputBitStream::writeBits(const byte bits[], uint count) THROW
 
 void DebugOutputBitStream::printByte(byte b)
 {
-    int val = int(b) & 0xFF;
+    int val = int(b);
 
     if (val < 10)
         _out << " [00" << val << "] ";

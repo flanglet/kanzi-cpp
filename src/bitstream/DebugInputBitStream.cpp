@@ -67,20 +67,12 @@ int DebugInputBitStream::readBit() THROW
     if (_mark == true)
         _out << "r";
 
-    if (_width != -1) {
-        if ((_idx - 1) % _width == _width - 1) {
-            if (showByte())
-                printByte(_current);
+    if ((_width != -1) && ((_idx - 1) % _width == _width - 1)) {
+        if (showByte())
+            printByte(_current);
 
-            _out << endl;
-            _idx = 0;
-        }
-        else if ((_idx & 7) == 0) {
-            if (showByte())
-                printByte(_current);
-            else
-                _out << " ";
-        }
+        _out << endl;
+        _idx = 0;
     }
     else if ((_idx & 7) == 0) {
         if (showByte())
@@ -106,20 +98,12 @@ uint64 DebugInputBitStream::readBits(uint count) THROW
         if ((_mark == true) && (i == count))
             _out << "r";
 
-        if (_width != -1) {
-            if (_idx % _width == 0) {
-                if (showByte())
-                    printByte(_current);
+        if ((_width != -1) && (_idx % _width == 0)) {
+            if (showByte())
+                printByte(_current);
 
-                _out << endl;
-                _idx = 0;
-            }
-            else if ((_idx & 7) == 0) {
-                if (showByte())
-                    printByte(_current);
-                else
-                    _out << " ";
-            }
+            _out << endl;
+            _idx = 0;
         }
         else if ((_idx & 7) == 0) {
             if (showByte())
@@ -147,20 +131,12 @@ uint DebugInputBitStream::readBits(byte bits[], uint count) THROW
             if ((_mark == true) && (j == int(count)))
                 _out << "r";
 
-            if (_width != -1) {
-                if (_idx % _width == 0) {
-                    if (showByte())
-                        printByte(_current);
+            if ((_width != -1) && (_idx % _width == 0)) {
+                if (showByte())
+                    printByte(_current);
 
-                    _out << endl;
-                    _idx = 0;
-                }
-                else if ((_idx & 7) == 0) {
-                    if (showByte())
-                        printByte(_current);
-                    else
-                        _out << " ";
-                }
+                _out << endl;
+                _idx = 0;
             }
             else if ((_idx & 7) == 0) {
                 if (showByte())
@@ -176,7 +152,7 @@ uint DebugInputBitStream::readBits(byte bits[], uint count) THROW
 
 void DebugInputBitStream::printByte(byte b)
 {
-    int val = int(b) & 0xFF;
+    int val = int(b);
 
     if (val < 10)
         _out << " [00" << val << "] ";
