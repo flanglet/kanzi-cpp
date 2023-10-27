@@ -138,11 +138,11 @@ There are no dependencies. Porting to other operating systems should be straight
 
 ### Visual Studio 2008
 Unzip the file "Kanzi_VS2008.zip" in place.
-The project generates a Windows 32 binary. Multithreading is not supported with this version.
+The solution generates a Windows 32 binary. Multithreading is not supported with this version.
 
-### Visual Studio 2017
-Unzip the file "Kanzi_VS2017.zip" in place.
-The project generates a Windows 64 binary. Multithreading is supported with this version.
+### Visual Studio 2022
+Unzip the file "Kanzi_VS2022.zip" in place.
+The solution generates a Windows 64 binary and library. Multithreading is supported with this version.
 
 ### mingw-w64
 Go to the source directory and run 'make clean && mingw32-make.exe'. The Makefile contains 
