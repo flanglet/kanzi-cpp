@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <time.h>
@@ -561,17 +562,30 @@ int main(int argc, const char* argv[])
 int TestDefaultBitStream_main(int argc, const char* argv[])
 #endif
 {
+    bool doPerf = true;
+
     if (argc <= 1) {
         cout << "Missing temp output file" << endl;
         exit(1);
     }
 
+    if (argc > 2) {
+        string str = argv[2];
+	transform(str.begin(), str.end(), str.begin(), ::toupper);
+        doPerf = str != "-NOPERF";
+    }
+
     int res = 0;
+    string fileName = argv[1];
     res |= testBitStreamCorrectnessAligned1();
     res |= testBitStreamCorrectnessAligned2();
     res |= testBitStreamCorrectnessMisaligned1();
     res |= testBitStreamCorrectnessMisaligned2();
-    res |= testBitStreamSpeed1(argv[1]);
-    res |= testBitStreamSpeed2(argv[1]);
+
+    if (doPerf == true) {
+       res |= testBitStreamSpeed1(fileName);
+       res |= testBitStreamSpeed2(fileName);
+    }
+
     return res;
 }
