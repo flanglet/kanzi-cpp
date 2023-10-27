@@ -126,11 +126,11 @@ static EntropyDecoder* getDecoder(string name, InputBitStream& ibs, Predictor* p
 int testEntropyCodecCorrectness(const string& name)
 {
     // Test behavior
-    cout << "Correctness test for " << name << endl;
+    cout << "=== Correctness test for " << name << " ===" << endl;
     srand((uint)time(nullptr));
     int res = 0;
 
-    for (int ii = 1; ii < 20; ii++) {
+    for (int ii = 1; ii < 50; ii++) {
         cout << endl
              << endl
              << "Test " << ii << endl;
@@ -224,7 +224,7 @@ int testEntropyCodecSpeed(const string& name)
     // Test speed
     cout << endl
          << endl
-         << "Speed test for " << name << endl;
+         << "=== Speed test for " << name << "===" << endl;
     int repeats[] = { 3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3 };
     int size = 500000;
     int iter = 100;
@@ -337,6 +337,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
 
     try {
         vector<string> codecs;
+	bool doPerf = true;
 
         if (argc == 1) {
             codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
@@ -351,6 +352,12 @@ int TestEntropyCodec_main(int argc, const char* argv[])
             else {
                 codecs = { str.substr(6) };
             }
+
+	    if (argc > 2) {
+                str = argv[2];
+                transform(str.begin(), str.end(), str.begin(), ::toupper);
+		doPerf = str != "-NOPERF";
+	    }
         }
 
         for (vector<string>::iterator it = codecs.begin(); it != codecs.end(); ++it) {
@@ -358,7 +365,9 @@ int TestEntropyCodec_main(int argc, const char* argv[])
                  << endl
                  << "Test" << *it << endl;
             res |= testEntropyCodecCorrectness(*it);
-            res |= testEntropyCodecSpeed(*it);
+
+	    if (doPerf == true)
+               res |= testEntropyCodecSpeed(*it);
         }
     }
     catch (exception& e) {
@@ -366,5 +375,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
         res = 123;
     }
 
+    cout << endl;
+    cout << ((res == 0) ? "Success" : "Failure") << endl;
     return res;
 }

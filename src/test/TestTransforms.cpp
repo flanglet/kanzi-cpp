@@ -88,7 +88,7 @@ int testTransformsCorrectness(const string& name)
     int mod = (name == "ZRLT") ? 5 : 256;
     int res = 0;
 
-    for (int ii = 0; ii < 20; ii++) {
+    for (int ii = 0; ii < 50; ii++) {
         cout << endl
              << "Test " << ii << endl;
         int size = 80000;
@@ -179,6 +179,23 @@ int testTransformsCorrectness(const string& name)
 
             memcpy(values, &arr[0], size);
         }
+        else if (ii < 10) {
+            size = 2048;
+            byte arr[2048] = { byte(0) };
+	    const int step = max(ii - 5, 2);
+	    arr[60] = byte(rand() % mod);
+	    arr[61] = byte(rand() % mod);
+	    arr[62] = byte(rand() % mod);
+	    arr[63] = byte(rand() % mod);
+
+	    // Simulate interleaved channels for MM
+            for (int j = 64; j < size; j += step) {
+                for (int k = 0; k < step; k++)
+                   arr[j + k] = arr[j + k - step];
+	    }
+
+            memcpy(values, &arr[0], size);
+        }
         else {
             size = 1024;
             byte arr[1024] = { byte(0) };
@@ -252,12 +269,14 @@ int testTransformsCorrectness(const string& name)
             goto End;
         }
 
-        if ((iba1._index != size) || (iba1._index < iba2._index)) {
-            cout << endl
-                 << "No compression (ratio > 1.0), skip reverse" << endl;
-            delete ff;
-            continue;
-        }
+	if (name != "MM") { // MM can expand
+            if ((iba1._index != size) || (iba1._index < iba2._index)) {
+                cout << endl
+                     << "No compression (ratio > 1.0), skip reverse" << endl;
+                delete ff;
+                continue;
+            }
+	}
 
         delete ff;
         cout << endl;
@@ -447,19 +466,26 @@ int TestTransforms_main(int argc, const char* argv[])
 
     try {
         vector<string> codecs;
+        bool doPerf = true;
 
         if (argc == 1) {
-            codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MTFT", "MM" };
+            codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
         }
         else {
             string str = argv[1];
             transform(str.begin(), str.end(), str.begin(), ::toupper);
 
             if (str == "-TYPE=ALL") {
-                codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MTFT", "MM" };
+                codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
             }
             else {
                 codecs = { str.substr(6) };
+            }
+
+	    if (argc > 2) {
+                str = argv[2];
+                transform(str.begin(), str.end(), str.begin(), ::toupper);
+                doPerf = str != "-NOPERF";
             }
         }
 
@@ -469,7 +495,7 @@ int TestTransforms_main(int argc, const char* argv[])
                 << "Test" << *it << endl;
             res |= testTransformsCorrectness(*it);
 
-            if ((*it != "LZP") && (*it != "MM")) // skip no good data
+            if ((doPerf == true) && (*it != "LZP") && (*it != "MM")) // skip codecs with no good data
                res |= testTransformsSpeed(*it);
         }
     
@@ -479,6 +505,8 @@ int TestTransforms_main(int argc, const char* argv[])
         res = 123;
     }
 
+    cout << endl;
+    cout << ((res == 0) ? "Success" : "Failure") << endl;
     return res;
 }
 
