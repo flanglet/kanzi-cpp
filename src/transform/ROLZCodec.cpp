@@ -113,15 +113,12 @@ ROLZCodec1::ROLZCodec1(Context& ctx) THROW
 
 
 // return position index (_logPosChecks bits) + length (16 bits) or -1
-int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 key)
+int ROLZCodec1::findMatch(const byte buf[], int pos, int end, int32 hash32, int32* matches, uint8* counter)
 {
-    uint8* counter = &_counters[key];
     const int s = int(*counter);
     const int e = s - _posChecks;
-    int32* matches = &_matches[key << _logPosChecks];
     prefetchRead(matches);
     const byte* curBuf = &buf[pos];
-    const int32 hash32 = ROLZCodec::hash(curBuf);
     int bestLen = 0;
     int bestIdx = -1;
     const int maxMatch = min(ROLZCodec1::MAX_MATCH, end - pos) - 4;
@@ -158,9 +155,6 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 key)
         }
     }
 
-    // Register current position
-    *counter = (*counter + 1) & _maskChecks;
-    matches[*counter] = hash32 | int32(pos);
     return (bestLen < _minMatch) ? -1 : ((s - bestIdx) << 16) | (bestLen - _minMatch);
 }
 
@@ -242,8 +236,15 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         int srcInc = 0;
 
         while (srcIdx < sizeChunk) {
-            const int match = (mm == MIN_MATCH3) ? findMatch(buf, srcIdx, sizeChunk, ROLZCodec::getKey1(&buf[srcIdx - dt])) 
-               : findMatch(buf, srcIdx, sizeChunk, ROLZCodec::getKey2(&buf[srcIdx - dt]));
+            const uint32 key = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&buf[srcIdx - dt]): ROLZCodec::getKey2(&buf[srcIdx - dt]);
+            uint8* counter = &_counters[key];
+            int32* matches = &_matches[key << _logPosChecks];
+            int32 hash32 = ROLZCodec::hash(&buf[srcIdx]);
+            int match = findMatch(buf, srcIdx, sizeChunk, hash32, matches, counter);
+
+            // Register current position
+            *counter = (*counter + 1) & _maskChecks;
+            matches[*counter] = hash32 | int32(srcIdx);
 
             if (match < 0) {
                 srcIdx++;
@@ -252,6 +253,25 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 continue;
             }
 
+            {
+                // Check if better match at next position
+                const uint32 key2 = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&buf[srcIdx + 1 - dt]) : ROLZCodec::getKey2(&buf[srcIdx + 1 - dt]);
+                uint8* counter = &_counters[key2];
+                int32* matches = &_matches[key2 << _logPosChecks];
+                int32 hash32 = ROLZCodec::hash(&buf[srcIdx + 1]);
+                int match2 = findMatch(buf, srcIdx + 1, sizeChunk, hash32, matches, counter);
+
+                if ((match2 >= 0) && ((match2 & 0xFFFF) > (match & 0xFFFF))) {
+                    // New match is better
+                    match = match2;
+                    srcIdx++;
+
+                    // Register current position
+                    *counter = (*counter + 1) & _maskChecks;
+                    matches[*counter] = hash32 | int32(srcIdx);
+                }
+            }
+            
             // mode LLLLLMMM -> L lit length, M match length
             const int litLen = srcIdx - firstLitIdx;
             const int mode = (litLen < 31) ? (litLen << 3) : 0xF8;
@@ -496,7 +516,6 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 success = false;
                 goto End;
             }
-
             const uint8 matchIdx = uint8(mIdxBuf._array[mIdxBuf._index++]);
             const uint32 key = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&buf[dstIdx - dt]) : ROLZCodec::getKey2(&buf[dstIdx - dt]);
             int32* matches = &_matches[key << _logPosChecks];
@@ -794,8 +813,8 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         while (srcIdx < sizeChunk) {
             re.setContext(LITERAL_CTX, src[srcIdx - 1]);
-            const int match = (mm == MIN_MATCH3) ? findMatch(src, srcIdx, sizeChunk, ROLZCodec::getKey1(&src[srcIdx - dt])) :
-               findMatch(src, srcIdx, sizeChunk, ROLZCodec::getKey2(&src[srcIdx - dt]));
+            uint32 key = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&src[srcIdx - dt]) : ROLZCodec::getKey2(&src[srcIdx - dt]);
+            const int match = findMatch(src, srcIdx, sizeChunk, key);
 
             if (match < 0) {
                 // Emit one literal

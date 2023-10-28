@@ -18,9 +18,8 @@ limitations under the License.
 #define _ROLZCodec_
 
 #include "../Context.hpp"
-#include "../Transform.hpp"
 #include "../Memory.hpp"
-#include "../Predictor.hpp"
+#include "../Transform.hpp"
 #include "../util.hpp"
 
 // Implementation of a Reduced Offset Lempel Ziv transform
@@ -134,7 +133,7 @@ namespace kanzi {
        static const int MIN_MATCH4 = 4;
        static const int MIN_MATCH7 = 7;
        static const int MAX_MATCH = MIN_MATCH3 + 65535;
-       static const int LOG_POS_CHECKS = 5;
+       static const int LOG_POS_CHECKS = 4;
 
        int32* _matches;
        uint8 _counters[65536];
@@ -144,7 +143,7 @@ namespace kanzi {
        int _minMatch;
        uint8 _maskChecks;	   
 
-       int findMatch(const byte buf[], int pos, int end, uint32 key);
+       int findMatch(const byte buf[], int pos, int end, int32 hash32, int32* matches, uint8* counter);
 
        int emitLength(byte block[], int length);
 
