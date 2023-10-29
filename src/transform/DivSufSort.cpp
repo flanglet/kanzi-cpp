@@ -54,7 +54,6 @@ const int DivSufSort::LOG_TABLE[] = {
 
 DivSufSort::DivSufSort()
 {
-    _length = 0;
     _ssStack = new Stack(SS_MISORT_STACKSIZE);
     _trStack = new Stack(TR_STACKSIZE);
     _mergeStack = new Stack(SS_SMERGE_STACKSIZE);
@@ -707,7 +706,7 @@ void DivSufSort::ssSwapMerge(int pa, int first, int middle, int last, int buf,
                 _sa[last] = ~_sa[last];
             }
 
-            StackElement* se = _mergeStack->pop();
+            const StackElement* se = _mergeStack->pop();
 
             if (se == nullptr)
                 return;
@@ -733,7 +732,7 @@ void DivSufSort::ssSwapMerge(int pa, int first, int middle, int last, int buf,
                 _sa[last] = ~_sa[last];
             }
 
-            StackElement* se = _mergeStack->pop();
+            const StackElement* se = _mergeStack->pop();
 
             if (se == nullptr)
                 return;
@@ -2184,24 +2183,3 @@ void DivSufSort::trCopy(int isa, int first, int a, int b, int last, int depth)
     }
 }
 
-
-Stack::Stack(int size)
-{
-    _arr = new StackElement[size];
-    _length = size;
-    _index = 0;
-}
-
-Stack::~Stack()
-{
-    delete[] _arr;
-}
-
-
-TRBudget::TRBudget(int chance, int incval)
-{
-    _chance = chance;
-    _remain = incval;
-    _incVal = incval;
-    _count = 0;
-}

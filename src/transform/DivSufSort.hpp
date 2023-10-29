@@ -49,31 +49,32 @@ namespace kanzi
    private:
        StackElement* _arr;
        int _index;
-       int _length;
 
-       Stack(int size);
+       Stack(int size)
+       {
+           _arr = new StackElement[size];
+           _index = 0;
+       }
 
-       ~Stack();
+       ~Stack() { delete[] _arr; }
 
        StackElement* get(int idx) const { return &_arr[idx]; }
 
        int size() const { return _index; }
 
-       void push(int a, int b, int c, int d, int e);
+       void push(int a, int b, int c, int d, int e)
+       {
+           StackElement* elt = &_arr[_index];
+           elt->_a = a;
+           elt->_b = b;
+           elt->_c = c;
+           elt->_d = d;
+           elt->_e = e;
+           _index++;
+       }
 
        StackElement* pop() { return (_index == 0) ? nullptr : &_arr[--_index]; }
    };
-
-   inline void Stack::push(int a, int b, int c, int d, int e)
-   {
-       StackElement* elt = &_arr[_index];
-       elt->_a = a;
-       elt->_b = b;
-       elt->_c = c;
-       elt->_d = d;
-       elt->_e = e;
-       _index++;
-   }
 
 
 
@@ -87,7 +88,13 @@ namespace kanzi
        int _incVal;
        int _count;
 
-       TRBudget(int chance, int incval);
+       TRBudget(int chance, int incval)
+       {
+           _chance = chance;
+           _remain = incval;
+           _incVal = incval;
+           _count = 0;
+       }
 
        ~TRBudget() {}
 
@@ -126,7 +133,6 @@ namespace kanzi
        static const int SQQ_TABLE[];
        static const int LOG_TABLE[];
 
-       int _length;
        int* _sa;
        uint8* _buffer;
        Stack* _ssStack;
