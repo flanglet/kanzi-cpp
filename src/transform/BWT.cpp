@@ -97,10 +97,8 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     if (count > MAX_BLOCK_SIZE)
         return false;
 
-    if (count < 2) {
-        if (count == 1)
-            output._array[output._index++] = input._array[input._index++];
-
+    if (count == 1) {
+        output._array[output._index++] = input._array[input._index++];
         return true;
     }
 
@@ -131,10 +129,8 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("BWT: Invalid output block");
 
-    if (count < 2) {
-        if (count == 1)
-            output._array[output._index++] = input._array[input._index++];
-
+    if (count == 1) {
+        output._array[output._index++] = input._array[input._index++];
         return true;
     }
 
@@ -431,6 +427,8 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
             delete task;
 #else
         // nbTasks > 1 but concurrency is not enabled (should never happen)
+        delete[] fastBits;
+        delete[] buckets;
         throw invalid_argument("Error during BWT inverse: concurrency not supported");
 #endif
     }

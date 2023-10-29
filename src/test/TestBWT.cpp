@@ -186,15 +186,17 @@ int testBWTSpeed(bool isBWT, int iter, bool isSmallSize)
         SliceArray<byte> ia2(output, size, 0);
         SliceArray<byte> ia3(reverse, size, 0);
         double delta1 = 0, delta2 = 0;
-        Transform<byte>* bwt = nullptr;
+        Transform<byte>* tf = nullptr;
+        Transform<byte>* ti = nullptr;
+        const int chunks = BWT::getBWTChunks(size);
+        int pi[8];
 
         for (int ii = 0; ii < iter; ii++) {
-
             if (isBWT) {
-                bwt = new BWT();
+                tf = new BWT();
             }
             else {
-                bwt = new BWTS();
+                tf = new BWTS();
             }
 
             for (int i = 0; i < size; i++) {
@@ -204,34 +206,48 @@ int testBWTSpeed(bool isBWT, int iter, bool isSmallSize)
             clock_t before1 = clock();
             ia1._index = 0;
             ia2._index = 0;
-            bwt->forward(ia1, ia2, size);
+            tf->forward(ia1, ia2, size);
             clock_t after1 = clock();
             delta1 += (after1 - before1);
+            
+            if (isBWT) {
+                BWT* bwt = (BWT*)tf;
+
+                for (int i = 0; i < chunks; i++)
+                    pi[i] = bwt->getPrimaryIndex(i);
+            }
+
+            delete tf;
+
             clock_t before2 = clock();
             ia2._index = 0;
             ia3._index = 0;
-            bwt->inverse(ia2, ia3, size);
+
+            if (isBWT) {
+                ti = new BWT();
+                BWT* bwt = (BWT*)ti;
+
+                for (int i = 0; i < chunks; i++)
+                    bwt->setPrimaryIndex(i, pi[i]);
+            }
+            else {
+                ti = new BWTS();
+            }
+
+            ti->inverse(ia2, ia3, size);
             clock_t after2 = clock();
             delta2 += (after2 - before2);
+            delete ti;
 
             // Sanity check
-            int idx = -1;
-
             for (int i = 0; i < size; i++) {
                 if (input[i] != reverse[i]) {
-                    idx = i;
-                }
-
-                if (idx >= 0) {
                     cout << "Failure at index " << i << " (" << int(input[i]) << "<->" << int(reverse[i]) << ")" << endl;
                     res = 1;
                     break;
                 }
             }
         }
-
-        if (bwt != nullptr)
-            delete bwt;
 
         delete[] input;
         delete[] output;
