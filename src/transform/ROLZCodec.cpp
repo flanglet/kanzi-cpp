@@ -152,6 +152,9 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, int32 hash32, int3
         if (n > bestLen) {
             bestIdx = i;
             bestLen = n;
+
+            if (bestLen == maxMatch)
+                break;
         }
     }
 
@@ -740,6 +743,9 @@ int ROLZCodec2::findMatch(const byte buf[], int pos, int end, uint32 key)
         if (n > bestLen) {
             bestIdx = counter - i;
             bestLen = n;
+
+            if (bestLen == maxMatch)
+                break;
         }
     }
 
