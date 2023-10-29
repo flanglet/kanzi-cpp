@@ -92,6 +92,7 @@ namespace kanzi {
        uint* _buffer;
        int* _sa;
        int _bufferSize;
+       int _saSize;
        int _primaryIndexes[8];
        DivSufSort _saAlgo;
        int _jobs;
@@ -110,7 +111,7 @@ namespace kanzi {
 
        BWT(Context& ctx);
 
-       ~BWT();
+       ~BWT() { delete[] _buffer; delete[] _sa; }
 
        bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
 

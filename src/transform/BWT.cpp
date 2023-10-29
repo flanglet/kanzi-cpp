@@ -31,6 +31,7 @@ BWT::BWT(int jobs) THROW
     _buffer = new uint[0];
     _sa = new int[0];
     _bufferSize = 0;
+    _saSize = 0;
 
 #ifdef CONCURRENCY_ENABLED
     _pool = nullptr;
@@ -52,6 +53,7 @@ BWT::BWT(Context& ctx) THROW
     _buffer = new uint[0];
     _sa = new int[0];
     _bufferSize = 0;
+    _saSize = 0;
     int jobs = ctx.getInt("jobs", 1);
 
 #ifdef CONCURRENCY_ENABLED
@@ -66,12 +68,6 @@ BWT::BWT(Context& ctx) THROW
 
     _jobs = jobs;
     memset(_primaryIndexes, 0, sizeof(int) * 8);
-}
-
-BWT::~BWT()
-{
-    delete[] _buffer;
-    delete[] _sa;
 }
 
 bool BWT::setPrimaryIndex(int n, int primaryIndex)
@@ -106,10 +102,10 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     byte* dst = &output._array[output._index];
 
     // Lazy dynamic memory allocation
-    if (_bufferSize < count) {
+    if (_saSize < count) {
          delete[] _sa;
-        _bufferSize = count;
-        _sa = new int[_bufferSize];
+         _saSize = count;
+        _sa = new int[_saSize];
     }
 
     _saAlgo.computeBWT(src, dst, _sa, count, _primaryIndexes, getBWTChunks(count));
