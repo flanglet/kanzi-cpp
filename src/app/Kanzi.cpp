@@ -50,11 +50,15 @@ static string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
    mutex Printer::_mtx;
 #endif
 
-void printHelp(Printer& log, const string& mode)
+void printHelp(Printer& log, const string& mode, bool showHeader)
 {
    log.println("", true);
-   log.println(APP_HEADER.c_str(), true);
-   log.println("", true);
+
+   if (showHeader == true) {
+       log.println(APP_HEADER.c_str(), true);
+       log.println("", true);
+   }
+
    log.println("Credits: Matt Mahoney, Yann Collet, Jan Ondrus, Yuta Mori, Ilya Muravyov,", true);
    log.println("         Neal Burns, Fabian Giesen, Jarek Duda, Ilya Grebnov", true);
    log.println("", true);
@@ -187,7 +191,8 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     int from = -1;
     int to = -1;
     string mode = " ";
-    Printer log(cout);
+    Printer log(cout); 
+    bool showHeader = true;
 
     for (int i = 1; i < argc; i++) {
         string arg(argv[i]);
@@ -324,6 +329,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         log.println("", true);
+        showHeader = false;
     }
 
     inputName = "";
@@ -331,7 +337,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     ctx = -1;
 
     if (argc == 1) {
-        printHelp(log, mode);
+        printHelp(log, mode, showHeader);
         return 0;
     }
 
@@ -349,7 +355,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
 
         if ((arg == "--help") || (arg == "-h")) {
-            printHelp(log, mode);
+            printHelp(log, mode, showHeader);
             return 0;
         }
 
