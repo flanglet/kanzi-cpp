@@ -33,6 +33,7 @@ namespace kanzi
        int _idx;
        bool _mark;
        bool _hexa;
+       bool _show;
        byte _current;
 
        void printByte(byte val);
@@ -63,9 +64,13 @@ namespace kanzi
 
        void close() THROW { _close(); }
 
-       void showByte(bool show) { _hexa = show; }
+       void showByte(bool show) { _show = show; }
 
-       bool showByte() const { return _hexa; }
+       void setHexa(bool hexa) { _hexa = hexa; }
+
+       bool hexa() const { return _hexa; }
+
+       bool showByte() const { return _show; }
 
        void setMark(bool mark) { _mark = mark; }
 

@@ -23,6 +23,7 @@ DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs) THROW : _delega
 {
     _mark = false;
     _hexa = false;
+    _show = false;
     _current = byte(0);
     _idx = 0;
 }
@@ -31,6 +32,7 @@ DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs, OutputStream& o
 {
     _mark = false;
     _hexa = false;
+    _show = false;
     _current = byte(0);
     _idx = 0;
 }
@@ -46,6 +48,7 @@ DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs, OutputStream& o
     _width = width;
     _mark = false;
     _hexa = false;
+    _show = false;
     _current = byte(0);
     _idx = 0;
 }
@@ -154,10 +157,22 @@ void DebugOutputBitStream::printByte(byte b)
 {
     int val = int(b);
 
+    if (_hexa == true) {
+        _out << hex << " [0x";
+        _out <<	((val < 16) ? "0" : "");
+        _out << val << "] ";
+        _out << dec;
+        return;
+    }
+
+    _out << " [";
+
     if (val < 10)
-        _out << " [00" << val << "] ";
+        _out << "00";
     else if (val < 100)
-        _out << " [0" << val << "] ";
-    else
-        _out << " [" << val << "] ";
+        _out << "0";
+
+    _out << val << "] ";
 }
+
+

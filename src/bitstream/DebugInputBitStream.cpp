@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <iomanip>
 #include <iostream>
 #include "../bitstream/DebugInputBitStream.hpp"
 
@@ -23,6 +24,7 @@ DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs) THROW : _delegate(
 {
     _idx = 0;
     _mark = false;
+    _show = false;
     _hexa = false;
     _current = byte(0);
 }
@@ -31,6 +33,7 @@ DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os) THROW
 {
     _idx = 0;
     _mark = false;
+    _show = false;
     _hexa = false;
     _current = byte(0);
 }
@@ -46,6 +49,7 @@ DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os, int w
     _width = width;
     _idx = 0;
     _mark = false;
+    _show = false;
     _hexa = false;
     _current = byte(0);
 }
@@ -154,10 +158,22 @@ void DebugInputBitStream::printByte(byte b)
 {
     int val = int(b);
 
+    if (_hexa == true) {
+        _out << hex << " [0x";
+        _out << ((val < 16) ? "0" : "");
+        _out << val << "] ";
+        _out << dec;
+        return;
+    }
+
+    _out << " [";
+
     if (val < 10)
-        _out << " [00" << val << "] ";
+        _out << "00";
     else if (val < 100)
-        _out << " [0" << val << "] ";
-    else
-        _out << " [" << val << "] ";
+        _out << "0";
+
+    _out << val << "] ";
 }
+
+
