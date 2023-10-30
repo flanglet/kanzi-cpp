@@ -87,9 +87,10 @@ namespace kanzi
        if (count > 64)
            throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
  
+       _current |= ((value << (64 - count)) >> (64 - _availBits));
+
        if (count >= _availBits) {
            // Not enough spots available in 'current'
-           _current |= ((value << (64 - count)) >> (64 - _availBits));
            const uint remaining = count - _availBits;
            pushCurrent();
 
@@ -100,7 +101,6 @@ namespace kanzi
        }
        else {
            _availBits -= count;
-           _current |= (value << _availBits);
        }
 
        return count;
