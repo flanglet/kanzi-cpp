@@ -71,9 +71,19 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     }
 
     it = args.find("inputName");
+
+    if (it == args.end()) {
+        throw invalid_argument("Missing input name");
+    }
+
     _inputName = (it->second == "") ? "STDIN" : it->second;
     args.erase(it);
     it = args.find("outputName");
+
+    if (it == args.end()) {
+        throw invalid_argument("Missing output name");
+    }
+
     _outputName = ((it->second == "") && (_inputName == "STDIN")) ? "STDOUT" : it->second;
     args.erase(it);
     string strCodec;
@@ -173,11 +183,22 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
     }
 
     it = args.find("verbose");
-    _verbosity = atoi(it->second.c_str());
-    args.erase(it);
+
+    if (it == args.end()) {
+        _verbosity = 1;
+    }
+    else {
+        _verbosity = atoi(it->second.c_str());
+        args.erase(it);
+    }
+
     it = args.find("jobs");
-    int concurrency = atoi(it->second.c_str());
-    args.erase(it);
+    int concurrency = 0;
+
+    if (it != args.end()) {
+        concurrency = atoi(it->second.c_str());
+        args.erase(it);
+    }
 
 #ifndef CONCURRENCY_ENABLED
     if (concurrency > 1)

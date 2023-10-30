@@ -49,14 +49,31 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
     }
 
     it = args.find("inputName");
+
+    if (it == args.end()) {
+        throw invalid_argument("Missing input name");
+    }
+
     _inputName = (it->second == "") ? "STDIN" : it->second;
     args.erase(it);
     it = args.find("outputName");
+
+    if (it == args.end()) {
+        throw invalid_argument("Missing output name");
+    }
+
     _outputName = ((it->second == "") && (_inputName == "STDIN")) ? "STDOUT" : it->second;
     args.erase(it);
     it = args.find("verbose");
-    _verbosity = atoi(it->second.c_str());
-    args.erase(it);
+
+    if (it == args.end()) {
+        _verbosity = 1;
+    }
+    else {
+        _verbosity = atoi(it->second.c_str());
+        args.erase(it);
+    }
+
     it = args.find("from");
 
     if (it == args.end()) {
@@ -78,8 +95,12 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
     }
 
     it = args.find("jobs");
-    int concurrency = atoi(it->second.c_str());
-    args.erase(it);
+    int concurrency = 0;
+
+    if (it != args.end()) {
+        concurrency = atoi(it->second.c_str());
+        args.erase(it);
+    }
 
 #ifndef CONCURRENCY_ENABLED
     if (concurrency > 1)
