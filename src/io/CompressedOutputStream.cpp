@@ -505,7 +505,7 @@ T EncodingTask<T>::run() THROW
 
         byte mode = byte(0);
         int postTransformLength = _blockLength;
-        int checksum = 0;
+        uint32 checksum = 0;
 
         // Compute block checksum
         if (_hasher != nullptr)

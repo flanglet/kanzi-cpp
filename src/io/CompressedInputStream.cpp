@@ -591,7 +591,7 @@ T DecodingTask<T>::run() THROW
         CPU_PAUSE();
     }
 
-    int checksum1 = 0;
+    uint32 checksum1 = 0;
     EntropyDecoder* ed = nullptr;
     InputBitStream* ibs = nullptr;
     TransformSequence<byte>* transform = nullptr;
@@ -689,7 +689,7 @@ T DecodingTask<T>::run() THROW
 
         // Extract checksum from bitstream (if any)
         if (_hasher != nullptr)
-            checksum1 = int(ibs->readBits(32));
+            checksum1 = uint32(ibs->readBits(32));
 
         if (_listeners.size() > 0) {
             // Notify before entropy (block size in bitstream is unknown)
@@ -763,7 +763,7 @@ T DecodingTask<T>::run() THROW
 
         // Verify checksum
         if (_hasher != nullptr) {
-            const int checksum2 = _hasher->hash(&_data->_array[savedIdx], decoded);
+            const uint32 checksum2 = _hasher->hash(&_data->_array[savedIdx], decoded);
 
             if (checksum2 != checksum1) {
                 stringstream ss;
