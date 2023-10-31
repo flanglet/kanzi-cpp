@@ -10,7 +10,7 @@ Kanzi is a modern, modular, portable and efficient lossless data compressor impl
 * expandable: clean design with heavy use of interfaces as contracts makes integrating and expanding the code easy. No dependencies.
 * efficient: the code is optimized for efficiency (trade-off between compression ratio and speed).
 
-Unlike the most common lossless data compressors, Kanzi uses a variety of different compression algorithms and supports a wider range of compression ratios as a result. Most usual compressors do not take advantage of the many cores and threads available on modern CPUs (what a waste!). Kanzi is multithreadead by design and uses several threads by default to compress blocks concurrently. It is not compatible with standard compression formats. Kanzi is a lossless data compressor, not an archiver. It uses checksums (optional but recommended) to validate data integrity but does not have a mechanism for data recovery. It also lacks data deduplication across files.
+Unlike the most common lossless data compressors, Kanzi uses a variety of different compression algorithms and supports a wider range of compression ratios as a result. Most usual compressors do not take advantage of the many cores and threads available on modern CPUs (what a waste!). Kanzi is multithreaded by design and uses several threads by default to compress blocks concurrently. It is not compatible with standard compression formats. Kanzi is a lossless data compressor, not an archiver. It uses checksums (optional but recommended) to validate data integrity but does not have a mechanism for data recovery. It also lacks data deduplication across files.
 
 For more details, check https://github.com/flanglet/kanzi/wiki.
 
@@ -34,7 +34,7 @@ Ilya Grebnov
 
 Disclaimer
 
-Use at your own risk. Always keep a backup of your files.
+Use at your own risk. Always keep a copy of your original files.
 
 ![Build Status](https://github.com/flanglet/kanzi-cpp/actions/workflows/c-cpp.yml/badge.svg)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=flanglet_kanzi-cpp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=flanglet_kanzi-cpp)
@@ -147,7 +147,8 @@ The solution generates a Windows 64 binary and library. Multithreading is suppor
 ### mingw-w64
 Go to the source directory and run 'make clean && mingw32-make.exe'. The Makefile contains 
 all the necessary targets. Tested successfully on Win64 with mingw-w64 g++ 8.1.0. 
-Multithreading is supported. Builds successfully with C++11, C++14, C++17.
+Multithreading is supportedwith g++ version 5.0.0 or newer.
+Builds successfully with C++11, C++14, C++17.
 
 ### Linux
 Go to the source directory and run 'make clean && make'. The Makefile contains all the necessary
@@ -155,10 +156,15 @@ targets. Build successfully on Ubuntu with many versions of g++ and clang++.
 Multithreading is supported with g++ version 5.0.0 or newer.
 Builds successfully with C++98, C++11, C++14, C++17, C++20.
 
+### MacOS
+Go to the source directory and run 'make clean && make'. The Makefile contains all the necessary
+targets. Build successfully on Ubuntu with many versions of clang++.
+Multithreading is supported.
+
 ### BSD
 The makefile uses the gnu-make syntax. First, make sure gmake is present (or install it: 'pkg_add gmake').
 Go to the source directory and run 'gmake clean && gmake'. The Makefile contains all the necessary
-targets.
+targets. Multithreading is supported.
 
 ### Makefile targets
 ```
