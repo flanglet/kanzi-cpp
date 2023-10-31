@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <iostream>
 #include <algorithm>
+#include <time.h>
 #include "../types.hpp"
 #include "../entropy/HuffmanEncoder.hpp"
 #include "../entropy/RangeEncoder.hpp"
@@ -337,27 +338,41 @@ int TestEntropyCodec_main(int argc, const char* argv[])
 
     try {
         vector<string> codecs;
-	bool doPerf = true;
+        bool doPerf = true;
 
         if (argc == 1) {
+#if _MSC_VER == 1500
+			string allCodecs[8] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
+
+			for (int i = 0; i < 8; i++)
+				codecs.push_back(allCodecs[i]);
+#else
             codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
+#endif
         }
         else {
             string str = argv[1];
             transform(str.begin(), str.end(), str.begin(), ::toupper);
 
             if (str == "-TYPE=ALL") {
-                codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
-            }
+#if _MSC_VER == 1500
+			string allCodecs[] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
+
+			for (int i = 0; i < 8; i++)
+				codecs.push_back(allCodecs[i]);
+#else
+            codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
+#endif
+			}
             else {
-                codecs = { str.substr(6) };
+                codecs.push_back(str.substr(6));
             }
 
 	    if (argc > 2) {
                 str = argv[2];
                 transform(str.begin(), str.end(), str.begin(), ::toupper);
-		doPerf = str != "-NOPERF";
-	    }
+                doPerf = str != "-NOPERF";
+            }
         }
 
         for (vector<string>::iterator it = codecs.begin(); it != codecs.end(); ++it) {

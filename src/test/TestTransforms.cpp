@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <iostream>
 #include <algorithm>
+#include <time.h>
 #include "../types.hpp"
 #include "../transform/AliasCodec.hpp"
 #include "../transform/FSDCodec.hpp"
@@ -469,20 +470,34 @@ int TestTransforms_main(int argc, const char* argv[])
         bool doPerf = true;
 
         if (argc == 1) {
+#if _MSC_VER == 1500
+            string allCodecs[13] = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
+
+			for (int i = 0; i < 13; i++)
+				codecs.push_back(allCodecs[i]);
+#else
             codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
+#endif
         }
         else {
             string str = argv[1];
             transform(str.begin(), str.end(), str.begin(), ::toupper);
 
             if (str == "-TYPE=ALL") {
-                codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
+#if _MSC_VER == 1500
+				string allCodecs[13] = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
+
+				for (int i = 0; i < 13; i++)
+					codecs.push_back(allCodecs[i]);
+#else
+				codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
+#endif
             }
             else {
-                codecs = { str.substr(6) };
+                codecs.push_back(str.substr(6));
             }
 
-	    if (argc > 2) {
+            if (argc > 2) {
                 str = argv[2];
                 transform(str.begin(), str.end(), str.begin(), ::toupper);
                 doPerf = str != "-NOPERF";

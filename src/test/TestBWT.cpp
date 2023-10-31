@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <cstring>
 #include <iostream>
+#include <time.h>
 #include "../types.hpp"
 #include "../transform/BWT.hpp"
 #include "../transform/BWTS.hpp"
