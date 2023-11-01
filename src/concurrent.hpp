@@ -31,7 +31,7 @@ public:
     // C++ 11 (or partial)
     #include <atomic>
 
-    #ifndef CONCURRENCY_ENABLED
+    #ifndef CONCURRENCY_DISABLED
         #ifdef __clang__
             // Process clang first because it may define __GNUC__ with an old version
             #define CONCURRENCY_ENABLED
