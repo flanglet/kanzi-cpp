@@ -145,7 +145,6 @@ namespace kanzi {
         virtual ~LZPCodec()
         {
             delete[] _hashes;
-            _hashSize = 0;
         }
 
         bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;

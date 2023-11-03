@@ -537,10 +537,8 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             ctx = (ctx << 8) | val;
             dst[dstIdx++] = src[srcIdx++];
 
-            if (ref != 0) {
-                if (val == MATCH_FLAG)
-                    dst[dstIdx++] = byte(0xFF);
-            }
+            if ((ref != 0) && (val == MATCH_FLAG))
+                dst[dstIdx++] = byte(0xFF);
 
             continue;
         }
