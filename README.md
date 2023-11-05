@@ -89,10 +89,13 @@ are single threaded.
 
 ### silesia.tar
 
+Download at http://sun.aei.polsl.pl/~sdeor/corpus/silesia.zip
+
 |        Compressor               | Encoding (sec)  | Decoding (sec)  |    Size          |
 |---------------------------------|-----------------|-----------------|------------------|
 |Original     	                  |                 |                 |   211,957,760    |
 |**Kanzi -l 1**                   |   	**0.284**   |    **0.185**    |  **80,284,705**  |
+|Lz4 1.9.5 -4                     |       3.397     |      0.987      |    79,914,864    |
 |Zstd 1.5.5 -2                    |	      0.761     |      0.286      |    69,590,245    |
 |**Kanzi -l 2**                   |   	**0.310**   |    **0.215**    |  **68,231,498**  |
 |Brotli 1.1.0 -2                  |       1.749     |      2.459      |    68,044,145    |
@@ -118,6 +121,8 @@ are single threaded.
 
 ### enwik8
 
+Download at https://mattmahoney.net/dc/enwik8.zip
+
 |      Compressor        | Encoding (sec)   | Decoding (sec)   |    Size          |
 |------------------------|------------------|------------------|------------------|
 |Original                |                  |                  |   100,000,000    |
@@ -130,6 +135,11 @@ are single threaded.
 |**Kanzi -l 7**          |     **1.789**    |    **1.619**     |  **22,817,376**  |
 |**Kanzi -l 8**          |	   **4.639**    |    **4.748**     |  **21,181,978**  |
 |**Kanzi -l 9**          |	  **12.71**     |   **13.28**      |  **20,035,133**  |
+
+### More benchmarks
+
+[lzbench benchmarks](https://github.com/flanglet/kanzi-cpp/wiki/Performance)
+
 
 
 ## Build Kanzi
