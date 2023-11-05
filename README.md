@@ -1,4 +1,4 @@
-# kanzi
+# Kanzi
 
 
 Kanzi is a modern, modular, portable and efficient lossless data compressor implemented in C++.
@@ -59,13 +59,13 @@ due to their fast decompression (but low compression speed at high compression r
 There are other scenarios where compression speed is critical: when data is generated before being compressed and consumed
 (one compression / one decompression) or during backups (many compressions / one decompression).
 
-- Kanzi has built-in data specific transforms (multimedia, utf, text, dna, ...) that can be chosen and combined 
-at compression time to better compress all kinds of data.
+- Kanzi has built-in data customized transforms (multimedia, utf, text, dna, ...) that can be chosen and combined 
+at compression time to better compress specific kinds of data.
 
 - Kanzi can take advantage of the multiple cores of a modern CPU to improve performance
 
 - It is easy to implement a new transform or entropy codec to either test an idea or improve
-compression ratio on speficic kinds of data.
+compression ratio on specific kinds of data.
 
 
 ## Benchmarks
@@ -80,7 +80,7 @@ Ubuntu 22.04.3 LTS
 
 Kanzi version 2.2 C++ implementation.
 
-On this machine kanzi can use up to 16 threads depending on compression level
+On this machine, Kanzi can use up to 16 threads depending on compression level
 (the default block size at level 9 is 32MB, severly limiting the number of threads
 in use, especially with enwik8, but all tests are performed with default values).
 bzip3 uses 16 threads. zstd can use 2 for compression, other compressors
