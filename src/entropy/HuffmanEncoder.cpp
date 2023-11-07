@@ -260,7 +260,7 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
         const uint endChunk4 = ((endChunk - startChunk) & -4) + startChunk;
         int idx = 0;
         uint64 state = 0;
-        int bits = 0; // accumulated bits
+        int bits = 0; // number of accumulated bits
 
         // Encode chunk
         for (uint i = startChunk; i < endChunk4; i += 4) {
@@ -278,10 +278,9 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
             const uint codeLen3 = code >> 24;
             state = (state << codeLen3) | uint64(code & 0xFFFFFF);
             bits += (codeLen0 + codeLen1 + codeLen2 + codeLen3);
-            const uint8 shift = bits & -8;
             BigEndian::writeLong64(&_buffer[idx], state << (64 - bits));
-            bits -= shift;
-            idx += (shift >> 3);
+            idx += (bits >> 3);
+            bits &= 7;
         }
 
         for (uint i = endChunk4; i < endChunk; i++) {
