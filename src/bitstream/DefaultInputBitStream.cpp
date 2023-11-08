@@ -97,28 +97,37 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
     else if (remaining >= 64) {
         // Not byte aligned
         const uint r = 64 - _availBits;
+        const uint a = _availBits;
 
         while (remaining >= 256) {
-            const uint64 v1 = _current << r;
-            _availBits = pullCurrent() - r;
-            BigEndian::writeLong64(&bits[start], v1 | (_current >> _availBits));
-            const uint64 v2 = _current << r;
-            _availBits = pullCurrent() - r;
-            BigEndian::writeLong64(&bits[start + 8], v2 | (_current >> _availBits));
-            const uint64 v3 = _current << r;
-            _availBits = pullCurrent() - r;
-            BigEndian::writeLong64(&bits[start + 16], v3 | (_current >> _availBits));
-            const uint64 v4 = _current << r;
-            _availBits = pullCurrent() - r;
-            BigEndian::writeLong64(&bits[start + 24], v4 | (_current >> _availBits));
+            const uint64 v0 = _current;
+
+            if (_position + 32 > _maxPosition) {
+                _availBits = pullCurrent() - r;
+                BigEndian::writeLong64(&bits[start], (v0 << r) | (_current >> _availBits));
+                start += 8;
+                remaining -= 64;
+                continue;
+            }
+
+            const uint64 v1 = BigEndian::readLong64(&_buffer[_position + 0]);
+            const uint64 v2 = BigEndian::readLong64(&_buffer[_position + 8]);
+            const uint64 v3 = BigEndian::readLong64(&_buffer[_position + 16]);
+            const uint64 v4 = BigEndian::readLong64(&_buffer[_position + 24]);
+            _position += 32;
+            BigEndian::writeLong64(&bits[start + 0], (v0 << r) | (v1 >> a));
+            BigEndian::writeLong64(&bits[start + 8], (v1 << r) | (v2 >> a));
+            BigEndian::writeLong64(&bits[start + 16], (v2 << r) | (v3 >> a));
+            BigEndian::writeLong64(&bits[start + 24], (v3 << r) | (v4 >> a));
             start += 32;
             remaining -= 256;
+            _current = v4;
         }
 
         while (remaining >= 64) {
-            const uint64 v = _current << r;
+            const uint64 v = _current;
             _availBits = pullCurrent() - r;
-            BigEndian::writeLong64(&bits[start], v | (_current >> _availBits));
+            BigEndian::writeLong64(&bits[start], (v << r) | (_current >> _availBits));
             start += 8;
             remaining -= 64;
         }

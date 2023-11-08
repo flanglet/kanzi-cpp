@@ -83,23 +83,23 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
             const uint a = _availBits;
 
             while (remaining >= 256) {
-                const uint64 val1 = uint64(BigEndian::readLong64(&bits[start]));
-                const uint64 val2 = uint64(BigEndian::readLong64(&bits[start + 8]));
-                const uint64 val3 = uint64(BigEndian::readLong64(&bits[start + 16]));
-                const uint64 val4 = uint64(BigEndian::readLong64(&bits[start + 24]));
-                _current |= (val1 >> r);
+                const uint64 v1 = uint64(BigEndian::readLong64(&bits[start]));
+                const uint64 v2 = uint64(BigEndian::readLong64(&bits[start + 8]));
+                const uint64 v3 = uint64(BigEndian::readLong64(&bits[start + 16]));
+                const uint64 v4 = uint64(BigEndian::readLong64(&bits[start + 24]));
+                _current |= (v1 >> r);
 
                 if (_position >= _bufferSize - 32)
                     flush();
 
                 BigEndian::writeLong64(&_buffer[_position], _current);
-                _current = (val1 << a) | (val2 >> r);
+                _current = (v1 << a) | (v2 >> r);
                 BigEndian::writeLong64(&_buffer[_position + 8], _current);
-                _current = (val2 << a) | (val3 >> r);
+                _current = (v2 << a) | (v3 >> r);
                 BigEndian::writeLong64(&_buffer[_position + 16], _current);
-                _current = (val3 << a) | (val4 >> r);
+                _current = (v3 << a) | (v4 >> r);
                 BigEndian::writeLong64(&_buffer[_position + 24], _current);
-                _current = (val4 << a);
+                _current = (v4 << a);
                 start += 32;
                 remaining -= 256;
                 _availBits = 64;
@@ -107,10 +107,10 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
             }
 
             while (remaining >= 64) {
-               const uint64 val = uint64(BigEndian::readLong64(&bits[start]));
-               _current |= (val >> r);
+               const uint64 v = uint64(BigEndian::readLong64(&bits[start]));
+               _current |= (v >> r);
                pushCurrent();
-               _current = val << a;
+               _current = v << a;
                start += 8;
                remaining -= 64;
             }
