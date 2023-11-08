@@ -222,17 +222,17 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     if (_order == 0) {
         for (int i = 0; i < end4; i += 4) {
             const uint8 cur3 = _f2s[st3 & mask];
-            const uint8 cur2 = _f2s[st2 & mask];
-            const uint8 cur1 = _f2s[st1 & mask];
-            const uint8 cur0 = _f2s[st0 & mask];
-            st3 = decodeSymbol(p, st3, _symbols[cur3], mask);
-            st2 = decodeSymbol(p, st2, _symbols[cur2], mask);
-            st1 = decodeSymbol(p, st1, _symbols[cur1], mask);
-            st0 = decodeSymbol(p, st0, _symbols[cur0], mask);
             block[i] = byte(cur3);
+            st3 = decodeSymbol(p, st3, _symbols[cur3], mask);
+            const uint8 cur2 = _f2s[st2 & mask];
             block[i + 1] = byte(cur2);
+            st2 = decodeSymbol(p, st2, _symbols[cur2], mask);
+            const uint8 cur1 = _f2s[st1 & mask];
             block[i + 2] = byte(cur1);
+            st1 = decodeSymbol(p, st1, _symbols[cur1], mask);
+            const uint8 cur0 = _f2s[st0 & mask];
             block[i + 3] = byte(cur0);
+            st0 = decodeSymbol(p, st0, _symbols[cur0], mask);
         }
     }
     else {
