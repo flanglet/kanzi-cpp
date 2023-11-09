@@ -345,12 +345,12 @@ void CompressedOutputStream::close() THROW
 
 void CompressedOutputStream::processBlock() THROW
 {
+    if (!_initialized.exchange(true, memory_order_acquire))
+        writeHeader();
+
     // All buffers empty, nothing to do
     if (_buffers[0]->_index == 0)
         return;
-
-    if (!_initialized.exchange(true, memory_order_acquire))
-        writeHeader();
 
     // Protect against future concurrent modification of the list of block listeners
     vector<Listener*> blockListeners(_listeners);
