@@ -232,7 +232,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     while (sumScaledFreq != scale) {
         // Remove next symbol
 #if __cplusplus >= 201103L
-        FreqSortData fsd = move(queue.front());
+        FreqSortData fsd = std::move(queue.front()); // qualified move (std::) to avoid warning
 #else
         FreqSortData fsd = queue.front();
 #endif
