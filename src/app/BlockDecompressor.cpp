@@ -524,10 +524,10 @@ T FileDecompressTask<T>::run()
     string str = outputName;
     transform(str.begin(), str.end(), str.begin(), ::toupper);
 
-    if (str.compare(0, 4, "NONE") == 0) {
+    if (str == "NONE") {
         _os = new NullOutputStream();
     }
-    else if (str.compare(0, 6, "STDOUT") == 0) {
+    else if (str == "STDOUT") {
         _os = &cout;
     }
     else {
@@ -595,7 +595,7 @@ T FileDecompressTask<T>::run()
         str = inputName;
         transform(str.begin(), str.end(), str.begin(), ::toupper);
 
-        if (str.compare(0, 5, "STDIN") == 0) {
+        if (str == "STDIN") {
             is = &cin;
         }
         else {

@@ -105,18 +105,7 @@ APP_OBJECTS=$(APP_SOURCES:.cpp=.o)
 SOURCES=$(LIB_SOURCES) $(APP_SOURCES)
 OBJECTS=$(SOURCES:.cpp=.o)
 
-ifeq ($(CXX),g++)
-   LIB_TCMALLOC=/usr/local/lib/libtcmalloc_minimal.a
-else ifeq ($(CXX),g++-9)
-   LIB_TCMALLOC=/usr/local/lib/libtcmalloc_minimal.a
-else ifeq ($(CXX),g++-10)
-   LIB_TCMALLOC=/usr/local/lib/libtcmalloc_minimal.a
-else ifeq ($(CXX),g++-11)
-   LIB_TCMALLOC=/usr/local/lib/libtcmalloc_minimal.a
-else
-   LIB_TCMALLOC=/usr/local/lib/libtcmalloc_minimal.a
-   #LIB_TCMALLOC=/disk1/ws/cpp/kanzi-cpp/src/librpmalloc.a
-endif
+LIB_TCMALLOC=/usr/local/lib/libtcmalloc_minimal.a
 
 RPTS=$(SOURCES:.cpp=.optrpt)
 TESTS=testBWT testTransforms \

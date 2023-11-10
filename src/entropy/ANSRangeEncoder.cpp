@@ -77,10 +77,10 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], uint lr)
 
     for (int k = 0; k < endk; k++) {
         uint* f = &frequencies[k * 257];
-        ANSEncSymbol* symb = &_symbols[k << 8];
         const int alphabetSize = EntropyUtils::normalizeFrequencies(f, curAlphabet, 256, f[256], 1 << lr);
 
         if (alphabetSize > 0) {
+            ANSEncSymbol* symb = &_symbols[k << 8];
             int sum = 0;
 
             for (int i = 0, count = 0; (i < 256) && (count < alphabetSize); i++) {

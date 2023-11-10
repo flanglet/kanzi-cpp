@@ -726,10 +726,10 @@ T FileCompressTask<T>::run()
         string str = outputName;
         transform(str.begin(), str.end(), str.begin(), ::toupper);
 
-        if (str.compare(0, 4, "NONE") == 0) {
+        if (str == "NONE") {
             os = new NullOutputStream();
         }
-        else if (str.compare(0, 6, "STDOUT") == 0) {
+        else if (str == "STDOUT") {
             os = &cout;
         }
         else {
@@ -806,7 +806,7 @@ T FileCompressTask<T>::run()
         string str = inputName;
         transform(str.begin(), str.end(), str.begin(), ::toupper);
 
-        if (str.compare(0, 5, "STDIN") == 0) {
+        if (str == "STDIN") {
             _is = &cin;
         }
         else {
@@ -935,24 +935,30 @@ T FileCompressTask<T>::run()
             ss << "Output size:       " << encoded;
             log.println(ss.str().c_str(), true);
             ss.str(string());
-            ss << "Compression ratio: " << (double(encoded) / double(read));
-            log.println(ss.str().c_str(), true);
-            ss.str(string());
+
+            if (read != 0) {
+                ss << "Compression ratio: " << (double(encoded) / double(read));
+                log.println(ss.str().c_str(), true);
+                ss.str(string());
+            }
         }
 
         if (verbosity == 1) {
             ss << "Compressing " << inputName << ": " << read << " => " << encoded;
             ss.precision(2);
             ss.setf(ios::fixed);
-            const double r = double(encoded) / double(read);
-            ss << " (" << (100 * r);
+
+            if (read != 0) {
+               const double r = double(encoded) / double(read);
+               ss << " (" << (100 * r) << "%)";
+            }
 
             if (delta >= 1e5) {
                 ss.precision(1);
-                ss << "%) in " << (delta / 1000) << " s";
+                ss << " in " << (delta / 1000) << " s";
             }
             else {
-                ss << "%) in " << int(delta) << " ms";
+                ss << " in " << int(delta) << " ms";
             }
 
             log.println(ss.str().c_str(), true);
