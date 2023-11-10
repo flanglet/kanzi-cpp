@@ -901,20 +901,11 @@ T FileCompressTask<T>::run()
     catch (exception&) {
     }
 
-    if (read == 0) {
-        delete[] buf;
-        stringstream sserr;
-        sserr << "Input file " << inputName << " is empty ... nothing to do";
-        log.println(sserr.str().c_str(), verbosity > 0);
-        remove(outputName.c_str()); // best effort to delete output file, ignore return code
-        return T(0, read, encoded, sserr.str().c_str());
-    }
-
     stopClock.stop();
     double delta = stopClock.elapsed();
 
     if (verbosity >= 1) {
-        log.println("", verbosity > 1);
+        log.println("", (verbosity > 1) && (read > 0));
         ss.str(string());
 
         if (verbosity > 1) {
@@ -936,19 +927,17 @@ T FileCompressTask<T>::run()
             log.println(ss.str().c_str(), true);
             ss.str(string());
 
-            if (read != 0) {
+            if (read > 0) {
                 ss << "Compression ratio: " << (double(encoded) / double(read));
                 log.println(ss.str().c_str(), true);
                 ss.str(string());
             }
-        }
-
-        if (verbosity == 1) {
+        } else if (verbosity == 1) {
             ss << "Compressing " << inputName << ": " << read << " => " << encoded;
             ss.precision(2);
             ss.setf(ios::fixed);
 
-            if (read != 0) {
+            if (read > 0) {
                const double r = double(encoded) / double(read);
                ss << " (" << (100 * r) << "%)";
             }
@@ -965,7 +954,7 @@ T FileCompressTask<T>::run()
             ss.str(string());
         }
 
-        if ((verbosity > 1) && (delta > 0)) {
+        if ((verbosity > 1) && (delta > 0) && (read > 0)) {
             double b2KB = double(1000) / double(1024);
             ss << "Throughput (KB/s): " << uint(double(read) * b2KB / delta);
             log.println(ss.str().c_str(), true);
