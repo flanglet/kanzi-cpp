@@ -140,6 +140,7 @@ Download at https://mattmahoney.net/dc/enwik8.zip
 
 [lzbench benchmarks](https://github.com/flanglet/kanzi-cpp/wiki/Performance)
 
+[Round trip scores](https://github.com/flanglet/kanzi-cpp/wiki/Round%E2%80%90trips-scores)
 
 
 ## Build Kanzi
