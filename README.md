@@ -83,7 +83,7 @@ Kanzi version 2.2 C++ implementation.
 On this machine, Kanzi can use up to 16 threads depending on compression level
 (the default block size at level 9 is 32MB, severly limiting the number of threads
 in use, especially with enwik8, but all tests are performed with default values).
-bzip3 uses 16 threads. zstd can use 2 for compression, other compressors
+bzip3 and pzstd use 16 threads. zstd can use 2 for compression, other compressors
 are single threaded.
 
 
@@ -96,19 +96,24 @@ Download at http://sun.aei.polsl.pl/~sdeor/corpus/silesia.zip
 |Original     	                  |                 |                 |   211,957,760    |
 |**Kanzi -l 1**                   |   	**0.284**   |    **0.185**    |  **80,284,705**  |
 |Lz4 1.9.5 -4                     |       3.397     |      0.987      |    79,914,864    |
+|pzstd 1.5.5 -2 -p16              |       0.339     |      0.933      |    69,742,237    |
 |Zstd 1.5.5 -2                    |	      0.761     |      0.286      |    69,590,245    |
 |**Kanzi -l 2**                   |   	**0.310**   |    **0.215**    |  **68,231,498**  |
 |Brotli 1.1.0 -2                  |       1.749     |      2.459      |    68,044,145    |
 |Gzip 1.10 -9                     |      20.15      |      1.316      |    67,652,229    |
 |**Kanzi -l 3**                   |   	**0.501**   |    **0.261**    |  **64,916,444**  |
+|pzstd 1.5.5 -5 -p16              |       0.497     |      0.881      |    63,223,740    |
 |Zstd 1.5.5 -5                    |	      2.003     |      0.324      |    63,103,408    |
 |**Kanzi -l 4**                   |   	**0.668**   |    **0.353**    |  **60,770,201**  |
+|pzstd 1.5.5 -9 -p16              |	      0.857     |      0.931      |    59,612,522    |
 |Zstd 1.5.5 -9                    |	      4.166     |      0.282      |    59,444,065    |
 |Brotli 1.1.0 -6                  |      14.53      |      4.263      |    58,552,177    |
+|pzstd 1.5.5 -15 -p16             |       4.904     |      0.934      |    57,539,610    |
 |Zstd 1.5.5 -15                   |	     19.15      |      0.276      |    58,061,115    |
 |Brotli 1.1.0 -9                  |      70.07      |      7.149      |    56,408,353    |
 |Bzip2 1.0.8 -9	                  |      16.94      |      6.734      |    54,572,500    |
 |**Kanzi -l 5**                   |   	**1.775**   |    **0.920**    |  **54,051,139**  |
+|pzstd 1.5.5 -19 -p16             |	     18.19      |      0.895      |    53,341,221    |
 |Zstd 1.5.5 -19                   |	     92.82      |      0.302      |    52,989,654    |
 |**Kanzi -l 6**                   |   	**2.614**   |    **1.289**    |  **49,517,823**  |
 |Lzma 5.2.5 -9                    |      92.6       |      3.075      |    48,744,632    |
