@@ -210,12 +210,12 @@ void ANSRangeEncoder::encodeChunk(const byte block[], int end)
 
         for ( ; i0 >= 0; i0--, i1--, i2--, i3--) {
             const int cur0 = int(block[i0]);
-            const int cur1 = int(block[i1]);
-            const int cur2 = int(block[i2]);
-            const int cur3 = int(block[i3]);
             st0 = encodeSymbol(p, st0, _symbols[(cur0 << 8) | prv0]);
+            const int cur1 = int(block[i1]);
             st1 = encodeSymbol(p, st1, _symbols[(cur1 << 8) | prv1]);
+            const int cur2 = int(block[i2]);
             st2 = encodeSymbol(p, st2, _symbols[(cur2 << 8) | prv2]);
+            const int cur3 = int(block[i3]);
             st3 = encodeSymbol(p, st3, _symbols[(cur3 << 8) | prv3]);
             prv0 = cur0;
             prv1 = cur1;
