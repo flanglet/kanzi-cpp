@@ -107,7 +107,6 @@ namespace kanzi {
         static const int MIN_MATCH9 = 9;
         static const int MAX_MATCH = 65535 + 254 + 15 + MIN_MATCH4;
         static const int MIN_BLOCK_LENGTH = 24;
-        static const int MIN_MATCH_MIN_DIST = 1 << 16;
 
         int32* _hashes;
         int _hashSize;

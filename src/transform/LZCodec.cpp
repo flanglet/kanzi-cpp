@@ -233,14 +233,13 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         else {
             // Emit distance (since not repeat)
             if (maxDist == MAX_DISTANCE2) {
-                if (dist >= 65536)
-                    _mBuf[mIdx++] = byte(dist >> 16);
-
+                _mBuf[mIdx] = byte(dist >> 16);
+                mIdx += ((dist >= 65536) ? 1 : 0);
                 _mBuf[mIdx++] = byte(dist >> 8);
             }
             else {
-                if (dist >= 256)
-                    _mBuf[mIdx++] = byte(dist >> 8);
+                _mBuf[mIdx] = byte(dist >> 8);
+                mIdx += ((dist >= 256) ? 1 : 0);
             }
 
             _mBuf[mIdx++] = byte(dist);
@@ -503,7 +502,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     byte* dst = &output._array[output._index];
     byte* src = &input._array[input._index];
     const int srcEnd = count;
-    const int dstEnd = output._length - 4;
+    const int dstEnd = count - (count >> 6);
 
     if (_hashSize == 0) {
         _hashSize = 1 << HASH_LOG;
@@ -569,13 +568,13 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         ctx = (ctx << 8) | val;
         dst[dstIdx++] = src[srcIdx++];
 
-        if ((ref != 0) && (val == MATCH_FLAG) && (dstIdx < dstEnd))
+        if ((ref != 0) && (val == MATCH_FLAG))
             dst[dstIdx++] = byte(0xFF);
     }
 
     input._index += srcIdx;
     output._index += dstIdx;
-    return (srcIdx == count) && (dstIdx < (count - (count >> 6)));
+    return (srcIdx == count) && (dstIdx < dstEnd);
 }
 
 bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
