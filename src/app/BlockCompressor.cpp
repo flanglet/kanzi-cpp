@@ -597,6 +597,7 @@ int BlockCompressor::compress(uint64& outputSize)
         }
 
         if (read > 0) {
+            ss.precision(6);
             ss << "Compression ratio: " << float(written) / float(read);
             log.println(ss.str().c_str(), _verbosity > 0);
             ss.str(string());
@@ -928,6 +929,7 @@ T FileCompressTask<T>::run()
             ss.str(string());
 
             if (read > 0) {
+                ss.precision(6);
                 ss << "Compression ratio: " << (double(encoded) / double(read));
                 log.println(ss.str().c_str(), true);
                 ss.str(string());
