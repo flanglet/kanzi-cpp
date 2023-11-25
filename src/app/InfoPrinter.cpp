@@ -125,11 +125,9 @@ void InfoPrinter::processEvent(const Event& evt)
             ss << " [" << int64(_clock34.elapsed()) << " ms]";
 
             // Add compression ratio for encoding
-            if (_type == InfoPrinter::ENCODING) {
-                if (bi->_stage0Size != 0) {
-                    ss << " (" << uint(double(stage2Size) * double(100) / double(bi->_stage0Size));
-                    ss << "%)";
-                }
+            if ((_type == InfoPrinter::ENCODING) && (bi->_stage0Size != 0)) {
+                ss << " (" << uint(double(stage2Size) * double(100) / double(bi->_stage0Size));
+                ss << "%)";
             }
 
             // Optionally add hash

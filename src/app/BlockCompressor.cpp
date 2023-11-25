@@ -900,6 +900,7 @@ T FileCompressTask<T>::run()
         _is = nullptr;
     }
     catch (exception&) {
+        // Ignore: best effort
     }
 
     stopClock.stop();

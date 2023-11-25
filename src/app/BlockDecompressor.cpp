@@ -713,6 +713,7 @@ T FileDecompressTask<T>::run()
         _os = nullptr;
     }
     catch (exception&) {
+        // Ignore: best effort
     }
 
     stopClock.stop();

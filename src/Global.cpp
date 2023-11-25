@@ -101,11 +101,14 @@ Global::Global()
     SQUASH[4095] = 4095;
     int n = 0;
 
-    for (int x = -2047; (x <= 2047) && (n < 4096); x++) {
+    for (int x = -2047; x <= 2047; x++) {
         const int sq = squash(x);
 
         while (n <= sq)
             STRETCH[n++] = x;
+
+	if (n >= 4096)
+           break;
     }
 
     STRETCH[4095] = 2047;
@@ -355,8 +358,5 @@ Global::DataType Global::detectSimpleType(int count, const uint freqs0[]) {
     if (sum == 256)
         return BIN;
 
-    if (sum <= 4)
-        return SMALL_ALPHABET;
-
-    return UNDEFINED;
+    return (sum <= 4) ? SMALL_ALPHABET : UNDEFINED;
 }

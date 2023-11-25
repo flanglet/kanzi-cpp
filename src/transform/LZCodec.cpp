@@ -218,17 +218,16 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // F    : if MMMM == 15, flag = 0 if dist == repd0 and 1 if dist == repd1
         //        else flag = 1 if dist >= dThreshold and 0 otherwise
         const int dist = srcIdx - ref;
-        const int mLen = bestLen - minMatch;
         const int litLen = srcIdx - anchor;
         int token;
 
         if (dist == repd[0]) {
             token = 0x0F;
-            mLenIdx += emitLength(&_mLenBuf[mLenIdx], mLen);
+            mLenIdx += emitLength(&_mLenBuf[mLenIdx], bestLen - minMatch);
         }
         else if (dist == repd[1]) {
             token = 0x1F;
-            mLenIdx += emitLength(&_mLenBuf[mLenIdx], mLen);
+            mLenIdx += emitLength(&_mLenBuf[mLenIdx], bestLen - minMatch);
         }
         else {
             // Emit distance (since not repeat)
@@ -243,6 +242,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             }
 
             _mBuf[mIdx++] = byte(dist);
+            const int mLen = bestLen - minMatch;
             
             // Emit match length
             if (mLen >= 14) {
@@ -295,7 +295,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             delete[] _mBuf;
             _mBuf = mBuf;
 
-            if (mLenIdx >= _bufferSize - 4) {
+            if (mLenIdx >= _bufferSize - 8) {
                 byte* mLenBuf = new byte[(_bufferSize * 3) / 2];
                 memcpy(&mLenBuf[0], &_mLenBuf[0], _bufferSize);
                 delete[] _mLenBuf;

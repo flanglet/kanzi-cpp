@@ -167,7 +167,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
 
     _entropyType = EntropyEncoderFactory::getType(entropyCodec.c_str());
     _transformType = TransformFactory<byte>::getType(transform.c_str());
-    string str = ctx.getString("checksum");
+    string str = ctx.getString("checksum", STR_FALSE);
     bool checksum = str == STR_TRUE;
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
