@@ -544,7 +544,7 @@ int DivSufSort::ssCompare(int pa, int pb, int p2, const int depth)
 }
 
 
-int DivSufSort::ssCompare(int sa1[], int sa2[], const int depth)
+int DivSufSort::ssCompare(const int sa1[], const int sa2[], const int depth)
 {
     prefetchRead(&sa1[0]);
     prefetchRead(&sa2[2]);

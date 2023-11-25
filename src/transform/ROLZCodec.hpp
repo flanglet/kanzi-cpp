@@ -143,7 +143,7 @@ namespace kanzi {
        int _minMatch;
        uint8 _maskChecks;	   
 
-       int findMatch(const byte buf[], int pos, int end, int32 hash32, int32* matches, uint8* counter);
+       int findMatch(const byte buf[], int pos, int end, int32 hash32, const int32* matches, const uint8* counter);
 
        int emitLength(byte block[], int length);
 

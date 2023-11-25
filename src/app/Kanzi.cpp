@@ -42,8 +42,8 @@ static const int ARG_IDX_LEVEL = 9;
 //static const int ARG_IDX_FROM = 10;
 //static const int ARG_IDX_TO = 11;
 
-static string KANZI_VERSION = "2.2";
-static string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
+static const string KANZI_VERSION = "2.2";
+static const string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
 
 
 #ifdef CONCURRENCY_ENABLED

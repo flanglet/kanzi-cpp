@@ -57,7 +57,7 @@ limitations under the License.
     *
     *  @return 0 in case of success
     */
-   int CDECL initDecompressor(struct dData* dParam, FILE* src, struct dContext** ctx);
+   int CDECL initDecompressor(const struct dData* dParam, FILE* src, struct dContext** ctx);
 
    /**
     *  Decompress a block of data. The decompressor must have been initialized.

@@ -311,7 +311,7 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
     return res;
 }
 
-byte TextCodec::detectType(uint freqs0[], uint freqs1[], int count) {
+byte TextCodec::detectType(const uint freqs0[], const uint freqs1[], int count) {
     Global::DataType dt = Global::detectSimpleType(count, freqs0);
 	
     if (dt != Global::UNDEFINED)

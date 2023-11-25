@@ -76,7 +76,7 @@ namespace kanzi {
 
 
 // Create internal dContext and CompressedInputStream
-int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCtx)
+int CDECL initDecompressor(const struct dData* pData, FILE* src, struct dContext** pCtx)
 {
     if ((pData == nullptr) || (pCtx == nullptr) || (src == nullptr))
         return Error::ERR_INVALID_PARAM;

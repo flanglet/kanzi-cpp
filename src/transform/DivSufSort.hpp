@@ -153,7 +153,7 @@ namespace kanzi
 
        int ssCompare(int pa, int pb, int p2, const int depth);
 
-       int ssCompare(int s1[], int s2[], const int depth);
+       int ssCompare(const int s1[], const int s2[], const int depth);
 
        void ssInplaceMerge(int pa, int first, int middle, int last, int depth);
 
