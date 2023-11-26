@@ -209,7 +209,7 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
         #define S(t, d) ptr = _buffer[t]; \
            d[n] = byte(ptr); \
            t = ptr >> 8; \
-           prefetchRead(&_buffer[t]);
+           prefetchRead(&_buffer[t])
 
         while (true) {
             S(t0, d0);
@@ -430,6 +430,10 @@ T InverseBiPSIv2Task<T>::run()
 
     const uint shift = sh;
     int c = _firstChunk;
+    byte* d0 = &_dst[0 * _ckSize];
+    byte* d1 = &_dst[1 * _ckSize];
+    byte* d2 = &_dst[2 * _ckSize];
+    byte* d3 = &_dst[3 * _ckSize];
 
     if (_start + 4 * _ckSize < _total) {
         for (; c + 3 < _lastChunk; c += 4) {
@@ -461,14 +465,15 @@ T InverseBiPSIv2Task<T>::run()
                 while (_buckets[s3] <= (const uint)p3)
                     s3++;
 
-                _dst[i - 1] = byte(s0 >> 8);
-                _dst[i] = byte(s0);
-                _dst[1 * _ckSize + i - 1] = byte(s1 >> 8);
-                _dst[1 * _ckSize + i] = byte(s1);
-                _dst[2 * _ckSize + i - 1] = byte(s2 >> 8);
-                _dst[2 * _ckSize + i] = byte(s2);
-                _dst[3 * _ckSize + i - 1] = byte(s3 >> 8);
-                _dst[3 * _ckSize + i] = byte(s3);
+                d0[i - 1] = byte(s0 >> 8);
+                d0[i] = byte(s0);
+                d1[i - 1] = byte(s1 >> 8);
+                d1[i] = byte(s1);
+                d2[i - 1] = byte(s2 >> 8);
+                d2[i] = byte(s2);
+                d3[i - 1] = byte(s3 >> 8);
+                d3[i] = byte(s3);
+
                 p0 = _data[p0];
                 p1 = _data[p1];
                 p2 = _data[p2];
