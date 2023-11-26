@@ -30,7 +30,7 @@ namespace kanzi
 
        void flush();
 
-       void _dispose() {}
+       void _dispose() const {}
 
    public:
        ExpGolombDecoder(InputBitStream& bitstream, bool sign=true);

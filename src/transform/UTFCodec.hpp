@@ -59,15 +59,15 @@ namespace kanzi
 
         Context* _pCtx;
        
-        static bool validate(byte src[], int count);
+        static bool validate(const byte src[], int count);
 
-        static int pack(byte in[], uint32& out);
+        static int pack(const byte in[], uint32& out);
 
         static int unpack(uint32 in, byte out[]);
    };
 
 
-    inline int UTFCodec::pack(byte in[], uint32& out) 
+    inline int UTFCodec::pack(const byte in[], uint32& out)
     {   
        int s;
 

@@ -29,7 +29,7 @@ namespace kanzi
        bool _signed;
        uint _logBase;
 
-       void _dispose() {}
+       void _dispose() const {}
 
    public:
        RiceGolombDecoder(InputBitStream& bitstream, uint logBase, bool sgn=true) THROW;

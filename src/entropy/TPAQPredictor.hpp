@@ -119,9 +119,9 @@ namespace kanzi
        int _ctx5;
        int _ctx6;
 
-       int hash(int x, int y);
+       int hash(int x, int y) const;
 
-       int createContext(uint ctxId, uint cx);
+       int createContext(uint ctxId, uint cx) const;
 
        int getMatchContextPred();
 
@@ -554,14 +554,14 @@ namespace kanzi
    }
 
    template <bool T>
-   inline int TPAQPredictor<T>::hash(int x, int y)
+   inline int TPAQPredictor<T>::hash(int x, int y) const
    {
        const int h = x * HASH ^ y * HASH;
        return (h >> 1) ^ (h >> 9) ^ (x >> 2) ^ (y >> 3) ^ HASH;
    }
 
    template <bool T>
-   inline int TPAQPredictor<T>::createContext(uint ctxId, uint cx)
+   inline int TPAQPredictor<T>::createContext(uint ctxId, uint cx) const
    {
        cx = cx * 987654323 + ctxId;
        cx = (cx << 16) | (cx >> 16);

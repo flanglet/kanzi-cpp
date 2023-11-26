@@ -41,7 +41,7 @@ namespace kanzi
        int _bufferSize;
        DivSufSort _saAlgo;
 
-       int moveLyndonWordHead(int sa[], int isa[], byte data[], int count, int start, int size, int rank);
+       int moveLyndonWordHead(int sa[], int isa[], const byte data[], int count, int start, int size, int rank);
 
    public:
        BWTS()

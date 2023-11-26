@@ -62,7 +62,7 @@ namespace kanzi
          int64 _size;
          int64 _modifTime;
 
-         FileData(std::string& path, int64 size, int64 _modifTime = 0) 
+         FileData(const std::string& path, int64 size, int64 _modifTime = 0)
             : _size(size)
             , _modifTime(_modifTime)
          {
@@ -149,7 +149,7 @@ namespace kanzi
        DIR* dir = opendir(target.c_str());
 
        if (dir != nullptr) {
-           struct dirent* ent;
+           const struct dirent* ent;
 
            while ((ent = readdir(dir)) != nullptr) {
                std::string dirName = ent->d_name;
@@ -286,7 +286,7 @@ namespace kanzi
    }
 
 
-   static inline bool samePaths(std::string& f1, std::string& f2)
+   static inline bool samePaths(const std::string& f1, const std::string& f2)
    {
       if (f1.compare(f2) == 0)
          return true;

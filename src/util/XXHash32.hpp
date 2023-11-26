@@ -47,10 +47,10 @@ namespace kanzi
 
        void setSeed(int seed) { _seed = seed; }
 
-       int hash(byte data[], int length);
+       int hash(const byte data[], int length);
    };
 
-   inline int XXHash32::hash(byte data[], int length)
+   inline int XXHash32::hash(const byte data[], int length)
    {
        uint32 h32;
        int idx = 0;

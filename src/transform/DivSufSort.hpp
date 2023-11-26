@@ -174,15 +174,15 @@ namespace kanzi
 
        void ssInsertionSort(int pa, int first, int last, int depth);
 
-       int ssIsqrt(int x);
+       int ssIsqrt(int x) const;
 
        void ssMultiKeyIntroSort(int pa, int first, int last, int depth);
 
        int ssPivot(int td, int pa, int first, int last);
 
-       int ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5);
+       int ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5) const;
 
-       int ssMedian3(int idx, int pa, int v1, int v2, int v3);
+       int ssMedian3(int idx, int pa, int v1, int v2, int v3) const;
 
        int ssPartition(int pa, int first, int last, int depth);
 
@@ -200,9 +200,9 @@ namespace kanzi
 
        int trPivot(int arr[], int isad, int first, int last);
 
-       int trMedian5(const int arr[], int isad, int v1, int v2, int v3, int v4, int v5);
+       int trMedian5(const int arr[], int isad, int v1, int v2, int v3, int v4, int v5) const;
 
-       int trMedian3(const int arr[], int isad, int v1, int v2, int v3);
+       int trMedian3(const int arr[], int isad, int v1, int v2, int v3) const;
 
        void trHeapSort(int isad, int saIdx, int size);
 
@@ -216,7 +216,7 @@ namespace kanzi
 
        void reset();
 
-       int trIlg(int n);
+       int trIlg(int n) const;
 
    public:
        DivSufSort();
@@ -246,7 +246,7 @@ namespace kanzi
    }
 
 
-   inline int DivSufSort::trIlg(int n)
+   inline int DivSufSort::trIlg(int n) const
    {
        return ((n & 0xFFFF0000) != 0) ? (((n & 0xFF000000) != 0) ? 24 + LOG_TABLE[(n >> 24) & 0xFF]
                                                                  : 16 + LOG_TABLE[(n >> 16) & 0xFF])
@@ -255,7 +255,7 @@ namespace kanzi
    }
 
 
-   inline int DivSufSort::trMedian5(const int sa[], int isad, int v1, int v2, int v3, int v4, int v5)
+   inline int DivSufSort::trMedian5(const int sa[], int isad, int v1, int v2, int v3, int v4, int v5) const
    {
        if (sa[isad + sa[v2]] > sa[isad + sa[v3]]) {
            std::swap(v2, v3);
@@ -288,7 +288,7 @@ namespace kanzi
    }
 
 
-   inline int DivSufSort::trMedian3(const int sa[], int isad, int v1, int v2, int v3)
+   inline int DivSufSort::trMedian3(const int sa[], int isad, int v1, int v2, int v3) const
    {
        if (sa[isad + sa[v1]] > sa[isad + sa[v2]]) {
            std::swap(v1, v2);
@@ -305,7 +305,7 @@ namespace kanzi
    }
 
 
-   inline int DivSufSort::ssIsqrt(int x)
+   inline int DivSufSort::ssIsqrt(int x) const
    {
        if (x >= (SS_BLOCKSIZE * SS_BLOCKSIZE))
            return SS_BLOCKSIZE;

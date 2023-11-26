@@ -230,7 +230,7 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         if (alias >= 128)
             alias = (uint(src[srcIdx++]) << 7) + (alias & 0x7F);
 
-        symb& s = m[alias];
+        const symb& s = m[alias];
         memcpy(&dst[dstIdx], &s.val, 4);
         dstIdx += s.len;
     }
@@ -244,7 +244,7 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 }
 
 
-bool UTFCodec::validate(byte block[], int count)
+bool UTFCodec::validate(const byte block[], int count)
 {
     uint freqs0[256] = { 0 };
     uint* freqs1 = new uint[65536];

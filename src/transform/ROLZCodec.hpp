@@ -143,11 +143,11 @@ namespace kanzi {
        int _minMatch;
        uint8 _maskChecks;	   
 
-       int findMatch(const byte buf[], int pos, int end, int32 hash32, const int32* matches, const uint8* counter);
+       int findMatch(const byte buf[], int pos, int end, int32 hash32, const int32* matches, const uint8* counter) const;
 
-       int emitLength(byte block[], int length);
+       int emitLength(byte block[], int length) const;
 
-       int readLength(byte block[], int& idx);
+       int readLength(const byte block[], int& idx) const;
    };
 
    // Use CM (ROLZEncoder/ROLZDecoder) to encode/decode literals and matches
@@ -242,7 +242,7 @@ namespace kanzi {
        static int emitCopy(byte dst[], int dstIdx, int ref, int matchLen);
    };
 
-   inline int ROLZCodec1::emitLength(byte block[], int length)
+   inline int ROLZCodec1::emitLength(byte block[], int length) const
    {
        if (length < 1 << 7) {
            block[0] = byte(length);
@@ -262,7 +262,7 @@ namespace kanzi {
        return idx;
    }
 
-   inline int ROLZCodec1::readLength(byte block[], int& pos)
+   inline int ROLZCodec1::readLength(const byte block[], int& pos) const
    {
        int next = int(block[pos++]);
 

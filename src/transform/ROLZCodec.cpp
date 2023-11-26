@@ -113,7 +113,7 @@ ROLZCodec1::ROLZCodec1(Context& ctx) THROW
 
 
 // return position index (_logPosChecks bits) + length (16 bits) or -1
-int ROLZCodec1::findMatch(const byte buf[], int pos, int end, int32 hash32, const int32* matches, const uint8* counter)
+int ROLZCodec1::findMatch(const byte buf[], int pos, int end, int32 hash32, const int32* matches, const uint8* counter) const
 {
     const int s = int(*counter);
     const int e = s - _posChecks;

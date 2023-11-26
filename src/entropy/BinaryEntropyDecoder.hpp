@@ -45,7 +45,7 @@ namespace kanzi
    protected:
        void read();
 
-       void _dispose() {}
+       void _dispose() const {}
 
    public:
        BinaryEntropyDecoder(InputBitStream& bitstream, Predictor* predictor, bool deallocate=true) THROW;

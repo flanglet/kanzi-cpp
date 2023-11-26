@@ -173,7 +173,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     return true;
 }
 
-int SRT::preprocess(int freqs[], uint8 symbols[])
+int SRT::preprocess(const int freqs[], uint8 symbols[])
 {
     int nbSymbols = 0;
 
@@ -229,7 +229,7 @@ int SRT::encodeHeader(int freqs[], byte dst[])
     return dstIdx;
 }
 
-int SRT::decodeHeader(byte src[], int freqs[])
+int SRT::decodeHeader(const byte src[], int freqs[])
 {
     int srcIdx = 0;
 

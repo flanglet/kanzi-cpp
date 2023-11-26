@@ -45,45 +45,45 @@ namespace kanzi
 
    class ANSRangeDecoder : public EntropyDecoder {
    public:
-	   static const int ANS_TOP = 1 << 15; // max possible for ANS_TOP=1<<23
+      static const int ANS_TOP = 1 << 15; // max possible for ANS_TOP=1<<23
 
-	   ANSRangeDecoder(InputBitStream& bitstream,
+      ANSRangeDecoder(InputBitStream& bitstream,
                       int order = 0,
                       int chunkSize = DEFAULT_ANS0_CHUNK_SIZE) THROW;
 
-	   ~ANSRangeDecoder();
+      ~ANSRangeDecoder();
 
-	   int decode(byte block[], uint blkptr, uint len);
+      int decode(byte block[], uint blkptr, uint len);
 
-	   InputBitStream& getBitStream() const { return _bitstream; }
+      InputBitStream& getBitStream() const { return _bitstream; }
 
-	   void dispose() { _dispose(); }
+      void dispose() { _dispose(); }
 
 
    private:
-	   static const int DEFAULT_ANS0_CHUNK_SIZE = 16384;
-	   static const int DEFAULT_LOG_RANGE = 12;
-	   static const int MIN_CHUNK_SIZE = 1024;
-	   static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
+      static const int DEFAULT_ANS0_CHUNK_SIZE = 16384;
+      static const int DEFAULT_LOG_RANGE = 12;
+      static const int MIN_CHUNK_SIZE = 1024;
+      static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
 
-	   InputBitStream& _bitstream;
-	   uint* _freqs;
-	   uint8* _f2s;
-	   int _f2sSize;
-	   ANSDecSymbol* _symbols;
-	   byte* _buffer;
-	   uint _bufferSize;
-	   uint _chunkSize;
-	   uint _order;
-	   uint _logRange;
+      InputBitStream& _bitstream;
+      uint* _freqs;
+      uint8* _f2s;
+      int _f2sSize;
+      ANSDecSymbol* _symbols;
+      byte* _buffer;
+      uint _bufferSize;
+      uint _chunkSize;
+      uint _order;
+      uint _logRange;
 
-	   void decodeChunk(byte block[], int end);
+      void decodeChunk(byte block[], int end);
 
-	   int decodeSymbol(byte*& p, int& st, const ANSDecSymbol& sym, const int mask);
+      int decodeSymbol(byte*& p, int& st, const ANSDecSymbol& sym, const int mask) const;
 
-	   int decodeHeader(uint frequencies[], uint alphabet[]);
+      int decodeHeader(uint frequencies[], uint alphabet[]);
 
- 	   void _dispose() {}
+      void _dispose() const {}
    };
 
 
@@ -94,7 +94,7 @@ namespace kanzi
    }
 
 
-   inline int ANSRangeDecoder::decodeSymbol(byte*& p, int& st, const ANSDecSymbol& sym, const int mask)
+   inline int ANSRangeDecoder::decodeSymbol(byte*& p, int& st, const ANSDecSymbol& sym, const int mask) const
    {
       // Compute next ANS state
       // D(x) = (s, q_s (x/M) + mod(x,M) - b_s) where s is such b_s <= x mod M < b_{s+1}
@@ -102,8 +102,8 @@ namespace kanzi
 
       // Normalize
       if (st < ANS_TOP) {
-	      st = (st << 16) | (int(p[0]) << 8) | int(p[1]);
-	      p += 2;
+          st = (st << 16) | (int(p[0]) << 8) | int(p[1]);
+          p += 2;
       }
 
       return st;

@@ -93,11 +93,11 @@ namespace kanzi
 
 	   void encodeChunk(const byte block[], int end);
 
-	   int encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym);
+	   int encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym) const;
 
 	   bool encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], uint lr);
 
-	   void _dispose() {}
+	   void _dispose() const {}
    };
 
 
@@ -128,7 +128,7 @@ namespace kanzi
       }
    }
 
-   inline int ANSRangeEncoder::encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym)
+   inline int ANSRangeEncoder::encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym) const
    {
       if (st >= sym._xMax) {
          *p-- = byte(st);

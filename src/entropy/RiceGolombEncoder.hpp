@@ -30,7 +30,7 @@ namespace kanzi
        uint _logBase;
        uint _base;
 
-       void _dispose() {}
+       void _dispose() const {}
 
 
    public:

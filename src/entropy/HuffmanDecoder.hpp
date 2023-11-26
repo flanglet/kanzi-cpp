@@ -57,7 +57,7 @@ namespace kanzi
 
        bool reset();
 
-       void _dispose() {}
+       void _dispose() const {}
    };
 
 

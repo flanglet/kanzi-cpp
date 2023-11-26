@@ -28,7 +28,7 @@ namespace kanzi
        OutputBitStream& _bitstream;
        const int _signed;
 
-       void _dispose() {}
+       void _dispose() const {}
 
    public:
        ExpGolombEncoder(OutputBitStream& bitstream, bool sign=true);

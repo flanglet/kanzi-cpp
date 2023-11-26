@@ -1312,9 +1312,9 @@ int DivSufSort::ssPivot(int td, int pa, int first, int last)
     return ssMedian3(td, pa, first, middle, last);
 }
 
-int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5)
+int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5) const
 {
-    uint8* buf0 = &_buffer[idx];
+    const uint8* buf0 = &_buffer[idx];
     const int* buf1 = &_sa[pa];
 
     if (buf0[buf1[_sa[v2]]] > buf0[buf1[_sa[v3]]]) {
@@ -1345,7 +1345,7 @@ int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4,
     return (buf0[buf1[_sa[v3]]] > buf0[buf1[_sa[v4]]]) ? v4 : v3;
 }
 
-int DivSufSort::ssMedian3(int idx, int pa, int v1, int v2, int v3)
+int DivSufSort::ssMedian3(int idx, int pa, int v1, int v2, int v3) const
 {
     uint8* buf0 = &_buffer[idx];
     const int* buf1 = &_sa[pa];

@@ -39,7 +39,7 @@ namespace kanzi
 
        bool reset();
 
-       void _dispose() {}
+       void _dispose() const {}
 
        static void computeInPlaceSizesPhase1(uint data[], int n);
 

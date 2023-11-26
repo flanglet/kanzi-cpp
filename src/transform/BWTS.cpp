@@ -124,7 +124,7 @@ bool BWTS::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     return true;
 }
 
-int BWTS::moveLyndonWordHead(int sa[], int isa[], byte data[], int count, int start, int size, int rank)
+int BWTS::moveLyndonWordHead(int sa[], int isa[], const byte data[], int count, int start, int size, int rank)
 {
     const int end = start + size;
 

@@ -46,7 +46,7 @@ namespace kanzi
        uint16* _p; // pointer to current prob
        int _ctx; // previous bits
 
-       void _dispose() {}
+       void _dispose() const {}
 
        int decodeBit(int pred = 2048);
 
