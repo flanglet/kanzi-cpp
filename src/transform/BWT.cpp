@@ -204,69 +204,36 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
         byte* d6 = &dst[ckSize * 6];
         byte* d7 = &dst[ckSize * 7];
         int n = 0;
+        int ptr;
+
+        #define S(t, d) ptr = _buffer[t]; \
+           d[n] = byte(ptr); \
+           t = ptr >> 8; \
+           prefetchRead(&_buffer[t]);
 
         while (true) {
-            const int ptr0 = _buffer[t0];
-            d0[n] = byte(ptr0);
-            t0 = ptr0 >> 8;
-            const int ptr1 = _buffer[t1];
-            d1[n] = byte(ptr1);
-            t1 = ptr1 >> 8;
-            const int ptr2 = _buffer[t2];
-            d2[n] = byte(ptr2);
-            t2 = ptr2 >> 8;
-            const int ptr3 = _buffer[t3];
-            d3[n] = byte(ptr3);
-            t3 = ptr3 >> 8;
-            const int ptr4 = _buffer[t4];
-            d4[n] = byte(ptr4);
-            t4 = ptr4 >> 8;
-            const int ptr5 = _buffer[t5];
-            d5[n] = byte(ptr5);
-            t5 = ptr5 >> 8;
-            const int ptr6 = _buffer[t6];
-            d6[n] = byte(ptr6);
-            t6 = ptr6 >> 8;
-            const int ptr7 = _buffer[t7];
-            d7[n] = byte(ptr7);
-            t7 = ptr7 >> 8;
+            S(t0, d0);
+            S(t1, d1);
+            S(t2, d2);
+            S(t3, d3);
+            S(t4, d4);
+            S(t5, d5);
+            S(t6, d6);
+            S(t7, d7);
             n++;
 
-            if (ptr7 < 0)
+            if (ptr < 0)
                 break;
-
-            prefetchRead(&_buffer[t0]);
-            prefetchRead(&_buffer[t1]);
-            prefetchRead(&_buffer[t2]);
-            prefetchRead(&_buffer[t3]);
-            prefetchRead(&_buffer[t4]);
-            prefetchRead(&_buffer[t5]);
-            prefetchRead(&_buffer[t6]);
-            prefetchRead(&_buffer[t7]);
         }
 
         while (n < ckSize) {
-            const int ptr0 = _buffer[t0];
-            d0[n] = byte(ptr0);
-            t0 = ptr0 >> 8;
-            const int ptr1 = _buffer[t1];
-            d1[n] = byte(ptr1);
-            t1 = ptr1 >> 8;
-            const int ptr2 = _buffer[t2];
-            d2[n] = byte(ptr2);
-            t2 = ptr2 >> 8;
-            const int ptr3 = _buffer[t3];
-            d3[n] = byte(ptr3);
-            t3 = ptr3 >> 8;
-            const int ptr4 = _buffer[t4];
-            d4[n] = byte(ptr4);
-            t4 = ptr4 >> 8;
-            const int ptr5 = _buffer[t5];
-            d5[n] = byte(ptr5);
-            t5 = ptr5 >> 8;
-            const int ptr6 = _buffer[t6];
-            d6[n] = byte(ptr6);
-            t6 = ptr6 >> 8;
+            S(t0, d0);
+            S(t1, d1);
+            S(t2, d2);
+            S(t3, d3);
+            S(t4, d4);
+            S(t5, d5);
+            S(t6, d6);
             n++;
         }
     }
