@@ -178,7 +178,7 @@ namespace kanzi {
 
        void close() THROW;
 
-       uint64 getWritten() { return (_obs->written() + 7) >> 3; }
+       uint64 getWritten() const { return (_obs->written() + 7) >> 3; }
    };
 
 

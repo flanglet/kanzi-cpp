@@ -259,26 +259,24 @@ namespace kanzi
    #endif
 
    #if defined(_MSC_VER)
-             if (_mkdir(curPath.c_str()) != 0) {
+             if ((_mkdir(curPath.c_str()) != 0) && (errno != EEXIST)) {
    #elif defined(__MINGW32__)
-             if (mkdir(curPath.c_str()) != 0) {
+             if ((mkdir(curPath.c_str()) != 0) && (errno != EEXIST)) {
    #else
-             if (mkdir(curPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
+             if ((mkdir(curPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) && (errno != EEXIST)) {
    #endif
-                if (errno != EEXIST)
                     return -1;
              }
           }
        }
 
    #if defined(_MSC_VER)
-       if (_mkdir(path.c_str()) != 0) {
+       if ((_mkdir(path.c_str()) != 0) && (errno != EEXIST)) {
    #elif defined(__MINGW32__)
-       if (mkdir(path.c_str()) != 0) {
+       if ((mkdir(path.c_str()) != 0) && (errno != EEXIST)) {
    #else
-       if (mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
+       if ((mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) && (errno != EEXIST)) {
    #endif
-           if (errno != EEXIST)
                return -1;
        }
 

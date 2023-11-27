@@ -214,7 +214,7 @@ namespace kanzi
 
        void close() THROW;
 
-       uint64 getRead() { return (_ibs->read() + 7) >> 3; }
+       uint64 getRead() const { return (_ibs->read() + 7) >> 3; }
    };
 
 

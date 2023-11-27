@@ -22,27 +22,27 @@ namespace kanzi
    template <class T, class traits = std::char_traits<T> >
    class basic_nullbuf : public std::basic_streambuf<T, traits>
    {
-	   typename traits::int_type overflow(typename traits::int_type c)
-	   {
-		   return traits::not_eof(c);
-	   }
+       typename traits::int_type overflow(typename traits::int_type c)
+       {
+           return traits::not_eof(c);
+       }
 
-	   void close() {}
+       void close() {}
    };
 
    template <class T, class traits = std::char_traits<T> >
    class basic_onullstream : public std::basic_ostream<T, traits>
    {
    public:
-	   basic_onullstream() :
-		   std::basic_ios<T, traits>(&_sbuf),
-		   std::basic_ostream<T, traits>(&_sbuf)
-	   {
-		   this->init(&_sbuf);
-	   }
+       basic_onullstream() :
+           std::basic_ios<T, traits>(&_sbuf),
+           std::basic_ostream<T, traits>(&_sbuf)
+       {
+           this->init(&_sbuf);
+       }
 
    private:
-	   basic_nullbuf<T, traits> _sbuf;
+       basic_nullbuf<T, traits> _sbuf;
    };
 
    typedef basic_onullstream<char> NullOutputStream;

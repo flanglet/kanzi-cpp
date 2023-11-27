@@ -188,11 +188,10 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
 // The goal is to detect text data amenable to pre-processing.
 byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool strict)
 {
-    if (strict == false) {
+    if ((strict == false) && (Magic::getType(block) != Magic::NO_MAGIC)) {
         // This is going to fail if the block is not the first of the file.
         // But this is a cheap test, good enough for fast mode.
-        if (Magic::getType(block) != Magic::NO_MAGIC)
-            return TextCodec::MASK_NOT_TEXT;
+        return TextCodec::MASK_NOT_TEXT;
     }
 
     uint* freqs1 = new uint[65536];
@@ -259,7 +258,7 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
     byte res = byte(0);
 
     if (notText == true) {
-        res |= detectType(freqs0, freqs1, count);
+        res = detectType(freqs0, freqs1, count);
         delete[] freqs1;
         return res;
     }
@@ -578,10 +577,8 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                         pe = pe2;
                 }
 
-                if (pe != nullptr) {
-                    if (!TextCodec::sameWords(&pe->_ptr[1], &src[delimAnchor + 2], length - 1))
-                        pe = nullptr;
-                }
+                if ((pe != nullptr) && (!TextCodec::sameWords(&pe->_ptr[1], &src[delimAnchor + 2], length - 1)))
+                    pe = nullptr;
 
                 if (pe == nullptr) {
                     // Word not found in the dictionary or hash collision.
@@ -1044,10 +1041,8 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                         pe = pe2;
                 }
 
-                if (pe != nullptr) {
-                    if (!TextCodec::sameWords(&pe->_ptr[1], &src[delimAnchor + 2], length - 1))
-                        pe = nullptr;
-                }
+                if ((pe != nullptr) && (!TextCodec::sameWords(&pe->_ptr[1], &src[delimAnchor + 2], length - 1)))
+                    pe = nullptr;
 
                 if (pe == nullptr) {
                     // Word not found in the dictionary or hash collision.

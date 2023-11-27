@@ -407,27 +407,25 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     stopClock.stop();
 
-    if (nbFiles > 1) {
-        if (_verbosity > 0) {
-            double delta = stopClock.elapsed();
-            log.println("", true);
-            ss << "Total decompression time: ";
+    if ((nbFiles > 1) && (_verbosity > 0)) {
+        double delta = stopClock.elapsed();
+        log.println("", true);
+        ss << "Total decompression time: ";
 
-            if (delta >= 1e5) {
-                ss.precision(1);
-                ss.setf(ios::fixed);
-                ss << (delta / 1000) << " s";
-            }
-            else {
-                ss << int(delta) << " ms";
-            }
-
-            log.println(ss.str().c_str(), _verbosity > 0);
-            ss.str(string());
-            ss << "Total output size: " << read << ((read > 1) ? " bytes" : " byte");
-            log.println(ss.str().c_str(), _verbosity > 0);
-            ss.str(string());
+        if (delta >= 1e5) {
+            ss.precision(1);
+            ss.setf(ios::fixed);
+            ss << (delta / 1000) << " s";
         }
+        else {
+            ss << int(delta) << " ms";
+        }
+
+        log.println(ss.str().c_str(), _verbosity > 0);
+        ss.str(string());
+        ss << "Total output size: " << read << ((read > 1) ? " bytes" : " byte");
+        log.println(ss.str().c_str(), _verbosity > 0);
+        ss.str(string());
     }
 
     if (_verbosity > 2)

@@ -75,13 +75,11 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     }
 
     if (n0 < 16) {
-        if (_pCtx != nullptr) {
-            if (dt == Global::UNDEFINED) {
-                dt = Global::detectSimpleType(count, freqs0);
+        if ((_pCtx != nullptr) && (dt == Global::UNDEFINED)) {
+            dt = Global::detectSimpleType(count, freqs0);
 
-                if (dt != Global::UNDEFINED)
-                    _pCtx->putInt("dataType", dt);
-            }
+            if (dt != Global::UNDEFINED)
+                _pCtx->putInt("dataType", dt);
         }
 
         return false;

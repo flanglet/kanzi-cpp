@@ -519,6 +519,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 success = false;
                 goto End;
             }
+
             const uint8 matchIdx = uint8(mIdxBuf._array[mIdxBuf._index++]);
             const uint32 key = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&buf[dstIdx - dt]) : ROLZCodec::getKey2(&buf[dstIdx - dt]);
             int32* matches = &_matches[key << _logPosChecks];

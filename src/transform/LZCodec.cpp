@@ -218,7 +218,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // F    : if MMMM == 15, flag = 0 if dist == repd0 and 1 if dist == repd1
         //        else flag = 1 if dist >= dThreshold and 0 otherwise
         const int dist = srcIdx - ref;
-        const int litLen = srcIdx - anchor;
         int token;
 
         if (dist == repd[0]) {
@@ -264,6 +263,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         repd[1] = repd[0];
         repd[0] = dist;
         repIdx = 1;
+        const int litLen = srcIdx - anchor;
 
         // Emit token
         // Literals to process ?
