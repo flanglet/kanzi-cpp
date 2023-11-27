@@ -19,14 +19,6 @@ limitations under the License.
 
 #include "types.hpp"
 
-template <class T>
-class Task {
-public:
-    Task() {}
-    virtual ~Task() {}
-    virtual T run() = 0;
-};
-
 #if __cplusplus >= 201103L || _MSC_VER >= 1700
     // C++ 11 (or partial)
     #include <atomic>
@@ -62,6 +54,14 @@ public:
    #define CPU_PAUSE()
 #endif
 
+
+template <class T>
+class Task {
+    public:
+        Task() {}
+        virtual ~Task() {}
+        virtual T run() = 0;
+};
 
 
 #ifdef CONCURRENCY_ENABLED

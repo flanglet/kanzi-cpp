@@ -131,7 +131,6 @@ limitations under the License.
 
     #ifndef _GLIBCXX_USE_NOEXCEPT
        #define _GLIBCXX_USE_NOEXCEPT
-       //#define _GLIBCXX_USE_NOEXCEPT throw()
     #endif
 
     // Notice: in Visual Studio (prior to VS2017 version 15.7)

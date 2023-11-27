@@ -35,7 +35,7 @@ namespace kanzi
        byte* _buffer;
        uint _bufferSize;
 
-       uint computeCodeLengths(uint16 sizes[], uint sranks[], int count);
+       uint computeCodeLengths(uint16 sizes[], uint sranks[], int count) const;
 
        bool reset();
 

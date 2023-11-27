@@ -44,7 +44,7 @@ struct FreqDataComparator {
 
 // alphabet must be sorted in increasing order
 // length = alphabet array length up to 256
-int EntropyUtils::encodeAlphabet(OutputBitStream& obs, uint alphabet[], int length, int count)
+int EntropyUtils::encodeAlphabet(OutputBitStream& obs, const uint alphabet[], int length, int count)
 {
     // Alphabet length must be a power of 2
     if ((length & (length - 1)) != 0)

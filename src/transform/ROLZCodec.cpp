@@ -259,9 +259,9 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             {
                 // Check if better match at next position
                 const uint32 key2 = (mm == MIN_MATCH3) ? ROLZCodec::getKey1(&buf[srcIdx + 1 - dt]) : ROLZCodec::getKey2(&buf[srcIdx + 1 - dt]);
-                uint8* counter = &_counters[key2];
-                int32* matches = &_matches[key2 << _logPosChecks];
-                int32 hash32 = ROLZCodec::hash(&buf[srcIdx + 1]);
+                counter = &_counters[key2];
+                matches = &_matches[key2 << _logPosChecks];
+                hash32 = ROLZCodec::hash(&buf[srcIdx + 1]);
                 int match2 = findMatch(buf, srcIdx + 1, sizeChunk, hash32, matches, counter);
 
                 if ((match2 >= 0) && ((match2 & 0xFFFF) > (match & 0xFFFF))) {

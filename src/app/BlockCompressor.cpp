@@ -270,10 +270,6 @@ BlockCompressor::~BlockCompressor()
     _listeners.clear();
 }
 
-void BlockCompressor::dispose()
-{
-}
-
 int BlockCompressor::compress(uint64& outputSize)
 {
     vector<FileData> files;

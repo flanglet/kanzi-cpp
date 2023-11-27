@@ -140,10 +140,6 @@ BlockDecompressor::~BlockDecompressor()
     _listeners.clear();
 }
 
-void BlockDecompressor::dispose()
-{
-}
-
 int BlockDecompressor::decompress(uint64& inputSize)
 {
     vector<FileData> files;

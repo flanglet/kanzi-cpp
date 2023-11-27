@@ -32,7 +32,7 @@ namespace kanzi {
 
        FSDCodec(Context& ctx) { _pCtx = &ctx; }
 
-       virtual ~FSDCodec() {}
+       ~FSDCodec() {}
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 

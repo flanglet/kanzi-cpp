@@ -141,7 +141,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
     return count;
 }
 
-uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count)
+uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count) const
 {
     // Sort ranks by increasing freqs (first key) and increasing value (second key)
     vector<uint> v(ranks, ranks + count);

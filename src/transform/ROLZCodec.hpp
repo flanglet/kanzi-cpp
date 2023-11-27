@@ -102,7 +102,7 @@ namespace kanzi {
 
        int decode9Bits();
 
-       void dispose() {}
+       void dispose() const {}
 
        void reset();
 
@@ -202,7 +202,7 @@ namespace kanzi {
 
        ROLZCodec(Context& ctx) THROW;
 
-       virtual ~ROLZCodec() { delete _delegate; }
+       ~ROLZCodec() { delete _delegate; }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 

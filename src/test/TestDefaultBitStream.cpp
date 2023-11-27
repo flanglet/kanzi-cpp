@@ -63,7 +63,7 @@ int testBitStreamCorrectnessAligned1()
 
         for (int i = 0; i < length; i++) {
             values[i] = rand();
-            cout << (int)values[i] << " ";
+            cout << values[i] << " ";
 
             if ((i % 20) == 19)
                 cout << endl;
@@ -168,7 +168,7 @@ int testBitStreamCorrectnessMisaligned1()
             values[i] = rand();
             const int mask = (1 << (1 + (i % 30))) - 1;
             values[i] &= mask;
-            cout << (int)values[i] << " ";
+            cout << values[i] << " ";
 
             if ((i % 20) == 19)
                 cout << endl;
@@ -295,7 +295,6 @@ int testBitStreamSpeed1(const string& fileName)
     }
 
     double d = 1024.0 * 8192.0;
-    //cout << delta1 << " " << delta2 << endl;
     cout << written << " bits written (" << (written / 1024 / 1024 / 8) << " MB)" << endl;
     cout << read << " bits read (" << (read / 1024 / 1024 / 8) << " MB)" << endl;
     cout << endl;
@@ -541,7 +540,6 @@ int testBitStreamSpeed2(const string& fileName)
     }
 
     double d = 1024.0 * 8192.0;
-    //cout << delta1 << " " << delta2 << endl;
     cout << written << " bits written (" << (written / 1024 / 1024 / 8) << " MB)" << endl;
     cout << read << " bits read (" << (read / 1024 / 1024 / 8) << " MB)" << endl;
     cout << endl;

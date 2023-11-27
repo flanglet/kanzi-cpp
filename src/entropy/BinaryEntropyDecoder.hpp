@@ -50,13 +50,13 @@ namespace kanzi
    public:
        BinaryEntropyDecoder(InputBitStream& bitstream, Predictor* predictor, bool deallocate=true) THROW;
 
-       virtual ~BinaryEntropyDecoder();
+       ~BinaryEntropyDecoder();
 
        int decode(byte block[], uint blkptr, uint count) THROW;
 
        InputBitStream& getBitStream() const { return _bitstream; }
 
-       virtual void dispose() { _dispose(); }
+       void dispose() { _dispose(); }
 
        byte decodeByte();
 

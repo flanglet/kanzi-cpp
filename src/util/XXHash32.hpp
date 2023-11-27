@@ -36,7 +36,7 @@ namespace kanzi
 
        int _seed;
 
-       uint32 round(uint32 acc, int32 val);
+       uint32 round(uint32 acc, int32 val) const;
 
    public:
        XXHash32() { _seed = int(time(nullptr)); }
@@ -100,7 +100,7 @@ namespace kanzi
        return h32 ^ (h32 >> 16);
    }
 
-   inline uint32 XXHash32::round(uint32 acc, int32 val)
+   inline uint32 XXHash32::round(uint32 acc, int32 val) const
    {
        acc += (uint32(val) * PRIME32_2);
        return ((acc << 13) | (acc >> 19)) * PRIME32_1;

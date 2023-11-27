@@ -149,7 +149,6 @@ uint64 compress4(byte block[], uint length)
         cos = new CompressedOutputStream(os, "HUFFMAN", "TEXT", 4 * 1024 * 1024, false, 1);
         cos->write((const char*)block, length);
         cos->close();
-        //cos->write((const char*) block, length);
         cos->put(char(0));
         cout << "Failure: no exception thrown in write after close" << endl;
         res = 1;
@@ -187,7 +186,6 @@ uint64 compress5(byte block[], uint length)
         }
 
         cis->close();
-//        cis->read((char*)block, length);
         cis->get();
         cout << "Failure: no exception thrown in read after close" << endl;
         res = 1;

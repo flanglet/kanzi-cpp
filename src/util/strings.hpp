@@ -58,7 +58,7 @@ inline std::string ltrim(std::string& str) { return __trim(str, true, false); }
 inline std::string rtrim(std::string& str) { return __trim(str, false, true); }
 
 
-inline void tokenize(std::string str, std::vector<std::string>& v, char token)
+inline void tokenize(const std::string& str, std::vector<std::string>& v, char token)
 {
    std::istringstream ss(str);
    std::string s;    

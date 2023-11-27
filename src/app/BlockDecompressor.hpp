@@ -122,7 +122,7 @@ namespace kanzi {
 
        bool removeListener(Listener& bl);
 
-       void dispose();
+       void dispose() const {};
 
    private:
        static const int DEFAULT_BUFFER_SIZE = 32768;

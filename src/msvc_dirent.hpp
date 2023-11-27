@@ -898,7 +898,7 @@ scandir(
         size_t allocated = 0;
 
         /* Read directory entries to memory */
-        while (1) {
+        while (true) {
 
             /* Enlarge pointer table to make room for another pointer */
             if (size >= allocated) {

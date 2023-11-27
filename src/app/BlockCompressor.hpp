@@ -128,7 +128,7 @@ namespace kanzi {
 
        bool removeListener(Listener& bl);
 
-       void dispose();
+       void dispose() const {};
 
    private:
        static const int DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024;

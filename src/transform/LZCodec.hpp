@@ -31,7 +31,7 @@ namespace kanzi {
 
         LZCodec(Context& ctx) THROW;
 
-        virtual ~LZCodec() { delete _delegate; }
+        ~LZCodec() { delete _delegate; }
 
         bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
 
@@ -73,7 +73,7 @@ namespace kanzi {
             _pCtx = &ctx;
         }
 
-        virtual ~LZXCodec()
+        ~LZXCodec()
         {
             _bufferSize = 0;
             _hashSize = 0;
@@ -141,7 +141,7 @@ namespace kanzi {
             _hashSize = 0;
         }
 
-        virtual ~LZPCodec()
+        ~LZPCodec()
         {
             delete[] _hashes;
         }

@@ -44,19 +44,18 @@ namespace kanzi
 
        void _dispose();
 
-   protected:
-       virtual void flush();
+       void flush();
 
    public:
        BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor* predictor, bool deallocate=true) THROW;
 
-       virtual ~BinaryEntropyEncoder();
+       ~BinaryEntropyEncoder();
 
        int encode(const byte block[], uint blkptr, uint count) THROW;
 
        OutputBitStream& getBitStream() const { return _bitstream; }
 
-       virtual void dispose() { _dispose(); }
+       void dispose() { _dispose(); }
 
        void encodeByte(byte val);
 

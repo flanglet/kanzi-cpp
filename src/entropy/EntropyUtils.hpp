@@ -38,7 +38,7 @@ namespace kanzi
 
        ~EntropyUtils() {}
 
-       static int encodeAlphabet(OutputBitStream& obs, uint alphabet[], int length, int count);
+       static int encodeAlphabet(OutputBitStream& obs, const uint alphabet[], int length, int count);
 
        static int decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW;
 

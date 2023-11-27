@@ -55,22 +55,22 @@ namespace kanzi
    class ANSRangeEncoder : public EntropyEncoder
    {
    public:
-	   static const int ANS_TOP = 1 << 15; // max possible for ANS_TOP=1<<23
+       static const int ANS_TOP = 1 << 15; // max possible for ANS_TOP=1<<23
 
-	   ANSRangeEncoder(OutputBitStream& bitstream,
+       ANSRangeEncoder(OutputBitStream& bitstream,
                       int order = 0,
                       int chunkSize = DEFAULT_ANS0_CHUNK_SIZE,
                       int logRange = DEFAULT_LOG_RANGE) THROW;
 
-	   ~ANSRangeEncoder();
+       ~ANSRangeEncoder();
 
-	   int updateFrequencies(uint frequencies[], uint lr);
+       int updateFrequencies(uint frequencies[], uint lr);
 
-	   int encode(const byte block[], uint blkptr, uint len);
+       int encode(const byte block[], uint blkptr, uint len);
 
-	   OutputBitStream& getBitStream() const { return _bitstream; }
+       OutputBitStream& getBitStream() const { return _bitstream; }
 
-	   void dispose() { _dispose(); }
+       void dispose() { _dispose(); }
 
 
    private:
@@ -79,25 +79,25 @@ namespace kanzi
        static const int MIN_CHUNK_SIZE = 1024;
        static const int MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
 
-	   ANSEncSymbol* _symbols;
-	   uint* _freqs;
-	   byte* _buffer;
-	   uint _bufferSize;
-	   OutputBitStream& _bitstream;
-	   uint _chunkSize;
-	   uint _logRange;
-	   uint _order;
+       ANSEncSymbol* _symbols;
+       uint* _freqs;
+       byte* _buffer;
+       uint _bufferSize;
+       OutputBitStream& _bitstream;
+       uint _chunkSize;
+       uint _logRange;
+       uint _order;
 
 
-	   int rebuildStatistics(const byte block[], int end, uint lr);
+       int rebuildStatistics(const byte block[], int end, uint lr);
 
-	   void encodeChunk(const byte block[], int end);
+       void encodeChunk(const byte block[], int end);
 
-	   int encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym) const;
+       int encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym) const;
 
-	   bool encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], uint lr);
+       bool encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], uint lr) const;
 
-	   void _dispose() const {}
+       void _dispose() const {}
    };
 
 
