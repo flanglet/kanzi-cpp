@@ -152,9 +152,18 @@ int testEntropyCodecCorrectness(const string& name)
             for (int i = 0; i < 32; i++)
                 val[i] = byte(2); // all identical
         }
-        else if (ii == 5) {
+        else if (ii == 4) {
             for (int i = 0; i < 32; i++)
                 val[i] = byte(2 + (i & 1)); // 2 symbols
+        }
+        else if (ii == 5) {
+            size = 1;
+            val[0] = byte(42);
+        }
+        else if (ii == 6) {
+            size = 2;
+            val[0] = byte(42);
+            val[1] = byte(42);
         }
         else {
             size = 256;

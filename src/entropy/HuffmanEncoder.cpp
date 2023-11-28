@@ -141,6 +141,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
     return count;
 }
 
+// Called only when more than 1 symbol
 uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count) const
 {
     // Sort ranks by increasing freqs (first key) and increasing value (second key)
@@ -203,6 +204,7 @@ void HuffmanEncoder::computeInPlaceSizesPhase1(uint data[], int n)
     }
 }
 
+// n must be at least 2
 void HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
 {
     uint topLevel = n - 2; //root
@@ -213,7 +215,7 @@ void HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
     while (i > 0) {
         uint k = topLevel;
 
-        while ((k != 0) && (data[k - 1] >= topLevel))
+        while ((k > 0) && (data[k - 1] >= topLevel))
             k--;
 
         const int internalNodesAtLevel = topLevel - k;
