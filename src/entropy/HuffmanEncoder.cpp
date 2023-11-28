@@ -215,7 +215,7 @@ void HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
     while (i > 0) {
         uint k = topLevel;
 
-        while ((k > 0) && (data[k - 1] >= topLevel))
+        while ((k != 0) && (data[k - 1] >= topLevel))
             k--;
 
         const int internalNodesAtLevel = topLevel - k;
