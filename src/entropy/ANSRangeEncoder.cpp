@@ -145,8 +145,10 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequ
 // Dynamically compute the frequencies for every chunk of data in the block
 int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint count)
 {
-    if (count == 0)
-        return 0;
+    if (count <= 32) {
+        _bitstream.writeBits(&block[blkptr], 8 * count);
+        return count;
+    }
 
     const uint end = blkptr + count;
     uint startChunk = blkptr;

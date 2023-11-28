@@ -165,8 +165,10 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
 
 int ANSRangeDecoder::decode(byte block[], uint blkptr, uint count)
 {
-    if (count == 0)
-        return 0;
+    if (count <= 32) {
+        _bitstream.readBits(&block[blkptr], 8 * count);
+        return count;
+    }
 
     const uint end = blkptr + count;
     uint startChunk = blkptr;
