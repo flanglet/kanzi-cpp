@@ -702,7 +702,7 @@ void DivSufSort::ssSwapMerge(int pa, int first, int middle, int last, int buf,
             }
 
             if (((check & 4) != 0)
-                && ((ssCompare(&_sa[pa + getIndex(_sa[last - 1])], &_sa[pa + _sa[last]], depth) == 0))) {
+                && (ssCompare(&_sa[pa + getIndex(_sa[last - 1])], &_sa[pa + _sa[last]], depth) == 0)) {
                 _sa[last] = ~_sa[last];
             }
 
@@ -728,7 +728,7 @@ void DivSufSort::ssSwapMerge(int pa, int first, int middle, int last, int buf,
             }
 
             if (((check & 4) != 0)
-                && ((ssCompare(&_sa[pa + getIndex(_sa[last - 1])], &_sa[pa + _sa[last]], depth) == 0))) {
+                && (ssCompare(&_sa[pa + getIndex(_sa[last - 1])], &_sa[pa + _sa[last]], depth) == 0)) {
                 _sa[last] = ~_sa[last];
             }
 
@@ -814,7 +814,7 @@ void DivSufSort::ssSwapMerge(int pa, int first, int middle, int last, int buf,
             }
 
             if (((check & 4) != 0)
-                && ((ssCompare(&_sa[pa + getIndex(_sa[last - 1])], &_sa[pa + _sa[last]], depth) == 0))) {
+                && (ssCompare(&_sa[pa + getIndex(_sa[last - 1])], &_sa[pa + _sa[last]], depth) == 0)) {
                 _sa[last] = ~_sa[last];
             }
 
@@ -1371,14 +1371,14 @@ int DivSufSort::ssPartition(int pa, int first, int last, int depth)
     while (true) {
         a++;
 
-        for (; (a < b) && (_sa[pa + _sa[a]] + d >= _sa[pb + _sa[a]]);) {
+        while ((a < b) && (_sa[pa + _sa[a]] + d >= _sa[pb + _sa[a]])) {
             _sa[a] = ~_sa[a];
             a++;
         }
 
         b--;
 
-        for (; (b > a) && (_sa[pa + _sa[b]] + d < _sa[pb + _sa[b]]);)
+        while ((b > a) && (_sa[pa + _sa[b]] + d < _sa[pb + _sa[b]]))
             b--;
 
         if (b <= a)

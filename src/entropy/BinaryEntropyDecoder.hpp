@@ -42,7 +42,6 @@ namespace kanzi
        bool _deallocate;
        SliceArray<byte> _sba;
 
-   protected:
        void read();
 
        void _dispose() const {}

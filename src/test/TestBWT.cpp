@@ -169,7 +169,7 @@ int testBWTCorrectness(bool isBWT)
 int testBWTSpeed(bool isBWT, int iter, bool isSmallSize)
 {
     // Test speed
-    int size = (isSmallSize) ? 256 * 1024 : 10 * 1024 * 1024;
+    int size = isSmallSize ? 256 * 1024 : 10 * 1024 * 1024;
     int res = 0;
 
     cout << endl
@@ -180,9 +180,9 @@ int testBWTSpeed(bool isBWT, int iter, bool isSmallSize)
     srand(uint(time(nullptr)));
 
     for (int jj = 0; jj < 3; jj++) {
-        byte* input = (isSmallSize) ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
-        byte* output = (isSmallSize) ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
-        byte* reverse = (isSmallSize) ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
+        byte* input = isSmallSize ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
+        byte* output = isSmallSize ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
+        byte* reverse = isSmallSize ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
         SliceArray<byte> ia1(input, size, 0);
         SliceArray<byte> ia2(output, size, 0);
         SliceArray<byte> ia3(reverse, size, 0);

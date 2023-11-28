@@ -213,7 +213,7 @@ int testEntropyCodecCorrectness(const string& name)
         }
 
         cout << endl;
-        cout << ((ok) ? "Identical" : "Different") << endl;
+        cout << (ok ? "Identical" : "Different") << endl;
         delete[] values2;
     }
 

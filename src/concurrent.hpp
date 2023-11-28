@@ -39,6 +39,17 @@ limitations under the License.
 #endif
 
 
+#ifdef CONCURRENCY_ENABLED
+   #include <vector>
+   #include <queue>
+   #include <memory>
+   #include <thread>
+   #include <mutex>
+   #include <condition_variable>
+   #include <future>
+   #include <functional>
+   #include <stdexcept>
+#endif
 
 #ifdef __x86_64__
    #ifdef __clang__
@@ -65,16 +76,6 @@ class Task {
 
 
 #ifdef CONCURRENCY_ENABLED
-   #include <vector>
-   #include <queue>
-   #include <memory>
-   #include <thread>
-   #include <mutex>
-   #include <condition_variable>
-   #include <future>
-   #include <functional>
-   #include <stdexcept>
-
    class ThreadPool FINAL {
    public:
        ThreadPool(uint32_t threads = 8) THROW;

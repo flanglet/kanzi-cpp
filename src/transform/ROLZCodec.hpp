@@ -317,7 +317,7 @@ namespace kanzi {
        }
        else {
            _high = _low + split;
-           _probs[_pIdx][_ctx + _c1] -= (((_probs[_pIdx][_ctx + _c1] - PSCALE + 32) >> 5));
+           _probs[_pIdx][_ctx + _c1] -= ((_probs[_pIdx][_ctx + _c1] - PSCALE + 32) >> 5);
            _c1 += (_c1 + 1);
        }
 

@@ -116,7 +116,7 @@ int testBitStreamCorrectnessAligned1()
         cout << endl
              << "Bits read: " << ibs.read() << endl;
         cout << endl
-             << "\n" << ((ok) ? "Success" : "Failure") << endl;
+             << "\n" << (ok ? "Success" : "Failure") << endl;
         cout << endl;
         cout << endl;
     }
@@ -231,7 +231,7 @@ int testBitStreamCorrectnessMisaligned1()
         cout << endl
              << "Bits read: " << ibs.read() << endl;
         cout << endl
-             << "\n" << ((ok) ? "Success" : "Failure") << endl;
+             << "\n" << (ok ? "Success" : "Failure") << endl;
         cout << endl;
         cout << endl;
 
@@ -388,7 +388,7 @@ int testBitStreamCorrectnessAligned2()
         cout << endl
              << "Bits read: " << ibs.read() << endl;
         cout << endl
-             << "\n" << ((ok) ? "Success" : "Failure") << endl;
+             << "\n" << (ok ? "Success" : "Failure") << endl;
         cout << endl;
         cout << endl;
 
@@ -481,7 +481,7 @@ int testBitStreamCorrectnessMisaligned2()
         cout << endl
              << "Bits read: " << ibs.read() << endl;
         cout << endl
-             << "\n" << ((ok) ? "Success" : "Failure") << endl;
+             << "\n" << (ok ? "Success" : "Failure") << endl;
         cout << endl;
         cout << endl;
     }
