@@ -66,13 +66,11 @@ int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
         const uint chunkSize = min(DEFAULT_CHUNK_SIZE, end - startChunk);
         const int szBytes = int(EntropyUtils::readVarInt(_bitstream));
         _current = _bitstream.readBits(56);
+        const int bufSize = min(szBytes + (szBytes >> 3), 1024);
 
-        if (szBytes == 0)
-           break;
-
-        if (_sba._length < szBytes) {
+        if (_sba._length < bufSize) {
             delete[] _sba._array;
-            _sba._length = szBytes + (szBytes >> 3);
+            _sba._length = bufSize;
             _sba._array = new byte[_sba._length];
         }
 
