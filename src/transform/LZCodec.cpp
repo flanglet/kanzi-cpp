@@ -171,12 +171,13 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
             if ((ref != srcIdx - repd[0]) && (ref != srcIdx - repd[1])) {
                 // Check if better match at next position
-                const int32 h1 = hash(&src[srcIdx + 1]);
+                const int srcIdx1 = srcIdx + 1;
+                const int32 h1 = hash(&src[srcIdx1]);
                 const int ref1 = _hashes[h1];
-                _hashes[h1] = srcIdx + 1;
+                _hashes[h1] = srcIdx1;
 
-                if ((ref1 > minRef + 1) && (memcmp(&src[srcIdx + 1], &src[ref1], 4) == 0)) {
-                    const int bestLen1 = findMatch(src, srcIdx + 1, ref1, min(srcEnd - srcIdx - 1, MAX_MATCH));
+                if ((ref1 > minRef + 1) && (memcmp(&src[srcIdx1 + bestLen - 4], &src[ref1 + bestLen - 4], 4) == 0)) {
+                    const int bestLen1 = findMatch(src, srcIdx1, ref1, min(srcEnd - srcIdx1, MAX_MATCH));
 
                     // Select best match
                     if ((bestLen1 > bestLen) || ((bestLen1 == bestLen) && (ref1 > ref))) {
