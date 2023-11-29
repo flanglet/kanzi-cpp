@@ -48,15 +48,14 @@ namespace kanzi
        clock_t _completionTime;
 
        DecodingTaskResult()
-           : _blockId(-1)
-           , _decoded(0)
-           , _data(nullptr)
-           , _error(0)
-           , _msg()
-           , _checksum(0)
-           , _skipped(false)
-           , _completionTime(clock())
        {
+           _blockId = -1;
+           _decoded = 0;
+           _data = nullptr;
+           _error = 0;
+           _checksum = 0;
+           _skipped = false;
+           _completionTime = clock();
        }
 
        DecodingTaskResult(const SliceArray<byte>& data, int blockId, int decoded, int checksum,
@@ -68,8 +67,8 @@ namespace kanzi
            , _msg(msg)
            , _checksum(checksum)
            , _skipped(skipped)
-           , _completionTime(clock())
        {
+           _completionTime = clock();
        }
 
        DecodingTaskResult(const DecodingTaskResult& result)

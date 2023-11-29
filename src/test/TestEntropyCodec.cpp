@@ -234,7 +234,7 @@ int testEntropyCodecSpeed(const string& name)
     // Test speed
     cout << endl
          << endl
-         << "=== Speed test for " << name << "===" << endl;
+         << "=== Speed test for " << name << " ===" << endl;
     int repeats[] = { 3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3 };
     int size = 500000;
     int iter = 100;
@@ -253,19 +253,17 @@ int testEntropyCodecSpeed(const string& name)
             int idx = 0;
             memset(values1, 0x00, size);
             memset(values2, 0xAA, size);
+            int n = 0;
 
-            for (int i = 0; i < size; i++) {
-                int i0 = i;
-                int len = repeats[idx];
+            while (n < size) {
+                int n0 = n;
+                int len = max(min(repeats[idx], size - n), 1);
                 idx = (idx + 1) & 0x0F;
                 byte b = (byte)(rand() % 255);
 
-                if (i0 + len >= size)
-                    len = size - i0 - 1;
-
-                for (int j = i0; j < i0 + len; j++) {
+                for (int j = n0; j < n0 + len; j++) {
                     values1[j] = b;
-                    i++;
+                    n++;
                 }
             }
 
@@ -351,10 +349,10 @@ int TestEntropyCodec_main(int argc, const char* argv[])
 
         if (argc == 1) {
 #if _MSC_VER == 1500
-			string allCodecs[8] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
+            string allCodecs[8] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
 
-			for (int i = 0; i < 8; i++)
-				codecs.push_back(allCodecs[i]);
+            for (int i = 0; i < 8; i++)
+                codecs.push_back(allCodecs[i]);
 #else
             codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
 #endif
@@ -365,19 +363,19 @@ int TestEntropyCodec_main(int argc, const char* argv[])
 
             if (str == "-TYPE=ALL") {
 #if _MSC_VER == 1500
-			string allCodecs[] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
+            string allCodecs[] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
 
-			for (int i = 0; i < 8; i++)
-				codecs.push_back(allCodecs[i]);
+            for (int i = 0; i < 8; i++)
+                codecs.push_back(allCodecs[i]);
 #else
             codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
 #endif
-			}
+            }
             else {
                 codecs.push_back(str.substr(6));
             }
 
-	    if (argc > 2) {
+        if (argc > 2) {
                 str = argv[2];
                 transform(str.begin(), str.end(), str.begin(), ::toupper);
                 doPerf = str != "-NOPERF";
@@ -390,7 +388,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
                  << "Test" << *it << endl;
             res |= testEntropyCodecCorrectness(*it);
 
-	    if (doPerf == true)
+        if (doPerf == true)
                res |= testEntropyCodecSpeed(*it);
         }
     }

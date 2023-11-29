@@ -508,9 +508,9 @@ int testBitStreamSpeed2(const string& fileName)
     byte* input = new byte[3250000*32];
     byte* output = new byte[3250000*32];
 
-	for (int i = 0; i < 3250000; i++) {
-		memcpy(&input[i*32], &values[0], 32);
-	}
+    for (int i = 0; i < 3250000; i++) {
+        memcpy(&input[i*32], &values[0], 32);
+    }
 
     for (int test = 1; test <= iter; test++) {
         ofstream os(fileName.c_str(), std::ofstream::binary);
@@ -569,7 +569,7 @@ int TestDefaultBitStream_main(int argc, const char* argv[])
 
     if (argc > 2) {
         string str = argv[2];
-	transform(str.begin(), str.end(), str.begin(), ::toupper);
+    transform(str.begin(), str.end(), str.begin(), ::toupper);
         doPerf = str != "-NOPERF";
     }
 

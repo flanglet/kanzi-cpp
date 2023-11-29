@@ -152,7 +152,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     int idxMax = -1;
 
     // Scale frequencies by stretching distribution over complete range
-    for (int i = 0; (i < length) && (sumFreq < totalFreq); i++) {
+    for (int i = 0; i < length; i++) {
         alphabet[i] = 0;
         const uint f = freqs[i];
 
@@ -164,8 +164,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
             idxMax = i;
         }
 
-        sumFreq += f;
-        int64 sf = int64(f) * int64(scale);
+        const int64 sf = int64(f) * int64(scale);
         uint scaledFreq;
 
         if (sf <= int64(totalFreq)) {
@@ -186,6 +185,10 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         alphabet[alphabetSize++] = i;
         sumScaledFreq += scaledFreq;
         freqs[i] = scaledFreq;
+        sumFreq += f;
+
+	if (sumFreq >= totalFreq)
+           break;
     }
 
     if (alphabetSize == 0)

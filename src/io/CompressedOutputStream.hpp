@@ -42,10 +42,9 @@ namespace kanzi {
        std::string _msg;
 
        EncodingTaskResult()
-           : _blockId(-1)
-           , _error(0)
-           , _msg()
        {
+           _blockId = -1;
+           _error = 0;
        }
 
        EncodingTaskResult(int blockId, int error, const std::string& msg)

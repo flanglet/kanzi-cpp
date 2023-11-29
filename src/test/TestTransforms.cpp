@@ -183,17 +183,17 @@ int testTransformsCorrectness(const string& name)
         else if (ii < 10) {
             size = 2048;
             byte arr[2048] = { byte(0) };
-	    const int step = max(ii - 5, 2);
-	    arr[60] = byte(rand() % mod);
-	    arr[61] = byte(rand() % mod);
-	    arr[62] = byte(rand() % mod);
-	    arr[63] = byte(rand() % mod);
+        const int step = max(ii - 5, 2);
+        arr[60] = byte(rand() % mod);
+        arr[61] = byte(rand() % mod);
+        arr[62] = byte(rand() % mod);
+        arr[63] = byte(rand() % mod);
 
-	    // Simulate interleaved channels for MM
+        // Simulate interleaved channels for MM
             for (int j = 64; j < size; j += step) {
                 for (int k = 0; k < step; k++)
                    arr[j + k] = arr[j + k - step];
-	    }
+        }
 
             memcpy(values, &arr[0], size);
         }
@@ -270,14 +270,14 @@ int testTransformsCorrectness(const string& name)
             goto End;
         }
 
-	if (name != "MM") { // MM can expand
+    if (name != "MM") { // MM can expand
             if ((iba1._index != size) || (iba1._index < iba2._index)) {
                 cout << endl
                      << "No compression (ratio > 1.0), skip reverse" << endl;
                 delete ff;
                 continue;
             }
-	}
+    }
 
         delete ff;
         cout << endl;
@@ -473,8 +473,8 @@ int TestTransforms_main(int argc, const char* argv[])
 #if _MSC_VER == 1500
             string allCodecs[13] = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
 
-			for (int i = 0; i < 13; i++)
-				codecs.push_back(allCodecs[i]);
+            for (int i = 0; i < 13; i++)
+                codecs.push_back(allCodecs[i]);
 #else
             codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
 #endif
@@ -485,12 +485,12 @@ int TestTransforms_main(int argc, const char* argv[])
 
             if (str == "-TYPE=ALL") {
 #if _MSC_VER == 1500
-				string allCodecs[13] = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
+                string allCodecs[13] = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
 
-				for (int i = 0; i < 13; i++)
-					codecs.push_back(allCodecs[i]);
+                for (int i = 0; i < 13; i++)
+                    codecs.push_back(allCodecs[i]);
 #else
-				codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
+                codecs = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
 #endif
             }
             else {

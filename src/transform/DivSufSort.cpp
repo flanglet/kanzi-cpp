@@ -1296,7 +1296,7 @@ void DivSufSort::ssMultiKeyIntroSort(int pa, int first, int last, int depth)
     }
 }
 
-int DivSufSort::ssPivot(int td, int pa, int first, int last)
+int DivSufSort::ssPivot(int td, int pa, int first, int last) const
 {
     int t = last - first;
     int middle = first + (t >> 1);
@@ -1347,7 +1347,7 @@ int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4,
 
 int DivSufSort::ssMedian3(int idx, int pa, int v1, int v2, int v3) const
 {
-    uint8* buf0 = &_buffer[idx];
+    const uint8* buf0 = &_buffer[idx];
     const int* buf1 = &_sa[pa];
 
     if (buf0[buf1[_sa[v1]]] > buf0[buf1[_sa[v2]]]) {
@@ -1993,7 +1993,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
     }
 }
 
-int DivSufSort::trPivot(int arr[], int isad, int first, int last)
+int DivSufSort::trPivot(int arr[], int isad, int first, int last) const
 {
     int t = last - first;
     int middle = first + (t >> 1);

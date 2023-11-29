@@ -23,17 +23,17 @@ using namespace kanzi;
 using namespace std;
 
 BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor* predictor, bool deallocate) THROW
-    : _bitstream(bitstream),
-      _sba(new byte[0], 0)
+    : _predictor(predictor)
+    , _bitstream(bitstream)
+    , _deallocate(deallocate)
+    , _sba(new byte[0], 0)
 {
     if (predictor == nullptr)
         throw invalid_argument("Invalid null predictor parameter");
 
-    _predictor = predictor;
     _low = 0;
     _high = TOP;
     _current = 0;
-    _deallocate = deallocate;
 }
 
 BinaryEntropyDecoder::~BinaryEntropyDecoder()

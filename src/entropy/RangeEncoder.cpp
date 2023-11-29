@@ -71,7 +71,7 @@ int RangeEncoder::updateFrequencies(uint frequencies[], int size, int lr)
     return alphabetSize;
 }
 
-bool RangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], int lr) const
+bool RangeEncoder::encodeHeader(int alphabetSize, const uint alphabet[], uint frequencies[], int lr) const
 {
     const int encoded = EntropyUtils::encodeAlphabet(_bitstream, alphabet, 256, alphabetSize);
 

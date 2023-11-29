@@ -178,7 +178,7 @@ namespace kanzi
 
        void ssMultiKeyIntroSort(int pa, int first, int last, int depth);
 
-       int ssPivot(int td, int pa, int first, int last);
+       int ssPivot(int td, int pa, int first, int last) const;
 
        int ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5) const;
 
@@ -198,7 +198,7 @@ namespace kanzi
 
        void trIntroSort(int isa, int isad, int first, int last, TRBudget& budget);
 
-       int trPivot(int arr[], int isad, int first, int last);
+       int trPivot(int arr[], int isad, int first, int last) const;
 
        int trMedian5(const int arr[], int isad, int v1, int v2, int v3, int v4, int v5) const;
 

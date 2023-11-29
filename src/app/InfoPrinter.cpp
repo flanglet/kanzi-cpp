@@ -24,9 +24,8 @@ using namespace std;
 InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os)
     : _os(os)
     , _type(type)
+    , _level(infoLevel)
 {
-    _level = infoLevel;
-
     if (type == InfoPrinter::ENCODING) {
         _thresholds[0] = Event::COMPRESSION_START;
         _thresholds[1] = Event::BEFORE_TRANSFORM;

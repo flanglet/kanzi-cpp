@@ -83,13 +83,16 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], uint lr)
             ANSEncSymbol* symb = &_symbols[k << 8];
             int sum = 0;
 
-            for (int i = 0, count = 0; (i < 256) && (count < alphabetSize); i++) {
+            for (int i = 0, count = 0; i < 256; i++) {
                 if (f[i] == 0)
                     continue;
 
                 symb[i].reset(sum, f[i], lr);
                 sum += f[i];
                 count++;
+
+		if (count >= alphabetSize)
+                   break;
             }
         }
 
@@ -101,7 +104,7 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], uint lr)
 }
 
 // Encode alphabet and frequencies
-bool ANSRangeEncoder::encodeHeader(int alphabetSize, uint alphabet[], uint frequencies[], uint lr) const
+bool ANSRangeEncoder::encodeHeader(int alphabetSize, const uint alphabet[], uint frequencies[], uint lr) const
 {
     const int encoded = EntropyUtils::encodeAlphabet(_bitstream, alphabet, 256, alphabetSize);
 

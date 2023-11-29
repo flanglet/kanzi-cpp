@@ -40,7 +40,7 @@ namespace kanzi {
    {
 
    public:
-       AliasCodec(int order = 1) : _pCtx(nullptr),  _order(order) { }
+       AliasCodec(int order = 1) : _order(order) { _pCtx = nullptr; }
 
        AliasCodec(Context& ctx);
 
