@@ -160,20 +160,11 @@ uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count)
     // See [In-Place Calculation of Minimum-Redundancy Codes]
     // by Alistair Moffat & Jyrki Katajainen
     computeInPlaceSizesPhase1(freqs, count);
-    computeInPlaceSizesPhase2(freqs, count);
-    uint maxCodeLen = 0;
+    const uint maxCodeLen = computeInPlaceSizesPhase2(freqs, count);
 
-    for (int i = 0; i < count; i++) {
-        const uint codeLen = freqs[i];
-
-        if (maxCodeLen < codeLen) {
-            maxCodeLen = codeLen;
-
-            if (maxCodeLen > HuffmanCommon::MAX_SYMBOL_SIZE)
-                break;
-        }
-
-        sizes[ranks[i]] = uint16(codeLen);
+    if (maxCodeLen <= HuffmanCommon::MAX_SYMBOL_SIZE) {
+        for (int i = 0; i < count; i++)
+            sizes[ranks[i]] = uint16(freqs[i]);
     }
 
     return maxCodeLen;
@@ -205,8 +196,12 @@ void HuffmanEncoder::computeInPlaceSizesPhase1(uint data[], int n)
 }
 
 // n must be at least 2
-void HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
+// return max symbol length
+uint HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
 {
+    if (n < 2)
+       return 0;
+
     uint topLevel = n - 2; //root
     uint depth = 1;
     uint i = n;
@@ -228,6 +223,8 @@ void HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
         topLevel = k;
         depth++;
     }
+
+    return depth - 1;
 }
 
 // Dynamically compute the frequencies for every chunk of data in the block

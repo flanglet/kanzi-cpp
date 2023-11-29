@@ -43,7 +43,7 @@ namespace kanzi
 
        static void computeInPlaceSizesPhase1(uint data[], int n);
 
-       static void computeInPlaceSizesPhase2(uint data[], int n);
+       static uint computeInPlaceSizesPhase2(uint data[], int n);
 
    public:
        HuffmanEncoder(OutputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE) THROW;
