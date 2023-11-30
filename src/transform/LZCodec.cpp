@@ -242,22 +242,22 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             }
 
             _mBuf[mIdx++] = byte(dist);
-            const int mLen = bestLen - minMatch;
+            const int mLen = bestLen - minMatch - 14;
             
             // Emit match length
-            if (mLen >= 14) {
-                if (mLen == 14) {
+            if (mLen >= 0) {
+                if (mLen == 0) {
                     // Avoid the penalty of one extra byte to encode match length
                     token = (dist >= dThreshold) ? 0x1D : 0x0D;
                     bestLen--;
                 }
                 else {
                     token = (dist >= dThreshold) ? 0x1E : 0x0E;
-                    mLenIdx += emitLength(&_mLenBuf[mLenIdx], mLen - 14);
+                    mLenIdx += emitLength(&_mLenBuf[mLenIdx], mLen);
                 }
             }
             else {
-                token = (dist >= dThreshold) ? 0x10 | mLen : mLen;
+                token = (dist >= dThreshold) ? mLen + 30 : mLen + 14;
             }
         }
 
