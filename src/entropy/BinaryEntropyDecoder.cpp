@@ -52,12 +52,12 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
 
     uint startChunk = blkptr;
     const uint end = blkptr + count;
-    uint length = (count < 64) ? 64 : count;
+    uint length = max(count, uint(64));
 
-    if (count >= MAX_CHUNK_SIZE) {
+    if (length >= MAX_CHUNK_SIZE) {
         // If the block is big (>=64MB), split the decoding to avoid allocating
         // too much memory.
-        length = (count < 8 * MAX_CHUNK_SIZE) ? count >> 3 : count >> 4;
+        length = (length / 8 < MAX_CHUNK_SIZE) ? count >> 3 : count >> 4;
     }
 
     // Split block into chunks, read bit array from bitstream and decode chunk
