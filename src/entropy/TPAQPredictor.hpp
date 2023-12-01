@@ -459,11 +459,14 @@ namespace kanzi
        // on SandyBridge/Windows and slower on SkyLake/Linux except when [ctx & 255 == 0]
        // (with c < 256). Hence, use XOR for _ctx5 which is the only context that fulfills
        // the condition.
-       prefetchRead(&_bigStatesMap[(_ctx2 + _c0) & _statesMask]);
-       prefetchRead(&_bigStatesMap[(_ctx3 + _c0) & _statesMask]);
-       prefetchRead(&_bigStatesMap[(_ctx4 + _c0) & _statesMask]);
-       prefetchRead(&_bigStatesMap[(_ctx5 ^ _c0) & _statesMask]);
-       prefetchRead(&_bigStatesMap[(_ctx6 + _c0) & _statesMask]);
+       const int idx2 = (_ctx2 + _c0) & _statesMask;
+       const int idx3 = (_ctx3 + _c0) & _statesMask;
+       const int idx4 = (_ctx4 + _c0) & _statesMask;
+       const int idx5 = (_ctx5 ^ _c0) & _statesMask;
+       prefetchRead(&_bigStatesMap[idx2]);
+       prefetchRead(&_bigStatesMap[idx3]);
+       prefetchRead(&_bigStatesMap[idx4]);
+       prefetchRead(&_bigStatesMap[idx5]);
 
        const uint8* table = STATE_TRANSITIONS[bit];
        *_cp0 = table[*_cp0];
@@ -476,13 +479,13 @@ namespace kanzi
        const int p0 = STATE_MAP[*_cp0];
        _cp1 = &_smallStatesMap1[_ctx1 + _c0];
        const int p1 = STATE_MAP[*_cp1];
-       _cp2 = &_bigStatesMap[(_ctx2 + _c0) & _statesMask];
+       _cp2 = &_bigStatesMap[idx2];
        const int p2 = STATE_MAP[*_cp2];
-       _cp3 = &_bigStatesMap[(_ctx3 + _c0) & _statesMask];
+       _cp3 = &_bigStatesMap[idx3];
        const int p3 = STATE_MAP[*_cp3];
-       _cp4 = &_bigStatesMap[(_ctx4 + _c0) & _statesMask];
+       _cp4 = &_bigStatesMap[idx4];
        const int p4 = STATE_MAP[*_cp4];
-       _cp5 = &_bigStatesMap[(_ctx5 ^ _c0) & _statesMask];
+       _cp5 = &_bigStatesMap[idx5];
        const int p5 = STATE_MAP[*_cp5];
 
        const int p7 = (_matchLen == 0) ? 0 : getMatchContextPred();
@@ -498,8 +501,10 @@ namespace kanzi
           }
        } else {
           // One more prediction
+          const int idx6 = (_ctx6 + _c0) & _statesMask;
+          prefetchRead(&_bigStatesMap[idx6]);
           *_cp6 = table[*_cp6];
-          _cp6 = &_bigStatesMap[(_ctx6 + _c0) & _statesMask];
+          _cp6 = &_bigStatesMap[idx6];
           const int p6 = STATE_MAP[*_cp6];
 
           // Mix predictions using NN
