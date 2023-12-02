@@ -148,10 +148,9 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
 
     uint sumScaledFreq = 0;
     uint sumFreq = 0;
-    uint freqMax = 0;
-    int idxMax = -1;
+    int idxMax = 0;
 
-    // Scale frequencies by stretching distribution over complete range
+    // Scale frequencies by squeezing/stretching distribution over complete range
     for (int i = 0; i < length; i++) {
         alphabet[i] = 0;
         const uint f = freqs[i];
@@ -159,11 +158,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         if (f == 0)
             continue;
 
-        if (f > freqMax) {
-            freqMax = f;
-            idxMax = i;
-        }
-
+        idxMax = (f > freqs[idxMax]) ? i : idxMax;
         const int64 sf = int64(f) * int64(scale);
         uint scaledFreq;
 
@@ -204,8 +199,8 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
 
     const int delta = int(sumScaledFreq - scale);
 
-    if (abs(delta) * 100 < int(freqs[idxMax]) * 5) {
-        // Fast path: just adjust the max frequency 
+    if (abs(delta) * 20 < int(freqs[idxMax])) {
+        // Fast path (small error): just adjust the max frequency
         freqs[idxMax] -= delta;
         return alphabetSize;
     }
@@ -275,9 +270,13 @@ uint32 EntropyUtils::readVarInt(InputBitStream& ibs)
     uint32 res = value & 0x7F;
     int shift = 7;
 
-    while ((value >= 128) && (shift <= 28)) {
+    while (value >= 128) {
         value = uint32(ibs.readBits(8));
         res |= ((value & 0x7F) << shift);
+
+        if (shift == 28)
+            break;
+
         shift += 7;
     }
 
