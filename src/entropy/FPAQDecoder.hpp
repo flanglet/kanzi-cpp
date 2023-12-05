@@ -89,7 +89,7 @@ namespace kanzi
        }
 
        // Read 32 bits from bitstream
-       while (((_low ^ _high) >> 24) == 0)
+       if (((_low ^ _high) >> 24) == 0)
            read();
 
        return bit;

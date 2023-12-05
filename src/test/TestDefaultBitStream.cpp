@@ -569,7 +569,7 @@ int TestDefaultBitStream_main(int argc, const char* argv[])
 
     if (argc > 2) {
         string str = argv[2];
-    transform(str.begin(), str.end(), str.begin(), ::toupper);
+        transform(str.begin(), str.end(), str.begin(), ::toupper);
         doPerf = str != "-NOPERF";
     }
 

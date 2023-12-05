@@ -45,7 +45,7 @@ namespace kanzi
 
        Context(const Context& ctx);
        Context& operator=(const Context& ctx);
-       virtual ~Context() {}
+       virtual ~Context() { _map.clear(); }
 
        bool has(const std::string& key) const;
        int getInt(const std::string& key, int defValue = 0) const;

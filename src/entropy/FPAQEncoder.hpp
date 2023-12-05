@@ -78,7 +78,7 @@ namespace kanzi
        }
 
        // Write unchanged first 32 bits to bitstream
-       while (((_low ^ _high) >> 24) == 0)
+       if (((_low ^ _high) >> 24) == 0)
            flush();
    }
 
