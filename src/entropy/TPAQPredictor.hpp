@@ -404,7 +404,7 @@ namespace kanzi
    void TPAQPredictor<T>::update(int bit)
    {
        _mixer->update(bit);
-       _c0 = (_c0 << 1) | bit;
+       _c0 += (_c0 + bit);
        _bpos--;
 
        if (_bpos == 0) {
