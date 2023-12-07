@@ -54,7 +54,7 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
         throw invalid_argument("Missing input name");
     }
 
-    _inputName = (it->second == "") ? "STDIN" : it->second;
+    _inputName = it->second == "" ? "STDIN" : it->second;
     args.erase(it);
     it = args.find("outputName");
 
@@ -62,7 +62,7 @@ BlockDecompressor::BlockDecompressor(map<string, string>& args)
         throw invalid_argument("Missing output name");
     }
 
-    _outputName = ((it->second == "") && (_inputName == "STDIN")) ? "STDOUT" : it->second;
+    _outputName = (it->second == "") && (_inputName == "STDIN") ? "STDOUT" : it->second;
     args.erase(it);
     it = args.find("verbose");
 
@@ -174,7 +174,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         }
 
         nbFiles = int(files.size());
-        string strFiles = (nbFiles > 1) ? " files" : " file";
+        string strFiles = nbFiles > 1 ? " files" : " file";
         ss << nbFiles << strFiles << " to decompress\n";
         log.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
@@ -202,7 +202,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         ss << "Overwrite set to " << (_overwrite ? "true" : "false");
         log.println(ss.str().c_str(), true);
         ss.str(string());
-        ss << "Using " << _jobs << " job" << ((_jobs > 1) ? "s" : "");
+        ss << "Using " << _jobs << " job" << (_jobs > 1 ? "s" : "");
         log.println(ss.str().c_str(), true);
         ss.str(string());
     }
@@ -279,7 +279,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     Context ctx;
 #endif
     ctx.putInt("verbosity", _verbosity);
-    ctx.putInt("overwrite", (_overwrite == true) ? 1 : 0);
+    ctx.putInt("overwrite", _overwrite == true ? 1 : 0);
 
     if (_from >= 0)
         ctx.putInt("from", _from);
@@ -419,7 +419,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
         log.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
-        ss << "Total output size: " << read << ((read > 1) ? " bytes" : " byte");
+        ss << "Total output size: " << read << (read > 1 ? " bytes" : " byte");
         log.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
     }

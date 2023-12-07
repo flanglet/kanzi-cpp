@@ -76,7 +76,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         throw invalid_argument("Missing input name");
     }
 
-    _inputName = (it->second == "") ? "STDIN" : it->second;
+    _inputName = it->second == "" ? "STDIN" : it->second;
     args.erase(it);
     it = args.find("outputName");
 
@@ -84,7 +84,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         throw invalid_argument("Missing output name");
     }
 
-    _outputName = ((it->second == "") && (_inputName == "STDIN")) ? "STDOUT" : it->second;
+    _outputName = (it->second == "") && (_inputName == "STDIN") ? "STDOUT" : it->second;
     args.erase(it);
     string strCodec;
     string strTransf;
@@ -141,7 +141,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
             stringstream sserr;
             sserr << "Minimum block size is " << (MIN_BLOCK_SIZE / 1024) << " KB (";
             sserr << MIN_BLOCK_SIZE << " bytes), got " << strBlkSz.c_str();
-            sserr << ((bl > 1) ? " bytes" : " byte");
+            sserr << (bl > 1 ? " bytes" : " byte");
             throw invalid_argument(sserr.str().c_str());
         }
 
@@ -177,8 +177,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         _checksum = false;
     }
     else {
-        string str = it->second;
-        _checksum = str == STR_TRUE;
+        _checksum = it->second == STR_TRUE;
         args.erase(it);
     }
 
@@ -227,8 +226,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         _reorderFiles = true;
     }
     else {
-        string str = it->second;
-        _reorderFiles = str == STR_TRUE;
+        _reorderFiles = it->second == STR_TRUE;
         args.erase(it);
     }
 
@@ -238,8 +236,7 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         _noDotFile = false;
     }
     else {
-        string str = it->second;
-        _noDotFile = str == STR_TRUE;
+        _noDotFile = it->second == STR_TRUE;
         args.erase(it);
     }
 
@@ -303,7 +300,7 @@ int BlockCompressor::compress(uint64& outputSize)
         }
 
         nbFiles = int(files.size());
-        string strFiles = (nbFiles > 1) ? " files" : " file";
+        string strFiles = nbFiles > 1 ? " files" : " file";
         ss << nbFiles << strFiles << " to compress\n";
         log.println(ss.str().c_str(), _verbosity > 0);
         ss.str(string());
@@ -343,15 +340,15 @@ int BlockCompressor::compress(uint64& outputSize)
         ss.str(string());
         string etransform = _transform;
         transform(etransform.begin(), etransform.end(), etransform.begin(), ::toupper);
-        ss << "Using " << ((etransform == "NONE") ? "no" : _transform) << " transform (stage 1)";
+        ss << "Using " << (etransform == "NONE" ? "no" : _transform) << " transform (stage 1)";
         log.println(ss.str().c_str(), true);
         ss.str(string());
         string ecodec = _codec;
         transform(ecodec.begin(), ecodec.end(), ecodec.begin(), ::toupper);
-        ss << "Using " << ((ecodec == "NONE") ? "no" : _codec) << " entropy codec (stage 2)";
+        ss << "Using " << (ecodec == "NONE" ? "no" : _codec) << " entropy codec (stage 2)";
         log.println(ss.str().c_str(), true);
         ss.str(string());
-        ss << "Using " << _jobs << " job" << ((_jobs > 1) ? "s" : "");
+        ss << "Using " << _jobs << " job" << (_jobs > 1 ? "s" : "");
         log.println(ss.str().c_str(), true);
         ss.str(string());
     }
@@ -429,12 +426,12 @@ int BlockCompressor::compress(uint64& outputSize)
     Context ctx;
 #endif
     ctx.putInt("verbosity", _verbosity);
-    ctx.putInt("overwrite", (_overwrite == true) ? 1 : 0);
-    ctx.putString("skipBlocks", (_skipBlocks == true) ? STR_TRUE : STR_FALSE);
-    ctx.putString("checksum", (_checksum == true) ? STR_TRUE : STR_FALSE);
+    ctx.putInt("overwrite", _overwrite == true ? 1 : 0);
+    ctx.putString("skipBlocks", _skipBlocks == true ? STR_TRUE : STR_FALSE);
+    ctx.putString("checksum", _checksum == true ? STR_TRUE : STR_FALSE);
     ctx.putString("codec", _codec);
     ctx.putString("transform", _transform);
-    ctx.putString("extra", (_codec == "TPAQX") ? STR_TRUE : STR_FALSE);
+    ctx.putString("extra", _codec == "TPAQX" ? STR_TRUE : STR_FALSE);
 
     // Run the task(s)
     if (nbFiles == 1) {
@@ -587,7 +584,7 @@ int BlockCompressor::compress(uint64& outputSize)
 
             log.println(ss.str().c_str(), true);
             ss.str(string());
-            ss << "Total output size: " << written << ((written > 1) ? " bytes" : " byte");
+            ss << "Total output size: " << written << (written > 1 ? " bytes" : " byte");
             log.println(ss.str().c_str(), true);
             ss.str(string());
         }
@@ -845,7 +842,7 @@ T FileCompressTask<T>::run()
 
             try {
                 _is->read(reinterpret_cast<char*>(&sa._array[0]), sa._length);
-                len = (*_is) ? sa._length : int(_is->gcount());
+                len = *_is ? sa._length : int(_is->gcount());
             }
             catch (exception& e) {
                 stringstream sserr;
