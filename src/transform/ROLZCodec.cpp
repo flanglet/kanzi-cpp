@@ -182,7 +182,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     const int litOrder = (count < (1 << 17)) ? 0 : 1;
     int flags = litOrder;
     stringbuf buffer;
-    iostream os(&buffer);
+    iostream ios(&buffer);
     _minMatch = MIN_MATCH3;
     int delta = 2;
 
@@ -219,7 +219,6 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 	
     // Main loop
     while (startChunk < srcEnd) {
-        buffer.pubseekpos(0);
         litBuf._index = 0;
         lenBuf._index = 0;
         mIdxBuf._index = 0;
@@ -319,7 +318,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         // Scope to deallocate resources early
         {
             // Encode literal, match length and match index buffers
-            DefaultOutputBitStream obs(os, 65536);
+            DefaultOutputBitStream obs(ios, 65536);
             obs.writeBits(litBuf._index, 32);
             obs.writeBits(tkBuf._index, 32);
             obs.writeBits(lenBuf._index, 32);
@@ -335,7 +334,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
 
         // Copy bitstream array to output
-        const int bufSize = int(os.tellp());
+        const int bufSize = int(ios.tellp());
 
         if (dstIdx + bufSize > output._length) {
             input._index = startChunk + srcIdx;
@@ -343,8 +342,8 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             goto End;
         }
 
-        os.seekg(0);
-        os.read(reinterpret_cast<char*>(&dst[dstIdx]), bufSize);
+        ios.read(reinterpret_cast<char*>(&dst[dstIdx]), bufSize);
+        buffer.pubseekpos(0);
         dstIdx += bufSize;
         startChunk = endChunk;
     }

@@ -361,24 +361,24 @@ int CompressedInputStream::processBlock() THROW
         // Add a padding area to manage any block temporarily expanded
         const int blkSize = max(_blockSize + EXTRA_BUFFER_SIZE, _blockSize + (_blockSize >> 4));
         int decoded = 0;
+        int nbTasks = _jobs;
+        int jobsPerTask[MAX_CONCURRENCY];
+
+        // Assign optimal number of tasks and jobs per task
+        if (nbTasks > 1) {
+            // Limit the number of tasks if there are fewer blocks that _jobs
+            // It allows more jobs per task and reduces memory usage.
+            nbTasks = min(_nbInputBlocks, _jobs);
+            Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
+        }
+        else {
+            jobsPerTask[0] = _jobs;
+        }
+
+        const int bufSize = max(_blockSize + EXTRA_BUFFER_SIZE, _blockSize + (_blockSize >> 4));
 
         while (true) {
             const int firstBlockId = _blockId.load(memory_order_relaxed);
-            int nbTasks = _jobs;
-            int jobsPerTask[MAX_CONCURRENCY];
-
-            // Assign optimal number of tasks and jobs per task
-            if (nbTasks > 1) {
-                // Limit the number of tasks if there are fewer blocks that _jobs
-                // It allows more jobs per task and reduces memory usage.
-                nbTasks = min(_nbInputBlocks, _jobs);
-                Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
-            }
-            else {
-                jobsPerTask[0] = _jobs;
-            }
-
-            const int bufSize = max(_blockSize + EXTRA_BUFFER_SIZE, _blockSize + (_blockSize >> 4));
 
             // Create as many tasks as empty buffers to decode
             for (int taskId = 0; taskId < nbTasks; taskId++) {
@@ -437,7 +437,6 @@ int CompressedInputStream::processBlock() THROW
 #ifdef CONCURRENCY_ENABLED
             else {
                 vector<future<DecodingTaskResult> > futures;
-                vector<DecodingTaskResult> results;
 
                 // Register task futures and launch tasks in parallel
                 for (uint i = 0; i < tasks.size(); i++) {
@@ -449,22 +448,20 @@ int CompressedInputStream::processBlock() THROW
 
                 // Wait for tasks completion and check results
                 for (uint i = 0; i < futures.size(); i++) {
-                    DecodingTaskResult status = futures[i].get();
-                    results.push_back(status);
-                    decoded += status._decoded;
+                    DecodingTaskResult res = futures[i].get();
 
-                    if (status._error != 0)
-                        throw IOException(status._msg, status._error); // deallocate in catch block
-
-                    if (status._decoded > _blockSize)
-                        throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
-
-                    if (status._skipped == true)
+                    if (res._skipped == true) {
                         skipped++;
-                }
+                        continue;
+                    }
 
-                for (uint i = 0; i < results.size(); i++) {
-                    DecodingTaskResult res = results[i];
+                    decoded += res._decoded;
+
+                    if (res._error != 0)
+                        throw IOException(res._msg, res._error); // deallocate in catch block
+
+                    if (res._decoded > _blockSize)
+                        throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
 
                     if (_buffers[i]->_array != res._data)
                        memcpy(&_buffers[i]->_array[0], &res._data[0], res._decoded);
