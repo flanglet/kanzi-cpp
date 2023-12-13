@@ -204,7 +204,7 @@ ifeq ($(OS),Windows_NT)
 	..\lib\$(STATIC_COMP_LIB) ..\lib\$(STATIC_DECOMP_LIB) \
 	..\lib\$(SHARED_COMP_LIB) ..\lib\$(SHARED_DECOMP_LIB)
 else
-	rm -f ../bin/test*$(PROG_SUFFIX) $(OBJECTS) $(RPTS) $(TEST_OBJECTS) \
+	rm -f ../bin/test*$(PROG_SUFFIX) $(OBJECTS) $(LIB_OBJECTS) $(RPTS) $(TEST_OBJECTS) \
         ../bin/$(APP)$(PROG_SUFFIX) ../lib/$(STATIC_LIB) ../lib/$(SHARED_LIB) \
 	../lib/$(STATIC_COMP_LIB) ../lib/$(STATIC_DECOMP_LIB) \
 	../lib/$(SHARED_COMP_LIB) ../lib/$(SHARED_DECOMP_LIB)
