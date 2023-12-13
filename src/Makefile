@@ -156,9 +156,9 @@ all: lib test $(APP)
 
 # Install / uninstall (may require sudo or admin rights)
 ifeq ($(OS),Windows_NT)
-      INSTALL_DIR="C:\Program Files"
+	INSTALL_DIR="C:\Program Files"
 else
-      INSTALL_DIR=/usr/local
+	INSTALL_DIR=/usr/local
 endif
 
 install: $(STATIC_LIB) $(SHARED_LIB) $(APP)
