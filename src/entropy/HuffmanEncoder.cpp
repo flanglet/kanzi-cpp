@@ -138,6 +138,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
         prevSize = sizes[s];
     }
 
+    egenc.dispose();
     return count;
 }
 
@@ -150,8 +151,8 @@ uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count)
     uint freqs[256] = { 0 };
 
     for (int i = 0; i < count; i++) {
-        freqs[i] = v[i] >> 8;
         ranks[i] = v[i] & 0xFF;
+        freqs[i] = v[i] >> 8;
 
         if (freqs[i] == 0)
             return 0;
@@ -204,10 +205,9 @@ uint HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
 
     uint topLevel = n - 2; //root
     uint depth = 1;
-    uint i = n;
     uint totalNodesAtLevel = 2;
 
-    while (i > 0) {
+    while (n > 0) {
         uint k = topLevel;
 
         while ((k != 0) && (data[k - 1] >= topLevel))
@@ -217,7 +217,7 @@ uint HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
         const int leavesAtLevel = totalNodesAtLevel - internalNodesAtLevel;
 
         for (int j = 0; j < leavesAtLevel; j++)
-            data[--i] = depth;
+            data[--n] = depth;
 
         totalNodesAtLevel = internalNodesAtLevel << 1;
         topLevel = k;
@@ -263,19 +263,18 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
 
         // Encode chunk
         for (uint i = startChunk; i < endChunk4; i += 4) {
-            uint code;
-            code = _codes[int(block[i])];
-            const uint codeLen0 = code >> 24;
-            state = (state << codeLen0) | uint64(code & 0xFFFFFF);
-            code = _codes[int(block[i + 1])];
-            const uint codeLen1 = code >> 24;
-            state = (state << codeLen1) | uint64(code & 0xFFFFFF);
-            code = _codes[int(block[i + 2])];
-            const uint codeLen2 = code >> 24;
-            state = (state << codeLen2) | uint64(code & 0xFFFFFF);
-            code = _codes[int(block[i + 3])];
-            const uint codeLen3 = code >> 24;
-            state = (state << codeLen3) | uint64(code & 0xFFFFFF);
+            const uint code0 = _codes[int(block[i])];
+            const uint codeLen0 = code0 >> 24;
+            const uint code1 = _codes[int(block[i + 1])];
+            const uint codeLen1 = code1 >> 24;
+            const uint code2 = _codes[int(block[i + 2])];
+            const uint codeLen2 = code2 >> 24;
+            const uint code3 = _codes[int(block[i + 3])];
+            const uint codeLen3 = code3 >> 24;
+            state = (state << codeLen0) | uint64(code0 & 0xFFFFFF);
+            state = (state << codeLen1) | uint64(code1 & 0xFFFFFF);
+            state = (state << codeLen2) | uint64(code2 & 0xFFFFFF);
+            state = (state << codeLen3) | uint64(code3 & 0xFFFFFF);
             bits += (codeLen0 + codeLen1 + codeLen2 + codeLen3);
             BigEndian::writeLong64(&_buffer[idx], state << (64 - bits));
             idx += (bits >> 3);
