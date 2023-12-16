@@ -176,7 +176,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
                 const int ref1 = _hashes[h1];
                 _hashes[h1] = srcIdx1;
 
-                if ((ref1 > minRef + 1) && (memcmp(&src[srcIdx1 + bestLen - 4], &src[ref1 + bestLen - 4], 4) == 0)) {
+                if ((ref1 > minRef + 1) && (memcmp(&src[srcIdx1 + bestLen - 3], &src[ref1 + bestLen - 3], 4) == 0)) {
                     const int bestLen1 = findMatch(src, srcIdx1, ref1, min(srcEnd - srcIdx1, MAX_MATCH));
 
                     // Select best match
