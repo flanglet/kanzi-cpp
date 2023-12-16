@@ -18,11 +18,12 @@ limitations under the License.
 #define _CMPredictor_
 
 #include "../Predictor.hpp"
+#include "../types.hpp"
 
 namespace kanzi
 {
 
-   class CMPredictor : public Predictor
+   class CMPredictor FINAL : public Predictor
    {
    private:
        static const int FAST_RATE = 2;

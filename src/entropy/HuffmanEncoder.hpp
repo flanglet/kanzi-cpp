@@ -28,23 +28,6 @@ namespace kanzi
    // Uses in place generation of canonical codes instead of a tree
    class HuffmanEncoder : public EntropyEncoder
    {
-   private:
-       OutputBitStream& _bitstream;
-       uint _codes[256];
-       int _chunkSize;
-       byte* _buffer;
-       uint _bufferSize;
-
-       uint computeCodeLengths(uint16 sizes[], uint sranks[], int count) const;
-
-       bool reset();
-
-       void _dispose() const {}
-
-       static void computeInPlaceSizesPhase1(uint data[], int n);
-
-       static uint computeInPlaceSizesPhase2(uint data[], int n);
-
    public:
        HuffmanEncoder(OutputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE) THROW;
 
@@ -57,6 +40,24 @@ namespace kanzi
        OutputBitStream& getBitStream() const { return _bitstream; }
 
        void dispose() { _dispose(); }
+
+
+   private:
+       OutputBitStream& _bitstream;
+       uint _codes[256];
+       int _chunkSize;
+       byte* _buffer;
+       uint _bufferSize;
+
+       uint computeCodeLengths(uint16 sizes[], uint sranks[], int count) const;
+
+       void _dispose() const {}
+
+       bool reset();
+
+       static void computeInPlaceSizesPhase1(uint data[], int n);
+
+       static uint computeInPlaceSizesPhase2(uint data[], int n);
    };
 
 }

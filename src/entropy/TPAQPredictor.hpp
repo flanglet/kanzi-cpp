@@ -57,7 +57,7 @@ namespace kanzi
 
 
    template <bool T>
-   class TPAQPredictor : public Predictor
+   class TPAQPredictor FINAL : public Predictor
    {
    public:
        TPAQPredictor(Context* ctx = nullptr);

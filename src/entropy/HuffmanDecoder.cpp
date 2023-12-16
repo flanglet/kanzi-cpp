@@ -89,8 +89,6 @@ int HuffmanDecoder::readLengths() THROW
         _sizes[s] = uint16(curSize);
     }
 
-    egdec.dispose();
-
     // Create canonical codes
     if (HuffmanCommon::generateCanonicalCodes(_sizes, _codes, _alphabet, count) < 0) {
         stringstream ss;

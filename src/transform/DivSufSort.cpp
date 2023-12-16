@@ -519,7 +519,7 @@ void DivSufSort::ssSort(const int pa, int first, int last, int buf, int bufSize,
 }
 
 
-int DivSufSort::ssCompare(int pa, int pb, int p2, const int depth)
+int DivSufSort::ssCompare(int pa, int pb, int p2, const int depth) const
 {
     prefetchRead(&_sa[p2]);
     int u1 = depth + pa;
@@ -544,7 +544,7 @@ int DivSufSort::ssCompare(int pa, int pb, int p2, const int depth)
 }
 
 
-int DivSufSort::ssCompare(const int sa1[], const int sa2[], const int depth)
+int DivSufSort::ssCompare(const int sa1[], const int sa2[], const int depth) const
 {
     prefetchRead(&sa1[0]);
     prefetchRead(&sa2[2]);

@@ -138,7 +138,6 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
         prevSize = sizes[s];
     }
 
-    egenc.dispose();
     return count;
 }
 

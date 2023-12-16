@@ -456,9 +456,7 @@ void CompressedOutputStream::processBlock() THROW
 
 void CompressedOutputStream::notifyListeners(vector<Listener*>& listeners, const Event& evt)
 {
-    vector<Listener*>::iterator it;
-
-    for (it = listeners.begin(); it != listeners.end(); ++it)
+    for (vector<Listener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->processEvent(evt);
 }
 

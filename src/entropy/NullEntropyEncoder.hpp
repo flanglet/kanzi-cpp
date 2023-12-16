@@ -24,7 +24,7 @@ namespace kanzi {
 
    // Null entropy encoder
    // Pass through that writes the data directly to the bitstream
-   class NullEntropyEncoder : public EntropyEncoder {
+   class NullEntropyEncoder FINAL : public EntropyEncoder {
    private:
        OutputBitStream& _bitstream;
 
@@ -53,21 +53,22 @@ namespace kanzi {
       uint res = 0;
 
       while (count != 0) {
-	      const uint ckSize = (count < 1<<23) ? count : 1<<23;
-	      const uint w = uint(_bitstream.writeBits(&block[blkptr], 8 * ckSize) >> 3);
+          const uint ckSize = (count < 1<<23) ? count : 1<<23;
+          const uint w = uint(_bitstream.writeBits(&block[blkptr], 8 * ckSize) >> 3);
 
-	      if (w == 0)
-	         break;
+          if (w == 0)
+             break;
 
-	      res += w;
-	      blkptr += w;
-	      count -= w;
+          res += w;
+          blkptr += w;
+          count -= w;
       }
 
       return res;
    }
 
-   inline void NullEntropyEncoder::encodeByte(byte val) {
+   inline void NullEntropyEncoder::encodeByte(byte val)
+   {
       _bitstream.writeBits(uint64(val), 8);
    }
 }
