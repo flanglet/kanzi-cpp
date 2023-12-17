@@ -342,7 +342,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             goto End;
         }
 
-        ios.seekg(0);
+        buffer.pubseekpos(0);
         ios.read(reinterpret_cast<char*>(&dst[dstIdx]), bufSize);
         dstIdx += bufSize;
         startChunk = endChunk;
