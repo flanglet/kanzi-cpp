@@ -87,7 +87,7 @@ namespace kanzi
    struct FileListConfig
    {
       bool _recursive;
-      bool _followLinks;
+      bool _ignoreLinks;
       bool _continueOnErrors;
       bool _ignoreDotFiles;
    };
@@ -107,7 +107,7 @@ namespace kanzi
    #endif
 
        struct STAT buffer;
-       int res = (cfg._followLinks) ? STAT(target.c_str(), &buffer) : LSTAT(target.c_str(), &buffer);
+       int res = cfg._ignoreLinks == true ? LSTAT(target.c_str(), &buffer) : STAT(target.c_str(), &buffer);
 
        if (res != 0) {
            std::stringstream ss;
@@ -118,7 +118,7 @@ namespace kanzi
               return;
        }
 
-       if ((buffer.st_mode & S_IFREG) != 0) {
+       if ((buffer.st_mode & S_IFMT) == S_IFREG) {
            // Target is regular file
            if (cfg._ignoreDotFiles == true) {
               size_t idx = target.rfind(PATH_SEPARATOR);
@@ -129,11 +129,13 @@ namespace kanzi
               }
            }
 
-           files.push_back(FileData(target, buffer.st_size, buffer.st_mtime));
+           if ((cfg._ignoreLinks == false) || (buffer.st_mode & S_IFMT) != S_IFLNK)
+               files.push_back(FileData(target, buffer.st_size, buffer.st_mtime));
+
            return;
        }
 
-       if ((buffer.st_mode & S_IFDIR) == 0) {
+       if ((buffer.st_mode & S_IFMT) != S_IFDIR) {
            // Target is neither regular file nor directory, ignore
            return;
        }
@@ -158,8 +160,8 @@ namespace kanzi
                   continue;
 
                std::string fullpath = target + dirName;
-               res = (cfg._followLinks) ? STAT(fullpath.c_str(), &buffer) :
-                  LSTAT(fullpath.c_str(), &buffer);
+               res = cfg._ignoreLinks == true ? LSTAT(fullpath.c_str(), &buffer) :
+                  STAT(fullpath.c_str(), &buffer);
 
                if (res != 0) {
                    std::stringstream ss;
@@ -172,7 +174,7 @@ namespace kanzi
                    }
                }
 
-               if ((buffer.st_mode & S_IFREG) != 0) {
+               if ((buffer.st_mode & S_IFMT) == S_IFREG) {
                   // Target is regular file
                   if (cfg._ignoreDotFiles == true) {
                      size_t idx = fullpath.rfind(PATH_SEPARATOR);
@@ -183,9 +185,10 @@ namespace kanzi
                      }
                   }
                  
-                  files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
+                  if ((cfg._ignoreLinks == false) || (buffer.st_mode & S_IFMT) != S_IFLNK)
+                     files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
                }
-               else if ((cfg._recursive) && ((buffer.st_mode & S_IFDIR) != 0)) {
+               else if ((cfg._recursive) && ((buffer.st_mode & S_IFMT) == S_IFDIR)) {
                   if (cfg._ignoreDotFiles == true) {
                      size_t idx = fullpath.rfind(PATH_SEPARATOR);
 

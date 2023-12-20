@@ -230,13 +230,23 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         args.erase(it);
     }
 
-    it = args.find("noDotFile");
+    it = args.find("noDotFiles");
 
     if (it == args.end()) {
-        _noDotFile = false;
+        _noDotFiles = false;
     }
     else {
-        _noDotFile = it->second == STR_TRUE;
+        _noDotFiles = it->second == STR_TRUE;
+        args.erase(it);
+    }
+
+    it = args.find("noLinks");
+
+    if (it == args.end()) {
+        _noLinks = false;
+    }
+    else {
+        _noLinks = it->second == STR_TRUE;
         args.erase(it);
     }
 
@@ -284,7 +294,7 @@ int BlockCompressor::compress(uint64& outputSize)
         suffix += ".";
         bool isRecursive = (_inputName.length() < 2) 
            || (_inputName.substr(_inputName.length() - 2) != suffix);
-        FileListConfig cfg = { isRecursive, false, false, _noDotFile };
+        FileListConfig cfg = { isRecursive, _noLinks, false, _noDotFiles };
         createFileList(_inputName, files, cfg, errors);
 
         if (files.size() == 0) {

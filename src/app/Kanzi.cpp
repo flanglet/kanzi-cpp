@@ -235,7 +235,8 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     string strChecksum = STR_FALSE;
     string strSkip = STR_FALSE;
     string strReorder = STR_TRUE;
-    string strNoDotFile = STR_FALSE;
+    string strNoDotFiles = STR_FALSE;
+    string strNoLinks = STR_FALSE;
     string codec;
     string transf;
     bool autoBlockSize = false;
@@ -447,7 +448,27 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 continue;
             }
 
-            strNoDotFile = STR_TRUE;
+            strNoDotFiles = STR_TRUE;
+            continue;
+        }
+
+        if (arg == "--no-link") {
+            if (ctx != -1) {
+                stringstream ss;
+                ss << "Warning: ignoring option [" << CMD_LINE_ARGS[ctx] << "] with no value.";
+                log.println(ss.str().c_str(), verbose > 0);
+            }
+
+            ctx = -1;
+
+            if (mode != "c") {
+                stringstream ss;
+                ss << "Warning: ignoring option [" << arg << "]. Only applicable in compress mode.";
+                log.println(ss.str().c_str(), verbose > 0);
+                continue;
+            }
+
+            strNoLinks = STR_TRUE;
             continue;
         }
 
@@ -816,8 +837,11 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     if (strReorder == STR_FALSE)
         map["fileReorder"] = STR_FALSE;
 
-    if (strNoDotFile == STR_TRUE)
-        map["noDotFile"] = STR_TRUE;
+    if (strNoDotFiles == STR_TRUE)
+        map["noDotFiles"] = STR_TRUE;
+
+    if (strNoLinks == STR_TRUE)
+        map["noLinks"] = STR_TRUE;
 
     if (from >= 0)
         map["from"] = strFrom;
