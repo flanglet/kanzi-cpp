@@ -167,6 +167,60 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    }
 }
 
+void printHeader(Printer& log, int verbose, bool& showHeader)
+{
+    if (verbose < 1)
+        return;
+
+    log.println("", true);
+    log.println(APP_HEADER.c_str(), true);
+    stringstream extraHeader;
+
+#ifdef __clang__
+    extraHeader << "\nCompiled with clang version ";
+    extraHeader << __clang_major__ << "." << __clang_minor__;
+#else
+   #ifdef _MSC_VER
+      extraHeader << "\nCompiled with Visual Studio";
+      #ifdef _MSC_VER_STR // see types.h
+      extraHeader << " " << _MSC_VER_STR;
+      #endif
+   #else
+      #ifdef  __INTEL_COMPILER
+      extraHeader << "\nCompiled with Intel compiler ";
+      extraHeader << "(" << __INTEL_COMPILER_BUILD_DATE << ")";
+      #else
+         #ifdef  __GNUC__
+         extraHeader << "\nCompiled with gcc version ";
+         extraHeader << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__;
+         #endif
+      #endif
+   #endif
+#endif
+
+    if ((verbose >= 3) && (extraHeader.str().length() > 0)) {
+#if defined(__AVX2__)
+        extraHeader << " - AVX2";
+#elif defined(__AVX__)
+        extraHeader << " - AVX";
+#elif defined(__AVX512F__)
+        extraHeader << " - AVX512";
+#elif defined(__SSE4_1__)
+        extraHeader << " - SSE4.1";
+#elif defined(__SSE3__)
+        extraHeader << " - SSE3";
+#elif defined(__SSE2__)
+        extraHeader << " - SSE2";
+#elif defined(__SSE__)
+        extraHeader << " - SSE";
+#endif
+        log.println(extraHeader.str().c_str(), true);
+    }
+
+    log.println("", true);
+    showHeader = false;
+}
+
 int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 {
     string inputName;
@@ -282,56 +336,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
         }
     }
 
-    if (verbose >= 1) {
-        log.println("", true);
-        log.println(APP_HEADER.c_str(), true);
-        stringstream extraHeader;
-
-#ifdef __clang__
-       extraHeader << "\nCompiled with clang version ";
-       extraHeader << __clang_major__ << "." << __clang_minor__;
-#else
-   #ifdef _MSC_VER
-         extraHeader << "\nCompiled with Visual Studio";
-      #ifdef _MSC_VER_STR // see types.h
-         extraHeader << " " << _MSC_VER_STR;
-      #endif
-   #else
-      #ifdef  __INTEL_COMPILER
-         extraHeader << "\nCompiled with Intel compiler ";
-         extraHeader << "(" << __INTEL_COMPILER_BUILD_DATE << ")";
-      #else
-         #ifdef  __GNUC__
-            extraHeader << "\nCompiled with gcc version ";
-            extraHeader << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__;
-         #endif
-      #endif
-   #endif
-#endif
-
-        if (extraHeader.str().length() > 0) {
-#if defined(__AVX2__)
-            extraHeader << " - AVX2";
-#elif defined(__AVX__)
-            extraHeader << " - AVX";
-#elif defined(__AVX512F__)
-            extraHeader << " - AVX512";
-#elif defined(__SSE4_1__)
-            extraHeader << " - SSE4.1";
-#elif defined(__SSE3__)
-            extraHeader << " - SSE3";
-#elif defined(__SSE2__)
-            extraHeader << " - SSE2";
-#elif defined(__SSE__)
-            extraHeader << " - SSE";
-#endif
-            log.println(extraHeader.str().c_str(), verbose >= 3);
-        }
-
-        log.println("", true);
-        showHeader = false;
-    }
-
+    printHeader(log, verbose, showHeader);
     inputName = "";
     outputName = "";
     ctx = -1;
@@ -460,6 +465,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if ((arg.compare(0, 9, "--output=") == 0) || (ctx == ARG_IDX_OUTPUT)) {
             string name = (arg.compare(0, 9, "--output=") == 0) ? arg.substr(9) : arg;
+            name = trim(name);
 
             if (outputName != "") {
                 stringstream ss;
@@ -479,6 +485,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
         if ((arg.compare(0, 8, "--input=") == 0) || (ctx == ARG_IDX_INPUT)) {
             string name = (arg.compare(0, 8, "--input=") == 0) ? arg.substr(8) : arg;
+            name = trim(name);
 
             if (inputName != "") {
                 stringstream ss;
@@ -541,7 +548,7 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             }
 
             while ((transf.length() > 0) && (transf[transf.length() - 1] == '+')) {
-                transf = transf.substr(0, transf.length() - 1);
+                transf.resize(transf.length() - 1);
             }
 
             ctx = -1;
@@ -563,11 +570,6 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
                 ss << "Warning: ignoring duplicate level: " << name;
                 log.println(ss.str().c_str(), verbose > 0);
             } else {
-                if (name.length() != 1) {
-                    cerr << "Invalid compression level provided on command line: " << arg << endl;
-                    return Error::ERR_INVALID_PARAM;
-                }
-
                 strLevel = name;
                 level = atoi(strLevel.c_str());
 
@@ -585,6 +587,11 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             string name = (arg.compare(0, 8, "--block=") == 0) ? arg.substr(8) : arg;
             name = trim(name);
 
+            if (name.length() == 0) {
+                cerr << "Invalid block size provided on command line: " << arg << endl;
+                return Error::ERR_INVALID_PARAM;
+            }
+
             if ((strBlockSize != "") || (autoBlockSize == true)) {
                 stringstream ss;
                 ss << "Warning: ignoring duplicate block size: " << name;
@@ -594,21 +601,21 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
             }
 
             transform(name.begin(), name.end(), name.begin(), ::toupper);
-            char lastChar = (name.length() == 0) ? ' ' : name[name.length() - 1];
+            char lastChar = name[name.length() - 1];
             uint64 scale = 1;
 
             // Process K or M or G suffix
             if ('K' == lastChar) {
                 scale = 1024;
-                name = name.substr(0, name.length() - 1);
+                name.resize(name.length() - 1);
             }
             else if ('M' == lastChar) {
                 scale = 1024 * 1024;
-                name = name.substr(0, name.length() - 1);
+                name.resize(name.length() - 1);
             }
             else if ('G' == lastChar) {
                 scale = 1024 * 1024 * 1024;
-                name = name.substr(0, name.length() - 1);
+                name.resize(name.length() - 1);
             }
 
             if (name[0] == '0') {
