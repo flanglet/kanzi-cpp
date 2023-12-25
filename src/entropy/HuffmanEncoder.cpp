@@ -16,6 +16,7 @@ limitations under the License.
 #include <sstream>
 #include <algorithm>
 #include <vector>
+
 #include "HuffmanEncoder.hpp"
 #include "EntropyUtils.hpp"
 #include "ExpGolombEncoder.hpp"
@@ -98,30 +99,33 @@ int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
 
             // Sometimes, codes exceed the budget for the max code length => scale down
             // and normalize frequencies (boost the smallest freqs) and try once more.
-            if (retries > 2) {
-                stringstream ss;
-                ss << "Could not generate Huffman codes: max code length (";
-                ss << HuffmanCommon::MAX_SYMBOL_SIZE;
-                ss << " bits) exceeded";
-                throw invalid_argument(ss.str());
+            if (retries <= 2) {
+                retries++;
+                uint alpha[256] = { 0 };
+                uint f[256];
+                uint totalFreq = 0;
+
+                for (int i = 0; i < count; i++) {
+                    f[i] = freqs[alphabet[i]];
+                    totalFreq += f[i];
+                }
+
+                // Normalize to a smaller scale
+                EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq,
+                    HuffmanCommon::MAX_CHUNK_SIZE >> (retries + 1));
+
+                for (int i = 0; i < count; i++)
+                    freqs[alphabet[i]] = f[i];
+
+                continue;
             }
 
-            retries++;
-            uint alpha[256] = { 0 };
-            uint f[256];
-            uint totalFreq = 0;
-
-            for (int i = 0; i < count; i++) {
-                f[i] = freqs[alphabet[i]];
-                totalFreq += f[i];
-            }
-
-            // Normalize to a smaller scale
-            EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq,
-                HuffmanCommon::MAX_CHUNK_SIZE >> (retries + 1));
-
-            for (int i = 0; i < count; i++)
-                freqs[alphabet[i]] = f[i];
+            // Max retries, give up (should never happen with current constants)
+            stringstream ss;
+            ss << "Could not generate Huffman codes: max code length (";
+            ss << HuffmanCommon::MAX_SYMBOL_SIZE;
+            ss << " bits) exceeded";
+            throw length_error(ss.str());
         }
     }
 
