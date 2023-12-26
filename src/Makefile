@@ -9,7 +9,7 @@ else
 	ARCH ?= $(shell uname -m)
 
 	ifeq ($(ARCH),x86_64)
-		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti
+		CXXFLAGS=-c -std=c++17 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti
 	else
 		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti
 	endif

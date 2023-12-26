@@ -128,7 +128,7 @@ namespace kanzi
        T run() THROW;
    };
 
-   class CompressedInputStream FINAL : public InputStream {
+   class CompressedInputStream : public InputStream {
        friend class DecodingTask<DecodingTaskResult>;
 
    private:
@@ -163,17 +163,21 @@ namespace kanzi
        std::vector<Listener*> _listeners;
        std::streamsize _gcount;
        Context _ctx;
+       bool _headless;
 #ifdef CONCURRENCY_ENABLED
        ThreadPool* _pool;
 #endif
-
-       void readHeader() THROW;
 
        int processBlock() THROW;
 
        int _get(int inc);
 
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
+
+   protected:
+
+       virtual void readHeader() THROW;
+
 
    public:
 #ifdef CONCURRENCY_ENABLED

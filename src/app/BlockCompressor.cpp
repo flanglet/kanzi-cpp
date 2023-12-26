@@ -439,9 +439,8 @@ int BlockCompressor::compress(uint64& outputSize)
     ctx.putInt("overwrite", _overwrite == true ? 1 : 0);
     ctx.putString("skipBlocks", _skipBlocks == true ? STR_TRUE : STR_FALSE);
     ctx.putString("checksum", _checksum == true ? STR_TRUE : STR_FALSE);
-    ctx.putString("codec", _codec);
+    ctx.putString("entropy", _codec);
     ctx.putString("transform", _transform);
-    ctx.putString("extra", _codec == "TPAQX" ? STR_TRUE : STR_FALSE);
 
     // Run the task(s)
     if (nbFiles == 1) {

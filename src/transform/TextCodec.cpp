@@ -436,7 +436,7 @@ TextCodec1::TextCodec1(Context& ctx)
     // Actual block size
     const int blockSize = ctx.getInt("blockSize", 0);
     const int log = (blockSize >= 8) ? max(min(Global::log2(blockSize / 8), 26), 13) : 13;
-    _logHashSize = (ctx.getInt("extra", 0) == 0) ? log : log + 1;
+    _logHashSize = ctx.getString("entropy") == "TPAQX" ? log : log + 1;
     _dictSize = 1 << 13;
     _dictMap = nullptr;
     _dictList = nullptr;
@@ -908,7 +908,7 @@ TextCodec2::TextCodec2(Context& ctx)
 {
     const int blockSize = ctx.getInt("blockSize", 0);
     const int log = (blockSize >= 32) ? max(min(Global::log2(blockSize / 32), 24), 13) : 13;
-    _logHashSize = (ctx.getInt("extra", 0) == 0) ? log : log + 1;
+    _logHashSize = ctx.getString("entropy") == "TPAQX" ? log : log + 1;
     _dictSize = 1 << 13;
     _dictMap = nullptr;
     _dictList = nullptr;

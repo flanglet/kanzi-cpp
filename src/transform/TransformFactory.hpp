@@ -221,8 +221,8 @@ namespace kanzi {
 		case DICT_TYPE: {
 			int textCodecType = 1;
 
-			if (ctx.has("codec")) {			
-				std::string entropyType = ctx.getString("codec");
+			if (ctx.has("entropy")) {
+				std::string entropyType = ctx.getString("entropy");
 				transform(entropyType.begin(), entropyType.end(), entropyType.begin(), ::toupper);
 
 				// Select text encoding based on entropy codec.

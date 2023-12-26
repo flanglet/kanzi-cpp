@@ -65,6 +65,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
     _hasher = nullptr;
     _nbInputBlocks = UNKNOWN_NB_BLOCKS;
     _buffers = new SliceArray<byte>*[2 * _jobs];
+    _headless = false;
 
     for (int i = 0; i < 2 * _jobs; i++)
         _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
@@ -117,6 +118,38 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
     _jobs = tasks;
     _hasher = nullptr;
     _nbInputBlocks = UNKNOWN_NB_BLOCKS;
+    _headless = _ctx.getInt("headerless") != 0;
+
+    if (_headless == true) {
+        // Validation of required values
+        int bsVersion = _ctx.getInt("bsVersion", 0);
+
+        if (bsVersion != BITSTREAM_FORMAT_VERSION) {
+            stringstream ss;
+            ss << "Invalid or missing bitstream version, cannot read this version of the stream: " << bsVersion;
+            throw invalid_argument(ss.str());
+        }
+
+        string entropy = _ctx.getString("entropy");
+        _entropyType = EntropyDecoderFactory::getType(entropy.c_str()); // throws on error
+
+        string transform = _ctx.getString("transform");
+        _transformType = TransformFactory<byte>::getType(transform.c_str()); // throws on error
+
+        _blockSize = _ctx.getInt("blockSize", 0);
+
+        if ((_blockSize < MIN_BITSTREAM_BLOCK_SIZE) || (_blockSize > MAX_BITSTREAM_BLOCK_SIZE)) {
+            stringstream ss;
+            ss << "Invalid or missing block size: " << _blockSize;
+            throw invalid_argument(ss.str());
+        }
+
+        _bufferThreshold = _blockSize;
+
+        if (_ctx.getInt("checksum") != 0)
+            _hasher = new XXHash32(BITSTREAM_TYPE);
+    }
+
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
     for (int i = 0; i < 2 * _jobs; i++)
@@ -175,8 +208,7 @@ void CompressedInputStream::readHeader() THROW
     try {
         // Read entropy codec
         _entropyType = short(_ibs->readBits(5));
-        _ctx.putString("codec", EntropyDecoderFactory::getName(_entropyType));
-        _ctx.putString("extra", _entropyType == EntropyDecoderFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
+        _ctx.putString("entropy", EntropyDecoderFactory::getName(_entropyType));
     }
     catch (invalid_argument&) {
         stringstream err;
@@ -350,7 +382,7 @@ istream& CompressedInputStream::read(char* data, streamsize length) THROW
 
 int CompressedInputStream::processBlock() THROW
 {
-    if (!_initialized.exchange(true, memory_order_acquire))
+    if ((_headless == false) && (!_initialized.exchange(true, memory_order_acquire)))
         readHeader();
 
     // Protect against future concurrent modification of the list of block listeners

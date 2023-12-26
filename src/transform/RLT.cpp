@@ -51,7 +51,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
         if ((dt == Global::DNA) || (dt == Global::BASE64) || (dt == Global::UTF8))
             return false;
 
-        std::string entropyType = _pCtx->getString("codec");
+        std::string entropyType = _pCtx->getString("entropy");
         transform(entropyType.begin(), entropyType.end(), entropyType.begin(), ::toupper);
 
         // Fast track if fast entropy coder is used

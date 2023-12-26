@@ -72,6 +72,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _blockSize = bSize;
     _bufferThreshold = bSize;
     _nbInputBlocks = UNKNOWN_NB_BLOCKS;
+    _headless = false;
     _initialized = false;
     _closed = false;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
@@ -82,7 +83,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _buffers = new SliceArray<byte>*[2 * _jobs];
     _ctx.putInt("blockSize", _blockSize);
     _ctx.putString("checksum", (checksum == true) ? STR_TRUE : STR_FALSE);
-    _ctx.putString("codec", entropyCodec);
+    _ctx.putString("entropy", entropyCodec);
     _ctx.putString("transform", transform);
     _ctx.putString("extra", _entropyType == EntropyEncoderFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
 
@@ -121,7 +122,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
-    string entropyCodec = ctx.getString("codec");
+    string entropyCodec = ctx.getString("entropy");
     string transform = ctx.getString("transform");
     int bSize = ctx.getInt("blockSize");
 
@@ -156,6 +157,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     _bufferThreshold = bSize;
     _initialized = false;
     _closed = false;
+    _headless = _ctx.getInt("headerless") != 0;
 
 #if __cplusplus >= 201103L
     // A hook can be provided by the caller to customize the instantiation of the
@@ -345,7 +347,7 @@ void CompressedOutputStream::close() THROW
 
 void CompressedOutputStream::processBlock() THROW
 {
-    if (!_initialized.exchange(true, memory_order_acquire))
+    if ((_headless == false) && (!_initialized.exchange(true, memory_order_acquire)))
         writeHeader();
 
     // All buffers empty, nothing to do

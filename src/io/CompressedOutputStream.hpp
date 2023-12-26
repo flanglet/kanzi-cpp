@@ -101,7 +101,7 @@ namespace kanzi {
        T run() THROW;
    };
 
-   class CompressedOutputStream FINAL : public OutputStream {
+   class CompressedOutputStream : public OutputStream {
        friend class EncodingTask<EncodingTaskResult>;
 
    private:
@@ -132,15 +132,20 @@ namespace kanzi {
        ATOMIC_INT _blockId;
        std::vector<Listener*> _listeners;
        Context _ctx;
+       bool _headless;
 #ifdef CONCURRENCY_ENABLED
        ThreadPool* _pool;
 #endif
 
-       void writeHeader() THROW;
-
        void processBlock() THROW;
 
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
+
+
+  protected:
+
+       virtual void writeHeader() THROW;
+
 
    public:
 #ifdef CONCURRENCY_ENABLED
