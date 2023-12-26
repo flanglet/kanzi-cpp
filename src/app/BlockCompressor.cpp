@@ -938,7 +938,7 @@ T FileCompressTask<T>::run()
                 log.println(ss.str().c_str(), true);
                 ss.str(string());
             }
-        } else if (verbosity == 1) {
+        } else {
             ss << "Compressing " << inputName << ": " << read << " => " << encoded;
             ss.precision(2);
             ss.setf(ios::fixed);
