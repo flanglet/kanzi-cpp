@@ -30,9 +30,9 @@ using namespace std;
 
 
 #ifdef CONCURRENCY_ENABLED
-CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, ThreadPool* pool)
+CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, ThreadPool* pool, bool headerless)
 #else
-CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
+CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, bool headerless)
 #endif
     : InputStream(is.rdbuf())
 {
@@ -65,7 +65,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
     _hasher = nullptr;
     _nbInputBlocks = UNKNOWN_NB_BLOCKS;
     _buffers = new SliceArray<byte>*[2 * _jobs];
-    _headless = false;
+    _headless = headerless;
 
     for (int i = 0; i < 2 * _jobs; i++)
         _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
@@ -122,7 +122,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
 
     if (_headless == true) {
         // Validation of required values
-        int bsVersion = _ctx.getInt("bsVersion", 0);
+        int bsVersion = _ctx.getInt("bsVersion", BITSTREAM_FORMAT_VERSION);
 
         if (bsVersion != BITSTREAM_FORMAT_VERSION) {
             stringstream ss;

@@ -32,10 +32,11 @@ using namespace std;
 
 #ifdef CONCURRENCY_ENABLED
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& entropyCodec,
-          const string& transform, int bSize, bool checksum, int tasks, ThreadPool* pool)
+          const string& transform, int bSize, bool checksum, int tasks, ThreadPool* pool,
+          bool headerless)
 #else
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& entropyCodec,
-          const string& transform, int bSize, bool checksum, int tasks)
+          const string& transform, int bSize, bool checksum, int tasks, bool headerless)
 #endif
     : OutputStream(os.rdbuf())
 {
@@ -72,7 +73,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _blockSize = bSize;
     _bufferThreshold = bSize;
     _nbInputBlocks = UNKNOWN_NB_BLOCKS;
-    _headless = false;
+    _headless = headerless;
     _initialized = false;
     _closed = false;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
