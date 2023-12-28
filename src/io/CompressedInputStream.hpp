@@ -118,7 +118,6 @@ namespace kanzi
 
    public:
        DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int blockSize,
-           uint64 transformType, short entropyType, int blockId,
            InputBitStream* ibs, XXHash32* hasher,
            ATOMIC_INT* processedBlockId, std::vector<Listener*>& listeners,
            const Context& ctx);

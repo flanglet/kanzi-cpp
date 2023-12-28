@@ -238,7 +238,7 @@ void CompressedInputStream::readHeader() THROW
         throw IOException(ss.str(), Error::ERR_BLOCK_SIZE);
     }
 
-    // Read number of blocks in input. 
+    // Read number of blocks in input.
     _nbInputBlocks = int(_ibs->readBits(6));
 
     // 0 means 'unknown' and 63 means 63 or more.
@@ -423,12 +423,15 @@ int CompressedInputStream::processBlock() THROW
                 Context copyCtx(_ctx);
                 copyCtx.putInt("jobs", jobsPerTask[taskId]); // jobs for current task
                 copyCtx.putInt("tasks", nbTasks); // overall number of tasks
+                copyCtx.putLong("tType", _transformType);
+                copyCtx.putInt("eType", _entropyType);
+                copyCtx.putInt("blockId", firstBlockId + taskId + 1);
+
                 _buffers[taskId]->_index = 0;
                 _buffers[_jobs + taskId]->_index = 0;
 
                 DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(_buffers[taskId],
-                    _buffers[_jobs + taskId], blkSize, _transformType,
-                    _entropyType, firstBlockId + taskId + 1,
+                    _buffers[_jobs + taskId], blkSize,
                     _ibs, _hasher, &_blockId,
                     blockListeners, copyCtx);
                 tasks.push_back(task);
@@ -456,7 +459,7 @@ int CompressedInputStream::processBlock() THROW
 
                 if (_buffers[_bufferId]->_array != res._data)
                    memcpy(&_buffers[_bufferId]->_array[0], &res._data[0], res._decoded);
-                
+
                 _buffers[_bufferId]->_index = 0;
 
                 if (blockListeners.size() > 0) {
@@ -572,7 +575,6 @@ void CompressedInputStream::notifyListeners(vector<Listener*>& listeners, const 
 
 template <class T>
 DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int blockSize,
-    uint64 transformType, short entropyType, int blockId,
     InputBitStream* ibs, XXHash32* hasher,
     atomic_int* processedBlockId, vector<Listener*>& listeners,
     const Context& ctx)
@@ -582,9 +584,9 @@ DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     _blockLength = blockSize;
     _data = iBuffer;
     _buffer = oBuffer;
-    _transformType = transformType;
-    _entropyType = entropyType;
-    _blockId = blockId;
+    _transformType = ctx.getLong("tType");
+    _entropyType = short(ctx.getInt("eType"));
+    _blockId = ctx.getInt("blockId");
     _ibs = ibs;
     _hasher = hasher;
     _processedBlockId = processedBlockId;

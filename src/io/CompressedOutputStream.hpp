@@ -91,7 +91,6 @@ namespace kanzi {
 
    public:
        EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int length,
-           uint64 transformType, short entropyType, int blockId,
            OutputBitStream* obs, XXHash32* hasher,
            ATOMIC_INT* processedBlockId, std::vector<Listener*>& listeners,
            const Context& ctx);

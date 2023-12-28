@@ -88,7 +88,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _ctx.putString("transform", transform);
     _ctx.putString("extra", _entropyType == EntropyEncoderFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
 
-    // Allocate first buffer and add padding for incompressible blocks 
+    // Allocate first buffer and add padding for incompressible blocks
     const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
     _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
     _buffers[_jobs] = new SliceArray<byte>(new byte[0], 0, 0);
@@ -148,7 +148,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     // better decisions about memory usage and job allocation in concurrent
     // decompression scenario.
     const int64 fileSize = ctx.getLong("fileSize", int64(UNKNOWN_NB_BLOCKS));
-    const int nbBlocks = (fileSize == int64(UNKNOWN_NB_BLOCKS)) ? UNKNOWN_NB_BLOCKS : 
+    const int nbBlocks = (fileSize == int64(UNKNOWN_NB_BLOCKS)) ? UNKNOWN_NB_BLOCKS :
                            int((fileSize + int64(bSize - 1)) / int64(bSize));
     _nbInputBlocks = max(min(nbBlocks, MAX_CONCURRENCY - 1), 1);
     _jobs = tasks;
@@ -176,7 +176,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
-    // Allocate first buffer and add padding for incompressible blocks 
+    // Allocate first buffer and add padding for incompressible blocks
     const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
     _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
     _buffers[_jobs] = new SliceArray<byte>(new byte[0], 0, 0);
@@ -384,11 +384,13 @@ void CompressedOutputStream::processBlock() THROW
 
             Context copyCtx(_ctx);
             copyCtx.putInt("jobs", jobsPerTask[taskId]);
+            copyCtx.putLong("tType", _transformType);
+            copyCtx.putInt("eType", _entropyType);
+            copyCtx.putInt("blockId", firstBlockId + taskId + 1);
             _buffers[taskId]->_index = 0;
 
             EncodingTask<EncodingTaskResult>* task = new EncodingTask<EncodingTaskResult>(_buffers[taskId],
-                _buffers[_jobs + taskId], dataLength, _transformType,
-                _entropyType, firstBlockId + taskId + 1,
+                _buffers[_jobs + taskId], dataLength,
                 _obs, _hasher, &_blockId,
                 blockListeners, copyCtx);
             tasks.push_back(task);
@@ -465,7 +467,6 @@ void CompressedOutputStream::notifyListeners(vector<Listener*>& listeners, const
 
 template <class T>
 EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer, int length,
-    uint64 transformType, short entropyType, int blockId,
     OutputBitStream* obs, XXHash32* hasher,
     atomic_int* processedBlockId, vector<Listener*>& listeners,
     const Context& ctx)
@@ -476,9 +477,9 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     _data = iBuffer;
     _buffer = oBuffer;
     _blockLength = length;
-    _transformType = transformType;
-    _entropyType = entropyType;
-    _blockId = blockId;
+    _transformType = ctx.getLong("tType");
+    _entropyType = short(ctx.getInt("eType"));
+    _blockId = ctx.getInt("blockId");
     _hasher = hasher;
     _processedBlockId = processedBlockId;
 }
@@ -603,8 +604,8 @@ T EncodingTask<T>::run() THROW
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
-        const int bufSize =  max(512 * 1024, max(postTransformLength, _blockLength + (_blockLength >> 3)));
-        
+        const int bufSize = max(512 * 1024, max(postTransformLength, _blockLength + (_blockLength >> 3)));
+
         if (_data->_length < bufSize) {
             // Rare case where the transform expanded the input or
             // entropy coder may expand size.
