@@ -175,7 +175,7 @@ Builds successfully with C++98, C++11, C++14, C++17, C++20.
 
 ### MacOS
 Go to the source directory and run 'make clean && make kanzi'. The Makefile contains all the necessary
-targets. Build successfully on Ubuntu with many versions of clang++.
+targets. Build successfully on MacOs with several versions of clang++.
 Multithreading is supported.
 
 ### BSD
