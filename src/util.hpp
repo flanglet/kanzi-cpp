@@ -42,33 +42,5 @@ struct istreambuf : public std::basic_streambuf<T, std::char_traits<T> >
     }
 };
 
-
-
-//Prefetch
-static inline void prefetchRead(const void* ptr) {
-#if defined(__GNUG__) || defined(__clang__)
-        __builtin_prefetch(ptr, 0, 1);
-#elif defined(__x86_64__) || defined(_m_amd64)
-        _mm_prefetch((char*) ptr, _MM_HINT_T0);
-#elif defined(_M_ARM)
-        __prefetch(ptr)
-#elif defined(_M_ARM64)
-        __prefetch2(ptr, 1)
-#endif
-}
-
-static inline void prefetchWrite(const void* ptr) {
-#if defined(__GNUG__) || defined(__clang__)
-        __builtin_prefetch(ptr, 1, 1);
-#elif defined(__x86_64__) || defined(_m_amd64)
-        _mm_prefetch((char*) ptr, _MM_HINT_T0);
-#elif defined(_M_ARM)
-        __prefetchw(ptr)
-#elif defined(_M_ARM64)
-        __prefetch2(ptr, 17)
-#endif
-}
-
-
 #endif
 

@@ -17,7 +17,7 @@ limitations under the License.
 #include <vector>
 #include "BWT.hpp"
 #include "../Global.hpp"
-#include "../util.hpp"
+#include "../Memory.hpp"
 
 #ifdef CONCURRENCY_ENABLED
 #include <future>

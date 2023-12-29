@@ -20,7 +20,7 @@ limitations under the License.
 #include <cstring>
 #include "../Context.hpp"
 #include "../Predictor.hpp"
-#include "../util.hpp"
+#include "../Memory.hpp"
 #include "AdaptiveProbMap.hpp"
 
 

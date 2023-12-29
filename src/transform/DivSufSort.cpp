@@ -16,7 +16,7 @@ limitations under the License.
 
 #include <cstring>
 #include "DivSufSort.hpp"
-#include "../util.hpp"
+#include "../Memory.hpp"
 
 using namespace kanzi;
 
