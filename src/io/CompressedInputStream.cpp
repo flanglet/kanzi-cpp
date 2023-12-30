@@ -130,6 +130,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
             throw invalid_argument(ss.str());
         }
 
+        _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
         string entropy = _ctx.getString("entropy");
         _entropyType = EntropyDecoderFactory::getType(entropy.c_str()); // throws on error
 
