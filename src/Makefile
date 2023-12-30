@@ -184,6 +184,7 @@ else
 	install -m 644 ./util/*.hpp $(INSTALL_DIR)/include/kanzi/util
 	install -d $(INSTALL_DIR)/bin
 	install -m577 ../bin/$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)/bin
+	install -m 644 ./kanzi.1.gz /usr/share/man/man1
 endif
 
 # Uninstall may require sudo or admin rights
@@ -195,6 +196,7 @@ else
 	rm -f $(INSTALL_DIR)/lib/$(STATIC_LIB)
 	rm -f $(INSTALL_DIR)/lib/$(SHARED_LIB)
 	rm -f $(INSTALL_DIR)/bin/$(APP)$(PROG_SUFFIX)
+	rm -f /usr/share/man/man1/kanzi.1.gz
 endif
 
 clean: 
