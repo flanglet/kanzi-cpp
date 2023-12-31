@@ -53,6 +53,11 @@ limitations under the License.
    #endif
 #endif
 
+#if defined(__MINGW32__)
+   // Missing from stat in mingw32
+   const int S_IFLNK = 40960;
+#endif
+
 
 namespace kanzi
 {
