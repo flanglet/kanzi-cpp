@@ -184,7 +184,7 @@ else
 	install -m 644 ./util/*.hpp $(INSTALL_DIR)/include/kanzi/util
 	install -d $(INSTALL_DIR)/bin
 	install -m577 ../bin/$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)/bin
-	install -m 644 ./kanzi.1.gz /usr/share/man/man1
+	install -m 644 ../kanzi.1.gz /usr/share/man/man1
 endif
 
 # Uninstall may require sudo or admin rights
