@@ -145,10 +145,10 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("        overwrite the output file if it already exists\n", true);
 
    if (mode.compare(0, 1, "d") == 0) {
-       log.println("   --from=blockId\n", true);
-       log.println("        Decompress starting from the provided block (included).\n", true);
+       log.println("   --from=blockId", true);
+       log.println("        Decompress starting from the provided block (included).", true);
        log.println("        The first block ID is 1.\n", true);
-       log.println("   --to=blockId\n", true);
+       log.println("   --to=blockId", true);
        log.println("        Decompress ending at the provided block (excluded).\n", true);
    }
 
