@@ -38,9 +38,11 @@ namespace kanzi
    public:
 
 #ifdef CONCURRENCY_ENABLED
-       Context(ThreadPool* pool = nullptr) : _pool(pool) {}
+       Context(ThreadPool* p = nullptr) : _pool(p) {}
+       Context(CTX_MAP<std::string, std::string>& m, ThreadPool* p = nullptr) : _map(m), _pool(p) {}
 #else
        Context() {}
+       Context(CTX_MAP<std::string, std::string>& m) : _map(m) {}
 #endif
 
        Context(const Context& ctx);
