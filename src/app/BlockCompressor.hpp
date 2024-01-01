@@ -68,7 +68,7 @@ namespace kanzi {
        ~FileCompressResult() {}
 #else
        FileCompressResult(const FileCompressResult& fdr) = delete;
-       
+
        FileCompressResult& operator=(const FileCompressResult& fdr) = delete;
 
        FileCompressResult(FileCompressResult&& fdr) = default;
@@ -76,7 +76,7 @@ namespace kanzi {
        FileCompressResult& operator=(FileCompressResult&& fdr) = default;
 
        ~FileCompressResult() = default;
-#endif 
+#endif
    };
 
 #ifdef CONCURRENCY_ENABLED
@@ -114,11 +114,14 @@ namespace kanzi {
        std::vector<Listener*> _listeners;
    };
 
+
+   typedef FileCompressTask<FileCompressResult> FCTask;
+
    class BlockCompressor {
        friend class FileCompressTask<FileCompressResult>;
 
    public:
-       BlockCompressor(std::map<std::string, std::string>& m) THROW;
+       BlockCompressor(Context& ctx) THROW;
 
        ~BlockCompressor();
 
@@ -134,7 +137,6 @@ namespace kanzi {
        static const int DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024;
        static const int MIN_BLOCK_SIZE = 1024;
        static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024;
-       static const int MAX_CONCURRENCY = 64;
 
        int _verbosity;
        bool _overwrite;
@@ -152,6 +154,7 @@ namespace kanzi {
        bool _reorderFiles;
        bool _noDotFiles;
        bool _noLinks;
+       Context _ctx;
 
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 

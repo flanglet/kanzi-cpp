@@ -44,6 +44,7 @@ static const int ARG_IDX_LEVEL = 9;
 
 static const string KANZI_VERSION = "2.2";
 static const string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
+static const int MAX_CONCURRENCY = 64;
 
 
 #ifdef CONCURRENCY_ENABLED
@@ -221,7 +222,7 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
     showHeader = false;
 }
 
-int processCommandLine(int argc, const char* argv[], map<string, string>& map)
+int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& map)
 {
     string inputName;
     string outputName;
@@ -805,12 +806,12 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
     }
 
     if (strBlockSize.length() > 0)
-        map["block"] = strBlockSize;
+        map["blockSize"] = strBlockSize;
 
     if (autoBlockSize == true)
         map["autoBlock"] = STR_TRUE;
 
-    map["verbose"] = (strVerbose == "") ? "1" : strVerbose;
+    map["verbosity"] = (strVerbose == "") ? "1" : strVerbose;
     map["mode"] = mode;
 
     if ((mode == "c") && (strLevel != ""))
@@ -855,14 +856,14 @@ int processCommandLine(int argc, const char* argv[], map<string, string>& map)
 
 int main(int argc, const char* argv[])
 {
-    map<string, string> args;
+    CTX_MAP<string, string> args;
     int status = processCommandLine(argc, argv, args);
 
     // Command line processing error ?
     if (status != 0)
        exit(status);
 
-    map<string, string>::iterator it = args.find("mode");
+    CTX_MAP<string, string>::iterator it = args.find("mode");
 
     // Help mode only ?
     if (it == args.end())
@@ -871,9 +872,42 @@ int main(int argc, const char* argv[])
     string mode = it->second;
     args.erase(it);
 
+    it = args.find("jobs");
+    int jobs = 1;
+
+    if (it != args.end()) {
+        jobs = atoi(it->second.c_str());
+    }
+
+#ifndef CONCURRENCY_ENABLED
+    if (jobs > 1)
+        throw invalid_argument("The number of jobs is limited to 1 in this version");
+
+    Context ctx(args);
+#else
+    if (jobs == 0) {
+       int cores = max(int(thread::hardware_concurrency()) / 2, 1); // Defaults to half the cores
+       jobs = min(cores, MAX_CONCURRENCY);
+    }
+    else if (jobs > MAX_CONCURRENCY) {
+        it = args.find("verbosity");
+        int verbosity = it == args.end() ? 1 : atoi(it->second.c_str());
+        stringstream ss;
+        ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY << endl;
+        Printer log(cout);
+        log.println(ss.str().c_str(), verbosity > 0);
+        jobs = MAX_CONCURRENCY;
+    }
+
+    ThreadPool pool(jobs);
+    Context ctx(args, &pool);
+#endif
+
+    ctx.putInt("jobs", jobs);
+
     if (mode == "c") {
         try {
-            BlockCompressor bc(args);
+            BlockCompressor bc(ctx);
             uint64 written = 0;
             int code = bc.compress(written);
             exit(code);
@@ -886,7 +920,7 @@ int main(int argc, const char* argv[])
 
     if (mode == "d") {
         try {
-            BlockDecompressor bd(args);
+            BlockDecompressor bd(ctx);
             uint64 read = 0;
             int code = bd.decompress(read);
             exit(code);

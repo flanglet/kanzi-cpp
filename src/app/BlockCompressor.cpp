@@ -34,70 +34,46 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-BlockCompressor::BlockCompressor(map<string, string>& args) THROW
+BlockCompressor::BlockCompressor(Context& ctx) THROW :
+            _ctx(ctx)
 {
-    map<string, string>::iterator it;
-    it = args.find("level");
+    _level = _ctx.getInt("level", 1);
 
-    if (it == args.end()) {
-        _level = -1;
-    }
-    else {
-        _level = atoi(it->second.c_str());
-        args.erase(it);
+    if ((_level < 0) || (_level > 9))
+        throw invalid_argument("Invalid compression level");
 
-        if ((_level < 0) || (_level > 9))
-            throw invalid_argument("Invalid compression level");
-    }
+    _overwrite = _ctx.getInt("overwrite", 0) != 0;
+    _ctx.putInt("overwrite", _overwrite ? 1 : 0);
+    _skipBlocks = _ctx.getInt("skipBlocks", 0) != 0;
+    _ctx.putInt("skipBlocks", _skipBlocks ? 1 : 0);;
+    _verbosity = _ctx.getInt("verbosity", 1);
+    _ctx.putInt("verbosity", _verbosity);
+    _jobs = _ctx.getInt("jobs", 1);
+    _ctx.putInt("jobs", _jobs);
+    _checksum = _ctx.getInt("checksum", 0) != 0;
+    _ctx.putInt("checksum", _checksum ? 1 : 0);
+    _noDotFiles = _ctx.getInt("noDotFiles", 0) != 0;
+    _ctx.putInt("noDotFiles", _noDotFiles ? 1 : 0);
+    _noLinks = _ctx.getInt("noLinks", 0) != 0;
+    _ctx.putInt("noLinks", _noLinks ? 1 : 0);
+    _autoBlockSize = _ctx.getInt("autoBlock", 0) != 0;
+    _ctx.putInt("autoBlock", _autoBlockSize ? 1 : 0);
+    _reorderFiles = _ctx.getInt("fileReorder", 0) != 0;
+    _ctx.putInt("fileReorder", _reorderFiles ? 1 : 0);
 
-    it = args.find("overwrite");
-
-    if (it == args.end()) {
-        _overwrite = false;
-    }
-    else {
-        _overwrite = it->second == STR_TRUE;
-        args.erase(it);
-    }
-
-    it = args.find("skipBlocks");
-
-    if (it == args.end()) {
-        _skipBlocks = false;
-    }
-    else {
-        _skipBlocks = it->second == STR_TRUE;
-        args.erase(it);
-    }
-
-    it = args.find("inputName");
-
-    if (it == args.end()) {
+    if (_ctx.has("inputName") == false)
         throw invalid_argument("Missing input name");
-    }
 
-    _inputName = it->second == "" ? "STDIN" : it->second;
-    args.erase(it);
-    it = args.find("outputName");
+    _inputName = _ctx.getString("inputName") == "" ? "STDIN" : _ctx.getString("inputName");
 
-    if (it == args.end()) {
+     if (_ctx.has("outputName") == false)
         throw invalid_argument("Missing output name");
-    }
 
-    _outputName = (it->second == "") && (_inputName == "STDIN") ? "STDOUT" : it->second;
-    args.erase(it);
+    string str = _ctx.getString("outputName");
+    _outputName = (str == "") && (_inputName == "STDIN") ? "STDOUT" : str;
+
     string strCodec;
     string strTransf;
-
-    it = args.find("entropy");
-
-    if (it == args.end()) {
-        strCodec = "ANS0";
-    }
-    else {
-        strCodec = it->second;
-        args.erase(it);
-    }
 
     if (_level >= 0) {
         string tranformAndCodec[2];
@@ -105,11 +81,20 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         strTransf = tranformAndCodec[0];
         strCodec = tranformAndCodec[1];
     }
+    else {
+       strCodec = _ctx.getString("entropy", "ANS0");
+       strTransf = _ctx.getString("transform", "BWT+RANK+ZRLT");
+
+       // Extract transform names. Curate input (EG. NONE+NONE+xxxx => xxxx)
+       strTransf = TransformFactory<byte>::getName(TransformFactory<byte>::getType(strTransf.c_str()));
+    }
 
     _codec = strCodec;
-    it = args.find("block");
+    _transform = strTransf;
+    _ctx.putString("entropy", _codec);
+    _ctx.putString("transform", _transform);
 
-    if (it == args.end()) {
+    if (_ctx.has("blockSize") == false) {
         switch (_level) {
         case 6:
             _blockSize = 2 * DEFAULT_BLOCK_SIZE;
@@ -126,21 +111,16 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         default:
             _blockSize = DEFAULT_BLOCK_SIZE;
         }
+
+        _ctx.putInt("blockSize", _blockSize);
     }
     else {
-        string strBlkSz = it->second;
-        args.erase(it);
-
-#ifdef _MSC_VER
-        uint64 bl = uint64(_atoi64(strBlkSz.c_str()));
-#else
-        uint64 bl = uint64(atoll(strBlkSz.c_str()));
-#endif
+        uint64 bl = _ctx.getLong("blockSize", DEFAULT_BLOCK_SIZE);
 
         if (bl < MIN_BLOCK_SIZE) {
             stringstream sserr;
             sserr << "Minimum block size is " << (MIN_BLOCK_SIZE / 1024) << " KB (";
-            sserr << MIN_BLOCK_SIZE << " bytes), got " << strBlkSz.c_str();
+            sserr << MIN_BLOCK_SIZE << " bytes), got " << bl;
             sserr << (bl > 1 ? " bytes" : " byte");
             throw invalid_argument(sserr.str().c_str());
         }
@@ -148,126 +128,11 @@ BlockCompressor::BlockCompressor(map<string, string>& args) THROW
         if (bl > MAX_BLOCK_SIZE) {
             stringstream sserr;
             sserr << "Maximum block size is " << (MAX_BLOCK_SIZE / (1024 * 1024 * 1024)) << " GB (";
-            sserr << MAX_BLOCK_SIZE << " bytes), got " << strBlkSz.c_str() << " bytes";
+            sserr << MAX_BLOCK_SIZE << " bytes), got " << bl << " bytes";
             throw invalid_argument(sserr.str().c_str());
         }
 
         _blockSize = min((int(bl) + 15) & -16, MAX_BLOCK_SIZE);
-    }
-
-    it = args.find("transform");
-
-    if (it == args.end()) {
-        if (strTransf.length() == 0)
-            strTransf = "BWT+RANK+ZRLT";
-    }
-    else {
-        if (strTransf.length() == 0) {
-            // Extract transform names. Curate input (EG. NONE+NONE+xxxx => xxxx)
-            strTransf = TransformFactory<byte>::getName(TransformFactory<byte>::getType(it->second.c_str()));
-        }
-
-        args.erase(it);
-    }
-
-    _transform = strTransf;
-    it = args.find("checksum");
-
-    if (it == args.end()) {
-        _checksum = false;
-    }
-    else {
-        _checksum = it->second == STR_TRUE;
-        args.erase(it);
-    }
-
-    it = args.find("verbose");
-
-    if (it == args.end()) {
-        _verbosity = 1;
-    }
-    else {
-        _verbosity = atoi(it->second.c_str());
-        args.erase(it);
-    }
-
-    it = args.find("jobs");
-    int concurrency = 0;
-
-    if (it != args.end()) {
-        concurrency = atoi(it->second.c_str());
-        args.erase(it);
-    }
-
-#ifndef CONCURRENCY_ENABLED
-    if (concurrency > 1)
-        throw invalid_argument("The number of jobs is limited to 1 in this version");
-
-    concurrency = 1;
-#else
-    if (concurrency == 0) {
-       int cores = max(int(thread::hardware_concurrency()) / 2, 1); // Defaults to half the cores
-       concurrency = min(cores, MAX_CONCURRENCY);   
-    }
-    else if (concurrency > MAX_CONCURRENCY) {
-        stringstream ss;
-        ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY << endl;
-        Printer log(cout);
-        log.println(ss.str().c_str(), _verbosity > 0);
-        concurrency = MAX_CONCURRENCY;
-    }
-#endif
-
-    _jobs = concurrency;
-
-    it = args.find("fileReorder");
-
-    if (it == args.end()) {
-        _reorderFiles = true;
-    }
-    else {
-        _reorderFiles = it->second == STR_TRUE;
-        args.erase(it);
-    }
-
-    it = args.find("noDotFiles");
-
-    if (it == args.end()) {
-        _noDotFiles = false;
-    }
-    else {
-        _noDotFiles = it->second == STR_TRUE;
-        args.erase(it);
-    }
-
-    it = args.find("noLinks");
-
-    if (it == args.end()) {
-        _noLinks = false;
-    }
-    else {
-        _noLinks = it->second == STR_TRUE;
-        args.erase(it);
-    }
-
-    it = args.find("autoBlock");
-
-    if (it == args.end()) {
-        _autoBlockSize = false;
-    }
-    else {
-        _autoBlockSize = it->second == STR_TRUE;
-        args.erase(it);
-    }
-
-    if ((_verbosity > 0) && (args.size() > 0)) {
-        Printer log(cout);
-
-        for (it = args.begin(); it != args.end(); ++it) {
-            stringstream ss;
-            ss << "Warning: ignoring invalid option [" << it->first << "]";
-            log.println(ss.str().c_str(), true);
-        }
     }
 }
 
@@ -429,19 +294,6 @@ int BlockCompressor::compress(uint64& outputSize)
         }
     }
 
-#ifdef CONCURRENCY_ENABLED
-    ThreadPool pool(_jobs);
-    Context ctx(&pool);
-#else
-    Context ctx;
-#endif
-    ctx.putInt("verbosity", _verbosity);
-    ctx.putInt("overwrite", _overwrite == true ? 1 : 0);
-    ctx.putString("skipBlocks", _skipBlocks == true ? STR_TRUE : STR_FALSE);
-    ctx.putString("checksum", _checksum == true ? STR_TRUE : STR_FALSE);
-    ctx.putString("entropy", _codec);
-    ctx.putString("transform", _transform);
-
     // Run the task(s)
     if (nbFiles == 1) {
         string oName = formattedOutName;
@@ -453,7 +305,7 @@ int BlockCompressor::compress(uint64& outputSize)
             }
         } else {
             iName = files[0].fullPath();
-            ctx.putLong("fileSize", files[0]._size);
+            _ctx.putLong("fileSize", files[0]._size);
 
             // Set the block size to optimize compression ratio when possible
             if ((_autoBlockSize == true) && (_jobs > 0)) {
@@ -469,11 +321,9 @@ int BlockCompressor::compress(uint64& outputSize)
             }
         }
 
-        ctx.putString("inputName", iName);
-        ctx.putString("outputName", oName);
-        ctx.putInt("blockSize", _blockSize);
-        ctx.putInt("jobs", _jobs);
-        FileCompressTask<FileCompressResult> task(ctx, _listeners);
+        _ctx.putString("inputName", iName);
+        _ctx.putString("outputName", oName);
+        FileCompressTask<FileCompressResult> task(_ctx, _listeners);
         FileCompressResult fcr = task.run();
         res = fcr._code;
         read = fcr._read;
@@ -510,13 +360,12 @@ int BlockCompressor::compress(uint64& outputSize)
                 _blockSize = int(max(min((bl + 63) & ~63, int64(MAX_BLOCK_SIZE)), int64(MIN_BLOCK_SIZE)));
             }
 
-            Context taskCtx(ctx);
+            Context taskCtx(_ctx);
             taskCtx.putLong("fileSize", files[i]._size);
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
             taskCtx.putInt("blockSize", _blockSize);
             taskCtx.putInt("jobs", jobsPerTask[n++]);
-            ss.str(string());
             FileCompressTask<FileCompressResult>* task = new FileCompressTask<FileCompressResult>(taskCtx, _listeners);
             tasks.push_back(task);
         }
@@ -525,14 +374,18 @@ int BlockCompressor::compress(uint64& outputSize)
 
 #ifdef CONCURRENCY_ENABLED
         if (doConcurrent) {
-            vector<FileCompressWorker<FileCompressTask<FileCompressResult>*, FileCompressResult>*> workers;
+            vector<FileCompressWorker<FCTask*, FileCompressResult>*> workers;
             vector<future<FileCompressResult> > results;
-            BoundedConcurrentQueue<FileCompressTask<FileCompressResult>*> queue(nbFiles, &tasks[0]);
+            BoundedConcurrentQueue<FCTask*> queue(nbFiles, &tasks[0]);
 
             // Create one worker per job and run it. A worker calls several tasks sequentially.
             for (int i = 0; i < _jobs; i++) {
-                workers.push_back(new FileCompressWorker<FileCompressTask<FileCompressResult>*, FileCompressResult>(&queue));
-                results.push_back(pool.schedule(&FileCompressWorker<FileCompressTask<FileCompressResult>*, FileCompressResult>::run, workers[i]));
+                workers.push_back(new FileCompressWorker<FCTask*, FileCompressResult>(&queue));
+
+                if (_ctx.getPool() == nullptr)
+                    results.push_back(async(launch::async, &FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
+                else 
+                    results.push_back(_ctx.getPool()->schedule(&FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
             }
 
             // Wait for results
@@ -580,6 +433,7 @@ int BlockCompressor::compress(uint64& outputSize)
         if (_verbosity > 0) {
             double delta = stopClock.elapsed();
             log.println("", true);
+            ss.str(string());
             ss << "Total compression time: ";
 
             if (delta >= 1e5) {
@@ -595,10 +449,10 @@ int BlockCompressor::compress(uint64& outputSize)
             ss.str(string());
             ss << "Total output size: " << written << (written > 1 ? " bytes" : " byte");
             log.println(ss.str().c_str(), true);
-            ss.str(string());
         }
 
         if (read > 0) {
+            ss.str(string());
             ss.precision(6);
             ss << "Compression ratio: " << float(written) / float(read);
             log.println(ss.str().c_str(), _verbosity > 0);

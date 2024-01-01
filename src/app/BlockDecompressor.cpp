@@ -34,104 +34,27 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-BlockDecompressor::BlockDecompressor(map<string, string>& args)
+BlockDecompressor::BlockDecompressor(Context& ctx) THROW :
+     _ctx(ctx)
 {
     _blockSize = 0;
-    map<string, string>::iterator it;
-    it = args.find("overwrite");
+    _overwrite = _ctx.getInt("overwrite", 0) != 0;
+    _ctx.putInt("overwrite", _overwrite ? 1 : 0);
+    _verbosity = _ctx.getInt("verbosity", 1);
+    _ctx.putInt("verbosity", _verbosity);
+    _jobs = _ctx.getInt("jobs", 1);
+    _ctx.putInt("jobs", _jobs);
 
-    if (it == args.end()) {
-        _overwrite = false;
-    }
-    else {
-        _overwrite = it->second == STR_TRUE;
-        args.erase(it);
-    }
-
-    it = args.find("inputName");
-
-    if (it == args.end()) {
+    if (_ctx.has("inputName") == false)
         throw invalid_argument("Missing input name");
-    }
 
-    _inputName = it->second == "" ? "STDIN" : it->second;
-    args.erase(it);
-    it = args.find("outputName");
+    _inputName = _ctx.getString("inputName") == "" ? "STDIN" : _ctx.getString("inputName");
 
-    if (it == args.end()) {
+     if (_ctx.has("outputName") == false)
         throw invalid_argument("Missing output name");
-    }
 
-    _outputName = (it->second == "") && (_inputName == "STDIN") ? "STDOUT" : it->second;
-    args.erase(it);
-    it = args.find("verbose");
-
-    if (it == args.end()) {
-        _verbosity = 1;
-    }
-    else {
-        _verbosity = atoi(it->second.c_str());
-        args.erase(it);
-    }
-
-    it = args.find("from");
-
-    if (it == args.end()) {
-        _from = -1;
-    }
-    else {
-        _from = atoi(it->second.c_str());
-        args.erase(it);
-    }
-
-    it = args.find("to");
-
-    if (it == args.end()) {
-        _to = -1;
-    }
-    else {
-        _to = atoi(it->second.c_str());
-        args.erase(it);
-    }
-
-    it = args.find("jobs");
-    int concurrency = 0;
-
-    if (it != args.end()) {
-        concurrency = atoi(it->second.c_str());
-        args.erase(it);
-    }
-
-#ifndef CONCURRENCY_ENABLED
-    if (concurrency > 1)
-        throw invalid_argument("The number of jobs is limited to 1 in this version");
-
-    concurrency = 1;
-#else
-    if (concurrency == 0) {
-       int cores = max(int(thread::hardware_concurrency()) / 2, 1); // Defaults to half the cores
-       concurrency = min(cores, MAX_CONCURRENCY);   
-    }
-    else if (concurrency > MAX_CONCURRENCY) {
-        stringstream ss;
-        ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY << endl;
-        Printer log(cout);
-        log.println(ss.str().c_str(), _verbosity > 0);
-        concurrency = MAX_CONCURRENCY;
-    }
-#endif
-
-    _jobs = concurrency;
-
-    if ((_verbosity > 0) && (args.size() > 0)) {
-        Printer log(cout);
-
-        for (it = args.begin(); it != args.end(); ++it) {
-            stringstream ss;
-            ss << "Warning: ignoring invalid option [" << it->first << "]";
-            log.println(ss.str().c_str(), _verbosity > 0);
-        }
-    }
+    string str = _ctx.getString("outputName");
+    _outputName = (str == "") && (_inputName == "STDIN") ? "STDOUT" : str;
 }
 
 BlockDecompressor::~BlockDecompressor()
@@ -194,7 +117,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         log.println("Warning: limiting verbosity to 1 due to concurrent processing of input files.\n", true);
         _verbosity = 1;
     }
-    
+
     if (_verbosity > 2) {
         ss << "Verbosity set to " << _verbosity;
         log.println(ss.str().c_str(), true);
@@ -272,21 +195,6 @@ int BlockDecompressor::decompress(uint64& inputSize)
         }
     }
 
-#ifdef CONCURRENCY_ENABLED
-    ThreadPool pool(_jobs);
-    Context ctx(&pool);
-#else
-    Context ctx;
-#endif
-    ctx.putInt("verbosity", _verbosity);
-    ctx.putInt("overwrite", _overwrite == true ? 1 : 0);
-
-    if (_from >= 0)
-        ctx.putInt("from", _from);
-
-    if (_to >= 0)
-        ctx.putInt("to", _to);
-
     // Run the task(s)
     if (nbFiles == 1) {
         string oName = formattedOutName;
@@ -300,7 +208,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         }
         else {
             iName = files[0].fullPath();
-            ctx.putLong("fileSize", files[0]._size);
+            _ctx.putLong("fileSize", files[0]._size);
 
             if (oName.length() == 0) {
                 oName = iName + ".bak";
@@ -310,10 +218,9 @@ int BlockDecompressor::decompress(uint64& inputSize)
             }
         }
 
-        ctx.putString("inputName", iName);
-        ctx.putString("outputName", oName);
-        ctx.putInt("jobs", _jobs);
-        FileDecompressTask<FileDecompressResult> task(ctx, _listeners);
+        _ctx.putString("inputName", iName);
+        _ctx.putString("outputName", oName);
+        FileDecompressTask<FileDecompressResult> task(_ctx, _listeners);
         FileDecompressResult fdr = task.run();
         res = fdr._code;
         read = fdr._read;
@@ -341,7 +248,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
                 oName = formattedOutName + iName.substr(formattedInName.size()) + ".bak";
             }
 
-            Context taskCtx(ctx);
+            Context taskCtx(_ctx);
             taskCtx.putLong("fileSize", files[i]._size);
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
@@ -354,14 +261,18 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
 #ifdef CONCURRENCY_ENABLED
         if (doConcurrent) {
-            vector<FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>*> workers;
+            vector<FileDecompressWorker<FDTask*, FileDecompressResult>*> workers;
             vector<future<FileDecompressResult> > results;
-            BoundedConcurrentQueue<FileDecompressTask<FileDecompressResult>*> queue(nbFiles, &tasks[0]);
+            BoundedConcurrentQueue<FDTask*> queue(nbFiles, &tasks[0]);
 
             // Create one worker per job and run it. A worker calls several tasks sequentially.
             for (int i = 0; i < _jobs; i++) {
                 workers.push_back(new FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>(&queue));
-                results.push_back(pool.schedule(&FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>::run, workers[i]));
+
+                if (_ctx.getPool() == nullptr)
+                    results.push_back(async(launch::async, &FileDecompressWorker<FDTask*, FileDecompressResult>::run, workers[i]));
+                else
+                    results.push_back(_ctx.getPool()->schedule(&FileDecompressWorker<FDTask*, FileDecompressResult>::run, workers[i]));
             }
 
             // Wait for results

@@ -80,7 +80,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
     : InputStream(is.rdbuf())
     , _ctx(ctx)
 {
-    int tasks = ctx.getInt("jobs", 1);
+    int tasks = _ctx.getInt("jobs", 1);
 
 #ifdef CONCURRENCY_ENABLED
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
