@@ -222,6 +222,23 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
     showHeader = false;
 }
 
+
+#define WARNING_OPT_NOVALUE(opt) \
+                 stringstream ss; \
+                 ss << "Warning: ignoring option [" << opt << "] with no value."; \
+                 log.println(ss.str().c_str(), verbose > 0)
+
+#define WARNING_OPT_COMP_ONLY(opt) \
+                 stringstream ss; \
+                 ss << "Warning: ignoring option [" << opt << "]. Only applicable in compress mode."; \
+                 log.println(ss.str().c_str(), verbose > 0)
+
+#define WARNING_OPT_DUPLICATE(opt, val) \
+                 stringstream ss; \
+                 ss << "Warning: ignoring duplicate " << opt << ": " << name;\
+                 log.println(ss.str().c_str(), verbose > 0)
+
+
 int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& map)
 {
     string inputName;
@@ -368,9 +385,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
         if ((arg == "--compress") || (arg == "-c") || (arg == "--decompress") || (arg == "-d")) {
             if (ctx != -1) {
-                stringstream ss;
-                ss << "Warning: ignoring option [" << CMD_LINE_ARGS[ctx] << "] with no value.";
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
 
             ctx = -1;
@@ -379,9 +394,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
         if ((arg == "--force") || (arg == "-f")) {
             if (ctx != -1) {
-                stringstream ss;
-                ss << "Warning: ignoring option [" << CMD_LINE_ARGS[ctx] << "] with no value.";
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
 
             strOverwrite = STR_TRUE;
@@ -391,9 +404,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
         if ((arg == "--skip") || (arg == "-s")) {
             if (ctx != -1) {
-                stringstream ss;
-                ss << "Warning: ignoring option [" << CMD_LINE_ARGS[ctx] << "] with no value.";
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
 
             strSkip = STR_TRUE;
@@ -403,9 +414,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
         if ((arg == "--checksum") || (arg == "-x")) {
             if (ctx != -1) {
-                stringstream ss;
-                ss << "Warning: ignoring option [" << CMD_LINE_ARGS[ctx] << "] with no value.";
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
 
             strChecksum = STR_TRUE;
@@ -415,17 +424,13 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
         if (arg == "--no-file-reorder") {
             if (ctx != -1) {
-                stringstream ss;
-                ss << "Warning: ignoring option [" << CMD_LINE_ARGS[ctx] << "] with no value.";
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
 
             ctx = -1;
 
             if (mode != "c") {
-                stringstream ss;
-                ss << "Warning: ignoring option [" << arg << "]. Only applicable in compress mode.";
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_COMP_ONLY(arg);
                 continue;
             }
 
@@ -435,17 +440,13 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
         if (arg == "--no-dot-file") {
             if (ctx != -1) {
-                stringstream ss;
-                ss << "Warning: ignoring option [" << CMD_LINE_ARGS[ctx] << "] with no value.";
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
 
             ctx = -1;
 
             if (mode != "c") {
-                stringstream ss;
-                ss << "Warning: ignoring option [" << arg << "]. Only applicable in compress mode.";
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_COMP_ONLY(arg);
                 continue;
             }
 
@@ -455,17 +456,13 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
         if (arg == "--no-link") {
             if (ctx != -1) {
-                stringstream ss;
-                ss << "Warning: ignoring option [" << CMD_LINE_ARGS[ctx] << "] with no value.";
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
 
             ctx = -1;
 
             if (mode != "c") {
-                stringstream ss;
-                ss << "Warning: ignoring option [" << arg << "]. Only applicable in compress mode.";
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_COMP_ONLY(arg);
                 continue;
             }
 
@@ -490,9 +487,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             name = trim(name);
 
             if (outputName != "") {
-                stringstream ss;
-                ss << "Warning: ignoring duplicate output name: " << name;
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_DUPLICATE("output name", name);
             } else {
                 if ((name.length() >= 2) && (name[0] == '.') && (name[1] == PATH_SEPARATOR)) {
                    name = (name.length() == 2) ? name.substr(0, 1) : name.substr(2);
@@ -510,9 +505,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             name = trim(name);
 
             if (inputName != "") {
-                stringstream ss;
-                ss << "Warning: ignoring duplicate input name: " << name;
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_DUPLICATE("input name", name);
             } else {
                 if ((name.length() >= 2) && (name[0] == '.') && (name[1] == PATH_SEPARATOR)) {
                    name = (name.length() == 2) ? name.substr(0, 1) : name.substr(2);
@@ -530,9 +523,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             name = trim(name);
 
             if (codec != "") {
-                stringstream ss;
-                ss << "Warning: ignoring duplicate entropy: " << name;
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_DUPLICATE("entropy", name);
             } else {
                 if (name.length() == 0) {
                     cerr << "Invalid empty entropy provided on command line" << endl;
@@ -552,9 +543,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             name = trim(name);
 
             if (transf != "") {
-                stringstream ss;
-                ss << "Warning: ignoring duplicate transform: " << name;
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_DUPLICATE("transform", name);
             } else {
                 if (name.length() == 0) {
                     cerr << "Invalid empty transform provided on command line" << endl;
@@ -588,9 +577,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             name = trim(name);
 
             if (strLevel != "") {
-                stringstream ss;
-                ss << "Warning: ignoring duplicate level: " << name;
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_DUPLICATE("level", name);
             } else {
                 strLevel = name;
                 level = atoi(strLevel.c_str());
@@ -615,9 +602,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             }
 
             if ((strBlockSize != "") || (autoBlockSize == true)) {
-                stringstream ss;
-                ss << "Warning: ignoring duplicate block size: " << name;
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_DUPLICATE("block size", name);
                 ctx = -1;
                 continue;
             }
@@ -668,7 +653,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
                     while ((k < name.length()) && ((name[k] >= '0') && (name[k] <= '9')))
                         k++;
-		
+
                     if (k < name.length()) {
                         cerr << "Invalid block size provided on command line: " << arg << endl;
                         return Error::ERR_INVALID_PARAM;
@@ -695,9 +680,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             name = trim(name);
 
             if (strTasks != "") {
-                stringstream ss;
-                ss << "Warning: ignoring duplicate jobs: " << name;
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_DUPLICATE("jobs", name);
                 ctx = -1;
                 continue;
             }
@@ -729,9 +712,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             }
 
             if (strFrom != "") {
-                stringstream ss;
-                ss << "Warning: ignoring duplicate start block: " << name;
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_DUPLICATE("start block", name);
             } else {
                 strFrom = name;
                 from = atoi(strFrom.c_str());
@@ -760,9 +741,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             }
 
             if (strTo != "") {
-                stringstream ss;
-                ss << "Warning: ignoring duplicate end block: " << name;
-                log.println(ss.str().c_str(), verbose > 0);
+                WARNING_OPT_DUPLICATE("end block", name);
             } else {
                 strTo = name;
                 to = atoi(strTo.c_str());

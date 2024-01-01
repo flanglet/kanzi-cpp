@@ -65,7 +65,7 @@ static Transform<byte>* getByteTransform(string name, Context& ctx)
         return new SBRT(SBRT::MODE_RANK, ctx);
 
     if (name.compare("MTFT") == 0)
-       return new SBRT(SBRT::MODE_MTF, ctx);
+        return new SBRT(SBRT::MODE_MTF, ctx);
 
     if (name.compare("MM") == 0)
         return new FSDCodec(ctx);

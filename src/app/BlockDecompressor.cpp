@@ -34,7 +34,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-BlockDecompressor::BlockDecompressor(Context& ctx) THROW :
+BlockDecompressor::BlockDecompressor(const Context& ctx) THROW :
      _ctx(ctx)
 {
     _blockSize = 0;
@@ -366,7 +366,7 @@ void BlockDecompressor::notifyListeners(vector<Listener*>& listeners, const Even
 }
 
 template <class T>
-FileDecompressTask<T>::FileDecompressTask(Context& ctx, vector<Listener*>& listeners)
+FileDecompressTask<T>::FileDecompressTask(const Context& ctx, vector<Listener*>& listeners)
     : _ctx(ctx)
 {
     _listeners = listeners;

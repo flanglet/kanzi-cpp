@@ -34,7 +34,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-BlockCompressor::BlockCompressor(Context& ctx) THROW :
+BlockCompressor::BlockCompressor(const Context& ctx) THROW :
             _ctx(ctx)
 {
     _level = _ctx.getInt("level", 1);
@@ -550,7 +550,7 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
 }
 
 template <class T>
-FileCompressTask<T>::FileCompressTask(Context& ctx, vector<Listener*>& listeners)
+FileCompressTask<T>::FileCompressTask(const Context& ctx, vector<Listener*>& listeners)
     : _ctx(ctx)
 {
     _listeners = listeners;

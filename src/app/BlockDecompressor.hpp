@@ -93,7 +93,7 @@ namespace kanzi {
    public:
        static const int DEFAULT_BUFFER_SIZE = 65536;
 
-       FileDecompressTask(Context& ctx, std::vector<Listener*>& listeners);
+       FileDecompressTask(const Context& ctx, std::vector<Listener*>& listeners);
 
        ~FileDecompressTask();
 
@@ -114,7 +114,7 @@ namespace kanzi {
        friend class FileDecompressTask<FileDecompressResult>;
 
    public:
-       BlockDecompressor(Context& ctx) THROW;
+       BlockDecompressor(const Context& ctx) THROW;
 
        ~BlockDecompressor();
 
