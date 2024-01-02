@@ -685,19 +685,14 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 continue;
             }
 
-            if ((name.length() != 1) && (name.length() != 2)) {
-                cerr << "Invalid number of jobs provided on command line: " << arg << endl;
-                return Error::ERR_INVALID_PARAM;
-            }
-
-            strTasks = name;
-            int tasks = atoi(strTasks.c_str());
+            int tasks = atoi(name.c_str());
 
             if (tasks < 1) {
                 cerr << "Invalid number of jobs provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
             }
 
+            strTasks = name;
             ctx = -1;
             continue;
         }

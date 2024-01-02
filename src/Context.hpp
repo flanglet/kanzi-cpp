@@ -45,10 +45,6 @@ namespace kanzi
        Context(CTX_MAP<std::string, std::string>& m) : _map(m) {}
 #endif
 
-       Context(const Context& ctx);
-       Context& operator=(const Context& ctx);
-       virtual ~Context() {}
-
        bool has(const std::string& key) const;
        int getInt(const std::string& key, int defValue = 0) const;
        int64 getLong(const std::string& key, int64 defValue = 0) const;
@@ -68,24 +64,6 @@ namespace kanzi
        ThreadPool* _pool;
 #endif
    };
-
-   inline Context::Context(const Context& ctx)
-      : _map(ctx._map)
-#ifdef CONCURRENCY_ENABLED
-      , _pool(ctx._pool)
-#endif
-   {
-   }
-
-
-   inline Context& Context::operator=(const Context& ctx)
-   {
-       _map = ctx._map;
-#ifdef CONCURRENCY_ENABLED
-       _pool = ctx._pool;
-#endif
-      return *this;
-   }
 
 
    inline bool Context::has(const std::string& key) const

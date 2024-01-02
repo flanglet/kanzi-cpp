@@ -37,9 +37,9 @@ using namespace std;
 BlockCompressor::BlockCompressor(const Context& ctx) THROW :
             _ctx(ctx)
 {
-    _level = _ctx.getInt("level", 1);
+    int level = _ctx.getInt("level", 0);
 
-    if ((_level < 0) || (_level > 9))
+    if ((level < 0) || (level > 9))
         throw invalid_argument("Invalid compression level");
 
     _overwrite = _ctx.getInt("overwrite", 0) != 0;
@@ -75,9 +75,9 @@ BlockCompressor::BlockCompressor(const Context& ctx) THROW :
     string strCodec;
     string strTransf;
 
-    if (_level >= 0) {
+    if (level > 0) {
         string tranformAndCodec[2];
-        getTransformAndCodec(_level, tranformAndCodec);
+        getTransformAndCodec(level, tranformAndCodec);
         strTransf = tranformAndCodec[0];
         strCodec = tranformAndCodec[1];
     }
@@ -95,7 +95,7 @@ BlockCompressor::BlockCompressor(const Context& ctx) THROW :
     _ctx.putString("transform", _transform);
 
     if (_ctx.has("blockSize") == false) {
-        switch (_level) {
+        switch (level) {
         case 6:
             _blockSize = 2 * DEFAULT_BLOCK_SIZE;
             break;
