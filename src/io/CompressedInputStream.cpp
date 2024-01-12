@@ -383,7 +383,7 @@ istream& CompressedInputStream::read(char* data, streamsize length) THROW
 
 int CompressedInputStream::processBlock() THROW
 {
-    if ((_headless == false) && (!_initialized.exchange(true, memory_order_acquire)))
+    if ((_headless == false) && (!_initialized.exchange(true, memory_order_relaxed)))
         readHeader();
 
     // Protect against future concurrent modification of the list of block listeners
@@ -411,7 +411,7 @@ int CompressedInputStream::processBlock() THROW
         const int bufSize = max(_blockSize + EXTRA_BUFFER_SIZE, _blockSize + (_blockSize >> 4));
 
         while (true) {
-            const int firstBlockId = _blockId.load(memory_order_relaxed);
+            const int firstBlockId = _blockId.load(memory_order_acquire);
 
             // Create as many tasks as empty buffers to decode
             for (int taskId = 0; taskId < nbTasks; taskId++) {
@@ -546,7 +546,7 @@ int CompressedInputStream::processBlock() THROW
 
 void CompressedInputStream::close() THROW
 {
-    if (_closed.exchange(true, memory_order_acquire))
+    if (_closed.exchange(true, memory_order_relaxed))
         return;
 
     try {
@@ -607,7 +607,7 @@ T DecodingTask<T>::run() THROW
 {
     // Lock free synchronization
     while (true) {
-        const int taskId = _processedBlockId->load(memory_order_relaxed);
+        const int taskId = _processedBlockId->load(memory_order_acquire);
 
         if (taskId == CompressedInputStream::CANCEL_TASKS_ID) {
             // Skip, an error occurred
@@ -661,7 +661,7 @@ T DecodingTask<T>::run() THROW
 
         // After completion of the bitstream reading, increment the block id.
         // It unblocks the task processing the next block (if any)
-        (*_processedBlockId)++;
+        _processedBlockId->store(_blockId, memory_order_release);
 
         const int from = _ctx.getInt("from", 1);
         const int to = _ctx.getInt("to", CompressedInputStream::MAX_BLOCK_ID);
@@ -806,8 +806,8 @@ T DecodingTask<T>::run() THROW
     }
     catch (exception& e) {
         // Make sure to unfreeze next block
-        if (_processedBlockId->load(memory_order_relaxed) == _blockId - 1)
-            (*_processedBlockId)++;
+        if (_processedBlockId->load(memory_order_acquire) == _blockId - 1)
+            _processedBlockId->store(_blockId, memory_order_release);
 
         if (transform != nullptr)
             delete transform;

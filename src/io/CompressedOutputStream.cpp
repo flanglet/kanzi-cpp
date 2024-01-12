@@ -123,8 +123,6 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
-    string entropyCodec = ctx.getString("entropy");
-    string transform = ctx.getString("transform");
     int bSize = ctx.getInt("blockSize");
 
     if (bSize > MAX_BITSTREAM_BLOCK_SIZE) {
@@ -168,6 +166,8 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
 #endif
 
+    string entropyCodec = ctx.getString("entropy");
+    string transform = ctx.getString("transform");
     _entropyType = EntropyEncoderFactory::getType(entropyCodec.c_str());
     _transformType = TransformFactory<byte>::getType(transform.c_str());
     string str = ctx.getString("checksum", STR_FALSE);
@@ -664,7 +664,7 @@ T EncodingTask<T>::run() THROW
 
         // Lock free synchronization
         while (true) {
-            const int taskId = _processedBlockId->load(memory_order_relaxed);
+            const int taskId = _processedBlockId->load(memory_order_acquire);
 
             if (taskId == CompressedOutputStream::CANCEL_TASKS_ID)
                 return T(_blockId, 0, "Canceled");
@@ -699,7 +699,7 @@ T EncodingTask<T>::run() THROW
 
         // After completion of the entropy coding, increment the block id.
         // It unblocks the task processing the next block (if any).
-        (*_processedBlockId)++;
+        _processedBlockId->store(_blockId, memory_order_release);
 
         return T(_blockId, 0, "Success");
     }
