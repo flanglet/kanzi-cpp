@@ -34,7 +34,7 @@ namespace kanzi
    {
    public:
        RLT() { _pCtx = nullptr; }
-       RLT(Context& ctx) { _pCtx = &ctx; }
+       RLT(Context& ctx) : _pCtx(&ctx) {}
        ~RLT() {}
 
        bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;

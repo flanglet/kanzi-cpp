@@ -38,7 +38,8 @@ namespace kanzi {
 
    class BWTBlockCodec FINAL : public Transform<byte> {
    public:
-       BWTBlockCodec(Context& ctx);
+
+       BWTBlockCodec(Context& ctx) : _pBWT(new BWT(ctx)) { }
 
        ~BWTBlockCodec() { delete _pBWT; }
 

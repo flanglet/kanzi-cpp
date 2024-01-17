@@ -30,7 +30,7 @@ namespace kanzi {
    public:
        FSDCodec() { _pCtx = nullptr; }
 
-       FSDCodec(Context& ctx) { _pCtx = &ctx; }
+       FSDCodec(Context& ctx) : _pCtx(&ctx) {}
 
        ~FSDCodec() {}
 

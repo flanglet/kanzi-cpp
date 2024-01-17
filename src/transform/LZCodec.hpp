@@ -62,7 +62,8 @@ namespace kanzi {
             _pCtx = nullptr;
         }
 
-        LZXCodec(Context& ctx)
+        LZXCodec(Context& ctx) :
+            _pCtx(&ctx)
         {
             _hashes = new int32[0];
             _hashSize = 0;
@@ -70,7 +71,6 @@ namespace kanzi {
             _mLenBuf = new byte[0];
             _mBuf = new byte[0];
             _bufferSize = 0;
-            _pCtx = &ctx;
         }
 
         ~LZXCodec()

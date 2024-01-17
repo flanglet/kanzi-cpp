@@ -18,10 +18,6 @@ limitations under the License.
 
 using namespace kanzi;
 
-BWTBlockCodec::BWTBlockCodec(Context& ctx)
-{
-	_pBWT = new BWT(ctx);
-}
 
 // Return true if the compression chain succeeded. In this case, the input data
 // may be modified. If the compression failed, the input data is returned unmodified.

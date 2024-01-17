@@ -149,6 +149,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     uint sumScaledFreq = 0;
     uint sumFreq = 0;
     int idxMax = 0;
+    const int64 scaleFactor = (int64(scale) << 16) / int64(totalFreq);
 
     // Scale frequencies by squeezing/stretching distribution over complete range
     for (int i = 0; i < length; i++) {
@@ -159,16 +160,15 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
             continue;
 
         idxMax = (f > freqs[idxMax]) ? i : idxMax;
-        const int64 sf = int64(f) * int64(scale);
-        uint scaledFreq;
+        uint scaledFreq = int((int64(freqs[i]) * scaleFactor) >> 16);
 
-        if (sf <= int64(totalFreq)) {
+        if (scaledFreq == 0) {
             // Quantum of frequency
             scaledFreq = 1;
         }
         else {
             // Find best frequency rounding value
-            scaledFreq = uint(sf / int64(totalFreq));
+            const int64 sf = int64(f) * int64(scale);
             const int64 prod = int64(scaledFreq) * int64(totalFreq);
             const int64 errCeiling = prod + int64(totalFreq) - sf;
             const int64 errFloor = sf - prod;
@@ -182,7 +182,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         freqs[i] = scaledFreq;
         sumFreq += f;
 
-	if (sumFreq >= totalFreq)
+        if (sumFreq >= totalFreq)
            break;
     }
 
@@ -206,7 +206,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     }
    
     // Slow path: spread error across frequencies
-    const int inc = (sumScaledFreq > scale) ? -1 : 1;
+    const int inc = (delta > 0) ? -1 : 1;
     deque<FreqSortData> queue;
 
     // Create sorted queue of present symbols

@@ -28,7 +28,7 @@ namespace kanzi
         uint32 val;
         uint32 freq;
 
-        ssUTF(uint32 v, uint32 f) : val(v), freq(f) { }
+        ssUTF(uint32 v, uint32 f) : val(v), freq(f) {}
 
         friend bool operator< (ssUTF const& lhs, ssUTF const& rhs) {
             int r;
@@ -42,7 +42,7 @@ namespace kanzi
     public:
         UTFCodec() { _pCtx = nullptr; }
 
-        UTFCodec(Context& ctx) { _pCtx = &ctx; }
+        UTFCodec(Context& ctx) : _pCtx(&ctx) {}
 
         ~UTFCodec() {}
 

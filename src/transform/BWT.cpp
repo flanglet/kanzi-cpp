@@ -105,7 +105,7 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     if (_saSize < count) {
          delete[] _sa;
          _saSize = count;
-        _sa = new int[_saSize];
+         _sa = new int[_saSize];
     }
 
     _saAlgo.computeBWT(src, dst, _sa, count, _primaryIndexes, getBWTChunks(count));

@@ -26,7 +26,7 @@ namespace kanzi
    public:
        EXECodec() { _pCtx = nullptr; }
 
-       EXECodec(Context& ctx) { _pCtx = &ctx; }
+       EXECodec(Context& ctx) : _pCtx(&ctx) {}
 
        ~EXECodec() {}
 
