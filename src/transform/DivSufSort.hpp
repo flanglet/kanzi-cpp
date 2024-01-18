@@ -78,25 +78,20 @@ namespace kanzi
 
 
 
-   class TRBudget
+   struct TRBudget
    {
-       friend class DivSufSort;
-
-   private:
        int _chance;
        int _remain;
        int _incVal;
        int _count;
 
        TRBudget(int chance, int incval)
+          : _chance(chance)
+          , _remain(incval)
        {
-           _chance = chance;
-           _remain = incval;
            _incVal = incval;
            _count = 0;
        }
-
-       ~TRBudget() {}
 
        bool check(int size);
    };

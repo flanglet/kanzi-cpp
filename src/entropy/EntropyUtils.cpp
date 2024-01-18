@@ -24,9 +24,9 @@ using namespace std;
 class FreqSortData {
 public:
     uint* _freq;
-    uint _symbol;
+    uint8 _symbol;
 
-    FreqSortData(uint* freq, int symbol) :
+    FreqSortData(uint* freq, uint8 symbol) :
          _freq(freq)
        , _symbol(symbol)
     {
@@ -149,7 +149,6 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     uint sumScaledFreq = 0;
     uint sumFreq = 0;
     int idxMax = 0;
-    const int64 scaleFactor = (int64(scale) << 16) / int64(totalFreq);
 
     // Scale frequencies by squeezing/stretching distribution over complete range
     for (int i = 0; i < length; i++) {
@@ -160,15 +159,16 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
             continue;
 
         idxMax = (f > freqs[idxMax]) ? i : idxMax;
-        uint scaledFreq = int((int64(freqs[i]) * scaleFactor) >> 16);
+        const int64 sf = int64(f) * int64(scale);
+        uint scaledFreq;
 
-        if (scaledFreq == 0) {
+        if (sf <= int64(totalFreq)) {
             // Quantum of frequency
             scaledFreq = 1;
         }
         else {
             // Find best frequency rounding value
-            const int64 sf = int64(f) * int64(scale);
+            scaledFreq = uint(sf / int64(totalFreq));
             const int64 prod = int64(scaledFreq) * int64(totalFreq);
             const int64 errCeiling = prod + int64(totalFreq) - sf;
             const int64 errFloor = sf - prod;
@@ -199,25 +199,25 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
 
     const int delta = int(sumScaledFreq - scale);
 
-    if (abs(delta) * 20 < int(freqs[idxMax])) {
+    if (abs(delta) * 10 < int(freqs[idxMax])) {
         // Fast path (small error): just adjust the max frequency
         freqs[idxMax] -= delta;
         return alphabetSize;
     }
-   
+
     // Slow path: spread error across frequencies
     const int inc = (delta > 0) ? -1 : 1;
     deque<FreqSortData> queue;
 
     // Create sorted queue of present symbols
     for (int i = 0; i < alphabetSize; i++) {
-        if (int(freqs[alphabet[i]]) == -inc)
-            continue;
-        
-        if (alphabetSize * freqs[alphabet[i]] >= scale)
-            queue.push_front(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
-        else
-            queue.push_back(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
+       if (int(freqs[alphabet[i]]) <= 2) // Do not distort small frequencies
+          continue;
+
+       if (alphabetSize * freqs[alphabet[i]] >= scale)
+          queue.push_front(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
+       else
+          queue.push_back(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
     }
 
     if (queue.empty()) {
@@ -240,7 +240,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         if (int(*fsd._freq) == -inc) {
             continue;
         }
-           
+
         // Distort frequency and re-enqueue
         *fsd._freq += inc;
         sumScaledFreq += inc;

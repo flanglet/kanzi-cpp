@@ -91,8 +91,8 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], uint lr)
                 sum += f[i];
                 count++;
 
-		if (count >= alphabetSize)
-                   break;
+                if (count >= alphabetSize)
+                    break;
             }
         }
 
