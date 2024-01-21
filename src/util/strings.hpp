@@ -22,13 +22,21 @@ limitations under the License.
 #include <vector>
 
 
-template <typename T>
-std::string to_string(T value)
-{
-    std::ostringstream os;
-    os << value;
-    return os.str();
-}
+
+#if __cplusplus < 201103L
+   // to_string() not available before C++ 11
+   template <typename T>
+   std::string to_string(T value)
+   {
+       std::ostringstream os;
+       os << value;
+       return os.str();
+   }
+
+   #define TOSTR(v) to_string(v)
+#else
+   #define TOSTR(v) std::to_string(v)
+#endif
 
 
 inline std::string __trim(std::string& str, bool left, bool right)

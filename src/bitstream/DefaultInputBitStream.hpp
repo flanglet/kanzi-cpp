@@ -87,7 +87,7 @@ namespace kanzi {
    inline uint64 DefaultInputBitStream::readBits(uint count) THROW
    {
        if ((count == 0) || (count > 64))
-           throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
+           throw BitStreamException("Invalid bit count: " + TOSTR(count) + " (must be in [1..64])");
 
        if (count <= _availBits) {
            // Enough spots available in 'current'

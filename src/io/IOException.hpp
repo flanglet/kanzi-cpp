@@ -21,6 +21,7 @@ limitations under the License.
 #include <stdexcept>
 #include "../Error.hpp"
 #include "../types.hpp"
+#include "../util/strings.hpp"
 
 
 namespace kanzi
@@ -32,12 +33,12 @@ namespace kanzi
        int _code;
 
    public:
-       IOException(const std::string& msg) : std::runtime_error(msg+". Error code: "+to_string(Error::ERR_UNKNOWN))
+       IOException(const std::string& msg) : std::runtime_error(msg + ". Error code: " + TOSTR(Error::ERR_UNKNOWN))
        {
            _code = Error::ERR_UNKNOWN;
        }
 
-       IOException(const std::string& msg, int error) : std::runtime_error(msg+". Error code: "+to_string(error))
+       IOException(const std::string& msg, int error) : std::runtime_error(msg + ". Error code: " + TOSTR(error))
        {
            _code = error;
        }

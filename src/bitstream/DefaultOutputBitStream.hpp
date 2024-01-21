@@ -85,7 +85,7 @@ namespace kanzi
    inline uint DefaultOutputBitStream::writeBits(uint64 value, uint count) THROW
    {
        if (count > 64)
-           throw BitStreamException("Invalid bit count: " + to_string(count) + " (must be in [1..64])");
+           throw BitStreamException("Invalid bit count: " + TOSTR(count) + " (must be in [1..64])");
  
        _current |= ((value << (64 - count)) >> (64 - _availBits));
 

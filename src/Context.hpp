@@ -111,13 +111,13 @@ namespace kanzi
 
    inline void Context::putInt(const std::string& key, int value)
    {
-      _map[key] = to_string(value);
+      _map[key] = TOSTR(value);
    }
 
 
    inline void Context::putLong(const std::string& key, int64 value)
    {
-      _map[key] = to_string(value);
+      _map[key] = TOSTR(value);
    }
 
 
