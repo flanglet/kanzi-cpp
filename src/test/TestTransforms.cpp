@@ -226,9 +226,13 @@ int testTransformsCorrectness(const string& name)
         ctx.putInt("bsVersion", 4);
         ctx.putString("transform", name);
         Transform<byte>* ff = getByteTransform(name, ctx);
+
+        if (ff == nullptr)
+            return 1;
+
         Transform<byte>* fi = getByteTransform(name, ctx);
 
-        if ((ff == nullptr) || (fi == nullptr))
+        if (fi == nullptr)
             return 1;
 
         byte* input = new byte[size];
