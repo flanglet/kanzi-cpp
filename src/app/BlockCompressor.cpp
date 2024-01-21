@@ -75,7 +75,7 @@ BlockCompressor::BlockCompressor(const Context& ctx) THROW :
     string strCodec;
     string strTransf;
 
-    if (level > 0) {
+    if (level >= 0) {
         string tranformAndCodec[2];
         getTransformAndCodec(level, tranformAndCodec);
         strTransf = tranformAndCodec[0];
