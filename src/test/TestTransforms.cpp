@@ -227,13 +227,16 @@ int testTransformsCorrectness(const string& name)
         ctx.putString("transform", name);
         Transform<byte>* ff = getByteTransform(name, ctx);
 
-        if (ff == nullptr)
+        if (ff == nullptr) {
             return 1;
+        }
 
         Transform<byte>* fi = getByteTransform(name, ctx);
 
-        if (fi == nullptr)
+        if (fi == nullptr) {
+            delete ff;
             return 1;
+        }
 
         byte* input = new byte[size];
         byte* output = new byte[ff->getMaxEncodedLength(size)];
