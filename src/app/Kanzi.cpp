@@ -44,10 +44,11 @@ static const int ARG_IDX_LEVEL = 9;
 
 static const string KANZI_VERSION = "2.2";
 static const string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
-static const int MAX_CONCURRENCY = 64;
 
 
 #ifdef CONCURRENCY_ENABLED
+   static const int MAX_CONCURRENCY = 64;
+
    mutex Printer::_mtx;
 #endif
 
@@ -824,6 +825,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
     if (to >= 0)
         map["to"] = strTo;
 
+    // Use 0 to indicate it has not been provided
     map["jobs"] = (strTasks == "") ? "0" : strTasks;
     return 0;
 }
@@ -857,6 +859,7 @@ int main(int argc, const char* argv[])
     if (jobs > 1)
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 
+    jobs = 1;
     Context ctx(args);
 #else
     if (jobs == 0) {
