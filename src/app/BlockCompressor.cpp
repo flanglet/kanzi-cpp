@@ -51,13 +51,20 @@ BlockCompressor::BlockCompressor(const Context& ctx) THROW :
         _codec = tranformAndCodec[1];
     }
     else {
-       string tranformAndCodec[2];
-       getTransformAndCodec(3, tranformAndCodec);
-       _codec = _ctx.getString("entropy", tranformAndCodec[1]);
-       string strTransf = _ctx.getString("transform", tranformAndCodec[0]);
+       if ((_ctx.has("transform") == false) && (_ctx.has("entropy") == false)) {
+           // Default to level 3
+           string tranformAndCodec[2];
+           getTransformAndCodec(3, tranformAndCodec);
+           _transform = tranformAndCodec[0];
+           _codec = tranformAndCodec[1];
+       }
+       else {
+           _codec = _ctx.getString("entropy", "NONE");
+           string strTransf = _ctx.getString("transform", "NONE");
 
-       // Extract transform names. Curate input (EG. NONE+NONE+xxxx => xxxx)
-       _transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(strTransf.c_str()));
+           // Extract transform names. Curate input (EG. NONE+NONE+xxxx => xxxx)
+           _transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(strTransf.c_str()));
+       }
     }
 
     _ctx.putString("entropy", _codec);
