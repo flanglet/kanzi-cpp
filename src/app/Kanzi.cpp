@@ -108,6 +108,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("   -l, --level=<compression>", true);
        log.println("        set the compression level [0..9]", true);
        log.println("        Providing this option forces entropy and transform.", true);
+       log.println("        Defaults to level 3 if not provided.", true);
        log.println("        0 = NONE&NONE (store)", true);
        log.println("        1 = PACK+LZ&NONE", true);
        log.println("        2 = PACK+LZ&HUFFMAN", true);
@@ -120,11 +121,10 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("        9 = EXE+RLT+TEXT+UTF&TPAQX\n", true);
        log.println("   -e, --entropy=<codec>", true);
        log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]", true);
-       log.println("        (default is ANS0)\n", true);
        log.println("   -t, --transform=<codec>", true);
        log.println("        transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
        log.println("                  [MTFT|RANK|SRT|TEXT|MM|EXE|UTF|PACK]", true);
-       log.println("        EG: BWT+RANK or BWTS+MTFT (default is BWT+RANK+ZRLT)\n", true);
+       log.println("        EG: BWT+RANK or BWTS+MTFT\n", true);
        log.println("   -x, --checksum", true);
        log.println("        enable block checksum\n", true);
        log.println("   -s, --skip", true);
@@ -856,8 +856,14 @@ int main(int argc, const char* argv[])
     }
 
 #ifndef CONCURRENCY_ENABLED
-    if (jobs > 1)
-        throw invalid_argument("The number of jobs is limited to 1 in this version");
+    if (jobs > 1) {
+        it = args.find("verbosity");
+        int verbosity = it == args.end() ? 1 : atoi(it->second.c_str());
+        stringstream ss;
+        ss << "Warning: the number of jobs is  limited to 1 in this version";
+        Printer log(cout);
+        log.println(ss.str().c_str(), verbosity > 0);
+    }
 
     jobs = 1;
     Context ctx(args);
@@ -870,7 +876,7 @@ int main(int argc, const char* argv[])
         it = args.find("verbosity");
         int verbosity = it == args.end() ? 1 : atoi(it->second.c_str());
         stringstream ss;
-        ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY << endl;
+        ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY;
         Printer log(cout);
         log.println(ss.str().c_str(), verbosity > 0);
         jobs = MAX_CONCURRENCY;
