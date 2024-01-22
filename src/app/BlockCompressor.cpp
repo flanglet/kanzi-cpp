@@ -37,15 +37,31 @@ using namespace std;
 BlockCompressor::BlockCompressor(const Context& ctx) THROW :
             _ctx(ctx)
 {
-    int level = 3;
+    int level = -1;
 
     if (_ctx.has("level") == true) {
-        level = _ctx.getInt("level", 3);
+        level = _ctx.getInt("level");
 
         if ((level < 0) || (level > 9))
             throw invalid_argument("Invalid compression level");
+
+        string tranformAndCodec[2];
+        getTransformAndCodec(level, tranformAndCodec);
+        _transform = tranformAndCodec[0];
+        _codec = tranformAndCodec[1];
+    }
+    else {
+       string tranformAndCodec[2];
+       getTransformAndCodec(3, tranformAndCodec);
+       _codec = _ctx.getString("entropy", tranformAndCodec[1]);
+       string strTransf = _ctx.getString("transform", tranformAndCodec[0]);
+
+       // Extract transform names. Curate input (EG. NONE+NONE+xxxx => xxxx)
+       _transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(strTransf.c_str()));
     }
 
+    _ctx.putString("entropy", _codec);
+    _ctx.putString("transform", _transform);
     _overwrite = _ctx.getInt("overwrite", 0) != 0;
     _ctx.putInt("overwrite", _overwrite ? 1 : 0);
     _skipBlocks = _ctx.getInt("skipBlocks", 0) != 0;
@@ -76,12 +92,6 @@ BlockCompressor::BlockCompressor(const Context& ctx) THROW :
     string str = _ctx.getString("outputName");
     _outputName = (str == "") && (_inputName == "STDIN") ? "STDOUT" : str;
 
-    string tranformAndCodec[2];
-    getTransformAndCodec(level, tranformAndCodec);
-    _transform = tranformAndCodec[0];
-    _codec = tranformAndCodec[1];
-    _ctx.putString("entropy", _codec);
-    _ctx.putString("transform", _transform);
 
     if (_ctx.has("blockSize") == false) {
         switch (level) {
