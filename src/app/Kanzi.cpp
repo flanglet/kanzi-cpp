@@ -240,6 +240,19 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
                  log.println(ss.str().c_str(), verbose > 0)
 
 
+bool toInt(string& s, int& res)
+{
+   // Chekc that all characters are valid
+   for (size_t i = 0; i < s.length(); i++) {
+       if ((s[i] < '0') || (s[i] > '9'))
+          return false;
+   }
+
+   // Use atoi because stoi can throw
+   res = atoi(s.c_str()); 
+   return true;
+}
+
 int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& map)
 {
     string inputName;
@@ -323,9 +336,9 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                    return Error::ERR_INVALID_PARAM;
                }
 
-               verbose = atoi(strVerbose.c_str());
+               bool res = toInt(strVerbose, verbose);
 
-               if ((verbose < 0) || (verbose > 5)) {
+               if ((res == false) || (verbose < 0) || (verbose > 5)) {
                    cerr << "Invalid verbosity level provided on command line: " << arg << endl;
                    return Error::ERR_INVALID_PARAM;
                }
@@ -581,9 +594,9 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 WARNING_OPT_DUPLICATE("level", name);
             } else {
                 strLevel = name;
-                level = atoi(strLevel.c_str());
+                bool res = toInt(strLevel, level);
 
-                if (((level < 0) || (level > 9)) || ((level == 0) && (strLevel != "0"))) {
+                if ((res == false) || ((level < 0) || (level > 9))) {
                     cerr << "Invalid compression level provided on command line: " << arg << endl;
                     return Error::ERR_INVALID_PARAM;
                 }
@@ -609,67 +622,46 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             }
 
             transform(name.begin(), name.end(), name.begin(), ::toupper);
-            char lastChar = name[name.length() - 1];
-            uint64 scale = 1;
-
-            // Process K or M or G suffix
-            if ('K' == lastChar) {
-                scale = 1024;
-                name.resize(name.length() - 1);
-            }
-            else if ('M' == lastChar) {
-                scale = 1024 * 1024;
-                name.resize(name.length() - 1);
-            }
-            else if ('G' == lastChar) {
-                scale = 1024 * 1024 * 1024;
-                name.resize(name.length() - 1);
-            }
-
-            if (name[0] == '0') {
-                size_t k = 1;
-
-                while ((k < name.length()) && (name[k] == '0'))
-                    k++;
-
-                name = name.substr(k);
-            }
-
-            if (name.length() == 0) {
-                cerr << "Invalid block size provided on command line: " << arg << endl;
-                return Error::ERR_INVALID_PARAM;
-            }
 
             if (name == "AUTO") {
                 autoBlockSize = true;
             }
             else {
+                uint64 scale = 1;
+                char lastChar = name[name.length() - 1];
+
+                // Process K or M or G suffix
+                if ('K' == lastChar) {
+                    scale = 1024;
+                    name.resize(name.length() - 1);
+                }
+                else if ('M' == lastChar) {
+                    scale = 1024 * 1024;
+                    name.resize(name.length() - 1);
+                }
+                else if ('G' == lastChar) {
+                    scale = 1024 * 1024 * 1024;
+                    name.resize(name.length() - 1);
+                }
+
+                size_t k = 0;
+
+                while ((k < name.length()) && ((name[k] >= '0') && (name[k] <= '9')))
+                    k++;
+
+                if (k < name.length()) {
+                    cerr << "Invalid block size provided on command line: " << arg << endl;
+                    return Error::ERR_INVALID_PARAM;
+                }
+
                 uint64 bk;
                 stringstream ss1;
                 ss1 << name;
                 ss1 >> bk;
-
-                if (scale != 1) {
-                    size_t k = 0;
-
-                    while ((k < name.length()) && ((name[k] >= '0') && (name[k] <= '9')))
-                        k++;
-
-                    if (k < name.length()) {
-                        cerr << "Invalid block size provided on command line: " << arg << endl;
-                        return Error::ERR_INVALID_PARAM;
-                    }
-                }
-
                 bk *= scale;
                 stringstream ss2;
                 ss2 << bk;
                 ss2 >> strBlockSize;
-
-                if ((scale == 1) && (strBlockSize.compare(ss1.str()) != 0)) {
-                    cerr << "Invalid block size provided on command line: " << arg << endl;
-                    return Error::ERR_INVALID_PARAM;
-                }
             }
 
             ctx = -1;
@@ -686,9 +678,10 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 continue;
             }
 
-            int tasks = atoi(name.c_str());
+            int tasks;
+            bool res = toInt(name, tasks);
 
-            if (tasks < 1) {
+            if ((res == false) || (tasks < 1)) {
                 cerr << "Invalid number of jobs provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
             }
@@ -711,9 +704,9 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 WARNING_OPT_DUPLICATE("start block", name);
             } else {
                 strFrom = name;
-                from = atoi(strFrom.c_str());
+                bool res = toInt(strFrom, from);
 
-                if ((from < 0) || ((from == 0) && (strFrom != "0"))) {
+                if ((res == false) || (from < 0)) {
                     cerr << "Invalid start block provided on command line: " << arg << endl;
 
                     if (from == 0) {
@@ -740,9 +733,9 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 WARNING_OPT_DUPLICATE("end block", name);
             } else {
                 strTo = name;
-                to = atoi(strTo.c_str());
+                bool res = toInt(strTo, to);
 
-                if (to <= 0) { // Must be > 0 (0 means nothing to do)
+                if ((res == false) || (to <= 0)) { // Must be > 0 (0 means nothing to do)
                     cerr << "Invalid end block provided on command line: " << arg << endl;
                     return Error::ERR_INVALID_PARAM;
                 }
