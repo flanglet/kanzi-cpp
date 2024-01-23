@@ -79,7 +79,7 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, const uint alphabet[], in
     return count;
 }
 
-int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
+int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[])
 {
     // Read encoding mode from bitstream
     if (ibs.readBit() == FULL_ALPHABET) {
@@ -116,7 +116,7 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW
 // 'totalFreq 'is the sum of frequencies.
 // 'scale' is the target new total of frequencies
 // The alphabet and freqs parameters are updated
-int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length, uint totalFreq, uint scale) THROW
+int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length, uint totalFreq, uint scale)
 {
     if (length > 256) {
         stringstream ss;

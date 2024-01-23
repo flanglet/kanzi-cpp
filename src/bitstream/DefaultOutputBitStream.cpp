@@ -18,7 +18,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize) THROW : _os(os)
+DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize) : _os(os)
 {
     if (bufferSize < 1024)
         throw invalid_argument("Invalid buffer size (must be at least 1024)");
@@ -39,7 +39,7 @@ DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize
     memset(&_buffer[0], 0, size_t(_bufferSize));
 }
 
-uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
+uint DefaultOutputBitStream::writeBits(const byte bits[], uint count)
 {
     if (isClosed() == true)
         throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);
@@ -132,7 +132,7 @@ uint DefaultOutputBitStream::writeBits(const byte bits[], uint count) THROW
     return count;
 }
 
-void DefaultOutputBitStream::_close() THROW
+void DefaultOutputBitStream::_close()
 {
     if (isClosed() == true)
         return;
@@ -187,7 +187,7 @@ void DefaultOutputBitStream::_close() THROW
 }
 
 // Write buffer to underlying stream
-void DefaultOutputBitStream::flush() THROW
+void DefaultOutputBitStream::flush()
 {
     if (isClosed() == true)
         throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);

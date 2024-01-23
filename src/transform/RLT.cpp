@@ -23,7 +23,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -239,7 +239,7 @@ int RLT::emitRunLength(byte dst[], int run, byte escape, byte val) {
     return dstIdx + 1;
 }
 
-bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;

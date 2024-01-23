@@ -112,15 +112,15 @@ namespace kanzi {
    // Use ANS to encode/decode literals and matches
    class ROLZCodec1 FINAL : public Transform<byte> {
    public:
-       ROLZCodec1(uint logPosChecks) THROW;
+       ROLZCodec1(uint logPosChecks);
 
-       ROLZCodec1(Context& ctx) THROW;
+       ROLZCodec1(Context& ctx);
 
        ~ROLZCodec1() { delete[] _matches; }
 
-       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
-       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
        // Required encoding output buffer size
        int getMaxEncodedLength(int srcLen) const
@@ -154,15 +154,15 @@ namespace kanzi {
    // Code loosely based on 'balz' by Ilya Muravyov
    class ROLZCodec2 FINAL : public Transform<byte> {
    public:
-       ROLZCodec2(uint logPosChecks) THROW;
+       ROLZCodec2(uint logPosChecks);
 
-       ROLZCodec2(Context& ctx) THROW;
+       ROLZCodec2(Context& ctx);
 
        ~ROLZCodec2() { delete[] _matches; }
 
-       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
-       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
        // Required encoding output buffer size
        int getMaxEncodedLength(int srcLen) const
@@ -198,15 +198,15 @@ namespace kanzi {
        friend class ROLZCodec2;
 
    public:
-       ROLZCodec(uint logPosChecks = 4) THROW;
+       ROLZCodec(uint logPosChecks = 4);
 
-       ROLZCodec(Context& ctx) THROW;
+       ROLZCodec(Context& ctx);
 
        ~ROLZCodec() { delete _delegate; }
 
-       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
-       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
        // Required encoding output buffer size
        int getMaxEncodedLength(int srcLen) const

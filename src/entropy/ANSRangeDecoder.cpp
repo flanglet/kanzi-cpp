@@ -25,7 +25,7 @@ using namespace std;
 
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats.
-ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunkSize) THROW : _bitstream(bitstream)
+ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunkSize) : _bitstream(bitstream)
 {
     if ((order != 0) && (order != 1))
         throw invalid_argument("ANS Codec: The order must be 0 or 1");

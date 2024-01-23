@@ -20,7 +20,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-DefaultInputBitStream::DefaultInputBitStream(InputStream& is, uint bufferSize) THROW : _is(is)
+DefaultInputBitStream::DefaultInputBitStream(InputStream& is, uint bufferSize) : _is(is)
 {
     if (bufferSize < 1024)
         throw invalid_argument("Invalid buffer size (must be at least 1024)");
@@ -47,7 +47,7 @@ DefaultInputBitStream::~DefaultInputBitStream()
     delete[] _buffer;
 }
 
-uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
+uint DefaultInputBitStream::readBits(byte bits[], uint count)
 {
     if (isClosed() == true)
         throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);
@@ -146,7 +146,7 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count) THROW
     return count;
 }
 
-void DefaultInputBitStream::_close() THROW
+void DefaultInputBitStream::_close()
 {
     if (isClosed() == true)
         return;
@@ -160,7 +160,7 @@ void DefaultInputBitStream::_close() THROW
     _maxPosition = -1;
 }
 
-int DefaultInputBitStream::readFromInputStream(uint count) THROW
+int DefaultInputBitStream::readFromInputStream(uint count)
 {
     if (isClosed() == true)
         throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);

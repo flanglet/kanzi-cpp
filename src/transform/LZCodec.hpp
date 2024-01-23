@@ -27,15 +27,15 @@ namespace kanzi {
     class LZCodec FINAL : public Transform<byte> {
 
     public:
-        LZCodec() THROW;
+        LZCodec();
 
-        LZCodec(Context& ctx) THROW;
+        LZCodec(Context& ctx);
 
         ~LZCodec() { delete _delegate; }
 
-        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
-        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
         // Required encoding output buffer size
         int getMaxEncodedLength(int srcLen) const
@@ -83,9 +83,9 @@ namespace kanzi {
             delete[] _tkBuf;
         }
 
-        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
-        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
         // Required encoding output buffer size
         int getMaxEncodedLength(int srcLen) const
@@ -146,9 +146,9 @@ namespace kanzi {
             delete[] _hashes;
         }
 
-        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
-        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
         // Required encoding output buffer size
         int getMaxEncodedLength(int srcLen) const

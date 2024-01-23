@@ -49,7 +49,7 @@ namespace kanzi
 
       ANSRangeDecoder(InputBitStream& bitstream,
                       int order = 0,
-                      int chunkSize = DEFAULT_ANS0_CHUNK_SIZE) THROW;
+                      int chunkSize = DEFAULT_ANS0_CHUNK_SIZE);
 
       ~ANSRangeDecoder();
 

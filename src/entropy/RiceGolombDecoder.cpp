@@ -19,7 +19,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-RiceGolombDecoder::RiceGolombDecoder(InputBitStream& bitstream, uint logBase, bool sgn) THROW
+RiceGolombDecoder::RiceGolombDecoder(InputBitStream& bitstream, uint logBase, bool sgn)
     : _bitstream(bitstream)
 {
     if ((logBase < 1) || (logBase > 12))

@@ -19,7 +19,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-RiceGolombEncoder::RiceGolombEncoder(OutputBitStream& bitstream, uint logBase, bool sgn) THROW
+RiceGolombEncoder::RiceGolombEncoder(OutputBitStream& bitstream, uint logBase, bool sgn)
     : _bitstream(bitstream)
 {
     if ((logBase < 1) || (logBase > 12))

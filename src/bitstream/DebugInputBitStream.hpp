@@ -38,23 +38,23 @@ namespace kanzi
 
        void printByte(byte val);
 
-       void _close() THROW { _delegate.close(); }
+       void _close() { _delegate.close(); }
 
    public:
-       DebugInputBitStream(InputBitStream& ibs) THROW;
+       DebugInputBitStream(InputBitStream& ibs);
 
-       DebugInputBitStream(InputBitStream& ibs, OutputStream& os) THROW;
+       DebugInputBitStream(InputBitStream& ibs, OutputStream& os);
 
-       DebugInputBitStream(InputBitStream& ibs, OutputStream& os, int width) THROW;
+       DebugInputBitStream(InputBitStream& ibs, OutputStream& os, int width);
 
        ~DebugInputBitStream();
 
        // Returns 1 or 0
-       int readBit() THROW;
+       int readBit();
 
-       uint64 readBits(uint length) THROW;
+       uint64 readBits(uint length);
 
-       uint readBits(byte bits[], uint length) THROW;
+       uint readBits(byte bits[], uint length);
 
        // Number of bits read
        uint64 read() const { return _delegate.read(); }
@@ -62,7 +62,7 @@ namespace kanzi
        // Return false when the bitstream is closed or the End-Of-Stream has been reached
        bool hasMoreToRead() { return _delegate.hasMoreToRead(); }
 
-       void close() THROW { _close(); }
+       void close() { _close(); }
 
        void showByte(bool show) { _show = show; }
 

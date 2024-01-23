@@ -114,7 +114,7 @@ namespace kanzi {
        friend class FileDecompressTask<FileDecompressResult>;
 
    public:
-       BlockDecompressor(const Context& ctx) THROW;
+       BlockDecompressor(const Context& ctx);
 
        ~BlockDecompressor();
 

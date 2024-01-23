@@ -29,7 +29,7 @@ namespace kanzi {
 
        static int squash(int d); // 1 / (1 + e-x)  (inverse of stretch)
 
-       static int log2(uint32 x) THROW; // fast, integer rounded
+       static int log2(uint32 x); // fast, integer rounded
 
        static int _log2(uint32 x); // same as log2 minus check on input value
 
@@ -39,9 +39,9 @@ namespace kanzi {
 
        static int trailingZeros(uint64 x);
 
-       static int log2_1024(uint32 x) THROW; // slow, accurate to 1/1024th
+       static int log2_1024(uint32 x); // slow, accurate to 1/1024th
 
-       static void computeJobsPerTask(int jobsPerTask[], int jobs, int tasks) THROW;
+       static void computeJobsPerTask(int jobsPerTask[], int jobs, int tasks);
 
        static int computeFirstOrderEntropy1024(int blockLen, const uint histo[]);
 

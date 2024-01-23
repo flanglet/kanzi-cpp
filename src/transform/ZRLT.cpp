@@ -21,7 +21,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
+bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 {
     if (length == 0)
         return true;
@@ -104,7 +104,7 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
     return res && (srcIdx == srcEnd);
 }
 
-bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
+bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 {
     if (length == 0)
         return true;

@@ -46,9 +46,9 @@ namespace kanzi
 
         ~UTFCodec() {}
 
-        bool forward(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
+        bool forward(SliceArray<byte>& source, SliceArray<byte>& destination, int length);
 
-        bool inverse(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
+        bool inverse(SliceArray<byte>& source, SliceArray<byte>& destination, int length);
 
         int getMaxEncodedLength(int srcLen) const { return srcLen + 8192; }
 

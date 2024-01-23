@@ -28,7 +28,7 @@ namespace kanzi
    class HuffmanDecoder : public EntropyDecoder
    {
    public:
-       HuffmanDecoder(InputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE) THROW;
+       HuffmanDecoder(InputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE);
 
        ~HuffmanDecoder() { _dispose(); delete[] _buffer; }
 
@@ -51,7 +51,7 @@ namespace kanzi
        uint16 _table[TABLE_MASK + 1]; // decoding table: code -> size, symbol
        int _chunkSize;
 
-       int readLengths() THROW;
+       int readLengths();
 
        void buildDecodingTable(int count);
 

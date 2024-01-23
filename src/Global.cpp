@@ -115,7 +115,7 @@ Global::Global()
 }
 
 // Return 1024 * log2(x). Max error is around 0.1%
-int Global::log2_1024(uint32 x) THROW
+int Global::log2_1024(uint32 x)
 {
     if (x == 0)
         throw std::invalid_argument("Cannot calculate log of a negative or null value");
@@ -131,7 +131,7 @@ int Global::log2_1024(uint32 x) THROW
     return ((log - 7) * 1024) + ((LOG2_4096[x >> (log - 7)] + 2) >> 2);
 }
 
-int Global::log2(uint32 x) THROW
+int Global::log2(uint32 x)
 {
     if (x == 0)
         throw std::invalid_argument("Cannot calculate log of a negative or null value");
@@ -290,7 +290,7 @@ int Global::computeFirstOrderEntropy1024(int blockLen, const uint histo[])
     return int(sum / uint64(blockLen));
 }
 
-void Global::computeJobsPerTask(int jobsPerTask[], int jobs, int tasks) THROW
+void Global::computeJobsPerTask(int jobsPerTask[], int jobs, int tasks)
 {
     if (jobs <= 0)
         throw std::invalid_argument("Invalid number of jobs provided");

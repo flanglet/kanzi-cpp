@@ -30,9 +30,9 @@ namespace kanzi
 
        ~EXECodec() {}
 
-       bool forward(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
+       bool forward(SliceArray<byte>& source, SliceArray<byte>& destination, int length);
 
-       bool inverse(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
+       bool inverse(SliceArray<byte>& source, SliceArray<byte>& destination, int length);
 
        int getMaxEncodedLength(int inputLen) const;
 
@@ -81,9 +81,9 @@ namespace kanzi
 
        bool forwardX86(SliceArray<byte>& source, SliceArray<byte>& destination, int length, int codeStart, int codeEnd);
 
-       bool inverseARM(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
+       bool inverseARM(SliceArray<byte>& source, SliceArray<byte>& destination, int length);
 
-       bool inverseX86(SliceArray<byte>& source, SliceArray<byte>& destination, int length) THROW;
+       bool inverseX86(SliceArray<byte>& source, SliceArray<byte>& destination, int length);
 
        static byte detectType(byte src[], int count, int& codeStart, int& codeEnd);
        

@@ -20,7 +20,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs) THROW : _delegate(ibs), _out(cout), _width(80)
+DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs) : _delegate(ibs), _out(cout), _width(80)
 {
     _idx = 0;
     _mark = false;
@@ -29,7 +29,7 @@ DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs) THROW : _delegate(
     _current = byte(0);
 }
 
-DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os) THROW : _delegate(ibs), _out(os), _width(80)
+DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os) : _delegate(ibs), _out(os), _width(80)
 {
     _idx = 0;
     _mark = false;
@@ -38,7 +38,7 @@ DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os) THROW
     _current = byte(0);
 }
 
-DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os, int width) THROW : _delegate(ibs), _out(os)
+DebugInputBitStream::DebugInputBitStream(InputBitStream& ibs, ostream& os, int width) : _delegate(ibs), _out(os)
 {
     if ((width != -1) && (width < 8))
         width = 8;
@@ -60,7 +60,7 @@ DebugInputBitStream::~DebugInputBitStream()
 }
 
 // Returns 1 or 0
-int DebugInputBitStream::readBit() THROW
+int DebugInputBitStream::readBit()
 {
     int res = _delegate.readBit();
     _current <<= 1;
@@ -88,7 +88,7 @@ int DebugInputBitStream::readBit() THROW
     return res;
 }
 
-uint64 DebugInputBitStream::readBits(uint count) THROW
+uint64 DebugInputBitStream::readBits(uint count)
 {
     uint64 res = _delegate.readBits(count);
 
@@ -120,7 +120,7 @@ uint64 DebugInputBitStream::readBits(uint count) THROW
     return res;
 }
 
-uint DebugInputBitStream::readBits(byte bits[], uint count) THROW
+uint DebugInputBitStream::readBits(byte bits[], uint count)
 {
     count = _delegate.readBits(bits, count);
 

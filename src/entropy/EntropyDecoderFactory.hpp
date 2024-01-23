@@ -50,14 +50,14 @@ namespace kanzi {
        static const short RESERVED5 = 14; //Reserved
        static const short RESERVED6 = 15; //Reserved
 
-       static EntropyDecoder* newDecoder(InputBitStream& ibs, Context& ctx, short entropyType) THROW;
+       static EntropyDecoder* newDecoder(InputBitStream& ibs, Context& ctx, short entropyType);
 
-       static const char* getName(short entropyType) THROW;
+       static const char* getName(short entropyType);
 
-       static short getType(const char* name) THROW;
+       static short getType(const char* name);
    };
 
-   inline EntropyDecoder* EntropyDecoderFactory::newDecoder(InputBitStream& ibs, Context& ctx, short entropyType) THROW
+   inline EntropyDecoder* EntropyDecoderFactory::newDecoder(InputBitStream& ibs, Context& ctx, short entropyType)
    {
        switch (entropyType) {
        // Each block is decoded separately
@@ -98,7 +98,7 @@ namespace kanzi {
    }
 
 
-   inline const char* EntropyDecoderFactory::getName(short entropyType) THROW
+   inline const char* EntropyDecoderFactory::getName(short entropyType)
    {
        switch (entropyType) {
        case HUFFMAN_TYPE:
@@ -137,7 +137,7 @@ namespace kanzi {
    }
 
 
-   inline short EntropyDecoderFactory::getType(const char* str) THROW
+   inline short EntropyDecoderFactory::getType(const char* str)
    {
        std::string name = str;
        transform(name.begin(), name.end(), name.begin(), ::toupper);

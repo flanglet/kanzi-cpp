@@ -31,7 +31,7 @@ namespace kanzi
    class RangeEncoder : public EntropyEncoder
    {
    public:
-       RangeEncoder(OutputBitStream& bitstream, int chunkSize = DEFAULT_CHUNK_SIZE, int logRange=DEFAULT_LOG_RANGE) THROW;
+       RangeEncoder(OutputBitStream& bitstream, int chunkSize = DEFAULT_CHUNK_SIZE, int logRange=DEFAULT_LOG_RANGE);
 
        ~RangeEncoder() { _dispose(); }
 

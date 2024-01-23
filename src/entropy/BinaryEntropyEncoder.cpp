@@ -22,7 +22,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-BinaryEntropyEncoder::BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor* predictor, bool deallocate) THROW
+BinaryEntropyEncoder::BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor* predictor, bool deallocate)
     : _predictor(predictor)
     , _bitstream(bitstream)
     , _deallocate(deallocate)
@@ -45,7 +45,7 @@ BinaryEntropyEncoder::~BinaryEntropyEncoder()
         delete _predictor;
 }
 
-int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count) THROW
+int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count)
 {
     if (count >= MAX_BLOCK_SIZE)
         throw invalid_argument("Invalid block size parameter (max is 1<<30)");

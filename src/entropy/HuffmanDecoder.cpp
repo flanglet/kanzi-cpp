@@ -26,7 +26,7 @@ using namespace std;
 
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats.
-HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) THROW : _bitstream(bitstream)
+HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) : _bitstream(bitstream)
 {
     if (chunkSize < 1024)
         throw invalid_argument("Huffman codec: The chunk size must be at least 1024");
@@ -56,7 +56,7 @@ bool HuffmanDecoder::reset()
     return true;
 }
 
-int HuffmanDecoder::readLengths() THROW
+int HuffmanDecoder::readLengths()
 {
     const int count = EntropyUtils::decodeAlphabet(_bitstream, _alphabet);
 

@@ -40,9 +40,9 @@ namespace kanzi
 
        static int encodeAlphabet(OutputBitStream& obs, const uint alphabet[], int length, int count);
 
-       static int decodeAlphabet(InputBitStream& ibs, uint alphabet[]) THROW;
+       static int decodeAlphabet(InputBitStream& ibs, uint alphabet[]);
 
-       static int normalizeFrequencies(uint freqs[], uint alphabet[], int length, uint totalFreq, uint scale) THROW;
+       static int normalizeFrequencies(uint freqs[], uint alphabet[], int length, uint totalFreq, uint scale);
 
        static int writeVarInt(OutputBitStream& obs, uint32 val);
 

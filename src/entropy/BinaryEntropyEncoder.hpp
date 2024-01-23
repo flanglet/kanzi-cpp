@@ -47,11 +47,11 @@ namespace kanzi
        void flush();
 
    public:
-       BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor* predictor, bool deallocate=true) THROW;
+       BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor* predictor, bool deallocate=true);
 
        ~BinaryEntropyEncoder();
 
-       int encode(const byte block[], uint blkptr, uint count) THROW;
+       int encode(const byte block[], uint blkptr, uint count);
 
        OutputBitStream& getBitStream() const { return _bitstream; }
 

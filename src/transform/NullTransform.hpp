@@ -30,19 +30,19 @@ namespace kanzi
        NullTransform(Context&) {}
        ~NullTransform() {}
 
-       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW { return doCopy(input, output, length); }
+       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) { return doCopy(input, output, length); }
 
-       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW { return doCopy(input, output, length); }
+       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) { return doCopy(input, output, length); }
 
        // Required encoding output buffer size
        int getMaxEncodedLength(int inputLen) const { return inputLen; }
 
    private:
-       bool doCopy(SliceArray<byte>& input, SliceArray<byte>& output, int length) const THROW;
+       bool doCopy(SliceArray<byte>& input, SliceArray<byte>& output, int length) const;
 
    };
 
-   inline bool NullTransform::doCopy(SliceArray<byte>& input, SliceArray<byte>& output, int length) const THROW
+   inline bool NullTransform::doCopy(SliceArray<byte>& input, SliceArray<byte>& output, int length) const
    {
        if (length == 0)
            return true;

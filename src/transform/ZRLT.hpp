@@ -35,9 +35,9 @@ namespace kanzi
        ZRLT(Context&) {}
        ~ZRLT() {}
 
-       bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;
+       bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length);
 
-       bool inverse(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;
+       bool inverse(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length);
 
        // Required encoding output buffer size unknown => guess
        int getMaxEncodedLength(int srcLen) const { return srcLen; }

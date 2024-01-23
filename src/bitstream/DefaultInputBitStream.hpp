@@ -39,23 +39,23 @@ namespace kanzi {
        int _maxPosition;
        uint _bufferSize;
 
-       int readFromInputStream(uint count) THROW;
+       int readFromInputStream(uint count);
 
        // return number of available bits
        uint pullCurrent();
 
-       void _close() THROW;
+       void _close();
 
 
    public:
        // Returns 1 or 0
-       int readBit() THROW;
+       int readBit();
 
-       uint64 readBits(uint length) THROW;
+       uint64 readBits(uint length);
 
-       uint readBits(byte bits[], uint count) THROW;
+       uint readBits(byte bits[], uint count);
 
-       void close() THROW { _close(); }
+       void close() { _close(); }
 
        // Number of bits read
        uint64 read() const
@@ -68,13 +68,13 @@ namespace kanzi {
 
        bool isClosed() const { return _closed; }
 
-       DefaultInputBitStream(InputStream& is, uint bufferSize = 65536) THROW;
+       DefaultInputBitStream(InputStream& is, uint bufferSize = 65536);
 
        ~DefaultInputBitStream();
    };
 
    // Returns 1 or 0
-   inline int DefaultInputBitStream::readBit() THROW
+   inline int DefaultInputBitStream::readBit()
    {
        if (_availBits == 0)
            _availBits = pullCurrent() - 1; // Triggers an exception if stream is closed
@@ -84,7 +84,7 @@ namespace kanzi {
        return int(_current >> _availBits) & 1;
    }
 
-   inline uint64 DefaultInputBitStream::readBits(uint count) THROW
+   inline uint64 DefaultInputBitStream::readBits(uint count)
    {
        if ((count == 0) || (count > 64))
            throw BitStreamException("Invalid bit count: " + TOSTR(count) + " (must be in [1..64])");

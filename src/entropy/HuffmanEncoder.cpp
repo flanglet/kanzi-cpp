@@ -29,7 +29,7 @@ using namespace std;
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats. 0 means that frequencies calculated at the
 // beginning of the block apply to the whole block.
-HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) THROW : _bitstream(bitstream)
+HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) : _bitstream(bitstream)
 {
     if (chunkSize < 1024)
         throw invalid_argument("Huffman codec: The chunk size must be at least 1024");
@@ -55,7 +55,7 @@ bool HuffmanEncoder::reset()
 }
 
 // Rebuild Huffman codes
-int HuffmanEncoder::updateFrequencies(uint freqs[]) THROW
+int HuffmanEncoder::updateFrequencies(uint freqs[])
 {
     int count = 0;
     uint16 sizes[256] = { 0 };

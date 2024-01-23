@@ -124,7 +124,7 @@ namespace kanzi
 
        ~DecodingTask(){}
 
-       T run() THROW;
+       T run();
    };
 
    class CompressedInputStream : public InputStream {
@@ -167,7 +167,7 @@ namespace kanzi
        ThreadPool* _pool;
 #endif
 
-       int processBlock() THROW;
+       int processBlock();
 
        int _get(int inc);
 
@@ -175,7 +175,7 @@ namespace kanzi
 
    protected:
 
-       virtual void readHeader() THROW;
+       virtual void readHeader();
 
 
    public:
@@ -200,34 +200,34 @@ namespace kanzi
 
        std::streampos tellg();
 
-       std::istream& seekg(std::streampos pos) THROW;
+       std::istream& seekg(std::streampos pos);
 
-       std::istream& putback(char c) THROW;
+       std::istream& putback(char c);
 
-       std::istream& unget() THROW;
+       std::istream& unget();
 
-       std::istream& read(char* s, std::streamsize n) THROW;
+       std::istream& read(char* s, std::streamsize n);
 
        std::streamsize gcount() const { return _gcount; }
 
-       int get() THROW;
+       int get();
 
-       int peek() THROW;
+       int peek();
 
-       void close() THROW;
+       void close();
 
        uint64 getRead() const { return (_ibs->read() + 7) >> 3; }
    };
 
 
-   inline int CompressedInputStream::get() THROW
+   inline int CompressedInputStream::get()
    {
        const int res = _get(1);
        _gcount = (res != EOF) ? 1 : 0;
        return res;
    }
 
-   inline int CompressedInputStream::peek() THROW
+   inline int CompressedInputStream::peek()
    {
        return _get(0);
    }
@@ -237,19 +237,19 @@ namespace kanzi
        return uint(getRead());
    }
 
-   inline std::istream& CompressedInputStream::seekg(std::streampos) THROW
+   inline std::istream& CompressedInputStream::seekg(std::streampos)
    {
        setstate(std::ios::badbit);
        throw std::ios_base::failure("Not supported");
    }
 
-   inline std::istream& CompressedInputStream::putback(char) THROW
+   inline std::istream& CompressedInputStream::putback(char)
    {
        setstate(std::ios::badbit);
        throw std::ios_base::failure("Not supported");
    }
 
-   inline std::istream& CompressedInputStream::unget() THROW
+   inline std::istream& CompressedInputStream::unget()
    {
        setstate(std::ios::badbit);
        throw std::ios_base::failure("Not supported");

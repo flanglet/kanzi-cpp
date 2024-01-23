@@ -34,7 +34,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-BlockCompressor::BlockCompressor(const Context& ctx) THROW :
+BlockCompressor::BlockCompressor(const Context& ctx) :
             _ctx(ctx)
 {
     int level = -1;

@@ -22,7 +22,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor* predictor, bool deallocate) THROW
+BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor* predictor, bool deallocate)
     : _predictor(predictor)
     , _bitstream(bitstream)
     , _deallocate(deallocate)

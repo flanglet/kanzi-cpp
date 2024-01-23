@@ -21,12 +21,12 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-LZCodec::LZCodec() THROW
+LZCodec::LZCodec()
 {
     _delegate = new LZXCodec<false>();
 }
 
-LZCodec::LZCodec(Context& ctx) THROW
+LZCodec::LZCodec(Context& ctx)
 {
     const int lzType = ctx.getInt("lz", TransformFactory<byte>::LZ_TYPE);
 
@@ -41,7 +41,7 @@ LZCodec::LZCodec(Context& ctx) THROW
     }
 }
 
-bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -52,7 +52,7 @@ bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     return _delegate->forward(input, output, count);
 }
 
-bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;

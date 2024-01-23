@@ -37,9 +37,9 @@ namespace kanzi
        RLT(Context& ctx) : _pCtx(&ctx) {}
        ~RLT() {}
 
-       bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;
+       bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length);
 
-       bool inverse(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;
+       bool inverse(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length);
 
        int getMaxEncodedLength(int srcLen) const { return (srcLen <= 512) ? srcLen + 32 : srcLen; }
 

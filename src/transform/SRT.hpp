@@ -31,9 +31,9 @@ namespace kanzi {
        SRT(Context&) {}
        ~SRT() {}
 
-       bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;
+       bool forward(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length);
 
-       bool inverse(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length) THROW;
+       bool inverse(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length);
 
        int getMaxEncodedLength(int srcLen) const { return srcLen + MAX_HEADER_SIZE; }
 

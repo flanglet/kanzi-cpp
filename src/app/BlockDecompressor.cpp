@@ -34,7 +34,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-BlockDecompressor::BlockDecompressor(const Context& ctx) THROW :
+BlockDecompressor::BlockDecompressor(const Context& ctx) :
      _ctx(ctx)
 {
     _blockSize = 0;

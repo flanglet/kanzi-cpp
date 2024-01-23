@@ -157,9 +157,9 @@ namespace kanzi {
 
        ~TextCodec() { delete _delegate; }
 
-       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+       bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
-       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length) THROW;
+       bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
        int getMaxEncodedLength(int srcLen) const
        {

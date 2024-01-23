@@ -65,9 +65,9 @@ namespace kanzi
           delete[] _buffer2;
        }
 
-       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
+       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length);
 
-       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
+       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length);
 
        int getMaxEncodedLength(int srcLen) const { return srcLen; }
    };

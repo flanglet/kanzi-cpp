@@ -137,29 +137,13 @@ limitations under the License.
     // __cplusplus always defaults to 199711L (aka C++98) !!! (unless
     // the extra option /Zc:__cplusplus is added to the command line).
     // Otherwise, using the _MSVC_LANG macro returns the proper C++ version.
-    #ifndef THROW
-       #if __cplusplus >= 201103L
-          #define THROW
-       #else
-           #if defined(__GNUC__)
-              #define THROW
-           #else
-              #define THROW throw(...)
-           #endif
-       #endif
-    #endif
-
-    #if __cplusplus >= 201103L
-      // C++ 11
-      #define FINAL final
-   #else
-      #define FINAL
-   #endif
-
     #if __cplusplus >= 201103L
        // C++ 11
+      #define FINAL final
        #include <cstdint>
     #else
+       #define FINAL
+ 
        #if defined(_MSC_VER)
           #if _MSC_VER < 1300
              typedef signed char int8_t;

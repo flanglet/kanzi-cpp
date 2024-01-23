@@ -32,7 +32,7 @@ namespace kanzi
        void _dispose() const {}
 
    public:
-       RiceGolombDecoder(InputBitStream& bitstream, uint logBase, bool sgn=true) THROW;
+       RiceGolombDecoder(InputBitStream& bitstream, uint logBase, bool sgn=true);
 
        ~RiceGolombDecoder() { _dispose(); }
 

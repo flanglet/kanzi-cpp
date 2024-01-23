@@ -19,7 +19,7 @@ limitations under the License.
 
 using namespace kanzi;
 
-bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
+bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 {
     if (length == 0)
         return true;
@@ -108,7 +108,7 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     return true;
 }
 
-bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW
+bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 {
     if (length == 0)
         return true;

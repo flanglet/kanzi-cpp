@@ -97,7 +97,7 @@ namespace kanzi {
 
        ~EncodingTask(){}
 
-       T run() THROW;
+       T run();
    };
 
    class CompressedOutputStream : public OutputStream {
@@ -136,14 +136,14 @@ namespace kanzi {
        ThreadPool* _pool;
 #endif
 
-       void processBlock() THROW;
+       void processBlock();
 
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
 
 
   protected:
 
-       virtual void writeHeader() THROW;
+       virtual void writeHeader();
 
 
    public:
@@ -169,17 +169,17 @@ namespace kanzi {
 
        bool removeListener(Listener& bl);
 
-       std::ostream& write(const char* s, std::streamsize n) THROW;
+       std::ostream& write(const char* s, std::streamsize n);
 
-       std::ostream& put(char c) THROW;
+       std::ostream& put(char c);
 
        std::ostream& flush();
 
        std::streampos tellp();
 
-       std::ostream& seekp(std::streampos pos) THROW;
+       std::ostream& seekp(std::streampos pos);
 
-       void close() THROW;
+       void close();
 
        uint64 getWritten() const { return (_obs->written() + 7) >> 3; }
    };
@@ -190,7 +190,7 @@ namespace kanzi {
        return uint(getWritten());
    }
 
-   inline std::ostream& CompressedOutputStream::seekp(std::streampos) THROW
+   inline std::ostream& CompressedOutputStream::seekp(std::streampos)
    {
        setstate(std::ios::badbit);
        throw std::ios_base::failure("Not supported");
@@ -202,7 +202,7 @@ namespace kanzi {
        return *this;
    }
 
-   inline std::ostream& CompressedOutputStream::put(char c) THROW
+   inline std::ostream& CompressedOutputStream::put(char c)
    {
        try {
            if (_buffers[_bufferId]->_index >= _bufferThreshold) {

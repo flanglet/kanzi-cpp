@@ -26,7 +26,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-BWT::BWT(int jobs) THROW
+BWT::BWT(int jobs)
 {
     _buffer = new uint[0];
     _sa = new int[0];
@@ -48,7 +48,7 @@ BWT::BWT(int jobs) THROW
 }
 
 
-BWT::BWT(Context& ctx) THROW
+BWT::BWT(Context& ctx)
 {
     _buffer = new uint[0];
     _sa = new int[0];
@@ -79,7 +79,7 @@ bool BWT::setPrimaryIndex(int n, int primaryIndex)
     return true;
 }
 
-bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -114,7 +114,7 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) 
     return true;
 }
 
-bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;

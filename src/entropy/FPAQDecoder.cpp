@@ -21,7 +21,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-FPAQDecoder::FPAQDecoder(InputBitStream& bitstream) THROW
+FPAQDecoder::FPAQDecoder(InputBitStream& bitstream)
     : _bitstream(bitstream)
     , _sba(new byte[0], 0)
 {

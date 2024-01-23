@@ -34,7 +34,7 @@ namespace kanzi
 
 
    public:
-       RiceGolombEncoder(OutputBitStream& bitstream, uint logBase, bool sign=true) THROW;
+       RiceGolombEncoder(OutputBitStream& bitstream, uint logBase, bool sign=true);
 
        ~RiceGolombEncoder() { _dispose(); }
 

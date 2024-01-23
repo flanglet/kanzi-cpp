@@ -25,7 +25,7 @@ using namespace std;
 
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats.
-RangeDecoder::RangeDecoder(InputBitStream& bitstream, int chunkSize) THROW : _bitstream(bitstream)
+RangeDecoder::RangeDecoder(InputBitStream& bitstream, int chunkSize) : _bitstream(bitstream)
 {
     if (chunkSize < 1024)
         throw invalid_argument("The chunk size must be at least 1024");

@@ -26,18 +26,18 @@ namespace kanzi
    {
    public:
        // Returns 1 or 0
-       virtual int readBit() THROW = 0;
+       virtual int readBit() = 0;
 
        // Length is the number of bits in [1..64]. Return the bits read as a long
        // Throws if the stream is closed.
-       virtual uint64 readBits(uint length) THROW = 0;
+       virtual uint64 readBits(uint length) = 0;
 
        // Read bits and put them in the byte array. Length is the number of bits
        // Return the number of bits read.
        // Throws if the stream is closed.
-       virtual uint readBits(byte bits[], uint length) THROW = 0;
+       virtual uint readBits(byte bits[], uint length) = 0;
 
-       virtual void close() THROW = 0;
+       virtual void close() = 0;
 
        // Number of bits read
        virtual uint64 read() const = 0;

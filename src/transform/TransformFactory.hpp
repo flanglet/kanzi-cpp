@@ -69,13 +69,13 @@ namespace kanzi {
 		static const uint64 RESERVED5 = 22; // Reserved
 
 
-		static uint64 getType(const char* tName) THROW;
+		static uint64 getType(const char* tName);
 
-		static uint64 getTypeToken(const char* tName) THROW;
+		static uint64 getTypeToken(const char* tName);
 
-		static std::string getName(uint64 functionType) THROW;
+		static std::string getName(uint64 functionType);
 
-		static TransformSequence<T>* newTransform(Context& ctx, uint64 functionType) THROW;
+		static TransformSequence<T>* newTransform(Context& ctx, uint64 functionType);
 
 	private:
 		TransformFactory() {}
@@ -86,14 +86,14 @@ namespace kanzi {
 		static const int MAX_SHIFT = (8 - 1) * ONE_SHIFT; // 8 transforms
 		static const int MASK = (1 << ONE_SHIFT) - 1;
 
-		static Transform<T>* newToken(Context& ctx, uint64 functionType) THROW;
+		static Transform<T>* newToken(Context& ctx, uint64 functionType);
 
-		static const char* getNameToken(uint64 functionType) THROW;
+		static const char* getNameToken(uint64 functionType);
 	};
 
 	// The returned type contains 8 transform values
 	template <class T>
-	uint64 TransformFactory<T>::getType(const char* tName) THROW
+	uint64 TransformFactory<T>::getType(const char* tName)
 	{
 		std::string name(tName);
 		size_t pos = name.find('+');
@@ -133,7 +133,7 @@ namespace kanzi {
 	}
 
 	template <class T>
-	uint64 TransformFactory<T>::getTypeToken(const char* tName) THROW
+	uint64 TransformFactory<T>::getTypeToken(const char* tName)
 	{
 		std::string name(tName);
 		transform(name.begin(), name.end(), name.begin(), ::toupper);
@@ -198,7 +198,7 @@ namespace kanzi {
 	}
 
 	template <class T>
-	TransformSequence<T>* TransformFactory<T>::newTransform(Context& ctx, uint64 functionType) THROW
+	TransformSequence<T>* TransformFactory<T>::newTransform(Context& ctx, uint64 functionType)
 	{
 		Transform<T>* transforms[8];
 		int nbtr = 0;
@@ -215,7 +215,7 @@ namespace kanzi {
 	}
 
 	template <class T>
-	Transform<T>* TransformFactory<T>::newToken(Context& ctx, uint64 functionType) THROW
+	Transform<T>* TransformFactory<T>::newToken(Context& ctx, uint64 functionType)
 	{
 		switch (functionType) {
 		case DICT_TYPE: {
@@ -297,7 +297,7 @@ namespace kanzi {
 	}
 
 	template <class T>
-	std::string TransformFactory<T>::getName(uint64 functionType) THROW
+	std::string TransformFactory<T>::getName(uint64 functionType)
 	{
 		std::stringstream res;
 		bool first = true;
@@ -319,7 +319,7 @@ namespace kanzi {
 	}
 
 	template <class T>
-	const char* TransformFactory<T>::getNameToken(uint64 functionType) THROW
+	const char* TransformFactory<T>::getNameToken(uint64 functionType)
 	{
 		switch (functionType) {
 		case DICT_TYPE:

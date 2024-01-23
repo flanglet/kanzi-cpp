@@ -19,7 +19,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs) THROW : _delegate(obs), _out(cout), _width(80)
+DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs) : _delegate(obs), _out(cout), _width(80)
 {
     _mark = false;
     _hexa = false;
@@ -28,7 +28,7 @@ DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs) THROW : _delega
     _idx = 0;
 }
 
-DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs, OutputStream& os) THROW : _delegate(obs), _out(os), _width(80)
+DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs, OutputStream& os) : _delegate(obs), _out(os), _width(80)
 {
     _mark = false;
     _hexa = false;
@@ -37,7 +37,7 @@ DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs, OutputStream& o
     _idx = 0;
 }
 
-DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs, OutputStream& os, int width) THROW : _delegate(obs), _out(os)
+DebugOutputBitStream::DebugOutputBitStream(OutputBitStream& obs, OutputStream& os, int width) : _delegate(obs), _out(os)
 {
     if ((width != -1) && (width < 8))
         width = 8;
@@ -58,7 +58,7 @@ DebugOutputBitStream::~DebugOutputBitStream()
     _close();
 }
 
-void DebugOutputBitStream::writeBit(int bit) THROW
+void DebugOutputBitStream::writeBit(int bit)
 {
     bit &= 1;
     _out << ((bit == 1) ? "1" : "0");
@@ -86,7 +86,7 @@ void DebugOutputBitStream::writeBit(int bit) THROW
     _delegate.writeBit(bit);
 }
 
-uint DebugOutputBitStream::writeBits(uint64 bits, uint count) THROW
+uint DebugOutputBitStream::writeBits(uint64 bits, uint count)
 {
     uint res = _delegate.writeBits(bits, count);
 
@@ -118,7 +118,7 @@ uint DebugOutputBitStream::writeBits(uint64 bits, uint count) THROW
     return res;
 }
 
-uint DebugOutputBitStream::writeBits(const byte bits[], uint count) THROW
+uint DebugOutputBitStream::writeBits(const byte bits[], uint count)
 {
     int res = _delegate.writeBits(bits, count);
     const int end = int(count >> 3);

@@ -38,27 +38,27 @@ namespace kanzi
 
        void printByte(byte val);
 
-       void _close() THROW { _delegate.close(); }
+       void _close() { _delegate.close(); }
 
    public:
-       DebugOutputBitStream(OutputBitStream& obs) THROW;
+       DebugOutputBitStream(OutputBitStream& obs);
 
-       DebugOutputBitStream(OutputBitStream& obs, OutputStream& os) THROW;
+       DebugOutputBitStream(OutputBitStream& obs, OutputStream& os);
 
-       DebugOutputBitStream(OutputBitStream& obs, OutputStream& os, int width) THROW;
+       DebugOutputBitStream(OutputBitStream& obs, OutputStream& os, int width);
 
        ~DebugOutputBitStream();
 
-       void writeBit(int bit) THROW;
+       void writeBit(int bit);
 
-       uint writeBits(uint64 bits, uint length) THROW;
+       uint writeBits(uint64 bits, uint length);
 
-       uint writeBits(const byte bits[], uint length) THROW;
+       uint writeBits(const byte bits[], uint length);
 
        // Return number of bits written so far
        uint64 written() const { return _delegate.written(); }
 
-       void close() THROW { _close(); }
+       void close() { _close(); }
 
        void showByte(bool show) { _show = show; }
 

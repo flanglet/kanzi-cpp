@@ -29,11 +29,11 @@ namespace kanzi
    class HuffmanEncoder : public EntropyEncoder
    {
    public:
-       HuffmanEncoder(OutputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE) THROW;
+       HuffmanEncoder(OutputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE);
 
        ~HuffmanEncoder() { _dispose(); delete[] _buffer; }
 
-       int updateFrequencies(uint frequencies[]) THROW;
+       int updateFrequencies(uint frequencies[]);
 
        int encode(const byte block[], uint blkptr, uint len);
 

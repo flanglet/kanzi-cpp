@@ -210,7 +210,7 @@ CompressedOutputStream::~CompressedOutputStream()
     }
 }
 
-void CompressedOutputStream::writeHeader() THROW
+void CompressedOutputStream::writeHeader()
 {
     if (_obs->writeBits(BITSTREAM_TYPE, 32) != 32)
         throw IOException("Cannot write bitstream type to header", Error::ERR_WRITE_FILE);
@@ -263,7 +263,7 @@ bool CompressedOutputStream::removeListener(Listener& bl)
     return true;
 }
 
-ostream& CompressedOutputStream::write(const char* data, streamsize length) THROW
+ostream& CompressedOutputStream::write(const char* data, streamsize length)
 {
     int remaining = int(length);
 
@@ -316,7 +316,7 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length) THRO
     return *this;
 }
 
-void CompressedOutputStream::close() THROW
+void CompressedOutputStream::close()
 {
     if (_closed.exchange(true, memory_order_acquire))
         return;
@@ -346,7 +346,7 @@ void CompressedOutputStream::close() THROW
     }
 }
 
-void CompressedOutputStream::processBlock() THROW
+void CompressedOutputStream::processBlock()
 {
     if ((_headless == false) && (!_initialized.exchange(true, memory_order_acquire)))
         writeHeader();
@@ -494,7 +494,7 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
 //      | 0b00000000
 //      then 0byyyyyyyy => transform sequence skip flags (1 means skip)
 template <class T>
-T EncodingTask<T>::run() THROW
+T EncodingTask<T>::run()
 {
     TransformSequence<byte>* transform = nullptr;
     EntropyEncoder* ee = nullptr;

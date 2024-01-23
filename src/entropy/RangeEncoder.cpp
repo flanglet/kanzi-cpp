@@ -25,7 +25,7 @@ using namespace std;
 
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats.
-RangeEncoder::RangeEncoder(OutputBitStream& bitstream, int chunkSize, int logRange) THROW : _bitstream(bitstream)
+RangeEncoder::RangeEncoder(OutputBitStream& bitstream, int chunkSize, int logRange) : _bitstream(bitstream)
 {
     if (chunkSize < 1024)
         throw invalid_argument("The chunk size must be at least 1024");

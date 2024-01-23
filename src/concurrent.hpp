@@ -78,12 +78,12 @@ class Task {
 #ifdef CONCURRENCY_ENABLED
    class ThreadPool FINAL {
    public:
-       ThreadPool(uint32_t threads = 8) THROW;
+       ThreadPool(uint32_t threads = 8);
        template<class F, class... Args>
 #if __cplusplus >= 201703L // result_of deprecated from C++17
-       std::future<typename std::invoke_result_t<F, Args...>> schedule(F&& f, Args&&... args) THROW;
+       std::future<typename std::invoke_result_t<F, Args...>> schedule(F&& f, Args&&... args);
 #else
-       std::future<typename std::result_of<F(Args...)>::type> schedule(F&& f, Args&&... args) THROW;
+       std::future<typename std::result_of<F(Args...)>::type> schedule(F&& f, Args&&... args);
 #endif
        ~ThreadPool();
 
@@ -96,7 +96,7 @@ class Task {
    };
 
 
-   inline ThreadPool::ThreadPool(uint32_t threads) THROW
+   inline ThreadPool::ThreadPool(uint32_t threads)
        :   _stop(false)
    {
        if ((threads == 0) || (threads > 1024))
@@ -132,11 +132,11 @@ class Task {
 
    template<class F, class... Args>
 #if __cplusplus >= 201703L // result_of deprecated from C++17
-   std::future<typename std::invoke_result_t<F, Args...> > ThreadPool::schedule(F&& f, Args&&... args) THROW
+   std::future<typename std::invoke_result_t<F, Args...> > ThreadPool::schedule(F&& f, Args&&... args)
    {
        using return_type = typename std::invoke_result<F, Args...>::type;
 #else
-   std::future<typename std::result_of<F(Args...)>::type> ThreadPool::schedule(F&& f, Args&&... args) THROW
+   std::future<typename std::result_of<F(Args...)>::type> ThreadPool::schedule(F&& f, Args&&... args)
    {
        using return_type = typename std::result_of<F(Args...)>::type;
 #endif

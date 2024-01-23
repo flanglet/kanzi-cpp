@@ -121,7 +121,7 @@ namespace kanzi {
        friend class FileCompressTask<FileCompressResult>;
 
    public:
-       BlockCompressor(const Context& ctx) THROW;
+       BlockCompressor(const Context& ctx);
 
        ~BlockCompressor();
 

@@ -180,7 +180,7 @@ CompressedInputStream::~CompressedInputStream()
     }
 }
 
-void CompressedInputStream::readHeader() THROW
+void CompressedInputStream::readHeader()
 {
     // Read stream type
     const int type = int(_ibs->readBits(32));
@@ -295,7 +295,7 @@ bool CompressedInputStream::removeListener(Listener& bl)
     return true;
 }
 
-int CompressedInputStream::_get(int inc) THROW
+int CompressedInputStream::_get(int inc)
 {
     try {
         if (_available == 0) {
@@ -335,7 +335,7 @@ int CompressedInputStream::_get(int inc) THROW
     }
 }
 
-istream& CompressedInputStream::read(char* data, streamsize length) THROW
+istream& CompressedInputStream::read(char* data, streamsize length)
 {
     int remaining = int(length);
 
@@ -381,7 +381,7 @@ istream& CompressedInputStream::read(char* data, streamsize length) THROW
     return *this;
 }
 
-int CompressedInputStream::processBlock() THROW
+int CompressedInputStream::processBlock()
 {
     if ((_headless == false) && (!_initialized.exchange(true, memory_order_relaxed)))
         readHeader();
@@ -544,7 +544,7 @@ int CompressedInputStream::processBlock() THROW
     }
 }
 
-void CompressedInputStream::close() THROW
+void CompressedInputStream::close()
 {
     if (_closed.exchange(true, memory_order_relaxed))
         return;
@@ -603,7 +603,7 @@ DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
 //      | 0b00000000
 //      then 0byyyyyyyy => transform sequence skip flags (1 means skip)
 template <class T>
-T DecodingTask<T>::run() THROW
+T DecodingTask<T>::run()
 {
     // Lock free synchronization
     while (true) {

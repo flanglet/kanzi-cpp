@@ -26,7 +26,7 @@ namespace kanzi {
    template <class T>
    class TransformSequence FINAL : public Transform<T> {
    public:
-       TransformSequence(Transform<T>* transforms[8], bool deallocate = true) THROW;
+       TransformSequence(Transform<T>* transforms[8], bool deallocate = true);
 
        ~TransformSequence();
 
@@ -53,7 +53,7 @@ namespace kanzi {
    };
 
    template <class T>
-   TransformSequence<T>::TransformSequence(Transform<T>* transforms[8], bool deallocate) THROW
+   TransformSequence<T>::TransformSequence(Transform<T>* transforms[8], bool deallocate)
    {
        _deallocate = deallocate;
        _length = 8;
@@ -82,7 +82,7 @@ namespace kanzi {
    }
 
    template <class T>
-   bool TransformSequence<T>::forward(SliceArray<T>& input, SliceArray<T>& output, int count) THROW
+   bool TransformSequence<T>::forward(SliceArray<T>& input, SliceArray<T>& output, int count)
    {
        if (!SliceArray<byte>::isValid(input))
            throw std::invalid_argument("Invalid input block");
@@ -149,7 +149,7 @@ namespace kanzi {
    }
 
    template <class T>
-   bool TransformSequence<T>::inverse(SliceArray<T>& input, SliceArray<T>& output, int count) THROW
+   bool TransformSequence<T>::inverse(SliceArray<T>& input, SliceArray<T>& output, int count)
    {
        if (!SliceArray<byte>::isValid(input))
            throw std::invalid_argument("Invalid input block");

@@ -52,11 +52,11 @@ namespace kanzi
        void _dispose();
 
    public:
-       FPAQEncoder(OutputBitStream& bitstream) THROW;
+       FPAQEncoder(OutputBitStream& bitstream);
 
        ~FPAQEncoder();
 
-       int encode(const byte block[], uint blkptr, uint count) THROW;
+       int encode(const byte block[], uint blkptr, uint count);
 
        OutputBitStream& getBitStream() const { return _bitstream; }
 

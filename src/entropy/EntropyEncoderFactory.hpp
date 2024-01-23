@@ -50,15 +50,15 @@ namespace kanzi {
        static const short RESERVED5 = 14; //Reserved
        static const short RESERVED6 = 15; //Reserved
 
-       static EntropyEncoder* newEncoder(OutputBitStream& obs, Context& ctx, short entropyType) THROW;
+       static EntropyEncoder* newEncoder(OutputBitStream& obs, Context& ctx, short entropyType);
 
-       static const char* getName(short entropyType) THROW;
+       static const char* getName(short entropyType);
 
-       static short getType(const char* name) THROW;
+       static short getType(const char* name);
    };
 
 
-   inline EntropyEncoder* EntropyEncoderFactory::newEncoder(OutputBitStream& obs, Context& ctx, short entropyType) THROW
+   inline EntropyEncoder* EntropyEncoderFactory::newEncoder(OutputBitStream& obs, Context& ctx, short entropyType)
    {
        switch (entropyType) {
        case HUFFMAN_TYPE:
@@ -97,7 +97,7 @@ namespace kanzi {
    }
 
 
-   inline const char* EntropyEncoderFactory::getName(short entropyType) THROW
+   inline const char* EntropyEncoderFactory::getName(short entropyType)
    {
        switch (entropyType) {
        case HUFFMAN_TYPE:
@@ -136,7 +136,7 @@ namespace kanzi {
    }
 
 
-   inline short EntropyEncoderFactory::getType(const char* str) THROW
+   inline short EntropyEncoderFactory::getType(const char* str)
    {
        std::string name = str;
        transform(name.begin(), name.end(), name.begin(), ::toupper);

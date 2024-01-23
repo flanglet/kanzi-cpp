@@ -113,9 +113,9 @@ namespace kanzi {
 
        ~BWT() { delete[] _buffer; delete[] _sa; }
 
-       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
+       bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length);
 
-       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length) THROW;
+       bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length);
 
        int getPrimaryIndex(int n) const { return _primaryIndexes[n]; }
 

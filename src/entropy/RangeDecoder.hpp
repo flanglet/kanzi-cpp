@@ -34,7 +34,7 @@ namespace kanzi
        static const int DECODING_BATCH_SIZE = 12; // in bits
        static const int DECODING_MASK = (1 << DECODING_BATCH_SIZE) - 1;
 
-       RangeDecoder(InputBitStream& bitstream, int chunkSize = DEFAULT_CHUNK_SIZE) THROW;
+       RangeDecoder(InputBitStream& bitstream, int chunkSize = DEFAULT_CHUNK_SIZE);
 
        ~RangeDecoder() { _dispose(); delete[] _f2s; }
 

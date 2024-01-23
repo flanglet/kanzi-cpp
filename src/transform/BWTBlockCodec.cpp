@@ -26,7 +26,7 @@ BWTBlockCodec::BWTBlockCodec(Context& ctx)
 
 // Return true if the compression chain succeeded. In this case, the input data
 // may be modified. If the compression failed, the input data is returned unmodified.
-bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int blockSize) THROW
+bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int blockSize)
 {
     if (blockSize == 0)
         return true;

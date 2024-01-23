@@ -21,7 +21,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-FPAQEncoder::FPAQEncoder(OutputBitStream& bitstream) THROW
+FPAQEncoder::FPAQEncoder(OutputBitStream& bitstream)
     : _bitstream(bitstream)
     , _sba(new byte[0], 0)
 {
@@ -48,7 +48,7 @@ bool FPAQEncoder::reset()
     return true;
 }
 
-int FPAQEncoder::encode(const byte block[], uint blkptr, uint count) THROW
+int FPAQEncoder::encode(const byte block[], uint blkptr, uint count)
 {
     if (count >= MAX_BLOCK_SIZE)
         throw invalid_argument("Invalid block size parameter (max is 1<<30)");

@@ -28,19 +28,19 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-ROLZCodec::ROLZCodec(uint logPosChecks) THROW
+ROLZCodec::ROLZCodec(uint logPosChecks)
 {
     _delegate = new ROLZCodec1(logPosChecks);
 }
 
-ROLZCodec::ROLZCodec(Context& ctx) THROW
+ROLZCodec::ROLZCodec(Context& ctx)
 {
     string transform = ctx.getString("transform", "NONE");
     _delegate = (transform.find("ROLZX") != string::npos) ? static_cast<Transform<byte>*>(new ROLZCodec2(ctx)) :
        static_cast<Transform<byte>*>(new ROLZCodec1(ctx));
 }
 
-bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -63,7 +63,7 @@ bool ROLZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
     return _delegate->forward(input, output, count);
 }
 
-bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -83,7 +83,7 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
     return _delegate->inverse(input, output, count);
 }
 
-ROLZCodec1::ROLZCodec1(uint logPosChecks) THROW :
+ROLZCodec1::ROLZCodec1(uint logPosChecks) :
     _logPosChecks(logPosChecks)
 {
     if ((logPosChecks < 2) || (logPosChecks > 8)) {
@@ -100,7 +100,7 @@ ROLZCodec1::ROLZCodec1(uint logPosChecks) THROW :
     memset(&_counters[0], 0, sizeof(_counters));
 }
 
-ROLZCodec1::ROLZCodec1(Context& ctx) THROW :
+ROLZCodec1::ROLZCodec1(Context& ctx) :
     _pCtx(&ctx)
 {
     _logPosChecks = LOG_POS_CHECKS;
@@ -161,7 +161,7 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, int32 hash32, cons
     return (bestLen < _minMatch) ? -1 : ((s - bestIdx) << 16) | (bestLen - _minMatch);
 }
 
-bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (output._length < getMaxEncodedLength(count))
         return false;
@@ -370,7 +370,7 @@ End:
 }
 
 
-bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -674,7 +674,7 @@ int ROLZDecoder::decode9Bits()
     return _c1 & 0x1FF;
 }
 
-ROLZCodec2::ROLZCodec2(uint logPosChecks) THROW :
+ROLZCodec2::ROLZCodec2(uint logPosChecks) :
     _logPosChecks(logPosChecks)
 {
     if ((logPosChecks < 2) || (logPosChecks > 8)) {
@@ -691,7 +691,7 @@ ROLZCodec2::ROLZCodec2(uint logPosChecks) THROW :
     memset(&_counters[0], 0, sizeof(_counters));
 }
 
-ROLZCodec2::ROLZCodec2(Context& ctx) THROW :
+ROLZCodec2::ROLZCodec2(Context& ctx) :
     _pCtx(&ctx)
 {
     _logPosChecks = LOG_POS_CHECKS;
@@ -755,7 +755,7 @@ int ROLZCodec2::findMatch(const byte buf[], int pos, int end, uint32 key)
     return (bestLen < _minMatch) ? -1 : (bestIdx << 16) | (bestLen - _minMatch);
 }
 
-bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (output._length < getMaxEncodedLength(count))
         return false;
@@ -853,7 +853,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     return (input._index == count) && (output._index < count);
 }
 
-bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;

@@ -377,7 +377,7 @@ TextCodec::TextCodec(Context& ctx)
         static_cast<Transform<byte>*>(new TextCodec2(ctx));
 }
 
-bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -397,7 +397,7 @@ bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
     return _delegate->forward(input, output, count);
 }
 
-bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;

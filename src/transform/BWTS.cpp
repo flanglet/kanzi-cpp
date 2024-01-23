@@ -19,7 +19,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-bool BWTS::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool BWTS::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -159,7 +159,7 @@ int BWTS::moveLyndonWordHead(int sa[], int isa[], const byte data[], int count,
     return rank;
 }
 
-bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;

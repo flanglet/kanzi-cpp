@@ -47,11 +47,11 @@ namespace kanzi
        void _dispose() const {}
 
    public:
-       BinaryEntropyDecoder(InputBitStream& bitstream, Predictor* predictor, bool deallocate=true) THROW;
+       BinaryEntropyDecoder(InputBitStream& bitstream, Predictor* predictor, bool deallocate=true);
 
        ~BinaryEntropyDecoder();
 
-       int decode(byte block[], uint blkptr, uint count) THROW;
+       int decode(byte block[], uint blkptr, uint count);
 
        InputBitStream& getBitStream() const { return _bitstream; }
 

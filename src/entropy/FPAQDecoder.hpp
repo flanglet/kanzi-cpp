@@ -53,11 +53,11 @@ namespace kanzi
        bool reset();
 
    public:
-       FPAQDecoder(InputBitStream& bitstream) THROW;
+       FPAQDecoder(InputBitStream& bitstream);
 
        ~FPAQDecoder();
 
-       int decode(byte block[], uint blkptr, uint count) THROW;
+       int decode(byte block[], uint blkptr, uint count);
 
        InputBitStream& getBitStream() const { return _bitstream; }
 

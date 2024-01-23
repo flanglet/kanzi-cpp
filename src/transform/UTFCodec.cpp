@@ -26,7 +26,7 @@ using namespace std;
 const int UTFCodec::SIZES[16] = { 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 3, 4 };
 
 
-bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -171,7 +171,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return dstIdx < dstEnd;
 }
 
-bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;

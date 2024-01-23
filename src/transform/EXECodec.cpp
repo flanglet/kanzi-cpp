@@ -20,7 +20,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -69,7 +69,7 @@ bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return false;
 }
 
-bool EXECodec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd) THROW
+bool EXECodec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd)
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -144,7 +144,7 @@ bool EXECodec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd) THROW
+bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd)
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -234,7 +234,7 @@ bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-bool EXECodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool EXECodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -256,7 +256,7 @@ bool EXECodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return false;
 }
 
-bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -308,7 +308,7 @@ bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int count) THROW
+bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
