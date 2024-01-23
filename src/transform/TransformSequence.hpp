@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef _TransformSequence_
 #define _TransformSequence_
 
+#include <cstring>
 #include <stdexcept>
 #include "../Transform.hpp"
 
@@ -140,7 +141,7 @@ namespace kanzi {
            if ((output._index + count > output._length) || (in->_index + count > in->_length))
                _skipFlags = SKIP_MASK;
            else
-               memcpy(&output._array[output._index], &in->_array[in->_index], count);
+               std::memcpy(&output._array[output._index], &in->_array[in->_index], count);
        }
 
        input._index += blockSize;
@@ -164,7 +165,7 @@ namespace kanzi {
            return true;
 
        if (_skipFlags == SKIP_MASK) {
-           memcpy(&output._array[output._index], &input._array[input._index], count);
+           std::memcpy(&output._array[output._index], &input._array[input._index], count);
            input._index += count;
            output._index += count;
            return true;
@@ -212,7 +213,7 @@ namespace kanzi {
            if ((output._index + count > output._length) || (input._index + count > input._length))
                res = false;
            else
-               memcpy(&output._array[output._index], &input._array[input._index], count);
+               std::memcpy(&output._array[output._index], &input._array[input._index], count);
        }
 
        input._index += blockSize;
