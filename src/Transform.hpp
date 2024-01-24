@@ -22,6 +22,11 @@ limitations under the License.
 namespace kanzi
 {
 
+   // Transform is a class used to transform an input byte array and write
+   // the result to an output byte array. The result may have a different size.
+   // The transform must be stateless to ensure that the compression results
+   // are the same regardless of the number of jobs (ie no information is retained
+   // between to invocations of forward or inverse).
    template <class T>
    class Transform
    {

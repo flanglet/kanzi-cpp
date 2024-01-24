@@ -22,6 +22,7 @@ limitations under the License.
 namespace kanzi
 {
 
+   // EntropyDecoder entropy decodes data from a bitstream
    class EntropyDecoder
    {
    public:
