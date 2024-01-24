@@ -158,7 +158,6 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         if (f == 0)
             continue;
 
-        idxMax = (f > freqs[idxMax]) ? i : idxMax;
         const int64 sf = int64(f) * int64(scale);
         uint scaledFreq;
 
@@ -181,6 +180,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         sumScaledFreq += scaledFreq;
         freqs[i] = scaledFreq;
         sumFreq += f;
+        idxMax = (scaledFreq > freqs[idxMax]) ? i : idxMax;
 
         if (sumFreq >= totalFreq)
            break;
@@ -198,15 +198,24 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         return alphabetSize;
 
     const int delta = int(sumScaledFreq - scale);
+    const int inc = (delta > 0) ? -1 : 1;
 
-    if (abs(delta) * 10 < int(freqs[idxMax])) {
+    if (abs(delta) * 16 <= int(freqs[idxMax])) {
         // Fast path (small error): just adjust the max frequency
         freqs[idxMax] -= delta;
         return alphabetSize;
     }
 
+    if (delta < 0) {
+        sumScaledFreq += (freqs[idxMax] >> 4);
+        freqs[idxMax] += (freqs[idxMax] >> 4);
+    }
+    else {
+        sumScaledFreq -= (freqs[idxMax] >> 4);
+        freqs[idxMax] -= (freqs[idxMax] >> 4);
+    }
+
     // Slow path: spread error across frequencies
-    const int inc = (delta > 0) ? -1 : 1;
     deque<FreqSortData> queue;
 
     // Create sorted queue of present symbols
@@ -214,14 +223,11 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
        if (int(freqs[alphabet[i]]) <= 2) // Do not distort small frequencies
           continue;
 
-       if (alphabetSize * freqs[alphabet[i]] >= scale)
-          queue.push_front(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
-       else
-          queue.push_back(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
+       queue.push_back(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
     }
 
     if (queue.empty()) {
-        freqs[idxMax] -= delta;
+        freqs[idxMax] += inc * delta;
         return alphabetSize;
     }
 
