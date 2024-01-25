@@ -182,9 +182,9 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
 
             while (idx < sz - 8) {
                 const uint8 shift = (56 - bits) & -8;
-                state = (state << shift) | (uint64(BigEndian::readLong64(&_buffer[idx])) >> (63 - shift) >> 1); // handle shift = 0
-                uint8 bs = bits + shift - DECODING_BATCH_SIZE;
+                state = (state << shift) | (uint64(BigEndian::readLong64(&_buffer[idx])) >> 1 >> (63 - shift)); // handle shift = 0
                 idx += (shift >> 3);
+                uint8 bs = bits + shift - DECODING_BATCH_SIZE;
                 const uint16 val0 = _table[(state >> bs) & TABLE_MASK];
                 bs -= uint8(val0);
                 const uint16 val1 = _table[(state >> bs) & TABLE_MASK];
@@ -193,12 +193,12 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
                 bs -= uint8(val2);
                 const uint16 val3 = _table[(state >> bs) & TABLE_MASK];
                 bs -= uint8(val3);
+                bits = bs + DECODING_BATCH_SIZE;
                 block[n + 0] = byte(val0 >> 8);
                 block[n + 1] = byte(val1 >> 8);
                 block[n + 2] = byte(val2 >> 8);
                 block[n + 3] = byte(val3 >> 8);
                 n += 4;
-                bits = bs + DECODING_BATCH_SIZE;
             }
 
             // Last bytes
