@@ -19,6 +19,7 @@ limitations under the License.
 #include "ANSRangeEncoder.hpp"
 #include "EntropyUtils.hpp"
 #include "../Global.hpp"
+#include "../Memory.hpp"
 
 using namespace kanzi;
 using namespace std;
@@ -200,6 +201,7 @@ void ANSRangeEncoder::encodeChunk(const byte block[], int end)
             st1 = encodeSymbol(p, st1, _symbols[int(block[i - 1])]);
             st2 = encodeSymbol(p, st2, _symbols[int(block[i - 2])]);
             st3 = encodeSymbol(p, st3, _symbols[int(block[i - 3])]);
+            prefetchRead(&block[i + 128]);
         }
     }
     else { // order 1
