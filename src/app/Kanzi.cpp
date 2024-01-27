@@ -134,6 +134,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("   -j, --jobs=<jobs>", true);
    log.println("        maximum number of jobs the program may start concurrently", true);
    #ifdef CONCURRENCY_ENABLED
+      log.println("        If 0 is provided, use all available cores (maximum is 64).", true);
       log.println("        (default is half of available cores, maximum is 64).\n", true);
    #else
       log.println("        (always 1 in this version).\n", true);
@@ -681,7 +682,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             int tasks;
             bool res = toInt(name, tasks);
 
-            if ((res == false) || (tasks < 1)) {
+            if ((res == false) || (tasks < 0)) {
                 cerr << "Invalid number of jobs provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
             }
@@ -818,8 +819,9 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
     if (to >= 0)
         map["to"] = strTo;
 
-    // Use 0 to indicate it has not been provided
-    map["jobs"] = (strTasks == "") ? "0" : strTasks;
+    if (strTasks != "")
+        map["jobs"] = strTasks;
+
     return 0;
 }
 
@@ -842,7 +844,7 @@ int main(int argc, const char* argv[])
     args.erase(it);
 
     it = args.find("jobs");
-    int jobs = 1;
+    int jobs = -1; // Not provided
 
     if (it != args.end()) {
         jobs = atoi(it->second.c_str());
@@ -862,6 +864,10 @@ int main(int argc, const char* argv[])
     Context ctx(args);
 #else
     if (jobs == 0) {
+       int cores = max(int(thread::hardware_concurrency()), 1); // User provided 0 => use all the cores
+       jobs = min(cores, MAX_CONCURRENCY);
+    }
+    else if (jobs == -1) {
        int cores = max(int(thread::hardware_concurrency()) / 2, 1); // Defaults to half the cores
        jobs = min(cores, MAX_CONCURRENCY);
     }
