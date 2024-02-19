@@ -467,7 +467,7 @@ void TextCodec1::reset(int count)
         memcpy(&_dictList[0], &TextCodec::STATIC_DICTIONARY[0], sizeof(TextCodec::STATIC_DICTIONARY));
 #else
 	for (int i = 0; i < TextCodec::STATIC_DICT_WORDS; i++)
-        _dictList[i] = TextCodec::STATIC_DICTIONARY[i];
+            _dictList[i] = TextCodec::STATIC_DICTIONARY[i];
 #endif
 
         // Add special entries at end of static dictionary
@@ -937,7 +937,7 @@ void TextCodec2::reset(int count)
         memcpy(&_dictList[0], &TextCodec::STATIC_DICTIONARY[0], sizeof(TextCodec::STATIC_DICTIONARY));
 #else
 	for (int i = 0; i < TextCodec::STATIC_DICT_WORDS; i++)
-        _dictList[i] = TextCodec::STATIC_DICTIONARY[i];
+            _dictList[i] = TextCodec::STATIC_DICTIONARY[i];
 #endif
     }
 
