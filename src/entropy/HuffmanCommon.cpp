@@ -19,7 +19,7 @@ using namespace kanzi;
 
 // Return the number of codes generated
 // codes and symbols are updated
-int HuffmanCommon::generateCanonicalCodes(const uint16 sizes[], uint codes[], uint symbols[], int count)
+int HuffmanCommon::generateCanonicalCodes(const uint16 sizes[], uint16 codes[], uint symbols[], int count)
 {
     if (count == 0)
         return 0;

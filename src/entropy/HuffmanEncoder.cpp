@@ -74,7 +74,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[])
         return 0;
 
     if (count == 1) {
-        _codes[alphabet[0]] = 1 << 24;
+        _codes[alphabet[0]] = 1 << 12;
         sizes[alphabet[0]] = 1;
     }
     else {
@@ -137,7 +137,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[])
     // Unary encode the code length differences
     for (int i = 0; i < count; i++) {
         const int s = alphabet[i];
-        _codes[s] |= (sizes[s] << 24);
+        _codes[s] |= uint16(sizes[s] << 12);
         egenc.encodeByte(byte(sizes[s] - prevSize));
         prevSize = sizes[s];
     }
@@ -266,18 +266,18 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
 
         // Encode chunk
         for (uint i = startChunk; i < endChunk4; i += 4) {
-            const uint code0 = _codes[int(block[i])];
-            const uint codeLen0 = code0 >> 24;
-            const uint code1 = _codes[int(block[i + 1])];
-            const uint codeLen1 = code1 >> 24;
-            const uint code2 = _codes[int(block[i + 2])];
-            const uint codeLen2 = code2 >> 24;
-            const uint code3 = _codes[int(block[i + 3])];
-            const uint codeLen3 = code3 >> 24;
-            state = (state << codeLen0) | uint64(code0 & 0xFFFFFF);
-            state = (state << codeLen1) | uint64(code1 & 0xFFFFFF);
-            state = (state << codeLen2) | uint64(code2 & 0xFFFFFF);
-            state = (state << codeLen3) | uint64(code3 & 0xFFFFFF);
+            const uint16 code0 = _codes[int(block[i])];
+            const uint16 codeLen0 = code0 >> 12;
+            const uint16 code1 = _codes[int(block[i + 1])];
+            const uint16 codeLen1 = code1 >> 12;
+            const uint16 code2 = _codes[int(block[i + 2])];
+            const uint16 codeLen2 = code2 >> 12;
+            const uint16 code3 = _codes[int(block[i + 3])];
+            const uint16 codeLen3 = code3 >> 12;
+            state = (state << codeLen0) | uint64(code0 & 0x0FFF);
+            state = (state << codeLen1) | uint64(code1 & 0x0FFF);
+            state = (state << codeLen2) | uint64(code2 & 0x0FFF);
+            state = (state << codeLen3) | uint64(code3 & 0x0FFF);
             bits += (codeLen0 + codeLen1 + codeLen2 + codeLen3);
             BigEndian::writeLong64(&_buffer[idx], state << (64 - bits));
             idx += (bits >> 3);
@@ -285,9 +285,9 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
         }
 
         for (uint i = endChunk4; i < endChunk; i++) {
-            const uint code = _codes[int(block[i])];
-            const uint codeLen = code >> 24;
-            state = (state << codeLen) | uint64(code & 0xFFFFFF);
+            const uint16 code = _codes[int(block[i])];
+            const uint16 codeLen = code >> 12;
+            state = (state << codeLen) | uint64(code & 0x0FFF);
             bits += codeLen;
         }
 

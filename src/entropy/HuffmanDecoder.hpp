@@ -45,7 +45,7 @@ namespace kanzi
        InputBitStream& _bitstream;
        byte* _buffer;
        uint _bufferSize;
-       uint _codes[256];
+       uint16 _codes[256];
        uint _alphabet[256];
        uint16 _sizes[256];
        uint16 _table[TABLE_MASK + 1]; // decoding table: code -> size, symbol

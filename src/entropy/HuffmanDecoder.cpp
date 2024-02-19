@@ -118,7 +118,7 @@ void HuffmanDecoder::buildDecodingTable(int count)
 
         // All DECODING_BATCH_SIZE bit values read from the bit stream and
         // starting with the same prefix point to symbol s
-        uint idx = _codes[s] << (DECODING_BATCH_SIZE - length);
+        uint idx = uint(_codes[s]) << (DECODING_BATCH_SIZE - length);
         const uint end = idx + (1 << (DECODING_BATCH_SIZE - length));
 
         while (idx < end)

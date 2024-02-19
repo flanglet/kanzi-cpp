@@ -44,7 +44,7 @@ namespace kanzi
 
    private:
        OutputBitStream& _bitstream;
-       uint _codes[256];
+       uint16 _codes[256];
        int _chunkSize;
        byte* _buffer;
        uint _bufferSize;
