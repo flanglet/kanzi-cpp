@@ -26,7 +26,6 @@ limitations under the License.
 #include "../OutputStream.hpp"
 #include "../OutputBitStream.hpp"
 #include "../SliceArray.hpp"
-#include "../transform/TransformSequence.hpp"
 #include "../util/XXHash32.hpp"
 
 #if __cplusplus >= 201103L
@@ -73,40 +72,24 @@ namespace kanzi {
        ~EncodingTaskResult() {}
    };
 
-   class EncodingTaskInfo FINAL {
-   public:
-       XXHash32* _hasher; // not owner
-       SliceArray<byte>* _iBuffer; // not owner
-       SliceArray<byte>* _oBuffer; // not owner
-       TransformSequence<byte>* _transform; // owner
-       std::vector<Listener*> _listeners;
-       uint64 _transformType;
-       short _entropyType;
-
-       EncodingTaskInfo() : _transform(nullptr) {}
-
-       ~EncodingTaskInfo()
-       {
-          if (_transform != nullptr)
-             delete _transform;
-       }
-   };
-
    // A task used to encode a block
    // Several tasks (transform+entropy) may run in parallel
    template <class T>
    class EncodingTask FINAL : public Task<T> {
    private:
-       SliceArray<byte>* _data; // not owner
-       SliceArray<byte>* _buffer; // not owner
-       OutputBitStream* _obs; // not owner
+       SliceArray<byte>* _data;
+       SliceArray<byte>* _buffer;
+       OutputBitStream* _obs;
+       XXHash32* _hasher;
        ATOMIC_INT* _processedBlockId;
+       std::vector<Listener*> _listeners;
        Context _ctx;
-       EncodingTaskInfo* _info; // not owner
 
    public:
-       EncodingTask(EncodingTaskInfo* info, OutputBitStream* obs,
-                    ATOMIC_INT* processedBlockId, const Context& ctx);
+       EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
+           OutputBitStream* obs, XXHash32* hasher,
+           ATOMIC_INT* processedBlockId, std::vector<Listener*>& listeners,
+           const Context& ctx);
 
        ~EncodingTask(){}
 
@@ -134,6 +117,7 @@ namespace kanzi {
        int _nbInputBlocks;
        int _jobs;
        int _bufferThreshold;
+       XXHash32* _hasher;
        SliceArray<byte>** _buffers; // input & output per block
        short _entropyType;
        uint64 _transformType;
@@ -141,8 +125,6 @@ namespace kanzi {
        ATOMIC_BOOL _initialized;
        ATOMIC_BOOL _closed;
        ATOMIC_INT _blockId;
-       XXHash32* _hasher;
-       EncodingTaskInfo* _infos;
        std::vector<Listener*> _listeners;
        Context _ctx;
        bool _headless;

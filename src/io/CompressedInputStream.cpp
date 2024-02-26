@@ -66,7 +66,6 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, bool he
     _nbInputBlocks = UNKNOWN_NB_BLOCKS;
     _buffers = new SliceArray<byte>*[2 * _jobs];
     _headless = headerless;
-    _infos = new DecodingTaskInfo[_jobs];
 
     for (int i = 0; i < 2 * _jobs; i++)
         _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
@@ -152,7 +151,6 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
             _hasher = new XXHash32(BITSTREAM_TYPE);
     }
 
-    _infos = new DecodingTaskInfo[_jobs];
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
     for (int i = 0; i < 2 * _jobs; i++)
@@ -180,8 +178,6 @@ CompressedInputStream::~CompressedInputStream()
         delete _hasher;
         _hasher = nullptr;
     }
-
-    delete[] _infos;
 }
 
 void CompressedInputStream::readHeader()
@@ -426,26 +422,20 @@ int CompressedInputStream::processBlock()
                 }
 
                 Context copyCtx(_ctx);
-                copyCtx.putInt("tasks", nbTasks); // overall number of tasks
                 copyCtx.putInt("jobs", jobsPerTask[taskId]); // jobs for current task
+                copyCtx.putInt("tasks", nbTasks); // overall number of tasks
+                copyCtx.putLong("tType", _transformType);
+                copyCtx.putInt("eType", _entropyType);
                 copyCtx.putInt("blockId", firstBlockId + taskId + 1);
                 copyCtx.putInt("blockSize", blkSize);
+
                 _buffers[taskId]->_index = 0;
                 _buffers[_jobs + taskId]->_index = 0;
 
-                if (firstBlockId == 0) {
-                   // Intiialize the static task infos
-                   _infos[taskId]._hasher = _hasher;
-                   _infos[taskId]._iBuffer = _buffers[taskId];
-                   _infos[taskId]._oBuffer = _buffers[_jobs + taskId];
-                   _infos[taskId]._transform = nullptr;
-                   _infos[taskId]._listeners = blockListeners;
-                   _infos[taskId]._transformType = _transformType;
-                   _infos[taskId]._entropyType = _entropyType;
-                }
-
-                DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(&_infos[taskId],
-                    _ibs, &_blockId, copyCtx);
+                DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(_buffers[taskId],
+                    _buffers[_jobs + taskId],
+                    _ibs, _hasher, &_blockId,
+                    blockListeners, copyCtx);
                 tasks.push_back(task);
             }
 
@@ -586,12 +576,17 @@ void CompressedInputStream::notifyListeners(vector<Listener*>& listeners, const 
 }
 
 template <class T>
-DecodingTask<T>::DecodingTask(DecodingTaskInfo* info, InputBitStream* ibs,
-           ATOMIC_INT* processedBlockId, const Context& ctx)
-    :  _ibs(ibs)
+DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
+    InputBitStream* ibs, XXHash32* hasher,
+    ATOMIC_INT* processedBlockId, vector<Listener*>& listeners,
+    const Context& ctx)
+    : _listeners(listeners)
     , _ctx(ctx)
 {
-    _info = info;
+    _data = iBuffer;
+    _buffer = oBuffer;
+    _ibs = ibs;
+    _hasher = hasher;
     _processedBlockId = processedBlockId;
 }
 
@@ -608,12 +603,7 @@ template <class T>
 T DecodingTask<T>::run()
 {
     int blockId = _ctx.getInt("blockId");
-    int blockLength = _ctx.getInt("blockSize");
-    DecodingTaskInfo& info = *_info;
-    _data = info._iBuffer;
-    _buffer = info._oBuffer;
-    uint64 tType = info._transformType;
-    short eType = info._entropyType;
+    const int blockLength = _ctx.getInt("blockSize");
 
     // Lock free synchronization
     while (true) {
@@ -634,7 +624,10 @@ T DecodingTask<T>::run()
     uint32 checksum1 = 0;
     EntropyDecoder* ed = nullptr;
     InputBitStream* ibs = nullptr;
+    TransformSequence<byte>* transform = nullptr;
     bool streamPerTask = _ctx.getInt("tasks") > 1;
+    uint64 tType = _ctx.getLong("tType");
+    short eType = short(_ctx.getInt("eType"));
 
     try {
         // Read shared bitstream sequentially (each task is gated by _processedBlockId)
@@ -727,13 +720,13 @@ T DecodingTask<T>::run()
         }
 
         // Extract checksum from bitstream (if any)
-        if (info._hasher != nullptr)
+        if (_hasher != nullptr)
             checksum1 = uint32(ibs->readBits(32));
 
-        if (info._listeners.size() > 0) {
+        if (_listeners.size() > 0) {
             // Notify before entropy (block size in bitstream is unknown)
-            Event evt(Event::BEFORE_ENTROPY, blockId, int64(-1), checksum1, info._hasher != nullptr, clock());
-            CompressedInputStream::notifyListeners(info._listeners, evt);
+            Event evt(Event::BEFORE_ENTROPY, blockId, int64(-1), checksum1, _hasher != nullptr, clock());
+            CompressedInputStream::notifyListeners(_listeners, evt);
         }
 
         const int bufferSize = max(blockLength, preTransformLength + CompressedInputStream::EXTRA_BUFFER_SIZE);
@@ -768,39 +761,32 @@ T DecodingTask<T>::run()
         delete ed;
         ed = nullptr;
 
-        if (info._listeners.size() > 0) {
+        if (_listeners.size() > 0) {
             // Notify after entropy (block size set to size in bitstream)
             Event evt(Event::AFTER_ENTROPY, blockId,
-                int64(r), checksum1, info._hasher != nullptr, clock());
+                int64(r), checksum1, _hasher != nullptr, clock());
 
-            CompressedInputStream::notifyListeners(info._listeners, evt);
+            CompressedInputStream::notifyListeners(_listeners, evt);
         }
 
-        if (info._listeners.size() > 0) {
+        if (_listeners.size() > 0) {
             // Notify before transform (block size after entropy decoding)
             Event evt(Event::BEFORE_TRANSFORM, blockId,
-                int64(preTransformLength), checksum1, info._hasher != nullptr, clock());
+                int64(preTransformLength), checksum1, _hasher != nullptr, clock());
 
-            CompressedInputStream::notifyListeners(info._listeners, evt);
+            CompressedInputStream::notifyListeners(_listeners, evt);
         }
 
-        TransformSequence<byte>* t = info._transform;
-
-        if ((tType == TransformFactory<byte>::NONE_TYPE) && (info._transformType != tType))  {
-            // Skipped or copied block
-            t = TransformFactory<byte>::newTransform(_ctx, tType);
-        }
-        else if (t == nullptr) {
-            // Initialize the task's info once
-            t = TransformFactory<byte>::newTransform(_ctx, tType);
-            info._transform = t;
-        }
-
-        t->setSkipFlags(skipFlags);
+        transform = TransformFactory<byte>::newTransform(_ctx, tType);
+        transform->setSkipFlags(skipFlags);
         _buffer->_index = 0;
 
         // Inverse transform
-        if (t->inverse(*_buffer, *_data, preTransformLength) == false) {
+        bool res = transform->inverse(*_buffer, *_data, preTransformLength);
+        delete transform;
+        transform = nullptr;
+
+        if (res == false) {
             return T(*_data, blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
                 "Transform inverse failed");
         }
@@ -808,8 +794,8 @@ T DecodingTask<T>::run()
         const int decoded = _data->_index - savedIdx;
 
         // Verify checksum
-        if (info._hasher != nullptr) {
-            const uint32 checksum2 = info._hasher->hash(&_data->_array[savedIdx], decoded);
+        if (_hasher != nullptr) {
+            const uint32 checksum2 = _hasher->hash(&_data->_array[savedIdx], decoded);
 
             if (checksum2 != checksum1) {
                 stringstream ss;
@@ -824,6 +810,9 @@ T DecodingTask<T>::run()
         // Make sure to unfreeze next block
         if (_processedBlockId->load(memory_order_acquire) == blockId - 1)
             _processedBlockId->store(blockId, memory_order_release);
+
+        if (transform != nullptr)
+            delete transform;
 
         if (ed != nullptr)
             delete ed;

@@ -26,7 +26,6 @@ limitations under the License.
 #include "../InputStream.hpp"
 #include "../InputBitStream.hpp"
 #include "../SliceArray.hpp"
-#include "../transform/TransformSequence.hpp"
 #include "../util/XXHash32.hpp"
 
 #if __cplusplus >= 201103L
@@ -100,40 +99,24 @@ namespace kanzi
        ~DecodingTaskResult() {}
    };
 
-   class DecodingTaskInfo FINAL {
-   public:
-       XXHash32* _hasher; // not owner
-       SliceArray<byte>* _iBuffer; // not owner
-       SliceArray<byte>* _oBuffer; // not owner
-       TransformSequence<byte>* _transform; // owner
-       std::vector<Listener*> _listeners;
-       uint64 _transformType;
-       short _entropyType;
-
-       DecodingTaskInfo() : _transform(nullptr) {}
-
-       ~DecodingTaskInfo()
-       {
-          if (_transform != nullptr)
-             delete _transform;
-       }
-   };
-
    // A task used to decode a block
    // Several tasks (transform+entropy) may run in parallel
    template <class T>
    class DecodingTask FINAL : public Task<T> {
    private:
-       SliceArray<byte>* _data; // not owner
-       SliceArray<byte>* _buffer; // not owner
-       InputBitStream* _ibs; // not owner
-       ATOMIC_INT* _processedBlockId; // not owner
+       SliceArray<byte>* _data;
+       SliceArray<byte>* _buffer;
+       InputBitStream* _ibs;
+       XXHash32* _hasher;
+       ATOMIC_INT* _processedBlockId;
+       std::vector<Listener*> _listeners;
        Context _ctx;
-       DecodingTaskInfo* _info; // not owner
 
    public:
-       DecodingTask(DecodingTaskInfo* info, InputBitStream* ibs,
-           ATOMIC_INT* processedBlockId, const Context& ctx);
+       DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
+           InputBitStream* ibs, XXHash32* hasher,
+           ATOMIC_INT* processedBlockId, std::vector<Listener*>& listeners,
+           const Context& ctx);
 
        ~DecodingTask(){}
 
@@ -164,6 +147,7 @@ namespace kanzi
        int _jobs;
        int _bufferThreshold;
        int _available; // decoded not consumed bytes
+       XXHash32* _hasher;
        SliceArray<byte>** _buffers; // input & output per block
        short _entropyType;
        uint64 _transformType;
@@ -171,8 +155,6 @@ namespace kanzi
        ATOMIC_BOOL _initialized;
        ATOMIC_BOOL _closed;
        ATOMIC_INT _blockId;
-       XXHash32* _hasher;
-       DecodingTaskInfo* _infos;
        std::vector<Listener*> _listeners;
        std::streamsize _gcount;
        Context _ctx;

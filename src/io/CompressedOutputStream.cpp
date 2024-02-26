@@ -87,7 +87,6 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _ctx.putString("entropy", entropyCodec);
     _ctx.putString("transform", transform);
     _ctx.putString("extra", _entropyType == EntropyEncoderFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
-    _infos = new EncodingTaskInfo[_jobs];
 
     // Allocate first buffer and add padding for incompressible blocks
     const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
@@ -175,7 +174,6 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     bool checksum = str == STR_TRUE;
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
-    _infos = new EncodingTaskInfo[_jobs];
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
     // Allocate first buffer and add padding for incompressible blocks
@@ -210,8 +208,6 @@ CompressedOutputStream::~CompressedOutputStream()
         delete _hasher;
         _hasher = nullptr;
     }
-
-    delete[] _infos;
 }
 
 void CompressedOutputStream::writeHeader()
@@ -388,23 +384,16 @@ void CompressedOutputStream::processBlock()
 
             Context copyCtx(_ctx);
             copyCtx.putInt("jobs", jobsPerTask[taskId]);
+            copyCtx.putLong("tType", _transformType);
+            copyCtx.putInt("eType", _entropyType);
             copyCtx.putInt("blockId", firstBlockId + taskId + 1);
-            copyCtx.putInt("blockSize", dataLength);
+            copyCtx.putInt("size", dataLength); // "size" is the actual block size, "blockSize" the provided one
             _buffers[taskId]->_index = 0;
 
-            if (firstBlockId == 0) {
-               // Initialize the static task infos
-               _infos[taskId]._hasher = _hasher;
-               _infos[taskId]._iBuffer = _buffers[taskId];
-               _infos[taskId]._oBuffer = _buffers[_jobs + taskId];
-               _infos[taskId]._transform = nullptr;
-               _infos[taskId]._listeners = blockListeners;
-               _infos[taskId]._transformType = _transformType;
-               _infos[taskId]._entropyType = _entropyType;
-            }
-
-            EncodingTask<EncodingTaskResult>* task = new EncodingTask<EncodingTaskResult>(&_infos[taskId],
-                        _obs, &_blockId, copyCtx);
+            EncodingTask<EncodingTaskResult>* task = new EncodingTask<EncodingTaskResult>(_buffers[taskId],
+                _buffers[_jobs + taskId],
+                _obs, _hasher, &_blockId,
+                blockListeners, copyCtx);
             tasks.push_back(task);
         }
 
@@ -478,11 +467,17 @@ void CompressedOutputStream::notifyListeners(vector<Listener*>& listeners, const
 }
 
 template <class T>
-EncodingTask<T>::EncodingTask(EncodingTaskInfo* info, OutputBitStream* obs, ATOMIC_INT* processedBlockId, const Context& ctx)
+EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
+    OutputBitStream* obs, XXHash32* hasher,
+    ATOMIC_INT* processedBlockId, vector<Listener*>& listeners,
+    const Context& ctx)
     : _obs(obs)
+    , _listeners(listeners)
     , _ctx(ctx)
 {
-    _info = info;
+    _data = iBuffer;
+    _buffer = oBuffer;
+    _hasher = hasher;
     _processedBlockId = processedBlockId;
 }
 
@@ -498,13 +493,9 @@ EncodingTask<T>::EncodingTask(EncodingTaskInfo* info, OutputBitStream* obs, ATOM
 template <class T>
 T EncodingTask<T>::run()
 {
-    int blockId = _ctx.getInt("blockId");
-    int blockLength = _ctx.getInt("blockSize");
-    EncodingTaskInfo& info = *_info;
-    _data = info._iBuffer;
-    _buffer = info._oBuffer;
-    uint64 tType = info._transformType;
-    short eType = info._entropyType;
+    const int blockId = _ctx.getInt("blockId");
+    const int blockLength = _ctx.getInt("size");
+    TransformSequence<byte>* transform = nullptr;
     EntropyEncoder* ee = nullptr;
 
     try {
@@ -517,17 +508,19 @@ T EncodingTask<T>::run()
         byte mode = byte(0);
         int postTransformLength = blockLength;
         uint32 checksum = 0;
+        uint64 tType = _ctx.getLong("tType");
+        short eType = short(_ctx.getInt("eType"));
 
         // Compute block checksum
-        if (info._hasher != nullptr)
-            checksum = info._hasher->hash(&_data->_array[_data->_index], blockLength);
+        if (_hasher != nullptr)
+            checksum = _hasher->hash(&_data->_array[_data->_index], blockLength);
 
-        if (info._listeners.size() > 0) {
+        if (_listeners.size() > 0) {
             // Notify before transform
             Event evt(Event::BEFORE_TRANSFORM, blockId,
-                int64(blockLength), checksum, info._hasher != nullptr, clock());
+                int64(blockLength), checksum, _hasher != nullptr, clock());
 
-            CompressedOutputStream::notifyListeners(info._listeners, evt);
+            CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
         if (blockLength <= CompressedOutputStream::SMALL_BLOCK_SIZE) {
@@ -558,19 +551,8 @@ T EncodingTask<T>::run()
         }
 
         _ctx.putInt("size", blockLength);
-        TransformSequence<byte>* t = info._transform;
-
-        if ((tType == TransformFactory<byte>::NONE_TYPE) && (info._transformType != tType))  {
-            // Skipped or copied block
-            t = TransformFactory<byte>::newTransform(_ctx, tType);
-        }
-        else if (t == nullptr) {
-            // Initialize the task's info once
-            t = TransformFactory<byte>::newTransform(_ctx, tType);
-            info._transform = t;
-        }
-
-        const int requiredSize = t->getMaxEncodedLength(blockLength);
+        transform = TransformFactory<byte>::newTransform(_ctx, tType);
+        const int requiredSize = transform->getMaxEncodedLength(blockLength);
 
         if (blockLength >= 4) {
            uint magic = Magic::getType(&_data->_array[_data->_index]);
@@ -590,11 +572,13 @@ T EncodingTask<T>::run()
         }
 
         // Forward transform (ignore error, encode skipFlags)
-        // _data->_length is at least _blockLength
+        // _data->_length is at least blockLength
         _buffer->_index = 0;
-        t->forward(*_data, *_buffer, blockLength);
-        const int nbTransforms = t->getNbTransforms();
-        const byte skipFlags = t->getSkipFlags();
+        transform->forward(*_data, *_buffer, blockLength);
+        const int nbTransforms = transform->getNbTransforms();
+        const byte skipFlags = transform->getSkipFlags();
+        delete transform;
+        transform = nullptr;
         postTransformLength = _buffer->_index;
 
         if (postTransformLength < 0) {
@@ -613,12 +597,12 @@ T EncodingTask<T>::run()
         // Record size of 'block size' - 1 in bytes
         mode |= byte(((dataSize - 1) & 0x03) << 5);
 
-        if (info._listeners.size() > 0) {
+        if (_listeners.size() > 0) {
             // Notify after transform
             Event evt(Event::AFTER_TRANSFORM, blockId,
-                int64(postTransformLength), checksum, info._hasher != nullptr, clock());
+                int64(postTransformLength), checksum, _hasher != nullptr, clock());
 
-            CompressedOutputStream::notifyListeners(info._listeners, evt);
+            CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
         const int bufSize = max(512 * 1024, max(postTransformLength, blockLength + (blockLength >> 3)));
@@ -650,15 +634,15 @@ T EncodingTask<T>::run()
         obs.writeBits(postTransformLength, 8 * dataSize);
 
         // Write checksum
-        if (info._hasher != nullptr)
+        if (_hasher != nullptr)
             obs.writeBits(checksum, 32);
 
-        if (info._listeners.size() > 0) {
+        if (_listeners.size() > 0) {
             // Notify before entropy
             Event evt(Event::BEFORE_ENTROPY, blockId,
-                int64(postTransformLength), checksum, info._hasher != nullptr, clock());
+                int64(postTransformLength), checksum, _hasher != nullptr, clock());
 
-            CompressedOutputStream::notifyListeners(info._listeners, evt);
+            CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
         // Each block is encoded separately
@@ -693,12 +677,12 @@ T EncodingTask<T>::run()
             CPU_PAUSE();
         }
 
-        if (info._listeners.size() > 0) {
+        if (_listeners.size() > 0) {
             // Notify after entropy
             Event evt(Event::AFTER_ENTROPY, blockId,
-                int64((written + 7) >> 3), checksum, info._hasher != nullptr, clock());
+                int64((written + 7) >> 3), checksum, _hasher != nullptr, clock());
 
-            CompressedOutputStream::notifyListeners(info._listeners, evt);
+            CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
         // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
@@ -724,6 +708,9 @@ T EncodingTask<T>::run()
         // Make sure to unfreeze next block
         if (_processedBlockId->load(memory_order_acquire) == blockId - 1)
             _processedBlockId->store(blockId, memory_order_release);
+
+        if (transform != nullptr)
+            delete transform;
 
         if (ee != nullptr)
             delete ee;
