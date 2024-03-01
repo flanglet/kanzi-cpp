@@ -72,7 +72,7 @@ BlockCompressor::BlockCompressor(const Context& ctx) :
     _overwrite = _ctx.getInt("overwrite", 0) != 0;
     _ctx.putInt("overwrite", _overwrite ? 1 : 0);
     _skipBlocks = _ctx.getInt("skipBlocks", 0) != 0;
-    _ctx.putInt("skipBlocks", _skipBlocks ? 1 : 0);;
+    _ctx.putInt("skipBlocks", _skipBlocks ? 1 : 0);
     _verbosity = _ctx.getInt("verbosity", 1);
     _ctx.putInt("verbosity", _verbosity);
     _jobs = _ctx.getInt("jobs", 1);

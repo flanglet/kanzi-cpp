@@ -42,9 +42,8 @@ namespace kanzi
            _code = UNDEFINED;
        }
 
-       BitStreamException(const std::string& msg, int code) : std::runtime_error(msg)
+       BitStreamException(const std::string& msg, int code) : std::runtime_error(msg), _code(code)
        {
-           _code = code;
        }
 
        int error() const { return _code; }
