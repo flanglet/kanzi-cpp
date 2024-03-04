@@ -176,16 +176,16 @@ namespace kanzi
 
    public:
 #ifdef CONCURRENCY_ENABLED
-        CompressedInputStream(InputStream& is, int jobs = 1, ThreadPool* pool = nullptr, bool headerless = false);
+        CompressedInputStream(InputStream& is, int jobs = 1, ThreadPool* pool = nullptr);
 #else
-        CompressedInputStream(InputStream& is, int jobs = 1, bool headerless = false);
+        CompressedInputStream(InputStream& is, int jobs = 1);
 #endif
 
 #if __cplusplus >= 201103L
        CompressedInputStream(InputStream& is, Context& ctx,
-          std::function<InputBitStream*(InputStream&)>* createBitStream = nullptr);
+          std::function<InputBitStream*(InputStream&)>* createBitStream = nullptr, bool headerless = false);
 #else
-       CompressedInputStream(InputStream& is, Context& ctx);
+       CompressedInputStream(InputStream& is, Context& ctx, bool headerless = false);
 #endif
 
        ~CompressedInputStream();

@@ -30,9 +30,9 @@ using namespace std;
 
 
 #ifdef CONCURRENCY_ENABLED
-CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, ThreadPool* pool, bool headerless)
+CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, ThreadPool* pool)
 #else
-CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, bool headerless)
+CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
 #endif
     : InputStream(is.rdbuf())
 {
@@ -65,7 +65,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, bool he
     _hasher = nullptr;
     _nbInputBlocks = UNKNOWN_NB_BLOCKS;
     _buffers = new SliceArray<byte>*[2 * _jobs];
-    _headless = headerless;
+    _headless = false;
 
     for (int i = 0; i < 2 * _jobs; i++)
         _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
@@ -73,9 +73,9 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, bool he
 
 #if __cplusplus >= 201103L
 CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx,
-    std::function<InputBitStream* (InputStream&)>* createBitStream)
+    std::function<InputBitStream* (InputStream&)>* createBitStream, bool headerless)
 #else
-CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
+CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool headerless)
 #endif
     : InputStream(is.rdbuf())
     , _ctx(ctx)
@@ -118,7 +118,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx)
     _jobs = tasks;
     _hasher = nullptr;
     _nbInputBlocks = UNKNOWN_NB_BLOCKS;
-    _headless = _ctx.getInt("headerless") != 0;
+    _headless = headerless;
 
     if (_headless == true) {
         // Validation of required values
