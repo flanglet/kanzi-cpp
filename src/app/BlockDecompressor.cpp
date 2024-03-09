@@ -368,8 +368,8 @@ void BlockDecompressor::notifyListeners(vector<Listener*>& listeners, const Even
 template <class T>
 FileDecompressTask<T>::FileDecompressTask(const Context& ctx, vector<Listener*>& listeners)
     : _ctx(ctx)
+    , _listeners(listeners)
 {
-    _listeners = listeners;
     _os = nullptr;
     _cis = nullptr;
 }

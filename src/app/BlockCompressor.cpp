@@ -558,8 +558,8 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
 template <class T>
 FileCompressTask<T>::FileCompressTask(const Context& ctx, vector<Listener*>& listeners)
     : _ctx(ctx)
+    , _listeners(listeners)
 {
-    _listeners = listeners;
     _is = nullptr;
     _cos = nullptr;
 }

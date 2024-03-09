@@ -3,7 +3,7 @@
 ifeq ($(OS),Windows_NT)
 	CXXFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=skylake -fno-rtti
 	#LDFLAGS=-static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
-	LDFLAGS=-static-libgcc -static-libstdc++ -lpthread
+	LDFLAGS=-lpthread
 else
 	LDFLAGS=-lpthread
 	ARCH ?= $(shell uname -m)

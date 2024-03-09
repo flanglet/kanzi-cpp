@@ -850,69 +850,75 @@ int main(int argc, const char* argv[])
         jobs = atoi(it->second.c_str());
     }
 
+    try {
 #ifndef CONCURRENCY_ENABLED
-    if (jobs > 1) {
-        it = args.find("verbosity");
-        int verbosity = it == args.end() ? 1 : atoi(it->second.c_str());
-        stringstream ss;
-        ss << "Warning: the number of jobs is  limited to 1 in this version";
-        Printer log(cout);
-        log.println(ss.str().c_str(), verbosity > 0);
-    }
+        if (jobs > 1) {
+            it = args.find("verbosity");
+            int verbosity = it == args.end() ? 1 : atoi(it->second.c_str());
+            stringstream ss;
+            ss << "Warning: the number of jobs is  limited to 1 in this version";
+            Printer log(cout);
+            log.println(ss.str().c_str(), verbosity > 0);
+        }
 
-    jobs = 1;
-    Context ctx(args);
+        jobs = 1;
+        Context ctx(args);
 #else
-    if (jobs == 0) {
-       int cores = max(int(thread::hardware_concurrency()), 1); // User provided 0 => use all the cores
-       jobs = min(cores, MAX_CONCURRENCY);
-    }
-    else if (jobs == -1) {
-       int cores = max(int(thread::hardware_concurrency()) / 2, 1); // Defaults to half the cores
-       jobs = min(cores, MAX_CONCURRENCY);
-    }
-    else if (jobs > MAX_CONCURRENCY) {
-        it = args.find("verbosity");
-        int verbosity = it == args.end() ? 1 : atoi(it->second.c_str());
-        stringstream ss;
-        ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY;
-        Printer log(cout);
-        log.println(ss.str().c_str(), verbosity > 0);
-        jobs = MAX_CONCURRENCY;
-    }
+        if (jobs == 0) {
+           int cores = max(int(thread::hardware_concurrency()), 1); // User provided 0 => use all the cores
+           jobs = min(cores, MAX_CONCURRENCY);
+        }
+        else if (jobs == -1) {
+           int cores = max(int(thread::hardware_concurrency()) / 2, 1); // Defaults to half the cores
+           jobs = min(cores, MAX_CONCURRENCY);
+        }
+        else if (jobs > MAX_CONCURRENCY) {
+            it = args.find("verbosity");
+            int verbosity = it == args.end() ? 1 : atoi(it->second.c_str());
+            stringstream ss;
+            ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY;
+            Printer log(cout);
+            log.println(ss.str().c_str(), verbosity > 0);
+            jobs = MAX_CONCURRENCY;
+        }
 
-    ThreadPool pool(jobs);
-    Context ctx(args, &pool);
+        ThreadPool pool(jobs);
+        Context ctx(args, &pool);
 #endif
 
-    ctx.putInt("jobs", jobs);
+        ctx.putInt("jobs", jobs);
 
-    if (mode == "c") {
-        try {
-            BlockCompressor bc(ctx);
-            uint64 written = 0;
-            int code = bc.compress(written);
-            exit(code);
+        if (mode == "c") {
+            try {
+                BlockCompressor bc(ctx);
+                uint64 written = 0;
+                int code = bc.compress(written);
+                exit(code);
+            }
+            catch (exception& e) {
+                cerr << "Could not create the compressor: " << e.what() << endl;
+                exit(Error::ERR_CREATE_COMPRESSOR);
+            }
         }
-        catch (exception& e) {
-            cerr << "Could not create the compressor: " << e.what() << endl;
-            exit(Error::ERR_CREATE_COMPRESSOR);
+
+        if (mode == "d") {
+            try {
+                BlockDecompressor bd(ctx);
+                uint64 read = 0;
+                int code = bd.decompress(read);
+                exit(code);
+            }
+            catch (exception& e) {
+                cerr << "Could not create the decompressor: " << e.what() << endl;
+                exit(Error::ERR_CREATE_DECOMPRESSOR);
+            }
         }
+
+        cout << "Missing arguments: try --help or -h" << endl;
+        return Error::ERR_MISSING_PARAM;
     }
-
-    if (mode == "d") {
-        try {
-            BlockDecompressor bd(ctx);
-            uint64 read = 0;
-            int code = bd.decompress(read);
-            exit(code);
-        }
-        catch (exception& e) {
-            cerr << "Could not create the decompressor: " << e.what() << endl;
-            exit(Error::ERR_CREATE_DECOMPRESSOR);
-        }
+    catch (runtime_error& e) {
+       cout << e.what() << endl;
+       return Error::ERR_INVALID_PARAM;
     }
-
-    cout << "Missing arguments: try --help or -h" << endl;
-    return Error::ERR_MISSING_PARAM;
 }
