@@ -307,7 +307,6 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length)
                 break;
         }
 
-        // Buffer full, time to encode
         put(data[off]);
         off++;
         remaining--;

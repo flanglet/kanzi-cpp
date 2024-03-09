@@ -26,6 +26,8 @@ Event::Event(Event::Type type, int id, int64 size, clock_t evtTime)
     , _id(id)
     , _size(size)
 {
+    _hash = 0;
+    _hashing = false;
 }
 
 Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
@@ -34,6 +36,9 @@ Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
     , _msg(msg)
     , _id(id)
 {
+    _size = 0;
+    _hash = 0;
+    _hashing = false;
 }
 
 Event::Event(Event::Type type, int id, int64 size, int hash, bool hashing, clock_t evtTime)
