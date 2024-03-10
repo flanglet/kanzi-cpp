@@ -72,8 +72,8 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
 }
 
 #if __cplusplus >= 201103L
-CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx,
-    std::function<InputBitStream* (InputStream&)>* createBitStream, bool headerless)
+CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool headerless,
+    std::function<InputBitStream* (InputStream&)>* createBitStream)
 #else
 CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool headerless)
 #endif
@@ -427,13 +427,12 @@ int CompressedInputStream::processBlock()
                 copyCtx.putLong("tType", _transformType);
                 copyCtx.putInt("eType", _entropyType);
                 copyCtx.putInt("blockId", firstBlockId + taskId + 1);
-                copyCtx.putInt("blockSize", blkSize);
 
                 _buffers[taskId]->_index = 0;
                 _buffers[_jobs + taskId]->_index = 0;
 
                 DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(_buffers[taskId],
-                    _buffers[_jobs + taskId],
+                    _buffers[_jobs + taskId], blkSize,
                     _ibs, _hasher, &_blockId,
                     blockListeners, copyCtx);
                 tasks.push_back(task);
@@ -577,12 +576,13 @@ void CompressedInputStream::notifyListeners(vector<Listener*>& listeners, const 
 
 template <class T>
 DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
-    InputBitStream* ibs, XXHash32* hasher,
+    int blockSize, InputBitStream* ibs, XXHash32* hasher,
     ATOMIC_INT* processedBlockId, vector<Listener*>& listeners,
     const Context& ctx)
     : _listeners(listeners)
     , _ctx(ctx)
 {
+    _blockLength = blockSize;
     _data = iBuffer;
     _buffer = oBuffer;
     _ibs = ibs;
@@ -603,7 +603,6 @@ template <class T>
 T DecodingTask<T>::run()
 {
     int blockId = _ctx.getInt("blockId");
-    const int blockLength = _ctx.getInt("blockSize");
 
     // Lock free synchronization
     while (true) {
@@ -647,8 +646,8 @@ T DecodingTask<T>::run()
         const int r = int((read + 7) >> 3);
 
         if (streamPerTask == true) {
-            if (_data->_length < max(blockLength, r)) {
-                _data->_length = max(blockLength, r);
+            if (_data->_length < max(_blockLength, r)) {
+                _data->_length = max(_blockLength, r);
                 delete[] _data->_array;
                 _data->_array = new byte[_data->_length];
             }
@@ -729,7 +728,7 @@ T DecodingTask<T>::run()
             CompressedInputStream::notifyListeners(_listeners, evt);
         }
 
-        const int bufferSize = max(blockLength, preTransformLength + CompressedInputStream::EXTRA_BUFFER_SIZE);
+        const int bufferSize = max(_blockLength, preTransformLength + CompressedInputStream::EXTRA_BUFFER_SIZE);
 
         if (_buffer->_length < bufferSize) {
             _buffer->_length = bufferSize;

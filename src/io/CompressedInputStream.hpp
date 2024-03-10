@@ -106,6 +106,7 @@ namespace kanzi
    private:
        SliceArray<byte>* _data;
        SliceArray<byte>* _buffer;
+       int _blockLength;
        InputBitStream* _ibs;
        XXHash32* _hasher;
        ATOMIC_INT* _processedBlockId;
@@ -114,7 +115,7 @@ namespace kanzi
 
    public:
        DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
-           InputBitStream* ibs, XXHash32* hasher,
+           int blockSize, InputBitStream* ibs, XXHash32* hasher,
            ATOMIC_INT* processedBlockId, std::vector<Listener*>& listeners,
            const Context& ctx);
 
@@ -182,8 +183,8 @@ namespace kanzi
 #endif
 
 #if __cplusplus >= 201103L
-       CompressedInputStream(InputStream& is, Context& ctx,
-          std::function<InputBitStream*(InputStream&)>* createBitStream = nullptr, bool headerless = false);
+       CompressedInputStream(InputStream& is, Context& ctx, bool headerless = false,
+          std::function<InputBitStream*(InputStream&)>* createBitStream = nullptr);
 #else
        CompressedInputStream(InputStream& is, Context& ctx, bool headerless = false);
 #endif
