@@ -22,6 +22,11 @@ limitations under the License.
 #include "../Error.hpp"
 #include "../util/Printer.hpp"
 
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+   #include <windows.h>
+#endif
+
+
 using namespace kanzi;
 using namespace std;
 
@@ -827,6 +832,23 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
 int main(int argc, const char* argv[])
 {
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+    // Users can provide a custom code page to properly display some non ASCII file names
+    // eg. 1252 for ANSI Latin-1 or 65001 for utf-8
+    const char* env_cp = getenv("KANZI_CODE_PAGE");
+
+    if (env_cp != nullptr) {
+        string s(env_cp);
+        int cp;
+
+        if (toInt(s, cp) == true) {
+           SetConsoleCP(cp);
+	   SetConsoleOutputCP(cp);
+        }
+    }
+
+#endif
+
     CTX_MAP<string, string> args;
     int status = processCommandLine(argc, argv, args);
 

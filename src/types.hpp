@@ -17,8 +17,6 @@ limitations under the License.
 #ifndef _types_
 #define _types_
 
-#include <cstddef>
-
     #ifdef _MSC_VER
         #if !defined(__x86_64__)
             #define __x86_64__  _M_X64
@@ -139,7 +137,7 @@ limitations under the License.
     // Otherwise, using the _MSVC_LANG macro returns the proper C++ version.
     #if __cplusplus >= 201103L
        // C++ 11
-      #define FINAL final
+       #define FINAL final
        #include <cstdint>
     #else
        #define FINAL
