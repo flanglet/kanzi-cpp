@@ -44,11 +44,11 @@ namespace kanzi {
 
        DictEntry& operator=(const DictEntry& de) = delete;
 
-       DictEntry(DictEntry&& de) = default;
+       DictEntry(DictEntry&& de) noexcept = default;
 
-       DictEntry& operator=(DictEntry&& de) = default;
+       DictEntry& operator=(DictEntry&& de) noexcept = default;
 
-       ~DictEntry() = default;
+       ~DictEntry() noexcept = default;
 #endif
    };
 

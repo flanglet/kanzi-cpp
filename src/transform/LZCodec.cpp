@@ -448,6 +448,8 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
             goto exit;
         }
 
+        prefetchRead(&src[mLenIdx]);
+
         // Copy match
         if (dist >= 16) {
             do {
