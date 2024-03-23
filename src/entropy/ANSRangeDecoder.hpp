@@ -101,11 +101,10 @@ namespace kanzi
       st = int(sym._freq) * (st >> _logRange) + (st & mask) - int(sym._cumFreq);
 
       // Normalize
-      if (st < ANS_TOP) {
-          st = (st << 16) | (int(p[0]) << 8) | int(p[1]);
-          p += 2;
-      }
-
+      const int x = (st < ANS_TOP) ? -1 : 0;
+      st <<= (x & 16);
+      st |= (x & ((int(p[0]) << 8) | int(p[1])));
+      p -= (x + x);
       return st;
    }
 
