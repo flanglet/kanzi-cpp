@@ -130,11 +130,12 @@ namespace kanzi
 
    inline int ANSRangeEncoder::encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym) const
    {
-      if (st >= sym._xMax) {
-         *p-- = byte(st);
-         *p-- = byte(st >> 8);
-         st >>= 16;
-      }
+      const int x = (st >= sym._xMax) ? 1 : 0;
+      *p = byte(st);
+      p -= x;
+      *p = byte(st >> 8);
+      p -= x;
+      st >>= (-x & 16);
 
       // Compute next ANS state
       // C(s,x) = M floor(x/q_s) + mod(x,q_s) + b_s where b_s = q_0 + ... + q_{s-1}
