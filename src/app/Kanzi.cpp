@@ -843,7 +843,7 @@ int main(int argc, const char* argv[])
 
         if (toInt(s, cp) == true) {
            SetConsoleCP(cp);
-	   SetConsoleOutputCP(cp);
+           SetConsoleOutputCP(cp);
         }
     }
 
@@ -940,7 +940,8 @@ int main(int argc, const char* argv[])
         return Error::ERR_MISSING_PARAM;
     }
     catch (runtime_error& e) {
+       // May be thrown by ThreadPool
        cout << e.what() << endl;
-       return Error::ERR_INVALID_PARAM;
+       exit(Error::ERR_INVALID_PARAM);
     }
 }
