@@ -172,7 +172,7 @@ limitations under the License.
        #endif
 
 
-      #if !defined(_MSC_VER) || _MSC_VER < 1920 
+      #if !defined(_MSC_VER) || _MSC_VER < 1910
           #define nullptr NULL
       #endif
     #endif
