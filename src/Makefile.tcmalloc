@@ -47,8 +47,7 @@ LIB_COMP_SOURCES=api/Compressor.cpp \
 	entropy/ExpGolombEncoder.cpp \
 	entropy/FPAQEncoder.cpp \
 	entropy/HuffmanEncoder.cpp \
-	entropy/RangeEncoder.cpp \
-	entropy/RiceGolombEncoder.cpp
+	entropy/RangeEncoder.cpp
 LIB_COMP_OBJECTS=$(LIB_COMP_SOURCES:.cpp=.o)
 
 LIB_DECOMP_SOURCES=api/Decompressor.cpp \
@@ -60,8 +59,7 @@ LIB_DECOMP_SOURCES=api/Decompressor.cpp \
 	entropy/ExpGolombDecoder.cpp \
 	entropy/FPAQDecoder.cpp \
 	entropy/HuffmanDecoder.cpp \
-	entropy/RangeDecoder.cpp \
-	entropy/RiceGolombDecoder.cpp
+	entropy/RangeDecoder.cpp
 LIB_DECOMP_OBJECTS=$(LIB_DECOMP_SOURCES:.cpp=.o)
 
 LIB_SOURCES=$(LIB_COMMON_SOURCES) $(LIB_COMP_SOURCES) $(LIB_DECOMP_SOURCES)

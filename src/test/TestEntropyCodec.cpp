@@ -22,7 +22,6 @@ limitations under the License.
 #include "../entropy/ANSRangeEncoder.hpp"
 #include "../entropy/BinaryEntropyEncoder.hpp"
 #include "../entropy/ExpGolombEncoder.hpp"
-#include "../entropy/RiceGolombEncoder.hpp"
 #include "../entropy/FPAQEncoder.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
@@ -32,7 +31,6 @@ limitations under the License.
 #include "../entropy/ANSRangeDecoder.hpp"
 #include "../entropy/BinaryEntropyDecoder.hpp"
 #include "../entropy/ExpGolombDecoder.hpp"
-#include "../entropy/RiceGolombDecoder.hpp"
 #include "../entropy/FPAQDecoder.hpp"
 #include "../entropy/CMPredictor.hpp"
 #include "../entropy/TPAQPredictor.hpp"
@@ -70,9 +68,6 @@ static EntropyEncoder* getEncoder(string name, OutputBitStream& obs, Predictor* 
 
     if (name.compare("EXPGOLOMB") == 0)
         return new ExpGolombEncoder(obs);
-
-    if (name.compare("RICEGOLOMB") == 0)
-        return new RiceGolombEncoder(obs, 4);
 
     if (name.compare("FPAQ") == 0)
         return new FPAQEncoder(obs);
@@ -116,9 +111,6 @@ static EntropyDecoder* getDecoder(string name, InputBitStream& ibs, Predictor* p
 
     if (name.compare("EXPGOLOMB") == 0)
         return new ExpGolombDecoder(ibs);
-
-    if (name.compare("RICEGOLOMB") == 0)
-        return new RiceGolombDecoder(ibs, 4);
 
     cout << "No such entropy decoder: " << name << endl;
     return nullptr;
