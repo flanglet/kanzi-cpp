@@ -31,6 +31,8 @@ namespace kanzi {
 
        static int log2(uint32 x); // fast, integer rounded
 
+       static int log2(uint64 x); // fast, integer rounded
+
        static int _log2(uint32 x); // same as log2 minus check on input value
 
        static int _log2(uint64 x); // same as log2 minus check on input value

@@ -435,7 +435,7 @@ TextCodec1::TextCodec1(Context& ctx)
 {
     // Actual block size
     const int blockSize = ctx.getInt("blockSize", 0);
-    const int log = (blockSize >= 8) ? max(min(Global::log2(blockSize / 8), 26), 13) : 13;
+    const int log = blockSize >= 8 ? max(min(Global::log2(uint32(blockSize / 8)), 26), 13) : 13;
     _logHashSize = ctx.getString("entropy") == "TPAQX" ? log + 1 : log;
     _dictSize = 1 << 13;
     _dictMap = nullptr;
@@ -451,7 +451,7 @@ TextCodec1::TextCodec1(Context& ctx)
 void TextCodec1::reset(int count)
 {
     // Select an appropriate initial dictionary size
-    const int log = (count < 1024) ? 13 : max(min(Global::log2(count / 128), 18), 13);
+    const int log = count < 1024 ? 13 : max(min(Global::log2(uint32(count / 128)), 18), 13);
     _dictSize = max(TextCodec::STATIC_DICT_WORDS + 2, 1 << log);
     const int mapSize = 1 << _logHashSize;
 
@@ -907,7 +907,7 @@ TextCodec2::TextCodec2()
 TextCodec2::TextCodec2(Context& ctx)
 {
     const int blockSize = ctx.getInt("blockSize", 0);
-    const int log = (blockSize >= 32) ? max(min(Global::log2(blockSize / 32), 24), 13) : 13;
+    const int log = blockSize >= 32 ? max(min(Global::log2(uint32(blockSize / 32)), 24), 13) : 13;
     _logHashSize = ctx.getString("entropy") == "TPAQX" ? log + 1 : log;
     _dictSize = 1 << 13;
     _dictMap = nullptr;
@@ -921,7 +921,7 @@ TextCodec2::TextCodec2(Context& ctx)
 void TextCodec2::reset(int count)
 {
     // Select an appropriate initial dictionary size
-    const int log = (count < 1024) ? 13 : max(min(Global::log2(count / 128), 18), 13);
+    const int log = count < 1024 ? 13 : max(min(Global::log2(uint32(count / 128)), 18), 13);
     _dictSize = max(TextCodec::STATIC_DICT_WORDS, 1 << log);
     const int mapSize = 1 << _logHashSize;
 

@@ -139,6 +139,15 @@ int Global::log2(uint32 x)
     return _log2(x);
 }
 
+
+int Global::log2(uint64 x)
+{
+    if (x == 0)
+        throw std::invalid_argument("Cannot calculate log of a negative or null value");
+
+    return _log2(x);
+}
+
 // If withTotal is true, the last spot in each frequencies order 0 array is for the total
 void Global::computeHistogram(const byte block[], int length, uint freqs[], bool isOrder0, bool withTotal)
 {
