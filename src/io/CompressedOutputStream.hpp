@@ -101,7 +101,7 @@ namespace kanzi {
 
    private:
        static const int BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
-       static const int BITSTREAM_FORMAT_VERSION = 4;
+       static const int BITSTREAM_FORMAT_VERSION = 5;
        static const int DEFAULT_BUFFER_SIZE = 256 * 1024;
        static const byte COPY_BLOCK_MASK = byte(0x80);
        static const byte TRANSFORMS_MASK = byte(0x10);
@@ -110,13 +110,13 @@ namespace kanzi {
        static const int SMALL_BLOCK_SIZE = 15;
        static const int CANCEL_TASKS_ID = -1;
        static const int MAX_CONCURRENCY = 64;
-       static const int UNKNOWN_NB_BLOCKS = 65536;
 
        int _blockSize;
        int _bufferId; // index of current write buffer
-       int _nbInputBlocks;
        int _jobs;
        int _bufferThreshold;
+       int _nbInputBlocks;
+       int64 _inputSize;
        XXHash32* _hasher;
        SliceArray<byte>** _buffers; // input & output per block
        short _entropyType;
@@ -203,9 +203,9 @@ namespace kanzi {
        try {
            if (_buffers[_bufferId]->_index >= _bufferThreshold) {
                // Current write buffer is full
-               const int jobs = (_jobs < _nbInputBlocks) ? _jobs : _nbInputBlocks;
+               const int nbTasks = (_nbInputBlocks == 0) || (_jobs < _nbInputBlocks) ? _jobs : _nbInputBlocks;
 
-               if (_bufferId + 1 < jobs) {
+               if (_bufferId + 1 < nbTasks) {
                    _bufferId++;
                    const int bSize = _blockSize + (_blockSize >> 6);
                    const int bufSize = (bSize > 65536) ? bSize : 65536;

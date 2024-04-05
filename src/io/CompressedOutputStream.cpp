@@ -72,7 +72,8 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _bufferId = 0;
     _blockSize = bSize;
     _bufferThreshold = bSize;
-    _nbInputBlocks = UNKNOWN_NB_BLOCKS;
+    _inputSize = 0;
+    _nbInputBlocks = 0;
     _headless = headerless;
     _initialized = false;
     _closed = false;
@@ -140,15 +141,9 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     if ((bSize & -16) != bSize)
         throw invalid_argument("The block size must be a multiple of 16");
 
-    // If input size has been provided, calculate the number of blocks
-    // in the input data else use 0. A value of 63 means '63 or more blocks'.
-    // This value is written to the bitstream header to let the decoder make
-    // better decisions about memory usage and job allocation in concurrent
-    // decompression scenario.
-    const int64 fileSize = ctx.getLong("fileSize", int64(UNKNOWN_NB_BLOCKS));
-    const int nbBlocks = (fileSize == int64(UNKNOWN_NB_BLOCKS)) ? UNKNOWN_NB_BLOCKS :
-                           int((fileSize + int64(bSize - 1)) / int64(bSize));
-    _nbInputBlocks = max(min(nbBlocks, MAX_CONCURRENCY - 1), 1);
+    _inputSize = ctx.getLong("fileSize", 0);
+    const int nbBlocks = (_inputSize == 0) ? 0 : int((_inputSize + int64(bSize - 1)) / int64(bSize));
+    _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
     _jobs = tasks;
     _blockId = 0;
     _bufferId = 0;
@@ -230,19 +225,33 @@ void CompressedOutputStream::writeHeader()
     if (_obs->writeBits(_blockSize >> 4, 28) != 28)
         throw IOException("Cannot write block size to header", Error::ERR_WRITE_FILE);
 
-    if (_obs->writeBits(_nbInputBlocks & (MAX_CONCURRENCY - 1), 6) != 6)
-        throw IOException("Cannot write number of blocks to header", Error::ERR_WRITE_FILE);
+    // _inputSize not provided or >= 2^48 -> 0, <2^16 -> 1, <2^32 -> 2, <2^48 -> 3
+    const int szMask = ((_inputSize == 0) || (_inputSize >= (uint64(1) << 48))) ? 0
+        : (Global::log2(uint64(_inputSize)) >> 4) + 1;
+
+    if (_obs->writeBits(szMask, 2) != 2)
+        throw IOException("Cannot write size of input to header", Error::ERR_WRITE_FILE);
+
+    if (szMask != 0) {
+        if (_obs->writeBits(_inputSize, 16 * szMask) != 16 * szMask)
+            throw IOException("Cannot write size of input to header", Error::ERR_WRITE_FILE);
+    }
 
     const uint32 HASH = 0x1E35A7BD;
     uint32 cksum = HASH * BITSTREAM_FORMAT_VERSION;
-    cksum ^= (HASH * uint32(_entropyType));
-    cksum ^= (HASH * uint32(_transformType >> 32));
-    cksum ^= (HASH * uint32(_transformType));
-    cksum ^= (HASH * uint32(_blockSize));
-    cksum ^= (HASH * uint32(_nbInputBlocks));
+    cksum ^= (HASH * uint32(~_entropyType));
+    cksum ^= (HASH * uint32((~_transformType) >> 32));
+    cksum ^= (HASH * uint32(~_transformType));
+    cksum ^= (HASH * uint32(~_blockSize));
+
+    if (szMask != 0) {
+        cksum ^= (HASH * uint32((~_inputSize) >> 32));
+        cksum ^= (HASH * uint32(~_inputSize));
+    }
+
     cksum = (cksum >> 23) ^ (cksum >> 3);
 
-    if (_obs->writeBits(cksum, 4) != 4)
+    if (_obs->writeBits(cksum, 16) != 16)
         throw IOException("Cannot write checksum to header", Error::ERR_WRITE_FILE);
 }
 
@@ -285,7 +294,9 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length)
 
             if (_buffers[_bufferId]->_index >= _bufferThreshold) {
                 // Current write buffer is full
-                if (_bufferId + 1 < min(_nbInputBlocks, _jobs)) {
+                const int nbTasks = _nbInputBlocks == 0 ? _jobs : min(_nbInputBlocks, _jobs);
+
+                if (_bufferId + 1 < nbTasks) {
                     _bufferId++;
                     const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
 
@@ -363,11 +374,13 @@ void CompressedOutputStream::processBlock()
         int nbTasks = _jobs;
         int jobsPerTask[MAX_CONCURRENCY];
 
-        // Assign optimal number of tasks and jobs per task
+        // Assign optimal number of tasks and jobs per task (if the number of blocks is available)
         if (nbTasks > 1) {
             // Limit the number of tasks if there are fewer blocks that _jobs
             // It allows more jobs per task and reduces memory usage.
-            nbTasks = min(_nbInputBlocks, _jobs);
+            if (_nbInputBlocks != 0)
+                nbTasks = min(_nbInputBlocks, _jobs);
+
             Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
         }
         else {

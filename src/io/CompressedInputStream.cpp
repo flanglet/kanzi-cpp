@@ -35,6 +35,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, ThreadP
 CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
 #endif
     : InputStream(is.rdbuf())
+    , _parentCtx(nullptr)
 {
 #ifdef CONCURRENCY_ENABLED
     if ((tasks <= 0) || (tasks > MAX_CONCURRENCY)) {
@@ -63,7 +64,8 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
     _jobs = tasks;
     _hasher = nullptr;
-    _nbInputBlocks = UNKNOWN_NB_BLOCKS;
+    _outputSize = 0;
+    _nbInputBlocks = 0;
     _buffers = new SliceArray<byte>*[2 * _jobs];
     _headless = false;
 
@@ -79,6 +81,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
 #endif
     : InputStream(is.rdbuf())
     , _ctx(ctx)
+    , _parentCtx(&ctx)
 {
     int tasks = _ctx.getInt("jobs", 1);
 
@@ -94,7 +97,6 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
     if (tasks != 1)
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
-
     _blockId = 0;
     _bufferId = 0;
     _maxBufferId = 0;
@@ -117,12 +119,14 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
 
     _jobs = tasks;
     _hasher = nullptr;
-    _nbInputBlocks = UNKNOWN_NB_BLOCKS;
+    _outputSize = 0;
+    _nbInputBlocks = 0;
     _headless = headerless;
 
     if (_headless == true) {
         // Validation of required values
-        int bsVersion = _ctx.getInt("bsVersion", BITSTREAM_FORMAT_VERSION);
+        // Optional bsVersion
+        const int bsVersion = _ctx.getInt("bsVersion", BITSTREAM_FORMAT_VERSION);
 
         if (bsVersion != BITSTREAM_FORMAT_VERSION) {
             stringstream ss;
@@ -147,6 +151,18 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
 
         _bufferThreshold = _blockSize;
 
+        // Optional outputSize
+        if (_ctx.has("outputSize")) {
+            _outputSize = _ctx.getLong("outputSize", 0);
+
+            if ((_outputSize < 0) || (_outputSize >= (int64(1) << 48)))
+                _outputSize = 0; // not provided
+        }
+
+        const int nbBlocks = int((_outputSize + int64(_blockSize - 1)) / int64(_blockSize));
+        _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
+
+        // Optional checksum
         if (_ctx.getInt("checksum") != 0)
             _hasher = new XXHash32(BITSTREAM_TYPE);
     }
@@ -191,10 +207,10 @@ void CompressedInputStream::readHeader()
     }
 
     // Read stream version
-    int bsVersion = int(_ibs->readBits(4));
+    const int bsVersion = int(_ibs->readBits(4));
 
     // Sanity check
-    if (bsVersion != BITSTREAM_FORMAT_VERSION) {
+    if (bsVersion > BITSTREAM_FORMAT_VERSION) {
         stringstream ss;
         ss << "Invalid bitstream, cannot read this version of the stream: " << bsVersion;
         throw IOException(ss.str(), Error::ERR_STREAM_VERSION);
@@ -239,37 +255,53 @@ void CompressedInputStream::readHeader()
         throw IOException(ss.str(), Error::ERR_BLOCK_SIZE);
     }
 
-    // Read number of blocks in input.
-    _nbInputBlocks = int(_ibs->readBits(6));
+    // Read original size
+    // 0 -> not provided, <2^16 -> 1, <2^32 -> 2, <2^48 -> 3
+    const int szMask = int(_ibs->readBits(2));
 
-    // 0 means 'unknown' and 63 means 63 or more.
-    if (_nbInputBlocks == 0)
-        _nbInputBlocks = UNKNOWN_NB_BLOCKS;
+    if (szMask != 0) {
+        _outputSize = _ibs->readBits(16 * szMask);
 
-    // Read checksum
-    const uint32 cksum1 = uint32(_ibs->readBits(4));
+        if (_parentCtx != nullptr)
+            _parentCtx->putLong("outputSize", _outputSize);
 
-    // Verify checksum
+        const int nbBlocks = int((_outputSize + int64(_blockSize - 1)) / int64(_blockSize));
+        _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
+    }
+
+    // Read & verify checksum
+    const uint32 cksum1 = uint32(_ibs->readBits(16));
     const uint32 HASH = 0x1E35A7BD;
     uint32 cksum2 = HASH * uint32(bsVersion);
-    cksum2 ^= (HASH * uint32(_entropyType));
-    cksum2 ^= (HASH * uint32(_transformType >> 32));
-    cksum2 ^= (HASH * uint32(_transformType));
-    cksum2 ^= (HASH * uint32(_blockSize));
-    cksum2 ^= (HASH * uint32(_nbInputBlocks));
+    cksum2 ^= (HASH * uint32(~_entropyType));
+    cksum2 ^= (HASH * uint32((~_transformType) >> 32));
+    cksum2 ^= (HASH * uint32(~_transformType));
+    cksum2 ^= (HASH * uint32(~_blockSize));
+
+    if (szMask != 0) {
+        cksum2 ^= (HASH * uint32((~_outputSize) >> 32));
+        cksum2 ^= (HASH * uint32(~_outputSize));
+    }
+
     cksum2 = (cksum2 >> 23) ^ (cksum2 >> 3);
 
-    if (cksum1 != (cksum2 & 0x0F))
+    if (cksum1 != (cksum2 & 0xFFFF))
         throw IOException("Invalid bitstream, corrupted header", Error::ERR_CRC_CHECK);
 
     if (_listeners.size() > 0) {
         stringstream ss;
-        ss << "Checksum set to " << (_hasher != nullptr ? "true" : "false") << endl;
-        ss << "Block size set to " << _blockSize << " bytes" << endl;
+        ss << "Bitstream version: " << bsVersion << endl;
+        ss << "Checksum: " << (_hasher != nullptr ? "true" : "false") << endl;
+        ss << "Block size: " << _blockSize << " bytes" << endl;
         string w1 = EntropyDecoderFactory::getName(_entropyType);
         ss << "Using " << ((w1 == "NONE") ? "no" : w1) << " entropy codec (stage 1)" << endl;
         string w2 = TransformFactory<byte>::getName(_transformType);
         ss << "Using " << ((w2 == "NONE") ? "no" : w2) << " transform (stage 2)" << endl;
+
+        if (szMask != 0) {
+            ss << "Output size: " << _outputSize;
+            ss << (_outputSize < 2 ? " byte" : " bytes") << endl;
+        }
 
         // Protect against future concurrent modification of the list of block listeners
         vector<Listener*> blockListeners(_listeners);
@@ -397,11 +429,13 @@ int CompressedInputStream::processBlock()
         int nbTasks = _jobs;
         int jobsPerTask[MAX_CONCURRENCY];
 
-        // Assign optimal number of tasks and jobs per task
+        // Assign optimal number of tasks and jobs per task (if the number of blocks is available)
         if (nbTasks > 1) {
             // Limit the number of tasks if there are fewer blocks that _jobs
             // It allows more jobs per task and reduces memory usage.
-            nbTasks = min(_nbInputBlocks, _jobs);
+            if (_nbInputBlocks != 0)
+                nbTasks = min(_nbInputBlocks, _jobs);
+
             Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
         }
         else {

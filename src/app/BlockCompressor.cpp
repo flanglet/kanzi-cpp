@@ -204,19 +204,19 @@ int BlockCompressor::compress(uint64& outputSize)
 
     if (_verbosity > 2) {
         if (_autoBlockSize == true)
-            ss << "Block size set to 'auto'";
+            ss << "Block size: 'auto'";
         else
-            ss << "Block size set to " << _blockSize << " bytes";
+            ss << "Block size: " << _blockSize << " bytes";
 
         log.println(ss.str().c_str(), true);
         ss.str(string());
-        ss << "Verbosity set to " << _verbosity;
+        ss << "Verbosity: " << _verbosity;
         log.println(ss.str().c_str(), true);
         ss.str(string());
-        ss << "Overwrite set to " << (_overwrite ? "true" : "false");
+        ss << "Overwrite: " << (_overwrite ? "true" : "false");
         log.println(ss.str().c_str(), true);
         ss.str(string());
-        ss << "Checksum set to " << (_checksum ? "true" : "false");
+        ss << "Checksum: " << (_checksum ? "true" : "false");
         log.println(ss.str().c_str(), true);
         ss.str(string());
         string etransform = _transform;
@@ -574,10 +574,10 @@ T FileCompressTask<T>::run()
     stringstream ss;
 
     if (verbosity > 2) {
-        ss << "Input file name set to '" << inputName << "'";
+        ss << "Input file name: '" << inputName << "'";
         log.println(ss.str().c_str(), true);
         ss.str(string());
-        ss << "Output file name set to '" << outputName << "'";
+        ss << "Output file name: '" << outputName << "'";
         log.println(ss.str().c_str(), true);
         ss.str(string());
     }

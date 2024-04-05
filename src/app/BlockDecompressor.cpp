@@ -119,10 +119,10 @@ int BlockDecompressor::decompress(uint64& inputSize)
     }
 
     if (_verbosity > 2) {
-        ss << "Verbosity set to " << _verbosity;
+        ss << "Verbosity: " << _verbosity;
         log.println(ss.str().c_str(), true);
         ss.str(string());
-        ss << "Overwrite set to " << (_overwrite ? "true" : "false");
+        ss << "Overwrite: " << (_overwrite ? "true" : "false");
         log.println(ss.str().c_str(), true);
         ss.str(string());
         ss << "Using " << _jobs << " job" << (_jobs > 1 ? "s" : "");
@@ -406,10 +406,10 @@ T FileDecompressTask<T>::run()
     stringstream ss;
 
     if (verbosity > 2) {
-        ss << "Input file name set to '" << inputName << "'";
+        ss << "Input file name: '" << inputName << "'";
         log.println(ss.str().c_str(), true);
         ss.str(string());
-        ss << "Output file name set to '" << outputName << "'";
+        ss << "Output file name: '" << outputName << "'";
         log.println(ss.str().c_str(), true);
         ss.str(string());
     }
@@ -573,8 +573,7 @@ T FileDecompressTask<T>::run()
         stringstream sserr;
 
         if (_cis->eof()) {
-            sserr << "Reached end of stream";
-            return T(Error::ERR_READ_FILE, _cis->getRead(), sserr.str().c_str());
+            return T(Error::ERR_READ_FILE, _cis->getRead(), "Reached end of stream");
         }
 
         sserr << e.what();
@@ -587,8 +586,7 @@ T FileDecompressTask<T>::run()
         stringstream sserr;
 
         if (_cis->eof()) {
-            sserr << "Reached end of stream";
-            return T(Error::ERR_READ_FILE, _cis->getRead(), sserr.str().c_str());
+            return T(Error::ERR_READ_FILE, _cis->getRead(), "Reached end of stream");
         }
 
         sserr << "An unexpected condition happened. Exiting ..." << endl
@@ -599,7 +597,8 @@ T FileDecompressTask<T>::run()
     // Close streams to ensure all data are flushed
     dispose();
 
-    uint64 decoded = _cis->getRead();
+    const uint64 decoded = _cis->getRead();
+    const uint64 written = _os->tellp();
 
     // is destructor will call close if ifstream
     if ((is != &cin) && (is != nullptr))
@@ -623,6 +622,19 @@ T FileDecompressTask<T>::run()
 
     stopClock.stop();
     double delta = stopClock.elapsed();
+
+    // If the whole input stream has been decoded and the original data size is present,
+    // check that the output size matches the original data size.
+    if ((_ctx.has("to") == false) && (_ctx.has("from") == false)) {
+        const uint64 outputSize = _ctx.getLong("outputSize", 0);
+
+        if ((outputSize != 0) && (written != outputSize)) {
+            stringstream sserr;
+            sserr << "Corrupted bitstream: invalid output size (expected " << outputSize;
+            sserr << ", got " << written << ")";
+            return T(Error::ERR_INVALID_FILE, decoded, sserr.str().c_str());
+        }
+    }
 
     if (verbosity >= 1) {
         log.println("", verbosity > 1);

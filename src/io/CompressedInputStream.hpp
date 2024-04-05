@@ -129,7 +129,7 @@ namespace kanzi
 
    private:
        static const int BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
-       static const int BITSTREAM_FORMAT_VERSION = 4;
+       static const int BITSTREAM_FORMAT_VERSION = 5;
        static const int DEFAULT_BUFFER_SIZE = 256 * 1024;
        static const int EXTRA_BUFFER_SIZE = 512;
        static const byte COPY_BLOCK_MASK = byte(0x80);
@@ -138,7 +138,6 @@ namespace kanzi
        static const int MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
        static const int CANCEL_TASKS_ID = -1;
        static const int MAX_CONCURRENCY = 64;
-       static const int UNKNOWN_NB_BLOCKS = 65536;
        static const int MAX_BLOCK_ID = int((uint(1) << 31) - 1);
 
        int _blockSize;
@@ -148,6 +147,7 @@ namespace kanzi
        int _jobs;
        int _bufferThreshold;
        int _available; // decoded not consumed bytes
+       int64 _outputSize;
        XXHash32* _hasher;
        SliceArray<byte>** _buffers; // input & output per block
        short _entropyType;
@@ -159,6 +159,7 @@ namespace kanzi
        std::vector<Listener*> _listeners;
        std::streamsize _gcount;
        Context _ctx;
+       Context* _parentCtx; // not owner
        bool _headless;
 #ifdef CONCURRENCY_ENABLED
        ThreadPool* _pool;
@@ -182,6 +183,8 @@ namespace kanzi
         CompressedInputStream(InputStream& is, int jobs = 1);
 #endif
 
+      // If headerless == true, the context must contain "entropy", "transform" & "blockSize"
+      // If "bsVersion" is missing , the curremt value of BITSTREAM_FORMAT_VERSION is assumed.
 #if __cplusplus >= 201103L
        CompressedInputStream(InputStream& is, Context& ctx, bool headerless = false,
           std::function<InputBitStream*(InputStream&)>* createBitStream = nullptr);
