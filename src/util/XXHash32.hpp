@@ -17,6 +17,8 @@ limitations under the License.
 #ifndef _XXHash32_
 #define _XXHash32_
 
+#include <ctime>
+
 #include "../Memory.hpp"
 
 
@@ -28,11 +30,11 @@ namespace kanzi
 
    class XXHash32 {
    private:
-       static const uint32 PRIME32_1 = -1640531535;
-       static const uint32 PRIME32_2 = -2048144777;
-       static const uint32 PRIME32_3 = -1028477379;
-       static const uint32 PRIME32_4 = 668265263;
-       static const uint32 PRIME32_5 = 374761393;
+       static const uint32 PRIME32_1 = uint32(-1640531535);
+       static const uint32 PRIME32_2 = uint32(-2048144777);
+       static const uint32 PRIME32_3 = uint32(-1028477379);
+       static const uint32 PRIME32_4 = uint32(668265263);
+       static const uint32 PRIME32_5 = uint32(374761393);
 
        int _seed;
 
@@ -41,7 +43,7 @@ namespace kanzi
    public:
        XXHash32() { _seed = int(time(nullptr)); }
 
-       XXHash32(int seed) { _seed = seed; }
+       XXHash32(int seed) : _seed(seed) {}
 
        ~XXHash32(){}
 

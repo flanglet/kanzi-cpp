@@ -46,7 +46,7 @@ HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) : _bits
 bool HuffmanDecoder::reset()
 {
     // Default lengths & canonical codes
-    for (int i = 0; i < 256; i++) {
+    for (uint16 i = 0; i < 256; i++) {
         _codes[i] = i;
         _sizes[i] = 8;
     }

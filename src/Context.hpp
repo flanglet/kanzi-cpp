@@ -39,9 +39,9 @@ namespace kanzi
 
 #ifdef CONCURRENCY_ENABLED
     #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
-           // Windows already has a built-in threadpool. Using it is better for performance.
-       Context(ThreadPool*) { _pool = nullptr; }
-       Context(CTX_MAP<std::string, std::string>& m, ThreadPool*) : _map(m) { _pool = nullptr; }
+       // Windows already has a built-in threadpool. Using it is better for performance.
+       Context(const ThreadPool*) { _pool = nullptr; }
+       Context(CTX_MAP<std::string, std::string>& m, const ThreadPool*) : _map(m) { _pool = nullptr; }
        Context() { _pool = nullptr; }
        Context(CTX_MAP<std::string, std::string>& m) : _map(m) { _pool = nullptr; }
 #else

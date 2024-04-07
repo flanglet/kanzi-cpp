@@ -52,7 +52,7 @@ int HuffmanCommon::generateCanonicalCodes(const uint16 sizes[], uint16 codes[], 
             curLen = sizes[s];
         }
 
-        codes[s] = code;
+        codes[s] = uint16(code);
         code++;
     }
 

@@ -48,7 +48,7 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) : _bit
 
 bool HuffmanEncoder::reset()
 {
-    for (int i = 0; i < 256; i++)
+    for (uint16 i = 0; i < 256; i++)
         _codes[i] = i;
 
     return true;

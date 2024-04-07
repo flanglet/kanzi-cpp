@@ -36,6 +36,7 @@ limitations under the License.
 #include <malloc.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <stdlib.h>
 
 /* Indicates that d_type field is available in dirent structure */
 #define _DIRENT_HAVE_D_TYPE

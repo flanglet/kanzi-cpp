@@ -226,7 +226,7 @@ void CompressedOutputStream::writeHeader()
         throw IOException("Cannot write block size to header", Error::ERR_WRITE_FILE);
 
     // _inputSize not provided or >= 2^48 -> 0, <2^16 -> 1, <2^32 -> 2, <2^48 -> 3
-    const int szMask = ((_inputSize == 0) || (_inputSize >= (uint64(1) << 48))) ? 0
+    const uint szMask = ((_inputSize == 0) || (_inputSize >= (int64(1) << 48))) ? 0
         : (Global::log2(uint64(_inputSize)) >> 4) + 1;
 
     if (_obs->writeBits(szMask, 2) != 2)
