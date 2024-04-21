@@ -431,11 +431,19 @@ T FileDecompressTask<T>::run()
     string str = outputName;
     transform(str.begin(), str.end(), str.begin(), ::toupper);
 
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+    bool checkOutputSize = str != "NUL";
+#else
+    bool checkOutputSize = str != "/DEV/NULL";
+#endif
+
     if (str == "NONE") {
         _os = new NullOutputStream();
+        checkOutputSize = false;
     }
     else if (str == "STDOUT") {
         _os = &cout;
+        checkOutputSize = false;
     }
     else {
         try {
@@ -600,7 +608,7 @@ T FileDecompressTask<T>::run()
     dispose();
 
     const uint64 decoded = _cis->getRead();
-    const uint64 written = _os->tellp();
+    const uint64 written = (checkOutputSize == true) ? uint64(_os->tellp()) : 0;
 
     // is destructor will call close if ifstream
     if ((is != &cin) && (is != nullptr))
@@ -627,7 +635,7 @@ T FileDecompressTask<T>::run()
 
     // If the whole input stream has been decoded and the original data size is present,
     // check that the output size matches the original data size.
-    if ((_ctx.has("to") == false) && (_ctx.has("from") == false)) {
+    if ((checkOutputSize == true) && (_ctx.has("to") == false) && (_ctx.has("from") == false)) {
         const uint64 outputSize = _ctx.getLong("outputSize", 0);
 
         if ((outputSize != 0) && (written != outputSize)) {
