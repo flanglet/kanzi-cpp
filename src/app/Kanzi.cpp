@@ -140,7 +140,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("        maximum number of jobs the program may start concurrently", true);
    #ifdef CONCURRENCY_ENABLED
       log.println("        If 0 is provided, use all available cores (maximum is 64).", true);
-      log.println("        (default is half of available cores, maximum is 64).\n", true);
+      log.println("        (default is half of available cores).\n", true);
    #else
       log.println("        (always 1 in this version).\n", true);
    #endif
@@ -161,6 +161,8 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    }
 
    if (mode.compare(0, 1, "d") != 0) {
+       log.println("   --rm", true);
+       log.println("        remove the input file after successful decompression\n", true);
        log.println("", true);
        log.println("EG. kanzi -c -i foo.txt -o none -b 4m -l 4 -v 3\n", true);
        log.println("EG. kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -j 4\n", true);
@@ -169,6 +171,8 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    }
 
    if (mode.compare(0, 1, "c") != 0) {
+       log.println("   --rm", true);
+       log.println("        remove the input file after successful compression\n", true);
        log.println("", true);
        log.println("EG. kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
        log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
@@ -269,6 +273,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
     string strBlockSize = "";
     string strFrom = "";
     string strTo = "";
+    string strRemove = STR_FALSE;
     string strOverwrite = STR_FALSE;
     string strChecksum = STR_FALSE;
     string strSkip = STR_FALSE;
@@ -438,6 +443,16 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             }
 
             strChecksum = STR_TRUE;
+            ctx = -1;
+            continue;
+        }
+
+        if (arg == "--rm") {
+            if (ctx != -1) {
+                WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
+            }
+
+            strRemove = STR_TRUE;
             ctx = -1;
             continue;
         }
@@ -793,6 +808,9 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
     if (strOverwrite == STR_TRUE)
         map["overwrite"] = STR_TRUE;
+
+    if (strRemove == STR_TRUE)
+        map["remove"] = STR_TRUE;
 
     map["inputName"] = inputName;
     map["outputName"] = outputName;

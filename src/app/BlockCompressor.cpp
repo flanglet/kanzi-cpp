@@ -87,6 +87,8 @@ BlockCompressor::BlockCompressor(const Context& ctx) :
     _ctx.putInt("autoBlock", _autoBlockSize ? 1 : 0);
     _reorderFiles = _ctx.getInt("fileReorder", 0) != 0;
     _ctx.putInt("fileReorder", _reorderFiles ? 1 : 0);
+    bool remove = _ctx.getInt("remove", 0) != 0;
+    _ctx.putInt("remove", remove ? 1 : 0);
 
     if (_ctx.has("inputName") == false)
         throw invalid_argument("Missing input name");
@@ -832,6 +834,17 @@ T FileCompressTask<T>::run()
     if (_listeners.size() > 0) {
         Event evt(Event::COMPRESSION_END, -1, int64(encoded), clock());
         BlockCompressor::notifyListeners(_listeners, evt);
+    }
+
+    if (_ctx.getInt("remove", 0) != 0)  {
+        // Delete input file
+        if (inputName == "STDIN") {
+            log.println("Warning: ignoring remove option with STDIN", verbosity > 0);
+        }
+        else if (remove(inputName.c_str()) != 0) {
+            log.println("Warning: input file could not be deleted", verbosity > 0);
+        }
+
     }
 
     delete[] buf;
