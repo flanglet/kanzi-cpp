@@ -299,7 +299,7 @@ void CompressedInputStream::readHeader()
         ss << "Using " << ((w2 == "NONE") ? "no" : w2) << " transform (stage 2)" << endl;
 
         if (szMask != 0) {
-            ss << "Output size: " << _outputSize;
+            ss << "Original size: " << _outputSize;
             ss << (_outputSize < 2 ? " byte" : " bytes") << endl;
         }
 
