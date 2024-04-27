@@ -162,7 +162,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
 
    if (mode.compare(0, 1, "d") != 0) {
        log.println("   --rm", true);
-       log.println("        remove the input file after successful decompression\n", true);
+       log.println("        remove the input file after successful compression\n", true);
        log.println("", true);
        log.println("EG. kanzi -c -i foo.txt -o none -b 4m -l 4 -v 3\n", true);
        log.println("EG. kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -j 4\n", true);
@@ -172,7 +172,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
 
    if (mode.compare(0, 1, "c") != 0) {
        log.println("   --rm", true);
-       log.println("        remove the input file after successful compression\n", true);
+       log.println("        remove the input file after successful decompression\n", true);
        log.println("", true);
        log.println("EG. kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
        log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
