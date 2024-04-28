@@ -171,8 +171,6 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    }
 
    if (mode.compare(0, 1, "c") != 0) {
-       log.println("   --rm", true);
-       log.println("        remove the input file after successful decompression\n", true);
        log.println("", true);
        log.println("EG. kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
        log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
