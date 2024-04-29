@@ -146,10 +146,11 @@ namespace kanzi {
 #ifdef CONCURRENCY_ENABLED
        CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform,
           int blockSize = 4 * 1024 * 1024, bool checksum = false, int jobs = 1,
-          ThreadPool* pool = nullptr, bool headerless = false);
+           uint64 fileSize = 0, ThreadPool* pool = nullptr, bool headerless = false);
 #else
        CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform,
-          int blockSize = 4 * 1024 * 1024, bool checksum = false, int jobs = 1, bool headerless = false);
+          int blockSize = 4 * 1024 * 1024, bool checksum = false, int jobs = 1,
+          uint64 fileSize = 0, bool headerless = false);
 #endif
 
 #if __cplusplus >= 201103L

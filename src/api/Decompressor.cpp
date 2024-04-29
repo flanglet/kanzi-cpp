@@ -17,6 +17,8 @@ limitations under the License.
 #include "../types.hpp"
 #include "../Error.hpp"
 #include "../io/CompressedInputStream.hpp"
+#include "../transform/TransformFactory.hpp"
+#include "../entropy/EntropyEncoderFactory.hpp"
 
 
 #ifdef _MSC_VER
@@ -76,7 +78,7 @@ namespace kanzi {
 
 
 // Create internal dContext and CompressedInputStream
-int CDECL initDecompressor(const struct dData* pData, FILE* src, struct dContext** pCtx)
+int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCtx)
 {
     if ((pData == nullptr) || (pCtx == nullptr) || (src == nullptr))
         return Error::ERR_INVALID_PARAM;
@@ -94,7 +96,37 @@ int CDECL initDecompressor(const struct dData* pData, FILE* src, struct dContext
         // Create decompression stream and update context
         FileInputStream* fis = new FileInputStream(fd);
         dContext* dctx = new dContext();
-        dctx->pCis = new CompressedInputStream(*fis, pData->jobs);
+
+        if (pData->headerless != 0) {
+           // Headerless mode: process params
+           string transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(pData->transform));
+
+           if (transform.length() >= 63)
+               return Error::ERR_INVALID_PARAM;
+
+           strncpy(pData->transform, transform.data(), transform.length());
+           pData->transform[transform.length() + 1] = 0;
+           string entropy = EntropyEncoderFactory::getName(EntropyEncoderFactory::getType(pData->entropy));
+
+           if (entropy.length() >= 15)
+               return Error::ERR_INVALID_PARAM;
+
+           strncpy(pData->entropy, entropy.data(), entropy.length());
+           pData->entropy[entropy.length() + 1] = 0;
+           pData->blockSize = (pData->blockSize + 15) & -16;
+
+#ifdef CONCURRENCY_ENABLED
+           dctx->pCis = new CompressedInputStream(*fis, pData->jobs, nullptr, pData->headerless,
+               pData->checksum, pData->blockSize, transform, entropy, pData->originalSize, pData->bsVersion);
+#else
+           dctx->pCis = new CompressedInputStream(*fis, pData->jobs, pData->headerless,
+               pData->checksum, pData->blockSize, transform, entropy, pData->originalSize, pData->bsVersion);
+#endif
+        }
+        else {
+           dctx->pCis = new CompressedInputStream(*fis, pData->jobs);
+        }
+
         dctx->bufferSize = pData->bufferSize;
         dctx->fis = fis;
         *pCtx = dctx;

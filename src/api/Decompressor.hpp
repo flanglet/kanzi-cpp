@@ -35,17 +35,28 @@ limitations under the License.
     *  Decompression parameters
     */
    struct dData {
-	   unsigned int bufferSize;  /* read buffer size (at least block size) */
-	   unsigned int jobs;        /* max number of concurrent tasks */
+       // Required fields
+       unsigned int bufferSize;      /* read buffer size (at least block size) */
+       unsigned int jobs;            /* max number of concurrent tasks */
+       int headerless;               /* bool to indicate if the bitstream has a header (usually yes) */
+
+       // Optional fields: only required if headerless is true
+       char transform[64];           /* name of transforms [None|PACK|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX]
+                                                       [RLT|ZRLT|MTFT|RANK|SRT|TEXT|MM|EXE|UTF] */
+       char entropy[16];             /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
+       unsigned int blockSize;       /* size of block in bytes */
+       unsigned long originalSize;   /* size of original file in bytes */
+       int checksum;                 /* bool to indicate use of block checksum */
+       int bsVersion;                /* version of the bitstream */
    };
 
    /**
     *  Decompression context: encapsulates decompressor state (opaque: could change in future versions)
     */
    struct dContext {
-	   void* pCis;
-	   unsigned int bufferSize;
-	   void* fis;
+       void* pCis;
+       unsigned int bufferSize;
+       void* fis;
    };
 
    /**
@@ -57,14 +68,14 @@ limitations under the License.
     *
     *  @return 0 in case of success
     */
-   int CDECL initDecompressor(const struct dData* dParam, FILE* src, struct dContext** ctx);
+   int CDECL initDecompressor(struct dData* dParam, FILE* src, struct dContext** ctx);
 
    /**
     *  Decompress a block of data. The decompressor must have been initialized.
     *
     *  @param ctx [IN] - the decompression context created during initialization
     *  @param dst [IN] - the destination block of decompressed data
-    *  @param inSize [OUT] - the number of bytes read from source.            
+    *  @param inSize [OUT] - the number of bytes read from source.
     *  @param outSize [IN|OUT] - the size of the block to decompress.
     *                            Updated to reflect the number of decompressed bytes
     *

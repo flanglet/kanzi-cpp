@@ -177,14 +177,30 @@ namespace kanzi
 
 
    public:
+        // If headerless == false, all provided compression parameters will be overwritten
+        // with values read from the bitstream header.
 #ifdef CONCURRENCY_ENABLED
-        CompressedInputStream(InputStream& is, int jobs = 1, ThreadPool* pool = nullptr);
+        CompressedInputStream(InputStream& is, int jobs = 1, ThreadPool* pool = nullptr,
+                   bool headerless = false,
+                   bool checksum = false,
+                   int blockSize = 4*1024*1024,
+                   std::string transform = "NONE",
+                   std::string entropy = "NONE",
+                   uint64 originalSize = 0,
+                   int bsVersion = BITSTREAM_FORMAT_VERSION);
 #else
-        CompressedInputStream(InputStream& is, int jobs = 1);
+        CompressedInputStream(InputStream& is, int jobs = 1,
+                   bool headerless = false,
+                   bool checksum = false,
+                   int blockSize = 4*1024*1024,
+                   std::string transform = "NONE",
+                   std::string entropy = "NONE",
+                   uint64 originalSize = 0,
+                   int bsVersion = BITSTREAM_FORMAT_VERSION);
 #endif
 
-      // If headerless == true, the context must contain "entropy", "transform" & "blockSize"
-      // If "bsVersion" is missing , the curremt value of BITSTREAM_FORMAT_VERSION is assumed.
+      // If headerless == true, the context must contain "entropy", "transform", "checksum" & "blockSize"
+      // If "bsVersion" is missing, the current value of BITSTREAM_FORMAT_VERSION is assumed.
 #if __cplusplus >= 201103L
        CompressedInputStream(InputStream& is, Context& ctx, bool headerless = false,
           std::function<InputBitStream*(InputStream&)>* createBitStream = nullptr);

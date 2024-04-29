@@ -32,11 +32,11 @@ using namespace std;
 
 #ifdef CONCURRENCY_ENABLED
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& entropyCodec,
-          const string& transform, int bSize, bool checksum, int tasks, ThreadPool* pool,
-          bool headerless)
+          const string& transform, int bSize, bool checksum, int tasks, uint64 fileSize,
+          ThreadPool* pool, bool headerless)
 #else
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& entropyCodec,
-          const string& transform, int bSize, bool checksum, int tasks, bool headerless)
+          const string& transform, int bSize, bool checksum, int tasks, uint64 fileSize, bool headerless)
 #endif
     : OutputStream(os.rdbuf())
 {
@@ -72,8 +72,9 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _bufferId = 0;
     _blockSize = bSize;
     _bufferThreshold = bSize;
-    _inputSize = 0;
-    _nbInputBlocks = 0;
+    _inputSize = fileSize;
+    const int nbBlocks = (_inputSize == 0) ? 0 : int((_inputSize + int64(bSize - 1)) / int64(bSize));
+    _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
     _headless = headerless;
     _initialized = false;
     _closed = false;
@@ -88,6 +89,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _ctx.putString("entropy", entropyCodec);
     _ctx.putString("transform", transform);
     _ctx.putString("extra", _entropyType == EntropyEncoderFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
+    _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
 
     // Allocate first buffer and add padding for incompressible blocks
     const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);

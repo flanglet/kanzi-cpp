@@ -25,6 +25,7 @@ limitations under the License.
 
 #include <stdio.h>
 
+
 #ifdef __cplusplus
    extern "C" {
 #endif
@@ -35,21 +36,23 @@ limitations under the License.
     *  Compression parameters
     */
    struct cData {
-	   char transform[64];      /* name of transforms [None|PACK|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX]
-                                                      [RLT|ZRLT|MTFT|RANK|SRT|TEXT|MM|EXE|UTF] */
-	   char entropy[16];        /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
-	   unsigned int blockSize;  /* size of block in bytes */
-	   unsigned int jobs;       /* max number of concurrent tasks */
-	   int checksum;            /* bool to indicate use of block checksum */
+       // Required fields
+       char transform[64];      /* name of transforms [None|PACK|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX]
+                                                          [RLT|ZRLT|MTFT|RANK|SRT|TEXT|MM|EXE|UTF] */
+       char entropy[16];        /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
+       unsigned int blockSize;  /* size of block in bytes */
+       unsigned int jobs;       /* max number of concurrent tasks */
+       int checksum;            /* bool to indicate use of block checksum */
+       int headerless;          /* bool to indicate if the bitstream has a header (usually yes) */
    };
 
    /**
     *  Compression context: encapsulates compressor state (opaque: could change in future versions)
     */
    struct cContext {
-	   void* pCos;
-	   unsigned int blockSize;
-	   void* fos;
+       void* pCos;
+       unsigned int blockSize;
+       void* fos;
    };
 
 

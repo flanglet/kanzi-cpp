@@ -19,6 +19,22 @@ limitations under the License.
 #include "../io/CompressedOutputStream.hpp"
 #include "../transform/TransformFactory.hpp"
 #include "../entropy/EntropyEncoderFactory.hpp"
+#include <sys/stat.h>
+
+
+#ifdef _MSC_VER
+   #define FSTAT _fstat64
+   #define STAT _stat64
+#else
+   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__MINGW32__)
+      #define FSTAT fstat
+      #define STAT stat
+   #else
+      #define FSTAT fstat64
+      #define STAT stat64
+   #endif
+#endif
+
 
 
 #ifdef _MSC_VER
@@ -101,10 +117,23 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         if (fd == -1)
            return Error::ERR_CREATE_COMPRESSOR;
 
+        uint64 fileSize = 0;
+        struct STAT sbuf;
+
+        if (FSTAT(fd, &sbuf) == 0) {
+           fileSize = uint64(sbuf.st_size);
+        }
+
         // Create compression stream and update context
         FileOutputStream* fos = new FileOutputStream(fd);
         cContext* cctx = new cContext();
-        cctx->pCos = new CompressedOutputStream(*fos, pData->entropy, pData->transform, pData->blockSize, bool(pData->checksum & 1), pData->jobs);
+
+#ifdef CONCURRENCY_ENABLED
+        cctx->pCos = new CompressedOutputStream(*fos, pData->entropy, pData->transform, pData->blockSize, bool(pData->checksum & 1), pData->jobs, fileSize, nullptr, bool(pData->headerless & 1));
+#else
+        cctx->pCos = new CompressedOutputStream(*fos, pData->entropy, pData->transform, pData->blockSize, bool(pData->checksum & 1), pData->jobs, fileSize, bool(pData->headerless & 1));
+#endif
+
         cctx->blockSize = pData->blockSize;
         cctx->fos = fos;
         *pCtx = cctx;
@@ -148,7 +177,7 @@ int CDECL compress(struct cContext* pCtx, const BYTE* src, int* inSize, int* out
 // Cleanup allocated internal data structures
 int CDECL disposeCompressor(struct cContext* pCtx, int* outSize)
 {
-	 *outSize = 0;
+    *outSize = 0;
 
     if (pCtx == nullptr)
         return Error::ERR_INVALID_PARAM;
@@ -160,7 +189,7 @@ int CDECL disposeCompressor(struct cContext* pCtx, int* outSize)
             const uint64 w = pCos->getWritten();
             pCos->close();
             *outSize = int(pCos->getWritten() - w);
-		  }
+        }
     }
     catch (exception&) {
         return Error::ERR_UNKNOWN;

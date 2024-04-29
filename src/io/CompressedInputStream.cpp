@@ -30,9 +30,23 @@ using namespace std;
 
 
 #ifdef CONCURRENCY_ENABLED
-CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, ThreadPool* pool)
+CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, ThreadPool* pool,
+                   bool headerless,
+                   bool checksum,
+                   int blockSize,
+                   string transform,
+                   string entropy,
+                   uint64 originalSize,
+                   int bsVersion)
 #else
-CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
+CompressedInputStream::CompressedInputStream(InputStream& is, int tasks,
+                   bool headerless,
+                   bool checksum,
+                   int blockSize,
+                   string transform,
+                   string entropy,
+                   uint64 originalSize,
+                   int bsVersione
 #endif
     : InputStream(is.rdbuf())
     , _parentCtx(nullptr)
@@ -53,21 +67,34 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks)
     _blockId = 0;
     _bufferId = 0;
     _maxBufferId = 0;
-    _blockSize = 0;
+    _blockSize = blockSize;
     _bufferThreshold = 0;
     _available = 0;
-    _entropyType = EntropyDecoderFactory::NONE_TYPE;
-    _transformType = TransformFactory<byte>::NONE_TYPE;
+    _entropyType = EntropyDecoderFactory::getType(entropy.c_str()); // throws on error
+    _transformType = TransformFactory<byte>::getType(transform.c_str()); // throws on error
     _initialized = false;
     _closed = false;
     _gcount = 0;
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
     _jobs = tasks;
-    _hasher = nullptr;
-    _outputSize = 0;
+    _hasher = (checksum = false) ? nullptr : new XXHash32(BITSTREAM_TYPE);
+    _outputSize = originalSize;
     _nbInputBlocks = 0;
     _buffers = new SliceArray<byte>*[2 * _jobs];
-    _headless = false;
+    _headless = headerless;
+
+    if (_headless == true) {
+       if ((_blockSize < MIN_BITSTREAM_BLOCK_SIZE) || (_blockSize > MAX_BITSTREAM_BLOCK_SIZE)) {
+           stringstream ss;
+           ss << "Invalid or missing block size: " << _blockSize;
+           throw invalid_argument(ss.str());
+       }
+
+       _ctx.putInt("bsVersion", bsVersion);
+       _ctx.putString("entropy", entropy);
+       _ctx.putString("transform", transform);
+       _ctx.putInt("blockSize", blockSize);
+    }
 
     for (int i = 0; i < 2 * _jobs; i++)
         _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
