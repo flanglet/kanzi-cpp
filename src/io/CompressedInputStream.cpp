@@ -46,7 +46,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks,
                    string transform,
                    string entropy,
                    uint64 originalSize,
-                   int bsVersione
+                   int bsVersion)
 #endif
     : InputStream(is.rdbuf())
     , _parentCtx(nullptr)

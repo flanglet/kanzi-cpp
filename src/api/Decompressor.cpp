@@ -123,13 +123,14 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
            strncpy(pData->entropy, entropy.data(), entropy.length());
            pData->entropy[entropy.length() + 1] = 0;
            pData->blockSize = (pData->blockSize + 15) & -16;
+           bool checksum = pData->checksum == 0 ? false : true;
 
 #ifdef CONCURRENCY_ENABLED
-           dctx->pCis = new CompressedInputStream(*fis, pData->jobs, nullptr, pData->headerless,
-               pData->checksum, pData->blockSize, transform, entropy, pData->originalSize, pData->bsVersion);
+           dctx->pCis = new CompressedInputStream(*fis, pData->jobs, nullptr, true,
+               checksum, pData->blockSize, transform, entropy, pData->originalSize, pData->bsVersion);
 #else
-           dctx->pCis = new CompressedInputStream(*fis, pData->jobs, pData->headerless,
-               pData->checksum, pData->blockSize, transform, entropy, pData->originalSize, pData->bsVersion);
+           dctx->pCis = new CompressedInputStream(*fis, pData->jobs, true,
+               checksum, pData->blockSize, transform, entropy, pData->originalSize, pData->bsVersion);
 #endif
         }
         else {
