@@ -145,7 +145,7 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
            delete fis;
 
         if (dctx != nullptr)
-           delte dctx;
+           delete dctx;
 
         return Error::ERR_CREATE_DECOMPRESSOR;
     }
