@@ -94,8 +94,16 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
     if ((pData == nullptr) || (pCtx == nullptr) || (dst == nullptr))
         return Error::ERR_INVALID_PARAM;
 
+    FileOutputStream* fos = nullptr;
+    cContext* cctx = nullptr;
+
     try {
         // Process params
+        const int fd = FILENO(dst);
+
+        if (fd == -1)
+           return Error::ERR_CREATE_COMPRESSOR;
+
         string transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(pData->transform));
         
         if (transform.length() >= 63)
@@ -111,12 +119,8 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         strncpy(pData->entropy, entropy.data(), entropy.length());
         pData->entropy[entropy.length() + 1] = 0;
         pData->blockSize = (pData->blockSize + 15) & -16;
+
         *pCtx = nullptr;
-        const int fd = FILENO(dst);
-
-        if (fd == -1)
-           return Error::ERR_CREATE_COMPRESSOR;
-
         uint64 fileSize = 0;
         struct STAT sbuf;
 
@@ -125,8 +129,8 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         }
 
         // Create compression stream and update context
-        FileOutputStream* fos = new FileOutputStream(fd);
-        cContext* cctx = new cContext();
+        fos = new FileOutputStream(fd);
+        cctx = new cContext();
 
 #ifdef CONCURRENCY_ENABLED
         cctx->pCos = new CompressedOutputStream(*fos, pData->entropy, pData->transform, pData->blockSize, bool(pData->checksum & 1), pData->jobs, fileSize, nullptr, bool(pData->headerless & 1));
@@ -139,6 +143,12 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         *pCtx = cctx;
     }
     catch (exception&) {
+        if (fos != nullptr)
+           delete fos;
+
+        if (cctx != nullptr)
+           delete cctx;
+
         return Error::ERR_CREATE_COMPRESSOR;
     }
 

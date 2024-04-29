@@ -86,30 +86,39 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
     if (pData->bufferSize > uint(2) * 1024 * 1024 * 1024) // max buffer size
         return Error::ERR_INVALID_PARAM;
 
+    dContext* dctx = nullptr;
+    FileInputStream* fis = nullptr;
+
     try {
-        *pCtx = nullptr;
         const int fd = FILENO(src);
 
         if (fd == -1)
-           return Error::ERR_CREATE_COMPRESSOR;
+           return Error::ERR_CREATE_DECOMPRESSOR;
 
         // Create decompression stream and update context
-        FileInputStream* fis = new FileInputStream(fd);
-        dContext* dctx = new dContext();
+        *pCtx = nullptr;
+        fis = new FileInputStream(fd);
+        dctx = new dContext();
 
         if (pData->headerless != 0) {
            // Headerless mode: process params
            string transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(pData->transform));
 
-           if (transform.length() >= 63)
+           if (transform.length() >= 63) {
+               delete fis;
+               delete dctx;
                return Error::ERR_INVALID_PARAM;
+           }
 
            strncpy(pData->transform, transform.data(), transform.length());
            pData->transform[transform.length() + 1] = 0;
            string entropy = EntropyEncoderFactory::getName(EntropyEncoderFactory::getType(pData->entropy));
 
-           if (entropy.length() >= 15)
+           if (entropy.length() >= 15) {
+               delete fis;
+               delete dctx;
                return Error::ERR_INVALID_PARAM;
+           }
 
            strncpy(pData->entropy, entropy.data(), entropy.length());
            pData->entropy[entropy.length() + 1] = 0;
@@ -132,6 +141,12 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
         *pCtx = dctx;
     }
     catch (exception&) {
+        if (fis != nullptr)
+           delete fis;
+
+        if (dctx != nullptr)
+           delte dctx;
+
         return Error::ERR_CREATE_DECOMPRESSOR;
     }
 
