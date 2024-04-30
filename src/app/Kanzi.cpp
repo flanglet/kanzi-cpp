@@ -47,7 +47,7 @@ static const int ARG_IDX_LEVEL = 9;
 //static const int ARG_IDX_FROM = 10;
 //static const int ARG_IDX_TO = 11;
 
-static const string KANZI_VERSION = "2.2";
+static const string KANZI_VERSION = "2.3";
 static const string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
 
 
@@ -125,7 +125,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("        8 = EXE+RLT+TEXT+UTF&TPAQ", true);
        log.println("        9 = EXE+RLT+TEXT+UTF&TPAQX\n", true);
        log.println("   -e, --entropy=<codec>", true);
-       log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]", true);
+       log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]\n", true);
        log.println("   -t, --transform=<codec>", true);
        log.println("        transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
        log.println("                  [MTFT|RANK|SRT|TEXT|MM|EXE|UTF|PACK]", true);
@@ -151,6 +151,8 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("        Verbosity is reduced to 0 when the output is 'stdout'\n", true);
    log.println("   -f, --force", true);
    log.println("        overwrite the output file if it already exists\n", true);
+   log.println("   --rm", true);
+   log.println("        remove the input file after successful (de)compression\n", true);
 
    if (mode.compare(0, 1, "d") == 0) {
        log.println("   --from=blockId", true);
@@ -158,22 +160,17 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("        The first block ID is 1.\n", true);
        log.println("   --to=blockId", true);
        log.println("        Decompress ending at the provided block (excluded).\n", true);
+       log.println("", true);
+       log.println("EG. kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
+       log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
    }
 
-   if (mode.compare(0, 1, "d") != 0) {
-       log.println("   --rm", true);
-       log.println("        remove the input file after successful compression\n", true);
+   if (mode.compare(0, 1, "c") == 0) {
        log.println("", true);
        log.println("EG. kanzi -c -i foo.txt -o none -b 4m -l 4 -v 3\n", true);
        log.println("EG. kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -j 4\n", true);
        log.println("EG. kanzi --compress --input=foo.txt --output=foo.knz --force", true);
        log.println("          --transform=BWT+MTFT+ZRLT --block=4m --entropy=FPAQ --jobs=4\n", true);
-   }
-
-   if (mode.compare(0, 1, "c") != 0) {
-       log.println("", true);
-       log.println("EG. kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
-       log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
    }
 }
 
