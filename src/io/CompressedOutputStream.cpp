@@ -434,13 +434,26 @@ void CompressedOutputStream::processBlock()
                     futures.push_back(_pool->schedule(&EncodingTask<EncodingTaskResult>::run, tasks[i]));
             }
 
+            int error = 0;
+            string msg;
+
             // Wait for tasks completion and check results
             for (uint i = 0; i < tasks.size(); i++) {
-                EncodingTaskResult status = futures[i].get();
+                EncodingTaskResult res = futures[i].get();
 
-                if (status._error != 0)
-                    throw IOException(status._msg, status._error); // deallocate in catch block
+                if (error != 0)
+                    continue;
+
+                // Capture first error but continue getting results from other tasks
+                // instead of exiting early, otherwise it is possible that the error
+                // management code is going to deallocate memory used by other tasks
+                // before they are completed.
+                error = res._error;
+                msg = res._msg;
             }
+
+            if (error != 0)
+               throw IOException(msg, error); // deallocate in catch block
         }
 
         for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)

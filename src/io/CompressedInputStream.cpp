@@ -543,35 +543,53 @@ int CompressedInputStream::processBlock()
                         futures.push_back(_pool->schedule(&DecodingTask<DecodingTaskResult>::run, tasks[i]));
                 }
 
+                int error = 0;
+                string msg;
+
                 // Wait for tasks completion and check results
                 for (uint i = 0; i < futures.size(); i++) {
                     DecodingTaskResult res = futures[i].get();
+
+                    if (error != 0)
+                        continue;
 
                     if (res._skipped == true) {
                         skipped++;
                         continue;
                     }
 
-                    decoded += res._decoded;
-
-                    if (res._error != 0)
-                        throw IOException(res._msg, res._error); // deallocate in catch block
-
-                    if (res._decoded > _blockSize)
-                        throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
-
-                    if (_buffers[i]->_array != res._data)
-                       memcpy(&_buffers[i]->_array[0], &res._data[0], res._decoded);
-
-                    _buffers[i]->_index = 0;
-
-                    if (blockListeners.size() > 0) {
-                        // Notify after transform ... in block order !
-                        Event evt(Event::AFTER_TRANSFORM, res._blockId,
-                            int64(res._decoded), res._checksum, _hasher != nullptr, res._completionTime);
-                        CompressedInputStream::notifyListeners(blockListeners, evt);
+                    if (res._decoded > _blockSize) {
+                        error = Error::ERR_PROCESS_BLOCK;
+                        msg = "Invalid data";
+                        continue;
                     }
+
+                    if (res._error == 0) {
+                       decoded += res._decoded;
+
+                       if (_buffers[i]->_array != res._data)
+                           memcpy(&_buffers[i]->_array[0], &res._data[0], res._decoded);
+
+                        _buffers[i]->_index = 0;
+
+                        if (blockListeners.size() > 0) {
+                           // Notify after transform ... in block order !
+                           Event evt(Event::AFTER_TRANSFORM, res._blockId,
+                               int64(res._decoded), res._checksum, _hasher != nullptr, res._completionTime);
+                           CompressedInputStream::notifyListeners(blockListeners, evt);
+                        }
+                    }
+
+                    // Capture first error but continue getting results from other tasks
+                    // instead of exiting early, otherwise it is possible that the error
+                    // management code is going to deallocate memory used by other tasks
+                    // before they are completed.
+                    error = res._error;
+                    msg = res._msg;
                 }
+
+                if (error != 0)
+                    throw IOException(msg, error); // deallocate in catch block
             }
 
             for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
