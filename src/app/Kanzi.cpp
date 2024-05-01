@@ -70,17 +70,17 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("         Neal Burns, Fabian Giesen, Jarek Duda, Ilya Grebnov", true);
    log.println("", true);
    log.println("   -h, --help", true);
-   log.println("        display this message\n", true);
+   log.println("        Display this message\n", true);
 
    if ((mode.compare(0, 1, "c") != 0) && (mode.compare(0, 1, "d") != 0)) {
        log.println("   -c, --compress", true);
-       log.println("        compress mode\n", true);
+       log.println("        Compress mode\n", true);
        log.println("   -d, --decompress", true);
-       log.println("        decompress mode\n", true);
+       log.println("        Decompress mode\n", true);
    }
 
    log.println("   -i, --input=<inputName>", true);
-   log.println("        mandatory name of the input file or directory or 'stdin'", true);
+   log.println("        Mandatory name of the input file or directory or 'stdin'", true);
    log.println("        When the source is a directory, all files in it will be processed.", true);
    stringstream ss;
    ss << "        Provide " << PATH_SEPARATOR << ". at the end of the directory name to avoid recursion";
@@ -92,26 +92,26 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("   -o, --output=<outputName>", true);
 
    if (mode.compare(0, 1, "c") == 0) {
-       log.println("        optional name of the output file or directory (defaults to", true);
+       log.println("        Optional name of the output file or directory (defaults to", true);
        log.println("        <inputName.knz>) or 'none' or 'stdout'. 'stdout' is not valid", true);
        log.println("        when the number of jobs is greater than 1.\n", true);
    }
    else if (mode.compare(0, 1, "d") == 0) {
-       log.println("        optional name of the output file or directory (defaults to", true);
+       log.println("        Optional name of the output file or directory (defaults to", true);
        log.println("        <inputName.bak>) or 'none' or 'stdout'. 'stdout' is not valid", true);
        log.println("        when the number of jobs is greater than 1.\n", true);
    }
    else {
-       log.println("        optional name of the output file or 'none' or 'stdout'.\n", true);
+       log.println("        Optional name of the output file or 'none' or 'stdout'.\n", true);
    }
 
    if (mode.compare(0, 1, "c") == 0) {
        log.println("   -b, --block=<size>", true);
-       log.println("        size of blocks (default 4|8|16|32 MB based on level, max 1 GB, min 1 KB).", true);
+       log.println("        Size of blocks (default 4|8|16|32 MB based on level, max 1 GB, min 1 KB).", true);
        log.println("        'auto' means that the compressor derives the best value", true);
        log.println("        based on input size (when available) and number of jobs.\n", true);
        log.println("   -l, --level=<compression>", true);
-       log.println("        set the compression level [0..9]", true);
+       log.println("        Set the compression level [0..9]", true);
        log.println("        Providing this option forces entropy and transform.", true);
        log.println("        Defaults to level 3 if not provided.", true);
        log.println("        0 = NONE&NONE (store)", true);
@@ -125,19 +125,19 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("        8 = EXE+RLT+TEXT+UTF&TPAQ", true);
        log.println("        9 = EXE+RLT+TEXT+UTF&TPAQX\n", true);
        log.println("   -e, --entropy=<codec>", true);
-       log.println("        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]\n", true);
+       log.println("        Entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]\n", true);
        log.println("   -t, --transform=<codec>", true);
-       log.println("        transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
+       log.println("        Transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
        log.println("                  [MTFT|RANK|SRT|TEXT|MM|EXE|UTF|PACK]", true);
        log.println("        EG: BWT+RANK or BWTS+MTFT\n", true);
        log.println("   -x, --checksum", true);
-       log.println("        enable block checksum\n", true);
+       log.println("        Enable block checksum\n", true);
        log.println("   -s, --skip", true);
-       log.println("        copy blocks with high entropy instead of compressing them.\n", true);
+       log.println("        Copy blocks with high entropy instead of compressing them.\n", true);
    }
 
    log.println("   -j, --jobs=<jobs>", true);
-   log.println("        maximum number of jobs the program may start concurrently", true);
+   log.println("        Maximum number of jobs the program may start concurrently", true);
    #ifdef CONCURRENCY_ENABLED
       log.println("        If 0 is provided, use all available cores (maximum is 64).", true);
       log.println("        (default is half of available cores).\n", true);
@@ -150,13 +150,18 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("        Verbosity is reduced to 1 when files are processed concurrently", true);
    log.println("        Verbosity is reduced to 0 when the output is 'stdout'\n", true);
    log.println("   -f, --force", true);
-   log.println("        overwrite the output file if it already exists\n", true);
+   log.println("        Overwrite the output file if it already exists\n", true);
    log.println("   --rm", true);
-   log.println("        remove the input file after successful (de)compression\n", true);
+   log.println("        Remove the input file after successful (de)compression.", true);
+   log.println("        If the input is a folder, all processed files under the folder are removed.\n", true);
+   log.println("   --no-link", true);
+   log.println("        Skip links\n", true);
+   log.println("   --no-dot-file", true);
+   log.println("        Skip dot files\n", true);
 
    if (mode.compare(0, 1, "d") == 0) {
        log.println("   --from=blockId", true);
-       log.println("        Decompress starting from the provided block (included).", true);
+       log.println("        Decompress starting at the provided block (included).", true);
        log.println("        The first block ID is 1.\n", true);
        log.println("   --to=blockId", true);
        log.println("        Decompress ending at the provided block (excluded).\n", true);
