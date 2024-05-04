@@ -477,7 +477,7 @@ int TestTransforms_main(int argc, const char* argv[])
         bool doPerf = true;
 
         if (argc == 1) {
-#if _MSC_VER == 1500
+#if __cplusplus < 201103L
             string allCodecs[13] = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
 
             for (int i = 0; i < 13; i++)
@@ -491,7 +491,7 @@ int TestTransforms_main(int argc, const char* argv[])
             transform(str.begin(), str.end(), str.begin(), ::toupper);
 
             if (str == "-TYPE=ALL") {
-#if _MSC_VER == 1500
+#if __cplusplus < 201103L
                 string allCodecs[13] = { "LZ", "LZX", "LZP", "ROLZ", "ROLZX", "RLT", "ZRLT", "RANK", "SRT", "NONE", "ALIAS", "MM", "MTFT" };
 
                 for (int i = 0; i < 13; i++)
