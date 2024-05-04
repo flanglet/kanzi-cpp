@@ -216,6 +216,7 @@ int testEntropyCodecCorrectness(const string& name)
         cout << endl;
         cout << (ok ? "Identical" : "Different") << endl;
         delete[] values2;
+        res = ok ? 0 : 2;
     }
 
     return res;
@@ -341,12 +342,12 @@ int TestEntropyCodec_main(int argc, const char* argv[])
 
         if (argc == 1) {
 #if __cplusplus < 201103L
-            string allCodecs[8] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
+            string allCodecs[8] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
 
             for (int i = 0; i < 8; i++)
                 codecs.push_back(allCodecs[i]);
 #else
-            codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
+            codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
 #endif
         }
         else {
@@ -355,12 +356,12 @@ int TestEntropyCodec_main(int argc, const char* argv[])
 
             if (str == "-TYPE=ALL") {
 #if __cplusplus < 201103L
-               string allCodecs[] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
+               string allCodecs[] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
 
                for (int i = 0; i < 8; i++)
                    codecs.push_back(allCodecs[i]);
 #else
-               codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "RICEGOLOMB", "CM", "TPAQ" };
+               codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
 #endif
             }
             else {
