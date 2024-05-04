@@ -40,7 +40,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     if (output._length - output._index < getMaxEncodedLength(count))
         return false;
 
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     Global::DataType dt = Global::UNDEFINED;
     bool findBestEscape = true;
@@ -250,7 +250,7 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("RLT: Invalid output block");
 
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;

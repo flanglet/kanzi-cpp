@@ -162,7 +162,7 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
         sum += tmp;
     }
 
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     memset(&_buffer[0], 0, size_t(_bufferSize) * sizeof(uint));
 
@@ -253,7 +253,7 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
         _buffer = new uint[_bufferSize];
     }
 
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     const int pIdx = getPrimaryIndex(0);
 

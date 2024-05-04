@@ -129,7 +129,7 @@ namespace kanzi
        static const int LOG_TABLE[];
 
        int* _sa;
-       uint8* _buffer;
+       const uint8* _buffer;
        Stack* _ssStack;
        Stack* _trStack;
        Stack* _mergeStack;
@@ -193,7 +193,7 @@ namespace kanzi
 
        void trIntroSort(int isa, int isad, int first, int last, TRBudget& budget);
 
-       int trPivot(int arr[], int isad, int first, int last) const;
+       int trPivot(const int arr[], int isad, int first, int last) const;
 
        int trMedian5(const int arr[], int isad, int v1, int v2, int v3, int v4, int v5) const;
 
@@ -203,7 +203,7 @@ namespace kanzi
 
        void trFixDown(int isad, int saIdx, int i, int size);
 
-       void trInsertionSort(int arr[], int first, int last);
+       void trInsertionSort(const int arr[], int first, int last);
 
        void trPartialCopy(int isa, int first, int a, int b, int last, int depth);
 
@@ -218,9 +218,9 @@ namespace kanzi
 
        ~DivSufSort();
 
-       void computeSuffixArray(byte input[], int sa[], int length);
+       void computeSuffixArray(const byte input[], int sa[], int length);
 
-       int computeBWT(byte input[], byte output[], int sa[], int length, int indexes[], int idxCount = 8);
+       int computeBWT(const byte input[], byte output[], int sa[], int length, int indexes[], int idxCount = 8);
    };
 
 

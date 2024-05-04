@@ -82,9 +82,9 @@ void DivSufSort::reset()
     memset(&_bucketB[0], 0, sizeof(int) * 65536);
 }
 
-void DivSufSort::computeSuffixArray(byte input[], int sa[], int length)
+void DivSufSort::computeSuffixArray(const byte input[], int sa[], int length)
 {
-    _buffer = reinterpret_cast<uint8*>(&input[0]);
+    _buffer = reinterpret_cast<const uint8*>(&input[0]);
     _sa = sa;
     reset();
     const int m = sortTypeBstar(_bucketA, _bucketB, length);
@@ -155,9 +155,9 @@ void DivSufSort::constructSuffixArray(int bucketA[], int bucketB[], int n, int m
     }
 }
 
-int DivSufSort::computeBWT(byte input[], byte output[], int bwt[], int length, int indexes[], int idxCount)
+int DivSufSort::computeBWT(const byte input[], byte output[], int bwt[], int length, int indexes[], int idxCount)
 {
-    _buffer = reinterpret_cast<uint8*>(&input[0]);
+    _buffer = reinterpret_cast<const uint8*>(&input[0]);
     _sa = bwt;
     reset();
     const int m = sortTypeBstar(_bucketA, _bucketB, length);
@@ -1993,7 +1993,7 @@ void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
     }
 }
 
-int DivSufSort::trPivot(int arr[], int isad, int first, int last) const
+int DivSufSort::trPivot(const int arr[], int isad, int first, int last) const
 {
     int t = last - first;
     int middle = first + (t >> 1);
@@ -2069,7 +2069,7 @@ void DivSufSort::trFixDown(int isad, int saIdx, int i, int size)
     _sa[saIdx + i] = v;
 }
 
-void DivSufSort::trInsertionSort(int arr[], int first, int last)
+void DivSufSort::trInsertionSort(const int arr[], int first, int last)
 {
     for (int a = first + 1; a < last; a++) {
         int b = a - 1;

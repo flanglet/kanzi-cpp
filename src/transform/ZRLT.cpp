@@ -35,7 +35,7 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
     if (output._length - output._index < getMaxEncodedLength(length))
         return false;
 
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;
@@ -115,7 +115,7 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("ZRLT: Invalid output block");
 
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;

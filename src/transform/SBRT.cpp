@@ -48,7 +48,7 @@ bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         throw std::invalid_argument("SBRT: Invalid output block");
 
     // Aliasing
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     int p[256] = { 0 };
     int q[256] = { 0 };
@@ -96,7 +96,7 @@ bool SBRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         throw std::invalid_argument("SBRT: Invalid output block");
 
     // Aliasing
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     int p[256] = { 0 };
     int q[256] = { 0 };

@@ -71,7 +71,7 @@ bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
 bool EXECodec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd)
 {
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     dst[0] = X86;
     int srcIdx = codeStart;
@@ -146,7 +146,7 @@ bool EXECodec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int
 
 bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd)
 {
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     dst[0] = ARM64;
     int srcIdx = codeStart;
@@ -258,7 +258,7 @@ bool EXECodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
 bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     int srcIdx = 9;
     int dstIdx = 0;
@@ -310,7 +310,7 @@ bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int
 
 bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     int srcIdx = 9;
     int dstIdx = 0;
@@ -462,14 +462,14 @@ byte EXECodec::detectType(byte src[], int count, int& codeStart, int& codeEnd)
 }
 
 // Return true if known header
-bool EXECodec::parseHeader(byte src[], int count, uint magic, int& arch, int& codeStart, int& codeEnd)
+bool EXECodec::parseHeader(const byte src[], int count, uint magic, int& arch, int& codeStart, int& codeEnd)
 {
     if (magic == Magic::WIN_MAGIC) {
         if (count >= 64) {
             const int posPE = LittleEndian::readInt32(&src[60]);
 
             if ((posPE > 0) && (posPE <= count - 48) && (LittleEndian::readInt32(&src[posPE]) == WIN_PE)) {
-                byte* pe = &src[posPE];
+                const byte* pe = &src[posPE];
                 codeStart = min(LittleEndian::readInt32(&pe[44]), count);
                 codeEnd = min(codeStart + LittleEndian::readInt32(&pe[28]), count);
                 arch = LittleEndian::readInt16(&pe[4]);

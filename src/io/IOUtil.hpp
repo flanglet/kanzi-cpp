@@ -128,10 +128,8 @@ namespace kanzi
            if (cfg._ignoreDotFiles == true) {
               size_t idx = target.rfind(PATH_SEPARATOR);
 
-              if ((idx != std::string::npos) && (idx < target.length() - 1)) {
-                  if (target[idx + 1] == '.')
-                     return;
-              }
+              if ((idx != std::string::npos) && (idx < target.length() - 1) && (target[idx + 1] == '.'))
+                  return;
            }
 
            if ((cfg._ignoreLinks == false) || (buffer.st_mode & S_IFMT) != S_IFLNK)
@@ -184,10 +182,8 @@ namespace kanzi
                   if (cfg._ignoreDotFiles == true) {
                      size_t idx = fullpath.rfind(PATH_SEPARATOR);
 
-                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1)) {
-                         if (fullpath[idx + 1] == '.')
-                            continue;
-                     }
+                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1) && (fullpath[idx + 1] == '.'))
+                        continue;
                   }
                  
                   if ((cfg._ignoreLinks == false) || (buffer.st_mode & S_IFMT) != S_IFLNK)
@@ -197,10 +193,8 @@ namespace kanzi
                   if (cfg._ignoreDotFiles == true) {
                      size_t idx = fullpath.rfind(PATH_SEPARATOR);
 
-                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1)) {
-                         if (fullpath[idx + 1] == '.')
-                            continue;
-                     }
+                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1) && (fullpath[idx + 1] == '.')) 
+                        continue;
                   }
                    
                   createFileList(fullpath, files, cfg, errors);

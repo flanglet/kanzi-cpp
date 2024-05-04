@@ -61,7 +61,7 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     }
 
     byte* dst = &output._array[output._index];
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
 
     // Find missing 1-byte symbols
     uint freqs0[256] = { 0 };
@@ -242,7 +242,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         throw invalid_argument("Alias codec: Invalid output block");
 
     byte* dst = &output._array[output._index];
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     int n = int(src[0]);
 
     if (n < 16)

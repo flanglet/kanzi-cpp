@@ -490,7 +490,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     if (output._length - output._index < getMaxEncodedLength(count))
         return false;
 
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;
@@ -754,7 +754,7 @@ int TextCodec1::emitWordIndex(byte dst[], int val)
 bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     reset(output._length);
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     _isCRLF = int(src[0] & TextCodec::MASK_CRLF) != 0;
     int srcIdx = 1;
@@ -954,7 +954,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     if (output._length - output._index < getMaxEncodedLength(count))
         return false;
 
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
 
     if (_pCtx != nullptr) {
@@ -1252,7 +1252,7 @@ int TextCodec2::emitWordIndex(byte dst[], int val, int mask)
 bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     reset(output._length);
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     _isCRLF = (src[0] & TextCodec::MASK_CRLF) != byte(0);
     int srcIdx = 1;

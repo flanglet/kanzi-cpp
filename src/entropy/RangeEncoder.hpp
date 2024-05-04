@@ -65,7 +65,7 @@ namespace kanzi
 
        void encodeByte(byte b);
 
-       bool encodeHeader(int alphabetSize, const uint alphabet[], uint frequencies[], int lr) const;
+       bool encodeHeader(int alphabetSize, const uint alphabet[], const uint frequencies[], int lr) const;
 
        bool reset();
 

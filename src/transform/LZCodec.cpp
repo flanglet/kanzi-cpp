@@ -100,8 +100,8 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     memset(_hashes, 0, sizeof(int32) * _hashSize);
     const int srcEnd = count - 16 - 1;
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    byte* src = &input._array[input._index];
     const int maxDist = (srcEnd < 4 * MAX_DISTANCE1) ? MAX_DISTANCE1 : MAX_DISTANCE2;
     dst[12] = (maxDist == MAX_DISTANCE1) ? byte(0) : byte(1);
     int mm = MIN_MATCH4;
@@ -502,8 +502,8 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (count < MIN_BLOCK_LENGTH)
         return false;
 
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    byte* src = &input._array[input._index];
     const int srcEnd = count;
     const int dstEnd = count - (count >> 6);
 
@@ -595,8 +595,8 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     const int srcEnd = count;
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    byte* src = &input._array[input._index];
 
     if (_hashSize == 0) {
         _hashSize = 1 << HASH_LOG;

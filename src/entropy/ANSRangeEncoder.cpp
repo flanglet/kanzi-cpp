@@ -105,7 +105,7 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], uint lr)
 }
 
 // Encode alphabet and frequencies
-bool ANSRangeEncoder::encodeHeader(int alphabetSize, const uint alphabet[], uint frequencies[], uint lr) const
+bool ANSRangeEncoder::encodeHeader(int alphabetSize, const uint alphabet[], const uint frequencies[], uint lr) const
 {
     const int encoded = EntropyUtils::encodeAlphabet(_bitstream, alphabet, 256, alphabetSize);
 

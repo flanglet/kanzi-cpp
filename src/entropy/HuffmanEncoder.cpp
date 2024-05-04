@@ -124,7 +124,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[])
 }
 
 
-uint HuffmanEncoder::limitCodeLengths(uint alphabet[], uint freqs[], uint16 sizes[], uint ranks[], int count) const
+uint HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16 sizes[], uint ranks[], int count) const
 {
    int n = 0;
    int debt = 0;

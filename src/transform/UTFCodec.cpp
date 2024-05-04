@@ -43,7 +43,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (output._length - output._index < getMaxEncodedLength(count))
         return false;
 
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     bool mustValidate = true;
 
@@ -185,7 +185,7 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("UTFCodec: Invalid output block");
 
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     const int start = int(src[0]);
     const int adjust = int(src[1]); // adjust end of regular processing

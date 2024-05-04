@@ -196,7 +196,7 @@ bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 
     // Aliasing
     int* lf = _buffer1;
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
 
     for (int i = 0; i < count; i++)

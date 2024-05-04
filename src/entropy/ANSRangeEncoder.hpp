@@ -95,7 +95,7 @@ namespace kanzi
 
        int encodeSymbol(byte*& p, int& st, const ANSEncSymbol& sym) const;
 
-       bool encodeHeader(int alphabetSize, const uint alphabet[], uint frequencies[], uint lr) const;
+       bool encodeHeader(int alphabetSize, const uint alphabet[], const uint frequencies[], uint lr) const;
 
        void _dispose() const {}
    };

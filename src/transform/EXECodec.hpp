@@ -87,7 +87,7 @@ namespace kanzi
 
        static byte detectType(byte src[], int count, int& codeStart, int& codeEnd);
        
-       static bool parseHeader(byte src[], int count, uint magic, int& arch, int& codeStart, int& codeEnd);
+       static bool parseHeader(const byte src[], int count, uint magic, int& arch, int& codeStart, int& codeEnd);
 
        Context* _pCtx;
    };

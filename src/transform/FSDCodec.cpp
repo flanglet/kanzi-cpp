@@ -119,8 +119,8 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             return false;
     }
 
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    byte* src = &input._array[input._index];
     uint magic = Magic::getType(src);
 
     // Skip detection except for a few candidate types
@@ -287,8 +287,8 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     const int srcEnd = count;
     const int dstEnd = output._length;
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    byte* src = &input._array[input._index];
 
     // Retrieve mode & step value
     const byte mode = src[0];

@@ -167,7 +167,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         return false;
 
     const int srcEnd = count - 4;
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     BigEndian::writeInt32(&dst[0], count);
     int dstIdx = 5;
@@ -227,7 +227,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         memset(&_matches[0], 0, sizeof(int32) * size_t(ROLZCodec::HASH_SIZE << _logPosChecks));
         const int endChunk = min(startChunk + sizeChunk, srcEnd);
         sizeChunk = endChunk - startChunk;
-        byte* buf = &src[startChunk];
+        const byte* buf = &src[startChunk];
         int srcIdx = 0;
         const int n = min(srcEnd - startChunk, 8);
 
