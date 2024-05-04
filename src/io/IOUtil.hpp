@@ -215,7 +215,7 @@ namespace kanzi
    {
        bool _sortBySize;
 
-       bool operator() (const FileData& f1, const FileData& f2)
+       bool operator() (const FileData& f1, const FileData& f2) const
        {
            if (_sortBySize == false)
               return f1.fullPath() < f2.fullPath();

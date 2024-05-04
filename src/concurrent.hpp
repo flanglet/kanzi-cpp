@@ -100,7 +100,7 @@ class Task {
        :   _stop(false)
    {
        if ((threads == 0) || (threads > 1024))
-           throw std::runtime_error("The number of threads must be in [1..1024]");
+           throw std::invalid_argument("The number of threads must be in [1..1024]");
 
        // Start and run threads
        for (uint32_t i = 0; i < threads; i++)

@@ -99,49 +99,6 @@ namespace kanzi {
    class CompressedOutputStream : public OutputStream {
        friend class EncodingTask<EncodingTaskResult>;
 
-   private:
-       static const int BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
-       static const int BITSTREAM_FORMAT_VERSION = 5;
-       static const int DEFAULT_BUFFER_SIZE = 256 * 1024;
-       static const byte COPY_BLOCK_MASK = byte(0x80);
-       static const byte TRANSFORMS_MASK = byte(0x10);
-       static const int MIN_BITSTREAM_BLOCK_SIZE = 1024;
-       static const int MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
-       static const int SMALL_BLOCK_SIZE = 15;
-       static const int CANCEL_TASKS_ID = -1;
-       static const int MAX_CONCURRENCY = 64;
-
-       int _blockSize;
-       int _bufferId; // index of current write buffer
-       int _jobs;
-       int _bufferThreshold;
-       int _nbInputBlocks;
-       int64 _inputSize;
-       XXHash32* _hasher;
-       SliceArray<byte>** _buffers; // input & output per block
-       short _entropyType;
-       uint64 _transformType;
-       OutputBitStream* _obs;
-       ATOMIC_BOOL _initialized;
-       ATOMIC_BOOL _closed;
-       ATOMIC_INT _blockId;
-       std::vector<Listener*> _listeners;
-       Context _ctx;
-       bool _headless;
-#ifdef CONCURRENCY_ENABLED
-       ThreadPool* _pool;
-#endif
-
-       void processBlock();
-
-       static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
-
-
-  protected:
-
-       virtual void writeHeader();
-
-
    public:
 #ifdef CONCURRENCY_ENABLED
        CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform,
@@ -179,6 +136,49 @@ namespace kanzi {
        void close();
 
        uint64 getWritten() const { return (_obs->written() + 7) >> 3; }
+
+
+  protected:
+
+       virtual void writeHeader();
+
+
+   private:
+       static const int BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
+       static const int BITSTREAM_FORMAT_VERSION = 5;
+       static const int DEFAULT_BUFFER_SIZE = 256 * 1024;
+       static const byte COPY_BLOCK_MASK = byte(0x80);
+       static const byte TRANSFORMS_MASK = byte(0x10);
+       static const int MIN_BITSTREAM_BLOCK_SIZE = 1024;
+       static const int MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
+       static const int SMALL_BLOCK_SIZE = 15;
+       static const int CANCEL_TASKS_ID = -1;
+       static const int MAX_CONCURRENCY = 64;
+
+       int _blockSize;
+       int _bufferId; // index of current write buffer
+       int _jobs;
+       int _bufferThreshold;
+       int _nbInputBlocks;
+       int64 _inputSize;
+       XXHash32* _hasher;
+       SliceArray<byte>** _buffers; // input & output per block
+       short _entropyType;
+       uint64 _transformType;
+       OutputBitStream* _obs;
+       ATOMIC_BOOL _initialized;
+       ATOMIC_BOOL _closed;
+       ATOMIC_INT _blockId;
+       std::vector<Listener*> _listeners;
+       Context _ctx;
+       bool _headless;
+#ifdef CONCURRENCY_ENABLED
+       ThreadPool* _pool;
+#endif
+
+       void processBlock();
+
+       static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
    };
 
 
