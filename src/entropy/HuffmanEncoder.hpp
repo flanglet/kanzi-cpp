@@ -51,6 +51,8 @@ namespace kanzi
 
        uint computeCodeLengths(uint16 sizes[], uint sranks[], int count) const;
 
+       uint limitCodeLengths(uint alphabet[], uint freqs[], uint16 sizes[], uint sranks[], int count) const;
+
        void _dispose() const {}
 
        bool reset();

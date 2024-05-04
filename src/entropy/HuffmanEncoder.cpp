@@ -13,9 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <sstream>
 #include <algorithm>
 #include <vector>
+#include <sstream>
 
 #include "HuffmanEncoder.hpp"
 #include "EntropyUtils.hpp"
@@ -78,55 +78,33 @@ int HuffmanEncoder::updateFrequencies(uint freqs[])
         sizes[alphabet[0]] = 1;
     }
     else {
-        int retries = 0;
         uint ranks[256]; // sorted ranks
 
-        while (true) {
-            for (int i = 0; i < count; i++)
-                ranks[i] = (freqs[alphabet[i]] << 8) | alphabet[i];
+        for (int i = 0; i < count; i++)
+            ranks[i] = (freqs[alphabet[i]] << 8) | alphabet[i];
 
-            const uint maxCodeLen = computeCodeLengths(sizes, ranks, count);
+        uint maxCodeLen = computeCodeLengths(sizes, ranks, count);
+
+        if (maxCodeLen == 0) {
+            throw invalid_argument("Could not generate Huffman codes: invalid code length 0");
+        }
+
+        if (maxCodeLen > HuffmanCommon::MAX_SYMBOL_SIZE) {
+            maxCodeLen = limitCodeLengths(alphabet, freqs, sizes, ranks, count);
 
             if (maxCodeLen == 0) {
                 throw invalid_argument("Could not generate Huffman codes: invalid code length 0");
             }
 
-            if (maxCodeLen <= HuffmanCommon::MAX_SYMBOL_SIZE) {
-                // Usual case
-                HuffmanCommon::generateCanonicalCodes(sizes, _codes, ranks, count);
-                break;
+            if (maxCodeLen > HuffmanCommon::MAX_SYMBOL_SIZE) {
+               stringstream ss;
+               ss << "Could not generate Huffman codes: max code length (";
+               ss << HuffmanCommon::MAX_SYMBOL_SIZE << " bits) exceeded";
+               throw length_error(ss.str());
             }
-
-            // Sometimes, codes exceed the budget for the max code length => scale down
-            // and normalize frequencies (boost the smallest freqs) and try once more.
-            if (retries <= 2) {
-                retries++;
-                uint alpha[256] = { 0 };
-                uint f[256];
-                uint totalFreq = 0;
-
-                for (int i = 0; i < count; i++) {
-                    f[i] = freqs[alphabet[i]];
-                    totalFreq += f[i];
-                }
-
-                // Normalize to a smaller scale
-                EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq,
-                    HuffmanCommon::MAX_CHUNK_SIZE >> (retries + 1));
-
-                for (int i = 0; i < count; i++)
-                    freqs[alphabet[i]] = f[i];
-
-                continue;
-            }
-
-            // Max retries, give up (should never happen with current constants)
-            stringstream ss;
-            ss << "Could not generate Huffman codes: max code length (";
-            ss << HuffmanCommon::MAX_SYMBOL_SIZE;
-            ss << " bits) exceeded";
-            throw length_error(ss.str());
         }
+
+        HuffmanCommon::generateCanonicalCodes(sizes, _codes, ranks, count);
     }
 
     // Transmit code lengths only, freqs and codes do not matter
@@ -144,6 +122,87 @@ int HuffmanEncoder::updateFrequencies(uint freqs[])
 
     return count;
 }
+
+
+uint HuffmanEncoder::limitCodeLengths(uint alphabet[], uint freqs[], uint16 sizes[], uint ranks[], int count) const
+{
+   int n = 0;
+   int debt = 0;
+
+   // Fold over-the-limit sizes, skip at-the-limit sizes => incur bit debt
+   while (sizes[ranks[n]] >= HuffmanCommon::MAX_SYMBOL_SIZE) {
+       debt += (sizes[ranks[n]] - HuffmanCommon::MAX_SYMBOL_SIZE);
+       sizes[ranks[n]] = HuffmanCommon::MAX_SYMBOL_SIZE;
+       n++;
+   }
+
+   // Check (up to) 6 levels; one vector per size delta
+   vector<int> v[6];
+
+   while ((n < count) && (sizes[ranks[n]] >= HuffmanCommon::MAX_SYMBOL_SIZE - 6)) {
+       const int idx = HuffmanCommon::MAX_SYMBOL_SIZE - 1 - sizes[ranks[n]];
+
+       if (debt < (1 << idx))
+          break;
+
+       v[idx].push_back(n);
+       n++;
+   }
+
+   int idx = 5;
+
+   // Repay bit debt in a "semi optimized" way
+   while ((debt > 0)  && (idx >= 0)) {
+      if ((v[idx].empty() == true) || (debt < (1 << idx))) {
+         idx--;
+         continue;
+      }
+
+      sizes[ranks[v[idx][0]]]++;
+      debt -= (1 << idx);
+      v[idx].erase(v[idx].begin());
+   }
+
+   idx = 0;
+
+   // Adjust if necessary
+   while ((debt > 0) && (idx < 6)) {
+      if (v[idx].empty() == true) {
+         idx++;
+         continue;
+      }
+
+      sizes[ranks[v[idx][0]]]++;
+      debt -= (1 << idx);
+      v[idx].erase(v[idx].begin());
+   }
+
+   if (debt > 0) {
+       // Fallback to slow (more accurate) path if fast path failed to repay the debt
+       uint alpha[256] = { 0 };
+       uint f[256];
+       uint totalFreq = 0;
+
+       for (int i = 0; i < count; i++) {
+           f[i] = freqs[alphabet[i]];
+           totalFreq += f[i];
+       }
+
+       // Renormalize to a smaller scale
+       EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq, HuffmanCommon::MAX_CHUNK_SIZE >> 3);
+
+       for (int i = 0; i < count; i++)
+           freqs[alphabet[i]] = f[i];
+
+       for (int i = 0; i < count; i++)
+          ranks[i] = (freqs[alphabet[i]] << 8) | alphabet[i];
+
+       return computeCodeLengths(sizes, ranks, count);
+   }
+
+   return HuffmanCommon::MAX_SYMBOL_SIZE;
+}
+
 
 // Called only when more than 1 symbol
 uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count) const
@@ -166,10 +225,8 @@ uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count)
     computeInPlaceSizesPhase1(freqs, count);
     const uint maxCodeLen = computeInPlaceSizesPhase2(freqs, count);
 
-    if (maxCodeLen <= HuffmanCommon::MAX_SYMBOL_SIZE) {
-        for (int i = 0; i < count; i++)
-            sizes[ranks[i]] = uint16(freqs[i]);
-    }
+    for (int i = 0; i < count; i++)
+        sizes[ranks[i]] = uint16(freqs[i]);
 
     return maxCodeLen;
 }
@@ -315,3 +372,4 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
 
     return count;
 }
+
