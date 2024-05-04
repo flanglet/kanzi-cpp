@@ -46,12 +46,8 @@ int HuffmanCommon::generateCanonicalCodes(const uint16 sizes[], uint16 codes[], 
 
     for (int i = 0, code = 0; i < count; i++) {
         const int s = symbols[i];
-
-        if (sizes[s] > curLen) {
-            code <<= (sizes[s] - curLen);
-            curLen = sizes[s];
-        }
-
+        code <<= (sizes[s] - curLen);
+        curLen = sizes[s];
         codes[s] = uint16(code);
         code++;
     }

@@ -139,10 +139,10 @@ uint HuffmanEncoder::limitCodeLengths(uint alphabet[], uint freqs[], uint16 size
    // Check (up to) 6 levels; one vector per size delta
    vector<int> v[6];
 
-   while ((n < count) && (sizes[ranks[n]] >= HuffmanCommon::MAX_SYMBOL_SIZE - 6)) {
+   while (n < count) {
        const int idx = HuffmanCommon::MAX_SYMBOL_SIZE - 1 - sizes[ranks[n]];
 
-       if (debt < (1 << idx))
+       if ((idx > 5) || (debt < (1 << idx)))
           break;
 
        v[idx].push_back(n);
@@ -152,7 +152,7 @@ uint HuffmanEncoder::limitCodeLengths(uint alphabet[], uint freqs[], uint16 size
    int idx = 5;
 
    // Repay bit debt in a "semi optimized" way
-   while ((debt > 0)  && (idx >= 0)) {
+   while ((debt > 0) && (idx >= 0)) {
       if ((v[idx].empty() == true) || (debt < (1 << idx))) {
          idx--;
          continue;
@@ -191,11 +191,10 @@ uint HuffmanEncoder::limitCodeLengths(uint alphabet[], uint freqs[], uint16 size
        // Renormalize to a smaller scale
        EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq, HuffmanCommon::MAX_CHUNK_SIZE >> 3);
 
-       for (int i = 0; i < count; i++)
+       for (int i = 0; i < count; i++) {
            freqs[alphabet[i]] = f[i];
-
-       for (int i = 0; i < count; i++)
-          ranks[i] = (freqs[alphabet[i]] << 8) | alphabet[i];
+           ranks[i] = (f[i] << 8) | alphabet[i];
+       }
 
        return computeCodeLengths(sizes, ranks, count);
    }

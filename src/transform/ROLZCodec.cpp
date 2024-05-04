@@ -420,7 +420,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         // Scope to deallocate resources early
         {
             // Decode literal, length and match index buffers
-            istreambuf<char> buffer(reinterpret_cast<char*>(&src[srcIdx]), count - srcIdx);
+            istreambuf<char> buffer(reinterpret_cast<char*>(&src[srcIdx]), min(count - srcIdx, sizeChunk + 16));
             istream is(&buffer);
             DefaultInputBitStream ibs(is, 65536);
             const int litLen = int(ibs.readBits(32));
