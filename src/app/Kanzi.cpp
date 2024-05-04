@@ -957,6 +957,11 @@ int main(int argc, const char* argv[])
         cout << "Missing arguments: try --help or -h" << endl;
         return Error::ERR_MISSING_PARAM;
     }
+    catch (invalid_argument& e) {
+       // May be thrown by ThreadPool
+       cout << e.what() << endl;
+       exit(Error::ERR_INVALID_PARAM);
+    }
     catch (runtime_error& e) {
        // May be thrown by ThreadPool
        cout << e.what() << endl;
