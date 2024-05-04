@@ -77,7 +77,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, int tasks,
     _gcount = 0;
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
     _jobs = tasks;
-    _hasher = (checksum = false) ? nullptr : new XXHash32(BITSTREAM_TYPE);
+    _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _outputSize = originalSize;
     _nbInputBlocks = 0;
     _buffers = new SliceArray<byte>*[2 * _jobs];
