@@ -126,8 +126,13 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
            bool checksum = pData->checksum == 0 ? false : true;
 
 #ifdef CONCURRENCY_ENABLED
+   #if __cplusplus >= 201103L
+           dctx->pCis = new CompressedInputStream(*fis, pData->jobs, nullptr, true,
+               checksum, pData->blockSize, std::move(transform), std::move(entropy), pData->originalSize, pData->bsVersion);
+   #else
            dctx->pCis = new CompressedInputStream(*fis, pData->jobs, nullptr, true,
                checksum, pData->blockSize, transform, entropy, pData->originalSize, pData->bsVersion);
+   #endif
 #else
            dctx->pCis = new CompressedInputStream(*fis, pData->jobs, true,
                checksum, pData->blockSize, transform, entropy, pData->originalSize, pData->bsVersion);
