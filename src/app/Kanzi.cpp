@@ -47,7 +47,7 @@ static const int ARG_IDX_LEVEL = 9;
 //static const int ARG_IDX_FROM = 10;
 //static const int ARG_IDX_TO = 11;
 
-static const string KANZI_VERSION = "2.3";
+static const string KANZI_VERSION = "2.3.0";
 static const string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
 
 
@@ -479,12 +479,6 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             }
 
             ctx = -1;
-
-            if (mode != "c") {
-                WARNING_OPT_COMP_ONLY(arg);
-                continue;
-            }
-
             strNoDotFiles = STR_TRUE;
             continue;
         }
@@ -495,12 +489,6 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             }
 
             ctx = -1;
-
-            if (mode != "c") {
-                WARNING_OPT_COMP_ONLY(arg);
-                continue;
-            }
-
             strNoLinks = STR_TRUE;
             continue;
         }

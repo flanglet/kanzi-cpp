@@ -136,6 +136,8 @@ namespace kanzi {
        int _blockSize;
        int _jobs;
        std::vector<Listener*> _listeners;
+       bool _noDotFiles;
+       bool _noLinks;
        Context _ctx;
 
        static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);

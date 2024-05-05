@@ -46,6 +46,10 @@ BlockDecompressor::BlockDecompressor(const Context& ctx) :
     _ctx.putInt("jobs", _jobs);
     bool remove = _ctx.getInt("remove", 0) != 0;
     _ctx.putInt("remove", remove ? 1 : 0);
+    _noDotFiles = _ctx.getInt("noDotFiles", 0) != 0;
+    _ctx.putInt("noDotFiles", _noDotFiles ? 1 : 0);
+    _noLinks = _ctx.getInt("noLinks", 0) != 0;
+    _ctx.putInt("noLinks", _noLinks ? 1 : 0);
 
     if (_ctx.has("inputName") == false)
         throw invalid_argument("Missing input name");
@@ -83,7 +87,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         suffix += ".";
         bool isRecursive = (_inputName.length() < 2) 
            || (_inputName.substr(_inputName.length() - 2) != suffix);
-        FileListConfig cfg = { isRecursive, false, false, false };
+        FileListConfig cfg = { isRecursive, _noLinks, false, _noDotFiles };
         createFileList(_inputName, files, cfg, errors);
         
         if (errors.size() > 0) {
