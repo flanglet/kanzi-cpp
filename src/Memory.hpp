@@ -22,6 +22,8 @@ limitations under the License.
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__DragonFly__) || defined(BSD)
 	#include <machine/endian.h>
+#elif defined(OS_MACOSX)
+        #include <machine/endian.h>
 #elif defined(__linux__) || defined(__linux) || defined(__gnu_linux__)
 	#include <endian.h>
 #endif
@@ -55,6 +57,7 @@ namespace kanzi {
     }
 
 
+#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__bsdi__) && !defined(__DragonFly__) && !defined(BSD)
    static inline uint32 bswap32(uint32 x) {
    #if defined(__clang__)
 		return __builtin_bswap32(x);
@@ -104,6 +107,7 @@ namespace kanzi {
    #endif
 	}
 
+#endif
 
 	#ifndef IS_BIG_ENDIAN
 		#if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
