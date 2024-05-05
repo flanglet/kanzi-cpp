@@ -133,7 +133,11 @@ namespace kanzi
            }
 
            if ((cfg._ignoreLinks == false) || (buffer.st_mode & S_IFMT) != S_IFLNK)
+   #if __cplusplus >= 201103L
+               files.emplace_back(target, buffer.st_size, buffer.st_mtime);
+   #else
                files.push_back(FileData(target, buffer.st_size, buffer.st_mtime));
+   #endif
 
            return;
        }
@@ -187,7 +191,11 @@ namespace kanzi
                   }
                  
                   if ((cfg._ignoreLinks == false) || (buffer.st_mode & S_IFMT) != S_IFLNK)
+   #if __cplusplus >= 201103L
+                     files.emplace_back(fullpath, buffer.st_size, buffer.st_mtime);
+   #else
                      files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
+   #endif
                }
                else if ((cfg._recursive) && ((buffer.st_mode & S_IFMT) == S_IFDIR)) {
                   if (cfg._ignoreDotFiles == true) {
