@@ -1,17 +1,21 @@
 #CXX=clang++
 
+LDFLAGS=-lpthread
+
+ifeq ($(CONCURRENCY_DISABLED), 1)
+	CONCURRENCY_FLAG = -DCONCURRENCY_DISABLED
+endif
+
 ifeq ($(OS),Windows_NT)
-	CXXFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=skylake -fno-rtti
+	CXXFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=skylake -fno-rtti $(CONCURRENCY_FLAG)
 	#LDFLAGS=-static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
-	LDFLAGS=-lpthread
 else
-	LDFLAGS=-lpthread
 	ARCH ?= $(shell uname -m)
 
 	ifeq ($(ARCH),x86_64)
-		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti
+		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 	else
-		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti
+		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 	endif
 endif	
 
@@ -70,7 +74,7 @@ TEST_SOURCES=test/TestEntropyCodec.cpp \
 	test/TestBWT.cpp \
 	test/TestCompressedStream.cpp \
 	test/TestDefaultBitStream.cpp \
-	test/TestTransforms.cpp 
+	test/TestTransforms.cpp
 TEST_OBJECTS=$(TEST_SOURCES:.cpp=.o)
 
 APP_SOURCES=app/Kanzi.cpp \
@@ -87,7 +91,7 @@ APP=kanzi
 	
 STATIC_LIB_SUFFIX := .a
 SHARED_LIB_SUFFIX := .so
-PROG_SUFFIX       := 
+PROG_SUFFIX       :=
 
 # Compiling for Windows with MinGW?
 ifeq ($(OS),Windows_NT)
@@ -197,7 +201,7 @@ else
 	rm -f $(INSTALL_DIR)/bin/$(APP)$(PROG_SUFFIX)
 endif
 
-clean: 
+clean:
 ifeq ($(OS),Windows_NT)
 	del /S *.o *.obj ..\bin\$(APP)$(PROG_SUFFIX) ..\bin\test*$(PROG_SUFFIX) \
 	..\lib\$(STATIC_LIB) ..\lib\$(SHARED_LIB) \
