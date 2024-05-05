@@ -197,6 +197,8 @@ int BlockDecompressor::decompress(uint64& inputSize)
         }
     }
 
+    _ctx.putInt("verbosity", _verbosity);
+
     // Run the task(s)
     if (nbFiles == 1) {
         string oName = formattedOutName;

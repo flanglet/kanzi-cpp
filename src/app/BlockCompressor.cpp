@@ -302,6 +302,8 @@ int BlockCompressor::compress(uint64& outputSize)
         }
     }
 
+    _ctx.putInt("verbosity", _verbosity);
+
     // Run the task(s)
     if (nbFiles == 1) {
         string oName = formattedOutName;
