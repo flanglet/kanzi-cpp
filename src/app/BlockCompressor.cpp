@@ -780,10 +780,10 @@ T FileCompressTask<T>::run()
             if (delta >= 1e5) {
                 ss.precision(1);
                 ss.setf(ios::fixed);
-                ss << "Compressing:       " << (delta / 1000) << " s";
+                ss << "Compression time:  " << (delta / 1000) << " s";
             }
             else {
-                ss << "Compressing:       " << int(delta) << " ms";
+                ss << "Compression time:  " << int(delta) << " ms";
             }
 
             log.println(ss.str().c_str(), true);

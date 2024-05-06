@@ -660,18 +660,18 @@ T FileDecompressTask<T>::run()
             if (delta >= 1e5) {
                 ss.precision(1);
                 ss.setf(ios::fixed);
-                ss << "Decompressing:     " << (delta / 1000) << " s";
+                ss << "Decompression time: " << (delta / 1000) << " s";
             }
             else {
-                ss << "Decompressing:     " << int(delta) << " ms";
+                ss << "Decompression time: " << int(delta) << " ms";
             }
 
             log.println(ss.str().c_str(), true);
             ss.str(string());
-            ss << "Input size:        " << decoded;
+            ss << "Input size:         " << decoded;
             log.println(ss.str().c_str(), true);
             ss.str(string());
-            ss << "Output size:       " << read;
+            ss << "Output size:        " << read;
             log.println(ss.str().c_str(), true);
             ss.str(string());
         }
@@ -694,7 +694,7 @@ T FileDecompressTask<T>::run()
 
         if ((verbosity > 1) && (delta > 0)) {
             double b2KB = double(1000) / double(1024);
-            ss << "Throughput (KB/s): " << uint(double(read) * b2KB / delta);
+            ss << "Throughput (KB/s):  " << uint(double(read) * b2KB / delta);
             log.println(ss.str().c_str(), true);
             ss.str(string());
         }
