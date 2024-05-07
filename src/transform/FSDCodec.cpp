@@ -138,8 +138,8 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     const int srcEnd = count;
     const int dstEnd = getMaxEncodedLength(count);
-    const int count5 = count / 5;
     const int count10 = count / 10;
+    const int count5 = 2 * count10; // count5=count/5 doest not guarantee count5=2*count10 !
     uint histo[7][256];
     memset(&histo[0][0], 0, sizeof(histo));
 
