@@ -215,14 +215,5 @@ namespace kanzi
       #endif
    #endif
 
-
-   #ifndef STR_TRUE
-      #define STR_TRUE "1"
-   #endif
-
-   #ifndef STR_FALSE
-      #define STR_FALSE "0"
-   #endif
-
 #endif
 

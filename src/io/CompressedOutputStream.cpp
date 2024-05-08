@@ -85,10 +85,9 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _jobs = tasks;
     _buffers = new SliceArray<byte>*[2 * _jobs];
     _ctx.putInt("blockSize", _blockSize);
-    _ctx.putString("checksum", (checksum == true) ? STR_TRUE : STR_FALSE);
+    _ctx.putInt("checksum", (checksum == true) ? 1 : 0);
     _ctx.putString("entropy", entropyCodec);
     _ctx.putString("transform", transform);
-    _ctx.putString("extra", _entropyType == EntropyEncoderFactory::TPAQX_TYPE ? STR_TRUE : STR_FALSE);
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
 
     // Allocate first buffer and add padding for incompressible blocks
@@ -167,8 +166,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     string transform = ctx.getString("transform");
     _entropyType = EntropyEncoderFactory::getType(entropyCodec.c_str());
     _transformType = TransformFactory<byte>::getType(transform.c_str());
-    string str = ctx.getString("checksum", STR_FALSE);
-    bool checksum = str == STR_TRUE;
+    bool checksum = ctx.getInt("checksum", 0) == 1;
     _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
     _buffers = new SliceArray<byte>*[2 * _jobs];
@@ -556,9 +554,9 @@ T EncodingTask<T>::run()
             mode |= CompressedOutputStream::COPY_BLOCK_MASK;
         }
         else {
-            string strSkip = _ctx.getString("skipBlocks", STR_FALSE);
+            int checkSkip = _ctx.getInt("skipBlocks", 0);
 
-            if (strSkip == STR_TRUE) {
+            if (checkSkip == 1) {
                 bool skip = Magic::isCompressed(Magic::getType(&_data->_array[_data->_index]));
 
                 if (skip == false) {

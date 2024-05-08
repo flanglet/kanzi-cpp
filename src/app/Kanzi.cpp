@@ -266,31 +266,27 @@ bool toInt(string& s, int& res)
    return true;
 }
 
-int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& map)
+int processCommandLine(int argc, const char* argv[], Context& map)
 {
     string inputName;
     string outputName;
-    string strLevel;
-    string strVerbose;
-    string strTasks;
-    string strBlockSize;
-    string strFrom;
-    string strTo;
-    string strRemove = STR_FALSE;
-    string strOverwrite = STR_FALSE;
-    string strChecksum = STR_FALSE;
-    string strSkip = STR_FALSE;
-    string strReorder = STR_TRUE;
-    string strNoDotFiles = STR_FALSE;
-    string strNoLinks = STR_FALSE;
+    int remove = -1;
+    int overwrite = -1;
+    int checksum = -1;
+    int skip = 1;
+    int reorder = -1;
+    int noDotFiles = -1;
+    int noLinks = -1;
     string codec;
     string transf;
-    bool autoBlockSize = false;
-    int verbose = 1;
+    int verbose = -1;
     int ctx = -1;
     int level = -1;
     int from = -1;
     int to = -1;
+    int tasks = -1;
+    int blockSize = -1;
+    int autoBlockSize = -1;
     string mode;
     Printer log(cout); 
     bool showHeader = true;
@@ -336,20 +332,14 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
         }
 
         if ((ctx == ARG_IDX_VERBOSE) || (arg.compare(0, 10, "--verbose=") == 0)) {
-           if (strVerbose != "") {
+           if (verbose >= 0) {
                 stringstream ss;
                 ss << "Warning: ignoring verbosity level: " << arg;
                 log.println(ss.str(), verbose > 0);
             }
             else {
-               strVerbose = (ctx == ARG_IDX_VERBOSE) ? arg : arg.substr(10);
+               string strVerbose = (ctx == ARG_IDX_VERBOSE) ? arg : arg.substr(10);
                strVerbose = trim(strVerbose);
-
-               if (strVerbose.length() != 1) {
-                   cerr << "Invalid verbosity level provided on command line: " << arg << endl;
-                   return Error::ERR_INVALID_PARAM;
-               }
-
                bool res = toInt(strVerbose, verbose);
 
                if ((res == false) || (verbose < 0) || (verbose > 5)) {
@@ -374,7 +364,6 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
     if (outputName.length() == 0) {
         if (inputName.length() == 0) {
             verbose = 0;
-            strVerbose = "0";
         }
     }
     else {
@@ -383,7 +372,6 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
         if (str == "STDOUT") {
             verbose = 0;
-            strVerbose = "0";
         }
     }
 
@@ -429,7 +417,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
 
-            strOverwrite = STR_TRUE;
+            overwrite = 1;
             ctx = -1;
             continue;
         }
@@ -439,7 +427,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
 
-            strSkip = STR_TRUE;
+            skip = 1;
             ctx = -1;
             continue;
         }
@@ -449,7 +437,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
 
-            strChecksum = STR_TRUE;
+            checksum = 1;
             ctx = -1;
             continue;
         }
@@ -459,7 +447,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
 
-            strRemove = STR_TRUE;
+            remove = 1;
             ctx = -1;
             continue;
         }
@@ -476,7 +464,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 continue;
             }
 
-            strReorder = STR_FALSE;
+            reorder = 0;
             continue;
         }
 
@@ -486,7 +474,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             }
 
             ctx = -1;
-            strNoDotFiles = STR_TRUE;
+            noDotFiles = 1;
             continue;
         }
 
@@ -496,7 +484,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             }
 
             ctx = -1;
-            strNoLinks = STR_TRUE;
+            noLinks = 1;
             continue;
         }
 
@@ -606,11 +594,10 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             string name = (ctx == ARG_IDX_LEVEL) ? arg : arg.substr(8);
             name = trim(name);
 
-            if (strLevel != "") {
+            if (level >= 0) {
                 WARNING_OPT_DUPLICATE("level", name);
             } else {
-                strLevel = name;
-                bool res = toInt(strLevel, level);
+                bool res = toInt(name, level);
 
                 if ((res == false) || ((level < 0) || (level > 9))) {
                     cerr << "Invalid compression level provided on command line: " << arg << endl;
@@ -631,7 +618,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 return Error::ERR_INVALID_PARAM;
             }
 
-            if ((strBlockSize != "") || (autoBlockSize == true)) {
+            if ((blockSize >= 0) || (autoBlockSize >= 0)) {
                 WARNING_OPT_DUPLICATE("block size", name);
                 ctx = -1;
                 continue;
@@ -640,7 +627,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             transform(name.begin(), name.end(), name.begin(), ::toupper);
 
             if (name == "AUTO") {
-                autoBlockSize = true;
+                autoBlockSize = 1;
             }
             else {
                 uint64 scale = 1;
@@ -675,9 +662,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 ss1 << name;
                 ss1 >> bk;
                 bk *= scale;
-                stringstream ss2;
-                ss2 << bk;
-                ss2 >> strBlockSize;
+                blockSize = int(bk);
             }
 
             ctx = -1;
@@ -688,13 +673,12 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             string name = (ctx == ARG_IDX_JOBS) ? arg : arg.substr(7);
             name = trim(name);
 
-            if (strTasks != "") {
+            if (tasks >= 0) {
                 WARNING_OPT_DUPLICATE("jobs", name);
                 ctx = -1;
                 continue;
             }
 
-            int tasks;
             bool res = toInt(name, tasks);
 
             if ((res == false) || (tasks < 0)) {
@@ -702,7 +686,6 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 return Error::ERR_INVALID_PARAM;
             }
 
-            strTasks = name;
             ctx = -1;
             continue;
         }
@@ -716,11 +699,10 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 continue;
             }
 
-            if (strFrom != "") {
+            if (from >= 0) {
                 WARNING_OPT_DUPLICATE("start block", name);
             } else {
-                strFrom = name;
-                bool res = toInt(strFrom, from);
+                bool res = toInt(name, from);
 
                 if ((res == false) || (from < 0)) {
                     cerr << "Invalid start block provided on command line: " << arg << endl;
@@ -745,11 +727,10 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 continue;
             }
 
-            if (strTo != "") {
+            if (to >= 0) {
                 WARNING_OPT_DUPLICATE("end block", name);
             } else {
-                strTo = name;
-                bool res = toInt(strTo, to);
+                bool res = toInt(name, to);
 
                 if ((res == false) || (to <= 0)) { // Must be > 0 (0 means nothing to do)
                     cerr << "Invalid end block provided on command line: " << arg << endl;
@@ -789,55 +770,55 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
         }
     }
 
-    if (strBlockSize.length() > 0)
-        map["blockSize"] = strBlockSize;
+    if (blockSize >= 0)
+        map.putInt("blockSize", blockSize);
 
-    map["verbosity"] = (strVerbose == "") ? "1" : strVerbose;
-    map["mode"] = mode;
-    map["inputName"] = inputName;
-    map["outputName"] = outputName;
+    map.putInt("verbosity", (verbose < 0) ? 1 : verbose);
+    map.putString("mode", mode);
+    map.putString("inputName", inputName);
+    map.putString("outputName", outputName);
 
-    if (autoBlockSize == true)
-        map["autoBlock"] = STR_TRUE;
+    if (autoBlockSize == 1)
+        map.putInt("autoBlock", 1);
 
-    if ((mode == "c") && (strLevel != ""))
-        map["level"] = strLevel;
+    if ((mode == "c") && (level >= 0))
+        map.putInt("level", level);
 
-    if (strOverwrite == STR_TRUE)
-        map["overwrite"] = STR_TRUE;
+    if (overwrite == 1)
+        map.putInt("overwrite", 1);
 
-    if (strRemove == STR_TRUE)
-        map["remove"] = STR_TRUE;
+    if (remove == 1)
+        map.putInt("remove", 1);
 
     if (codec.length() > 0)
-        map["entropy"] = codec;
+        map.putString("entropy", codec);
 
     if (transf.length() > 0)
-        map["transform"] = transf;
+        map.putString("transform", transf);
 
-    if (strChecksum == STR_TRUE)
-        map["checksum"] = STR_TRUE;
+    if (checksum == 1)
+        map.putInt("checksum", 1);
 
-    if (strSkip == STR_TRUE)
-        map["skipBlocks"] = STR_TRUE;
+    if (skip == 1)
+        map.putInt("skipBlocks", 1);
 
-    if (strReorder == STR_FALSE)
-        map["fileReorder"] = STR_FALSE;
+    if (reorder == 0)
+        map.putInt("fileReorder", 0);
 
-    if (strNoDotFiles == STR_TRUE)
-        map["noDotFiles"] = STR_TRUE;
+    if (noDotFiles == 1)
+        map.putInt("noDotFiles", 1);
 
-    if (strNoLinks == STR_TRUE)
-        map["noLinks"] = STR_TRUE;
+    if (noLinks == 1)
+        map.putInt("noLinks", 1);
 
     if (from >= 0)
-        map["from"] = strFrom;
+        map.putInt("from", from);
 
     if (to >= 0)
-        map["to"] = strTo;
+        map.putInt("to", to);
 
-    if (strTasks != "")
-        map["jobs"] = strTasks;
+    if (tasks >= 0)
+        map.putInt("jobs", tasks);
 
     return 0;
 }
@@ -860,35 +841,24 @@ int main(int argc, const char* argv[])
     }
 
 #endif
-
-    CTX_MAP<string, string> args;
+    Context args;
     int status = processCommandLine(argc, argv, args);
 
     // Command line processing error ?
     if (status != 0)
        exit(status);
 
-    CTX_MAP<string, string>::iterator it = args.find("mode");
-
     // Help mode only ?
-    if (it == args.end())
+    if (args.has("mode") == false)
        exit(0);
 
-    string mode = it->second;
-    args.erase(it);
-
-    it = args.find("jobs");
-    int jobs = -1; // Not provided
-
-    if (it != args.end()) {
-        jobs = atoi(it->second.c_str());
-    }
+    string mode = args.getString("mode");
+    int jobs = args.getInt("jobs", -1);
 
     try {
 #ifndef CONCURRENCY_ENABLED
         if (jobs > 1) {
-            it = args.find("verbosity");
-            int verbosity = it == args.end() ? 1 : atoi(it->second.c_str());
+            const int verbosity = args.getInt("verbosity");
             stringstream ss;
             ss << "Warning: the number of jobs is  limited to 1 in this version";
             Printer log(cout);
@@ -907,8 +877,7 @@ int main(int argc, const char* argv[])
            jobs = min(cores, MAX_CONCURRENCY);
         }
         else if (jobs > MAX_CONCURRENCY) {
-            it = args.find("verbosity");
-            int verbosity = it == args.end() ? 1 : atoi(it->second.c_str());
+            const int verbosity = args.getInt("verbosity");
             stringstream ss;
             ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY;
             Printer log(cout);
@@ -919,7 +888,6 @@ int main(int argc, const char* argv[])
         ThreadPool pool(jobs);
         Context ctx(args, &pool);
 #endif
-
         ctx.putInt("jobs", jobs);
 
         if (mode == "c") {

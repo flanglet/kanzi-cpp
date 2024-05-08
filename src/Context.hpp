@@ -41,16 +41,16 @@ namespace kanzi
     #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
        // Windows already has a built-in threadpool. Using it is better for performance.
        Context(const ThreadPool*) { _pool = nullptr; }
-       Context(CTX_MAP<std::string, std::string>& m, const ThreadPool*) : _map(m) { _pool = nullptr; }
+       Context(const Context>& c, const ThreadPool*) : _map(c._map) { _pool = nullptr; }
        Context() { _pool = nullptr; }
-       Context(CTX_MAP<std::string, std::string>& m) : _map(m) { _pool = nullptr; }
+       Context(const Context& c) : _map(c._map) { _pool = nullptr; }
 #else
            Context(ThreadPool* p = nullptr) : _pool(p) {}
-           Context(CTX_MAP<std::string, std::string>& m, ThreadPool* p = nullptr) : _map(m), _pool(p) {}
+           Context(const Context& c, ThreadPool* p = nullptr) : _map(c._map), _pool(p) {}
     #endif
 #else
        Context() {}
-       Context(CTX_MAP<std::string, std::string>& m) : _map(m) {}
+       Context(const Context& c) : _map(c._map) {}
 #endif
 
        bool has(const std::string& key) const;
