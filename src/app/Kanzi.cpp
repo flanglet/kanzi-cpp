@@ -62,7 +62,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("", true);
 
    if (showHeader == true) {
-       log.println(APP_HEADER.c_str(), true);
+       log.println(APP_HEADER, true);
        log.println("", true);
    }
 
@@ -84,10 +84,10 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("        When the source is a directory, all files in it will be processed.", true);
    stringstream ss;
    ss << "        Provide " << PATH_SEPARATOR << ". at the end of the directory name to avoid recursion";
-   log.println(ss.str().c_str(), true);
+   log.println(ss.str(), true);
    ss.str(string());
    ss << "        (EG: myDir" << PATH_SEPARATOR << ". => no recursion)\n";
-   log.println(ss.str().c_str(), true);
+   log.println(ss.str(), true);
    ss.str(string());
    log.println("   -o, --output=<outputName>", true);
 
@@ -185,48 +185,51 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
         return;
 
     log.println("", true);
-    log.println(APP_HEADER.c_str(), true);
-    stringstream extraHeader;
+    log.println(APP_HEADER, true);
 
-#ifdef __clang__
-    extraHeader << "\nCompiled with clang version ";
-    extraHeader << __clang_major__ << "." << __clang_minor__;
-#else
-   #ifdef _MSC_VER
-      extraHeader << "\nCompiled with Visual Studio";
-      #ifdef _MSC_VER_STR // see types.h
-      extraHeader << " " << _MSC_VER_STR;
-      #endif
+    if (verbose >= 3) {
+       stringstream extraHeader;
+
+   #ifdef __clang__
+       extraHeader << "\nCompiled with clang version ";
+       extraHeader << __clang_major__ << "." << __clang_minor__;
    #else
-      #ifdef  __INTEL_COMPILER
-      extraHeader << "\nCompiled with Intel compiler ";
-      extraHeader << "(" << __INTEL_COMPILER_BUILD_DATE << ")";
+      #ifdef _MSC_VER
+         extraHeader << "\nCompiled with Visual Studio";
+         #ifdef _MSC_VER_STR // see types.h
+         extraHeader << " " << _MSC_VER_STR;
+         #endif
       #else
-         #ifdef  __GNUC__
-         extraHeader << "\nCompiled with gcc version ";
-         extraHeader << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__;
+         #ifdef  __INTEL_COMPILER
+         extraHeader << "\nCompiled with Intel compiler ";
+         extraHeader << "(" << __INTEL_COMPILER_BUILD_DATE << ")";
+         #else
+            #ifdef  __GNUC__
+            extraHeader << "\nCompiled with gcc version ";
+            extraHeader << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__;
+            #endif
          #endif
       #endif
    #endif
-#endif
 
-    if ((verbose >= 3) && (extraHeader.str().length() > 0)) {
-#if defined(__AVX2__)
-        extraHeader << " - AVX2";
-#elif defined(__AVX__)
-        extraHeader << " - AVX";
-#elif defined(__AVX512F__)
-        extraHeader << " - AVX512";
-#elif defined(__SSE4_1__)
-        extraHeader << " - SSE4.1";
-#elif defined(__SSE3__)
-        extraHeader << " - SSE3";
-#elif defined(__SSE2__)
-        extraHeader << " - SSE2";
-#elif defined(__SSE__)
-        extraHeader << " - SSE";
-#endif
-        log.println(extraHeader.str().c_str(), true);
+        if (extraHeader.str().length() > 0) {
+    #if defined(__AVX2__)
+            extraHeader << " - AVX2";
+    #elif defined(__AVX__)
+            extraHeader << " - AVX";
+    #elif defined(__AVX512F__)
+            extraHeader << " - AVX512";
+    #elif defined(__SSE4_1__)
+            extraHeader << " - SSE4.1";
+    #elif defined(__SSE3__)
+            extraHeader << " - SSE3";
+    #elif defined(__SSE2__)
+            extraHeader << " - SSE2";
+    #elif defined(__SSE__)
+            extraHeader << " - SSE";
+    #endif
+            log.println(extraHeader.str(), true);
+        }
     }
 
     log.println("", true);
@@ -237,17 +240,17 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
 #define WARNING_OPT_NOVALUE(opt) \
                  stringstream ss; \
                  ss << "Warning: ignoring option [" << opt << "] with no value."; \
-                 log.println(ss.str().c_str(), verbose > 0)
+                 log.println(ss.str(), verbose > 0)
 
 #define WARNING_OPT_COMP_ONLY(opt) \
                  stringstream ss; \
                  ss << "Warning: ignoring option [" << opt << "]. Only applicable in compress mode."; \
-                 log.println(ss.str().c_str(), verbose > 0)
+                 log.println(ss.str(), verbose > 0)
 
 #define WARNING_OPT_DUPLICATE(opt, val) \
                  stringstream ss; \
                  ss << "Warning: ignoring duplicate " << opt << ": " << name;\
-                 log.println(ss.str().c_str(), verbose > 0)
+                 log.println(ss.str(), verbose > 0)
 
 
 bool toInt(string& s, int& res)
@@ -267,12 +270,12 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 {
     string inputName;
     string outputName;
-    string strLevel = "";
-    string strVerbose = "";
-    string strTasks = "";
-    string strBlockSize = "";
-    string strFrom = "";
-    string strTo = "";
+    string strLevel;
+    string strVerbose;
+    string strTasks;
+    string strBlockSize;
+    string strFrom;
+    string strTo;
     string strRemove = STR_FALSE;
     string strOverwrite = STR_FALSE;
     string strChecksum = STR_FALSE;
@@ -288,7 +291,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
     int level = -1;
     int from = -1;
     int to = -1;
-    string mode = " ";
+    string mode;
     Printer log(cout); 
     bool showHeader = true;
 
@@ -296,50 +299,50 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
         string arg(argv[i]);
         arg = trim(arg);
 
-        if ((arg.compare(0, 10, "--verbose=") == 0) || (arg.compare(0, 2, "-v") == 0)) {
+        if (arg == "-v") {
             ctx = ARG_IDX_VERBOSE;
             continue;
         }
 
-        if ((arg.compare(0, 8, "--input=") == 0) || (arg.compare(0, 2, "-i") == 0)) {
+        if (arg == "-i") {
             ctx = ARG_IDX_INPUT;
             continue;
         }
 
-        if ((arg.compare(0, 9, "--output=") == 0) || (arg.compare(0, 2, "-o") == 0)) {
+        if (arg == "-o") {
             ctx = ARG_IDX_OUTPUT;
             continue;
         }
 
         // Extract verbosity, output and mode first
-        if ((arg.compare(0, 10, "--compress") == 0) || (arg.compare(0, 2, "-c") == 0)) {
+        if ((arg == "-c") || (arg.compare(0, 10, "--compress") == 0)) {
             if (mode == "d") {
                 cerr << "Both compression and decompression options were provided." << endl;
                 return Error::ERR_INVALID_PARAM;
             }
 
-            mode = 'c';
+            mode = "c";
             continue;
         }
 
-        if ((arg.compare(0, 12, "--decompress") == 0) || (arg.compare(0, 2, "-d") == 0)) {
+        if ((arg == "-d") || (arg.compare(0, 12, "--decompress") == 0)) {
             if (mode == "c") {
                 cerr << "Both compression and decompression options were provided." << endl;
                 return Error::ERR_INVALID_PARAM;
             }
 
-            mode = 'd';
+            mode = "d";
             continue;
         }
 
-        if ((arg.compare(0, 10, "--verbose=") == 0) || (ctx == ARG_IDX_VERBOSE)) {
+        if ((ctx == ARG_IDX_VERBOSE) || (arg.compare(0, 10, "--verbose=") == 0)) {
            if (strVerbose != "") {
                 stringstream ss;
                 ss << "Warning: ignoring verbosity level: " << arg;
-                log.println(ss.str().c_str(), verbose > 0);
+                log.println(ss.str(), verbose > 0);
             }
             else {
-               strVerbose = (arg.compare(0, 10, "--verbose=") == 0) ? arg.substr(10) : arg;
+               strVerbose = (ctx == ARG_IDX_VERBOSE) ? arg : arg.substr(10);
                strVerbose = trim(strVerbose);
 
                if (strVerbose.length() != 1) {
@@ -355,10 +358,12 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                }
             }
         }
-        else if (ctx == ARG_IDX_OUTPUT) {
+        else if ((ctx == ARG_IDX_OUTPUT) || (arg.compare(0, 9, "--output=") == 0)) {
+            outputName = (ctx == ARG_IDX_OUTPUT) ? arg : arg.substr(9);
             outputName = trim(arg);
         }
-        else if (ctx == ARG_IDX_INPUT) {
+        else if ((ctx == ARG_IDX_INPUT) || (arg.compare(0, 8, "--input=") == 0)) {
+            inputName = (ctx == ARG_IDX_INPUT) ? arg : arg.substr(8);
             inputName = trim(arg);
         }
 
@@ -366,9 +371,11 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
     }
 
     // Overwrite verbosity if the output goes to stdout
-    if ((inputName.length() == 0) && (outputName.length() == 0)) {
-        verbose = 0;
-        strVerbose = "0";
+    if (outputName.length() == 0) {
+        if (inputName.length() == 0) {
+            verbose = 0;
+            strVerbose = "0";
+        }
     }
     else {
         string str = outputName;
@@ -381,8 +388,8 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
     }
 
     printHeader(log, verbose, showHeader);
-    inputName = "";
-    outputName = "";
+    inputName.clear();
+    outputName.clear();
     ctx = -1;
 
     if (argc == 1) {
@@ -505,8 +512,8 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
                 continue;
         }
 
-        if ((arg.compare(0, 9, "--output=") == 0) || (ctx == ARG_IDX_OUTPUT)) {
-            string name = (arg.compare(0, 9, "--output=") == 0) ? arg.substr(9) : arg;
+        if ((ctx == ARG_IDX_OUTPUT) || (arg.compare(0, 9, "--output=") == 0)) {
+            string name = (ctx == ARG_IDX_OUTPUT) ? arg : arg.substr(9);
             name = trim(name);
 
             if (outputName != "") {
@@ -523,8 +530,8 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             continue;
         }
 
-        if ((arg.compare(0, 8, "--input=") == 0) || (ctx == ARG_IDX_INPUT)) {
-            string name = (arg.compare(0, 8, "--input=") == 0) ? arg.substr(8) : arg;
+        if ((ctx == ARG_IDX_INPUT) || (arg.compare(0, 8, "--input=") == 0)) {
+            string name = (ctx == ARG_IDX_INPUT) ? arg : arg.substr(8);
             name = trim(name);
 
             if (inputName != "") {
@@ -541,8 +548,8 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             continue;
         }
 
-        if ((arg.compare(0, 10, "--entropy=") == 0) || (ctx == ARG_IDX_ENTROPY)) {
-            string name = (arg.compare(0, 10, "--entropy=") == 0) ? arg.substr(10) : arg;
+        if ((ctx == ARG_IDX_ENTROPY) || (arg.compare(0, 10, "--entropy=") == 0)) {
+            string name = (ctx == ARG_IDX_ENTROPY) ? arg : arg.substr(10);
             name = trim(name);
 
             if (codec != "") {
@@ -561,8 +568,8 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             continue;
         }
 
-        if ((arg.compare(0, 12, "--transform=") == 0) || (ctx == ARG_IDX_TRANSFORM)) {
-            string name = (arg.compare(0, 12, "--transform=") == 0) ? arg.substr(12) : arg;
+        if ((ctx == ARG_IDX_TRANSFORM) || (arg.compare(0, 12, "--transform=") == 0)) {
+            string name = (ctx == ARG_IDX_TRANSFORM) ? arg : arg.substr(12);
             name = trim(name);
 
             if (transf != "") {
@@ -589,14 +596,14 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             continue;
         }
 
-        if ((arg.compare(0, 8, "--level=") == 0) || (ctx == ARG_IDX_LEVEL)) {
+        if ((ctx == ARG_IDX_LEVEL) || (arg.compare(0, 8, "--level=") == 0)) {
             if (mode != "c"){
                 log.println("Warning: ignoring level (only valid for compression)", verbose > 0);
                 ctx = -1;
                 continue;
             }
 
-            string name = (arg.compare(0, 8, "--level=") == 0) ? arg.substr(8) : arg;
+            string name = (ctx == ARG_IDX_LEVEL) ? arg : arg.substr(8);
             name = trim(name);
 
             if (strLevel != "") {
@@ -615,8 +622,8 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             continue;
         }
 
-        if ((arg.compare(0, 8, "--block=") == 0) || (ctx == ARG_IDX_BLOCK)) {
-            string name = (arg.compare(0, 8, "--block=") == 0) ? arg.substr(8) : arg;
+        if ((ctx == ARG_IDX_BLOCK) || (arg.compare(0, 8, "--block=") == 0)) {
+            string name = (ctx == ARG_IDX_BLOCK) ? arg : arg.substr(8);
             name = trim(name);
 
             if (name.length() == 0) {
@@ -677,8 +684,8 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
             continue;
         }
 
-        if ((arg.compare(0, 7, "--jobs=") == 0) || (ctx == ARG_IDX_JOBS)) {
-            string name = (arg.compare(0, 7, "--jobs=") == 0) ? arg.substr(7) : arg;
+        if ((ctx == ARG_IDX_JOBS) || (arg.compare(0, 7, "--jobs=") == 0)) {
+            string name = (ctx == ARG_IDX_JOBS) ? arg : arg.substr(7);
             name = trim(name);
 
             if (strTasks != "") {
@@ -756,7 +763,7 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
         if ((arg.compare(0, 10, "--verbose=") != 0) && (ctx == -1) && (arg.compare(0, 9, "--output=") != 0)) {
             stringstream ss;
             ss << "Warning: ignoring unknown option [" << arg << "]";
-            log.println(ss.str().c_str(), verbose > 0);
+            log.println(ss.str(), verbose > 0);
         }
 
         ctx = -1;
@@ -765,31 +772,33 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
     if (ctx != -1) {
         stringstream ss;
         ss << "Warning: ignoring option with missing value [" << CMD_LINE_ARGS[ctx] << "]";
-        log.println(ss.str().c_str(), verbose > 0);
+        log.println(ss.str(), verbose > 0);
     }
 
     if (level >= 0) {
         if (codec.length() > 0) {
             stringstream ss;
             ss << "Warning: providing the 'level' option forces the entropy codec. Ignoring [" << codec << "]";
-            log.println(ss.str().c_str(), verbose > 0);
+            log.println(ss.str(), verbose > 0);
         }
 
         if (transf.length() > 0) {
             stringstream ss;
             ss << "Warning: providing the 'level' option forces the transform. Ignoring [" << transf << "]";
-            log.println(ss.str().c_str(), verbose > 0);
+            log.println(ss.str(), verbose > 0);
         }
     }
 
     if (strBlockSize.length() > 0)
         map["blockSize"] = strBlockSize;
 
-    if (autoBlockSize == true)
-        map["autoBlock"] = STR_TRUE;
-
     map["verbosity"] = (strVerbose == "") ? "1" : strVerbose;
     map["mode"] = mode;
+    map["inputName"] = inputName;
+    map["outputName"] = outputName;
+
+    if (autoBlockSize == true)
+        map["autoBlock"] = STR_TRUE;
 
     if ((mode == "c") && (strLevel != ""))
         map["level"] = strLevel;
@@ -799,9 +808,6 @@ int processCommandLine(int argc, const char* argv[], CTX_MAP<string, string>& ma
 
     if (strRemove == STR_TRUE)
         map["remove"] = STR_TRUE;
-
-    map["inputName"] = inputName;
-    map["outputName"] = outputName;
 
     if (codec.length() > 0)
         map["entropy"] = codec;
@@ -886,7 +892,7 @@ int main(int argc, const char* argv[])
             stringstream ss;
             ss << "Warning: the number of jobs is  limited to 1 in this version";
             Printer log(cout);
-            log.println(ss.str().c_str(), verbosity > 0);
+            log.println(ss.str(), verbosity > 0);
         }
 
         jobs = 1;
@@ -906,7 +912,7 @@ int main(int argc, const char* argv[])
             stringstream ss;
             ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY;
             Printer log(cout);
-            log.println(ss.str().c_str(), verbosity > 0);
+            log.println(ss.str(), verbosity > 0);
             jobs = MAX_CONCURRENCY;
         }
 

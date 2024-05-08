@@ -185,7 +185,7 @@ int BlockCompressor::compress(uint64& outputSize)
         nbFiles = int(files.size());
         string strFiles = nbFiles > 1 ? " files" : " file";
         ss << nbFiles << strFiles << " to compress\n";
-        log.println(ss.str().c_str(), _verbosity > 0);
+        log.println(ss.str(), _verbosity > 0);
         ss.str(string());
     }
 
@@ -210,29 +210,29 @@ int BlockCompressor::compress(uint64& outputSize)
         else
             ss << "Block size: " << _blockSize << " bytes";
 
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
         ss << "Verbosity: " << _verbosity;
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
         ss << "Overwrite: " << (_overwrite ? "true" : "false");
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
         ss << "Checksum: " << (_checksum ? "true" : "false");
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
         string etransform = _transform;
         transform(etransform.begin(), etransform.end(), etransform.begin(), ::toupper);
         ss << "Using " << (etransform == "NONE" ? "no" : _transform) << " transform (stage 1)";
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
         string ecodec = _codec;
         transform(ecodec.begin(), ecodec.end(), ecodec.begin(), ::toupper);
         ss << "Using " << (ecodec == "NONE" ? "no" : _codec) << " entropy codec (stage 2)";
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
         ss << "Using " << _jobs << " job" << (_jobs > 1 ? "s" : "");
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
     }
 
@@ -455,17 +455,17 @@ int BlockCompressor::compress(uint64& outputSize)
                 ss << int(delta) << " ms";
             }
 
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
             ss.str(string());
             ss << "Total output size: " << written << (written > 1 ? " bytes" : " byte");
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
         }
 
         if (read > 0) {
             ss.str(string());
             ss.precision(6);
             ss << "Compression ratio: " << float(written) / float(read);
-            log.println(ss.str().c_str(), _verbosity > 0);
+            log.println(ss.str(), _verbosity > 0);
             ss.str(string());
         }
     }
@@ -579,10 +579,10 @@ T FileCompressTask<T>::run()
 
     if (verbosity > 2) {
         ss << "Input file name: '" << inputName << "'";
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
         ss << "Output file name: '" << outputName << "'";
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
     }
 
@@ -696,7 +696,7 @@ T FileCompressTask<T>::run()
 
     // Compress
     ss << "\nCompressing " << inputName << " ...";
-    log.println(ss.str().c_str(), verbosity > 1);
+    log.println(ss.str(), verbosity > 1);
     log.println("\n", verbosity > 3);
     int64 read = 0;
     byte* buf = new byte[DEFAULT_BUFFER_SIZE];
@@ -786,19 +786,19 @@ T FileCompressTask<T>::run()
                 ss << "Compression time:  " << int(delta) << " ms";
             }
 
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
             ss.str(string());
             ss << "Input size:        " << read;
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
             ss.str(string());
             ss << "Output size:       " << encoded;
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
             ss.str(string());
 
             if (read > 0) {
                 ss.precision(6);
                 ss << "Compression ratio: " << (double(encoded) / double(read));
-                log.println(ss.str().c_str(), true);
+                log.println(ss.str(), true);
                 ss.str(string());
             }
         } else {
@@ -819,14 +819,14 @@ T FileCompressTask<T>::run()
                 ss << " in " << int(delta) << " ms";
             }
 
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
             ss.str(string());
         }
 
         if ((verbosity > 1) && (delta > 0) && (read > 0)) {
             double b2KB = double(1000) / double(1024);
             ss << "Throughput (KB/s): " << uint(double(read) * b2KB / delta);
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
             ss.str(string());
         }
 

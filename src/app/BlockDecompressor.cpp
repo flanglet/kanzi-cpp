@@ -105,7 +105,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         nbFiles = int(files.size());
         string strFiles = nbFiles > 1 ? " files" : " file";
         ss << nbFiles << strFiles << " to decompress\n";
-        log.println(ss.str().c_str(), _verbosity > 0);
+        log.println(ss.str(), _verbosity > 0);
         ss.str(string());
     }
 
@@ -126,13 +126,13 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     if (_verbosity > 2) {
         ss << "Verbosity: " << _verbosity;
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
         ss << "Overwrite: " << (_overwrite ? "true" : "false");
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
         ss << "Using " << _jobs << " job" << (_jobs > 1 ? "s" : "");
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
     }
 
@@ -336,10 +336,10 @@ int BlockDecompressor::decompress(uint64& inputSize)
             ss << int(delta) << " ms";
         }
 
-        log.println(ss.str().c_str(), _verbosity > 0);
+        log.println(ss.str(), _verbosity > 0);
         ss.str(string());
         ss << "Total output size: " << read << (read > 1 ? " bytes" : " byte");
-        log.println(ss.str().c_str(), _verbosity > 0);
+        log.println(ss.str(), _verbosity > 0);
         ss.str(string());
     }
 
@@ -415,10 +415,10 @@ T FileDecompressTask<T>::run()
 
     if (verbosity > 2) {
         ss << "Input file name: '" << inputName << "'";
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
         ss << "Output file name: '" << outputName << "'";
-        log.println(ss.str().c_str(), true);
+        log.println(ss.str(), true);
         ss.str(string());
     }
 
@@ -426,7 +426,7 @@ T FileDecompressTask<T>::run()
 
     int64 read = 0;
     ss << "\nDecompressing " << inputName << " ...";
-    log.println(ss.str().c_str(), verbosity > 1);
+    log.println(ss.str(), verbosity > 1);
     log.println("\n", verbosity > 3);
 
     if (_listeners.size() > 0) {
@@ -666,13 +666,13 @@ T FileDecompressTask<T>::run()
                 ss << "Decompression time: " << int(delta) << " ms";
             }
 
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
             ss.str(string());
             ss << "Input size:         " << decoded;
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
             ss.str(string());
             ss << "Output size:        " << read;
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
             ss.str(string());
         }
 
@@ -688,14 +688,14 @@ T FileDecompressTask<T>::run()
                 ss << " bytes in " << int(delta) << " ms";
             }
 
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
             ss.str(string());
         }
 
         if ((verbosity > 1) && (delta > 0)) {
             double b2KB = double(1000) / double(1024);
             ss << "Throughput (KB/s):  " << uint(double(read) * b2KB / delta);
-            log.println(ss.str().c_str(), true);
+            log.println(ss.str(), true);
             ss.str(string());
         }
 

@@ -39,32 +39,27 @@ limitations under the License.
 #endif
 
 
-inline std::string __trim(std::string& str, bool left, bool right)
+// trim from end of string (right)
+inline std::string& rtrim(std::string& s)
 {
-    if (str.empty())
-        return str;
-
-    std::string::size_type begin = 0;
-    std::string::size_type end = str.length() - 1;
-
-    if (left) {
-       while (begin <= end && (str[begin] <= 0x20 || str[begin] == 0x7F))
-          begin++;
-    }
-
-    if (right) {
-       while (end > begin && (str[end] <= 0x20 || str[end] == 0x7F))
-          end--;
-    }
-
-    return str.substr(begin, end - begin + 1);
+    static const char* ws = " \t\n\r";
+    s.erase(s.find_last_not_of(ws) + 1);
+    return s;
 }
 
+// trim from beginning of string (left)
+inline std::string& ltrim(std::string& s)
+{
+    static const char* ws = " \t\n\r";
+    s.erase(0, s.find_first_not_of(ws));
+    return s;
+}
 
-inline std::string trim(std::string& str)  { return __trim(str, true, true); }
-inline std::string ltrim(std::string& str) { return __trim(str, true, false); }
-inline std::string rtrim(std::string& str) { return __trim(str, false, true); }
-
+// trim from both ends of string (right then left)
+inline std::string& trim(std::string& s)
+{
+    return ltrim(rtrim(s));
+}
 
 inline void tokenize(const std::string& str, std::vector<std::string>& v, char token)
 {

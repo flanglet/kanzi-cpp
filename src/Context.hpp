@@ -89,7 +89,7 @@ namespace kanzi
 
       std::stringstream ss;
       int res;
-      ss << it->second.c_str();
+      ss << it->second;
       ss >> res;
       return res;
    }
@@ -104,7 +104,7 @@ namespace kanzi
 
       std::stringstream ss;
       int64 res;
-      ss << it->second.c_str();
+      ss << it->second;
       ss >> res;
       return res;
    }
@@ -113,7 +113,7 @@ namespace kanzi
    inline std::string Context::getString(const std::string& key, const std::string& defValue) const
    {
       CTX_MAP<std::string, std::string>::const_iterator it = _map.find(key);
-      return (it != _map.end()) ? it->second.c_str() : defValue;
+      return (it != _map.end()) ? it->second : defValue;
    }
 
 

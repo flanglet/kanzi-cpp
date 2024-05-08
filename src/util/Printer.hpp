@@ -50,6 +50,25 @@ namespace kanzi
             }
          }
 
+         void print(const std::string& msg, bool print) {
+            if (print == true) {
+   #ifdef CONCURRENCY_ENABLED
+               std::lock_guard<std::mutex> lock(_mtx);
+   #endif
+               (*_os) << msg ;
+            }
+         }
+
+         void println(const std::string& msg, bool print) {
+            if (print == true) {
+   #ifdef CONCURRENCY_ENABLED
+               std::lock_guard<std::mutex> lock(_mtx);
+   #endif
+               (*_os) << msg << std::endl;
+            }
+         }
+
+
    private:
    #ifdef CONCURRENCY_ENABLED
          static std::mutex _mtx;
