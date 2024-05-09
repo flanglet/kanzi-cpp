@@ -33,6 +33,19 @@ limitations under the License.
 namespace kanzi
 {
 
+   // Poor's man equivalent to std::variant used to support C++98 and up.
+   // union cannot be used due to the std:string field.
+   // The extra memory used does not matter for the application context since
+   // the map is small.
+   typedef struct ContextVal {
+       bool isString;
+       int64 lVal;
+       std::string sVal;
+
+       ContextVal(bool b, uint64 val, std::string str) : isString(b), lVal(val), sVal(str) {}
+       ContextVal() {}
+   } ctxVal;
+
    class Context
    {
    public:
@@ -44,9 +57,9 @@ namespace kanzi
        Context(const Context>& c, const ThreadPool*) : _map(c._map) { _pool = nullptr; }
        Context() { _pool = nullptr; }
        Context(const Context& c) : _map(c._map) { _pool = nullptr; }
-#else
-           Context(ThreadPool* p = nullptr) : _pool(p) {}
-           Context(const Context& c, ThreadPool* p = nullptr) : _map(c._map), _pool(p) {}
+    #else
+       Context(ThreadPool* p = nullptr) : _pool(p) {}
+       Context(const Context& c, ThreadPool* p = nullptr) : _map(c._map), _pool(p) {}
     #endif
 #else
        Context() {}
@@ -66,7 +79,7 @@ namespace kanzi
 #endif
 
    private:
-       CTX_MAP<std::string, std::string> _map;
+       CTX_MAP<std::string, ContextVal> _map;
 
 #ifdef CONCURRENCY_ENABLED
        ThreadPool* _pool;
@@ -82,58 +95,50 @@ namespace kanzi
 
    inline int Context::getInt(const std::string& key, int defValue) const
    {
-      CTX_MAP<std::string, std::string>::const_iterator it = _map.find(key);
-
-      if (it == _map.end())
-          return defValue;
-
-      std::stringstream ss;
-      int res;
-      ss << it->second;
-      ss >> res;
-      return res;
+      return int(this->getLong(key, defValue));
    }
 
 
    inline int64 Context::getLong(const std::string& key, int64 defValue) const
    {
-      CTX_MAP<std::string, std::string>::const_iterator it = _map.find(key);
+      CTX_MAP<std::string, ContextVal>::const_iterator it = _map.find(key);
 
       if (it == _map.end())
           return defValue;
 
-      std::stringstream ss;
-      int64 res;
-      ss << it->second;
-      ss >> res;
-      return res;
+      return it->second.isString == true ? defValue : it->second.lVal;
    }
 
 
    inline std::string Context::getString(const std::string& key, const std::string& defValue) const
    {
-      CTX_MAP<std::string, std::string>::const_iterator it = _map.find(key);
-      return (it != _map.end()) ? it->second : defValue;
+      CTX_MAP<std::string, ContextVal>::const_iterator it = _map.find(key);
+
+      if (it == _map.end())
+          return defValue;
+
+      return it->second.isString == true ? it->second.sVal : defValue;
    }
 
 
    inline void Context::putInt(const std::string& key, int value)
    {
-      _map[key] = TOSTR(value);
+      _map[key] = ctxVal(false, value, "");
    }
 
 
    inline void Context::putLong(const std::string& key, int64 value)
    {
-      _map[key] = TOSTR(value);
+      _map[key] = ctxVal(false, value, "");
    }
 
 
    inline void Context::putString(const std::string& key, const std::string& value)
    {
-      _map[key] = value;
+      _map[key] = ctxVal(true, 0, value);
    }
 
 }
 #endif
+
 

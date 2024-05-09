@@ -42,16 +42,24 @@ limitations under the License.
 // trim from end of string (right)
 inline std::string& rtrim(std::string& s)
 {
-    static const char* ws = " \t\n\r";
-    s.erase(s.find_last_not_of(ws) + 1);
+    static const char* whitespaces = " \t\f\v\n\r";
+    std::size_t pos = s.find_last_not_of(whitespaces);
+
+    if (pos != std::string::npos)
+       s.erase(pos + 1);
+
     return s;
 }
 
 // trim from beginning of string (left)
 inline std::string& ltrim(std::string& s)
 {
-    static const char* ws = " \t\n\r";
-    s.erase(0, s.find_first_not_of(ws));
+    static const char* whitespaces = " \t\f\v\n\r";
+    std::size_t pos = s.find_first_not_of(whitespaces);
+
+    if (pos != std::string::npos)
+       s.erase(0, pos);
+
     return s;
 }
 

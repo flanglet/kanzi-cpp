@@ -187,7 +187,7 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
     log.println("", true);
     log.println(APP_HEADER, true);
 
-    if (verbose >= 3) {
+    if (verbose >= 4) {
        stringstream extraHeader;
 
    #ifdef __clang__
@@ -249,7 +249,7 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
 
 #define WARNING_OPT_DUPLICATE(opt, val) \
                  stringstream ss; \
-                 ss << "Warning: ignoring duplicate " << opt << ": " << name;\
+                 ss << "Warning: ignoring duplicate " << opt << ": " << val;\
                  log.println(ss.str(), verbose > 0)
 
 
@@ -293,7 +293,7 @@ int processCommandLine(int argc, const char* argv[], Context& map)
 
     for (int i = 1; i < argc; i++) {
         string arg(argv[i]);
-        arg = trim(arg);
+        trim(arg);
 
         if (arg == "-v") {
             ctx = ARG_IDX_VERBOSE;
@@ -338,22 +338,25 @@ int processCommandLine(int argc, const char* argv[], Context& map)
                 log.println(ss.str(), verbose > 0);
             }
             else {
-               string strVerbose = (ctx == ARG_IDX_VERBOSE) ? arg : arg.substr(10);
-               strVerbose = trim(strVerbose);
-               bool res = toInt(strVerbose, verbose);
+               if (ctx != ARG_IDX_VERBOSE)
+                  arg = arg.substr(10);
 
-               if ((res == false) || (verbose < 0) || (verbose > 5)) {
+               if ((toInt(arg, verbose) == false) || (verbose < 0) || (verbose > 5)) {
                    cerr << "Invalid verbosity level provided on command line: " << arg << endl;
                    return Error::ERR_INVALID_PARAM;
                }
             }
         }
         else if ((ctx == ARG_IDX_OUTPUT) || (arg.compare(0, 9, "--output=") == 0)) {
-            outputName = (ctx == ARG_IDX_OUTPUT) ? arg : arg.substr(9);
+            if (ctx != ARG_IDX_OUTPUT)
+               arg = arg.substr(9);
+
             outputName = trim(arg);
         }
         else if ((ctx == ARG_IDX_INPUT) || (arg.compare(0, 8, "--input=") == 0)) {
-            inputName = (ctx == ARG_IDX_INPUT) ? arg : arg.substr(8);
+            if (ctx != ARG_IDX_INPUT)
+               arg = arg.substr(8);
+
             inputName = trim(arg);
         }
 
@@ -403,7 +406,7 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             return 0;
         }
 
-        if ((arg == "--compress") || (arg == "-c") || (arg == "--decompress") || (arg == "-d")) {
+        if ((arg == "-c") || (arg == "-d") || (arg == "--compress") || (arg == "--decompress")) {
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
@@ -501,17 +504,17 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((ctx == ARG_IDX_OUTPUT) || (arg.compare(0, 9, "--output=") == 0)) {
-            string name = (ctx == ARG_IDX_OUTPUT) ? arg : arg.substr(9);
-            name = trim(name);
+            string oName = (ctx == ARG_IDX_OUTPUT) ? arg : arg.substr(9);
+            trim(oName);
 
             if (outputName != "") {
-                WARNING_OPT_DUPLICATE("output name", name);
+                WARNING_OPT_DUPLICATE("output name", oName);
             } else {
-                if ((name.length() >= 2) && (name[0] == '.') && (name[1] == PATH_SEPARATOR)) {
-                   name = (name.length() == 2) ? name.substr(0, 1) : name.substr(2);
+                if ((oName.length() >= 2) && (oName[0] == '.') && (oName[1] == PATH_SEPARATOR)) {
+                   oName = (oName.length() == 2) ? oName.substr(0, 1) : oName.substr(2);
                 }
 
-                outputName = name;
+                outputName = oName;
             }
 
             ctx = -1;
@@ -519,17 +522,19 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((ctx == ARG_IDX_INPUT) || (arg.compare(0, 8, "--input=") == 0)) {
-            string name = (ctx == ARG_IDX_INPUT) ? arg : arg.substr(8);
-            name = trim(name);
+            if (ctx != ARG_IDX_INPUT)
+               arg = arg.substr(8);
+
+            trim(arg);
 
             if (inputName != "") {
-                WARNING_OPT_DUPLICATE("input name", name);
+                WARNING_OPT_DUPLICATE("input name", arg);
             } else {
-                if ((name.length() >= 2) && (name[0] == '.') && (name[1] == PATH_SEPARATOR)) {
-                   name = (name.length() == 2) ? name.substr(0, 1) : name.substr(2);
+                if ((arg.length() >= 2) && (arg[0] == '.') && (arg[1] == PATH_SEPARATOR)) {
+                   arg = (arg.length() == 2) ? arg.substr(0, 1) : arg.substr(2);
                 }
 
-                inputName = name;
+                inputName = arg;
             }
 
             ctx = -1;
@@ -537,18 +542,20 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((ctx == ARG_IDX_ENTROPY) || (arg.compare(0, 10, "--entropy=") == 0)) {
-            string name = (ctx == ARG_IDX_ENTROPY) ? arg : arg.substr(10);
-            name = trim(name);
+            if (ctx != ARG_IDX_ENTROPY)
+               arg = arg.substr(10);
+
+            trim(arg);
 
             if (codec != "") {
-                WARNING_OPT_DUPLICATE("entropy", name);
+                WARNING_OPT_DUPLICATE("entropy", arg);
             } else {
-                if (name.length() == 0) {
+                if (arg.length() == 0) {
                     cerr << "Invalid empty entropy provided on command line" << endl;
                     return Error::ERR_INVALID_PARAM;
                 }
 
-                codec = name;
+                codec = arg;
                 transform(codec.begin(), codec.end(), codec.begin(), ::toupper);
             }
 
@@ -557,18 +564,20 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((ctx == ARG_IDX_TRANSFORM) || (arg.compare(0, 12, "--transform=") == 0)) {
-            string name = (ctx == ARG_IDX_TRANSFORM) ? arg : arg.substr(12);
-            name = trim(name);
+            if (ctx != ARG_IDX_TRANSFORM)
+                arg = arg.substr(12);
+
+            trim(arg);
 
             if (transf != "") {
-                WARNING_OPT_DUPLICATE("transform", name);
+                WARNING_OPT_DUPLICATE("transform", arg);
             } else {
-                if (name.length() == 0) {
+                if (arg.length() == 0) {
                     cerr << "Invalid empty transform provided on command line" << endl;
                     return Error::ERR_INVALID_PARAM;
                 }
 
-                transf = name;
+                transf = arg;
                 transform(transf.begin(), transf.end(), transf.begin(), ::toupper);
             }
 
@@ -591,15 +600,15 @@ int processCommandLine(int argc, const char* argv[], Context& map)
                 continue;
             }
 
-            string name = (ctx == ARG_IDX_LEVEL) ? arg : arg.substr(8);
-            name = trim(name);
+            if (ctx != ARG_IDX_LEVEL)
+               arg = arg.substr(8);
+
+            trim(arg);
 
             if (level >= 0) {
-                WARNING_OPT_DUPLICATE("level", name);
+                WARNING_OPT_DUPLICATE("level", arg);
             } else {
-                bool res = toInt(name, level);
-
-                if ((res == false) || ((level < 0) || (level > 9))) {
+                if ((toInt(arg, level) == false) || ((level < 0) || (level > 9))) {
                     cerr << "Invalid compression level provided on command line: " << arg << endl;
                     return Error::ERR_INVALID_PARAM;
                 }
@@ -610,59 +619,54 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((ctx == ARG_IDX_BLOCK) || (arg.compare(0, 8, "--block=") == 0)) {
-            string name = (ctx == ARG_IDX_BLOCK) ? arg : arg.substr(8);
-            name = trim(name);
+            if (ctx != ARG_IDX_BLOCK)
+               arg = arg.substr(8);
 
-            if (name.length() == 0) {
+            trim(arg);
+
+            if (arg.length() == 0) {
                 cerr << "Invalid block size provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
             }
 
             if ((blockSize >= 0) || (autoBlockSize >= 0)) {
-                WARNING_OPT_DUPLICATE("block size", name);
+                WARNING_OPT_DUPLICATE("block size", arg);
                 ctx = -1;
                 continue;
             }
 
-            transform(name.begin(), name.end(), name.begin(), ::toupper);
+            transform(arg.begin(), arg.end(), arg.begin(), ::toupper);
 
-            if (name == "AUTO") {
+            if (arg == "AUTO") {
                 autoBlockSize = 1;
             }
             else {
                 uint64 scale = 1;
-                char lastChar = name[name.length() - 1];
+                char lastChar = arg[arg.length() - 1];
 
                 // Process K or M or G suffix
                 if ('K' == lastChar) {
                     scale = 1024;
-                    name.resize(name.length() - 1);
+                    arg.resize(arg.length() - 1);
                 }
                 else if ('M' == lastChar) {
                     scale = 1024 * 1024;
-                    name.resize(name.length() - 1);
+                    arg.resize(arg.length() - 1);
                 }
                 else if ('G' == lastChar) {
                     scale = 1024 * 1024 * 1024;
-                    name.resize(name.length() - 1);
+                    arg.resize(arg.length() - 1);
                 }
 
-                size_t k = 0;
-
-                while ((k < name.length()) && ((name[k] >= '0') && (name[k] <= '9')))
-                    k++;
-
-                if (k < name.length()) {
+                if (toInt(arg, blockSize) == false) {
                     cerr << "Invalid block size provided on command line: " << arg << endl;
                     return Error::ERR_INVALID_PARAM;
                 }
 
-                uint64 bk;
                 stringstream ss1;
-                ss1 << name;
-                ss1 >> bk;
-                bk *= scale;
-                blockSize = int(bk);
+                ss1 << arg;
+                ss1 >> blockSize;
+                blockSize = int(uint64(blockSize) * scale);
             }
 
             ctx = -1;
@@ -670,18 +674,18 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((ctx == ARG_IDX_JOBS) || (arg.compare(0, 7, "--jobs=") == 0)) {
-            string name = (ctx == ARG_IDX_JOBS) ? arg : arg.substr(7);
-            name = trim(name);
+            if (ctx != ARG_IDX_JOBS)
+               arg = arg.substr(7);
+
+            trim(arg);
 
             if (tasks >= 0) {
-                WARNING_OPT_DUPLICATE("jobs", name);
+                WARNING_OPT_DUPLICATE("jobs", arg);
                 ctx = -1;
                 continue;
             }
 
-            bool res = toInt(name, tasks);
-
-            if ((res == false) || (tasks < 0)) {
+            if ((toInt(arg, tasks) == false) || (tasks < 0)) {
                 cerr << "Invalid number of jobs provided on command line: " << arg << endl;
                 return Error::ERR_INVALID_PARAM;
             }
@@ -691,8 +695,8 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((arg.compare(0, 7, "--from=") == 0) && (ctx == -1)) {
-            string name = arg.substr(7);
-            name = trim(name);
+            arg = arg.substr(7);
+            trim(arg);
 
             if (mode != "d"){
                 log.println("Warning: ignoring start block (only valid for decompression)", verbose > 0);
@@ -700,11 +704,9 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             }
 
             if (from >= 0) {
-                WARNING_OPT_DUPLICATE("start block", name);
+                WARNING_OPT_DUPLICATE("start block", arg);
             } else {
-                bool res = toInt(name, from);
-
-                if ((res == false) || (from < 0)) {
+                if ((toInt(arg, from) == false) || (from < 0)) {
                     cerr << "Invalid start block provided on command line: " << arg << endl;
 
                     if (from == 0) {
@@ -719,8 +721,8 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((arg.compare(0, 5, "--to=") == 0) && (ctx == -1)) {
-            string name = arg.substr(5);
-            name = trim(name);
+            arg = arg.substr(5);
+            trim(arg);
 
             if (mode != "d"){
                 log.println("Warning: ignoring end block (only valid for decompression)", verbose > 0);
@@ -728,11 +730,9 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             }
 
             if (to >= 0) {
-                WARNING_OPT_DUPLICATE("end block", name);
+                WARNING_OPT_DUPLICATE("end block", arg);
             } else {
-                bool res = toInt(name, to);
-
-                if ((res == false) || (to <= 0)) { // Must be > 0 (0 means nothing to do)
+                if ((toInt(arg, to) == false) || (to <= 0)) { // Must be > 0 (0 means nothing to do)
                     cerr << "Invalid end block provided on command line: " << arg << endl;
                     return Error::ERR_INVALID_PARAM;
                 }
@@ -854,6 +854,7 @@ int main(int argc, const char* argv[])
 
     string mode = args.getString("mode");
     int jobs = args.getInt("jobs", -1);
+exit(0);
 
     try {
 #ifndef CONCURRENCY_ENABLED
