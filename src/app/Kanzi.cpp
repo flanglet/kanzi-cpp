@@ -854,7 +854,6 @@ int main(int argc, const char* argv[])
 
     string mode = args.getString("mode");
     int jobs = args.getInt("jobs", -1);
-exit(0);
 
     try {
 #ifndef CONCURRENCY_ENABLED
