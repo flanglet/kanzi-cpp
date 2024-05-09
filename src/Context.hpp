@@ -54,7 +54,7 @@ namespace kanzi
     #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
        // Windows already has a built-in threadpool. Using it is better for performance.
        Context(const ThreadPool*) { _pool = nullptr; }
-       Context(const Context>& c, const ThreadPool*) : _map(c._map) { _pool = nullptr; }
+       Context(const Context& c, const ThreadPool*) : _map(c._map) { _pool = nullptr; }
        Context() { _pool = nullptr; }
        Context(const Context& c) : _map(c._map) { _pool = nullptr; }
     #else
