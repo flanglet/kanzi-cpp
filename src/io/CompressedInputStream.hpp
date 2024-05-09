@@ -188,7 +188,7 @@ namespace kanzi
 
    protected:
 
-       virtual void readHeader();
+       void readHeader();
 
 
    private:

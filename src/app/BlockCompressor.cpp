@@ -163,10 +163,9 @@ int BlockCompressor::compress(uint64& outputSize)
 
     if (isStdIn == false) {
         vector<string> errors;
-        string suffix(1, PATH_SEPARATOR);
-        suffix += ".";
-        bool isRecursive = (_inputName.length() < 2) 
-           || (_inputName.substr(_inputName.length() - 2) != suffix);
+        bool isRecursive = (_inputName.length() < 2) ||
+            (_inputName[_inputName.length() - 2] != PATH_SEPARATOR) ||
+            (_inputName[_inputName.length() - 1] != '.');
         FileListConfig cfg = { isRecursive, _noLinks, false, _noDotFiles };
         createFileList(_inputName, files, cfg, errors);
 
@@ -206,33 +205,21 @@ int BlockCompressor::compress(uint64& outputSize)
 
     if (_verbosity > 2) {
         if (_autoBlockSize == true)
-            ss << "Block size: 'auto'";
+            ss << "Block size: 'auto'" << endl;
         else
-            ss << "Block size: " << _blockSize << " bytes";
+            ss << "Block size: " << _blockSize << " bytes" << endl;
 
-        log.println(ss.str(), true);
-        ss.str(string());
-        ss << "Verbosity: " << _verbosity;
-        log.println(ss.str(), true);
-        ss.str(string());
-        ss << "Overwrite: " << (_overwrite ? "true" : "false");
-        log.println(ss.str(), true);
-        ss.str(string());
-        ss << "Checksum: " << (_checksum ? "true" : "false");
-        log.println(ss.str(), true);
-        ss.str(string());
+        ss << "Verbosity: " << _verbosity << endl;
+        ss << "Overwrite: " << (_overwrite ? "true" : "false") << endl;
+        ss << "Checksum: " << (_checksum ? "true" : "false") << endl;
         string etransform = _transform;
         transform(etransform.begin(), etransform.end(), etransform.begin(), ::toupper);
-        ss << "Using " << (etransform == "NONE" ? "no" : _transform) << " transform (stage 1)";
-        log.println(ss.str(), true);
-        ss.str(string());
+        ss << "Using " << (etransform == "NONE" ? "no" : _transform) << " transform (stage 1)" << endl;
         string ecodec = _codec;
         transform(ecodec.begin(), ecodec.end(), ecodec.begin(), ::toupper);
-        ss << "Using " << (ecodec == "NONE" ? "no" : _codec) << " entropy codec (stage 2)";
-        log.println(ss.str(), true);
-        ss.str(string());
-        ss << "Using " << _jobs << " job" << (_jobs > 1 ? "s" : "");
-        log.println(ss.str(), true);
+        ss << "Using " << (ecodec == "NONE" ? "no" : _codec) << " entropy codec (stage 2)" << endl;
+        ss << "Using " << _jobs << " job" << (_jobs > 1 ? "s" : "") << endl;
+        log.print(ss.str(), true);
         ss.str(string());
     }
 
@@ -257,6 +244,7 @@ int BlockCompressor::compress(uint64& outputSize)
 
     if (isStdIn == false) {
         struct STAT buffer;
+        memset(&buffer, 0, sizeof(buffer));
 
         if ((formattedInName.size() > 1) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
             formattedInName.resize(formattedInName.size() - 1);
@@ -449,23 +437,20 @@ int BlockCompressor::compress(uint64& outputSize)
             if (delta >= 1e5) {
                 ss.precision(1);
                 ss.setf(ios::fixed);
-                ss << (delta / 1000) << " s";
+                ss << (delta / 1000) << " s" << endl;
             }
             else {
-                ss << int(delta) << " ms";
+                ss << int(delta) << " ms" << endl;
             }
 
-            log.println(ss.str(), true);
-            ss.str(string());
-            ss << "Total output size: " << written << (written > 1 ? " bytes" : " byte");
-            log.println(ss.str(), true);
-        }
+            ss << "Total output size: " << written << (written > 1 ? " bytes" : " byte") << endl;
 
-        if (read > 0) {
-            ss.str(string());
-            ss.precision(6);
-            ss << "Compression ratio: " << float(written) / float(read);
-            log.println(ss.str(), _verbosity > 0);
+            if (read > 0) {
+                ss.precision(6);
+                ss << "Compression ratio: " << (float(written) / float(read)) << endl;
+            }
+
+            log.print(ss.str(), true);
             ss.str(string());
         }
     }
@@ -578,11 +563,9 @@ T FileCompressTask<T>::run()
     stringstream ss;
 
     if (verbosity > 2) {
-        ss << "Input file name: '" << inputName << "'";
-        log.println(ss.str(), true);
-        ss.str(string());
-        ss << "Output file name: '" << outputName << "'";
-        log.println(ss.str(), true);
+        ss << "Input file name: '" << inputName << "'" << endl;
+        ss << "Output file name: '" << outputName << "'" << endl;
+        log.print(ss.str(), true);
         ss.str(string());
     }
 
@@ -607,6 +590,7 @@ T FileCompressTask<T>::run()
             }
 
             struct STAT buffer;
+            memset(&buffer, 0, sizeof(buffer));
             string path = outputName;
             replace(path.begin(), path.end(), '\\', '/');
 
@@ -780,27 +764,22 @@ T FileCompressTask<T>::run()
             if (delta >= 1e5) {
                 ss.precision(1);
                 ss.setf(ios::fixed);
-                ss << "Compression time:  " << (delta / 1000) << " s";
+                ss << "Compression time:  " << (delta / 1000) << " s" << endl;
             }
             else {
-                ss << "Compression time:  " << int(delta) << " ms";
+                ss << "Compression time:  " << int(delta) << " ms" << endl;
             }
 
-            log.println(ss.str(), true);
-            ss.str(string());
-            ss << "Input size:        " << read;
-            log.println(ss.str(), true);
-            ss.str(string());
-            ss << "Output size:       " << encoded;
-            log.println(ss.str(), true);
-            ss.str(string());
+            ss << "Input size:        " << read << endl;
+            ss << "Output size:       " << encoded << endl;
 
             if (read > 0) {
                 ss.precision(6);
-                ss << "Compression ratio: " << (double(encoded) / double(read));
-                log.println(ss.str(), true);
-                ss.str(string());
+                ss << "Compression ratio: " << (double(encoded) / double(read)) << endl;
             }
+
+            log.print(ss.str(), true);
+            ss.str(string());
         } else {
             ss << "Compressing " << inputName << ": " << read << " => " << encoded;
             ss.precision(2);

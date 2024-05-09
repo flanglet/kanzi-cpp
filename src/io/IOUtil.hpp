@@ -112,6 +112,7 @@ namespace kanzi
    #endif
 
        struct STAT buffer;
+       memset(&buffer, 0, sizeof(buffer));
        int res = cfg._ignoreLinks == true ? LSTAT(target.c_str(), &buffer) : STAT(target.c_str(), &buffer);
 
        if (res != 0) {
@@ -300,8 +301,10 @@ namespace kanzi
          return true;
 
       struct STAT buf1;
+      memset(&buf1, 0, sizeof(buf1));
       int s1 = STAT(f1.c_str(), &buf1);
       struct STAT buf2;
+      memset(&buf2, 0, sizeof(buf2));
       int s2 = STAT(f2.c_str(), &buf2);
 
       if ((s1 < 0) && (s2 < 0))

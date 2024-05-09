@@ -140,7 +140,7 @@ namespace kanzi {
 
   protected:
 
-       virtual void writeHeader();
+       void writeHeader();
 
 
    private:

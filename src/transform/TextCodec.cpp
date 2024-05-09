@@ -466,7 +466,7 @@ void TextCodec1::reset(int count)
 #if __cplusplus >= 201103L
         memcpy(&_dictList[0], &TextCodec::STATIC_DICTIONARY[0], sizeof(TextCodec::STATIC_DICTIONARY));
 #else
-	for (int i = 0; i < TextCodec::STATIC_DICT_WORDS; i++)
+        for (int i = 0; i < TextCodec::STATIC_DICT_WORDS; i++)
             _dictList[i] = TextCodec::STATIC_DICTIONARY[i];
 #endif
 
@@ -936,7 +936,7 @@ void TextCodec2::reset(int count)
 #if __cplusplus >= 201103L
         memcpy(&_dictList[0], &TextCodec::STATIC_DICTIONARY[0], sizeof(TextCodec::STATIC_DICTIONARY));
 #else
-	for (int i = 0; i < TextCodec::STATIC_DICT_WORDS; i++)
+        for (int i = 0; i < TextCodec::STATIC_DICT_WORDS; i++)
             _dictList[i] = TextCodec::STATIC_DICTIONARY[i];
 #endif
     }

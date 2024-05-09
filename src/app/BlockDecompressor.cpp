@@ -83,10 +83,8 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     if (isStdIn == false) {
         vector<string> errors;
-        string suffix(1, PATH_SEPARATOR);
-        suffix += ".";
-        bool isRecursive = (_inputName.length() < 2) 
-           || (_inputName.substr(_inputName.length() - 2) != suffix);
+        bool isRecursive = (_inputName.length() < 2) ||                                                                                                                  (_inputName[_inputName.length() - 2] != PATH_SEPARATOR) ||
+            (_inputName[_inputName.length() - 1] != '.');
         FileListConfig cfg = { isRecursive, _noLinks, false, _noDotFiles };
         createFileList(_inputName, files, cfg, errors);
         
@@ -125,14 +123,10 @@ int BlockDecompressor::decompress(uint64& inputSize)
     }
 
     if (_verbosity > 2) {
-        ss << "Verbosity: " << _verbosity;
-        log.println(ss.str(), true);
-        ss.str(string());
-        ss << "Overwrite: " << (_overwrite ? "true" : "false");
-        log.println(ss.str(), true);
-        ss.str(string());
-        ss << "Using " << _jobs << " job" << (_jobs > 1 ? "s" : "");
-        log.println(ss.str(), true);
+        ss << "Verbosity: " << _verbosity << endl;
+        ss << "Overwrite: " << (_overwrite ? "true" : "false") << endl;
+        ss << "Using " << _jobs << " job" << (_jobs > 1 ? "s" : "") << endl;
+        log.print(ss.str(), true);
         ss.str(string());
     }
 
@@ -154,6 +148,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     if (isStdIn == false) {
         struct STAT buffer;
+        memset(&buffer, 0, sizeof(buffer));
 
         if ((formattedInName.size() > 1) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
             formattedInName.resize(formattedInName.size() - 1);
@@ -330,16 +325,14 @@ int BlockDecompressor::decompress(uint64& inputSize)
         if (delta >= 1e5) {
             ss.precision(1);
             ss.setf(ios::fixed);
-            ss << (delta / 1000) << " s";
+            ss << (delta / 1000) << " s" << endl;
         }
         else {
-            ss << int(delta) << " ms";
+            ss << int(delta) << " ms" << endl;
         }
 
-        log.println(ss.str(), _verbosity > 0);
-        ss.str(string());
-        ss << "Total output size: " << read << (read > 1 ? " bytes" : " byte");
-        log.println(ss.str(), _verbosity > 0);
+        ss << "Total output size: " << read << (read > 1 ? " bytes" : " byte") << endl;
+        log.print(ss.str(), _verbosity > 0);
         ss.str(string());
     }
 
@@ -414,11 +407,9 @@ T FileDecompressTask<T>::run()
     stringstream ss;
 
     if (verbosity > 2) {
-        ss << "Input file name: '" << inputName << "'";
-        log.println(ss.str(), true);
-        ss.str(string());
-        ss << "Output file name: '" << outputName << "'";
-        log.println(ss.str(), true);
+        ss << "Input file name: '" << inputName << "'" << endl;
+        ss << "Output file name: '" << outputName << "'" << endl;
+        log.print(ss.str(), true);
         ss.str(string());
     }
 
@@ -460,6 +451,7 @@ T FileDecompressTask<T>::run()
             }
 
             struct STAT buffer;
+            memset(&buffer, 0, sizeof(buffer));
 
             if (STAT(outputName.c_str(), &buffer) == 0) {
                 if ((buffer.st_mode & S_IFDIR) != 0) {
@@ -660,19 +652,15 @@ T FileDecompressTask<T>::run()
             if (delta >= 1e5) {
                 ss.precision(1);
                 ss.setf(ios::fixed);
-                ss << "Decompression time: " << (delta / 1000) << " s";
+                ss << "Decompression time: " << (delta / 1000) << " s" << endl;
             }
             else {
-                ss << "Decompression time: " << int(delta) << " ms";
+                ss << "Decompression time: " << int(delta) << " ms" << endl;
             }
 
-            log.println(ss.str(), true);
-            ss.str(string());
-            ss << "Input size:         " << decoded;
-            log.println(ss.str(), true);
-            ss.str(string());
-            ss << "Output size:        " << read;
-            log.println(ss.str(), true);
+            ss << "Input size:         " << decoded << endl;
+            ss << "Output size:        " << read << endl;
+            log.print(ss.str(), true);
             ss.str(string());
         }
 
