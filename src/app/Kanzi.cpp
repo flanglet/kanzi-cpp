@@ -279,7 +279,8 @@ int processCommandLine(int argc, const char* argv[], Context& map)
     int noLinks = -1;
     string codec;
     string transf;
-    int verbose = -1;
+    bool verboseFlag = false;
+    int verbose = 1;
     int ctx = -1;
     int level = -1;
     int from = -1;
@@ -332,10 +333,8 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((ctx == ARG_IDX_VERBOSE) || (arg.compare(0, 10, "--verbose=") == 0)) {
-           if (verbose >= 0) {
-                stringstream ss;
-                ss << "Warning: ignoring verbosity level: " << arg;
-                log.println(ss.str(), verbose > 0);
+           if (verboseFlag == true) {
+                WARNING_OPT_DUPLICATE("verbosity level", arg);
             }
             else {
                if (ctx != ARG_IDX_VERBOSE)
@@ -345,6 +344,8 @@ int processCommandLine(int argc, const char* argv[], Context& map)
                    cerr << "Invalid verbosity level provided on command line: " << arg << endl;
                    return Error::ERR_INVALID_PARAM;
                }
+
+               verboseFlag = true;
             }
         }
         else if ((ctx == ARG_IDX_OUTPUT) || (arg.compare(0, 9, "--output=") == 0)) {
@@ -367,6 +368,7 @@ int processCommandLine(int argc, const char* argv[], Context& map)
     if (outputName.length() == 0) {
         if (inputName.length() == 0) {
             verbose = 0;
+            verboseFlag = true;
         }
     }
     else {
@@ -375,6 +377,7 @@ int processCommandLine(int argc, const char* argv[], Context& map)
 
         if (str == "STDOUT") {
             verbose = 0;
+            verboseFlag = true;
         }
     }
 
@@ -504,17 +507,17 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((ctx == ARG_IDX_OUTPUT) || (arg.compare(0, 9, "--output=") == 0)) {
-            string oName = (ctx == ARG_IDX_OUTPUT) ? arg : arg.substr(9);
-            trim(oName);
+            if (ctx != ARG_IDX_OUTPUT)
+               arg = arg.substr(9);
 
             if (outputName != "") {
-                WARNING_OPT_DUPLICATE("output name", oName);
+                WARNING_OPT_DUPLICATE("output name", arg);
             } else {
-                if ((oName.length() >= 2) && (oName[0] == '.') && (oName[1] == PATH_SEPARATOR)) {
-                   oName = (oName.length() == 2) ? oName.substr(0, 1) : oName.substr(2);
+                if ((arg.length() >= 2) && (arg[0] == '.') && (arg[1] == PATH_SEPARATOR)) {
+                   arg = (arg.length() == 2) ? arg.substr(0, 1) : arg.substr(2);
                 }
 
-                outputName = oName;
+                outputName = arg;
             }
 
             ctx = -1;
@@ -524,8 +527,6 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         if ((ctx == ARG_IDX_INPUT) || (arg.compare(0, 8, "--input=") == 0)) {
             if (ctx != ARG_IDX_INPUT)
                arg = arg.substr(8);
-
-            trim(arg);
 
             if (inputName != "") {
                 WARNING_OPT_DUPLICATE("input name", arg);
@@ -544,8 +545,6 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         if ((ctx == ARG_IDX_ENTROPY) || (arg.compare(0, 10, "--entropy=") == 0)) {
             if (ctx != ARG_IDX_ENTROPY)
                arg = arg.substr(10);
-
-            trim(arg);
 
             if (codec != "") {
                 WARNING_OPT_DUPLICATE("entropy", arg);
@@ -566,8 +565,6 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         if ((ctx == ARG_IDX_TRANSFORM) || (arg.compare(0, 12, "--transform=") == 0)) {
             if (ctx != ARG_IDX_TRANSFORM)
                 arg = arg.substr(12);
-
-            trim(arg);
 
             if (transf != "") {
                 WARNING_OPT_DUPLICATE("transform", arg);
@@ -603,8 +600,6 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             if (ctx != ARG_IDX_LEVEL)
                arg = arg.substr(8);
 
-            trim(arg);
-
             if (level >= 0) {
                 WARNING_OPT_DUPLICATE("level", arg);
             } else {
@@ -621,8 +616,6 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         if ((ctx == ARG_IDX_BLOCK) || (arg.compare(0, 8, "--block=") == 0)) {
             if (ctx != ARG_IDX_BLOCK)
                arg = arg.substr(8);
-
-            trim(arg);
 
             if (arg.length() == 0) {
                 cerr << "Invalid block size provided on command line: " << arg << endl;
@@ -677,8 +670,6 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             if (ctx != ARG_IDX_JOBS)
                arg = arg.substr(7);
 
-            trim(arg);
-
             if (tasks >= 0) {
                 WARNING_OPT_DUPLICATE("jobs", arg);
                 ctx = -1;
@@ -696,7 +687,6 @@ int processCommandLine(int argc, const char* argv[], Context& map)
 
         if ((arg.compare(0, 7, "--from=") == 0) && (ctx == -1)) {
             arg = arg.substr(7);
-            trim(arg);
 
             if (mode != "d"){
                 log.println("Warning: ignoring start block (only valid for decompression)", verbose > 0);
@@ -722,7 +712,6 @@ int processCommandLine(int argc, const char* argv[], Context& map)
 
         if ((arg.compare(0, 5, "--to=") == 0) && (ctx == -1)) {
             arg = arg.substr(5);
-            trim(arg);
 
             if (mode != "d"){
                 log.println("Warning: ignoring end block (only valid for decompression)", verbose > 0);
@@ -741,7 +730,7 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             continue;
         }
 
-        if ((arg.compare(0, 10, "--verbose=") != 0) && (ctx == -1) && (arg.compare(0, 9, "--output=") != 0)) {
+        if ((arg.compare(0, 10, "--verbose=") != 0) && (ctx == -1)) {
             stringstream ss;
             ss << "Warning: ignoring unknown option [" << arg << "]";
             log.println(ss.str(), verbose > 0);
@@ -773,7 +762,7 @@ int processCommandLine(int argc, const char* argv[], Context& map)
     if (blockSize >= 0)
         map.putInt("blockSize", blockSize);
 
-    map.putInt("verbosity", (verbose < 0) ? 1 : verbose);
+    map.putInt("verbosity", (verboseFlag == false) ? 1 : verbose);
     map.putString("mode", mode);
     map.putString("inputName", inputName);
     map.putString("outputName", outputName);
