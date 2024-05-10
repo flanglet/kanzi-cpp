@@ -263,10 +263,16 @@ int ANSRangeEncoder::rebuildStatistics(const byte block[], int end, uint lr)
     }
     else {
        const int quarter = end >> 2;
-       Global::computeHistogram(&block[0 * quarter], quarter, _freqs, false, true);
-       Global::computeHistogram(&block[1 * quarter], quarter, _freqs, false, true);
-       Global::computeHistogram(&block[2 * quarter], quarter, _freqs, false, true);
-       Global::computeHistogram(&block[3 * quarter], quarter, _freqs, false, true);
+
+       if (quarter == 0) {
+          Global::computeHistogram(block, end, _freqs, false, true);
+       }
+       else {
+          Global::computeHistogram(&block[0 * quarter], quarter, _freqs, false, true);
+          Global::computeHistogram(&block[1 * quarter], quarter, _freqs, false, true);
+          Global::computeHistogram(&block[2 * quarter], quarter, _freqs, false, true);
+          Global::computeHistogram(&block[3 * quarter], quarter, _freqs, false, true);
+       }
     }
 
     return updateFrequencies(_freqs, lr);
