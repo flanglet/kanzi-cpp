@@ -306,8 +306,12 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         // Emit last chunk literals
         srcIdx = sizeChunk;
         const int litLen = srcIdx - firstLitIdx;
-        const int mode = (litLen < 31) ? (litLen << 3) : 0xF8;
-        tkBuf._array[tkBuf._index++] = byte(mode);
+
+        if (tkBuf._index != 0) {
+           // At least one match to emit
+           const int mode = (litLen < 31) ? (litLen << 3) : 0xF8;
+           tkBuf._array[tkBuf._index++] = byte(mode);
+        }
 
         if (litLen >= 31)
             lenBuf._index += emitLength(&lenBuf._array[lenBuf._index], litLen - 31);
@@ -416,6 +420,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         memset(&_matches[0], 0, sizeof(int32) * size_t(ROLZCodec::HASH_SIZE << _logPosChecks));
         const int endChunk = min(startChunk + sizeChunk, dstEnd);
         sizeChunk = endChunk - startChunk;
+        bool onlyLiterals = false;
 
         // Scope to deallocate resources early
         {
@@ -429,15 +434,15 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const int mIdxLen = int(ibs.readBits(32));
 
             if ((litLen < 0) || (tkLen < 0) || (mLenLen < 0) || (mIdxLen < 0)) {
-                input._index = srcIdx;
-                output._index = startChunk;
+                input._index += srcIdx;
+                output._index += startChunk;
                 success = false;
                 goto End;
             }
 
             if ((litLen > sizeChunk) || (tkLen > sizeChunk) || (mLenLen > sizeChunk) || (mIdxLen > sizeChunk)) {
-                input._index = srcIdx;
-                output._index = startChunk;
+                input._index += srcIdx;
+                output._index += startChunk;
                 success = false;
                 goto End;
             }
@@ -451,7 +456,16 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             mDec.decode(mIdxBuf._array, 0, mIdxLen);
             mDec.dispose();
 
+            onlyLiterals = tkLen == 0;
             srcIdx += int((ibs.read() + 7) >> 3);
+        }
+
+        if (onlyLiterals == true) {
+            // Shortcut when no match
+            memcpy(&output._array[output._index], &litBuf._array[0], sizeChunk);
+            startChunk = endChunk;
+            output._index += sizeChunk;
+            continue;
         }
 
         byte* buf = &output._array[output._index];
