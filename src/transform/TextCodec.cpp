@@ -312,7 +312,7 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
 
 byte TextCodec::detectType(const uint freqs0[], const uint freqs1[], int count) {
     Global::DataType dt = Global::detectSimpleType(count, freqs0);
-	
+
     if (dt != Global::UNDEFINED)
        return TextCodec::MASK_NOT_TEXT | byte(dt);
 
@@ -837,7 +837,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 }
                 else {
                     idx = ((idx & 0x7F) << 7) | idx2;
-	        }
+                }
 
                 if (idx >= _dictSize)
                     break;
@@ -1335,7 +1335,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 }
                 else {
                     idx = (idx << 7) | idx2;
-		}
+                }
 
                 if (idx >= _dictSize)
                     break;

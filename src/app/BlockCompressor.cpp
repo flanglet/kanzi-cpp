@@ -244,7 +244,6 @@ int BlockCompressor::compress(uint64& outputSize)
 
     if (isStdIn == false) {
         struct STAT buffer;
-        memset(&buffer, 0, sizeof(buffer));
 
         if ((formattedInName.size() > 1) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
             formattedInName.resize(formattedInName.size() - 1);
@@ -590,7 +589,6 @@ T FileCompressTask<T>::run()
             }
 
             struct STAT buffer;
-            memset(&buffer, 0, sizeof(buffer));
             string path = outputName;
             replace(path.begin(), path.end(), '\\', '/');
 

@@ -148,7 +148,6 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     if (isStdIn == false) {
         struct STAT buffer;
-        memset(&buffer, 0, sizeof(buffer));
 
         if ((formattedInName.size() > 1) && (formattedInName[formattedInName.size() - 1] == PATH_SEPARATOR)) {
             formattedInName.resize(formattedInName.size() - 1);
@@ -451,7 +450,6 @@ T FileDecompressTask<T>::run()
             }
 
             struct STAT buffer;
-            memset(&buffer, 0, sizeof(buffer));
 
             if (STAT(outputName.c_str(), &buffer) == 0) {
                 if ((buffer.st_mode & S_IFDIR) != 0) {
