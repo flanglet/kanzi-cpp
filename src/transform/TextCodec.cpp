@@ -764,6 +764,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
     int words = _staticDictSize;
     bool wordRun = false;
+    bool res = true;
 
     while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
         const byte cur = src[srcIdx];
@@ -839,15 +840,13 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     idx = ((idx & 0x7F) << 7) | idx2;
                 }
 
-                if (idx >= _dictSize)
+                if (idx >= _dictSize) {
+                    res = false;
                     break;
+                }
             }
 
-            const int length = _dictList[idx]._data >> 24;
-
-            // Sanity check
-            if (dstIdx + length >= dstEnd)
-                break;
+            const int length = (_dictList[idx]._data >> 24) & 0xFF;
 
             // Emit word
             if (length > 1) {
@@ -860,12 +859,20 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 delimAnchor = srcIdx;
             }
             else {
-                if (length == 0)
+                if (length == 0) {
+                   res = false;
                    break;
+                }
 
                 // Escape entry
                 wordRun = false;
                 delimAnchor = srcIdx - 1;
+            }
+
+            // Sanity check
+            if (dstIdx + length >= dstEnd) {
+                res = false;
+                break;
             }
 
             memcpy(&dst[dstIdx], _dictList[idx]._ptr, length);
@@ -880,8 +887,14 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             wordRun = false;
             delimAnchor = srcIdx - 1;
 
-            if ((_isCRLF == true) && (cur == TextCodec::LF))
+            if ((_isCRLF == true) && (cur == TextCodec::LF)) {
                 dst[dstIdx++] = TextCodec::CR;
+
+                if (dstIdx >= dstEnd) {
+                    res = false;
+                    break;
+                }
+            }
 
             dst[dstIdx++] = cur;
         }
@@ -889,7 +902,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     output._index += dstIdx;
     input._index += srcIdx;
-    return srcIdx == srcEnd;
+    return (res == true) && (srcIdx == srcEnd);
 }
 
 TextCodec2::TextCodec2()
@@ -1262,6 +1275,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
     int words = _staticDictSize;
     bool wordRun = false;
+    bool res = true;
 
     while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
         const byte cur = src[srcIdx];
@@ -1337,15 +1351,13 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     idx = (idx << 7) | idx2;
                 }
 
-                if (idx >= _dictSize)
+                if (idx >= _dictSize) {
+                    res = false;
                     break;
+                }
             }
 
-            const int length = _dictList[idx]._data >> 24;
-
-            // Sanity check
-            if (dstIdx + length >= dstEnd)
-                break;
+            const int length = (_dictList[idx]._data >> 24) & 0xFF;
 
             // Emit word
             if (length > 1) {
@@ -1358,12 +1370,20 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 delimAnchor = srcIdx;
             }
             else {
-                if (length == 0)
+                if (length == 0) {
+                   res = false;
                    break;
+                }
 
                 // Escape entry
                 wordRun = false;
                 delimAnchor = srcIdx - 1;
+            }
+
+            // Sanity check
+            if (dstIdx + length >= dstEnd) {
+                res = false;
+                break;
             }
 
             memcpy(&dst[dstIdx], _dictList[idx]._ptr, length);
@@ -1377,8 +1397,14 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 dst[dstIdx++] = src[srcIdx++];
             }
             else {
-                if ((_isCRLF == true) && (cur == TextCodec::LF))
+                if ((_isCRLF == true) && (cur == TextCodec::LF)) {
                     dst[dstIdx++] = TextCodec::CR;
+
+                    if (dstIdx >= dstEnd) {
+                        res = false;
+                        break;
+                    }
+                }
 
                 dst[dstIdx++] = cur;
             }
@@ -1390,5 +1416,5 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     output._index += dstIdx;
     input._index += srcIdx;
-    return srcIdx == srcEnd;
+    return (res == true) && (srcIdx == srcEnd);
 }
