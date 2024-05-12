@@ -13,9 +13,9 @@ Unlike the most common lossless data compressors, Kanzi uses a variety of differ
 
 Kanzi is a lossless data compressor, not an archiver. It uses checksums (optional but recommended) to validate data integrity but does not have a mechanism for data recovery. It also lacks data deduplication across files. However, Kanzi generates a bitstream that is seekable (one or several consecutive blocks can be decompressed without the need for the whole bitstream to be decompressed).
 
-For more details, check https://github.com/flanglet/kanzi/wiki.
+For more details, see [Wiki](https://github.com/flanglet/kanzi/wiki) and [Q&A](https://github.com/flanglet/kanzi/wiki/q&a)
 
-See how to reuse the C and C++ APIs here: https://github.com/flanglet/kanzi-cpp/wiki/Using-and-extending-the-code
+See how to reuse the C and C++ APIs: [here](https://github.com/flanglet/kanzi-cpp/wiki/Using-and-extending-the-code)
 
 There is a Java implementation available here: https://github.com/flanglet/kanzi
 
@@ -111,24 +111,65 @@ Download at http://sun.aei.polsl.pl/~sdeor/corpus/silesia.zip
 
 Download at https://mattmahoney.net/dc/enwik8.zip
 
-|      Compressor        | Encoding (sec)   | Decoding (sec)   |    Size          |
-|------------------------|------------------|------------------|------------------|
-|Original                |                  |                  |   100,000,000    |
-|**Kanzi -l 1**          |     **0.192**    |    **0.125**     |  **43,746,017**  |
-|**Kanzi -l 2**          |     **0.184**    |    **0.133**     |  **37,816,913**  |
-|**Kanzi -l 3**          |     **0.264**    |    **0.160**     |  **33,865,383**  |
-|**Kanzi -l 4**          |	   **0.283**    |    **0.191**     |  **29,597,577**  |
-|**Kanzi -l 5**          |	   **0.481**    |    **0.311**     |  **26,528,023**  |
-|**Kanzi -l 6**          |	   **0.733**    |    **0.517**     |  **24,076,674**  |
-|**Kanzi -l 7**          |     **1.827**    |    **1.795**     |  **22,817,373**  |
-|**Kanzi -l 8**          |	   **4.680**    |    **5.404**     |  **21,181,983**  |
-|**Kanzi -l 9**          |	  **12.69**     |   **13.98**      |  **20,035,138**  |
+|      Compressor        | Encoding (sec)  | Decoding (sec)   |    Size          |
+|------------------------|-----------------|------------------|------------------|
+|Original                |                 |                  |   100,000,000    |
+|**Kanzi -l 1**          |    **0.192**    |    **0.125**     |  **43,746,017**  |
+|**Kanzi -l 2**          |    **0.184**    |    **0.133**     |  **37,816,913**  |
+|**Kanzi -l 3**          |    **0.264**    |    **0.160**     |  **33,865,383**  |
+|**Kanzi -l 4**          |	  **0.283**    |    **0.191**     |  **29,597,577**  |
+|**Kanzi -l 5**          |	  **0.481**    |    **0.311**     |  **26,528,023**  |
+|**Kanzi -l 6**          |	  **0.733**    |    **0.517**     |  **24,076,674**  |
+|**Kanzi -l 7**          |    **1.827**    |    **1.795**     |  **22,817,373**  |
+|**Kanzi -l 8**          |	  **4.680**    |    **5.404**     |  **21,181,983**  |
+|**Kanzi -l 9**          |	 **12.69**     |   **13.98**      |  **20,035,138**  |
+
+
+
+### Round-trip scores for LZ
+
+Below is a table showing silesia.tar compressed using different LZ compressors (no entropy) in single-threaded mode.
+
+The efficiency score is computed as such: score(lambda) = compTime + 2 x decompTime + lambda x compSize
+
+A lower score is better. Best scores are in bold.
+
+Tested on Ubuntu 22.04.4 LTS, i7-7700K CPU @ 4.20GHz, 32 GB RAM 
+
+|      Compressor      | Encoding (sec) | Decoding (sec)  |    Size          |  Score(5)  |  Score(6)  |  Score(7)  |
+|----------------------|----------------|-----------------|------------------|------------|------------|------------|
+|FastLZ -2	           |     1.78	      |       0.77	    |     101114153	   |  1014.46	  |   104.43	 |   13.43    |
+|Lzo 2.10	             |     0.47	      |       0.24	    |     101040957	   |  1011.35	  |   101.98	 |   11.04    |
+|Lz4 1.9.3 -2	         |     0.41	      |      	0.20	    |    	100924332	   |  1010.06   |   101.74   |	 10.91    |
+|Lizard 1.1.0 -11	     |     0.76	      |      	0.24	    |      93967850	   | 	 940.91   |	  95.20	   |   10.63    |
+|lzav	                 |     0.59	      |       0.33	    |      89232384	   |	 893.57   |   90.48	   |	 10.17    |
+|Lzturbo 1.2 -11 -p0   |	   1.09	      |      	0.34	    |      88657053	   |	 888.35   |   90.43	   |	 10.64    |
+|s2 -cpu 1	           |     0.81	      |      	0.40	    |	     86646819	   |	 868.08   |   88.25	   |	 10.27    |
+|LZ4x 1.60 -2	         |     1.16	      |      	0.24	    |	     87883674	   |	 880.47   |   89.52	   |	 10.42    |
+|Lizard 1.1.0 -12	     |     1.46	      |      	0.23	    |      86340434	   |	 865.34   |   88.27	   |	 10.57    |
+|LZ4x 1.60 -3	         |     1.39	      |      	0.24	    |	     85483806	   |	 856.71   |   87.35	   |	 10.42    |
+|Kanzi 2.3 -t lz -j 1	 |     0.94	      |      	0.26	    |      83355862	   |	 835.01   |   84.81	   | ***9.79*** |
+|Lzturbo 1.2 -12 -p0	 |     2.40	      |      	0.22	    |      83179291	   |	 834.63   |   86.02	   |	 11.16    |
+|Kanzi 2.3 -t lzx -j 1 |	   1.21	      |      	0.24	    |      81485228	   |	 816.55   |   83.18	   |	  9.84    |
+|Lz4 1.9.3 -3	         |     2.34	      |      	0.21	    |	     81441623	   |***817.17***|***84.20*** |	 10.90    |
+
+References:
+
+[FastLZ](https://github.com/ariya/FastLZ)
+[Lizard](https://github.com/inikep/lizard)
+[LZ4](https://github.com/lz4/lz4)
+[S2](https://github.com/klauspost/compress)
+[LZAV](https://github.com/avaneev/lzav)
+[LZ4x](https://github.com/tomsim/lz4x)
+[LZTurbo](https://sites.google.com/site/powturbo)
+
+
 
 ### More benchmarks
 
-[lzbench benchmarks](https://github.com/flanglet/kanzi-cpp/wiki/Performance)
+[Comprehensive lzbench benchmarks](https://github.com/flanglet/kanzi-cpp/wiki/Performance)
 
-[Round trip scores](https://github.com/flanglet/kanzi-cpp/wiki/Round%E2%80%90trips-scores)
+[Mode round trip scores](https://github.com/flanglet/kanzi-cpp/wiki/Round%E2%80%90trips-scores)
 
 
 ## Build Kanzi
