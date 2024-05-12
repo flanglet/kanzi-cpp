@@ -291,6 +291,7 @@ int processCommandLine(int argc, const char* argv[], Context& map)
     string mode;
     Printer log(cout); 
     bool showHeader = true;
+    bool showHelp = false;
 
     for (int i = 1; i < argc; i++) {
         string arg(argv[i]);
@@ -360,8 +361,17 @@ int processCommandLine(int argc, const char* argv[], Context& map)
 
             inputName = trim(arg);
         }
+        else if ((arg == "--help") || (arg == "-h")) {
+            showHelp = true;
+        }
 
         ctx = -1;
+    }
+
+    if ((argc == 1) || (showHelp == true)) {
+        printHeader(log, verbose, showHeader);
+        printHelp(log, mode, showHeader);
+        return 0;
     }
 
     // Overwrite verbosity if the output goes to stdout
@@ -386,11 +396,6 @@ int processCommandLine(int argc, const char* argv[], Context& map)
     outputName.clear();
     ctx = -1;
 
-    if (argc == 1) {
-        printHelp(log, mode, showHeader);
-        return 0;
-    }
-
     for (int i = 1; i < argc; i++) {
         string arg(argv[i]);
 
@@ -402,11 +407,6 @@ int processCommandLine(int argc, const char* argv[], Context& map)
               k++;
 
            arg = arg.substr(k);
-        }
-
-        if ((arg == "--help") || (arg == "-h")) {
-            printHelp(log, mode, showHeader);
-            return 0;
         }
 
         if ((arg == "-c") || (arg == "-d") || (arg == "--compress") || (arg == "--decompress")) {
