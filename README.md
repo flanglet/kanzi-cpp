@@ -130,7 +130,7 @@ Download at https://mattmahoney.net/dc/enwik8.zip
 
 Below is a table showing silesia.tar compressed using different LZ compressors (no entropy) in single-threaded mode.
 
-The efficiency score is computed as such: score(lambda) = compTime + 2 x decompTime + lambda x compSize
+The efficiency score is computed as such: score(lambda) = compTime + 2 x decompTime + 10^-lambda x compSize
 
 A lower score is better. Best scores are in bold.
 
