@@ -68,8 +68,8 @@ Kanzi version 2.3.0 C++ implementation
 
 On this machine, Kanzi uses up to 16 threads (half of CPUs by default).
 
-bzip3 uses 16 threads. zstd uses 16 threads for compression and 1 for decompression, 
-other compressors are single threaded.
+bzip3 and zpaq use 16 threads. 
+zstd uses 16 threads for compression and 1 for decompression, other compressors are single threaded.
 
 The default block size at level 9 is 32MB, severely limiting the number of threads
 in use, especially with enwik8, but all tests are performed with default values.
@@ -148,9 +148,9 @@ Tested on Ubuntu 22.04.4 LTS, i7-7700K CPU @ 4.20GHz, 32 GB RAM
 |LZ4x 1.60 -2	         |     1.16	      |      	0.24	    |	     87883674	   |	 880.47   |   89.52	   |	 10.42    |
 |Lizard 1.1.0 -12	     |     1.46	      |      	0.23	    |      86340434	   |	 865.34   |   88.27	   |	 10.57    |
 |LZ4x 1.60 -3	         |     1.39	      |      	0.24	    |	     85483806	   |	 856.71   |   87.35	   |	 10.42    |
-|Kanzi 2.3 -t lz -j 1	 |     0.94	      |      	0.26	    |      83355862	   |	 835.01   |   84.81	   | ***9.79*** |
+|Kanzi 2.3 -t lz -j 1	 |     0.87	      |      	0.26	    |      83355862	   |	 834.93   |   84.73	   | ***9.71*** |
 |Lzturbo 1.2 -12 -p0	 |     2.40	      |      	0.22	    |      83179291	   |	 834.63   |   86.02	   |	 11.16    |
-|Kanzi 2.3 -t lzx -j 1 |	   1.21	      |      	0.24	    |      81485228	   |***816.55***|***83.18*** |	  9.84    |
+|Kanzi 2.3 -t lzx -j 1 |	   1.14	      |      	0.24	    |      81485228	   |***816.48***|***83.12*** |	  9.78    |
 |Lz4 1.9.3 -3	         |     2.34	      |      	0.21	    |	     81441623	   |   817.17   |   84.20    |   10.90    |
 
 References:
