@@ -273,7 +273,7 @@ int processCommandLine(int argc, const char* argv[], Context& map)
     int remove = -1;
     int overwrite = -1;
     int checksum = -1;
-    int skip = 1;
+    int skip = -1;
     int reorder = -1;
     int noDotFiles = -1;
     int noLinks = -1;
