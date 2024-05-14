@@ -75,14 +75,14 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
 
     int res = 0;
     const int dim = 255 * _order + 1;
-    const int scale = 1 << _logRange;
 
-    if (_f2sSize < dim * scale) {
+    if (_f2sSize < (dim << _logRange)) {
         delete[] _f2s;
-        _f2sSize = dim * scale;
+        _f2sSize = dim << _logRange;
         _f2s = new uint8[_f2sSize];
     }
 
+    const uint scale = 1 << _logRange;
     int llr = 3;
 
     while (uint(1 << llr) <= _logRange)
@@ -100,7 +100,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
             memset(f, 0, sizeof(uint) * 256);
 
         const int chkSize = (alphabetSize >= 64) ? 8 : 6;
-        int sum = 0;
+        uint sum = 0;
 
         // Decode all frequencies (but the first one) by chunks
         for (int i = 1; i < alphabetSize; i += chkSize) {
@@ -118,16 +118,16 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
 
             // Read frequencies
             for (int j = i; j < endj; j++) {
-                const int freq = (logMax == 0) ? 1 : int(_bitstream.readBits(logMax) + 1);
+                const uint freq = (logMax == 0) ? 1 : uint(_bitstream.readBits(logMax) + 1);
 
-                if ((freq < 0) || (freq >= scale)) {
+                if (freq >= scale) {
                     stringstream ss;
                     ss << "Invalid bitstream: incorrect frequency " << freq;
                     ss << " for symbol '" << alphabet[j] << "' in ANS range decoder";
                     throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
                 }
 
-                f[alphabet[j]] = uint(freq);
+                f[alphabet[j]] = freq;
                 sum += freq;
             }
         }
@@ -150,9 +150,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
             if (f[i] == 0)
                 continue;
 
-            for (int j = f[i] - 1; j >= 0; j--)
-                freq2sym[sum + j] = uint8(i);
-
+            memset(&freq2sym[sum], i, size_t(f[i]));
             symb[i].reset(sum, f[i], _logRange);
             sum += f[i];
         }

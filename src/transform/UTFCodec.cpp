@@ -74,6 +74,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     uint32* aliasMap = new uint32[1 << 22];
     memset(aliasMap, 0, size_t(1 << 22) * sizeof(uint32));
     vector<sdUTF> v;
+    v.reserve(count);
     int n = 0;
     bool res = true;
 
