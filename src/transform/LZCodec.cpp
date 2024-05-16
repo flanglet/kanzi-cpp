@@ -308,13 +308,13 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         // Fill _hashes and update positions
         anchor = srcIdx + bestLen;
+        prefetchRead(&src[anchor + 64]);
 
         while (++srcIdx < anchor) {
             const int32 h = hash(&src[srcIdx]);
             _hashes[h] = srcIdx;
         }
 
-        prefetchRead(&src[srcIdx + 64]);
     }
 
     // Emit last literals
