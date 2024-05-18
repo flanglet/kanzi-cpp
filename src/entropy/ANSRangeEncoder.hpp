@@ -140,7 +140,7 @@ namespace kanzi
       // Compute next ANS state
       // C(s,x) = M floor(x/q_s) + mod(x,q_s) + b_s where b_s = q_0 + ... + q_{s-1}
       // st = ((st / freq) << lr) + (st % freq) + cumFreq[prv];
-      const int q = (st * sym._invFreq) >> sym._invShift;
+      const int q = int((st * sym._invFreq) >> sym._invShift);
       return st + sym._bias + q * sym._cmplFreq;
    }
 }
