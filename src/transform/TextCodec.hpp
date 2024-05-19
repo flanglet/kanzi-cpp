@@ -166,13 +166,15 @@ namespace kanzi {
            return _delegate->getMaxEncodedLength(srcLen);
        }
 
-       static bool isText(byte val) { return TEXT_CHARS[uint8(val)]; }
+       static int8 getType(byte val) { return CHAR_TYPE[uint8(val)]; }
+
+       static bool isText(byte val) { return getType(val) == 0; }
 
        static bool isLowerCase(byte val) { return (val >= byte('a')) && (val <= byte('z')); }
 
        static bool isUpperCase(byte val) { return (val >= byte('A')) && (val <= byte('Z')); }
 
-       static bool isDelimiter(byte val) { return DELIMITER_CHARS[uint8(val)]; }
+       static bool isDelimiter(byte val) { return getType(val) > 0; }
 
    private:
        static const int HASH1 = 0x7FEB352D;
@@ -191,9 +193,8 @@ namespace kanzi {
        static const byte MASK_DT = byte(0x0F);
        static const int MASK_LENGTH = 0x0007FFFF; // 19 bits
 
-       static bool init(bool delims[256], bool text[256]);
-       static bool DELIMITER_CHARS[256];
-       static bool TEXT_CHARS[256];
+       static bool init(int8 cType[256]);
+       static int8 CHAR_TYPE[256];
        static const bool INIT;
 
        static bool sameWords(const byte src[], const byte dst[], int length);

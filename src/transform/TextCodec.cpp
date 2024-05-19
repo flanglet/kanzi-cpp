@@ -114,18 +114,19 @@ rBeautifulOnlineFanPriorityTraditionalSixUnited";
 
 
 DictEntry TextCodec::STATIC_DICTIONARY[1024] = {};
-bool TextCodec::DELIMITER_CHARS[256] = {};
-bool TextCodec::TEXT_CHARS[256] = {};
-const bool TextCodec::INIT = TextCodec::init(TextCodec::DELIMITER_CHARS, TextCodec::TEXT_CHARS);
+int8 TextCodec::CHAR_TYPE[256] = {};
+const bool TextCodec::INIT = TextCodec::init(TextCodec::CHAR_TYPE);
 const int TextCodec::STATIC_DICT_WORDS = TextCodec::createDictionary(DICT_EN_1024, sizeof(DICT_EN_1024), STATIC_DICTIONARY, 1024, 0);
 
-bool TextCodec::init(bool delims[256], bool text[256])
+bool TextCodec::init(int8 cType[256])
 {
     for (int i = 0; i < 256; i++) {
+        bool delim;
+
         if ((i >= ' ') && (i <= '/')) // [ !"#$%&'()*+,-./]
-            delims[i] = true;
+            delim = true;
         else if ((i >= ':') && (i <= '?')) // [:;<=>?]
-            delims[i] = true;
+            delim = true;
         else {
             switch (i) {
             case '\n':
@@ -137,14 +138,19 @@ bool TextCodec::init(bool delims[256], bool text[256])
             case '}':
             case '[':
             case ']':
-                delims[i] = true;
+                delim = true;
                 break;
             default:
-                delims[i] = false;
+                delim = false;
             }
         }
 
-        text[i] = isUpperCase(byte(i)) || isLowerCase(byte(i));
+        if (isUpperCase(byte(i)) || isLowerCase(byte(i)))
+           cType[i] = 0;
+        else if (delim == true)
+           cType[i] = 1;
+        else
+           cType[i] = -1;
     }
 
     return true;
@@ -538,12 +544,14 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 
     while (srcIdx < srcEnd) {
-        if (TextCodec::isText(src[srcIdx])) {
+        const int8 cType = TextCodec::getType(src[srcIdx]);
+
+        if (cType == 0) {
             srcIdx++;
             continue;
         }
 
-        if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(src[srcIdx])) { // At least 2 letters
+        if ((srcIdx > delimAnchor + 2) && (cType > 0)) { // At least 2 letters
             const byte val = src[delimAnchor + 1];
             const int length = srcIdx - delimAnchor - 1;
 
@@ -757,6 +765,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     _isCRLF = int(src[0] & TextCodec::MASK_CRLF) != 0;
+    const bool isCRLF = _isCRLF;
     int srcIdx = 1;
     int dstIdx = 0;
     const int srcEnd = count;
@@ -768,21 +777,24 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
         const byte cur = src[srcIdx];
+        const int8 cType = TextCodec::getType(cur);
 
-        if (TextCodec::isText(cur)) {
-            dst[dstIdx] = cur;
+        if (cType == 0) {
+            dst[dstIdx] = src[srcIdx];
             srcIdx++;
             dstIdx++;
             continue;
         }
 
-        if ((srcIdx > delimAnchor + 3) && TextCodec::isDelimiter(cur)) {
+        if ((srcIdx > delimAnchor + 3) && (cType > 0)) {
             const int length = srcIdx - delimAnchor - 1; // length > 2
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
                 int h1 = TextCodec::HASH1;
+                h1 = h1 * TextCodec::HASH1 ^ int(src[delimAnchor + 1]) * TextCodec::HASH2;
+                h1 = h1 * TextCodec::HASH1 ^ int(src[delimAnchor + 2]) * TextCodec::HASH2;
 
-                for (int i = delimAnchor + 1; i < srcIdx; i++)
+                for (int i = delimAnchor + 3; i < srcIdx; i++)
                     h1 = h1 * TextCodec::HASH1 ^ int(src[i]) * TextCodec::HASH2;
 
                 // Lookup word in dictionary
@@ -887,7 +899,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             wordRun = false;
             delimAnchor = srcIdx - 1;
 
-            if ((_isCRLF == true) && (cur == TextCodec::LF)) {
+            if ((isCRLF == true) && (cur == TextCodec::LF)) {
                 dst[dstIdx++] = TextCodec::CR;
 
                 if (dstIdx >= dstEnd) {
@@ -1015,12 +1027,14 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
 
     while (srcIdx < srcEnd) {
-        if (TextCodec::isText(src[srcIdx])) {
+        const int8 cType = TextCodec::getType(src[srcIdx]);
+
+        if (cType == 0) {
             srcIdx++;
             continue;
         }
 
-        if ((srcIdx > delimAnchor + 2) && TextCodec::isDelimiter(src[srcIdx])) {
+        if ((srcIdx > delimAnchor + 2) && (cType > 0)) {
             const byte val = src[delimAnchor + 1];
             const int length = srcIdx - delimAnchor - 1;
 
@@ -1268,6 +1282,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     _isCRLF = (src[0] & TextCodec::MASK_CRLF) != byte(0);
+    const bool isCRLF = _isCRLF;
     int srcIdx = 1;
     int dstIdx = 0;
     const int srcEnd = count;
@@ -1279,21 +1294,24 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
         const byte cur = src[srcIdx];
+        const int8 cType = TextCodec::getType(cur);
 
-        if (TextCodec::isText(cur)) {
-            dst[dstIdx] = cur;
+        if (cType == 0) {
+            dst[dstIdx] = src[srcIdx];
             srcIdx++;
             dstIdx++;
             continue;
         }
 
-        if ((srcIdx > delimAnchor + 3) && TextCodec::isDelimiter(cur)) {
+        if ((srcIdx > delimAnchor + 3) && (cType > 0)) {
             const int length = srcIdx - delimAnchor - 1; // length > 2
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
                 int h1 = TextCodec::HASH1;
+                h1 = h1 * TextCodec::HASH1 ^ int(src[delimAnchor + 1]) * TextCodec::HASH2;
+                h1 = h1 * TextCodec::HASH1 ^ int(src[delimAnchor + 2]) * TextCodec::HASH2;
 
-                for (int i = delimAnchor + 1; i < srcIdx; i++)
+                for (int i = delimAnchor + 3; i < srcIdx; i++)
                     h1 = h1 * TextCodec::HASH1 ^ int(src[i]) * TextCodec::HASH2;
 
                 // Lookup word in dictionary
@@ -1397,7 +1415,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 dst[dstIdx++] = src[srcIdx++];
             }
             else {
-                if ((_isCRLF == true) && (cur == TextCodec::LF)) {
+                if ((isCRLF == true) && (cur == TextCodec::LF)) {
                     dst[dstIdx++] = TextCodec::CR;
 
                     if (dstIdx >= dstEnd) {
