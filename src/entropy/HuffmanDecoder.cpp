@@ -105,21 +105,20 @@ int HuffmanDecoder::readLengths()
 void HuffmanDecoder::buildDecodingTable(int count)
 {
     memset(_table, 0, sizeof(_table));
-    int length = 0;
+    uint16 length = 0;
 
     for (int i = 0; i < count; i++) {
-        const uint16 s = uint16(_alphabet[i]);
-
-        if (_sizes[s] > length)
-            length = _sizes[s];
+        const uint s = _alphabet[i];
+        length = max(_sizes[s], length);
 
         // code -> size, symbol
-        const uint16 val = (s << 8) | _sizes[s];
+        const uint16 val = (uint16(s) << 8) | _sizes[s];
 
         // All DECODING_BATCH_SIZE bit values read from the bit stream and
         // starting with the same prefix point to symbol s
-        uint idx = uint(_codes[s]) << (DECODING_BATCH_SIZE - length);
-        const uint end = idx + (1 << (DECODING_BATCH_SIZE - length));
+        const int w = 1 << (DECODING_BATCH_SIZE - length);
+        int idx = int(_codes[s]) * w;
+        const int end = idx + w;
 
         while (idx < end)
             _table[idx++] = val;

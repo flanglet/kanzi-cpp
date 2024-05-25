@@ -152,7 +152,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         if (bestLen < minMatch) {
             // Check match at position in hash table
             const int32 h0 = hash(&src[srcIdx]);
-            prefetchWrite(&_hashes[h0]);
             ref = _hashes[h0];
             _hashes[h0] = srcIdx;
 
