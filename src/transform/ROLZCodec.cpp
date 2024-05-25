@@ -515,6 +515,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
                 litBuf._index += litLen;
                 dstIdx += litLen;
+                prefetchRead(&litBuf._array[litBuf._index]);
 
                 if (dstIdx >= sizeChunk) {
                     // Last chunk literals not followed by match
