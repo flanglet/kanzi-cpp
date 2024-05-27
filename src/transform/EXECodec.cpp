@@ -378,26 +378,27 @@ byte EXECodec::detectType(byte src[], int count, int& codeStart, int& codeEnd)
     int arch = 0;
 
     if (parseHeader(src, count, magic, arch, codeStart, codeEnd) == true) {
-        if ((arch == ELF_X86_ARCH) || (arch == ELF_AMD64_ARCH))
-            return X86;
+        switch(arch) {
+            case ELF_X86_ARCH:
+            case ELF_AMD64_ARCH:
+            case WIN_X86_ARCH:
+            case WIN_AMD64_ARCH:
+            case MAC_AMD64_ARCH:
+               return X86;
 
-        if ((arch == WIN_X86_ARCH) || (arch == WIN_AMD64_ARCH))
-            return X86;
+            case ELF_ARM64_ARCH:
+            case WIN_ARM64_ARCH:
+            case MAC_ARM64_ARCH:
+               return ARM64;
 
-        if (arch == MAC_AMD64_ARCH)
-            return X86;
-
-        if ((arch == ELF_ARM64_ARCH) || (arch == WIN_ARM64_ARCH))
-            return ARM64;
-
-        if (arch == MAC_ARM64_ARCH)
-            return ARM64;
+            default:
+               count = codeEnd - codeStart;
+        }
     }
 
     int jumpsX86 = 0;
     int jumpsARM64 = 0;
     uint histo[256] = { 0 };
-    count = codeEnd - codeStart;
 
     for (int i = codeStart; i < codeEnd; i++) {
         histo[int(src[i])]++;
@@ -441,12 +442,15 @@ byte EXECodec::detectType(byte src[], int count, int& codeStart, int& codeEnd)
         return NOT_EXE | byte(dt);
 
     // Filter out (some/many) multimedia files
+    if ((histo[0] < uint(count / 10)) || (histo[255] < uint(count / 100)))
+        return NOT_EXE | byte(dt);
+
     int smallVals = 0;
 
     for (int i = 0; i < 16; i++)
         smallVals += histo[i];
 
-    if ((histo[0] < uint(count / 10)) || (smallVals > (count / 2)) || (histo[255] < uint(count / 100)))
+    if (smallVals > (count / 2))
         return NOT_EXE | byte(dt);
 
     // Ad-hoc thresholds
