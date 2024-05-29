@@ -134,17 +134,18 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     while (srcIdx < srcEnd) {
         const int minRef = max(srcIdx - maxDist, 0);
         int bestLen = 0;
-        int ref = srcIdx + 1 - repd[repIdx];
+        const int srcIdx1 = srcIdx + 1;
+        int ref = srcIdx1 - repd[repIdx];
 
-        if ((ref > minRef) && (memcmp(&src[srcIdx + 1], &src[ref], 4) == 0)) {
+        if ((ref > minRef) && (memcmp(&src[srcIdx1], &src[ref], 4) == 0)) {
             // Check repd first
-            bestLen = findMatch(src, srcIdx + 1, ref, min(srcEnd - srcIdx - 1, MAX_MATCH));
+            bestLen = findMatch(src, srcIdx1, ref, min(srcEnd - srcIdx1, MAX_MATCH));
 
             if (bestLen < minMatch) {
-                ref = srcIdx + 1 - repd[1 - repIdx];
+                ref = srcIdx1 - repd[1 - repIdx];
 
-                if ((ref > minRef) && (memcmp(&src[srcIdx + 1], &src[ref], 4) == 0)) {
-                    bestLen = findMatch(src, srcIdx + 1, ref, min(srcEnd - srcIdx - 1, MAX_MATCH));
+                if ((ref > minRef) && (memcmp(&src[srcIdx1], &src[ref], 4) == 0)) {
+                    bestLen = findMatch(src, srcIdx1, ref, min(srcEnd - srcIdx1, MAX_MATCH));
                 }
             }
         }
@@ -170,7 +171,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
             if ((ref != srcIdx - repd[0]) && (ref != srcIdx - repd[1])) {
                 // Check if better match at next position
-                const int srcIdx1 = srcIdx + 1;
                 const int32 h1 = hash(&src[srcIdx1]);
                 const int ref1 = _hashes[h1];
                 _hashes[h1] = srcIdx1;
