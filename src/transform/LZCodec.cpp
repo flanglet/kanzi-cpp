@@ -180,14 +180,14 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
                     // Select best match
                     if ((bestLen1 > bestLen) || ((bestLen1 == bestLen) && (ref1 > ref))) {
-                        if ((src[srcIdx] == src[ref1 - 1]) && (bestLen1 < MAX_MATCH)) {
-                            ref = ref1 - 1;
-                            bestLen = bestLen1 + 1;
-                        }
-                        else {
+                        if ((bestLen >= MAX_MATCH) || (src[srcIdx] != src[ref1 - 1])) {
                             ref = ref1;
                             bestLen = bestLen1;
                             srcIdx++;
+                        }
+                        else {
+                            ref = ref1 - 1;
+                            bestLen = bestLen1 + 1;
                         }
                     }
                 }
@@ -197,14 +197,14 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             const int32 h0 = hash(&src[srcIdx]);
             _hashes[h0] = srcIdx;
 
-            if ((src[srcIdx] == src[ref - 1]) && (bestLen < MAX_MATCH)) {
-                bestLen++;
-                ref--;
-            }
-            else {
+            if ((bestLen >= MAX_MATCH) || (src[srcIdx] != src[ref - 1])) {
                 srcIdx++;
                 const int32 h1 = hash(&src[srcIdx]);
                 _hashes[h1] = srcIdx;
+            }
+            else {
+                bestLen++;
+                ref--;
             }
         }
 
