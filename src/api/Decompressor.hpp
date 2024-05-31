@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _libAPI_
-#define _libAPI_
+#ifndef _Decompressor_
+#define _Decompressor_
 
 #ifdef _WIN32
    #define CDECL __cdecl
