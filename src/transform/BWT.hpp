@@ -84,10 +84,10 @@ namespace kanzi {
    class BWT FINAL : public Transform<byte> {
 
    private:
-       static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB
-       static const int NB_FASTBITS = 17;
-       static const int BLOCK_SIZE_THRESHOLD1 = 256;
-       static const int BLOCK_SIZE_THRESHOLD2 = 2 * 1024 * 1024;
+       static const int MAX_BLOCK_SIZE;
+       static const int NB_FASTBITS;
+       static const int BLOCK_SIZE_THRESHOLD1;
+       static const int BLOCK_SIZE_THRESHOLD2;
 
        uint* _buffer;
        int* _sa;
@@ -105,7 +105,7 @@ namespace kanzi {
        bool inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, int count);
 
    public:
-       static const int MASK_FASTBITS = (1 << NB_FASTBITS) - 1;
+       static const int MASK_FASTBITS;
 
        BWT(int jobs = 1);
 

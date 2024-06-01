@@ -18,6 +18,12 @@ limitations under the License.
 
 using namespace kanzi;
 
+const int CMPredictor::FAST_RATE = 2;
+const int CMPredictor::MEDIUM_RATE = 4;
+const int CMPredictor::SLOW_RATE = 6;
+const int CMPredictor::PSCALE = 65536;
+
+
 CMPredictor::CMPredictor()
 {
     _ctx = 1;

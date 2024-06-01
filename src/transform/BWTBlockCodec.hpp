@@ -50,12 +50,10 @@ namespace kanzi {
        // Required encoding output buffer size
        int getMaxEncodedLength(int srcLen) const
        {
-           return srcLen + BWT_MAX_HEADER_SIZE;
+           return srcLen + 32 /* max header size */;
        }
 
    private:
-       static const int BWT_MAX_HEADER_SIZE = 8 * 4;
-
        BWT* _pBWT;
    };
 }

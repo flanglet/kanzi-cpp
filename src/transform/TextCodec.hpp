@@ -140,16 +140,16 @@ namespace kanzi {
        friend class TextCodec2;
 
    public:
-       static const int MAX_DICT_SIZE = 1 << 19; // must be less than 1<<24
-       static const int MAX_WORD_LENGTH = 31; // must be less than 128
-       static const int MIN_BLOCK_SIZE = 1024;
-       static const int MAX_BLOCK_SIZE = 1 << 30; // 1 GB
-       static const byte ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
-       static const byte ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
-       static const byte MASK_1F = byte(0x1F);
-       static const byte MASK_20 = byte(0x20);
-       static const byte MASK_40 = byte(0x40);
-       static const byte MASK_80 = byte(0x80);
+       static const int MAX_DICT_SIZE;
+       static const int MAX_WORD_LENGTH;
+       static const int MIN_BLOCK_SIZE;
+       static const int MAX_BLOCK_SIZE;
+       static const byte ESCAPE_TOKEN1;
+       static const byte ESCAPE_TOKEN2;
+       static const byte MASK_1F;
+       static const byte MASK_20;
+       static const byte MASK_40;
+       static const byte MASK_80;
 
        TextCodec();
 
@@ -177,21 +177,21 @@ namespace kanzi {
        static bool isDelimiter(byte val) { return getType(val) > 0; }
 
    private:
-       static const int HASH1 = 0x7FEB352D;
-       static const int HASH2 = 0x846CA68B;
-       static const byte CR = byte(0x0D);
-       static const byte LF = byte(0x0A);
-       static const byte SP = byte(0x20);
-       static const int THRESHOLD1 = 128;
-       static const int THRESHOLD2 = THRESHOLD1 * THRESHOLD1;
-       static const int THRESHOLD3 = 32;
-       static const int THRESHOLD4 = THRESHOLD3 * 128;
-       static const int LOG_HASHES_SIZE = 24; // 16 MB
-       static const byte MASK_NOT_TEXT = byte(0x80);
-       static const byte MASK_CRLF = byte(0x40);
-       static const byte MASK_XML_HTML = byte(0x20);
-       static const byte MASK_DT = byte(0x0F);
-       static const int MASK_LENGTH = 0x0007FFFF; // 19 bits
+       static const int HASH1;
+       static const int HASH2;
+       static const byte CR;
+       static const byte LF;
+       static const byte SP;
+       static const int THRESHOLD1;
+       static const int THRESHOLD2;
+       static const int THRESHOLD3;
+       static const int THRESHOLD4;
+       static const int LOG_HASHES_SIZE;
+       static const byte MASK_NOT_TEXT;
+       static const byte MASK_CRLF;
+       static const byte MASK_XML_HTML;
+       static const byte MASK_DT;
+       static const int MASK_LENGTH;
 
        static bool init(int8 cType[256]);
        static int8 CHAR_TYPE[256];

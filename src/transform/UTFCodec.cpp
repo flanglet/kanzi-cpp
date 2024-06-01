@@ -24,6 +24,7 @@ using namespace kanzi;
 using namespace std;
 
 const int UTFCodec::SIZES[16] = { 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 3, 4 };
+const int UTFCodec::MIN_BLOCK_SIZE = 1024;
 
 
 bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)

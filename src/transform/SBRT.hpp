@@ -35,9 +35,9 @@ namespace kanzi
    class SBRT FINAL : public Transform<byte>
    {
    public:
-       static const int MODE_MTF = 1; // alpha = 0
-       static const int MODE_RANK = 2; // alpha = 1/2
-       static const int MODE_TIMESTAMP = 3; // alpha = 1
+       static const int MODE_MTF;
+       static const int MODE_RANK;
+       static const int MODE_TIMESTAMP;
 
        SBRT(int mode);
        SBRT(int mode, Context&);

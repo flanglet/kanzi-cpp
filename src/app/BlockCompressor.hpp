@@ -134,9 +134,9 @@ namespace kanzi {
        void dispose() const {};
 
    private:
-       static const int DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024;
-       static const int MIN_BLOCK_SIZE = 1024;
-       static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024;
+       static const int DEFAULT_BLOCK_SIZE;
+       static const int MIN_BLOCK_SIZE;
+       static const int MAX_BLOCK_SIZE;
 
        int _verbosity;
        bool _overwrite;

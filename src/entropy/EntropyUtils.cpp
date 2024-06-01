@@ -21,6 +21,15 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+
+const int EntropyUtils::FULL_ALPHABET = 0;
+const int EntropyUtils::PARTIAL_ALPHABET = 1;
+const int EntropyUtils::ALPHABET_256 = 0;
+const int EntropyUtils::ALPHABET_0 = 1;
+const int EntropyUtils::INCOMPRESSIBLE_THRESHOLD = 973; // 0.95*1024
+
+
+
 class FreqSortData {
 public:
     uint* _freq;

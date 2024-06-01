@@ -21,6 +21,15 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+
+const uint64 FPAQDecoder::TOP = 0x00FFFFFFFFFFFFFF;
+const uint64 FPAQDecoder::MASK_0_56 = 0x00FFFFFFFFFFFFFF;
+const uint64 FPAQDecoder::MASK_0_32 = 0x00000000FFFFFFFF;
+const uint FPAQDecoder::DEFAULT_CHUNK_SIZE = 4 * 1024 * 1024;
+const uint FPAQDecoder::MAX_BLOCK_SIZE = 1 << 30;
+const int FPAQDecoder::PSCALE = 65536;
+
+
 FPAQDecoder::FPAQDecoder(InputBitStream& bitstream)
     : _bitstream(bitstream)
     , _sba(new byte[0], 0)

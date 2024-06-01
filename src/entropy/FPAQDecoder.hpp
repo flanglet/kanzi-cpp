@@ -30,12 +30,12 @@ namespace kanzi
    class FPAQDecoder : public EntropyDecoder
    {
    private:
-       static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
-       static const uint64 MASK_0_56 = 0x00FFFFFFFFFFFFFF;
-       static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
-       static const uint DEFAULT_CHUNK_SIZE = 4 * 1024 * 1024;
-       static const uint MAX_BLOCK_SIZE = 1 << 30;
-       static const int PSCALE = 65536;
+       static const uint64 TOP;
+       static const uint64 MASK_0_56;
+       static const uint64 MASK_0_32;
+       static const uint DEFAULT_CHUNK_SIZE;
+       static const uint MAX_BLOCK_SIZE;
+       static const int PSCALE;
 
        uint64 _low;
        uint64 _high;

@@ -119,12 +119,12 @@ namespace kanzi
    class DivSufSort
    {
    private:
-       static const int SS_INSERTIONSORT_THRESHOLD = 16;
-       static const int SS_BLOCKSIZE = 4096;
-       static const int SS_MISORT_STACKSIZE = 16;
-       static const int SS_SMERGE_STACKSIZE = 32;
-       static const int TR_STACKSIZE = 64;
-       static const int TR_INSERTIONSORT_THRESHOLD = 16;
+       static const int SS_INSERTIONSORT_THRESHOLD;
+       static const int SS_BLOCKSIZE;
+       static const int SS_MISORT_STACKSIZE;
+       static const int SS_SMERGE_STACKSIZE;
+       static const int TR_STACKSIZE;
+       static const int TR_INSERTIONSORT_THRESHOLD;
        static const int SQQ_TABLE[];
        static const int LOG_TABLE[];
 

@@ -23,6 +23,16 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+
+const int RLT::RUN_LEN_ENCODE1 = 224; // used to encode run length
+const int RLT::RUN_LEN_ENCODE2 = (255 - RUN_LEN_ENCODE1) << 8; // used to encode run length
+const int RLT::RUN_THRESHOLD = 3;
+const int RLT::MAX_RUN = 0xFFFF + RUN_LEN_ENCODE2 + RUN_THRESHOLD - 1;
+const int RLT::MAX_RUN4 = MAX_RUN - 4;
+const int RLT::MIN_BLOCK_LENGTH = 16;
+const byte RLT::DEFAULT_ESCAPE = byte(0xFB);
+
+
 bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)

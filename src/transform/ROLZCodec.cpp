@@ -28,6 +28,14 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+const int ROLZCodec::HASH_SIZE = 65536;
+const int ROLZCodec::CHUNK_SIZE = 16 * 1024 * 1024;
+const int32 ROLZCodec::HASH = 200002979;
+const int32 ROLZCodec::HASH_MASK = ~(ROLZCodec::CHUNK_SIZE - 1);
+const int ROLZCodec::MAX_BLOCK_SIZE = 1024 * 1024 * 1024;
+const int ROLZCodec::MIN_BLOCK_SIZE = 64;
+
+
 ROLZCodec::ROLZCodec(uint logPosChecks)
 {
     _delegate = new ROLZCodec1(logPosChecks);
@@ -82,6 +90,14 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
 
     return _delegate->inverse(input, output, count);
 }
+
+
+const int ROLZCodec1::MIN_MATCH3 = 3;
+const int ROLZCodec1::MIN_MATCH4 = 4;
+const int ROLZCodec1::MIN_MATCH7 = 7;
+const int ROLZCodec1::MAX_MATCH = MIN_MATCH3 + 65535;
+const int ROLZCodec1::LOG_POS_CHECKS = 4;
+
 
 ROLZCodec1::ROLZCodec1(uint logPosChecks) :
     _logPosChecks(logPosChecks)
@@ -564,6 +580,14 @@ End:
     return srcIdx == count;
 }
 
+
+const uint64 ROLZEncoder::TOP = 0x00FFFFFFFFFFFFFF;
+const uint64 ROLZEncoder::MASK_0_32 = 0x00000000FFFFFFFF;
+const int ROLZEncoder::MATCH_FLAG = 0;
+const int ROLZEncoder::LITERAL_FLAG = 1;
+const int ROLZEncoder::PSCALE = 0xFFFF;
+
+
 ROLZEncoder::ROLZEncoder(uint litLogSize, uint mLogSize, byte buf[], int& idx)
     : _idx(idx)
     , _low(0)
@@ -627,6 +651,15 @@ void ROLZEncoder::dispose()
     _idx += 8;
 }
 
+
+const uint64 ROLZDecoder::TOP = 0x00FFFFFFFFFFFFFF;
+const uint64 ROLZDecoder::MASK_0_56 = 0x00FFFFFFFFFFFFFF;
+const uint64 ROLZDecoder::MASK_0_32 = 0x00000000FFFFFFFF;
+const int ROLZDecoder::MATCH_FLAG = 0;
+const int ROLZDecoder::LITERAL_FLAG = 1;
+const int ROLZDecoder::PSCALE = 0xFFFF;
+
+
 ROLZDecoder::ROLZDecoder(uint litLogSize, uint mLogSize, byte buf[], int& idx)
     : _idx(idx)
     , _low(0)
@@ -688,6 +721,17 @@ int ROLZDecoder::decode9Bits()
     decodeBit();
     return _c1 & 0x1FF;
 }
+
+
+const int ROLZCodec2::MATCH_FLAG = 0;
+const int ROLZCodec2::LITERAL_FLAG = 1;
+const int ROLZCodec2::MATCH_CTX = 0;
+const int ROLZCodec2::LITERAL_CTX = 1;
+const int ROLZCodec2::MIN_MATCH3 = 3;
+const int ROLZCodec2::MIN_MATCH7 = 7;
+const int ROLZCodec2::MAX_MATCH = MIN_MATCH3 + 255;
+const int ROLZCodec2::LOG_POS_CHECKS = 5;
+
 
 ROLZCodec2::ROLZCodec2(uint logPosChecks) :
     _logPosChecks(logPosChecks)

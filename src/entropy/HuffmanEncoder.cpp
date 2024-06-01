@@ -83,7 +83,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[])
         for (int i = 0; i < count; i++)
             ranks[i] = (freqs[alphabet[i]] << 8) | alphabet[i];
 
-        uint maxCodeLen = computeCodeLengths(sizes, ranks, count);
+        int maxCodeLen = computeCodeLengths(sizes, ranks, count);
 
         if (maxCodeLen == 0) {
             throw invalid_argument("Could not generate Huffman codes: invalid code length 0");
@@ -124,7 +124,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[])
 }
 
 
-uint HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16 sizes[], uint ranks[], int count) const
+int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16 sizes[], uint ranks[], int count) const
 {
    int n = 0;
    int debt = 0;
@@ -204,7 +204,7 @@ uint HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint1
 
 
 // Called only when more than 1 symbol
-uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count) const
+int HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count) const
 {
     // Sort ranks by increasing freqs (first key) and increasing value (second key)
     vector<uint> v(ranks, ranks + count);
@@ -222,7 +222,7 @@ uint HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count)
     // See [In-Place Calculation of Minimum-Redundancy Codes]
     // by Alistair Moffat & Jyrki Katajainen
     computeInPlaceSizesPhase1(freqs, count);
-    const uint maxCodeLen = computeInPlaceSizesPhase2(freqs, count);
+    const int maxCodeLen = computeInPlaceSizesPhase2(freqs, count);
 
     for (int i = 0; i < count; i++)
         sizes[ranks[i]] = uint16(freqs[i]);

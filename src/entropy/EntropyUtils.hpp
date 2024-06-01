@@ -26,13 +26,13 @@ namespace kanzi
    class EntropyUtils
    {
    private:
-       static const int FULL_ALPHABET = 0;
-       static const int PARTIAL_ALPHABET = 1;
-       static const int ALPHABET_256 = 0;
-       static const int ALPHABET_0 = 1;
+       static const int FULL_ALPHABET;
+       static const int PARTIAL_ALPHABET;
+       static const int ALPHABET_256;
+       static const int ALPHABET_0;
 
    public:
-       static const int INCOMPRESSIBLE_THRESHOLD = 973; // 0.95*1024
+       static const int INCOMPRESSIBLE_THRESHOLD;
 
        EntropyUtils() {}
 

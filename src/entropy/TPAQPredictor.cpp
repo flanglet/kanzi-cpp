@@ -17,6 +17,26 @@ limitations under the License.
 
 using namespace kanzi;
 
+const int TPAQMixer::BEGIN_LEARN_RATE = 60 << 7;
+const int TPAQMixer::END_LEARN_RATE = 11 << 7;
+
+template<>
+const int TPAQPredictor<true>::MAX_LENGTH = 88;
+template<>
+const int TPAQPredictor<true>::BUFFER_SIZE = 64 * 1024 * 1024;
+template<>
+const int TPAQPredictor<true>::HASH_SIZE = 16 * 1024 * 1024;
+template<>
+const int TPAQPredictor<true>::HASH = 0x7FEB352D;
+template<>
+const int TPAQPredictor<false>::MAX_LENGTH = 88;
+template<>
+const int TPAQPredictor<false>::BUFFER_SIZE = 64 * 1024 * 1024;
+template<>
+const int TPAQPredictor<false>::HASH_SIZE = 16 * 1024 * 1024;
+template<>
+const int TPAQPredictor<false>::HASH = 0x7FEB352D;
+
 
 TPAQMixer::TPAQMixer()
 {

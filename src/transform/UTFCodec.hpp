@@ -54,7 +54,7 @@ namespace kanzi
 
     private:
 
-        static const int MIN_BLOCK_SIZE = 1024;
+        static const int MIN_BLOCK_SIZE;
         static const int SIZES[16];
 
         Context* _pCtx;

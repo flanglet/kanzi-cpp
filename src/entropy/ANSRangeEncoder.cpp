@@ -24,6 +24,13 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+const int ANSRangeEncoder::ANS_TOP = 1 << 15; // max possible for ANS_TOP=1<<23
+const int ANSRangeEncoder::DEFAULT_ANS0_CHUNK_SIZE = 16384;
+const int ANSRangeEncoder::DEFAULT_LOG_RANGE = 12;
+const int ANSRangeEncoder::MIN_CHUNK_SIZE = 1024;
+const int ANSRangeEncoder::MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not overflow
+
+
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats.
 ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chunkSize, int logRange) : _bitstream(bitstream)

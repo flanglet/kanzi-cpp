@@ -30,6 +30,19 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+
+const int CompressedOutputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
+const int CompressedOutputStream::BITSTREAM_FORMAT_VERSION = 5;
+const int CompressedOutputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
+const byte CompressedOutputStream::COPY_BLOCK_MASK = byte(0x80);
+const byte CompressedOutputStream::TRANSFORMS_MASK = byte(0x10);
+const int CompressedOutputStream::MIN_BITSTREAM_BLOCK_SIZE = 1024;
+const int CompressedOutputStream::MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
+const int CompressedOutputStream::SMALL_BLOCK_SIZE = 15;
+const int CompressedOutputStream::CANCEL_TASKS_ID = -1;
+const int CompressedOutputStream::MAX_CONCURRENCY = 64;
+
+
 #ifdef CONCURRENCY_ENABLED
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& entropyCodec,
           const string& transform, int bSize, bool checksum, int tasks, uint64 fileSize,

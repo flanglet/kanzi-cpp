@@ -23,6 +23,15 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+
+const uint64 RangeEncoder::TOP_RANGE    = 0x0FFFFFFFFFFFFFFF;
+const uint64 RangeEncoder::BOTTOM_RANGE = 0x000000000000FFFF;
+const uint64 RangeEncoder::RANGE_MASK   = 0x0FFFFFFF00000000;
+const int RangeEncoder::DEFAULT_CHUNK_SIZE = 1 << 15; // 32 KB by default
+const int RangeEncoder::DEFAULT_LOG_RANGE = 12;
+const int RangeEncoder::MAX_CHUNK_SIZE = 1 << 30;
+
+
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats.
 RangeEncoder::RangeEncoder(OutputBitStream& bitstream, int chunkSize, int logRange) : _bitstream(bitstream)

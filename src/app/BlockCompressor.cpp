@@ -34,6 +34,12 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+
+const int BlockCompressor::DEFAULT_BLOCK_SIZE = 4 * 1024 * 1024;
+const int BlockCompressor::MIN_BLOCK_SIZE = 1024;
+const int BlockCompressor::MAX_BLOCK_SIZE = 1024 * 1024 * 1024;
+
+
 BlockCompressor::BlockCompressor(const Context& ctx) :
             _ctx(ctx)
 {
@@ -681,6 +687,7 @@ T FileCompressTask<T>::run()
     log.println(ss.str(), verbosity > 1);
     log.println("\n", verbosity > 3);
     int64 read = 0;
+    static const int DEFAULT_BUFFER_SIZE = 65536;
     byte* buf = new byte[DEFAULT_BUFFER_SIZE];
     SliceArray<byte> sa(buf, DEFAULT_BUFFER_SIZE, 0);
 

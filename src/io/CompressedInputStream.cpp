@@ -29,6 +29,19 @@ using namespace kanzi;
 using namespace std;
 
 
+const int CompressedInputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
+const int CompressedInputStream::BITSTREAM_FORMAT_VERSION = 5;
+const int CompressedInputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
+const int CompressedInputStream::EXTRA_BUFFER_SIZE = 512;
+const byte CompressedInputStream::COPY_BLOCK_MASK = byte(0x80);
+const byte CompressedInputStream::TRANSFORMS_MASK = byte(0x10);
+const int CompressedInputStream::MIN_BITSTREAM_BLOCK_SIZE = 1024;
+const int CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
+const int CompressedInputStream::CANCEL_TASKS_ID = -1;
+const int CompressedInputStream::MAX_CONCURRENCY = 64;
+const int CompressedInputStream::MAX_BLOCK_ID = int((uint(1) << 31) - 1);
+
+
 #ifdef CONCURRENCY_ENABLED
 CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, ThreadPool* pool,
                    bool headerless,

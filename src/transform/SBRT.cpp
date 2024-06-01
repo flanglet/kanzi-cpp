@@ -18,6 +18,13 @@ limitations under the License.
 
 using namespace kanzi;
 
+
+const int SBRT::MODE_MTF = 1; // alpha = 0
+const int SBRT::MODE_RANK = 2; // alpha = 1/2
+const int SBRT::MODE_TIMESTAMP = 3; // alpha = 1
+
+
+
 SBRT::SBRT(int mode) :
 	  _mask1((mode == MODE_TIMESTAMP) ? 0 : -1)
 	, _mask2((mode == MODE_MTF) ? 0 : -1)

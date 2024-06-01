@@ -26,6 +26,14 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+
+const int BWT::MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB
+const int BWT::NB_FASTBITS = 17;
+const int BWT::MASK_FASTBITS = (1 << NB_FASTBITS) - 1;
+const int BWT::BLOCK_SIZE_THRESHOLD1 = 256;
+const int BWT::BLOCK_SIZE_THRESHOLD2 = 2 * 1024 * 1024;
+
+
 BWT::BWT(int jobs)
 {
     _buffer = new uint[0];

@@ -24,6 +24,9 @@ using namespace kanzi;
 using namespace std;
 
 
+const int AliasCodec::MIN_BLOCK_SIZE = 1024;
+
+
 AliasCodec::AliasCodec(Context& ctx) : 
           _pCtx(&ctx) 
 {

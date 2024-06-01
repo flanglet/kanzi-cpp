@@ -20,6 +20,14 @@ limitations under the License.
 
 using namespace kanzi;
 
+
+const int DivSufSort::SS_INSERTIONSORT_THRESHOLD = 16;
+const int DivSufSort::SS_BLOCKSIZE = 4096;
+const int DivSufSort::SS_MISORT_STACKSIZE = 16;
+const int DivSufSort::SS_SMERGE_STACKSIZE = 32;
+const int DivSufSort::TR_STACKSIZE = 64;
+const int DivSufSort::TR_INSERTIONSORT_THRESHOLD = 16;
+
 const int DivSufSort::SQQ_TABLE[] = {
     0, 16, 22, 27, 32, 35, 39, 42, 45, 48, 50, 53, 55, 57, 59, 61,
     64, 65, 67, 69, 71, 73, 75, 76, 78, 80, 81, 83, 84, 86, 87, 89,

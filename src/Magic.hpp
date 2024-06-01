@@ -22,8 +22,7 @@ limitations under the License.
 
 namespace kanzi
 {
-   class Magic {
-   public:
+   struct Magic {
        static const uint NO_MAGIC = 0;
        static const uint JPG_MAGIC = 0xFFD8FFE0;
        static const uint GIF_MAGIC = 0x47494638;
@@ -61,12 +60,6 @@ namespace kanzi
        static bool isMultimedia(uint magic);       
 
        static bool isExecutable(uint magic);       
-  
-
-    private:
-       Magic() {}
-       ~Magic() {}        
-       
     }; 
     
        

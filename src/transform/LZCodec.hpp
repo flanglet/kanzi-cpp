@@ -94,19 +94,16 @@ namespace kanzi {
         }
 
     private:
-        static const uint HASH_SEED = 0x1E35A7BD;
-        static const uint HASH_LOG1 = 17;
-        static const uint HASH_SHIFT1 = 40 - HASH_LOG1;
-        static const uint HASH_MASK1 = (1 << HASH_LOG1) - 1;
-        static const uint HASH_LOG2 = 21;
-        static const uint HASH_SHIFT2 = 48 - HASH_LOG2;
-        static const uint HASH_MASK2 = (1 << HASH_LOG2) - 1;
-        static const int MAX_DISTANCE1 = (1 << 16) - 2;
-        static const int MAX_DISTANCE2 = (1 << 24) - 2;
-        static const int MIN_MATCH4 = 4;
-        static const int MIN_MATCH9 = 9;
-        static const int MAX_MATCH = 65535 + 254 + 15 + MIN_MATCH4;
-        static const int MIN_BLOCK_LENGTH = 24;
+        static const uint HASH_SEED;
+        static const uint HASH_LOG;
+        static const uint HASH_SHIFT;
+        static const uint HASH_MASK;
+        static const int MAX_DISTANCE1;
+        static const int MAX_DISTANCE2;
+        static const int MIN_MATCH4;
+        static const int MIN_MATCH9;
+        static const int MAX_MATCH;
+        static const int MIN_BLOCK_LENGTH;
 
         int32* _hashes;
         int _hashSize;
@@ -157,12 +154,12 @@ namespace kanzi {
         }
 
     private:
-        static const uint HASH_SEED = 0x7FEB352D;
-        static const uint HASH_LOG = 16;
-        static const uint HASH_SHIFT = 32 - HASH_LOG;
-        static const int MIN_MATCH = 64;
-        static const int MIN_BLOCK_LENGTH = 128;
-        static const int MATCH_FLAG = 0xFC;
+        static const uint HASH_SEED;
+        static const uint HASH_LOG;
+        static const uint HASH_SHIFT;
+        static const int MIN_MATCH;
+        static const int MIN_BLOCK_LENGTH;
+        static const int MATCH_FLAG;
 
         int32* _hashes;
         int _hashSize;
@@ -180,8 +177,7 @@ namespace kanzi {
     template <bool T>
     inline int32 LZXCodec<T>::hash(const byte* p)
     {
-        return (T == true) ? ((LittleEndian::readLong64(p) * HASH_SEED) >> HASH_SHIFT2) & HASH_MASK2 :
-            ((LittleEndian::readLong64(p) * HASH_SEED) >> HASH_SHIFT1) & HASH_MASK1;
+        return ((LittleEndian::readLong64(p) * HASH_SEED) >> HASH_SHIFT) & HASH_MASK;
     }
 
     template <bool T>

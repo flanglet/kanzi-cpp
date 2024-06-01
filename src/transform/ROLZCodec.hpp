@@ -29,11 +29,11 @@ namespace kanzi {
 
    class ROLZEncoder {
    private:
-       static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
-       static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
-       static const int MATCH_FLAG = 0;
-       static const int LITERAL_FLAG = 1;
-       static const int PSCALE = 0xFFFF;
+       static const uint64 TOP;
+       static const uint64 MASK_0_32;
+       static const int MATCH_FLAG;
+       static const int LITERAL_FLAG;
+       static const int PSCALE;
 
        uint16* _probs[2];
        uint _logSizes[2];
@@ -69,12 +69,12 @@ namespace kanzi {
 
    class ROLZDecoder {
    private:
-       static const uint64 TOP = 0x00FFFFFFFFFFFFFF;
-       static const uint64 MASK_0_56 = 0x00FFFFFFFFFFFFFF;
-       static const uint64 MASK_0_32 = 0x00000000FFFFFFFF;
-       static const int MATCH_FLAG = 0;
-       static const int LITERAL_FLAG = 1;
-       static const int PSCALE = 0xFFFF;
+       static const uint64 TOP;
+       static const uint64 MASK_0_56;
+       static const uint64 MASK_0_32;
+       static const int MATCH_FLAG;
+       static const int LITERAL_FLAG;
+       static const int PSCALE;
 
        uint16* _probs[2];
        uint _logSizes[2];
@@ -129,11 +129,11 @@ namespace kanzi {
        }
 
    private:
-       static const int MIN_MATCH3 = 3;
-       static const int MIN_MATCH4 = 4;
-       static const int MIN_MATCH7 = 7;
-       static const int MAX_MATCH = MIN_MATCH3 + 65535;
-       static const int LOG_POS_CHECKS = 4;
+       static const int MIN_MATCH3;
+       static const int MIN_MATCH4;
+       static const int MIN_MATCH7;
+       static const int MAX_MATCH;
+       static const int LOG_POS_CHECKS;
 
        int32* _matches;
        uint8 _counters[65536];
@@ -173,14 +173,14 @@ namespace kanzi {
        }
 
    private:
-       static const int MATCH_FLAG = 0;
-       static const int LITERAL_FLAG = 1;
-       static const int MATCH_CTX = 0;
-       static const int LITERAL_CTX = 1;
-       static const int MIN_MATCH3 = 3;
-       static const int MIN_MATCH7 = 7;
-       static const int MAX_MATCH = MIN_MATCH3 + 255;
-       static const int LOG_POS_CHECKS = 5;
+       static const int MATCH_FLAG;
+       static const int LITERAL_FLAG;
+       static const int MATCH_CTX;
+       static const int LITERAL_CTX;
+       static const int MIN_MATCH3;
+       static const int MIN_MATCH7;
+       static const int MAX_MATCH;
+       static const int LOG_POS_CHECKS;
 
        int32* _matches;
        uint8 _counters[65536];
@@ -215,12 +215,12 @@ namespace kanzi {
        }
 
    private:
-       static const int HASH_SIZE = 65536;
-       static const int CHUNK_SIZE = 16 * 1024 * 1024;
-       static const int32 HASH = 200002979;
-       static const int32 HASH_MASK = ~(CHUNK_SIZE - 1);
-       static const int MAX_BLOCK_SIZE = 1024 * 1024 * 1024;
-       static const int MIN_BLOCK_SIZE = 64;
+       static const int HASH_SIZE;
+       static const int CHUNK_SIZE;
+       static const int32 HASH;
+       static const int32 HASH_MASK;
+       static const int MAX_BLOCK_SIZE;
+       static const int MIN_BLOCK_SIZE;
 
        Transform<byte>* _delegate;
 

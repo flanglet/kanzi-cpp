@@ -20,6 +20,45 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+const byte EXECodec::X86_MASK_JUMP = byte(0xFE);
+const byte EXECodec::X86_INSTRUCTION_JUMP = byte(0xE8);
+const byte EXECodec::X86_INSTRUCTION_JCC = byte(0x80);
+const byte EXECodec::X86_TWO_BYTE_PREFIX = byte(0x0F);
+const byte EXECodec::X86_MASK_JCC = byte(0xF0);
+const byte EXECodec::X86_ESCAPE = byte(0x9B);
+const byte EXECodec::NOT_EXE = byte(0x80);
+const byte EXECodec::X86 = byte(0x40);
+const byte EXECodec::ARM64 = byte(0x20);
+const byte EXECodec::MASK_DT = byte(0x0F);
+const int EXECodec::X86_ADDR_MASK = (1 << 24) - 1;
+const int EXECodec::MASK_ADDRESS = 0xF0F0F0F0;
+const int EXECodec::ARM_B_ADDR_MASK = (1 << 26) - 1;
+const int EXECodec::ARM_B_OPCODE_MASK = 0xFFFFFFFF ^ ARM_B_ADDR_MASK;
+const int EXECodec::ARM_B_ADDR_SGN_MASK = 1 << 25;
+const int EXECodec::ARM_OPCODE_B = 0x14000000;  // 6 bit opcode
+const int EXECodec::ARM_OPCODE_BL = 0x94000000; // 6 bit opcode
+const int EXECodec::ARM_CB_REG_BITS = 5; // lowest bits for register
+const int EXECodec::ARM_CB_ADDR_MASK = 0x00FFFFE0; // 18 bit addr mask
+const int EXECodec::ARM_CB_ADDR_SGN_MASK = 1 << 18;
+const int EXECodec::ARM_CB_OPCODE_MASK = 0x7F000000;
+const int EXECodec::ARM_OPCODE_CBZ = 0x34000000;  // 8 bit opcode
+const int EXECodec::ARM_OPCODE_CBNZ = 0x3500000; // 8 bit opcode
+const int EXECodec::WIN_PE = 0x00004550;
+const uint16 EXECodec::WIN_X86_ARCH = 0x014C;
+const uint16 EXECodec::WIN_AMD64_ARCH = 0x8664;
+const uint16 EXECodec::WIN_ARM64_ARCH = 0xAA64;
+const int EXECodec::ELF_X86_ARCH = 0x03;
+const int EXECodec::ELF_AMD64_ARCH = 0x3E;
+const int EXECodec::ELF_ARM64_ARCH = 0xB7;
+const int EXECodec::MAC_AMD64_ARCH = 0x01000007;
+const int EXECodec::MAC_ARM64_ARCH = 0x0100000C;
+const int EXECodec::MAC_MH_EXECUTE = 0x02;
+const int EXECodec::MAC_LC_SEGMENT = 0x01;
+const int EXECodec::MAC_LC_SEGMENT64 = 0x19;
+const int EXECodec::MIN_BLOCK_SIZE = 4096;
+const int EXECodec::MAX_BLOCK_SIZE = (1 << (26 + 2)) - 1; // max offset << 2
+
+
 bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)

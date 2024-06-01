@@ -45,8 +45,8 @@ namespace kanzi
        int get(int p0, int p1, int p2, int p3, int p4, int p5, int p6, int p7);
 
    private:
-       static const int BEGIN_LEARN_RATE = 60 << 7;
-       static const int END_LEARN_RATE = 11 << 7;
+       static const int BEGIN_LEARN_RATE;
+       static const int END_LEARN_RATE;
 
        int _w0, _w1, _w2, _w3, _w4, _w5, _w6, _w7;
        int _p0, _p1, _p2, _p3, _p4, _p5, _p6, _p7;
@@ -70,13 +70,11 @@ namespace kanzi
        int get() { return _pr; }
 
    private:
-       static const int MAX_LENGTH = 88;
-       static const int BUFFER_SIZE = 64 * 1024 * 1024;
-       static const int HASH_SIZE = 16 * 1024 * 1024;
-       static const int MASK_80808080 = 0x80808080;
-       static const int MASK_F0F0F000 = 0xF0F0F000;
-       static const int MASK_4F4FFFFF = 0x4F4FFFFF;
-       static const int HASH = 0x7FEB352D;
+       static const int MAX_LENGTH;
+       static const int BUFFER_SIZE;
+       static const int HASH_SIZE;
+       static const int HASH;
+
 
        #define SSE0_RATE(T) ((T == true) ? 6 : 7)
 
@@ -429,11 +427,11 @@ namespace kanzi
            if (_binCount < (_pos >> 2)) {
                // Mostly text or mixed
                _ctx4 = createContext(_ctx1, _c4 ^ (_c8 & 0xFFFF));
-               _ctx5 = (_c8 & MASK_F0F0F000) | ((_c4 & MASK_F0F0F000) >> 4);
+               _ctx5 = (_c8 & 0x80808080) | ((_c4 & 0xF0F0F000) >> 4);
 
                if (T == true) {
-                  const int h1 = ((_c4 & MASK_80808080) == 0) ? _c4 & MASK_4F4FFFFF : _c4 & MASK_80808080;
-                  const int h2 = ((_c8 & MASK_80808080) == 0) ? _c8 & MASK_4F4FFFFF : _c8 & MASK_80808080;
+                  const int h1 = ((_c4 & 0x80808080) == 0) ? _c4 & 0x4F4FFFFF : _c4 & 0x80808080;
+                  const int h2 = ((_c8 & 0x80808080) == 0) ? _c8 & 0x4F4FFFFF : _c8 & 0x80808080;
                   _ctx6 = hash(h1 << 2, h2 >> 2);
                }
            }

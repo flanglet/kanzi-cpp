@@ -57,6 +57,7 @@ namespace kanzi {
        static short getType(const char* name);
    };
 
+
    inline EntropyDecoder* EntropyDecoderFactory::newDecoder(InputBitStream& ibs, Context& ctx, short entropyType)
    {
        switch (entropyType) {

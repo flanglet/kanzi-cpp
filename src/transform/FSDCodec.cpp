@@ -20,6 +20,12 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+
+const int FSDCodec::MIN_LENGTH = 1024;
+const byte FSDCodec::ESCAPE_TOKEN = byte(255);
+const byte FSDCodec::DELTA_CODING = byte(0);
+const byte FSDCodec::XOR_CODING = byte(1);
+
 const uint8 FSDCodec::ZIGZAG1[256] = {
 	   253,   251,   249,   247,   245,   243,   241,   239,
 	   237,   235,   233,   231,   229,   227,   225,   223,

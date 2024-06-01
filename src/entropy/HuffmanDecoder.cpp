@@ -24,6 +24,10 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+const int HuffmanDecoder::DECODING_BATCH_SIZE = 12; // ensures decoding table fits in L1 cache
+const int HuffmanDecoder::TABLE_MASK = (1 << DECODING_BATCH_SIZE) - 1;
+
+
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats.
 HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) : _bitstream(bitstream)

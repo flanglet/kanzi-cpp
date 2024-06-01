@@ -49,9 +49,9 @@ namespace kanzi
        byte* _buffer;
        uint _bufferSize;
 
-       uint computeCodeLengths(uint16 sizes[], uint sranks[], int count) const;
+       int computeCodeLengths(uint16 sizes[], uint sranks[], int count) const;
 
-       uint limitCodeLengths(const uint alphabet[], uint freqs[], uint16 sizes[], uint sranks[], int count) const;
+       int limitCodeLengths(const uint alphabet[], uint freqs[], uint16 sizes[], uint sranks[], int count) const;
 
        void _dispose() const {}
 

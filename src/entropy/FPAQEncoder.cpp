@@ -21,6 +21,14 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+const uint64 FPAQEncoder::TOP = 0x00FFFFFFFFFFFFFF;
+const uint64 FPAQEncoder::MASK_0_24 = 0x0000000000FFFFFF;
+const uint64 FPAQEncoder::MASK_0_32 = 0x00000000FFFFFFFF;
+const uint FPAQEncoder::DEFAULT_CHUNK_SIZE = 4 * 1024 * 1024;
+const uint FPAQEncoder::MAX_BLOCK_SIZE = 1 << 30;
+const int FPAQEncoder::PSCALE = 65536;
+
+
 FPAQEncoder::FPAQEncoder(OutputBitStream& bitstream)
     : _bitstream(bitstream)
     , _sba(new byte[0], 0)

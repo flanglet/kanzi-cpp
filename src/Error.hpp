@@ -20,7 +20,7 @@ limitations under the License.
 namespace kanzi
 {
 
-   class Error
+   struct Error
    {
    public:
        static const int ERR_MISSING_PARAM = 1;

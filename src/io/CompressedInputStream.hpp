@@ -192,17 +192,17 @@ namespace kanzi
 
 
    private:
-       static const int BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
-       static const int BITSTREAM_FORMAT_VERSION = 5;
-       static const int DEFAULT_BUFFER_SIZE = 256 * 1024;
-       static const int EXTRA_BUFFER_SIZE = 512;
-       static const byte COPY_BLOCK_MASK = byte(0x80);
-       static const byte TRANSFORMS_MASK = byte(0x10);
-       static const int MIN_BITSTREAM_BLOCK_SIZE = 1024;
-       static const int MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
-       static const int CANCEL_TASKS_ID = -1;
-       static const int MAX_CONCURRENCY = 64;
-       static const int MAX_BLOCK_ID = int((uint(1) << 31) - 1);
+       static const int BITSTREAM_TYPE;
+       static const int BITSTREAM_FORMAT_VERSION;
+       static const int DEFAULT_BUFFER_SIZE;
+       static const int EXTRA_BUFFER_SIZE;
+       static const byte COPY_BLOCK_MASK;
+       static const byte TRANSFORMS_MASK;
+       static const int MIN_BITSTREAM_BLOCK_SIZE;
+       static const int MAX_BITSTREAM_BLOCK_SIZE;
+       static const int CANCEL_TASKS_ID;
+       static const int MAX_CONCURRENCY;
+       static const int MAX_BLOCK_ID;
 
        int _blockSize;
        int _bufferId; // index of current read buffer

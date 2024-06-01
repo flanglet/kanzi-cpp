@@ -63,6 +63,50 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     return _delegate->inverse(input, output, count);
 }
 
+
+template<>
+const uint LZXCodec<false>::HASH_SEED = 0x1E35A7BD;
+template<>
+const uint LZXCodec<false>::HASH_LOG = 17;
+template<>
+const uint LZXCodec<false>::HASH_SHIFT = 40 - HASH_LOG;
+template<>
+const uint LZXCodec<false>::HASH_MASK = (1 << HASH_LOG) - 1;
+template<>
+const int LZXCodec<false>::MAX_DISTANCE1 = (1 << 16) - 2;
+template<>
+const int LZXCodec<false>::MAX_DISTANCE2 = (1 << 24) - 2;
+template<>
+const int LZXCodec<false>::MIN_MATCH4 = 4;
+template<>
+const int LZXCodec<false>::MIN_MATCH9 = 9;
+template<>
+const int LZXCodec<false>::MAX_MATCH = 65535 + 254 + 15 + MIN_MATCH4;
+template<>
+const int LZXCodec<false>::MIN_BLOCK_LENGTH = 24;
+template<>
+const uint LZXCodec<true>::HASH_SEED = 0x1E35A7BD;
+template<>
+const uint LZXCodec<true>::HASH_LOG = 21;
+template<>
+const uint LZXCodec<true>::HASH_SHIFT = 48 - HASH_LOG;
+template<>
+const uint LZXCodec<true>::HASH_MASK = (1 << HASH_LOG) - 1;
+template<>
+const int LZXCodec<true>::MAX_DISTANCE1 = (1 << 16) - 2;
+template<>
+const int LZXCodec<true>::MAX_DISTANCE2 = (1 << 24) - 2;
+template<>
+const int LZXCodec<true>::MIN_MATCH4 = 4;
+template<>
+const int LZXCodec<true>::MIN_MATCH9 = 9;
+template<>
+const int LZXCodec<true>::MAX_MATCH = 65535 + 254 + 15 + MIN_MATCH4;
+template<>
+const int LZXCodec<true>::MIN_BLOCK_LENGTH = 24;
+
+
+
 template <bool T>
 bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
@@ -83,7 +127,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         return false;
 
     if (_hashSize == 0) {
-        _hashSize = (T == true) ? 1 << HASH_LOG2 : 1 << HASH_LOG1;
+        _hashSize = 1 << HASH_LOG;
         delete[] _hashes;
         _hashes = new int32[_hashSize];
     }
@@ -479,6 +523,15 @@ exit:
     input._index += mIdx;
     return res && (srcIdx == srcEnd + 13);
 }
+
+
+const uint LZPCodec::HASH_SEED = 0x7FEB352D;
+const uint LZPCodec::HASH_LOG = 16;
+const uint LZPCodec::HASH_SHIFT = 32 - HASH_LOG;
+const int LZPCodec::MIN_MATCH = 64;
+const int LZPCodec::MIN_BLOCK_LENGTH = 128;
+const int LZPCodec::MATCH_FLAG = 0xFC;
+
 
 bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {

@@ -21,6 +21,9 @@ limitations under the License.
 #include <stdexcept>
 #include "../Transform.hpp"
 
+#define SKIP_MASK  byte(0xFF)
+
+
 namespace kanzi {
 
    // Encapsulates a sequence of transforms in a transform
@@ -45,7 +48,6 @@ namespace kanzi {
        int getNbTransforms() const { return _length; }
 
    private:
-       static const byte SKIP_MASK = byte(0xFF);
 
        Transform<T>* _transforms[8]; // transforms or functions
        bool _deallocate; // deallocate memory for transforms ?

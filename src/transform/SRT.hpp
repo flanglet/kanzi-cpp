@@ -35,11 +35,9 @@ namespace kanzi {
 
        bool inverse(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length);
 
-       int getMaxEncodedLength(int srcLen) const { return srcLen + MAX_HEADER_SIZE; }
+       int getMaxEncodedLength(int srcLen) const { return srcLen + 1024 /* max header size */; }
 
    private:
-       static const int MAX_HEADER_SIZE = 4 * 256;
-
        static int preprocess(const int freqs[], uint8 symbols[]);
 
        static int encodeHeader(int freqs[], byte dst[]);

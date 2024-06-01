@@ -540,6 +540,7 @@ T FileDecompressTask<T>::run()
     }
 
     Clock stopClock;
+    static const int DEFAULT_BUFFER_SIZE = 65536;
     byte* buf = new byte[DEFAULT_BUFFER_SIZE];
 
     try {

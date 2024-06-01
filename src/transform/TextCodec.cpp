@@ -23,6 +23,35 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+
+const int TextCodec::MAX_DICT_SIZE = 1 << 19; // must be less than 1<<24
+const int TextCodec::MAX_WORD_LENGTH = 31; // must be less than 128
+const int TextCodec::MIN_BLOCK_SIZE = 1024;
+const int TextCodec::MAX_BLOCK_SIZE = 1 << 30; // 1 GB
+const byte TextCodec::ESCAPE_TOKEN1 = byte(0x0F); // dictionary word preceded by space symbol
+const byte TextCodec::ESCAPE_TOKEN2 = byte(0x0E); // toggle upper/lower case of first word char
+const byte TextCodec::MASK_1F = byte(0x1F);
+const byte TextCodec::MASK_20 = byte(0x20);
+const byte TextCodec::MASK_40 = byte(0x40);
+const byte TextCodec::MASK_80 = byte(0x80);
+const int TextCodec::HASH1 = 0x7FEB352D;
+const int TextCodec::HASH2 = 0x846CA68B;
+const byte TextCodec::CR = byte(0x0D);
+const byte TextCodec::LF = byte(0x0A);
+const byte TextCodec::SP = byte(0x20);
+const int TextCodec::THRESHOLD1 = 128;
+const int TextCodec::THRESHOLD2 = TextCodec::THRESHOLD1 * TextCodec::THRESHOLD1;
+const int TextCodec::THRESHOLD3 = 32;
+const int TextCodec::THRESHOLD4 = TextCodec::THRESHOLD3 * 128;
+const int TextCodec::LOG_HASHES_SIZE = 24; // 16 MB
+const byte TextCodec::MASK_NOT_TEXT = byte(0x80);
+const byte TextCodec::MASK_CRLF = byte(0x40);
+const byte TextCodec::MASK_XML_HTML = byte(0x20);
+const byte TextCodec::MASK_DT = byte(0x0F);
+const int TextCodec::MASK_LENGTH = 0x0007FFFF; // 19 bits
+
+
+
 // 1024 of the most common English words with at least 2 chars.
 char TextCodec::DICT_EN_1024[] =
 "TheBeAndOfInToWithItThatForYouHeHaveOnSaidSayAtButWeByHadTheyAsW\

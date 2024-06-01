@@ -22,6 +22,13 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+const uint64 BinaryEntropyEncoder::TOP = 0x00FFFFFFFFFFFFFF;
+const uint64 BinaryEntropyEncoder::MASK_0_24 = 0x0000000000FFFFFF;
+const uint64 BinaryEntropyEncoder::MASK_0_32 = 0x00000000FFFFFFFF;
+const int BinaryEntropyEncoder::MAX_BLOCK_SIZE = 1 << 30;
+const int BinaryEntropyEncoder::MAX_CHUNK_SIZE = 1 << 26;
+
+
 BinaryEntropyEncoder::BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor* predictor, bool deallocate)
     : _predictor(predictor)
     , _bitstream(bitstream)

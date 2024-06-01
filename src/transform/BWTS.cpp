@@ -19,6 +19,10 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+
+const int BWTS::MAX_BLOCK_SIZE = 1024 * 1024 * 1024; // 1024 MB
+
+
 bool BWTS::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
