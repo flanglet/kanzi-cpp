@@ -24,6 +24,7 @@ limitations under the License.
 
 #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
    #include <windows.h>
+   #include <io.h>
    #include <fcntl.h>
 #endif
 

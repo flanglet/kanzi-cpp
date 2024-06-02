@@ -575,13 +575,14 @@ T FileDecompressTask<T>::run()
 
             if (decoded < 0) {
                 dispose();
+                const uint64 decoded = _cis->getRead();
                 CLEANUP_IS
                 CLEANUP_OS
                 delete _cis;
                 delete[] buf;
                 stringstream sserr;
                 sserr << "Reached end of stream";
-                return T(Error::ERR_READ_FILE, _cis->getRead(), sserr.str().c_str());
+                return T(Error::ERR_READ_FILE, decoded, sserr.str().c_str());
             }
 
             try {
@@ -592,43 +593,48 @@ T FileDecompressTask<T>::run()
             }
             catch (exception& e) {
                 dispose();
+                const uint64 decoded = _cis->getRead();
                 CLEANUP_IS
                 CLEANUP_OS
                 delete[] buf;
                 delete _cis;
                 stringstream sserr;
                 sserr << "Failed to write decompressed block to file '" << outputName << "': " << e.what();
-                return T(Error::ERR_READ_FILE, _cis->getRead(), sserr.str().c_str());
+                return T(Error::ERR_READ_FILE, decoded, sserr.str().c_str());
             }
         } while (decoded == sa._length);
     }
     catch (IOException& e) {
         dispose();
+        const uint64 decoded = _cis->getRead();
+        bool isEOF = _cis->eof();
         CLEANUP_IS
         CLEANUP_OS
         delete[] buf;
         delete _cis;
+
+        if (isEOF == true)
+            return T(Error::ERR_READ_FILE, decoded, "Reached end of stream");
+
         stringstream sserr;
-
-        if (_cis->eof())
-            return T(Error::ERR_READ_FILE, _cis->getRead(), "Reached end of stream");
-
         sserr << e.what();
-        return T(e.error(), _cis->getRead(), sserr.str().c_str());
+        return T(e.error(), decoded, sserr.str().c_str());
     }
     catch (exception& e) {
         dispose();
+        const uint64 decoded = _cis->getRead();
+        bool isEOF = _cis->eof();
         CLEANUP_IS
         CLEANUP_OS
         delete[] buf;
         delete _cis;
+
+        if (isEOF == true)
+            return T(Error::ERR_READ_FILE, decoded, "Reached end of stream");
+
         stringstream sserr;
-
-        if (_cis->eof())
-            return T(Error::ERR_READ_FILE, _cis->getRead(), "Reached end of stream");
-
         sserr << "An unexpected condition happened. Exiting ..." << endl << e.what();
-        return T(Error::ERR_UNKNOWN, _cis->getRead(), sserr.str().c_str());
+        return T(Error::ERR_UNKNOWN, decoded, sserr.str().c_str());
     }
 
     // Close streams to ensure all data are flushed
