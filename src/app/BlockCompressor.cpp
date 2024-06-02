@@ -577,11 +577,10 @@ T FileCompressTask<T>::run()
     bool overwrite = _ctx.getInt("overwrite") != 0;
     OutputStream* os = nullptr;
 
-#define CLEANUP_OS  if ((os != nullptr) && (os != &cout)) {\
-                       delete os; \
-                       os = nullptr; \
-                    }
-
+#define CLEANUP_COMP_OS  if ((os != nullptr) && (os != &cout)) {\
+                            delete os; \
+                            os = nullptr; \
+                         }
 
     try {
         string str = outputName;
@@ -654,23 +653,23 @@ T FileCompressTask<T>::run()
                 _cos->addListener(*_listeners[i]);
         }
         catch (invalid_argument& e) {
-            CLEANUP_OS
+            CLEANUP_COMP_OS
             stringstream sserr;
             sserr << "Cannot create compressed stream: " << e.what();
             return T(Error::ERR_CREATE_COMPRESSOR, 0, 0, sserr.str().c_str());
         }
     }
     catch (exception& e) {
-        CLEANUP_OS
+        CLEANUP_COMP_OS
         stringstream sserr;
         sserr << "Cannot open output file '" << outputName << "' for writing: " << e.what();
         return T(Error::ERR_CREATE_FILE, 0, 0, sserr.str().c_str());
     }
 
-#define CLEANUP_IS  if ((_is != nullptr) && (_is != &cin)) {\
-                       delete _is; \
-                       _is = nullptr; \
-                    }
+#define CLEANUP_COMP_IS  if ((_is != nullptr) && (_is != &cin)) {\
+                            delete _is; \
+                            _is = nullptr; \
+                         }
 
     try {
         string str = inputName;
@@ -695,8 +694,8 @@ T FileCompressTask<T>::run()
         }
     }
     catch (exception& e) {
-        CLEANUP_IS
-        CLEANUP_OS
+        CLEANUP_COMP_IS
+        CLEANUP_COMP_OS
         delete _cos;
         _cos = nullptr;
         stringstream sserr;
@@ -729,8 +728,8 @@ T FileCompressTask<T>::run()
                 len = *_is ? sa._length : int(_is->gcount());
             }
             catch (exception& e) {
-                CLEANUP_IS
-                CLEANUP_OS
+                CLEANUP_COMP_IS
+                CLEANUP_COMP_OS
                 delete[] buf;
                 delete _cos;
                 _cos = nullptr;
@@ -749,16 +748,16 @@ T FileCompressTask<T>::run()
         }
     }
     catch (IOException& ioe) {
-        CLEANUP_IS
-        CLEANUP_OS
+        CLEANUP_COMP_IS
+        CLEANUP_COMP_OS
         delete[] buf;
         delete _cos;
         _cos = nullptr;
         return T(ioe.error(), read, _cos->getWritten(), ioe.what());
     }
     catch (exception& e) {
-        CLEANUP_IS
-        CLEANUP_OS
+        CLEANUP_COMP_IS
+        CLEANUP_COMP_OS
         delete[] buf;
         delete _cos;
         _cos = nullptr;
@@ -774,7 +773,7 @@ T FileCompressTask<T>::run()
     uint64 encoded = _cos->getWritten();
 
     // os destructor will call close if ofstream
-    CLEANUP_OS
+    CLEANUP_COMP_OS
 
     // Clean up resources at the end of the method as the task may be
     // recycled in a threadpool and the destructor not called.
@@ -782,7 +781,7 @@ T FileCompressTask<T>::run()
     _cos = nullptr;
 
     try {
-        CLEANUP_IS
+        CLEANUP_COMP_IS
         _is = nullptr;
     }
     catch (exception&) {
