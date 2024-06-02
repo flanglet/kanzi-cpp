@@ -173,14 +173,16 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     memset(&_buffer[0], 0, size_t(_bufferSize) * sizeof(uint));
+    const uint end1 = uint(pIdx);
+    const uint end2 = uint(count);
 
-    for (int i = 0; i < pIdx; i++) {
+    for (uint i = 0; i < end1; i++) {
         const uint8 val = uint8(src[i]);
         _buffer[buckets[val]] = ((i - 1) << 8) | val;
         buckets[val]++;
     }
 
-    for (int i = pIdx; i < count; i++) {
+    for (uint i = end1; i < end2; i++) {
         const uint8 val = uint8(src[i]);
         _buffer[buckets[val]] = (i << 8) | val;
         buckets[val]++;

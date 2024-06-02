@@ -231,12 +231,12 @@ namespace kanzi {
 
        static uint32 getKey2(const byte* p)
        {
-           return uint32((LittleEndian::readLong64(p) * HASH) >> 40) & (HASH_SIZE - 1);
+           return uint32((uint64(LittleEndian::readLong64(p)) * HASH) >> 40) & (HASH_SIZE - 1);
        }
 
        static int32 hash(const byte* p)
        {
-           return ((LittleEndian::readInt32(p) << 8) * HASH) & HASH_MASK;
+           return ((uint32(LittleEndian::readInt32(p)) << 8) * HASH) & HASH_MASK;
        }
 
        static int emitCopy(byte dst[], int dstIdx, int ref, int matchLen);

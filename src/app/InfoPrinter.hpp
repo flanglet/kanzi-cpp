@@ -56,7 +56,7 @@ namespace kanzi
        Clock _clock23;
        Clock _clock34;
 	   
-       static int hash(int id) { return (id * 0x1E35A7BD) & 0x03FF; }
+       static uint hash(uint id) { return (id * 0x1E35A7BD) & 0x03FF; }
    };
 }
 #endif

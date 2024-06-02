@@ -79,16 +79,16 @@ namespace kanzi
        #define SSE0_RATE(T) ((T == true) ? 6 : 7)
 
        int _pr; // next predicted value (0-4095)
-       int _c0; // bitwise context: last 0-7 bits with a leading 1 (1-255)
-       int _c4; // last 4 whole bytes, last is in low 8 bits
-       int _c8; // last 8 to 4 whole bytes, last is in low 8 bits
+       uint _c0; // bitwise context: last 0-7 bits with a leading 1 (1-255)
+       uint _c4; // last 4 whole bytes, last is in low 8 bits
+       uint _c8; // last 8 to 4 whole bytes, last is in low 8 bits
        int _bpos; // number of bits in c0 (0-7)
        int _pos;
        int _binCount;
        int _matchLen;
        int _matchPos;
-       int _matchVal;
-       int _hash;
+       uint _matchVal;
+       uint _hash;
        LogisticAdaptiveProbMap<false, SSE0_RATE(T)> _sse0;
        LogisticAdaptiveProbMap<false, 7> _sse1;
        TPAQMixer* _mixers;
@@ -109,15 +109,15 @@ namespace kanzi
        uint8* _cp4;
        uint8* _cp5;
        uint8* _cp6;
-       int _ctx0; // contexts
-       int _ctx1;
-       int _ctx2;
-       int _ctx3;
-       int _ctx4;
-       int _ctx5;
-       int _ctx6;
+       uint _ctx0; // contexts
+       uint _ctx1;
+       uint _ctx2;
+       uint _ctx3;
+       uint _ctx4;
+       uint _ctx5;
+       uint _ctx6;
 
-       int hash(int x, int y) const;
+       int hash(uint x, uint y) const;
 
        int createContext(uint ctxId, uint cx) const;
 
@@ -299,12 +299,10 @@ namespace kanzi
        uint statesSize = 1 << 28;
        uint mixersSize = 1 << 12;
        uint hashSize = HASH_SIZE;
-       uint extraMem = 0;
+       uint extraMem = (T == true) ? 1 : 0;
        uint bufferSize = BUFFER_SIZE;
 
        if (ctx != nullptr) {
-           extraMem = (T == true) ? 1 : 0;
-
            // Block size requested by the user
            // The user can request a big block size to force more states
            const int rbsz = ctx->getInt("blockSize", 32768);
@@ -334,8 +332,8 @@ namespace kanzi
            else
                mixersSize = (absz >= 1 * 1024 * 1024) ? 1 << 11 : 1 << 8;
 
-           bufferSize = (rbsz < BUFFER_SIZE) ? rbsz : BUFFER_SIZE;
-           hashSize = (hashSize < 16 * uint(absz)) ? hashSize : 16 * uint(absz);
+           bufferSize = rbsz < BUFFER_SIZE ? rbsz : BUFFER_SIZE;
+           hashSize = hashSize < 16 * uint(absz) ? hashSize : 16 * uint(absz);
        }
 
        mixersSize <<= (2 * extraMem);
@@ -430,8 +428,8 @@ namespace kanzi
                _ctx5 = (_c8 & 0x80808080) | ((_c4 & 0xF0F0F000) >> 4);
 
                if (T == true) {
-                  const int h1 = ((_c4 & 0x80808080) == 0) ? _c4 & 0x4F4FFFFF : _c4 & 0x80808080;
-                  const int h2 = ((_c8 & 0x80808080) == 0) ? _c8 & 0x4F4FFFFF : _c8 & 0x80808080;
+                  const uint h1 = ((_c4 & 0x80808080) == 0) ? _c4 & 0x4F4FFFFF : _c4 & 0x80808080;
+                  const uint h2 = ((_c8 & 0x80808080) == 0) ? _c8 & 0x4F4FFFFF : _c8 & 0x80808080;
                   _ctx6 = hash(h1 << 2, h2 >> 2);
                }
            }
@@ -446,7 +444,7 @@ namespace kanzi
            }
 
            findMatch();
-           _matchVal = int(_buffer[_matchPos & _bufferMask]) | 0x100;
+           _matchVal = uint(_buffer[_matchPos & _bufferMask]) | 0x100;
 
            // Keep track current position
            _hashes[_hash] = _pos;
@@ -557,9 +555,9 @@ namespace kanzi
    }
 
    template <bool T>
-   inline int TPAQPredictor<T>::hash(int x, int y) const
+   inline int TPAQPredictor<T>::hash(uint x, uint y) const
    {
-       const int h = x * HASH ^ y * HASH;
+       const uint h = x * HASH ^ y * HASH;
        return (h >> 1) ^ (h >> 9) ^ (x >> 2) ^ (y >> 3) ^ HASH;
    }
 

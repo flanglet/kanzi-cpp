@@ -570,7 +570,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     dst[1] = src[1];
     dst[2] = src[2];
     dst[3] = src[3];
-    int32 ctx = LittleEndian::readInt32(&src[0]);
+    uint ctx = LittleEndian::readInt32(&src[0]);
     int srcIdx = 4;
     int dstIdx = 4;
 
@@ -587,7 +587,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         // No good match ?
         if (bestLen < MIN_MATCH) {
-            const int val = int(src[srcIdx]);
+            const uint val = uint(src[srcIdx]);
             ctx = (ctx << 8) | val;
             dst[dstIdx++] = src[srcIdx++];
 
@@ -619,7 +619,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
         const int ref = _hashes[h];
         _hashes[h] = srcIdx;
-        const int val = int32(src[srcIdx]);
+        const uint val = uint(src[srcIdx]);
         ctx = (ctx << 8) | val;
         dst[dstIdx++] = src[srcIdx++];
 
@@ -661,7 +661,7 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     dst[1] = src[1];
     dst[2] = src[2];
     dst[3] = src[3];
-    int32 ctx = LittleEndian::readInt32(&dst[0]);
+    uint32 ctx = LittleEndian::readInt32(&dst[0]);
     int srcIdx = 4;
     int dstIdx = 4;
 
@@ -671,7 +671,7 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         _hashes[h] = dstIdx;
 
         if ((ref == 0) || (src[srcIdx] != byte(MATCH_FLAG))) {
-            ctx = (ctx << 8) | int32(src[srcIdx]);
+            ctx = (ctx << 8) | uint32(src[srcIdx]);
             dst[dstIdx++] = src[srcIdx++];
             continue;
         }
@@ -679,7 +679,7 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         srcIdx++;
 
         if (src[srcIdx] == byte(0xFF)) {
-            ctx = (ctx << 8) | int32(MATCH_FLAG);
+            ctx = (ctx << 8) | uint32(MATCH_FLAG);
             dst[dstIdx++] = byte(MATCH_FLAG);
             srcIdx++;
             continue;
