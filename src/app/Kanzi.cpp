@@ -916,12 +916,12 @@ int main(int argc, const char* argv[])
     }
     catch (invalid_argument& e) {
        // May be thrown by ThreadPool
-       cout << e.what() << endl;
+       cerr << e.what() << endl;
        exit(Error::ERR_INVALID_PARAM);
     }
     catch (runtime_error& e) {
        // May be thrown by ThreadPool
-       cout << e.what() << endl;
+       cerr << e.what() << endl;
        exit(Error::ERR_INVALID_PARAM);
     }
 }
