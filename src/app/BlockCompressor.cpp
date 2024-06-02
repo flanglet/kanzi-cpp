@@ -577,6 +577,12 @@ T FileCompressTask<T>::run()
     bool overwrite = _ctx.getInt("overwrite") != 0;
     OutputStream* os = nullptr;
 
+#define CLEANUP_OS  if ((os != nullptr) && (os != &cout)) {\
+                       delete os; \
+                       os = nullptr; \
+                    }
+
+
     try {
         string str = outputName;
         transform(str.begin(), str.end(), str.begin(), ::toupper);
@@ -627,11 +633,13 @@ T FileCompressTask<T>::run()
                     }
 
                     if (mkdirAll(parentDir) == 0) {
+                        delete os;
                         os = new ofstream(outputName.c_str(), ofstream::binary);
                     }
                 }
 
                 if (!*os) {
+                    delete os;
                     stringstream sserr;
                     sserr << "Cannot open output file '" << outputName << "' for writing";
                     return T(Error::ERR_CREATE_FILE, 0, 0, sserr.str().c_str());
@@ -646,16 +654,23 @@ T FileCompressTask<T>::run()
                 _cos->addListener(*_listeners[i]);
         }
         catch (invalid_argument& e) {
+            CLEANUP_OS
             stringstream sserr;
             sserr << "Cannot create compressed stream: " << e.what();
             return T(Error::ERR_CREATE_COMPRESSOR, 0, 0, sserr.str().c_str());
         }
     }
     catch (exception& e) {
+        CLEANUP_OS
         stringstream sserr;
         sserr << "Cannot open output file '" << outputName << "' for writing: " << e.what();
         return T(Error::ERR_CREATE_FILE, 0, 0, sserr.str().c_str());
     }
+
+#define CLEANUP_IS  if ((_is != nullptr) && (_is != &cin)) {\
+                       delete _is; \
+                       _is = nullptr; \
+                    }
 
     try {
         string str = inputName;
@@ -668,6 +683,9 @@ T FileCompressTask<T>::run()
             ifstream* ifs = new ifstream(inputName.c_str(), ifstream::in | ifstream::binary);
 
             if (!*ifs) {
+                delete ifs;
+                delete _cos;
+                _cos = nullptr;
                 stringstream sserr;
                 sserr << "Cannot open input file '" << inputName << "'";
                 return T(Error::ERR_OPEN_FILE, 0, 0, sserr.str().c_str());
@@ -677,6 +695,10 @@ T FileCompressTask<T>::run()
         }
     }
     catch (exception& e) {
+        CLEANUP_IS
+        CLEANUP_OS
+        delete _cos;
+        _cos = nullptr;
         stringstream sserr;
         sserr << "Cannot open input file '" << inputName << "': " << e.what();
         return T(Error::ERR_OPEN_FILE, 0, 0, sserr.str().c_str());
@@ -707,6 +729,11 @@ T FileCompressTask<T>::run()
                 len = *_is ? sa._length : int(_is->gcount());
             }
             catch (exception& e) {
+                CLEANUP_IS
+                CLEANUP_OS
+                delete[] buf;
+                delete _cos;
+                _cos = nullptr;
                 stringstream sserr;
                 sserr << "Failed to read block from file '" << inputName << "': ";
                 sserr << e.what() << endl;
@@ -722,11 +749,19 @@ T FileCompressTask<T>::run()
         }
     }
     catch (IOException& ioe) {
+        CLEANUP_IS
+        CLEANUP_OS
         delete[] buf;
+        delete _cos;
+        _cos = nullptr;
         return T(ioe.error(), read, _cos->getWritten(), ioe.what());
     }
     catch (exception& e) {
+        CLEANUP_IS
+        CLEANUP_OS
         delete[] buf;
+        delete _cos;
+        _cos = nullptr;
         stringstream sserr;
         sserr << "An unexpected condition happened. Exiting ..." << endl
               << e.what();
@@ -739,8 +774,7 @@ T FileCompressTask<T>::run()
     uint64 encoded = _cos->getWritten();
 
     // os destructor will call close if ofstream
-    if ((os != &cout) && (os != nullptr))
-        delete os;
+    CLEANUP_OS
 
     // Clean up resources at the end of the method as the task may be
     // recycled in a threadpool and the destructor not called.
@@ -748,10 +782,7 @@ T FileCompressTask<T>::run()
     _cos = nullptr;
 
     try {
-        if ((_is != nullptr) && (_is != &cin)) {
-            delete _is;
-        }
-
+        CLEANUP_IS
         _is = nullptr;
     }
     catch (exception&) {
