@@ -578,8 +578,9 @@ T FileDecompressTask<T>::run()
                 const uint64 d = _cis->getRead();
                 CLEANUP_DECOMP_IS
                 CLEANUP_DECOMP_OS
-                delete _cis;
                 delete[] buf;
+                delete _cis;
+                _cis = nullptr;
                 stringstream sserr;
                 sserr << "Reached end of stream";
                 return T(Error::ERR_READ_FILE, d, sserr.str().c_str());
@@ -598,6 +599,7 @@ T FileDecompressTask<T>::run()
                 CLEANUP_DECOMP_OS
                 delete[] buf;
                 delete _cis;
+                _cis = nullptr;
                 stringstream sserr;
                 sserr << "Failed to write decompressed block to file '" << outputName << "': " << e.what();
                 return T(Error::ERR_READ_FILE, d, sserr.str().c_str());
@@ -612,6 +614,7 @@ T FileDecompressTask<T>::run()
         CLEANUP_DECOMP_OS
         delete[] buf;
         delete _cis;
+        _cis = nullptr;
 
         if (isEOF == true)
             return T(Error::ERR_READ_FILE, d, "Reached end of stream");
@@ -628,6 +631,7 @@ T FileDecompressTask<T>::run()
         CLEANUP_DECOMP_OS
         delete[] buf;
         delete _cis;
+        _cis = nullptr;
 
         if (isEOF == true)
             return T(Error::ERR_READ_FILE, d, "Reached end of stream");
