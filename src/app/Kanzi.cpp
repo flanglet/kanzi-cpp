@@ -257,7 +257,7 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
 
 bool toInt(string& s, int& res)
 {
-   // Chekc that all characters are valid
+   // Check that all characters are valid
    for (size_t i = 0; i < s.length(); i++) {
        if ((s[i] < '0') || (s[i] > '9'))
           return false;

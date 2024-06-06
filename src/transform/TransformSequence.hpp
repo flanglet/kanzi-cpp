@@ -125,7 +125,7 @@ namespace kanzi {
            // Apply forward transform
            if (_transforms[i]->forward(*in, *out, count) == false) {
                // Transform failed. Either it does not apply to this type
-               // of data or a recoverable error occured => revert
+               // of data or a recoverable error occurred => revert
                in->_index = savedIIdx;
                out->_index = savedOIdx;
                continue;

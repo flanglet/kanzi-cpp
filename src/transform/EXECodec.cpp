@@ -202,7 +202,7 @@ bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int
         const int instr = LittleEndian::readInt32(&src[srcIdx]);
         const int opcode1 = instr & ARM_B_OPCODE_MASK;
         //const int opcode2 = instr & ARM_CB_OPCODE_MASK;
-        bool isBL = (opcode1 == ARM_OPCODE_B) || (opcode1 == ARM_OPCODE_BL); // inconditional jump
+        bool isBL = (opcode1 == ARM_OPCODE_B) || (opcode1 == ARM_OPCODE_BL); // unconditional jump
         bool isCB = false; // disable for now ... isCB = (opcode2 == ARM_OPCODE_CBZ) || (opcode2 == ARM_OPCODE_CBNZ); // conditional jump
 
         if ((isBL == false) && (isCB == false)) {
@@ -217,7 +217,7 @@ bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         if (isBL == true) {
             // opcode(6) + sgn(1) + offset(25)
-            // Absolute target address = srcIdx +/- (offet*4)
+            // Absolute target address = srcIdx +/- (offset*4)
             const int offset = instr & ARM_B_ADDR_MASK;
             const int sgn = instr & ARM_B_ADDR_SGN_MASK;
             addr = srcIdx + 4 * ((sgn == 0) ? offset : -(-offset & ARM_B_ADDR_MASK));
@@ -228,7 +228,7 @@ bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int
             val = opcode1 | (addr >> 2);
         } else { // isCB == true
             // opcode(8) + sgn(1) + offset(18) + register(5)
-            // Absolute target address = srcIdx +/- (offet*4)
+            // Absolute target address = srcIdx +/- (offset*4)
             const int offset = (instr & ARM_CB_ADDR_MASK) >> ARM_CB_REG_BITS;
             const int sgn = instr & ARM_CB_ADDR_SGN_MASK;
             addr = srcIdx + 4 * ((sgn == 0) ? offset : -(-offset & ARM_B_ADDR_MASK));
@@ -366,7 +366,7 @@ bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
         const int instr = LittleEndian::readInt32(&src[srcIdx]);
         const int opcode1 = instr & ARM_B_OPCODE_MASK;
         //const int opcode2 = instr & ARM_CB_OPCODE_MASK;
-        bool isBL = (opcode1 == ARM_OPCODE_B) || (opcode1 == ARM_OPCODE_BL); // inconditional jump
+        bool isBL = (opcode1 == ARM_OPCODE_B) || (opcode1 == ARM_OPCODE_BL); // unconditional jump
         bool isCB = false; // disable for now ... isCB = (opcode2 == ARM_OPCODE_CBZ) || (opcode2 == ARM_OPCODE_CBNZ); // conditional jump
 
         if ((isBL == false) && (isCB == false)) {
