@@ -69,9 +69,9 @@ const uint LZXCodec<false>::HASH_SEED = 0x1E35A7BD;
 template<>
 const uint LZXCodec<false>::HASH_LOG = 17;
 template<>
-const uint LZXCodec<false>::HASH_SHIFT = 40 - HASH_LOG;
+const uint LZXCodec<false>::HASH_RSHIFT = 64 - HASH_LOG;
 template<>
-const uint LZXCodec<false>::HASH_MASK = (1 << HASH_LOG) - 1;
+const uint LZXCodec<false>::HASH_LSHIFT = 24;
 template<>
 const int LZXCodec<false>::MAX_DISTANCE1 = (1 << 16) - 2;
 template<>
@@ -89,9 +89,9 @@ const uint LZXCodec<true>::HASH_SEED = 0x1E35A7BD;
 template<>
 const uint LZXCodec<true>::HASH_LOG = 21;
 template<>
-const uint LZXCodec<true>::HASH_SHIFT = 48 - HASH_LOG;
+const uint LZXCodec<true>::HASH_RSHIFT = 64 - HASH_LOG;
 template<>
-const uint LZXCodec<true>::HASH_MASK = (1 << HASH_LOG) - 1;
+const uint LZXCodec<true>::HASH_LSHIFT = 16;
 template<>
 const int LZXCodec<true>::MAX_DISTANCE1 = (1 << 16) - 2;
 template<>
@@ -180,6 +180,9 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         int bestLen = 0;
         const int srcIdx1 = srcIdx + 1;
         int ref = srcIdx1 - repd[repIdx];
+        const int32 h0 = hash(&src[srcIdx]);
+        const int ref0 = _hashes[h0];
+        _hashes[h0] = srcIdx;
 
         if ((ref > minRef) && (memcmp(&src[srcIdx1], &src[ref], 4) == 0)) {
             // Check repd first
@@ -196,24 +199,22 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         if (bestLen < minMatch) {
             // Check match at position in hash table
-            const int32 h0 = hash(&src[srcIdx]);
-            ref = _hashes[h0];
-            _hashes[h0] = srcIdx;
+            ref = ref0;
 
             if ((ref > minRef) && (memcmp(&src[srcIdx], &src[ref], 4) == 0)) {
-                bestLen = findMatch(src, srcIdx, ref, min(srcEnd - srcIdx, MAX_MATCH));
+                bestLen = 4 + findMatch(src, srcIdx + 4, ref + 4, min(srcEnd - srcIdx - 4, MAX_MATCH));
             }
 
             // No good match ?
             if (bestLen < minMatch) {
                 srcIdx++;
-                srcIdx += (srcInc >> 6);
+                srcIdx += (srcInc >> 7);
                 srcInc++;
                 repIdx = 0;
                 continue;
             }
 
-            if ((ref != srcIdx - repd[0]) && (ref != srcIdx - repd[1])) {
+            if ((srcIdx - ref != repd[0]) && (srcIdx - ref != repd[1])) {
                 // Check if better match at next position
                 const int32 h1 = hash(&src[srcIdx1]);
                 const int ref1 = _hashes[h1];
@@ -238,9 +239,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             }
         }
         else {
-            const int32 h0 = hash(&src[srcIdx]);
-            _hashes[h0] = srcIdx;
-
             if ((bestLen >= MAX_MATCH) || (src[srcIdx] != src[ref - 1])) {
                 srcIdx++;
                 const int32 h1 = hash(&src[srcIdx]);

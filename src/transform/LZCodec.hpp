@@ -96,8 +96,8 @@ namespace kanzi {
     private:
         static const uint HASH_SEED;
         static const uint HASH_LOG;
-        static const uint HASH_SHIFT;
-        static const uint HASH_MASK;
+        static const uint HASH_LSHIFT;
+        static const uint HASH_RSHIFT;
         static const int MAX_DISTANCE1;
         static const int MAX_DISTANCE2;
         static const int MIN_MATCH4;
@@ -177,7 +177,7 @@ namespace kanzi {
     template <bool T>
     inline int32 LZXCodec<T>::hash(const byte* p)
     {
-        return ((uint64(LittleEndian::readLong64(p)) * HASH_SEED) >> HASH_SHIFT) & HASH_MASK;
+        return ((uint64(LittleEndian::readLong64(p) << HASH_LSHIFT) * HASH_SEED) >> HASH_RSHIFT);
     }
 
     template <bool T>
