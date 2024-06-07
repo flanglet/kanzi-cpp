@@ -24,6 +24,7 @@ limitations under the License.
 #ifndef DIRENT_H
 #define DIRENT_H
 
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
 /*
  * Include windows.h without Windows Sockets 1.1 to prevent conflicts with
  * Windows Sockets 2.0.
@@ -1160,5 +1161,8 @@ dirent_set_errno(
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* WINDOWS */
+
 #endif /*DIRENT_H*/
 
