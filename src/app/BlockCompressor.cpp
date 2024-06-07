@@ -730,13 +730,14 @@ T FileCompressTask<T>::run()
             catch (exception& e) {
                 CLEANUP_COMP_IS
                 CLEANUP_COMP_OS
+                const uint64 w = _cos->getWritten();
                 delete[] buf;
                 delete _cos;
                 _cos = nullptr;
                 stringstream sserr;
                 sserr << "Failed to read block from file '" << inputName << "': ";
                 sserr << e.what() << endl;
-                return T(Error::ERR_READ_FILE, read, _cos->getWritten(), sserr.str().c_str());
+                return T(Error::ERR_READ_FILE, read, w, sserr.str().c_str());
             }
 
             if (len <= 0)
@@ -750,21 +751,23 @@ T FileCompressTask<T>::run()
     catch (IOException& ioe) {
         CLEANUP_COMP_IS
         CLEANUP_COMP_OS
+        const uint64 w = _cos->getWritten();
         delete[] buf;
         delete _cos;
         _cos = nullptr;
-        return T(ioe.error(), read, _cos->getWritten(), ioe.what());
+        return T(ioe.error(), read, w, ioe.what());
     }
     catch (exception& e) {
         CLEANUP_COMP_IS
         CLEANUP_COMP_OS
+        const uint64 w = _cos->getWritten();
         delete[] buf;
         delete _cos;
         _cos = nullptr;
         stringstream sserr;
         sserr << "An unexpected condition happened. Exiting ..." << endl
               << e.what();
-        return T(Error::ERR_UNKNOWN, read, _cos->getWritten(), sserr.str().c_str());
+        return T(Error::ERR_UNKNOWN, read, w, sserr.str().c_str());
     }
 
     // Close streams to ensure all data are flushed
