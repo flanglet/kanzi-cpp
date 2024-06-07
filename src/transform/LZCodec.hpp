@@ -189,13 +189,13 @@ namespace kanzi {
         }
 
         if (length < 65536 + 254) {
-            length = (length - 254) | 0x00FE0000;
-            kanzi::BigEndian::writeInt32(&block[0], length << 8);
+            const uint32 l = (length - 254) | 0x00FE0000;
+            kanzi::BigEndian::writeInt32(&block[0], l << 8);
             return 3;
         }
 
-        length = (length - 255) | 0xFF000000;
-        kanzi::BigEndian::writeInt32(&block[0], length);
+        const uint32 l = (length - 255) | 0xFF000000;
+        kanzi::BigEndian::writeInt32(&block[0], l);
         return 4;
     }
 
