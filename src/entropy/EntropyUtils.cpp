@@ -206,8 +206,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     if (sumScaledFreq == scale)
         return alphabetSize;
 
-    const int delta = int(sumScaledFreq - scale);
-    const int inc = (delta > 0) ? -1 : 1;
+    int delta = int(sumScaledFreq - scale);
 
     if (abs(delta) * 16 <= int(freqs[idxMax])) {
         // Fast path (small error): just adjust the max frequency
@@ -229,11 +228,13 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
 
     // Create sorted queue of present symbols
     for (int i = 0; i < alphabetSize; i++) {
-       if (int(freqs[alphabet[i]]) <= 2) // Do not distort small frequencies
+       if (freqs[alphabet[i]] <= 2) // Do not distort small frequencies
           continue;
 
        queue.push_back(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
     }
+
+    const int inc = (delta > 0) ? -1 : 1;
 
     if (queue.empty()) {
         freqs[idxMax] += inc * delta;
@@ -253,6 +254,12 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
 
         // Do not zero out any frequency
         if (int(*fsd._freq) == -inc) {
+            if (queue.empty()) {
+                delta = int(sumScaledFreq - scale);
+                freqs[idxMax] += inc * delta;
+                break;
+            }
+
             continue;
         }
 
