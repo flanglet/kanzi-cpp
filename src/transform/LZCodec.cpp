@@ -178,11 +178,11 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     while (srcIdx < srcEnd) {
         const int minRef = max(srcIdx - maxDist, 0);
         int bestLen = 0;
-        const int srcIdx1 = srcIdx + 1;
-        int ref = srcIdx1 - repd[repIdx];
         const int32 h0 = hash(&src[srcIdx]);
         const int ref0 = _hashes[h0];
         _hashes[h0] = srcIdx;
+        const int srcIdx1 = srcIdx + 1;
+        int ref = srcIdx1 - repd[repIdx];
 
         if ((ref > minRef) && (memcmp(&src[srcIdx1], &src[ref], 4) == 0)) {
             // Check repd first
@@ -350,6 +350,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // Fill _hashes and update positions
         anchor = srcIdx + bestLen;
         prefetchRead(&src[anchor + 64]);
+        prefetchRead(&src[anchor + 128]);
 
         while (++srcIdx < anchor) {
             const int32 h = hash(&src[srcIdx]);
