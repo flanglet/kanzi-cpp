@@ -77,10 +77,9 @@ namespace kanzi {
    inline int DefaultInputBitStream::readBit()
    {
        if (_availBits == 0)
-           _availBits = pullCurrent() - 1; // Triggers an exception if stream is closed
-       else
-           _availBits--;
+           _availBits = pullCurrent(); // Triggers an exception if stream is closed
 
+       _availBits--;
        return int(_current >> _availBits) & 1;
    }
 
@@ -99,7 +98,7 @@ namespace kanzi {
        count -= _availBits;
        const uint64 res = _current & ((uint64(1) << _availBits) - 1);
        _availBits = pullCurrent() - count;
-       return (res << count) | (_current >> _availBits);
+       return (res << 1 << (count - 1)) | (_current >> _availBits);
    }
 
    // Pull 64 bits of current value from buffer.
