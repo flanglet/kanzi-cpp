@@ -190,7 +190,7 @@ int testTransformsCorrectness(const string& name)
             arr[63] = byte(rand() % mod);
 
             // Simulate interleaved channels for MM
-            for (int j = 64; j < size; j += step) {
+            for (int j = 64; j + step < size; j += step) {
                 for (int k = 0; k < step; k++)
                    arr[j + k] = arr[j + k - step];
         }
@@ -225,18 +225,11 @@ int testTransformsCorrectness(const string& name)
         Context ctx;
         ctx.putInt("bsVersion", 4);
         ctx.putString("transform", name);
-        Transform<byte>* ff = getByteTransform(name, ctx);
+        unique_ptr<Transform<byte>> ff(getByteTransform(name, ctx));
+        unique_ptr<Transform<byte>> fi(getByteTransform(name, ctx));
 
-        if (ff == nullptr) {
-            return 1;
-        }
-
-        Transform<byte>* fi = getByteTransform(name, ctx);
-
-        if (fi == nullptr) {
-            delete ff;
-            return 1;
-        }
+        if ((ff.get() == nullptr) || (fi.get() == nullptr))
+           return 1;
 
         byte* input = new byte[size];
         byte* output = new byte[ff->getMaxEncodedLength(size)];
@@ -266,14 +259,16 @@ int testTransformsCorrectness(const string& name)
             if ((iba1._index != size) || (iba2._index >= iba1._index)) {
                 cout << endl
                      << "No compression (ratio > 1.0), skip reverse" << endl;
-                delete ff;
+                delete[] input;
+                delete[] output;
+                delete[] reverse;
                 continue;
             }
 
             cout << endl
                  << "Encoding error" << endl;
             res = 1;
-            delete ff;
+            ff = nullptr;
             goto End;
         }
 
@@ -281,12 +276,13 @@ int testTransformsCorrectness(const string& name)
             if ((iba1._index != size) || (iba1._index < iba2._index)) {
                 cout << endl
                      << "No compression (ratio > 1.0), skip reverse" << endl;
-                delete ff;
+                delete[] input;
+                delete[] output;
+                delete[] reverse;
                 continue;
             }
         }
 
-        delete ff;
         cout << endl;
         cout << "Coded: " << endl;
 
@@ -302,7 +298,6 @@ int testTransformsCorrectness(const string& name)
         if (fi->inverse(iba2, iba3, count) == false) {
             cout << "Decoding error" << endl;
             res = 1;
-            delete fi;
             goto End;
         }
 
@@ -324,7 +319,6 @@ int testTransformsCorrectness(const string& name)
                 cout << (int(input[i]) & 0xFF) << " - " << (int(reverse[i]) & 0xFF);
                 cout << ")" << endl;
                 res = 1;
-                delete fi;
                 goto End;
             }
         }
@@ -333,7 +327,6 @@ int testTransformsCorrectness(const string& name)
              << "Identical" << endl
              << endl;
 
-        delete fi;
 
     End:
         delete[] input;
