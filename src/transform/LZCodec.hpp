@@ -177,7 +177,7 @@ namespace kanzi {
     template <bool T>
     inline int32 LZXCodec<T>::hash(const byte* p)
     {
-        return ((uint64(LittleEndian::readLong64(p) << HASH_LSHIFT) * HASH_SEED) >> HASH_RSHIFT);
+        return ((uint64(LittleEndian::readLong64(p)) << HASH_LSHIFT) * HASH_SEED) >> HASH_RSHIFT;
     }
 
     template <bool T>
