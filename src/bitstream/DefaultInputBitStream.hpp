@@ -97,8 +97,8 @@ namespace kanzi {
        // Not enough spots available in 'current'
        count -= _availBits;
        const uint64 res = _current & ((uint64(1) << _availBits) - 1);
-       _availBits = pullCurrent() - count;
-       return (res << 1 << (count - 1)) | (_current >> _availBits);
+       _availBits = pullCurrent();
+       return (res << 1 << (count - 1)) | readBits(count); // handle count = 64 and _availBits < count (at EOS)
    }
 
    // Pull 64 bits of current value from buffer.
