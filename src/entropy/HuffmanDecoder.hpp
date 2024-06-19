@@ -53,7 +53,7 @@ namespace kanzi
 
        int readLengths();
 
-       void buildDecodingTable(int count);
+       bool buildDecodingTable(int count);
 
        bool reset();
 

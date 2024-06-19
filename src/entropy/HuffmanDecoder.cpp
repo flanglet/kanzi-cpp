@@ -106,7 +106,7 @@ int HuffmanDecoder::readLengths()
 }
 
 // max(CodeLen) must be <= MAX_SYMBOL_SIZE
-void HuffmanDecoder::buildDecodingTable(int count)
+bool HuffmanDecoder::buildDecodingTable(int count)
 {
     memset(_table, 0, sizeof(_table));
     uint16 length = 0;
@@ -124,9 +124,14 @@ void HuffmanDecoder::buildDecodingTable(int count)
         int idx = int(_codes[s]) * w;
         const int end = idx + w;
 
+        if (end > TABLE_MASK)
+            return false;
+
         while (idx < end)
             _table[idx++] = val;
     }
+
+    return true;
 }
 
 int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
@@ -153,7 +158,8 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
             continue;
         }
 
-        buildDecodingTable(alphabetSize);
+        if (buildDecodingTable(alphabetSize) == false)
+            return -1;
 
         // Read number of streams. Only 1 steam supported for now
         if (_bitstream.readBits(2) != 0)
