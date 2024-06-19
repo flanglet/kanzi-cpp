@@ -225,19 +225,26 @@ int testTransformsCorrectness(const string& name)
         Context ctx;
         ctx.putInt("bsVersion", 4);
         ctx.putString("transform", name);
-        unique_ptr<Transform<byte>> ff(getByteTransform(name, ctx));
-        unique_ptr<Transform<byte>> fi(getByteTransform(name, ctx));
+        Transform<byte>* ff = getByteTransform(name, ctx);
 
-        if ((ff.get() == nullptr) || (fi.get() == nullptr))
-           return 1;
+        if (ff == nullptr)
+            return 1;
 
+        Transform<byte>* fi = getByteTransform(name, ctx);
+
+        if (fi == nullptr) {
+            delete ff;
+            return 1;
+        }
+
+        const int dstSize = ff->getMaxEncodedLength(size);
         byte* input = new byte[size];
-        byte* output = new byte[ff->getMaxEncodedLength(size)];
+        byte* output = new byte[dstSize];
         byte* reverse = new byte[size];
         SliceArray<byte> iba1(input, size, 0);
-        SliceArray<byte> iba2(output, ff->getMaxEncodedLength(size), 0);
+        SliceArray<byte> iba2(output, dstSize, 0);
         SliceArray<byte> iba3(reverse, size, 0);
-        memset(output, 0xAA, ff->getMaxEncodedLength(size));
+        memset(output, 0xAA, dstSize);
         memset(reverse, 0xAA, size);
         int count;
 
@@ -259,6 +266,8 @@ int testTransformsCorrectness(const string& name)
             if ((iba1._index != size) || (iba2._index >= iba1._index)) {
                 cout << endl
                      << "No compression (ratio > 1.0), skip reverse" << endl;
+                delete ff;
+                delete fi;
                 delete[] input;
                 delete[] output;
                 delete[] reverse;
@@ -276,6 +285,8 @@ int testTransformsCorrectness(const string& name)
             if ((iba1._index != size) || (iba1._index < iba2._index)) {
                 cout << endl
                      << "No compression (ratio > 1.0), skip reverse" << endl;
+                delete ff;
+                delete fi;
                 delete[] input;
                 delete[] output;
                 delete[] reverse;
@@ -327,8 +338,13 @@ int testTransformsCorrectness(const string& name)
              << "Identical" << endl
              << endl;
 
-
     End:
+        if (ff != nullptr)
+           delete ff;
+
+        if (fi != nullptr)
+           delete fi;
+
         delete[] input;
         delete[] output;
         delete[] reverse;
@@ -524,4 +540,5 @@ int TestTransforms_main(int argc, const char* argv[])
     cout << ((res == 0) ? "Success" : "Failure") << endl;
     return res;
 }
+
 
