@@ -135,7 +135,8 @@ namespace kanzi {
        static const int MAX_MATCH;
        static const int LOG_POS_CHECKS;
 
-       int32* _matches;
+       uint32* _matches;
+       size_t _mSize;
        uint8 _counters[65536];
        int _logPosChecks;
        int _posChecks;
@@ -143,7 +144,7 @@ namespace kanzi {
        int _minMatch;
        uint8 _maskChecks;	   
 
-       int findMatch(const byte buf[], int pos, int end, int32 hash32, const int32* matches, const uint8* counter) const;
+       int findMatch(const byte buf[], int pos, int end, uint32 hash32, const uint32* matches, const uint8* counter) const;
 
        int emitLength(byte block[], int length) const;
 
@@ -182,7 +183,7 @@ namespace kanzi {
        static const int MAX_MATCH;
        static const int LOG_POS_CHECKS;
 
-       int32* _matches;
+       uint32* _matches;
        uint8 _counters[65536];
        int _logPosChecks;
        uint8 _maskChecks;
@@ -234,7 +235,7 @@ namespace kanzi {
            return uint32((uint64(LittleEndian::readLong64(p)) * HASH) >> 40) & (HASH_SIZE - 1);
        }
 
-       static int32 hash(const byte* p)
+       static uint32 hash(const byte* p)
        {
            return ((uint32(LittleEndian::readInt32(p)) << 8) * HASH) & HASH_MASK;
        }
