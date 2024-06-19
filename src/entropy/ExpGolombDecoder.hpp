@@ -59,6 +59,8 @@ namespace kanzi
        while (_bitstream.readBit() == 0)
            log2++;
 
+       log2 &= 7;
+
        if (_signed == true) {
            // Decode signed: read value + sign
            int res = int(_bitstream.readBits(log2 + 1));
