@@ -31,11 +31,13 @@ namespace kanzi
        int _code;
 
    public:
-       static const int UNDEFINED = 0;
-       static const int INPUT_OUTPUT = 1;
-       static const int END_OF_STREAM = 2;
-       static const int INVALID_STREAM = 3;
-       static const int STREAM_CLOSED = 4;
+       enum BitStreamStatus {
+           UNDEFINED = 0,
+           INPUT_OUTPUT = 1,
+           END_OF_STREAM = 2,
+           INVALID_STREAM = 3,
+           STREAM_CLOSED = 4
+       };
 
        BitStreamException(const std::string& msg) : std::runtime_error(msg)
        {

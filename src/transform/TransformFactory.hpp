@@ -44,29 +44,31 @@ namespace kanzi {
     class TransformFactory {
     public:
         // Up to 64 transforms can be declared (6 bit index)
-        static const uint64 NONE_TYPE = 0; // Copy
-        static const uint64 BWT_TYPE = 1; // Burrows Wheeler
-        static const uint64 BWTS_TYPE = 2; // Burrows Wheeler Scott
-        static const uint64 LZ_TYPE = 3; // Lempel Ziv
-        static const uint64 SNAPPY_TYPE = 4; // Snappy (obsolete)
-        static const uint64 RLT_TYPE = 5; // Run Length
-        static const uint64 ZRLT_TYPE = 6; // Zero Run Length
-        static const uint64 MTFT_TYPE = 7; // Move To Front
-        static const uint64 RANK_TYPE = 8; // Rank
-        static const uint64 EXE_TYPE = 9; // EXE codec
-        static const uint64 DICT_TYPE = 10; // Text codec
-        static const uint64 ROLZ_TYPE = 11; // ROLZ codec
-        static const uint64 ROLZX_TYPE = 12; // ROLZ Extra codec
-        static const uint64 SRT_TYPE = 13; // Sorted Rank
-        static const uint64 LZP_TYPE = 14; // Lempel Ziv Predict
-        static const uint64 MM_TYPE = 15; // Multimedia (FSD) codec
-        static const uint64 LZX_TYPE = 16; // Lempel Ziv Extra
-        static const uint64 UTF_TYPE = 17; // UTF Codec
-        static const uint64 PACK_TYPE = 18; // Alias Codec
-        static const uint64 RESERVED2 = 19; // Reserved
-        static const uint64 RESERVED3 = 20; // Reserved
-        static const uint64 RESERVED4 = 21; // Reserved
-        static const uint64 RESERVED5 = 22; // Reserved
+        enum TransformType {
+            NONE_TYPE = 0, // Copy
+            BWT_TYPE = 1, // Burrows Wheeler
+            BWTS_TYPE = 2, // Burrows Wheeler Scott
+            LZ_TYPE = 3, // Lempel Ziv
+            SNAPPY_TYPE = 4, // Snappy (obsolete)
+            RLT_TYPE = 5, // Run Length
+            ZRLT_TYPE = 6, // Zero Run Length
+            MTFT_TYPE = 7, // Move To Front
+            RANK_TYPE = 8, // Rank
+            EXE_TYPE = 9, // EXE codec
+            DICT_TYPE = 10, // Text codec
+            ROLZ_TYPE = 11, // ROLZ codec
+            ROLZX_TYPE = 12, // ROLZ Extra codec
+            SRT_TYPE = 13, // Sorted Rank
+            LZP_TYPE = 14, // Lempel Ziv Predict
+            MM_TYPE = 15, // Multimedia (FSD) codec
+            LZX_TYPE = 16, // Lempel Ziv Extra
+            UTF_TYPE = 17, // UTF Codec
+            PACK_TYPE = 18, // Alias Codec
+            RESERVED2 = 19, // Reserved
+            RESERVED3 = 20, // Reserved
+            RESERVED4 = 21, // Reserved
+            RESERVED5 = 22 // Reserved
+        };
 
 
         static uint64 getType(const char* tName);

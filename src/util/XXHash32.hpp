@@ -30,11 +30,13 @@ namespace kanzi
 
    class XXHash32 {
    private:
-       static const uint32 PRIME32_1 = uint32(-1640531535);
-       static const uint32 PRIME32_2 = uint32(-2048144777);
-       static const uint32 PRIME32_3 = uint32(-1028477379);
-       static const uint32 PRIME32_4 = uint32(668265263);
-       static const uint32 PRIME32_5 = uint32(374761393);
+       enum PrimeSeeds {
+          PRIME32_1 = uint32(-1640531535),
+          PRIME32_2 = uint32(-2048144777),
+          PRIME32_3 = uint32(-1028477379),
+          PRIME32_4 = uint32(668265263),
+          PRIME32_5 = uint32(374761393)
+       };
 
        int _seed;
 
