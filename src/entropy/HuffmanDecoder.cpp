@@ -124,7 +124,7 @@ bool HuffmanDecoder::buildDecodingTable(int count)
         int idx = int(_codes[s]) * w;
         const int end = idx + w;
 
-        if (end > TABLE_MASK)
+        if (end > TABLE_MASK + 1) {
             return false;
 
         while (idx < end)
