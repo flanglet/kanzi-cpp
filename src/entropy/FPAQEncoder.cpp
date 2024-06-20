@@ -31,7 +31,6 @@ const int FPAQEncoder::PSCALE = 65536;
 
 FPAQEncoder::FPAQEncoder(OutputBitStream& bitstream)
     : _bitstream(bitstream)
-    , _sba(new byte[0], 0)
 {
     reset();
 }
@@ -39,7 +38,6 @@ FPAQEncoder::FPAQEncoder(OutputBitStream& bitstream)
 FPAQEncoder::~FPAQEncoder()
 {
     _dispose();
-    delete[] _sba._array;
 }
 
 bool FPAQEncoder::reset()
@@ -67,33 +65,31 @@ int FPAQEncoder::encode(const byte block[], uint blkptr, uint count)
     // Split block into chunks, encode chunk and write bit array to bitstream
     while (startChunk < end) {
         const uint chunkSize = min(DEFAULT_CHUNK_SIZE, end - startChunk);
+        const size_t bufSize = max(chunkSize + (chunkSize >> 3), 1024u);
 
-        if (_sba._length < int(chunkSize + (chunkSize >> 3))) {
-            delete[] _sba._array;
-            _sba._length = chunkSize + (chunkSize >> 3);
-            _sba._array = new byte[_sba._length];
-        }
+        if (_buf.size() < bufSize)
+            _buf.resize(bufSize);
 
-        _sba._index = 0;
+        _index = 0;
         const uint endChunk = startChunk + chunkSize;
-        int ctx = 0;
+        int val = 0;
 
         for (uint i = startChunk; i < endChunk; i++) {
-            const int val = int(block[i]);
+            uint16* p = _probs[val >> 6];
+            val = int(block[i]);
             const int bits = val + 256;
-            encodeBit(val & 0x80, _probs[ctx][1]);
-            encodeBit(val & 0x40, _probs[ctx][bits >> 7]);
-            encodeBit(val & 0x20, _probs[ctx][bits >> 6]);
-            encodeBit(val & 0x10, _probs[ctx][bits >> 5]);
-            encodeBit(val & 0x08, _probs[ctx][bits >> 4]);
-            encodeBit(val & 0x04, _probs[ctx][bits >> 3]);
-            encodeBit(val & 0x02, _probs[ctx][bits >> 2]);
-            encodeBit(val & 0x01, _probs[ctx][bits >> 1]);
-            ctx = val >> 6;
+            encodeBit(val & 0x80, p[1]);
+            encodeBit(val & 0x40, p[bits >> 7]);
+            encodeBit(val & 0x20, p[bits >> 6]);
+            encodeBit(val & 0x10, p[bits >> 5]);
+            encodeBit(val & 0x08, p[bits >> 4]);
+            encodeBit(val & 0x04, p[bits >> 3]);
+            encodeBit(val & 0x02, p[bits >> 2]);
+            encodeBit(val & 0x01, p[bits >> 1]);
         }
 
-        EntropyUtils::writeVarInt(_bitstream, uint32(_sba._index));
-        _bitstream.writeBits(&_sba._array[0], 8 * _sba._index);
+        EntropyUtils::writeVarInt(_bitstream, uint32(_index));
+        _bitstream.writeBits(&_buf[0], 8 * _index);
         startChunk += chunkSize;
 
         if (startChunk < end)

@@ -17,6 +17,8 @@ limitations under the License.
 #ifndef _FPAQDecoder_
 #define _FPAQDecoder_
 
+#include <vector>
+
 #include "../EntropyDecoder.hpp"
 #include "../Memory.hpp"
 #include "../SliceArray.hpp"
@@ -41,7 +43,8 @@ namespace kanzi
        uint64 _high;
        uint64 _current;
        InputBitStream& _bitstream;
-       SliceArray<byte> _sba;
+       std::vector<byte> _buf;
+       int _index;
        uint16 _probs[4][256]; // probability of bit=1
        uint16* _p; // pointer to current prob
        int _ctx; // previous bits
@@ -100,9 +103,9 @@ namespace kanzi
    {
        _low = (_low << 32) & MASK_0_56;
        _high = ((_high << 32) | MASK_0_32) & MASK_0_56;
-       const uint64 val = BigEndian::readInt32(&_sba._array[_sba._index]) & MASK_0_32;
+       const uint64 val = BigEndian::readInt32(&_buf[_index]) & MASK_0_32;
        _current = ((_current << 32) | val) & MASK_0_56;
-       _sba._index += 4;
+       _index += 4;
    }
 }
 #endif

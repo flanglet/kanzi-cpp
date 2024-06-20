@@ -32,7 +32,6 @@ const int FPAQDecoder::PSCALE = 65536;
 
 FPAQDecoder::FPAQDecoder(InputBitStream& bitstream)
     : _bitstream(bitstream)
-    , _sba(new byte[0], 0)
 {
     reset();
 }
@@ -40,7 +39,6 @@ FPAQDecoder::FPAQDecoder(InputBitStream& bitstream)
 FPAQDecoder::~FPAQDecoder()
 {
     _dispose();
-    delete[] _sba._array;
 }
 
 bool FPAQDecoder::reset()
@@ -70,31 +68,28 @@ int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
     // Split block into chunks, read bit array from bitstream and decode chunk
     while (startChunk < end) {
         const uint chunkSize = min(DEFAULT_CHUNK_SIZE, end - startChunk);
-        const int szBytes = int(EntropyUtils::readVarInt(_bitstream));
+        const uint szBytes = uint(EntropyUtils::readVarInt(_bitstream));
         _current = _bitstream.readBits(56);
-        const int bufSize = max(szBytes + (szBytes >> 3), 1024);
+        const size_t bufSize = max(szBytes + (szBytes >> 3), 1024u);
 
-        if (_sba._length < bufSize) {
-            delete[] _sba._array;
-            _sba._length = bufSize;
-            _sba._array = new byte[_sba._length];
-        }
+        if (_buf.size() < bufSize)
+            _buf.resize(bufSize);
 
-        _bitstream.readBits(&_sba._array[0], 8 * szBytes);
-        _sba._index = 0;
+        _bitstream.readBits(&_buf[0], 8 * szBytes);
+        _index = 0;
         const uint endChunk = startChunk + chunkSize;
         _p = _probs[0];
 
         for (uint i = startChunk; i < endChunk; i++) {
             _ctx = 1;
-            decodeBit(int(_p[_ctx]));
-            decodeBit(int(_p[_ctx]));
-            decodeBit(int(_p[_ctx]));
-            decodeBit(int(_p[_ctx]));
-            decodeBit(int(_p[_ctx]));
-            decodeBit(int(_p[_ctx]));
-            decodeBit(int(_p[_ctx]));
-            decodeBit(int(_p[_ctx]));
+            decodeBit(_p[_ctx]);
+            decodeBit(_p[_ctx]);
+            decodeBit(_p[_ctx]);
+            decodeBit(_p[_ctx]);
+            decodeBit(_p[_ctx]);
+            decodeBit(_p[_ctx]);
+            decodeBit(_p[_ctx]);
+            decodeBit(_p[_ctx]);
             block[i] = byte(_ctx);
             _p = _probs[(_ctx & 0xFF) >> 6];
         }

@@ -17,6 +17,8 @@ limitations under the License.
 #ifndef _FPAQEncoder_
 #define _FPAQEncoder_
 
+#include <vector>
+
 #include "../EntropyEncoder.hpp"
 #include "../Memory.hpp"
 #include "../SliceArray.hpp"
@@ -41,7 +43,8 @@ namespace kanzi
        uint64 _high;
        bool _disposed;
        OutputBitStream& _bitstream;
-       SliceArray<byte> _sba;
+       std::vector<byte> _buf;
+       int _index;
        uint16 _probs[4][256]; // probability of bit=1
 
 
@@ -84,8 +87,8 @@ namespace kanzi
 
    inline void FPAQEncoder::flush()
    {
-       BigEndian::writeInt32(&_sba._array[_sba._index], int32(_high >> 24));
-       _sba._index += 4;
+       BigEndian::writeInt32(&_buf[_index], int32(_high >> 24));
+       _index += 4;
        _low <<= 32;
        _high = (_high << 32) | MASK_0_32;
    }
