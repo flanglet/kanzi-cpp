@@ -708,7 +708,6 @@ T FileCompressTask<T>::run()
     log.println(ss.str(), verbosity > 1);
     log.println("\n", verbosity > 3);
     int64 read = 0;
-    static const int DEFAULT_BUFFER_SIZE = 65536;
     byte* buf = new byte[DEFAULT_BUFFER_SIZE];
     SliceArray<byte> sa(buf, DEFAULT_BUFFER_SIZE, 0);
 
