@@ -157,7 +157,7 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
 
     const int pIdx = getPrimaryIndex(0);
 
-    if ((pIdx < 0) || (pIdx > count))
+    if ((pIdx <= 0) || (pIdx > count))
         return false;
 
     // Build array of packed index + value (assumes block size < 1<<24)
