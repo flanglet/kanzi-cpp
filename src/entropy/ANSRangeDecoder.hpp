@@ -45,7 +45,7 @@ namespace kanzi
 
    class ANSRangeDecoder : public EntropyDecoder {
    public:
-      static const int ANS_TOP;
+      static const uint ANS_TOP;
 
       ANSRangeDecoder(InputBitStream& bitstream,
                       int order = 0,
@@ -79,7 +79,7 @@ namespace kanzi
 
       void decodeChunk(byte block[], int end);
 
-      int decodeSymbol(byte*& p, int& st, const ANSDecSymbol& sym, const int mask) const;
+      uint decodeSymbol(byte*& p, uint& st, const ANSDecSymbol& sym, const int mask) const;
 
       int decodeHeader(uint frequencies[], uint alphabet[]);
 
@@ -94,16 +94,16 @@ namespace kanzi
    }
 
 
-   inline int ANSRangeDecoder::decodeSymbol(byte*& p, int& st, const ANSDecSymbol& sym, const int mask) const
+   inline uint ANSRangeDecoder::decodeSymbol(byte*& p, uint& st, const ANSDecSymbol& sym, const int mask) const
    {
       // Compute next ANS state
       // D(x) = (s, q_s (x/M) + mod(x,M) - b_s) where s is such b_s <= x mod M < b_{s+1}
-      st = int(sym._freq) * (st >> _logRange) + (st & mask) - int(sym._cumFreq);
+      st = uint(sym._freq) * (st >> _logRange) + (st & mask) - uint(sym._cumFreq);
 
       // Normalize
       const int x = (st < ANS_TOP) ? -1 : 0;
       st <<= (x & 16);
-      st |= (x & ((int(p[0]) << 8) | int(p[1])));
+      st |= (x & ((uint(p[0]) << 8) | uint(p[1])));
       p -= (x + x);
       return st;
    }

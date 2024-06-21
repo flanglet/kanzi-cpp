@@ -23,7 +23,7 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-const int ANSRangeDecoder::ANS_TOP = 1 << 15; // max possible for ANS_TOP=1<<23
+const uint ANSRangeDecoder::ANS_TOP = 1 << 15; // max possible for ANS_TOP=1<<23
 const int ANSRangeDecoder::DEFAULT_ANS0_CHUNK_SIZE = 16384;
 const int ANSRangeDecoder::DEFAULT_LOG_RANGE = 12;
 const int ANSRangeDecoder::MIN_CHUNK_SIZE = 1024;
@@ -205,26 +205,23 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     // Read chunk size
     const uint sz = uint(EntropyUtils::readVarInt(_bitstream) & (MAX_CHUNK_SIZE - 1));
 
+    // Read initial ANS states
+    uint st0 = uint(_bitstream.readBits(32));
+    uint st1 = uint(_bitstream.readBits(32));
+    uint st2 = uint(_bitstream.readBits(32));
+    uint st3 = uint(_bitstream.readBits(32));
+
     if (sz == 0)
        return;
 
-    // Read initial ANS states
-    int st0 = int(_bitstream.readBits(32));
-    int st1 = int(_bitstream.readBits(32));
-    int st2 = int(_bitstream.readBits(32));
-    int st3 = int(_bitstream.readBits(32));
-
-    // Read encoded data from bitstream
-    if (sz != 0) {
-         if (_bufferSize < sz) {
-            delete[] _buffer;
-            _bufferSize = max(sz + (sz >> 3), 256u);
-            _buffer = new byte[_bufferSize];
-        }
-
-        _bitstream.readBits(&_buffer[0], 8 * sz);
+    if (_bufferSize < sz) {
+        delete[] _buffer;
+        _bufferSize = max(sz + (sz >> 3), 256u);
+        _buffer = new byte[_bufferSize];
     }
 
+    // Read encoded data from bitstream
+    _bitstream.readBits(&_buffer[0], 8 * sz);
     byte* p = &_buffer[0];
     const int mask = (1 << _logRange) - 1;
     const int end4 = end & -4;
