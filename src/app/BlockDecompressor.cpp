@@ -672,6 +672,7 @@ T FileDecompressTask<T>::run()
         const uint64 outputSize = _ctx.getLong("outputSize", 0);
 
         if ((outputSize != 0) && (written != outputSize)) {
+            delete[] buf;
             stringstream sserr;
             sserr << "Corrupted bitstream: invalid output size (expected " << outputSize;
             sserr << ", got " << written << ")";
