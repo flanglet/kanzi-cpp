@@ -197,7 +197,6 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if ((n >= 32768) || (3 * n >= count))
         return false;
 
-#pragma pack(1)
     struct symb {
         uint32 val;
         uint8 len;

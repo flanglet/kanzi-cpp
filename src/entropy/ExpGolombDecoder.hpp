@@ -59,6 +59,7 @@ namespace kanzi
        while (_bitstream.readBit() == 0)
            log2++;
 
+       // Clamp. Do not attempt to detect a corrupted bitstream
        log2 &= 7;
 
        if (_signed == true) {
