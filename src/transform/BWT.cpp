@@ -189,9 +189,16 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
     }
 
     if (count < BLOCK_SIZE_THRESHOLD1) {
-        for (int i = 0, t = pIdx - 1; i < count; i++) {
-            const uint ptr = _buffer[t];
-            dst[i] = byte(ptr);
+        int t = pIdx - 1;
+        int n = 0;
+
+        while (n < count) {
+            const int ptr = _buffer[t];
+
+            if (ptr < 0)
+                break;
+
+            dst[n++] = byte(ptr);
             t = ptr >> 8;
         }
     }
