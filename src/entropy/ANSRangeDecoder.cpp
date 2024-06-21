@@ -205,6 +205,9 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     // Read chunk size
     const uint sz = uint(EntropyUtils::readVarInt(_bitstream) & (MAX_CHUNK_SIZE - 1));
 
+    if (sz == 0)
+       return;
+
     // Read initial ANS states
     int st0 = int(_bitstream.readBits(32));
     int st1 = int(_bitstream.readBits(32));
@@ -215,7 +218,7 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     if (sz != 0) {
          if (_bufferSize < sz) {
             delete[] _buffer;
-            _bufferSize = max(sz + (sz >> 3), uint(256));
+            _bufferSize = max(sz + (sz >> 3), 256u);
             _buffer = new byte[_bufferSize];
         }
 
