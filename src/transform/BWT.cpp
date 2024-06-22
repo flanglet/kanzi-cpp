@@ -106,7 +106,7 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         return true;
     }
 
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
 
     // Lazy dynamic memory allocation

@@ -408,7 +408,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     const int dstEnd = output._length;
     byte* dst = &output._array[output._index];
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
 
     int tkIdx = LittleEndian::readInt32(&src[0]);
     int mIdx = LittleEndian::readInt32(&src[4]);

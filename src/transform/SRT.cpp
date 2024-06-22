@@ -36,7 +36,7 @@ bool SRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     int freqs[256] = { 0 };
     uint8 s2r[256] = { 0 };
     uint8 r2s[256] = { 0 };
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
 
     // find first symbols and count occurrences
     for (int i = 0, b = 0; i < length;) {
@@ -123,7 +123,7 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     const int headerSize = decodeHeader(&input._array[input._index], freqs);
     input._index += headerSize;
     length -= headerSize;
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     uint8 symbols[256];
 
     // init arrays
