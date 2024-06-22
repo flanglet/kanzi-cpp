@@ -42,7 +42,12 @@ namespace kanzi
 
        InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os);
 
-       ~InfoPrinter() {}
+       ~InfoPrinter() {
+          for (int i = 0; i < 1024; i++) {
+             if (_map[i] != nullptr)
+                delete _map[i];
+          }
+       }
 
        void processEvent(const Event& evt);
 

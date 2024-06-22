@@ -43,8 +43,8 @@ InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os
         _thresholds[5] = Event::DECOMPRESSION_END;
     }
 	
-	for (int i = 0; i < 1024; i++)
-		_map[i] = nullptr;
+    for (int i = 0; i < 1024; i++)
+        _map[i] = nullptr;
 }
 
 void InfoPrinter::processEvent(const Event& evt)
