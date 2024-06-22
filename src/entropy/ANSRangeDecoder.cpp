@@ -215,12 +215,11 @@ bool ANSRangeDecoder::decodeChunk(byte block[], int count)
     uint st2 = uint(_bitstream.readBits(32));
     uint st3 = uint(_bitstream.readBits(32));
 
-    if (sz == 0)
-       return true;
+    const uint minBufSize = max(sz + (sz >> 3), uint(count));
 
-    if (_bufferSize < sz) {
+    if (_bufferSize < minBufSize) {
         delete[] _buffer;
-        _bufferSize = max(sz + (sz >> 3), uint(count));
+        _bufferSize = minBufSize;
         _buffer = new byte[_bufferSize];
     }
 
