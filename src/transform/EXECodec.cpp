@@ -304,8 +304,12 @@ bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int
     const int codeStart = LittleEndian::readInt32(&src[1]);
     const int codeEnd = LittleEndian::readInt32(&src[5]);
 
+    // Sanity check
+    if ((codeStart + srcIdx > count) || (codeEnd > count))
+        return false;
+
     if (codeStart > 0) {
-        memcpy(&dst[dstIdx], &src[9], codeStart);
+        memcpy(&dst[dstIdx], &src[srcIdx], codeStart);
         dstIdx += codeStart;
         srcIdx += codeStart;
     }
@@ -340,8 +344,11 @@ bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int
         dstIdx += 4;
     }
 
-    memcpy(&dst[dstIdx], &src[srcIdx], count - srcIdx);
-    dstIdx += (count - srcIdx);
+    if (srcIdx < count) {
+       memcpy(&dst[dstIdx], &src[srcIdx], count - srcIdx);
+       dstIdx += (count - srcIdx);
+    }
+
     input._index += count;
     output._index += dstIdx;
     return true;
@@ -356,8 +363,12 @@ bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     const int codeStart = LittleEndian::readInt32(&src[1]);
     const int codeEnd = LittleEndian::readInt32(&src[5]);
 
+    // Sanity check
+    if ((codeStart + srcIdx > count) || (codeEnd > count))
+        return false;
+
     if (codeStart > 0) {
-        memcpy(&dst[dstIdx], &src[9], codeStart);
+        memcpy(&dst[dstIdx], &src[srcIdx], codeStart);
         dstIdx += codeStart;
         srcIdx += codeStart;
     }
@@ -402,8 +413,11 @@ bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
         dstIdx += 4;
     }
 
-    memcpy(&dst[dstIdx], &src[srcIdx], count - srcIdx);
-    dstIdx += (count - srcIdx);
+    if (srcIdx < count) {
+       memcpy(&dst[dstIdx], &src[srcIdx], count - srcIdx);
+       dstIdx += (count - srcIdx);
+    }
+
     input._index += count;
     output._index += dstIdx;
     return true;

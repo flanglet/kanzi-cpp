@@ -414,14 +414,15 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
     int mIdx = LittleEndian::readInt32(&src[4]);
     int mLenIdx = LittleEndian::readInt32(&src[8]);
 
+    // Sanity checks
     if ((tkIdx < 0) || (mIdx < 0) || (mLenIdx < 0))
+        return false;
+
+    if ((tkIdx > count) || (mIdx > count - tkIdx) || (mLenIdx > count - tkIdx - mIdx))
         return false;
 
     mIdx += tkIdx;
     mLenIdx += mIdx;
-
-    if ((tkIdx > count) || (mIdx > count) || (mLenIdx > count))
-        return false;
 
     const int srcEnd = tkIdx - 13;
     const int mFlag = int(src[12]) & 1;

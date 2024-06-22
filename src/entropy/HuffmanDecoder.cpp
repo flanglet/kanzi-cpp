@@ -225,6 +225,10 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
                     bits += 8;
                 }
 
+                // Sanity check
+                if (bits > 64)
+                   return n;
+
                 uint16 val;
 
                 if (bits >= DECODING_BATCH_SIZE)
