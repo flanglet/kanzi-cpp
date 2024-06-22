@@ -515,7 +515,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         const bool cond = _minMatch == MIN_MATCH3;
         byte* buf = &output._array[output._index];
-        const byte* ref = &output._array[output._index - delta];
+        const byte* refBuf = &output._array[output._index - delta];
         int dstIdx = 0;
         const int n = min(dstEnd - output._index, 8);
 
@@ -540,7 +540,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
                 if (cond == true) {
                      for (int k = 0; k < litLen; k++) {
-                        const uint32 key = ROLZCodec::getKey1(&ref[dstIdx + k]);
+                        const uint32 key = ROLZCodec::getKey1(&refBuf[dstIdx + k]);
                         uint8* counter = &_counters[key];
                         uint32* matches = &_matches[key << _logPosChecks];
                         *counter = (*counter + 1) & _maskChecks;
@@ -550,7 +550,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     }
                 } else {
                      for (int k = 0; k < litLen; k++) {
-                        const uint32 key = ROLZCodec::getKey2(&ref[dstIdx + k]);
+                        const uint32 key = ROLZCodec::getKey2(&refBuf[dstIdx + k]);
                         uint8* counter = &_counters[key];
                         uint32* matches = &_matches[key << _logPosChecks];
                         *counter = (*counter + 1) & _maskChecks;
@@ -582,7 +582,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             }
 
             const uint8 matchIdx = uint8(mIdxBuf._array[mIdxBuf._index++]);
-            const uint32 key = (cond == true) ? ROLZCodec::getKey1(&ref[dstIdx]) : ROLZCodec::getKey2(&ref[dstIdx]);
+            const uint32 key = (cond == true) ? ROLZCodec::getKey1(&refBuf[dstIdx]) : ROLZCodec::getKey2(&refBuf[dstIdx]);
             uint32* matches = &_matches[key << _logPosChecks];
             const int32 ref = matches[(_counters[key] - matchIdx) & _maskChecks];
             _counters[key] = (_counters[key] + 1) & _maskChecks;
@@ -851,7 +851,7 @@ bool ROLZCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         return false;
 
     const int srcEnd = count - 4;
-    byte* src = &input._array[input._index];
+    const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     BigEndian::writeInt32(&dst[0], count);
     _minMatch = MIN_MATCH3;
@@ -981,7 +981,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         sizeChunk = endChunk - startChunk;
         rd.reset();
         byte* dst = &output._array[output._index];
-        byte* ref = &output._array[output._index - delta];
+        byte* refBuf = &output._array[output._index - delta];
         int dstIdx = 0;
 
         // First literals
@@ -1003,7 +1003,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         // Next chunk
         while (dstIdx < sizeChunk) {
             const int savedIdx = dstIdx;
-            const uint32 key = (cond == true) ? ROLZCodec::getKey1(&ref[dstIdx]) : ROLZCodec::getKey2(&ref[dstIdx]);
+            const uint32 key = (cond == true) ? ROLZCodec::getKey1(&refBuf[dstIdx]) : ROLZCodec::getKey2(&refBuf[dstIdx]);
             uint32* matches = &_matches[key << _logPosChecks];
             rd.setContext(LITERAL_CTX, dst[dstIdx - 1]);
             int val = rd.decode9Bits();
