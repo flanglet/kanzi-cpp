@@ -37,16 +37,16 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
 
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    int srcIdx = 0;
-    int dstIdx = 0;
-    const int srcEnd = length;
-    const int dstEnd = length; // do not expand
+    uint srcIdx = 0;
+    uint dstIdx = 0;
+    const uint srcEnd = length;
+    const uint dstEnd = length; // do not expand
     bool res = true;
     byte zeros[4] = { byte(0) };
 
     while (srcIdx < srcEnd) {
         if (src[srcIdx] == byte(0)) {
-            int runLength = 1;
+            uint runLength = 1;
 
             while ((srcIdx + runLength + 4 < srcEnd) && (memcmp(&src[srcIdx + runLength], &zeros[0], 4) == 0))
                 runLength += 4;
@@ -117,14 +117,14 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
 
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    int srcIdx = 0;
-    int dstIdx = 0;
-    const int srcEnd = length;
-    const int dstEnd = output._length;
-    int runLength = 0;
+    uint srcIdx = 0;
+    uint dstIdx = 0;
+    const uint srcEnd = length;
+    const uint dstEnd = output._length;
+    uint runLength = 0;
 
     while (true) {
-        int val = int(src[srcIdx]);
+        uint val = uint(src[srcIdx]);
 
         if (val <= 1) {
             // Generate the run length bit by bit (but force MSB)
@@ -137,14 +137,14 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
                 if (srcIdx >= srcEnd)
                     goto End;
 
-                val = int(src[srcIdx]);
+                val = uint(src[srcIdx]);
             } 
             while (val <= 1);
 
             runLength--;
 
             if (runLength > 0) {
-                if (dstIdx + runLength > dstEnd)
+                if (runLength > dstEnd - dstIdx)
                     goto End;
 
                 memset(&dst[dstIdx], 0, size_t(runLength));
@@ -179,7 +179,7 @@ End:
         runLength--;
 
         // If runLength is not 1, add trailing 0s
-        if (dstIdx + runLength > dstEnd)
+        if (runLength > dstEnd - dstIdx)
             return false;
 
         memset(&dst[dstIdx], 0, size_t(runLength));

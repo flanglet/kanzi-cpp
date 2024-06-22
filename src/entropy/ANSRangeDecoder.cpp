@@ -191,7 +191,8 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint count)
             // Shortcut for chunks with only one symbol
             memset(&block[startChunk], alphabet[0], size_t(sizeChunk));
         } else {
-            decodeChunk(&block[startChunk], sizeChunk);
+            if (decodeChunk(&block[startChunk], sizeChunk) == false)
+                break;
         }
 
         startChunk += sizeChunk;
@@ -200,10 +201,13 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint count)
     return count;
 }
 
-void ANSRangeDecoder::decodeChunk(byte block[], int end)
+bool ANSRangeDecoder::decodeChunk(byte block[], int count)
 {
     // Read chunk size
-    const uint sz = uint(EntropyUtils::readVarInt(_bitstream) & (MAX_CHUNK_SIZE - 1));
+    const uint sz = uint(EntropyUtils::readVarInt(_bitstream));
+
+    if (sz >= MAX_CHUNK_SIZE)
+       return false;
 
     // Read initial ANS states
     uint st0 = uint(_bitstream.readBits(32));
@@ -212,11 +216,11 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     uint st3 = uint(_bitstream.readBits(32));
 
     if (sz == 0)
-       return;
+       return true;
 
     if (_bufferSize < sz) {
         delete[] _buffer;
-        _bufferSize = max(sz + (sz >> 3), 256u);
+        _bufferSize = max(sz + (sz >> 3), uint(count));
         _buffer = new byte[_bufferSize];
     }
 
@@ -224,10 +228,10 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
     _bitstream.readBits(&_buffer[0], 8 * sz);
     byte* p = &_buffer[0];
     const int mask = (1 << _logRange) - 1;
-    const int end4 = end & -4;
+    const int count4 = count & -4;
 
     if (_order == 0) {
-        for (int i = 0; i < end4; i += 4) {
+        for (int i = 0; i < count4; i += 4) {
             const uint8 cur3 = _f2s[st3 & mask];
             block[i] = byte(cur3);
             st3 = decodeSymbol(p, st3, _symbols[cur3], mask);
@@ -243,7 +247,7 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
         }
     }
     else {
-        const int quarter = end4 >> 2;
+        const int quarter = count4 >> 2;
         int i0 = 0;
         int i1 = 1 * quarter;
         int i2 = 2 * quarter;
@@ -270,6 +274,8 @@ void ANSRangeDecoder::decodeChunk(byte block[], int end)
         }
     }
 
-    for (int i = end4; i < end; i++)
+    for (int i = count4; i < count; i++)
         block[i] = *p++;
+
+    return true;
 }

@@ -204,13 +204,22 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
     else {
         const int ckSize = ((count & 7) == 0) ? count >> 3 : (count >> 3) + 1;
         int t0 = getPrimaryIndex(0) - 1;
+        if (t0 >= _bufferSize) return false;
         int t1 = getPrimaryIndex(1) - 1;
+        if (t1 >= _bufferSize) return false;
         int t2 = getPrimaryIndex(2) - 1;
+        if (t2 >= _bufferSize) return false;
         int t3 = getPrimaryIndex(3) - 1;
+        if (t3 >= _bufferSize) return false;
         int t4 = getPrimaryIndex(4) - 1;
+        if (t4 >= _bufferSize) return false;
         int t5 = getPrimaryIndex(5) - 1;
+        if (t5 >= _bufferSize) return false;
         int t6 = getPrimaryIndex(6) - 1;
+        if (t6 >= _bufferSize) return false;
         int t7 = getPrimaryIndex(7) - 1;
+        if (t7 >= _bufferSize) return false;
+
         byte* d0 = &dst[ckSize * 0];
         byte* d1 = &dst[ckSize * 1];
         byte* d2 = &dst[ckSize * 2];
