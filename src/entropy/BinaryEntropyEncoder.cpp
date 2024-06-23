@@ -59,7 +59,7 @@ int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count)
 
     uint startChunk = blkptr;
     const uint end = blkptr + count;
-    uint length = max(count, uint(64));
+    uint length = max(count, 64u);
 
     if (length >= MAX_CHUNK_SIZE) {
         // If the block is big (>=64MB), split the encoding to avoid allocating
@@ -67,18 +67,19 @@ int BinaryEntropyEncoder::encode(const byte block[], uint blkptr, uint count)
         length = (length / 8 < MAX_CHUNK_SIZE) ? count >> 3 : count >> 4;
     }
 
+    const uint bufSize = length + (length >> 3);
+
+    if (_sba._length < int(bufSize)) {
+        delete[] _sba._array;
+        _sba._length = int(bufSize);
+        _sba._array = new byte[_sba._length];
+    }
+
     // Split block into chunks, encode chunk and write bit array to bitstream
     while (startChunk < end) {
         const uint chunkSize = min(length, end - startChunk);
-
-        if (_sba._length < int(chunkSize + (chunkSize >> 3))) {
-            delete[] _sba._array;
-            _sba._length = chunkSize + (chunkSize >> 3);
-            _sba._array = new byte[_sba._length];
-        }
-
-        _sba._index = 0;
         const uint endChunk = startChunk + chunkSize;
+        _sba._index = 0;
 
         for (uint i = startChunk; i < endChunk; i++) {
             encodeBit(int(block[i]) & 0x80, _predictor->get());

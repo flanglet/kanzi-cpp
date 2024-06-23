@@ -416,7 +416,6 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int startChunk = 0;
     const int flags = int(src[4]);
     const int litOrder = flags & 1;
-    _logPosChecks = flags >> 4;
     _minMatch = MIN_MATCH3;
     int delta = 2;
 	
@@ -436,6 +435,11 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
            break;
     }
 
+    _logPosChecks = flags >> 4;
+
+    if ((_logPosChecks < 2) || (_logPosChecks > 8))
+       return false;
+
     if (_mSize < size_t(ROLZCodec::HASH_SIZE << _logPosChecks)) {
        _mSize = size_t(ROLZCodec::HASH_SIZE << _logPosChecks);
        delete[] _matches;
@@ -448,6 +452,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     SliceArray<byte> tkBuf(new byte[sizeChunk / 4], sizeChunk / 4);
     memset(&_counters[0], 0, sizeof(_counters));
     bool success = true;
+    const int litBufSize = litBuf._length;
 
     // Main loop
     while (startChunk < dstEnd) {
@@ -478,7 +483,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 goto End;
             }
 
-            if ((litLen > sizeChunk) || (tkLen > sizeChunk) || (mLenLen > sizeChunk) || (mIdxLen > sizeChunk)) {
+            if ((litLen > litBuf._length) || (tkLen > tkBuf._length) || (mLenLen > lenBuf._length) || (mIdxLen > mIdxBuf._length)) {
                 input._index += srcIdx;
                 output._index += startChunk;
                 success = false;
@@ -535,6 +540,11 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const int litLen = (mode < 0xF8) ? mode >> 3 : readLength(lenBuf._array, lenBuf._index) + 31;
 
             if (litLen > 0) {
+                if (dstIdx + litLen > litBufSize) {
+                    success = false;
+                    goto End;
+                }
+
                 memcpy(&buf[dstIdx], &litBuf._array[litBuf._index], litLen);
                 int srcInc = 0;
 
@@ -597,10 +607,14 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 End:
     if (success == true) {
         // Emit last chunk literals
-        dst[output._index++] = src[srcIdx++];
-        dst[output._index++] = src[srcIdx++];
-        dst[output._index++] = src[srcIdx++];
-        dst[output._index++] = src[srcIdx++];
+        if ((output._index + 4 > output._length) || (srcIdx + 4 > input._length)) {
+           success = false;
+        }
+        else {
+           memcpy(&dst[output._index], &src[srcIdx], 4);
+           output._index += 4;
+           srcIdx += 4;
+        }
     }
 
     input._index += srcIdx;

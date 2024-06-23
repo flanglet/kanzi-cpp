@@ -201,7 +201,7 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint count)
     return count;
 }
 
-bool ANSRangeDecoder::decodeChunk(byte block[], int count)
+bool ANSRangeDecoder::decodeChunk(byte block[], uint count)
 {
     // Read chunk size
     const uint sz = uint(EntropyUtils::readVarInt(_bitstream));
@@ -215,7 +215,7 @@ bool ANSRangeDecoder::decodeChunk(byte block[], int count)
     uint st2 = uint(_bitstream.readBits(32));
     uint st3 = uint(_bitstream.readBits(32));
 
-    const uint minBufSize = max(sz + (sz >> 3), uint(count));
+    const uint minBufSize = max(sz + (sz >> 3), count);
 
     if (_bufferSize < minBufSize) {
         delete[] _buffer;
@@ -273,7 +273,7 @@ bool ANSRangeDecoder::decodeChunk(byte block[], int count)
         }
     }
 
-    for (int i = count4; i < count; i++)
+    for (uint i = count4; i < count; i++)
         block[i] = *p++;
 
     return true;

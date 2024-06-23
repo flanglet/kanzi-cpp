@@ -77,7 +77,7 @@ namespace kanzi
       uint _order;
       uint _logRange;
 
-      bool decodeChunk(byte block[], int end);
+      bool decodeChunk(byte block[], uint count);
 
       uint decodeSymbol(byte*& p, uint& st, const ANSDecSymbol& sym, const int mask) const;
 

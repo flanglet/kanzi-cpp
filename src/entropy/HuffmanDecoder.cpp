@@ -108,24 +108,27 @@ int HuffmanDecoder::readLengths()
 // max(CodeLen) must be <= MAX_SYMBOL_SIZE
 bool HuffmanDecoder::buildDecodingTable(int count)
 {
-    memset(_table, 0, sizeof(_table));
+    // Initialize table with non zero value.
+    // If the bitstream is altered, the decoder may access these default table values.
+    // The number of consumed bits cannot be 0.
+    memset(_table, 8, sizeof(_table));
     uint16 length = 0;
 
     for (int i = 0; i < count; i++) {
         const uint s = _alphabet[i];
-        length = max(_sizes[s], length);
-
-        // code -> size, symbol
-        const uint16 val = (uint16(s) << 8) | _sizes[s];
 
         // All DECODING_BATCH_SIZE bit values read from the bit stream and
         // starting with the same prefix point to symbol s
+        length = max(_sizes[s], length);
         const int w = 1 << (DECODING_BATCH_SIZE - length);
         int idx = int(_codes[s]) * w;
         const int end = idx + w;
 
         if (end > TABLE_MASK + 1)
             return false;
+
+        // code -> size, symbol
+        const uint16 val = (uint16(s) << 8) | _sizes[s];
 
         while (idx < end)
             _table[idx++] = val;
