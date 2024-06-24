@@ -118,6 +118,12 @@ bool EXECodec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int
     int matches = 0;
     const int dstEnd = output._length - 5;
 
+    if ((dstIdx + codeStart > output._length) || (srcIdx + codeStart > input._length))
+        return false;
+
+    if (codeEnd > input._length)
+        return false;
+
     if (codeStart > 0) {
         memcpy(&dst[dstIdx], &src[0], codeStart);
         dstIdx += codeStart;
@@ -192,6 +198,12 @@ bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     int dstIdx = 9;
     int matches = 0;
     const int dstEnd = output._length - 8;
+
+    if ((dstIdx + codeStart > output._length) || (srcIdx + codeStart > input._length))
+        return false;
+
+    if (codeEnd > input._length)
+        return false;
 
     if (codeStart > 0) {
         memcpy(&dst[dstIdx], &src[0], codeStart);
@@ -305,7 +317,7 @@ bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int
     const int codeEnd = LittleEndian::readInt32(&src[5]);
 
     // Sanity check
-    if ((codeStart + srcIdx > count) || (codeEnd > count))
+    if ((codeEnd > count) || (codeStart + srcIdx > count) || (codeStart + dstIdx > output._length))
         return false;
 
     if (codeStart > 0) {
@@ -364,7 +376,7 @@ bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     const int codeEnd = LittleEndian::readInt32(&src[5]);
 
     // Sanity check
-    if ((codeStart + srcIdx > count) || (codeEnd > count))
+    if ((codeEnd > count) || (codeStart + srcIdx > count) || (codeStart + dstIdx > output._length))
         return false;
 
     if (codeStart > 0) {
