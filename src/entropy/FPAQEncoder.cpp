@@ -72,11 +72,10 @@ int FPAQEncoder::encode(const byte block[], uint blkptr, uint count)
 
         _index = 0;
         const uint endChunk = startChunk + chunkSize;
-        int val = 0;
+        uint16* p = _probs[0];
 
         for (uint i = startChunk; i < endChunk; i++) {
-            uint16* p = _probs[val >> 6];
-            val = int(block[i]);
+            const int val = int(block[i]);
             const int bits = val + 256;
             encodeBit(val & 0x80, p[1]);
             encodeBit(val & 0x40, p[bits >> 7]);
@@ -86,6 +85,7 @@ int FPAQEncoder::encode(const byte block[], uint blkptr, uint count)
             encodeBit(val & 0x04, p[bits >> 3]);
             encodeBit(val & 0x02, p[bits >> 2]);
             encodeBit(val & 0x01, p[bits >> 1]);
+            p = _probs[val >> 6];
         }
 
         EntropyUtils::writeVarInt(_bitstream, uint32(_index));
