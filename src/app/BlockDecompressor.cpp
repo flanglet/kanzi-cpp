@@ -701,7 +701,7 @@ T FileDecompressTask<T>::run()
         }
 
         if (verbosity == 1) {
-            ss << "Decompressing " << inputName << ": " << decoded << " => " << read;
+            ss << "Decompressed " << inputName << ": " << decoded << " => " << read;
 
             if (delta >= 1e5) {
                 ss.precision(1);

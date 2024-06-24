@@ -818,7 +818,7 @@ T FileCompressTask<T>::run()
             log.print(ss.str(), true);
             ss.str(string());
         } else {
-            ss << "Compressing " << inputName << ": " << read << " => " << encoded;
+            ss << "Compressed " << inputName << ": " << read << " => " << encoded;
             ss.precision(2);
             ss.setf(ios::fixed);
 
