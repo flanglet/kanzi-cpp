@@ -263,7 +263,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const byte val = src[1];
             const int oSize = LittleEndian::readInt32(&src[2]);
 
-            if (output._index + oSize > output._length)
+            if ((oSize < 0) || (output._index + oSize > output._length))
                 return false;
 
             memset(&dst[0], int(val), oSize);
