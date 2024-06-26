@@ -406,11 +406,12 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 {
     byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    const int dstEnd = BigEndian::readInt32(&src[0]) - 4;
+    const int end = BigEndian::readInt32(&src[0]);
 
-    if ((dstEnd <= 0) || (dstEnd > output._length - output._index))
+    if ((end <= 4) || (end - 4 > output._length - output._index))
         return false;
 
+    const int dstEnd = end - 4;
     int srcIdx = 5;
     int sizeChunk = min(dstEnd, ROLZCodec::CHUNK_SIZE);
     int startChunk = 0;
@@ -446,10 +447,11 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
        _matches = new uint32[_mSize];
     }
 
-    SliceArray<byte> litBuf(new byte[sizeChunk], sizeChunk);
-    SliceArray<byte> lenBuf(new byte[sizeChunk / 5], sizeChunk / 5);
-    SliceArray<byte> mIdxBuf(new byte[sizeChunk / 4], sizeChunk / 4);
-    SliceArray<byte> tkBuf(new byte[sizeChunk / 4], sizeChunk / 4);
+    byte* arena = new byte[sizeChunk + sizeChunk / 5 + 2 * sizeChunk / 4];
+    SliceArray<byte> litBuf(&arena[0], sizeChunk);
+    SliceArray<byte> mIdxBuf(&arena[sizeChunk], sizeChunk / 4);
+    SliceArray<byte> tkBuf(&arena[sizeChunk + sizeChunk / 4], sizeChunk / 4);
+    SliceArray<byte> lenBuf(&arena[sizeChunk + sizeChunk / 2], sizeChunk / 5);
     memset(&_counters[0], 0, sizeof(_counters));
     bool success = true;
     const int litBufSize = litBuf._length;
@@ -503,10 +505,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             srcIdx += int((ibs.read() + 7) >> 3);
         }
         catch (BitStreamException& e) {
-            delete[] litBuf._array;
-            delete[] lenBuf._array;
-            delete[] mIdxBuf._array;
-            delete[] tkBuf._array;
+            delete[] arena;
             throw e;
         }
 
@@ -618,11 +617,8 @@ End:
     }
 
     input._index += srcIdx;
-    delete[] litBuf._array;
-    delete[] lenBuf._array;
-    delete[] mIdxBuf._array;
-    delete[] tkBuf._array;
-    return srcIdx == count;
+    delete[] arena;
+    return (success == true) && (srcIdx == count);
 }
 
 
