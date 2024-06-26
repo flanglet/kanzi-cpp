@@ -50,16 +50,7 @@ namespace kanzi
 
    template <class T>
    inline bool SliceArray<T>::isValid(const SliceArray& sa) {
-       if (sa._array == nullptr)
-          return false;
-
-       if (sa._index < 0)
-          return false;
-
-       if (sa._length < 0)
-          return false;
-
-       return (sa._index <= sa._length);
+       return ((sa._array != nullptr) && (sa._index >= 0) && (sa._length >= 0) && (sa._index <= sa._length));
    }
 
 #if __cplusplus < 201103L

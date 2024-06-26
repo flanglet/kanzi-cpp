@@ -79,17 +79,17 @@ namespace kanzi
 
        // Update probabilities
        if (split >= _current) {
-           bit = 1;
            _high = split;
            _p[_ctx] -= uint16((_p[_ctx] - PSCALE + 64) >> 6);
+           _ctx += (_ctx + 1);
+           bit = 1;
        }
        else {
-           bit = 0;
            _low = split + 1;
            _p[_ctx] -= uint16(_p[_ctx] >> 6);
+           _ctx += _ctx;
+           bit = 1;
        }
-
-       _ctx += (_ctx + bit);
 
        // Read 32 bits from bitstream
        if (((_low ^ _high) >> 24) == 0)
