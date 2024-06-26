@@ -88,7 +88,7 @@ namespace kanzi
            _low = split + 1;
            _p[_ctx] -= uint16(_p[_ctx] >> 6);
            _ctx += _ctx;
-           bit = 1;
+           bit = 0;
        }
 
        // Read 32 bits from bitstream
