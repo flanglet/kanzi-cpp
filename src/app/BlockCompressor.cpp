@@ -175,15 +175,15 @@ int BlockCompressor::compress(uint64& outputSize)
         FileListConfig cfg = { isRecursive, _noLinks, false, _noDotFiles };
         createFileList(_inputName, files, cfg, errors);
 
-        if (files.size() == 0) {
-            cerr << "Cannot access input file '" << _inputName << "'" << endl;
-            return Error::ERR_OPEN_FILE;
-        }
-
         if (errors.size() > 0) {
             for (size_t i = 0; i < errors.size(); i++)
                cerr << errors[i] << endl;
 
+            return Error::ERR_OPEN_FILE;
+        }
+
+        if (files.size() == 0) {
+            cerr << "Cannot access input file '" << _inputName << "'" << endl;
             return Error::ERR_OPEN_FILE;
         }
 

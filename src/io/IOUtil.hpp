@@ -21,6 +21,8 @@ limitations under the License.
 #include <sstream>
 #include <vector>
 #include <sys/stat.h>
+#include <string.h>
+
 
 #include "../types.hpp"
 
@@ -116,7 +118,7 @@ namespace kanzi
 
        if (res != 0) {
            std::stringstream ss;
-           ss << "Cannot access input file '" << target << "'";
+           ss << "Cannot access input file '" << target << "': " << strerror(errno);
            errors.push_back(ss.str());
 
            if (cfg._continueOnErrors == false)
@@ -172,7 +174,7 @@ namespace kanzi
 
                if (res != 0) {
                    std::stringstream ss;
-                   ss << "Cannot access input file '" << fullpath << "'";
+                   ss << "Cannot access input file '" << fullpath << "': " << strerror(errno);
                    errors.push_back(ss.str());
 
                    if (cfg._continueOnErrors == false) {
