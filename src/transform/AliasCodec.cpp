@@ -30,7 +30,7 @@ const int AliasCodec::MIN_BLOCK_SIZE = 1024;
 AliasCodec::AliasCodec(Context& ctx) : 
           _pCtx(&ctx) 
 {
-   _order = _pCtx->getInt("alias", 1);
+   _onlyDNA = _pCtx->getInt("packOnlyDNA", 0);
 }
 
 
@@ -61,6 +61,9 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         if ((dt == Global::EXE) || (dt == Global::BIN))
             return false;
+
+        if ((_onlyDNA == true) && (dt != Global::UNDEFINED) && (dt != Global::DNA))
+            return false;
     }
 
     byte* dst = &output._array[output._index];
@@ -77,15 +80,17 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             absent[n0++] = i;
     }
 
-    if (n0 < 16) {
-        if ((_pCtx != nullptr) && (dt == Global::UNDEFINED)) {
-            dt = Global::detectSimpleType(count, freqs0);
-
-            if (dt != Global::UNDEFINED)
-                _pCtx->putInt("dataType", dt);
-        }
-
+    if (n0 < 16)
         return false;
+
+    if (dt == Global::UNDEFINED) {
+        dt = Global::detectSimpleType(count, freqs0);
+
+        if ((_pCtx != nullptr) && (dt != Global::UNDEFINED))
+            _pCtx->putInt("dataType", dt);
+
+        if ((dt != Global::DNA) && (_onlyDNA == true))
+            return false;
     }
 
     int srcIdx, dstIdx;
@@ -142,9 +147,6 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
     }
     else {
-        if (_order == 0)
-            return false;
-
         // Digram encoding
         vector<sdAlias> v;
         

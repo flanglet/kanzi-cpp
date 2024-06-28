@@ -64,7 +64,7 @@ namespace kanzi {
             LZX_TYPE = 16, // Lempel Ziv Extra
             UTF_TYPE = 17, // UTF Codec
             PACK_TYPE = 18, // Alias Codec
-            RESERVED2 = 19, // Reserved
+            DNA_TYPE = 19, // DNA Alias Codec
             RESERVED3 = 20, // Reserved
             RESERVED4 = 21, // Reserved
             RESERVED5 = 22 // Reserved
@@ -188,6 +188,9 @@ namespace kanzi {
         if (name == "PACK")
             return PACK_TYPE;
 
+        if (name == "DNA")
+            return DNA_TYPE;
+
         if (name == "MM")
             return MM_TYPE;
 
@@ -285,6 +288,10 @@ namespace kanzi {
         case PACK_TYPE:
             return new AliasCodec(ctx);
 
+        case DNA_TYPE:
+            ctx.putInt("packOnlyDNA", 1);
+            return new AliasCodec(ctx);
+
         case MM_TYPE:
             return new FSDCodec(ctx);
 
@@ -368,6 +375,9 @@ namespace kanzi {
 
         case PACK_TYPE:
             return "PACK";
+
+        case DNA_TYPE:
+            return "DNA";
 
         case UTF_TYPE:
             return "UTF";
