@@ -447,6 +447,9 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
        _matches = new uint32[_mSize];
     }
 
+    _posChecks = 1 << _logPosChecks;
+    _maskChecks = uint8(_posChecks - 1);
+
     byte* arena = new byte[sizeChunk + sizeChunk / 5 + 2 * sizeChunk / 4];
     SliceArray<byte> litBuf(&arena[0], sizeChunk);
     SliceArray<byte> mIdxBuf(&arena[sizeChunk], sizeChunk / 4);
