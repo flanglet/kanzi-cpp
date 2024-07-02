@@ -61,7 +61,7 @@ namespace kanzi {
        static const int MIN_BLOCK_SIZE;
 
        Context* _pCtx;
-       int _onlyDNA;
+       bool _onlyDNA;
    };
 }
 
