@@ -148,17 +148,20 @@ bool BWT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 // When count <= BLOCK_SIZE_THRESHOLD2, mergeTPSI algo
 bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
+    if (count == 0)
+       return true;
+
+    const int pIdx = getPrimaryIndex(0);
+
+    if ((pIdx <= 0) || (pIdx > count))
+        return false;
+
     // Lazy dynamic memory allocation
     if (_bufferSize < count) {
         delete[] _buffer;
         _bufferSize = max(count, 256);
         _buffer = new uint[_bufferSize];
     }
-
-    const int pIdx = getPrimaryIndex(0);
-
-    if ((pIdx <= 0) || (pIdx > count))
-        return false;
 
     // Build array of packed index + value (assumes block size < 1<<24)
     uint buckets[256] = { 0 };
@@ -176,7 +179,10 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
     const uint end1 = uint(pIdx);
     const uint end2 = uint(count);
 
-    for (uint i = 0; i < end1; i++) {
+    _buffer[buckets[uint8(src[0])]] = 0xFF00 | uint(src[0]);
+    buckets[uint8(src[0])]++;
+
+    for (uint i = 1; i < end1; i++) {
         const uint8 val = uint8(src[i]);
         _buffer[buckets[val]] = ((i - 1) << 8) | val;
         buckets[val]++;
@@ -188,7 +194,7 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
         buckets[val]++;
     }
 
-    if (count < BLOCK_SIZE_THRESHOLD1) {
+    if (getBWTChunks(count) != 8) {
         int t = pIdx - 1;
         int n = 0;
 
@@ -196,29 +202,26 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
             const int ptr = _buffer[t];
             dst[n++] = byte(ptr);
             t = ptr >> 8;
-
-            if (ptr < 0)
-                break;
         }
     }
     else {
         const int ckSize = ((count & 7) == 0) ? count >> 3 : (count >> 3) + 1;
         int t0 = getPrimaryIndex(0) - 1;
-        if (t0 >= _bufferSize) return false;
+        if ((t0 < 0) || (t0 >= _bufferSize)) return false;
         int t1 = getPrimaryIndex(1) - 1;
-        if (t1 >= _bufferSize) return false;
+        if ((t1 < 0) || (t1 >= _bufferSize)) return false;
         int t2 = getPrimaryIndex(2) - 1;
-        if (t2 >= _bufferSize) return false;
+        if ((t2 < 0) || (t2 >= _bufferSize)) return false;
         int t3 = getPrimaryIndex(3) - 1;
-        if (t3 >= _bufferSize) return false;
+        if ((t3 < 0) || (t3 >= _bufferSize)) return false;
         int t4 = getPrimaryIndex(4) - 1;
-        if (t4 >= _bufferSize) return false;
+        if ((t4 < 0) || (t4 >= _bufferSize)) return false;
         int t5 = getPrimaryIndex(5) - 1;
-        if (t5 >= _bufferSize) return false;
+        if ((t5 < 0) || (t5 >= _bufferSize)) return false;
         int t6 = getPrimaryIndex(6) - 1;
-        if (t6 >= _bufferSize) return false;
+        if ((t6 < 0) || (t6 >= _bufferSize)) return false;
         int t7 = getPrimaryIndex(7) - 1;
-        if (t7 >= _bufferSize) return false;
+        if ((t7 < 0) || (t7 >= _bufferSize)) return false;
 
         byte* d0 = &dst[ckSize * 0];
         byte* d1 = &dst[ckSize * 1];
@@ -236,7 +239,10 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
            t = ptr >> 8; \
            prefetchRead(&_buffer[t])
 
-        while (true) {
+        // Last interval [7*chunk:count] smaller when 8*ckSize != count
+        const int end = count - ckSize * 7;
+
+        while (n < end) {
             S(t0, d0);
             S(t1, d1);
             S(t2, d2);
@@ -246,9 +252,6 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
             S(t6, d6);
             S(t7, d7);
             n++;
-
-            if (ptr < 0)
-                break;
         }
 
         while (n < ckSize) {
