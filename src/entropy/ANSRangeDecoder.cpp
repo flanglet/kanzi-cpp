@@ -224,6 +224,7 @@ bool ANSRangeDecoder::decodeChunk(byte block[], uint count)
     }
 
     // Read encoded data from bitstream
+    memset(_buffer, 0, _bufferSize);
     _bitstream.readBits(&_buffer[0], 8 * sz);
     byte* p = &_buffer[0];
     const int mask = (1 << _logRange) - 1;
