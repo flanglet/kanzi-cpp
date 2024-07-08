@@ -66,7 +66,6 @@ namespace kanzi
    inline int BinaryEntropyDecoder::decodeBit(int pred)
    {
        // Calculate interval split
-       // Written in a way to maximize accuracy of multiplication/division
        const uint64 split = ((((_high - _low) >> 4) * uint64(pred)) >> 8) + _low;
        int bit;
 
