@@ -66,13 +66,9 @@ namespace kanzi
    inline void BinaryEntropyEncoder::encodeBit(int bit, int pred)
    {
        // Update fields with new interval bounds and predictor
-       if (bit == 0) {
-          _low = _low + ((((_high - _low) >> 4) * uint64(pred)) >> 8) + 1;
-          _predictor->update(0);
-       } else  {
-          _high = _low + ((((_high - _low) >> 4) * uint64(pred)) >> 8);
-          _predictor->update(1);
-       }
+       const uint64 mid = _low + ((((_high - _low) >> 4) * uint64(pred)) >> 8);
+       (bit != 0) ? _high = mid : _low = mid + 1;
+       _predictor->update(bit != 0);
 
        // Write unchanged first 32 bits to bitstream
        if (((_low ^ _high) >> 24) == 0)
