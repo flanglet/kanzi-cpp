@@ -215,6 +215,9 @@ bool ANSRangeDecoder::decodeChunk(byte block[], uint count)
     uint st2 = uint(_bitstream.readBits(32));
     uint st3 = uint(_bitstream.readBits(32));
 
+    if (sz == 0)
+        return count == 0;
+
     const uint minBufSize = max(sz + (sz >> 3), count);
 
     if (_bufferSize < minBufSize) {
@@ -227,6 +230,7 @@ bool ANSRangeDecoder::decodeChunk(byte block[], uint count)
     memset(_buffer, 0, _bufferSize);
     _bitstream.readBits(&_buffer[0], 8 * sz);
     byte* p = &_buffer[0];
+
     const int mask = (1 << _logRange) - 1;
     const int count4 = count & -4;
 
