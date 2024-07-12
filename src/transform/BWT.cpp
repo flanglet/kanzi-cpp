@@ -179,7 +179,7 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
     const uint end1 = uint(pIdx);
     const uint end2 = uint(count);
 
-    _buffer[buckets[uint8(src[0])]] = 0xFF00 | uint(src[0]);
+    _buffer[buckets[uint8(src[0])]] = uint(src[0]);
     buckets[uint8(src[0])]++;
 
     for (uint i = 1; i < end1; i++) {
@@ -223,26 +223,24 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
         int t7 = getPrimaryIndex(7) - 1;
         if ((t7 < 0) || (t7 >= _bufferSize)) return false;
 
-        byte* d0 = &dst[ckSize * 0];
-        byte* d1 = &dst[ckSize * 1];
-        byte* d2 = &dst[ckSize * 2];
-        byte* d3 = &dst[ckSize * 3];
-        byte* d4 = &dst[ckSize * 4];
-        byte* d5 = &dst[ckSize * 5];
-        byte* d6 = &dst[ckSize * 6];
-        byte* d7 = &dst[ckSize * 7];
-        int n = 0;
+        // Last interval [7*chunk:count] smaller when 8*ckSize != count
+        const int end = count - ckSize * 7;
+        byte* d0 = &dst[end + ckSize * 0];
+        byte* d1 = &dst[end + ckSize * 1];
+        byte* d2 = &dst[end + ckSize * 2];
+        byte* d3 = &dst[end + ckSize * 3];
+        byte* d4 = &dst[end + ckSize * 4];
+        byte* d5 = &dst[end + ckSize * 5];
+        byte* d6 = &dst[end + ckSize * 6];
+        byte* d7 = &dst[end + ckSize * 7];
+        int n = -end;
         int ptr;
 
         #define S(t, d) ptr = _buffer[t]; \
            d[n] = byte(ptr); \
-           t = ptr >> 8; \
-           prefetchRead(&_buffer[t])
+           t = ptr >> 8;
 
-        // Last interval [7*chunk:count] smaller when 8*ckSize != count
-        const int end = count - ckSize * 7;
-
-        while (n < end) {
+        while (n < 0) {
             S(t0, d0);
             S(t1, d1);
             S(t2, d2);
@@ -254,7 +252,7 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
             n++;
         }
 
-        while (n < ckSize) {
+        while (n < ckSize - end) {
             S(t0, d0);
             S(t1, d1);
             S(t2, d2);
