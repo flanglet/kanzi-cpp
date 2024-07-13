@@ -66,6 +66,7 @@ namespace kanzi
        Context(const Context& c) : _map(c._map) {}
 #endif
 
+       virtual ~Context() {}
        bool has(const std::string& key) const;
        int getInt(const std::string& key, int defValue = 0) const;
        int64 getLong(const std::string& key, int64 defValue = 0) const;
