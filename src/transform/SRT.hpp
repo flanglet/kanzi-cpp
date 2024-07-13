@@ -38,11 +38,11 @@ namespace kanzi {
        int getMaxEncodedLength(int srcLen) const { return srcLen + 1024 /* max header size */; }
 
    private:
-       static int preprocess(const int freqs[], uint8 symbols[]);
+       static int preprocess(const uint freqs[], uint8 symbols[]);
 
-       static int encodeHeader(int freqs[], byte dst[]);
+       static int encodeHeader(uint freqs[], byte dst[]);
 
-       static int decodeHeader(const byte src[], int freqs[]);
+       static int decodeHeader(const byte src[], uint freqs[]);
    };
 }
 #endif
