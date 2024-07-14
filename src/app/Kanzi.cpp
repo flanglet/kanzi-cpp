@@ -880,8 +880,13 @@ int main(int argc, const char* argv[])
             jobs = MAX_CONCURRENCY;
         }
 
+    #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+        // Windows already has a built-in threadpool. Using it is better for performance.
+        Context ctx(args);
+    #else
         ThreadPool pool(jobs);
         Context ctx(args, &pool);
+    #endif
 #endif
         ctx.putInt("jobs", jobs);
 

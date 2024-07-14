@@ -51,19 +51,13 @@ namespace kanzi
    public:
 
 #ifdef CONCURRENCY_ENABLED
-    #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
-       // Windows already has a built-in threadpool. Using it is better for performance.
-       Context(const ThreadPool*) { _pool = nullptr; }
-       Context(const Context& c, const ThreadPool*) : _map(c._map) { _pool = nullptr; }
-       Context() { _pool = nullptr; }
-       Context(const Context& c) : _map(c._map) { _pool = nullptr; }
-    #else
        Context(ThreadPool* p = nullptr) : _pool(p) {}
        Context(const Context& c, ThreadPool* p = nullptr) : _map(c._map), _pool(p) {}
-    #endif
+       Context& operator=(const Context& c) { _map = c._map; _pool = c._pool; return *this; };
 #else
-       Context() {}
-       Context(const Context& c) : _map(c._map) {}
+       Context() { _pool = nullptr; }
+       Context(const Context& c) : _map(c._map) { _pool = nullptr; }
+       Context& operator=(const Context& c) { _map = c._map; _pool = nullptr; return *this; };
 #endif
 
        virtual ~Context() {}
