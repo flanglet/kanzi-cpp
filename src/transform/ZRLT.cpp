@@ -144,7 +144,7 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
             runLength--;
 
             if (runLength > 0) {
-                if (runLength > dstEnd - dstIdx)
+                if (runLength >= dstEnd - dstIdx)
                     goto End;
 
                 memset(&dst[dstIdx], 0, size_t(runLength));
