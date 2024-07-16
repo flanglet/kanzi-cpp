@@ -29,13 +29,8 @@ limitations under the License.
 namespace kanzi
 {
 
-   class ANSDecSymbol FINAL
+   struct ANSDecSymbol
    {
-   public:
-      ANSDecSymbol() :  _cumFreq(0),  _freq(0)  { }
-
-      ~ANSDecSymbol() { }
-
       void reset(int cumFreq, int freq, int logRange);
 
       uint16 _cumFreq;
