@@ -55,9 +55,9 @@ namespace kanzi
        Context(const Context& c, ThreadPool* p = nullptr) : _map(c._map), _pool(p) {}
        Context& operator=(const Context& c) { _map = c._map; _pool = c._pool; return *this; };
 #else
-       Context() { _pool = nullptr; }
-       Context(const Context& c) : _map(c._map) { _pool = nullptr; }
-       Context& operator=(const Context& c) { _map = c._map; _pool = nullptr; return *this; };
+       Context() {}
+       Context(const Context& c) : _map(c._map) {}
+       Context& operator=(const Context& c) { _map = c._map; return *this; };
 #endif
 
        virtual ~Context() {}
