@@ -461,36 +461,88 @@ T InverseBiPSIv2Task<T>::run()
     byte* d1 = &_dst[1 * _ckSize];
     byte* d2 = &_dst[2 * _ckSize];
     byte* d3 = &_dst[3 * _ckSize];
+    byte* d4 = &_dst[4 * _ckSize];
+    byte* d5 = &_dst[5 * _ckSize];
+    byte* d6 = &_dst[6 * _ckSize];
+    byte* d7 = &_dst[7 * _ckSize];
 
-    if (_start + 4 * _ckSize < _total) {
-        for (; c + 3 < _lastChunk; c += 4) {
+    if (_start + 7 * _ckSize <= _total) {
+        for (; c + 8 <= _lastChunk; c += 8) {
             const int end = _start + _ckSize;
-            uint p0 = _primaryIndexes[c];
+            uint p0 = _primaryIndexes[c + 0];
             uint p1 = _primaryIndexes[c + 1];
             uint p2 = _primaryIndexes[c + 2];
             uint p3 = _primaryIndexes[c + 3];
+            uint p4 = _primaryIndexes[c + 4];
+            uint p5 = _primaryIndexes[c + 5];
+            uint p6 = _primaryIndexes[c + 6];
+            uint p7 = _primaryIndexes[c + 7];
 
             for (int i = _start + 1; i <= end; i += 2) {
                 prefetchRead(&_data[p0]);
                 prefetchRead(&_data[p1]);
                 prefetchRead(&_data[p2]);
                 prefetchRead(&_data[p3]);
+                prefetchRead(&_data[p4]);
+                prefetchRead(&_data[p5]);
+                prefetchRead(&_data[p6]);
+                prefetchRead(&_data[p7]);
                 uint16 s0 = _fastBits[p0 >> shift];
                 uint16 s1 = _fastBits[p1 >> shift];
                 uint16 s2 = _fastBits[p2 >> shift];
                 uint16 s3 = _fastBits[p3 >> shift];
+                uint16 s4 = _fastBits[p4 >> shift];
+                uint16 s5 = _fastBits[p5 >> shift];
+                uint16 s6 = _fastBits[p6 >> shift];
+                uint16 s7 = _fastBits[p7 >> shift];
 
-                while (_buckets[s0] <= (const uint)p0)
-                    s0++;
+                if (_buckets[s0] <= p0) {
+                   do {
+                      s0++;
+                   } while (_buckets[s0] <= p0);
+                }
 
-                while (_buckets[s1] <= (const uint)p1)
-                    s1++;
+                if (_buckets[s1] <= p1) {
+                   do {
+                      s1++;
+                   } while (_buckets[s1] <= p1);
+                }
 
-                while (_buckets[s2] <= (const uint)p2)
-                    s2++;
+                if (_buckets[s2] <= p2) {
+                   do {
+                      s2++;
+                    } while (_buckets[s2] <= p2);
+                }
 
-                while (_buckets[s3] <= (const uint)p3)
-                    s3++;
+                if (_buckets[s3] <= p3) {
+                   do {
+                      s3++;
+                    } while (_buckets[s3] <= p3);
+                }
+
+                if (_buckets[s4] <= p4) {
+                   do {
+                      s4++;
+                    } while (_buckets[s4] <= p4);
+                }
+
+                if (_buckets[s5] <= p5) {
+                   do {
+                      s5++;
+                    } while (_buckets[s5] <= p5);
+                }
+
+                if (_buckets[s6] <= p6) {
+                   do {
+                      s6++;
+                    } while (_buckets[s6] <= p6);
+                }
+
+                if (_buckets[s7] <= p7) {
+                   do {
+                      s7++;
+                    } while (_buckets[s7] <= p7);
+                }
 
                 d0[i - 1] = byte(s0 >> 8);
                 d0[i] = byte(s0);
@@ -500,14 +552,26 @@ T InverseBiPSIv2Task<T>::run()
                 d2[i] = byte(s2);
                 d3[i - 1] = byte(s3 >> 8);
                 d3[i] = byte(s3);
+                d4[i - 1] = byte(s4 >> 8);
+                d4[i] = byte(s4);
+                d5[i - 1] = byte(s5 >> 8);
+                d5[i] = byte(s5);
+                d6[i - 1] = byte(s6 >> 8);
+                d6[i] = byte(s6);
+                d7[i - 1] = byte(s7 >> 8);
+                d7[i] = byte(s7);
 
                 p0 = _data[p0];
                 p1 = _data[p1];
                 p2 = _data[p2];
                 p3 = _data[p3];
+                p4 = _data[p4];
+                p5 = _data[p5];
+                p6 = _data[p6];
+                p7 = _data[p7];
             }
 
-            _start = end + 3 * _ckSize;
+            _start += (8 * _ckSize);
         }
     }
 
