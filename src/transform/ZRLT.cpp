@@ -170,7 +170,7 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
         srcIdx++;
         dstIdx++;
 
-        if (srcIdx >= srcEnd)
+        if ((srcIdx >= srcEnd) || (dstIdx >= dstEnd))
             break;
     }
 

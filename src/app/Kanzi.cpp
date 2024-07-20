@@ -855,7 +855,7 @@ int main(int argc, const char* argv[])
         if (jobs > 1) {
             const int verbosity = args.getInt("verbosity");
             stringstream ss;
-            ss << "Warning: the number of jobs is  limited to 1 in this version";
+            ss << "Warning: the number of jobs is limited to 1 in this version";
             Printer log(cout);
             log.println(ss.str(), verbosity > 0);
         }

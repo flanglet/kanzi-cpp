@@ -65,18 +65,27 @@ int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
     uint startChunk = blkptr;
     const uint end = blkptr + count;
 
-    // Split block into chunks, read bit array from bitstream and decode chunk
+    // Read bit array from bitstream and decode chunk
     while (startChunk < end) {
-        const uint chunkSize = min(DEFAULT_CHUNK_SIZE, end - startChunk);
         const uint szBytes = uint(EntropyUtils::readVarInt(_bitstream));
-        _current = _bitstream.readBits(56);
-        const size_t bufSize = max(szBytes + (szBytes >> 3), 1024u);
+
+        // Sanity check
+        if (szBytes >= 2 * count)
+            return 0;
+
+        const size_t bufSize = max(szBytes + (szBytes >> 2), 1024u);
 
         if (_buf.size() < bufSize)
             _buf.resize(bufSize);
 
+        _current = _bitstream.readBits(56);
+
+        if (bufSize > szBytes)
+            memset(&_buf[szBytes], 0, bufSize - szBytes);
+
         _bitstream.readBits(&_buf[0], 8 * szBytes);
         _index = 0;
+        const uint chunkSize = min(DEFAULT_CHUNK_SIZE, end - startChunk);
         const uint endChunk = startChunk + chunkSize;
         _p = _probs[0];
 

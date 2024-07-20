@@ -121,9 +121,12 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
 
     uint freqs[256] = { 0 };
     const int headerSize = decodeHeader(&input._array[input._index], freqs);
-
     input._index += headerSize;
     length -= headerSize;
+
+    if (length > output._length - output._index)
+        return false;
+
     const byte* src = &input._array[input._index];
     uint8 symbols[256] = { 0 };
 
