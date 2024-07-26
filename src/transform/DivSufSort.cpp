@@ -1310,19 +1310,18 @@ int DivSufSort::ssPivot(int td, int pa, int first, int last) const
     int middle = first + (t >> 1);
 
     if (t <= 512) {
-        return (t <= 32) ? ssMedian3(td, pa, first, middle, last - 1) : ssMedian5(td, pa, first, first + (t >> 2), middle, last - 1 - (t >> 2), last - 1);
+        return (t <= 32) ? ssMedian3(&_buffer[td], pa, first, middle, last - 1) : ssMedian5(&_buffer[td], pa, first, first + (t >> 2), middle, last - 1 - (t >> 2), last - 1);
     }
 
     t >>= 3;
-    first = ssMedian3(td, pa, first, first + t, first + (t << 1));
-    middle = ssMedian3(td, pa, middle - t, middle, middle + t);
-    last = ssMedian3(td, pa, last - 1 - (t << 1), last - 1 - t, last - 1);
-    return ssMedian3(td, pa, first, middle, last);
+    first = ssMedian3(&_buffer[td], pa, first, first + t, first + (t << 1));
+    middle = ssMedian3(&_buffer[td], pa, middle - t, middle, middle + t);
+    last = ssMedian3(&_buffer[td], pa, last - 1 - (t << 1), last - 1 - t, last - 1);
+    return ssMedian3(&_buffer[td], pa, first, middle, last);
 }
 
-int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5) const
+int DivSufSort::ssMedian5(const uint8 buf0[], int pa, int v1, int v2, int v3, int v4, int v5) const
 {
-    const uint8* buf0 = &_buffer[idx];
     const int* buf1 = &_sa[pa];
 
     if (buf0[buf1[_sa[v2]]] > buf0[buf1[_sa[v3]]]) {
@@ -1353,9 +1352,8 @@ int DivSufSort::ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4,
     return (buf0[buf1[_sa[v3]]] > buf0[buf1[_sa[v4]]]) ? v4 : v3;
 }
 
-int DivSufSort::ssMedian3(int idx, int pa, int v1, int v2, int v3) const
+int DivSufSort::ssMedian3(const uint8 buf0[], int pa, int v1, int v2, int v3) const
 {
-    const uint8* buf0 = &_buffer[idx];
     const int* buf1 = &_sa[pa];
 
     if (buf0[buf1[_sa[v1]]] > buf0[buf1[_sa[v2]]]) {

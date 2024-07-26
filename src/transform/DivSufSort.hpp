@@ -175,9 +175,9 @@ namespace kanzi
 
        int ssPivot(int td, int pa, int first, int last) const;
 
-       int ssMedian5(const int idx, int pa, int v1, int v2, int v3, int v4, int v5) const;
+       int ssMedian5(const uint8 buf[], int pa, int v1, int v2, int v3, int v4, int v5) const;
 
-       int ssMedian3(int idx, int pa, int v1, int v2, int v3) const;
+       int ssMedian3(const uint8 buf[], int pa, int v1, int v2, int v3) const;
 
        int ssPartition(int pa, int first, int last, int depth);
 
