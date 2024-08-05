@@ -43,6 +43,7 @@ namespace kanzi
            ERR_CREATE_STREAM = 17,
            ERR_INVALID_PARAM = 18,
            ERR_CRC_CHECK = 19,
+           ERR_RESERVED_NAME = 20,
            ERR_UNKNOWN = 127
        };
    };

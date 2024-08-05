@@ -52,6 +52,10 @@ static const int ARG_IDX_LEVEL = 9;
 static const string KANZI_VERSION = "2.3.0";
 static const string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
 
+static const string WIN_RESERVED[] = { "CON", "PRN", "AUX", "NUL", "COM0", "COM1", "COM2",
+                                       "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+                                       "COM¹", "COM²", "COM³", "LPT0", "LPT1", "LPT2", "LPT3",
+                                       "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9 "};
 
 #ifdef CONCURRENCY_ENABLED
    static const int MAX_CONCURRENCY = 64;
@@ -264,7 +268,7 @@ bool toInt(string& s, int& res)
    }
 
    // Use atoi because stoi can throw
-   res = atoi(s.c_str()); 
+   res = atoi(s.c_str());
    return true;
 }
 
@@ -291,7 +295,7 @@ int processCommandLine(int argc, const char* argv[], Context& map)
     int blockSize = -1;
     int autoBlockSize = -1;
     string mode;
-    Printer log(cout); 
+    Printer log(cout);
     bool showHeader = true;
     bool showHelp = false;
 
@@ -504,7 +508,7 @@ int processCommandLine(int argc, const char* argv[], Context& map)
                 }
             }
 
-            if (ctx != -1) 
+            if (ctx != -1)
                 continue;
         }
 
@@ -834,8 +838,8 @@ int main(int argc, const char* argv[])
            SetConsoleOutputCP(cp);
         }
     }
-
 #endif
+
     Context args;
     int status = processCommandLine(argc, argv, args);
 
@@ -846,6 +850,23 @@ int main(int argc, const char* argv[])
     // Help mode only ?
     if (args.has("mode") == false)
        exit(0);
+
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+    vector<string> reserved(WIN_RESERVED, end(WIN_RESERVED));
+    string input = args.getString("inputName", "");
+
+    if ((input != "") && (find(reserved.begin(), reserved.end(), input) != reserved.end())) {
+       cerr << input << " is a reserved name in Windows" << endl;
+       return Error::ERR_RESERVED_NAME;
+    }
+
+    string output = args.getString("outputName", "");
+
+    if ((output != "") && (find(reserved.begin(), reserved.end(), output) != reserved.end())) {
+       cerr << output << " is a reserved name in Windows" << endl;
+       return Error::ERR_RESERVED_NAME;
+    }
+#endif
 
     string mode = args.getString("mode");
     int jobs = args.getInt("jobs", -1);
