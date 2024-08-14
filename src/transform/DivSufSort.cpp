@@ -704,7 +704,7 @@ void DivSufSort::ssSwapMerge(int pa, int first, int middle, int last, int buf,
             if ((first < middle) && (middle < last))
                 ssMergeBackward(pa, first, middle, last, buf, depth);
 
-            if (((check & 1) != 0) || 
+            if (((check & 1) != 0) ||
                 (((check & 2) != 0) && (ssCompare(&_sa[pa + getIndex(_sa[first - 1])], &_sa[pa + _sa[first]], depth) == 0))) {
                 _sa[first] = ~_sa[first];
             }

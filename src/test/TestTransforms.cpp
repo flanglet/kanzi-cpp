@@ -529,7 +529,7 @@ int TestTransforms_main(int argc, const char* argv[])
             if ((doPerf == true) && (*it != "LZP") && (*it != "MM")) // skip codecs with no good data
                res |= testTransformsSpeed(*it);
         }
-    
+
     }
     catch (exception& e) {
         cout << e.what() << endl;

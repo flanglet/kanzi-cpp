@@ -28,7 +28,7 @@ namespace kanzi
        static const uint GIF_MAGIC = 0x47494638;
        static const uint PDF_MAGIC = 0x25504446;
        static const uint ZIP_MAGIC = 0x504B0304; // Works for jar & office docs
-       static const uint LZMA_MAGIC = 0x377ABCAF; // Works for 7z  37 7A BC AF 27 1C 
+       static const uint LZMA_MAGIC = 0x377ABCAF; // Works for 7z  37 7A BC AF 27 1C
        static const uint PNG_MAGIC = 0x89504E47;
        static const uint ELF_MAGIC = 0x7F454C46;
        static const uint MAC_MAGIC32 = 0xFEEDFACE;

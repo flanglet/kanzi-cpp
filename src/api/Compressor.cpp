@@ -60,7 +60,7 @@ namespace kanzi {
         ofstreambuf (int fd) : _fd(fd) { }
 
      private:
-        int _fd; 
+        int _fd;
 
         virtual int_type overflow(int_type c) {
             if (c == EOF)
@@ -105,7 +105,7 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
            return Error::ERR_CREATE_COMPRESSOR;
 
         string transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(pData->transform));
-        
+
         if (transform.length() >= 63)
             return Error::ERR_INVALID_PARAM;
 
@@ -115,7 +115,7 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
 
         if (entropy.length() >= 15)
             return Error::ERR_INVALID_PARAM;
-        
+
         strncpy(pData->entropy, entropy.data(), entropy.length());
         pData->entropy[entropy.length() + 1] = 0;
         pData->blockSize = (pData->blockSize + 15) & -16;

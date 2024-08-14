@@ -138,7 +138,7 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
                     goto End;
 
                 val = uint(src[srcIdx]);
-            } 
+            }
             while (val <= 1);
 
             runLength--;

@@ -52,7 +52,8 @@ namespace kanzi
 
 #ifdef CONCURRENCY_ENABLED
        Context(ThreadPool* p = nullptr) : _pool(p) {}
-       Context(const Context& c, ThreadPool* p = nullptr) : _map(c._map), _pool(p) {}
+       Context(const Context& c) : _map(c._map), _pool(c._pool) {}
+       Context(const Context& c, ThreadPool* p) : _map(c._map), _pool(p) {}
        Context& operator=(const Context& c) { _map = c._map; _pool = c._pool; return *this; };
 #else
        Context() {}

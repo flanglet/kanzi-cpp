@@ -712,7 +712,7 @@ bool EXECodec::parseHeader(const byte src[], int count, uint magic, int& arch, i
             codeStart = min(codeStart, count);
             codeEnd = min(codeEnd, count);
             return true;
-        } 
+        }
     }
 
     return false;

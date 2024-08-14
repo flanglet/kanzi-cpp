@@ -27,8 +27,8 @@ using namespace std;
 const int AliasCodec::MIN_BLOCK_SIZE = 1024;
 
 
-AliasCodec::AliasCodec(Context& ctx) : 
-          _pCtx(&ctx) 
+AliasCodec::AliasCodec(Context& ctx) :
+          _pCtx(&ctx)
 {
    _onlyDNA = _pCtx->getInt("packOnlyDNA", 0) != 0;
 }
@@ -94,7 +94,7 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     }
 
     int srcIdx, dstIdx;
- 
+
     if (n0 >= 240) {
         // Small alphabet => pack bits
         dst[0] = byte(n0);
@@ -149,7 +149,7 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     else {
         // Digram encoding
         vector<sdAlias> v;
-        
+
         {
             // Find missing 2-byte symbols
             uint* freqs1 = new uint[65536];
@@ -177,16 +177,16 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 // Fewer distinct 2-byte symbols than 1-byte symbols
                 n0 = n1;
 
-                if (n0 < 16) 
+                if (n0 < 16)
                     return false;
-            }   
+            }
 
             // Sort by decreasing order 1 frequencies
-            sort(v.begin(), v.end());  
+            sort(v.begin(), v.end());
         }
 
         int16 map16[65536];
- 
+
         // Build map symbol -> alias
         for (int i = 0; i < 65536; i++)
             map16[i] = 0x100 | int16(i >> 8);
@@ -257,7 +257,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int dstIdx = 0;
 
     if (n >= 240) {
-        n = 256 - n; 
+        n = 256 - n;
         srcIdx = 1;
 
         if (n == 1) {
@@ -285,7 +285,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 return false;
 
             if (n <= 4) {
-                // 4 symbols or less 
+                // 4 symbols or less
                 int32 decodeMap[256] = { 0 };
 
                 for (int i = 0; i < 256; i++) {

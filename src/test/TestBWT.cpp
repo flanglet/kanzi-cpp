@@ -210,7 +210,7 @@ int testBWTSpeed(bool isBWT, int iter, bool isSmallSize)
             tf->forward(ia1, ia2, size);
             clock_t after1 = clock();
             delta1 += (after1 - before1);
-            
+
             if (isBWT) {
                 BWT* bwt = (BWT*)tf;
 

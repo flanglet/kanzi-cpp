@@ -102,7 +102,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
             continue;
 
         uint* f = &frequencies[k << 8];
- 
+
         if (alphabetSize != 256)
             memset(f, 0, sizeof(uint) * 256);
 

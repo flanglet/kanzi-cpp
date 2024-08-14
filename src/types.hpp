@@ -40,26 +40,26 @@ limitations under the License.
     #endif
 
    #ifdef __SSE__
-      #include <xmmintrin.h> 
+      #include <xmmintrin.h>
    #endif
-   
-   #ifdef __SSE2__ 
+
+   #ifdef __SSE2__
       #include <emmintrin.h>
    #endif
 
-   #ifdef __SSE3__ 
+   #ifdef __SSE3__
       #include <pmmintrin.h>
    #endif
 
    #ifdef __SSE4_1__
-       #include <smmintrin.h> 
+       #include <smmintrin.h>
    #endif
 
-   #ifdef __AVX__ 
+   #ifdef __AVX__
        #include <immintrin.h>
    #endif
 
-   #ifdef __AVX2__ 
+   #ifdef __AVX2__
        #include <immintrin.h>
    #endif
 
@@ -102,7 +102,7 @@ limitations under the License.
    */
 
    #ifdef _MSC_VER
-      #if _MSC_VER >= 1930 
+      #if _MSC_VER >= 1930
          #define _MSC_VER_STR 2022
       #elif _MSC_VER >= 1920
          #define _MSC_VER_STR 2019
@@ -141,7 +141,7 @@ limitations under the License.
        #include <cstdint>
     #else
        #define FINAL
- 
+
        #if defined(_MSC_VER)
           #if _MSC_VER < 1300
              typedef signed char int8_t;
@@ -180,11 +180,11 @@ limitations under the License.
 #if __cplusplus >= 201703L
     // byte is defined in C++17 and above
     #include <cstddef>
-namespace kanzi 
+namespace kanzi
 {
     typedef std::byte byte;
 #else
-namespace kanzi 
+namespace kanzi
 {
     typedef uint8_t byte;
 #endif

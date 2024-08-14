@@ -174,10 +174,10 @@ bool TextCodec::init(int8 cType[256])
             }
         }
 
-        if (isUpperCase(byte(i)) || isLowerCase(byte(i)))
-           cType[i] = 0;
-        else if (delim == true)
+        if (delim == true)
            cType[i] = 1;
+        else if (isUpperCase(byte(i)) || isLowerCase(byte(i)))
+           cType[i] = 0;
         else
            cType[i] = -1;
     }
@@ -305,7 +305,7 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
         // Getting this flag wrong results in a very small compression speed degradation.
         const int f60 = freqs0[60]; // '<'
         const int f62 = freqs0[62]; // '>'
-        const int f38 = freqs1[38 * 256 + 97]  + freqs1[38 * 256 + 103] + 
+        const int f38 = freqs1[38 * 256 + 97]  + freqs1[38 * 256 + 103] +
                         freqs1[38 * 256 + 108] + freqs1[38 * 256 + 113]; // '&a', '&g', '&l', '&q'
         const int minFreq = max((count - nbBinChars) >> 9, 2);
 
@@ -370,7 +370,7 @@ byte TextCodec::detectType(const uint freqs0[], const uint freqs1[], int count) 
         if (freqs0[i] > 0)
             return TextCodec::MASK_NOT_TEXT;
     }
-   
+ 
     int sum = 0;
 
     for (int i = 0; i < 256; i++) {

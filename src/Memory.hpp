@@ -141,7 +141,7 @@ namespace kanzi {
    }
 
 
-   class BigEndian 
+   class BigEndian
    {
     public:
        static int64 readLong64(const byte* p);

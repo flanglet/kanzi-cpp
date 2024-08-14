@@ -87,7 +87,7 @@ namespace kanzi {
            unsigned long res;
            _BitScanReverse(&res, x);
            return int(res);
-       #elif defined(__GNUG__) 
+       #elif defined(__GNUG__)
            return 31 ^ __builtin_clz(x);
        #elif defined(__clang__)
            return 31 ^ __builtin_clz(x);
