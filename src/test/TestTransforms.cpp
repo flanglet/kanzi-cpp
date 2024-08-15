@@ -460,14 +460,15 @@ int testTransformsSpeed(const string& name)
             res = 1;
         }
 
+        // MB = 1000 * 1000, MiB = 1024 * 1024
         double prod = double(iter) * double(size);
-        double b2MB = double(1) / double(1024 * 1024);
+        double b2MiB = double(1) / double(1024 * 1024);
         double d1_sec = delta1 / CLOCKS_PER_SEC;
         double d2_sec = delta2 / CLOCKS_PER_SEC;
         cout << name << " encoding [ms]: " << (int)(d1_sec * 1000) << endl;
-        cout << "Throughput [MB/s]: " << (int)(prod * b2MB / d1_sec) << endl;
+        cout << "Throughput [MiB/s]: " << (int)(prod * b2MiB / d1_sec) << endl;
         cout << name << " decoding [ms]: " << (int)(d2_sec * 1000) << endl;
-        cout << "Throughput [MB/s]: " << (int)(prod * b2MB / d2_sec) << endl;
+        cout << "Throughput [MiB/s]: " << (int)(prod * b2MiB / d2_sec) << endl;
     }
 
     return res;

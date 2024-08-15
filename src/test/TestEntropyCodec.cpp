@@ -315,14 +315,15 @@ int testEntropyCodecSpeed(const string& name)
             }
         }
 
+        // KB = 1000, KiB = 1024
         double prod = double(iter) * double(size);
-        double b2KB = double(1) / double(1024);
+        double b2KiB = double(1) / double(1024);
         double d1_sec = delta1 / CLOCKS_PER_SEC;
         double d2_sec = delta2 / CLOCKS_PER_SEC;
         cout << "Encode [ms]       : " << (int)(d1_sec * 1000) << endl;
-        cout << "Throughput [KB/s] : " << (int)(prod * b2KB / d1_sec) << endl;
+        cout << "Throughput [KiB/s] : " << (int)(prod * b2KiB / d1_sec) << endl;
         cout << "Decode [ms]       : " << (int)(d2_sec * 1000) << endl;
-        cout << "Throughput [KB/s] : " << (int)(prod * b2KB / d2_sec) << endl;
+        cout << "Throughput [KiB/s] : " << (int)(prod * b2KiB / d2_sec) << endl;
     }
 
     return res;
