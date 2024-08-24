@@ -387,7 +387,7 @@ int BlockCompressor::compress(uint64& outputSize)
 
                 if (_ctx.getPool() == nullptr)
                     results.push_back(async(launch::async, &FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
-                else 
+                else
                     results.push_back(_ctx.getPool()->schedule(&FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
             }
 
@@ -504,7 +504,7 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         break;
 
     case 2:
-        tranformAndCodec[0] = "PACK+LZ";
+        tranformAndCodec[0] = "DNA+LZ";
         tranformAndCodec[1] = "HUFFMAN";
         break;
 
@@ -534,12 +534,12 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         break;
 
     case 8:
-        tranformAndCodec[0] = "EXE+RLT+TEXT+UTF";
+        tranformAndCodec[0] = "EXE+RLT+TEXT+UTF+DNA";
         tranformAndCodec[1] = "TPAQ";
         break;
 
     case 9:
-        tranformAndCodec[0] = "EXE+RLT+TEXT+UTF";
+        tranformAndCodec[0] = "EXE+RLT+TEXT+UTF+DNA";
         tranformAndCodec[1] = "TPAQX";
         break;
 

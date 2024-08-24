@@ -87,7 +87,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
             (_inputName[_inputName.length() - 1] != '.');
         FileListConfig cfg = { isRecursive, _noLinks, false, _noDotFiles };
         createFileList(_inputName, files, cfg, errors);
-        
+
         if (errors.size() > 0) {
             for (size_t i = 0; i < errors.size(); i++)
                cerr << errors[i] << endl;
