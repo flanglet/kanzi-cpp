@@ -313,7 +313,7 @@ void CompressedInputStream::readHeader()
     const int crcSize = bsVersion <= 5 ? 16 : 24;
     const uint32 cksum1 = uint32(_ibs->readBits(crcSize));
 
-    const uint32 seed = (bsVersion <= 5 ? 1 : 0x01030507) * uint32(bsVersion);
+    uint32 seed = (bsVersion <= 5 ? 1 : 0x01030507) * uint32(bsVersion);
     const uint32 HASH = 0x1E35A7BD;
     uint32 cksum2 = HASH * seed;
     cksum2 ^= (HASH * uint32(~_entropyType));

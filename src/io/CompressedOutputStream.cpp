@@ -250,7 +250,7 @@ void CompressedOutputStream::writeHeader()
             throw IOException("Cannot write size of input to header", Error::ERR_WRITE_FILE);
     }
 
-    const uint32 seed = 0x01030507 * BITSTREAM_FORMAT_VERSION;
+    uint32 seed = 0x01030507 * BITSTREAM_FORMAT_VERSION; // no const to avoid VS2008 warning
     const uint32 HASH = 0x1E35A7BD;
     uint32 cksum = HASH * seed;
     cksum ^= (HASH * uint32(~_entropyType));

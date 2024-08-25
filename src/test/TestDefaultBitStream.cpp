@@ -40,7 +40,7 @@ int testBitStreamCorrectnessAligned1()
         iostream ios(&buffer);
         DefaultOutputBitStream obs(ios, 16384);
         cout << endl;
-        obs.writeBits(0x0123456789ABCDEFL, t);
+        obs.writeBits(0x0123456789ABCDEFLL, t);
         cout << "Written (before close): " << obs.written() << endl;
         obs.close();
         cout << "Written (after close): " << obs.written() << endl;
@@ -142,7 +142,7 @@ int testBitStreamCorrectnessMisaligned1()
         DefaultOutputBitStream obs(ios, 16384);
         cout << endl;
         obs.writeBit(1);
-        obs.writeBits(0x0123456789ABCDEFL, t);
+        obs.writeBits(0x0123456789ABCDEFLL, t);
         cout << "Written (before close): " << obs.written() << endl;
         obs.close();
         cout << "Written (after close): " << obs.written() << endl;
