@@ -40,7 +40,7 @@ namespace kanzi {
    private:
        static int preprocess(const uint freqs[], uint8 symbols[]);
 
-       static int encodeHeader(uint freqs[], byte dst[]);
+       static int encodeHeader(const uint freqs[], byte dst[]);
 
        static int decodeHeader(const byte src[], uint freqs[]);
    };

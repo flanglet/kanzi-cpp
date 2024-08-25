@@ -221,7 +221,7 @@ int SRT::preprocess(const uint freqs[], uint8 symbols[])
     return nbSymbols;
 }
 
-int SRT::encodeHeader(uint freqs[], byte dst[])
+int SRT::encodeHeader(const uint freqs[], byte dst[])
 {
     int dstIdx = 0;
 

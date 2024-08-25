@@ -435,7 +435,7 @@ bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-byte EXECodec::detectType(byte src[], int count, int& codeStart, int& codeEnd)
+byte EXECodec::detectType(const byte src[], int count, int& codeStart, int& codeEnd)
 {
     // Let us check the first bytes ... but this may not be the first block
     // Best effort

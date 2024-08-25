@@ -582,7 +582,7 @@ T InverseBiPSIv2Task<T>::run()
         for (int i = _start + 1; i <= end; i += 2) {
             uint16 s = _fastBits[p >> shift];
 
-            while (_buckets[s] <= (const uint)p)
+            while (_buckets[s] <= p)
                 s++;
 
             _dst[i - 1] = byte(s >> 8);
