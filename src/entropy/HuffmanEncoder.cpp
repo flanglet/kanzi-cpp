@@ -85,26 +85,28 @@ int HuffmanEncoder::updateFrequencies(uint freqs[])
 
         int maxCodeLen = computeCodeLengths(sizes, ranks, count);
 
-        if (maxCodeLen == 0) {
+        if (maxCodeLen == 0)
             throw invalid_argument("Could not generate Huffman codes: invalid code length 0");
-        }
 
         if (maxCodeLen > HuffmanCommon::MAX_SYMBOL_SIZE) {
             maxCodeLen = limitCodeLengths(alphabet, freqs, sizes, ranks, count);
 
-            if (maxCodeLen == 0) {
+            if (maxCodeLen == 0)
                 throw invalid_argument("Could not generate Huffman codes: invalid code length 0");
-            }
-
-            if (maxCodeLen > HuffmanCommon::MAX_SYMBOL_SIZE) {
-               stringstream ss;
-               ss << "Could not generate Huffman codes: max code length (";
-               ss << HuffmanCommon::MAX_SYMBOL_SIZE << " bits) exceeded";
-               throw length_error(ss.str());
-            }
         }
 
-        HuffmanCommon::generateCanonicalCodes(sizes, _codes, ranks, count);
+        if (maxCodeLen > HuffmanCommon::MAX_SYMBOL_SIZE) {
+            uint16 n = 0;
+
+            for (int i = 0; i < count; i++) {
+               _codes[alphabet[i]] = n;
+               sizes[alphabet[i]] = 8;
+               n++;
+            }
+        }
+        else {
+            HuffmanCommon::generateCanonicalCodes(sizes, _codes, ranks, count);
+        }
     }
 
     // Transmit code lengths only, freqs and codes do not matter
@@ -292,7 +294,6 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
     if (count == 0)
         return 0;
 
-    const uint end = blkptr + count;
     uint startChunk = blkptr;
     uint sz = uint(_chunkSize);
     const uint minLenBuf = max(min(sz + (sz >> 3), 2 * count), uint(65536));
@@ -302,6 +303,8 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
         _bufferSize = minLenBuf;
         _buffer = new byte[_bufferSize];
     }
+
+    const uint end = startChunk + count;
 
     while (startChunk < end) {
         // Update frequencies and rebuild Huffman codes
