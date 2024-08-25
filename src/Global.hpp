@@ -17,6 +17,8 @@ limitations under the License.
 #ifndef _Global_
 #define _Global_
 
+#include <string>
+
 #include "types.hpp"
 
 namespace kanzi {
@@ -51,6 +53,8 @@ namespace kanzi {
 
        static DataType detectSimpleType(int count, const uint histo[]);
 
+       static bool isReservedName(const std::string& fileName);
+
    private:
        Global();
        ~Global() {};
@@ -63,6 +67,7 @@ namespace kanzi {
        static char BASE64_SYMBOLS[];
        static char DNA_SYMBOLS[];
        static char NUMERIC_SYMBOLS[];
+       static std::string WIN_RESERVED[27];
    };
 
 

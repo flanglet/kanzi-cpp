@@ -101,12 +101,17 @@ BlockCompressor::BlockCompressor(const Context& ctx) :
 
     _inputName = _ctx.getString("inputName") == "" ? "STDIN" : _ctx.getString("inputName");
 
+    if (Global::isReservedName(_inputName))
+        throw invalid_argument("'" + _inputName + "' is a reserved name");
+
      if (_ctx.has("outputName") == false)
         throw invalid_argument("Missing output name");
 
     string str = _ctx.getString("outputName");
     _outputName = (str == "") && (_inputName == "STDIN") ? "STDOUT" : str;
 
+    if (Global::isReservedName(_outputName))
+        throw invalid_argument("'" + _outputName + "' is a reserved name");
 
     if (_ctx.has("blockSize") == false) {
         switch (level) {

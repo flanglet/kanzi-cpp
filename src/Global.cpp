@@ -17,6 +17,7 @@ limitations under the License.
 #include "Global.hpp"
 
 using namespace kanzi;
+using namespace std;
 
 // int(Math.log2(x-1))
 const int Global::LOG2[256] = {
@@ -66,6 +67,13 @@ const int Global::LOG2_4096[257] = {
     32135, 32161, 32186, 32212, 32237, 32262, 32287, 32312, 32337, 32362,
     32387, 32411, 32436, 32460, 32484, 32508, 32533, 32557, 32580, 32604,
     32628, 32651, 32675, 32698, 32722, 32745, 32768
+};
+
+string Global::WIN_RESERVED[27] = {
+   // Sorted list
+   "AUX", "COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6",
+   "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³", "CON", "LPT0", "LPT1", "LPT2",
+   "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "NUL", "PRN"
 };
 
 char Global::BASE64_SYMBOLS[] =
@@ -369,3 +377,21 @@ Global::DataType Global::detectSimpleType(int count, const uint freqs0[]) {
 
     return (sum <= 4) ? SMALL_ALPHABET : UNDEFINED;
 }
+
+bool Global::isReservedName(const string& fileName)
+{
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+    for (int i =0; i< 27; i++) {
+        int res = fileName.compare(WIN_RESERVED[i]);
+
+        if (res == 0)
+           return true;
+
+        if (res < 0)
+           break;
+    }
+#endif
+
+    return false;
+}
+

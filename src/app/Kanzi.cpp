@@ -52,10 +52,6 @@ static const int ARG_IDX_LEVEL = 9;
 static const string KANZI_VERSION = "2.3.0";
 static const string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
 
-static const string WIN_RESERVED[] = { "CON", "PRN", "AUX", "NUL", "COM0", "COM1", "COM2",
-                                       "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-                                       "COM¹", "COM²", "COM³", "LPT0", "LPT1", "LPT2", "LPT3",
-                                       "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9 "};
 
 #ifdef CONCURRENCY_ENABLED
    static const int MAX_CONCURRENCY = 64;
@@ -113,7 +109,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
 
    if (mode.compare(0, 1, "c") == 0) {
        log.println("   -b, --block=<size>", true);
-       log.println("        Size of blocks (default 4|8|16|32 MB based on level, max 1 GB, min 1 KB).", true);
+       log.println("        Size of blocks (default 4|8|16|32 MiB based on level, max 1 GiB, min 1 KiB).", true);
        log.println("        'auto' means that the compressor derives the best value", true);
        log.println("        based on input size (when available) and number of jobs.\n", true);
        log.println("   -l, --level=<compression>", true);
@@ -122,14 +118,14 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("        Defaults to level 3 if not provided.", true);
        log.println("        0 = NONE&NONE (store)", true);
        log.println("        1 = PACK+LZ&NONE", true);
-       log.println("        2 = PACK+LZ&HUFFMAN", true);
+       log.println("        2 = DNA+LZ&HUFFMAN", true);
        log.println("        3 = TEXT+UTF+PACK+MM+LZX&HUFFMAN", true);
        log.println("        4 = TEXT+UTF+EXE+PACK+MM+ROLZ&NONE", true);
        log.println("        5 = TEXT+UTF+BWT+RANK+ZRLT&ANS0", true);
        log.println("        6 = TEXT+UTF+BWT+SRT+ZRLT&FPAQ", true);
        log.println("        7 = LZP+TEXT+UTF+BWT+LZP&CM", true);
-       log.println("        8 = EXE+RLT+TEXT+UTF&TPAQ", true);
-       log.println("        9 = EXE+RLT+TEXT+UTF&TPAQX\n", true);
+       log.println("        8 = EXE+RLT+TEXT+UTF+DNA&TPAQ", true);
+       log.println("        9 = EXE+RLT+TEXT+UTF+DNA&TPAQX\n", true);
        log.println("   -e, --entropy=<codec>", true);
        log.println("        Entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]\n", true);
        log.println("   -t, --transform=<codec>", true);
@@ -850,23 +846,6 @@ int main(int argc, const char* argv[])
     // Help mode only ?
     if (args.has("mode") == false)
        exit(0);
-
-#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
-    vector<string> reserved(WIN_RESERVED, end(WIN_RESERVED));
-    string input = args.getString("inputName", "");
-
-    if ((input != "") && (find(reserved.begin(), reserved.end(), input) != reserved.end())) {
-       cerr << input << " is a reserved name in Windows" << endl;
-       return Error::ERR_RESERVED_NAME;
-    }
-
-    string output = args.getString("outputName", "");
-
-    if ((output != "") && (find(reserved.begin(), reserved.end(), output) != reserved.end())) {
-       cerr << output << " is a reserved name in Windows" << endl;
-       return Error::ERR_RESERVED_NAME;
-    }
-#endif
 
     string mode = args.getString("mode");
     int jobs = args.getInt("jobs", -1);
