@@ -168,7 +168,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
         // Optional bsVersion
         const int bsVersion = _ctx.getInt("bsVersion", BITSTREAM_FORMAT_VERSION);
 
-        if (bsVersion != BITSTREAM_FORMAT_VERSION) {
+        if (bsVersion > BITSTREAM_FORMAT_VERSION) {
             stringstream ss;
             ss << "Invalid or missing bitstream version, cannot read this version of the stream: " << bsVersion;
             throw invalid_argument(ss.str());
