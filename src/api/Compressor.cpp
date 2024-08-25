@@ -13,13 +13,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <sys/stat.h>
 #include "Compressor.hpp"
 #include "../types.hpp"
 #include "../Error.hpp"
 #include "../io/CompressedOutputStream.hpp"
 #include "../transform/TransformFactory.hpp"
 #include "../entropy/EntropyEncoderFactory.hpp"
-#include <sys/stat.h>
 
 
 #ifdef _MSC_VER

@@ -14,9 +14,9 @@ limitations under the License.
 */
 
 #include <iomanip>
+#include <ios>
 #include <sstream>
 #include "InfoPrinter.hpp"
-#include <ios>
 
 using namespace kanzi;
 using namespace std;
