@@ -378,9 +378,9 @@ Global::DataType Global::detectSimpleType(int count, const uint freqs0[]) {
     return (sum <= 4) ? SMALL_ALPHABET : UNDEFINED;
 }
 
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
 bool Global::isReservedName(const string& fileName)
 {
-#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
     for (int i =0; i< 27; i++) {
         int res = fileName.compare(WIN_RESERVED[i]);
 
@@ -390,6 +390,9 @@ bool Global::isReservedName(const string& fileName)
         if (res < 0)
            break;
     }
+#else
+bool Global::isReservedName(const string&)
+{
 #endif
 
     return false;
