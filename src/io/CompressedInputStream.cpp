@@ -30,7 +30,7 @@ using namespace std;
 
 
 const int CompressedInputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
-const int CompressedInputStream::BITSTREAM_FORMAT_VERSION = 5;
+const int CompressedInputStream::BITSTREAM_FORMAT_VERSION = 6;
 const int CompressedInputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
 const int CompressedInputStream::EXTRA_BUFFER_SIZE = 512;
 const byte CompressedInputStream::COPY_BLOCK_MASK = byte(0x80);
@@ -310,9 +310,12 @@ void CompressedInputStream::readHeader()
     }
 
     // Read & verify checksum
-    const uint32 cksum1 = uint32(_ibs->readBits(16));
+    const int crcSize = bsVersion <= 5 ? 16 : 24;
+    const uint32 cksum1 = uint32(_ibs->readBits(crcSize));
+
+    const uint32 seed = (bsVersion <= 5 ? 1 : 0x01030507) * uint32(bsVersion);
     const uint32 HASH = 0x1E35A7BD;
-    uint32 cksum2 = HASH * uint32(bsVersion);
+    uint32 cksum2 = HASH * seed;
     cksum2 ^= (HASH * uint32(~_entropyType));
     cksum2 ^= (HASH * uint32((~_transformType) >> 32));
     cksum2 ^= (HASH * uint32(~_transformType));
@@ -325,7 +328,7 @@ void CompressedInputStream::readHeader()
 
     cksum2 = (cksum2 >> 23) ^ (cksum2 >> 3);
 
-    if (cksum1 != (cksum2 & 0xFFFF))
+    if (cksum1 != (cksum2 & ((1 << crcSize) - 1)))
         throw IOException("Invalid bitstream, corrupted header", Error::ERR_CRC_CHECK);
 
     if (_listeners.size() > 0) {
@@ -798,7 +801,9 @@ T DecodingTask<T>::run()
             return T(*_data, blockId, 0, checksum1, 0, "Invalid transform block size");
         }
 
-        if ((preTransformLength < 0) || (preTransformLength > CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE)) {
+        const int maxTransformSize = min(max(2 * _blockLength, 1024), CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE);
+
+        if ((preTransformLength < 0) || (preTransformLength > maxTransformSize)) {
             // Error => cancel concurrent decoding tasks
             _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
             stringstream ss;

@@ -32,7 +32,7 @@ using namespace std;
 
 
 const int CompressedOutputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
-const int CompressedOutputStream::BITSTREAM_FORMAT_VERSION = 5;
+const int CompressedOutputStream::BITSTREAM_FORMAT_VERSION = 6;
 const int CompressedOutputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
 const byte CompressedOutputStream::COPY_BLOCK_MASK = byte(0x80);
 const byte CompressedOutputStream::TRANSFORMS_MASK = byte(0x10);
@@ -116,9 +116,9 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
 
 #if __cplusplus >= 201103L
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx,
-          std::function<OutputBitStream*(OutputStream&)>* createBitStream)
+          bool headerless, std::function<OutputBitStream*(OutputStream&)>* createBitStream)
 #else
-CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
+CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, bool headerless)
 #endif
     : OutputStream(os.rdbuf())
     , _ctx(ctx)
@@ -165,7 +165,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx)
     _bufferThreshold = bSize;
     _initialized = false;
     _closed = false;
-    _headless = _ctx.getInt("headerless") != 0;
+    _headless = headerless;
 
 #if __cplusplus >= 201103L
     // A hook can be provided by the caller to customize the instantiation of the
@@ -250,8 +250,9 @@ void CompressedOutputStream::writeHeader()
             throw IOException("Cannot write size of input to header", Error::ERR_WRITE_FILE);
     }
 
+    const uint32 seed = 0x01030507 * BITSTREAM_FORMAT_VERSION;
     const uint32 HASH = 0x1E35A7BD;
-    uint32 cksum = HASH * BITSTREAM_FORMAT_VERSION;
+    uint32 cksum = HASH * seed;
     cksum ^= (HASH * uint32(~_entropyType));
     cksum ^= (HASH * uint32((~_transformType) >> 32));
     cksum ^= (HASH * uint32(~_transformType));
@@ -264,7 +265,7 @@ void CompressedOutputStream::writeHeader()
 
     cksum = (cksum >> 23) ^ (cksum >> 3);
 
-    if (_obs->writeBits(cksum, 16) != 16)
+    if (_obs->writeBits(cksum, 24) != 24)
         throw IOException("Cannot write checksum to header", Error::ERR_WRITE_FILE);
 }
 

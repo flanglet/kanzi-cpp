@@ -111,10 +111,10 @@ namespace kanzi {
 #endif
 
 #if __cplusplus >= 201103L
-       CompressedOutputStream(OutputStream& os, Context& ctx,
+       CompressedOutputStream(OutputStream& os, Context& ctx, bool headerless = false,
           std::function<OutputBitStream*(OutputStream&)>* createBitStream = nullptr);
 #else
-       CompressedOutputStream(OutputStream& os, Context& ctx);
+       CompressedOutputStream(OutputStream& os, Context& ctx, bool headerless = false);
 #endif
 
        ~CompressedOutputStream();
