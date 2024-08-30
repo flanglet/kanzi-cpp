@@ -484,18 +484,24 @@ T FileDecompressTask<T>::run()
             ofstream* ofs = new ofstream(outputName.c_str(), ofstream::out | ofstream::binary);
 
             if (!*ofs) {
+                string errMsg;
+
                 if (overwrite == true) {
                     // Attempt to create the full folder hierarchy to file
                     string parentDir = outputName;
                     size_t idx = outputName.find_last_of(PATH_SEPARATOR);
 
-                    if (idx != string::npos) {
+                    if (idx != string::npos)
                         parentDir.resize(idx);
-                    }
 
-                    if (mkdirAll(parentDir) == 0) {
+                    int rmkd = mkdirAll(parentDir);
+
+                    if ((rmkd == 0) || (rmkd == EEXIST))  {
                         delete ofs;
                         ofs = new ofstream(outputName.c_str(), ofstream::binary);
+                    }
+                    else {
+                        errMsg = strerror(rmkd);
                     }
                 }
 
@@ -503,6 +509,10 @@ T FileDecompressTask<T>::run()
                     delete ofs;
                     stringstream sserr;
                     sserr << "Cannot open output file '" << outputName << "' for writing";
+
+                    if (errMsg != "")
+                        sserr << ": " << errMsg;
+
                     return T(Error::ERR_CREATE_FILE, 0, sserr.str().c_str());
                 }
             }

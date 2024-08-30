@@ -247,52 +247,53 @@ namespace kanzi
    }
 
 
-   static inline int mkdirAll(const std::string& path) {
-      errno = 0;
+   static inline int mkdirAll(const std::string& path, mode_t mode = S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH) {
    #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
       bool foundDrive = false;
    #endif
 
+      int res = 0;
+      errno = 0;
+
       // Scan path, ignoring potential PATH_SEPARATOR at position 0
-      for (uint i = 1; i < path.size(); i++) {
+      for (size_t i = 1; i < path.size(); i++) {
           if (path[i] == PATH_SEPARATOR) {
               std::string curPath = path;
               curPath.resize(i);
 
-             if (curPath.length() == 0)
-                 continue;
+              if (curPath.length() == 0)
+                  continue;
 
    #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
-             //Skip if drive
-             if ((foundDrive == false) && (curPath.length() == 2) && (curPath[1] == ':')) {
-                 foundDrive = true;
-                 continue;
-             }
+              //Skip if drive
+              if ((foundDrive == false) && (curPath.length() == 2) && (curPath[1] == ':')) {
+                  foundDrive = true;
+                  continue;
+              }
    #endif
 
    #if defined(_MSC_VER)
-             if ((_mkdir(curPath.c_str()) != 0) && (errno != EEXIST)) {
+              res = _mkdir(curPath.c_str());
    #elif defined(__MINGW32__)
-             if ((mkdir(curPath.c_str()) != 0) && (errno != EEXIST)) {
+              res = mkdir(curPath.c_str());
    #else
-             if ((mkdir(curPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) && (errno != EEXIST)) {
+              res = mkdir(curPath.c_str(), mode);
    #endif
-                    return -1;
-             }
+              if ((res != 0) && (errno != EEXIST))
+                  return errno;
           }
-       }
+      }
+      errno = 0;
 
    #if defined(_MSC_VER)
-       if ((_mkdir(path.c_str()) != 0) && (errno != EEXIST)) {
+      res = _mkdir(path.c_str());
    #elif defined(__MINGW32__)
-       if ((mkdir(path.c_str()) != 0) && (errno != EEXIST)) {
+      res = mkdir(path.c_str());
    #else
-       if ((mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) && (errno != EEXIST)) {
+      res = mkdir(path.c_str(), mode);
    #endif
-               return -1;
-       }
 
-       return 0;
+      return (res == 0) ? 0 : errno;
    }
 
 
