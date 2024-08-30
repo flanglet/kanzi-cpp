@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <algorithm>
 #include <stdexcept>
 #include "Global.hpp"
 
@@ -122,7 +123,7 @@ Global::Global()
        "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³", "CON", "LPT0",
        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
        "LPT9", "NUL", "PRN"
-    };  
+    };
 
     set<string> reserved_set(reserved, reserved + 27);
     WIN_RESERVED = reserved_set;
@@ -385,13 +386,13 @@ Global::DataType Global::detectSimpleType(int count, const uint freqs0[]) {
 }
 
 #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
-bool Global::isReservedName(const string& fileName)
+bool Global::isReservedName(string fileName)
 {
     transform(fileName.begin(), fileName.end(), fileName.begin(), ::toupper);
-    return WIN_RESERVED.find(fileName.begin) != WIN_RESERVED.end();
+    return WIN_RESERVED.find(fileName) != WIN_RESERVED.end();
 }
 #else
-bool Global::isReservedName(const string&)
+bool Global::isReservedName(string)
 {
     return false;
 }

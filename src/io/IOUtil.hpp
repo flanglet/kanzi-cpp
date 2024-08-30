@@ -78,7 +78,7 @@ namespace kanzi
             if (idx != std::string::npos) {
                _path = path.substr(0, idx + 1);
                _name = path.substr(idx + 1);
-            } 
+            }
             else {
                _path = "";
                _name = path;
@@ -100,7 +100,7 @@ namespace kanzi
    };
 
 
-   static inline void createFileList(std::string& target, std::vector<FileData>& files, const FileListConfig& cfg, 
+   static inline void createFileList(std::string& target, std::vector<FileData>& files, const FileListConfig& cfg,
                                      std::vector<std::string>& errors)
    {
        if (target.size() == 0)
@@ -152,7 +152,7 @@ namespace kanzi
        if (cfg._recursive) {
           if (target[target.size() - 1] != PATH_SEPARATOR)
              target += PATH_SEPARATOR;
-       } 
+       }
        else {
           target.resize(target.size() - 1);
        }
@@ -191,7 +191,7 @@ namespace kanzi
                      if ((idx != std::string::npos) && (idx < fullpath.length() - 1) && (fullpath[idx + 1] == '.'))
                         continue;
                   }
-                 
+
                   if ((cfg._ignoreLinks == false) || (buffer.st_mode & S_IFMT) != S_IFLNK)
    #if __cplusplus >= 201103L
                      files.emplace_back(fullpath, buffer.st_size, buffer.st_mtime);
@@ -203,10 +203,10 @@ namespace kanzi
                   if (cfg._ignoreDotFiles == true) {
                      size_t idx = fullpath.rfind(PATH_SEPARATOR);
 
-                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1) && (fullpath[idx + 1] == '.')) 
+                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1) && (fullpath[idx + 1] == '.'))
                         continue;
                   }
-                   
+
                   createFileList(fullpath, files, cfg, errors);
                }
            }
@@ -247,10 +247,14 @@ namespace kanzi
    }
 
 
-   static inline int mkdirAll(const std::string& path, mode_t mode = S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH) {
-   #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+   static inline int mkdirAll(const std::string& path)
+   {
       bool foundDrive = false;
-   #endif
+#else
+   static inline int mkdirAll(const std::string& path, mode_t mode = S_IRWXU | S_IRWXG | S_IROTH | S_IWOTH | S_IXOTH)
+   {
+#endif
 
       int res = 0;
       errno = 0;
@@ -264,34 +268,34 @@ namespace kanzi
               if (curPath.length() == 0)
                   continue;
 
-   #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
               //Skip if drive
               if ((foundDrive == false) && (curPath.length() == 2) && (curPath[1] == ':')) {
                   foundDrive = true;
                   continue;
               }
-   #endif
+#endif
 
-   #if defined(_MSC_VER)
+#if defined(_MSC_VER)
               res = _mkdir(curPath.c_str());
-   #elif defined(__MINGW32__)
+#elif defined(__MINGW32__)
               res = mkdir(curPath.c_str());
-   #else
+#else
               res = mkdir(curPath.c_str(), mode);
-   #endif
+#endif
               if ((res != 0) && (errno != EEXIST))
                   return errno;
           }
       }
       errno = 0;
 
-   #if defined(_MSC_VER)
+#if defined(_MSC_VER)
       res = _mkdir(path.c_str());
-   #elif defined(__MINGW32__)
+#elif defined(__MINGW32__)
       res = mkdir(path.c_str());
-   #else
+#else
       res = mkdir(path.c_str(), mode);
-   #endif
+#endif
 
       return (res == 0) ? 0 : errno;
    }

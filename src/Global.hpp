@@ -54,7 +54,7 @@ namespace kanzi {
 
        static DataType detectSimpleType(int count, const uint histo[]);
 
-       static bool isReservedName(const std::string& fileName);
+       static bool isReservedName(std::string fileName);
 
    private:
        Global();
