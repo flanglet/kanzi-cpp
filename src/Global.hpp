@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef _Global_
 #define _Global_
 
+#include <set>
 #include <string>
 
 #include "types.hpp"
@@ -67,7 +68,7 @@ namespace kanzi {
        static char BASE64_SYMBOLS[];
        static char DNA_SYMBOLS[];
        static char NUMERIC_SYMBOLS[];
-       static std::string WIN_RESERVED[27];
+       static std::set<std::string> WIN_RESERVED;
    };
 
 

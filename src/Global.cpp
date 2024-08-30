@@ -69,13 +69,6 @@ const int Global::LOG2_4096[257] = {
     32628, 32651, 32675, 32698, 32722, 32745, 32768
 };
 
-string Global::WIN_RESERVED[27] = {
-   // Sorted list
-   "AUX", "COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6",
-   "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³", "CON", "LPT0", "LPT1", "LPT2",
-   "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "NUL", "PRN"
-};
-
 char Global::BASE64_SYMBOLS[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -88,6 +81,9 @@ const Global Global::_singleton;
 int Global::SQUASH[4096];
 
 int Global::STRETCH[4096];
+
+set<string> Global::WIN_RESERVED;
+
 
 Global::Global()
 {
@@ -120,6 +116,16 @@ Global::Global()
     }
 
     STRETCH[4095] = 2047;
+
+    string reserved[27] = {
+       "AUX", "COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6",
+       "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³", "CON", "LPT0",
+       "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
+       "LPT9", "NUL", "PRN"
+    };  
+
+    set<string> reserved_set(reserved, reserved + 27);
+    WIN_RESERVED = reserved_set;
 }
 
 // Return 1024 * log2(x). Max error is around 0.1%
@@ -381,20 +387,13 @@ Global::DataType Global::detectSimpleType(int count, const uint freqs0[]) {
 #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
 bool Global::isReservedName(const string& fileName)
 {
-    for (int i =0; i< 27; i++) {
-        int res = fileName.compare(WIN_RESERVED[i]);
-
-        if (res == 0)
-           return true;
-
-        if (res < 0)
-           break;
-    }
+    transform(fileName.begin(), fileName.end(), fileName.begin(), ::toupper);
+    return WIN_RESERVED.find(fileName.begin) != WIN_RESERVED.end();
+}
 #else
 bool Global::isReservedName(const string&)
 {
-#endif
-
     return false;
 }
+#endif
 
