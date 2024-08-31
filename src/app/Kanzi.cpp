@@ -246,12 +246,17 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
 
 #define WARNING_OPT_COMP_ONLY(opt) \
                  stringstream ss; \
-                 ss << "Warning: ignoring option [" << opt << "]. Only applicable in compress mode."; \
+                 ss << "Warning: ignoring option [" << opt << "]. Only applicable in compression mode."; \
+                 log.println(ss.str(), verbose > 0)
+
+#define WARNING_OPT_DECOMP_ONLY(opt) \
+                 stringstream ss; \
+                 ss << "Warning: ignoring option [" << opt << "]. Only applicable in decompression mode."; \
                  log.println(ss.str(), verbose > 0)
 
 #define WARNING_OPT_DUPLICATE(opt, val) \
                  stringstream ss; \
-                 ss << "Warning: ignoring duplicate " << opt << ": " << val;\
+                 ss << "Warning: ignoring duplicate optiom [" << opt << "]: " << val;\
                  log.println(ss.str(), verbose > 0)
 
 
@@ -424,6 +429,9 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
+            else if (overwrite >= 0) {
+                WARNING_OPT_DUPLICATE(arg, "true");
+            }
 
             overwrite = 1;
             ctx = -1;
@@ -434,9 +442,18 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
+            else if (skip >= 0) {
+                WARNING_OPT_DUPLICATE(arg, "true");
+            }
+
+            ctx = -1;
+
+            if (mode != "c") {
+                WARNING_OPT_COMP_ONLY(arg);
+                continue;
+            }
 
             skip = 1;
-            ctx = -1;
             continue;
         }
 
@@ -444,15 +461,27 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
+            else if (checksum >= 0) {
+                WARNING_OPT_DUPLICATE(arg, "true");
+            }
+
+            ctx = -1;
+
+            if (mode != "c") {
+                WARNING_OPT_COMP_ONLY(arg);
+                continue;
+            }
 
             checksum = 1;
-            ctx = -1;
             continue;
         }
 
         if (arg == "--rm") {
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
+            }
+            else if (remove >= 0) {
+                WARNING_OPT_DUPLICATE(arg, "true");
             }
 
             remove = 1;
@@ -463,6 +492,9 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         if (arg == "--no-file-reorder") {
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
+            }
+            else if (reorder >= 0) {
+                WARNING_OPT_DUPLICATE(arg, "true");
             }
 
             ctx = -1;
@@ -480,6 +512,9 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
+            else if (noDotFiles >= 0) {
+                WARNING_OPT_DUPLICATE(arg, "true");
+            }
 
             ctx = -1;
             noDotFiles = 1;
@@ -489,6 +524,9 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         if (arg == "--no-link") {
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
+            }
+            else if (noDotFiles >= 0) {
+                WARNING_OPT_DUPLICATE(arg, "true");
             }
 
             ctx = -1;
@@ -513,7 +551,8 @@ int processCommandLine(int argc, const char* argv[], Context& map)
                arg = arg.substr(9);
 
             if (outputName != "") {
-                WARNING_OPT_DUPLICATE("output name", arg);
+                string msg = (ctx == ARG_IDX_OUTPUT) ? CMD_LINE_ARGS[ctx] : arg;
+                WARNING_OPT_DUPLICATE(msg, arg);
             } else {
                 if ((arg.length() >= 2) && (arg[0] == '.') && (arg[1] == PATH_SEPARATOR)) {
                    arg = (arg.length() == 2) ? arg.substr(0, 1) : arg.substr(2);
@@ -531,7 +570,8 @@ int processCommandLine(int argc, const char* argv[], Context& map)
                arg = arg.substr(8);
 
             if (inputName != "") {
-                WARNING_OPT_DUPLICATE("input name", arg);
+                string msg = (ctx == ARG_IDX_INPUT) ? CMD_LINE_ARGS[ctx] : arg;
+                WARNING_OPT_DUPLICATE(msg, arg);
             } else {
                 if ((arg.length() >= 2) && (arg[0] == '.') && (arg[1] == PATH_SEPARATOR)) {
                    arg = (arg.length() == 2) ? arg.substr(0, 1) : arg.substr(2);
@@ -548,8 +588,16 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             if (ctx != ARG_IDX_ENTROPY)
                arg = arg.substr(10);
 
+            if (mode != "c"){
+                string msg = (ctx == ARG_IDX_ENTROPY) ? CMD_LINE_ARGS[ctx] : arg;
+                WARNING_OPT_COMP_ONLY(msg);
+                ctx = -1;
+                continue;
+            }
+
             if (codec != "") {
-                WARNING_OPT_DUPLICATE("entropy", arg);
+                string msg = (ctx == ARG_IDX_ENTROPY) ? CMD_LINE_ARGS[ctx] : arg;
+                WARNING_OPT_DUPLICATE(msg, arg);
             } else {
                 if (arg.length() == 0) {
                     cerr << "Invalid empty entropy provided on command line" << endl;
@@ -568,8 +616,16 @@ int processCommandLine(int argc, const char* argv[], Context& map)
             if (ctx != ARG_IDX_TRANSFORM)
                 arg = arg.substr(12);
 
+            if (mode != "c"){
+                string msg = (ctx == ARG_IDX_TRANSFORM) ? CMD_LINE_ARGS[ctx] : arg;
+                WARNING_OPT_COMP_ONLY(msg);
+                ctx = -1;
+                continue;
+            }
+
             if (transf != "") {
-                WARNING_OPT_DUPLICATE("transform", arg);
+                string msg = (ctx == ARG_IDX_TRANSFORM) ? CMD_LINE_ARGS[ctx] : arg;
+                WARNING_OPT_DUPLICATE(msg, arg);
             } else {
                 if (arg.length() == 0) {
                     cerr << "Invalid empty transform provided on command line" << endl;
@@ -593,17 +649,19 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((ctx == ARG_IDX_LEVEL) || (arg.compare(0, 8, "--level=") == 0)) {
-            if (mode != "c"){
-                log.println("Warning: ignoring level (only valid for compression)", verbose > 0);
+            if (ctx != ARG_IDX_LEVEL)
+               arg = arg.substr(8);
+
+            if (mode != "c") {
+                string msg = (ctx == ARG_IDX_LEVEL) ? CMD_LINE_ARGS[ctx] : arg;
+                WARNING_OPT_COMP_ONLY(msg);
                 ctx = -1;
                 continue;
             }
 
-            if (ctx != ARG_IDX_LEVEL)
-               arg = arg.substr(8);
-
             if (level >= 0) {
-                WARNING_OPT_DUPLICATE("level", arg);
+                string msg = (ctx == ARG_IDX_LEVEL) ? CMD_LINE_ARGS[ctx] : arg;
+                WARNING_OPT_DUPLICATE(msg, arg);
             } else {
                 if ((toInt(arg, level) == false) || ((level < 0) || (level > 9))) {
                     cerr << "Invalid compression level provided on command line: " << arg << endl;
@@ -624,8 +682,16 @@ int processCommandLine(int argc, const char* argv[], Context& map)
                 return Error::ERR_INVALID_PARAM;
             }
 
+            if (mode != "c") {
+                string msg = (ctx == ARG_IDX_BLOCK) ? CMD_LINE_ARGS[ctx] : arg;
+                WARNING_OPT_COMP_ONLY(msg);
+                ctx = -1;
+                continue;
+            }
+
             if ((blockSize >= 0) || (autoBlockSize >= 0)) {
-                WARNING_OPT_DUPLICATE("block size", arg);
+                string msg = (ctx == ARG_IDX_BLOCK) ? CMD_LINE_ARGS[ctx] : arg;
+                WARNING_OPT_DUPLICATE(msg, arg);
                 ctx = -1;
                 continue;
             }
@@ -673,7 +739,8 @@ int processCommandLine(int argc, const char* argv[], Context& map)
                arg = arg.substr(7);
 
             if (tasks >= 0) {
-                WARNING_OPT_DUPLICATE("jobs", arg);
+                string msg = (ctx == ARG_IDX_BLOCK) ? CMD_LINE_ARGS[ctx] : arg;
+                WARNING_OPT_DUPLICATE(msg, arg);
                 ctx = -1;
                 continue;
             }
@@ -688,15 +755,15 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((arg.compare(0, 7, "--from=") == 0) && (ctx == -1)) {
-            arg = arg.substr(7);
-
             if (mode != "d"){
-                log.println("Warning: ignoring start block (only valid for decompression)", verbose > 0);
+                WARNING_OPT_DECOMP_ONLY("--from");
                 continue;
             }
 
+            arg = arg.substr(7);
+
             if (from >= 0) {
-                WARNING_OPT_DUPLICATE("start block", arg);
+                WARNING_OPT_DUPLICATE("--from", arg);
             } else {
                 if ((toInt(arg, from) == false) || (from < 0)) {
                     cerr << "Invalid start block provided on command line: " << arg << endl;
@@ -713,15 +780,15 @@ int processCommandLine(int argc, const char* argv[], Context& map)
         }
 
         if ((arg.compare(0, 5, "--to=") == 0) && (ctx == -1)) {
-            arg = arg.substr(5);
-
             if (mode != "d"){
-                log.println("Warning: ignoring end block (only valid for decompression)", verbose > 0);
+                WARNING_OPT_DECOMP_ONLY("--to");
                 continue;
             }
 
+            arg = arg.substr(5);
+
             if (to >= 0) {
-                WARNING_OPT_DUPLICATE("end block", arg);
+                WARNING_OPT_DUPLICATE("--to", arg);
             } else {
                 if ((toInt(arg, to) == false) || (to <= 0)) { // Must be > 0 (0 means nothing to do)
                     cerr << "Invalid end block provided on command line: " << arg << endl;
@@ -823,16 +890,22 @@ int main(int argc, const char* argv[])
 
     // Users can provide a custom code page to properly display some non ASCII file names
     // eg. 1252 for ANSI Latin-1 or 65001 for utf-8
-    const char* env_cp = getenv("KANZI_CODE_PAGE");
+    size_t size;
+    getenv_s(&size, nullptr, 0, "KANZI_CODE_PAGE");
 
-    if (env_cp != nullptr) {
-        string s(env_cp);
+    if (size != 0) {
+        char* p = new char[size];
+        getenv_s(&size, p, size, "KANZI_CODE_PAGE");
+        string s(p);
+
         int cp;
 
         if (toInt(s, cp) == true) {
            SetConsoleCP(cp);
            SetConsoleOutputCP(cp);
         }
+
+        delete[] p;
     }
 #endif
 
