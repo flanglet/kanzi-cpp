@@ -81,6 +81,7 @@ set(APP_SOURCES
 # Libraries
 add_library(libkanzi STATIC ${LIB_COMMON_SOURCES} ${LIB_COMP_SOURCES} ${LIB_DECOMP_SOURCES})
 add_library(libkanzi_shared SHARED ${LIB_COMMON_SOURCES} ${LIB_COMP_SOURCES} ${LIB_DECOMP_SOURCES})
+set_target_properties(libkanzi PROPERTIES OUTPUT_NAME "kanzi")
 set_target_properties(libkanzi_shared PROPERTIES OUTPUT_NAME "kanzi")
 
 #add_library(libkanzi_comp STATIC ${LIB_COMP_SOURCES})
