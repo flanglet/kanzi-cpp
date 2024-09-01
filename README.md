@@ -222,6 +222,14 @@ install:   installs libraries, headers and executable
 uninstall: removes installed libraries, headers and executable
 ```
 
+For those who prefer cmake, run the following commands:
+```
+mkdir build
+cd build
+cmake ..
+make
+```
+
 Credits
 
 Matt Mahoney,
