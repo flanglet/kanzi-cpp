@@ -44,7 +44,7 @@ namespace kanzi
 
           Event(Type type, int id, int64 size, int hash, bool hashing, clock_t evtTime);
 
-          ~Event() {}
+          virtual ~Event() {}
 
           int getId() const { return _id; }
 
