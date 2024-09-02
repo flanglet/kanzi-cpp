@@ -83,7 +83,7 @@ int Global::SQUASH[4096];
 
 int Global::STRETCH[4096];
 
-set<string> Global::WIN_RESERVED;
+unordered_set<string> Global::WIN_RESERVED;
 
 
 Global::Global()
@@ -118,6 +118,7 @@ Global::Global()
 
     STRETCH[4095] = 2047;
 
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
     string reserved[27] = {
        "AUX", "COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6",
        "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³", "CON", "LPT0",
@@ -125,8 +126,9 @@ Global::Global()
        "LPT9", "NUL", "PRN"
     };
 
-    set<string> reserved_set(reserved, reserved + 27);
+    unordered_set<string> reserved_set(reserved, reserved + 27);
     WIN_RESERVED = reserved_set;
+#endif
 }
 
 // Return 1024 * log2(x). Max error is around 0.1%
