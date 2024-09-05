@@ -83,11 +83,8 @@ int Global::SQUASH[4096];
 
 int Global::STRETCH[4096];
 
-#if __cplusplus >= 201103L
-    unordered_set<string> Global::WIN_RESERVED;
-#else
-    set<string> Global::WIN_RESERVED;
-#endif
+set<string> Global::WIN_RESERVED = Global::initReservedNames();
+
 
 Global::Global()
 {
@@ -120,23 +117,25 @@ Global::Global()
     }
 
     STRETCH[4095] = 2047;
+}
+
+set<string> Global::initReservedNames()
+{
+    set<string> reservedSet;
 
 #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
-    string reserved[27] = {
+    static const string reserved[27] = {
        "AUX", "COM0", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6",
        "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³", "CON", "LPT0",
        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8",
        "LPT9", "NUL", "PRN"
     };
 
-#if __cplusplus >= 201103L
-    unordered_set<string> reserved_set(reserved, reserved + 27);
-#else
-    set<string> reserved_set(reserved, reserved + 27);
+    for (int i = 0; i < 27; i++)
+       reservedSet.insert(reserved[i]);
 #endif
 
-    WIN_RESERVED = reserved_set;
-#endif
+    return reservedSet;
 }
 
 // Return 1024 * log2(x). Max error is around 0.1%
