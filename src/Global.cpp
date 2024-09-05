@@ -83,8 +83,11 @@ int Global::SQUASH[4096];
 
 int Global::STRETCH[4096];
 
-unordered_set<string> Global::WIN_RESERVED;
-
+#if __cplusplus >= 201103L
+    unordered_set<string> Global::WIN_RESERVED;
+#else
+    set<string> Global::WIN_RESERVED;
+#endif
 
 Global::Global()
 {
@@ -126,7 +129,12 @@ Global::Global()
        "LPT9", "NUL", "PRN"
     };
 
+#if __cplusplus >= 201103L
     unordered_set<string> reserved_set(reserved, reserved + 27);
+#else
+    set<string> reserved_set(reserved, reserved + 27);
+#endif
+
     WIN_RESERVED = reserved_set;
 #endif
 }

@@ -17,7 +17,12 @@ limitations under the License.
 #ifndef _Global_
 #define _Global_
 
-#include <unordered_set>
+#if __cplusplus >= 201103L
+    #include <unordered_set>
+#else
+    #include <set>
+#endif
+
 #include <string>
 
 #include "types.hpp"
@@ -68,7 +73,11 @@ namespace kanzi {
        static char BASE64_SYMBOLS[];
        static char DNA_SYMBOLS[];
        static char NUMERIC_SYMBOLS[];
+#if __cplusplus >= 201103L
        static std::unordered_set<std::string> WIN_RESERVED;
+#else
+       static std::set<std::string> WIN_RESERVED;
+#endif
    };
 
 
