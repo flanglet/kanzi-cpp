@@ -347,21 +347,21 @@ void CompressedInputStream::readHeader()
         }
 
         // Protect against future concurrent modification of the list of block listeners
-        vector<Listener*> blockListeners(_listeners);
+        vector<Listener<Event>*> blockListeners(_listeners);
         Event evt(Event::AFTER_HEADER_DECODING, 0, ss.str(), clock());
         CompressedInputStream::notifyListeners(blockListeners, evt);
     }
 }
 
-bool CompressedInputStream::addListener(Listener& bl)
+bool CompressedInputStream::addListener(Listener<Event>& bl)
 {
     _listeners.push_back(&bl);
     return true;
 }
 
-bool CompressedInputStream::removeListener(Listener& bl)
+bool CompressedInputStream::removeListener(Listener<Event>& bl)
 {
-    std::vector<Listener*>::iterator it = find(_listeners.begin(), _listeners.end(), &bl);
+    std::vector<Listener<Event>*>::iterator it = find(_listeners.begin(), _listeners.end(), &bl);
 
     if (it == _listeners.end())
         return false;
@@ -462,7 +462,7 @@ int CompressedInputStream::processBlock()
         readHeader();
 
     // Protect against future concurrent modification of the list of block listeners
-    vector<Listener*> blockListeners(_listeners);
+    vector<Listener<Event>*> blockListeners(_listeners);
     vector<DecodingTask<DecodingTaskResult>*> tasks;
 
     try {
@@ -663,16 +663,16 @@ void CompressedInputStream::close()
     }
 }
 
-void CompressedInputStream::notifyListeners(vector<Listener*>& listeners, const Event& evt)
+void CompressedInputStream::notifyListeners(vector<Listener<Event>*>& listeners, const Event& evt)
 {
-    for (vector<Listener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
+    for (vector<Listener<Event>*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->processEvent(evt);
 }
 
 template <class T>
 DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
     int blockSize, InputBitStream* ibs, XXHash32* hasher,
-    ATOMIC_INT* processedBlockId, vector<Listener*>& listeners,
+    ATOMIC_INT* processedBlockId, vector<Listener<Event>*>& listeners,
     const Context& ctx)
     : _listeners(listeners)
     , _ctx(ctx)

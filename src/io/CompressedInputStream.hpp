@@ -22,6 +22,7 @@ limitations under the License.
 #include <vector>
 #include "../concurrent.hpp"
 #include "../Context.hpp"
+#include "../Event.hpp"
 #include "../Listener.hpp"
 #include "../InputStream.hpp"
 #include "../InputBitStream.hpp"
@@ -110,13 +111,13 @@ namespace kanzi
        InputBitStream* _ibs;
        XXHash32* _hasher;
        ATOMIC_INT* _processedBlockId;
-       std::vector<Listener*> _listeners;
+       std::vector<Listener<Event>*> _listeners;
        Context _ctx;
 
    public:
        DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
            int blockSize, InputBitStream* ibs, XXHash32* hasher,
-           ATOMIC_INT* processedBlockId, std::vector<Listener*>& listeners,
+           ATOMIC_INT* processedBlockId, std::vector<Listener<Event>*>& listeners,
            const Context& ctx);
 
        ~DecodingTask(){}
@@ -161,9 +162,9 @@ namespace kanzi
 
        ~CompressedInputStream();
 
-       bool addListener(Listener& bl);
+       bool addListener(Listener<Event>& bl);
 
-       bool removeListener(Listener& bl);
+       bool removeListener(Listener<Event>& bl);
 
        std::streampos tellg();
 
@@ -220,7 +221,7 @@ namespace kanzi
        ATOMIC_BOOL _initialized;
        ATOMIC_BOOL _closed;
        ATOMIC_INT _blockId;
-       std::vector<Listener*> _listeners;
+       std::vector<Listener<Event>*> _listeners;
        std::streamsize _gcount;
        Context _ctx;
        Context* _parentCtx; // not owner
@@ -233,7 +234,7 @@ namespace kanzi
 
        int _get(int inc);
 
-       static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
+       static void notifyListeners(std::vector<Listener<Event>*>& listeners, const Event& evt);
    };
 
 

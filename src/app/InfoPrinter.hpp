@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef _InfoPrinter_
 #define _InfoPrinter_
 
+#include "../Event.hpp"
 #include "../Listener.hpp"
 #include "../OutputStream.hpp"
 #include "../util/Clock.hpp"
@@ -33,7 +34,7 @@ namespace kanzi
 
    // An implementation of Listener to display block information (verbose option
    // of the BlockCompressor/BlockDecompressor)
-   class InfoPrinter : public Listener {
+   class InfoPrinter : public Listener<Event> {
    public:
        enum Type {
            ENCODING,

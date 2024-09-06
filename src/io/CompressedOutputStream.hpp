@@ -22,6 +22,7 @@ limitations under the License.
 #include <vector>
 #include "../concurrent.hpp"
 #include "../Context.hpp"
+#include "../Event.hpp"
 #include "../Listener.hpp"
 #include "../OutputStream.hpp"
 #include "../OutputBitStream.hpp"
@@ -82,13 +83,13 @@ namespace kanzi {
        OutputBitStream* _obs;
        XXHash32* _hasher;
        ATOMIC_INT* _processedBlockId;
-       std::vector<Listener*> _listeners;
+       std::vector<Listener<Event>*> _listeners;
        Context _ctx;
 
    public:
        EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
            OutputBitStream* obs, XXHash32* hasher,
-           ATOMIC_INT* processedBlockId, std::vector<Listener*>& listeners,
+           ATOMIC_INT* processedBlockId, std::vector<Listener<Event>*>& listeners,
            const Context& ctx);
 
        ~EncodingTask(){}
@@ -119,9 +120,9 @@ namespace kanzi {
 
        ~CompressedOutputStream();
 
-       bool addListener(Listener& bl);
+       bool addListener(Listener<Event>& bl);
 
-       bool removeListener(Listener& bl);
+       bool removeListener(Listener<Event>& bl);
 
        std::ostream& write(const char* s, std::streamsize n);
 
@@ -169,7 +170,7 @@ namespace kanzi {
        ATOMIC_BOOL _initialized;
        ATOMIC_BOOL _closed;
        ATOMIC_INT _blockId;
-       std::vector<Listener*> _listeners;
+       std::vector<Listener<Event>*> _listeners;
        Context _ctx;
        bool _headless;
 #ifdef CONCURRENCY_ENABLED
@@ -178,7 +179,7 @@ namespace kanzi {
 
        void processBlock();
 
-       static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
+       static void notifyListeners(std::vector<Listener<Event>*>& listeners, const Event& evt);
    };
 
 

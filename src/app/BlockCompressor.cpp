@@ -472,15 +472,15 @@ int BlockCompressor::compress(uint64& outputSize)
     return res;
 }
 
-bool BlockCompressor::addListener(Listener& bl)
+bool BlockCompressor::addListener(Listener<Event>& bl)
 {
     _listeners.push_back(&bl);
     return true;
 }
 
-bool BlockCompressor::removeListener(Listener& bl)
+bool BlockCompressor::removeListener(Listener<Event>& bl)
 {
-    std::vector<Listener*>::iterator it = find(_listeners.begin(), _listeners.end(), &bl);
+    std::vector<Listener<Event>*>::iterator it = find(_listeners.begin(), _listeners.end(), &bl);
 
     if (it == _listeners.end())
         return false;
@@ -489,9 +489,9 @@ bool BlockCompressor::removeListener(Listener& bl)
     return true;
 }
 
-void BlockCompressor::notifyListeners(vector<Listener*>& listeners, const Event& evt)
+void BlockCompressor::notifyListeners(vector<Listener<Event>*>& listeners, const Event& evt)
 {
-    for (vector<Listener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
+    for (vector<Listener<Event>*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->processEvent(evt);
 }
 
@@ -555,7 +555,7 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
 }
 
 template <class T>
-FileCompressTask<T>::FileCompressTask(const Context& ctx, vector<Listener*>& listeners)
+FileCompressTask<T>::FileCompressTask(const Context& ctx, vector<Listener<Event>*>& listeners)
     : _ctx(ctx)
     , _listeners(listeners)
 {

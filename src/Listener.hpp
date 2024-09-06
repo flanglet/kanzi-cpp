@@ -17,17 +17,16 @@ limitations under the License.
 #ifndef _Listener_
 #define _Listener_
 
-#include "Event.hpp"
-
 namespace kanzi
 {
 
+   template <class T>
    class Listener
    {
    public:
        Listener(){}
 
-       virtual void processEvent(const Event& evt) = 0;
+       virtual void processEvent(const T& evt) = 0;
 
        virtual ~Listener(){}
    };

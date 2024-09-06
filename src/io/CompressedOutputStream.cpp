@@ -269,15 +269,15 @@ void CompressedOutputStream::writeHeader()
         throw IOException("Cannot write checksum to header", Error::ERR_WRITE_FILE);
 }
 
-bool CompressedOutputStream::addListener(Listener& bl)
+bool CompressedOutputStream::addListener(Listener<Event>& bl)
 {
     _listeners.push_back(&bl);
     return true;
 }
 
-bool CompressedOutputStream::removeListener(Listener& bl)
+bool CompressedOutputStream::removeListener(Listener<Event>& bl)
 {
-    std::vector<Listener*>::iterator it = find(_listeners.begin(), _listeners.end(), &bl);
+    std::vector<Listener<Event>*>::iterator it = find(_listeners.begin(), _listeners.end(), &bl);
 
     if (it == _listeners.end())
         return false;
@@ -380,7 +380,7 @@ void CompressedOutputStream::processBlock()
         return;
 
     // Protect against future concurrent modification of the list of block listeners
-    vector<Listener*> blockListeners(_listeners);
+    vector<Listener<Event>*> blockListeners(_listeners);
     vector<EncodingTask<EncodingTaskResult>*> tasks;
 
     try {
@@ -499,16 +499,16 @@ void CompressedOutputStream::processBlock()
     }
 }
 
-void CompressedOutputStream::notifyListeners(vector<Listener*>& listeners, const Event& evt)
+void CompressedOutputStream::notifyListeners(vector<Listener<Event>*>& listeners, const Event& evt)
 {
-    for (vector<Listener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
+    for (vector<Listener<Event>*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->processEvent(evt);
 }
 
 template <class T>
 EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
     OutputBitStream* obs, XXHash32* hasher,
-    ATOMIC_INT* processedBlockId, vector<Listener*>& listeners,
+    ATOMIC_INT* processedBlockId, vector<Listener<Event>*>& listeners,
     const Context& ctx)
     : _obs(obs)
     , _listeners(listeners)

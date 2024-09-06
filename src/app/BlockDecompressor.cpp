@@ -348,15 +348,15 @@ int BlockDecompressor::decompress(uint64& inputSize)
     return res;
 }
 
-bool BlockDecompressor::addListener(Listener& bl)
+bool BlockDecompressor::addListener(Listener<Event>& bl)
 {
     _listeners.push_back(&bl);
     return true;
 }
 
-bool BlockDecompressor::removeListener(Listener& bl)
+bool BlockDecompressor::removeListener(Listener<Event>& bl)
 {
-    std::vector<Listener*>::iterator it = find(_listeners.begin(), _listeners.end(), &bl);
+    std::vector<Listener<Event>*>::iterator it = find(_listeners.begin(), _listeners.end(), &bl);
 
     if (it == _listeners.end())
         return false;
@@ -365,14 +365,14 @@ bool BlockDecompressor::removeListener(Listener& bl)
     return true;
 }
 
-void BlockDecompressor::notifyListeners(vector<Listener*>& listeners, const Event& evt)
+void BlockDecompressor::notifyListeners(vector<Listener<Event>*>& listeners, const Event& evt)
 {
-    for (vector<Listener*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
+    for (vector<Listener<Event>*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
         (*it)->processEvent(evt);
 }
 
 template <class T>
-FileDecompressTask<T>::FileDecompressTask(const Context& ctx, vector<Listener*>& listeners)
+FileDecompressTask<T>::FileDecompressTask(const Context& ctx, vector<Listener<Event>*>& listeners)
     : _ctx(ctx)
     , _listeners(listeners)
 {

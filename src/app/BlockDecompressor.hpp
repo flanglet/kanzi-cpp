@@ -91,7 +91,7 @@ namespace kanzi {
    template <class T>
    class FileDecompressTask FINAL : public Task<T> {
    public:
-       FileDecompressTask(const Context& ctx, std::vector<Listener*>& listeners);
+       FileDecompressTask(const Context& ctx, std::vector<Listener<Event>*>& listeners);
 
        ~FileDecompressTask();
 
@@ -103,7 +103,7 @@ namespace kanzi {
        Context _ctx;
        OutputStream* _os;
        CompressedInputStream* _cis;
-       std::vector<Listener*> _listeners;
+       std::vector<Listener<Event>*> _listeners;
    };
 
    typedef FileDecompressTask<FileDecompressResult> FDTask;
@@ -118,9 +118,9 @@ namespace kanzi {
 
        int decompress(uint64& read);
 
-       bool addListener(Listener& bl);
+       bool addListener(Listener<Event>& bl);
 
-       bool removeListener(Listener& bl);
+       bool removeListener(Listener<Event>& bl);
 
        void dispose() const {};
 
@@ -131,12 +131,12 @@ namespace kanzi {
        std::string _outputName;
        int _blockSize;
        int _jobs;
-       std::vector<Listener*> _listeners;
+       std::vector<Listener<Event>*> _listeners;
        bool _noDotFiles;
        bool _noLinks;
        Context _ctx;
 
-       static void notifyListeners(std::vector<Listener*>& listeners, const Event& evt);
+       static void notifyListeners(std::vector<Listener<Event>*>& listeners, const Event& evt);
    };
 }
 #endif
