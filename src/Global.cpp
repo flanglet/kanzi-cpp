@@ -83,8 +83,6 @@ int Global::SQUASH[4096];
 
 int Global::STRETCH[4096];
 
-set<string> Global::WIN_RESERVED = Global::initReservedNames();
-
 
 Global::Global()
 {
@@ -117,11 +115,6 @@ Global::Global()
     }
 
     STRETCH[4095] = 2047;
-}
-
-set<string> Global::initReservedNames()
-{
-    set<string> reservedSet;
 
 #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
     static const string reserved[27] = {
@@ -132,10 +125,8 @@ set<string> Global::initReservedNames()
     };
 
     for (int i = 0; i < 27; i++)
-       reservedSet.insert(reserved[i]);
+       _reservedNames.insert(reserved[i]);
 #endif
-
-    return reservedSet;
 }
 
 // Return 1024 * log2(x). Max error is around 0.1%
@@ -398,7 +389,7 @@ Global::DataType Global::detectSimpleType(int count, const uint freqs0[]) {
 bool Global::isReservedName(string fileName)
 {
     transform(fileName.begin(), fileName.end(), fileName.begin(), ::toupper);
-    return WIN_RESERVED.find(fileName) != WIN_RESERVED.end();
+    return _singleton._reservedNames.find(fileName) != WIN_RESERVED.end();
 }
 #else
 bool Global::isReservedName(string)

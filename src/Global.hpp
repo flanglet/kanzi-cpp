@@ -68,9 +68,8 @@ namespace kanzi {
        static char BASE64_SYMBOLS[];
        static char DNA_SYMBOLS[];
        static char NUMERIC_SYMBOLS[];
-       static std::set<std::string> WIN_RESERVED;
 
-       static std::set<std::string> initReservedNames();
+       std::set<std::string> _reservedNames;
    };
 
 
