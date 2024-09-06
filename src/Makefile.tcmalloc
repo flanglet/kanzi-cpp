@@ -1,6 +1,9 @@
 #CXX=clang++
 LDFLAGS=-lpthread
 OBJ_DIR = obj
+TEST_OBJ_DIR=$(OBJ_DIR)/test
+APP=kanzi
+
 
 ifeq ($(CONCURRENCY_DISABLED), 1)
 	CONCURRENCY_FLAG = -DCONCURRENCY_DISABLED
@@ -66,7 +69,6 @@ LIB_DECOMP_SOURCES=api/Decompressor.cpp \
 LIB_SOURCES=$(LIB_COMMON_SOURCES) $(LIB_COMP_SOURCES) $(LIB_DECOMP_SOURCES)
 
 # Define library object files
-#LIB_OBJECTS=$(LIB_COMMON_OBJECTS) $(LIB_COMP_OBJECTS) $(LIB_DECOMP_OBJECTS)
 LIB_OBJECTS=$(filter-out $(OBJ_DIR)/test/%.o,$(LIB_COMMON_OBJECTS) $(LIB_COMP_OBJECTS) $(LIB_DECOMP_OBJECTS))
 
 
@@ -95,8 +97,6 @@ APP_OBJECTS=$(foreach src,$(APP_SOURCES),$(call OBJ,$(src)))
 OBJECTS=$(LIB_OBJECTS) $(APP_OBJECTS) $(TEST_OBJECTS)
 RPTS=$(SOURCES:.cpp=.optrpt)
 
-APP=kanzi
-	
 STATIC_LIB_SUFFIX := .a
 SHARED_LIB_SUFFIX := .so
 PROG_SUFFIX       :=
@@ -142,8 +142,6 @@ $(SHARED_COMP_LIB):$(LIB_COMP_OBJECTS)
 
 $(SHARED_DECOMP_LIB):$(LIB_DECOMP_OBJECTS)
 	$(CXX) -o ../lib/$@ $(LDFLAGS) -shared $+
-
-TEST_OBJ_DIR=$(OBJ_DIR)/test
 
 # Targets for test executables
 testBWT: $(LIB_OBJECTS) $(TEST_OBJ_DIR)/TestBWT.o
@@ -219,7 +217,7 @@ ifeq ($(OS),Windows_NT)
 	..\lib\$(STATIC_COMP_LIB) ..\lib\$(STATIC_DECOMP_LIB) \
 	..\lib\$(SHARED_COMP_LIB) ..\lib\$(SHARED_DECOMP_LIB)
 else
-	rm -f ../bin/test*$(PROG_SUFFIX) $(OBJECTS) $(LIB_OBJECTS) $(RPTS) $(TEST_OBJECTS) \
+	rm -f ../bin/test*$(PROG_SUFFIX) $(OBJECTS) $(RPTS) \
 	../bin/$(APP)$(PROG_SUFFIX) ../lib/$(STATIC_LIB) ../lib/$(SHARED_LIB) \
 	../lib/$(STATIC_COMP_LIB) ../lib/$(STATIC_DECOMP_LIB) \
 	../lib/$(SHARED_COMP_LIB) ../lib/$(SHARED_DECOMP_LIB)
