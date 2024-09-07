@@ -389,7 +389,7 @@ Global::DataType Global::detectSimpleType(int count, const uint freqs0[]) {
 bool Global::isReservedName(string fileName)
 {
     transform(fileName.begin(), fileName.end(), fileName.begin(), ::toupper);
-    return _singleton._reservedNames.find(fileName) != WIN_RESERVED.end();
+    return _singleton._reservedNames.find(fileName) != _singleton._reservedNames.end();
 }
 #else
 bool Global::isReservedName(string)
