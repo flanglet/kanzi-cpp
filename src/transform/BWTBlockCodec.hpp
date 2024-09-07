@@ -25,16 +25,12 @@ namespace kanzi {
 
    // Utility class to en/de-code a BWT data block and its associated primary index(es)
 
-   // BWT stream format: Header (m bytes) Data (n bytes)
-   // Header: For each primary index,
-   //   mode (8 bits) + primary index (8,16 or 24 bits)
-   //   mode: bits 7-6 contain the size in bits of the primary index :
-   //             00: primary index size <=  6 bits (fits in mode byte)
-   //             01: primary index size <= 14 bits (1 extra byte)
-   //             10: primary index size <= 22 bits (2 extra bytes)
-   //             11: primary index size  > 22 bits (3 extra bytes)
-   //         bits 5-0 contain 6 most significant bits of primary index
-   //   primary index: remaining bits (up to 3 bytes)
+   // BWT stream format: Header (mode + primary index(es)) | Data (n bytes)
+   //   mode (8 bits): xxxyyyzz
+   //   xxx: ignored
+   //   yyy: log(chunks)
+   //   zz: primary index size - 1 (in bytes)
+   //   primary indexes (chunks * (8|16|24|32 bits))
 
    class BWTBlockCodec FINAL : public Transform<byte> {
    public:
@@ -55,6 +51,7 @@ namespace kanzi {
 
    private:
        BWT* _pBWT;
+       int _bsVersion;
    };
 }
 #endif
