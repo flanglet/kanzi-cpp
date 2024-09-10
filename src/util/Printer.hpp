@@ -30,7 +30,16 @@ namespace kanzi
    {
       public:
          Printer(std::ostream& os) { _os = &os; }
-         ~Printer() { _os->flush(); }
+
+         ~Printer() {
+            try  {
+                _os->flush();
+            }
+            catch (std::exception&) {
+                // Ignore: best effort
+                _os->setstate(std::ios::badbit);
+            }
+         }
 
          void print(const char* msg, bool print) {
             if ((print == true) && (msg != nullptr)) {
