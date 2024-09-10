@@ -37,7 +37,6 @@ namespace kanzi
             }
             catch (std::exception&) {
                 // Ignore: best effort
-                _os->setstate(std::ios::badbit);
             }
          }
 
