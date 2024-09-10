@@ -51,6 +51,8 @@ static const int ARG_IDX_LEVEL = 9;
 
 static const string KANZI_VERSION = "2.3.0";
 static const string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
+static const string APP_SUB_HEADER = "Fast lossless data compressor.";
+static const string APP_USAGE = "Usage: kanzi [-c|-d] [flags and files in any order]";
 
 
 #ifdef CONCURRENCY_ENABLED
@@ -66,6 +68,8 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    if (showHeader == true) {
        log.println(APP_HEADER, true);
        log.println("", true);
+       log.println(APP_SUB_HEADER, true);
+       log.println(APP_USAGE, true);
    }
 
    log.println("Credits: Matt Mahoney, Yann Collet, Jan Ondrus, Yuta Mori, Ilya Muravyov,", true);
@@ -82,14 +86,15 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    }
 
    log.println("   -i, --input=<inputName>", true);
-   log.println("        Mandatory name of the input file or directory or 'stdin'", true);
+   log.println("        Name of the input file or directory or 'stdin'", true);
    log.println("        When the source is a directory, all files in it will be processed.", true);
    stringstream ss;
    ss << "        Provide " << PATH_SEPARATOR << ". at the end of the directory name to avoid recursion";
    log.println(ss.str(), true);
    ss.str(string());
-   ss << "        (EG: myDir" << PATH_SEPARATOR << ". => no recursion)\n";
+   ss << "        (EG: myDir" << PATH_SEPARATOR << ". => no recursion)";
    log.println(ss.str(), true);
+   log.println("        If this option is not provided, kanzi reads data from stdin.\n", true);
    ss.str(string());
    log.println("   -o, --output=<outputName>", true);
 
@@ -188,26 +193,29 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
 
     log.println("", true);
     log.println(APP_HEADER, true);
+    log.println("", true);
+    log.println(APP_SUB_HEADER, true);
+    log.println(APP_USAGE, true);
 
     if (verbose >= 4) {
        stringstream extraHeader;
 
    #ifdef __clang__
-       extraHeader << "\nCompiled with clang version ";
+       extraHeader << "Compiled with clang version ";
        extraHeader << __clang_major__ << "." << __clang_minor__;
    #else
       #ifdef _MSC_VER
-         extraHeader << "\nCompiled with Visual Studio";
+         extraHeader << "Compiled with Visual Studio";
          #ifdef _MSC_VER_STR // see types.h
          extraHeader << " " << _MSC_VER_STR;
          #endif
       #else
          #ifdef  __INTEL_COMPILER
-         extraHeader << "\nCompiled with Intel compiler ";
+         extraHeader << "Compiled with Intel compiler ";
          extraHeader << "(" << __INTEL_COMPILER_BUILD_DATE << ")";
          #else
             #ifdef  __GNUC__
-            extraHeader << "\nCompiled with gcc version ";
+            extraHeader << "Compiled with gcc version ";
             extraHeader << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__;
             #endif
          #endif
@@ -234,7 +242,6 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
         }
     }
 
-    log.println("", true);
     showHeader = false;
 }
 
