@@ -273,7 +273,7 @@ bool toInt(string& s, int& res)
    return true;
 }
 
-int processCommandLine(int argc, const char* argv[], Context& map)
+int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
 {
     string inputName;
     string outputName;
@@ -296,7 +296,6 @@ int processCommandLine(int argc, const char* argv[], Context& map)
     int blockSize = -1;
     int autoBlockSize = -1;
     string mode;
-    Printer log(cout);
     bool showHeader = true;
     bool showHelp = false;
 
@@ -910,15 +909,16 @@ int main(int argc, const char* argv[])
 #endif
 
     Context args;
-    int status = processCommandLine(argc, argv, args);
+    Printer log(cout);
+    int status =  processCommandLine(argc, argv, args, log);
 
     // Command line processing error ?
     if (status != 0)
-       exit(status);
+       return status;
 
     // Help mode only ?
     if (args.has("mode") == false)
-       exit(0);
+       return 0;
 
     string mode = args.getString("mode");
     int jobs = args.getInt("jobs", -1);
@@ -929,7 +929,6 @@ int main(int argc, const char* argv[])
             const int verbosity = args.getInt("verbosity");
             stringstream ss;
             ss << "Warning: the number of jobs is limited to 1 in this version";
-            Printer log(cout);
             log.println(ss.str(), verbosity > 0);
         }
 
@@ -948,7 +947,6 @@ int main(int argc, const char* argv[])
             const int verbosity = args.getInt("verbosity");
             stringstream ss;
             ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY;
-            Printer log(cout);
             log.println(ss.str(), verbosity > 0);
             jobs = MAX_CONCURRENCY;
         }
@@ -968,11 +966,11 @@ int main(int argc, const char* argv[])
                 BlockCompressor bc(ctx);
                 uint64 written = 0;
                 int code = bc.compress(written);
-                exit(code);
+                return code;
             }
             catch (exception& e) {
                 cerr << "Could not create the compressor: " << e.what() << endl;
-                exit(Error::ERR_CREATE_COMPRESSOR);
+                return Error::ERR_CREATE_COMPRESSOR;
             }
         }
 
@@ -981,11 +979,11 @@ int main(int argc, const char* argv[])
                 BlockDecompressor bd(ctx);
                 uint64 read = 0;
                 int code = bd.decompress(read);
-                exit(code);
+                return code;
             }
             catch (exception& e) {
                 cerr << "Could not create the decompressor: " << e.what() << endl;
-                exit(Error::ERR_CREATE_DECOMPRESSOR);
+                return Error::ERR_CREATE_DECOMPRESSOR;
             }
         }
 
@@ -995,11 +993,11 @@ int main(int argc, const char* argv[])
     catch (invalid_argument& e) {
        // May be thrown by ThreadPool
        cerr << e.what() << endl;
-       exit(Error::ERR_INVALID_PARAM);
+       return Error::ERR_INVALID_PARAM;
     }
     catch (runtime_error& e) {
        // May be thrown by ThreadPool
        cerr << e.what() << endl;
-       exit(Error::ERR_INVALID_PARAM);
+       return Error::ERR_INVALID_PARAM;
     }
 }

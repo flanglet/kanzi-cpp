@@ -30,7 +30,7 @@ namespace kanzi
    {
       public:
          Printer(std::ostream& os) { _os = &os; }
-         ~Printer() {}
+         ~Printer() { _os->flush(); }
 
          void print(const char* msg, bool print) {
             if ((print == true) && (msg != nullptr)) {

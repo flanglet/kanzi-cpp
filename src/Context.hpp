@@ -17,18 +17,11 @@ limitations under the License.
 #ifndef _Context_
 #define _Context_
 
+#include <map>
 #include <sstream>
 #include <string>
 #include "concurrent.hpp"
 #include "util/strings.hpp"
-
-#if __cplusplus >= 201103L
-   #include <unordered_map>
-   #define CTX_MAP std::unordered_map
-#else
-   #include <map>
-   #define CTX_MAP std::map
-#endif
 
 namespace kanzi
 {
@@ -75,7 +68,7 @@ namespace kanzi
 #endif
 
    private:
-       CTX_MAP<std::string, ContextVal> _map;
+       std::map<std::string, ContextVal> _map;
 
 #ifdef CONCURRENCY_ENABLED
        ThreadPool* _pool;
@@ -97,7 +90,7 @@ namespace kanzi
 
    inline int64 Context::getLong(const std::string& key, int64 defValue) const
    {
-      CTX_MAP<std::string, ContextVal>::const_iterator it = _map.find(key);
+      std::map<std::string, ContextVal>::const_iterator it = _map.find(key);
 
       if (it == _map.end())
           return defValue;
@@ -108,7 +101,7 @@ namespace kanzi
 
    inline std::string Context::getString(const std::string& key, const std::string& defValue) const
    {
-      CTX_MAP<std::string, ContextVal>::const_iterator it = _map.find(key);
+      std::map<std::string, ContextVal>::const_iterator it = _map.find(key);
 
       if (it == _map.end())
           return defValue;

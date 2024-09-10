@@ -101,8 +101,7 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
 
     if (_bsVersion > 5) {
        // Number of chunks and primary index size in bitstream since bsVersion 6
-       const byte* src = &input._array[input._index];
-       byte mode = src[0];
+       byte mode = input._array[input._index++];
        const uint logNbChunks = uint(mode >> 2) & 0x07;
        const int pIndexSize = (int(mode) & 0x03) + 1;
 
@@ -117,16 +116,16 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
        const int headerSize = 1 + chunks * pIndexSize;
 
        if ((input._length < headerSize) || (blockSize < headerSize))
-          return false;
+           return false;
 
        // Read header
-       for (int i = 0, idx = 1; i < chunks; i++) {
+       for (int i = 0; i < chunks; i++) {
            int shift = (pIndexSize - 1) << 3;
            int primaryIndex = 0;
 
            // Extract BWT primary index
            while (shift >= 0) {
-               primaryIndex = (primaryIndex << 8) | int(src[idx++]);
+               primaryIndex = (primaryIndex << 8) | int(input._array[input._index++]);
                shift -= 8;
            }
 
@@ -134,7 +133,6 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
                return false;
        }
 
-       input._index += headerSize;
        blockSize -= headerSize;
     }
     else {
