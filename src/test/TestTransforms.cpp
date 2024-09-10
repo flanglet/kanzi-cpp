@@ -223,7 +223,7 @@ int testTransformsCorrectness(const string& name)
         }
 
         Context ctx;
-        ctx.putInt("bsVersion", 4);
+        ctx.putInt("bsVersion", 6);
         ctx.putString("transform", name);
         Transform<byte>* ff = getByteTransform(name, ctx);
 
@@ -357,7 +357,11 @@ int testTransformsSpeed(const string& name)
 {
     // Test speed
     srand((uint)time(nullptr));
-    int iter = (name.rfind("ROLZ", 0) == 0) ? 2000 : ((name == "SRT") ? 4000 : 50000);
+    int iter = 50000;
+
+    if ((name == "ROLZ") || (name == "SRT") || (name == "RANK"))
+        iter = 4000;
+
     int size = 30000;
     int res = 0;
 
