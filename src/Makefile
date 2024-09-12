@@ -15,7 +15,7 @@ else
 	ARCH ?= $(shell uname -m)
 
 	ifeq ($(ARCH),x86_64)
-		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
+		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=skylake -fno-rtti $(CONCURRENCY_FLAG)
 	else
 		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 	endif
@@ -223,7 +223,13 @@ else
 	rm -rf $(OBJ_DIR)
 endif
 
+ifeq ($(OS),Windows_NT)
+   MKDIR = if not exist $(subst /,\,$(dir $@)) mkdir $(subst /,\,$(dir $@))
+else
+   MKDIR = mkdir -p $(dir $@)
+endif
+
 $(OBJ_DIR)/%.o: %.cpp
-	@mkdir -p $(dir $@)
+	@$(MKDIR)
 	$(CXX) $(CXXFLAGS) $< -o $@
 
