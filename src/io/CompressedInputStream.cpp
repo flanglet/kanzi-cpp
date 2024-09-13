@@ -42,25 +42,18 @@ const int CompressedInputStream::MAX_CONCURRENCY = 64;
 const int CompressedInputStream::MAX_BLOCK_ID = int((uint(1) << 31) - 1);
 
 
+CompressedInputStream::CompressedInputStream(InputStream& is,
+                   int tasks,
 #ifdef CONCURRENCY_ENABLED
-CompressedInputStream::CompressedInputStream(InputStream& is, int tasks, ThreadPool* pool,
-                   bool headerless,
-                   bool checksum,
-                   int blockSize,
-                   string transform,
-                   string entropy,
-                   uint64 originalSize,
-                   int bsVersion)
-#else
-CompressedInputStream::CompressedInputStream(InputStream& is, int tasks,
-                   bool headerless,
-                   bool checksum,
-                   int blockSize,
-                   string transform,
-                   string entropy,
-                   uint64 originalSize,
-                   int bsVersion)
+                   ThreadPool* pool,
 #endif
+                   bool headerless,
+                   bool checksum,
+                   int blockSize,
+                   string transform,
+                   string entropy,
+                   uint64 originalSize,
+                   int bsVersion)
     : InputStream(is.rdbuf())
     , _parentCtx(nullptr)
 {
@@ -152,7 +145,8 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
 #if __cplusplus >= 201103L
     // A hook can be provided by the caller to customize the instantiation of the
     // input bitstream.
-    _ibs = (createBitStream == nullptr) ? new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE) : (*createBitStream)(is);
+    _ibs = (createBitStream == nullptr) ? new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE) :
+                             (*createBitStream)(is);
 #else
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
 #endif
