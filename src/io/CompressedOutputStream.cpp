@@ -220,6 +220,9 @@ CompressedOutputStream::~CompressedOutputStream()
 
 void CompressedOutputStream::writeHeader()
 {
+    if ((_headless == true) || (_initialized.exchange(true, memory_order_acquire)))
+        return;
+
     if (_obs->writeBits(BITSTREAM_TYPE, 32) != 32)
         throw IOException("Cannot write bitstream type to header", Error::ERR_WRITE_FILE);
 
@@ -372,8 +375,7 @@ void CompressedOutputStream::close()
 
 void CompressedOutputStream::processBlock()
 {
-    if ((_headless == false) && (!_initialized.exchange(true, memory_order_acquire)))
-        writeHeader();
+    writeHeader();
 
     // All buffers empty, nothing to do
     if (_buffers[0]->_index == 0)
