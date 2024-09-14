@@ -232,6 +232,11 @@ CompressedInputStream::~CompressedInputStream()
 
 void CompressedInputStream::readHeader()
 {
+    if ((_headless == true) || (_initialized.exchange(true, memory_order_relaxed)))
+        return;
+
+    const uint64 pos0 = _ibs->read();
+
     // Read stream type
     const int type = int(_ibs->readBits(32));
 
@@ -345,6 +350,8 @@ void CompressedInputStream::readHeader()
         Event evt(Event::AFTER_HEADER_DECODING, 0, ss.str(), clock());
         CompressedInputStream::notifyListeners(blockListeners, evt);
     }
+
+    _ctx.putInt("headerSize", int(_ibs->read() - pos0));
 }
 
 bool CompressedInputStream::addListener(Listener<Event>& bl)
@@ -452,9 +459,7 @@ istream& CompressedInputStream::read(char* data, streamsize length)
 
 int CompressedInputStream::processBlock()
 {
-    if ((_headless == false) && (!_initialized.exchange(true, memory_order_relaxed)))
-        readHeader();
-
+    readHeader();
     // Protect against future concurrent modification of the list of block listeners
     vector<Listener<Event>*> blockListeners(_listeners);
     vector<DecodingTask<DecodingTaskResult>*> tasks;
