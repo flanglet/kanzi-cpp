@@ -21,12 +21,13 @@ limitations under the License.
 #include "../InputBitStream.hpp"
 #include "../InputStream.hpp"
 #include "../Memory.hpp"
+#include "../Seekable.hpp"
 #include "../util/strings.hpp"
 
 
 namespace kanzi {
 
-   class DefaultInputBitStream FINAL : public InputBitStream
+   class DefaultInputBitStream FINAL : public InputBitStream, Seekable
    {
    private:
        InputStream& _is;
@@ -67,6 +68,10 @@ namespace kanzi {
        bool hasMoreToRead();
 
        bool isClosed() const { return _closed; }
+
+       bool seek(int64 pos);
+
+       int64 tell();
 
        DefaultInputBitStream(InputStream& is, uint bufferSize = 65536);
 
@@ -128,6 +133,29 @@ namespace kanzi {
        _current = BigEndian::readLong64(&_buffer[_position]);
        _position += 8;
        return 64;
+   }
+
+   // Return a position at the byte boundary
+   inline int64 DefaultInputBitStream::tell()
+   {
+       const int64 res = int64(_is.tellg());
+       return (res < 0) ? -1 : 8 * (res - _maxPosition - 1 + _position);
+   }
+
+   // Only support a new position at the byte boundary (pos & 7 == 0)
+   inline bool DefaultInputBitStream::seek(int64 pos)
+   {
+       if ((pos & 7) != 0)
+           return false;
+
+       // Update internal states to force read at new stream position
+       _read += (8 * int64(_position) - _availBits);
+       _availBits = pos & 7;
+       _position = 0;
+       _maxPosition = -1;
+       _is.clear();
+       _is.seekg(std::streampos(pos >> 3));
+       return true;
    }
 }
 #endif

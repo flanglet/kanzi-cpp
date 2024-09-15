@@ -21,13 +21,14 @@ limitations under the License.
 #include "../OutputStream.hpp"
 #include "../OutputBitStream.hpp"
 #include "../Memory.hpp"
+#include "../Seekable.hpp"
 #include "../util/strings.hpp"
 
 
 namespace kanzi
 {
 
-   class DefaultOutputBitStream FINAL : public OutputBitStream
+   class DefaultOutputBitStream FINAL : public OutputBitStream, Seekable
    {
    private:
        OutputStream& _os;
@@ -57,6 +58,10 @@ namespace kanzi
        uint writeBits(const byte bits[], uint length);
 
        void close() { _close(); }
+
+       int64 tell();
+
+       bool seek(int64 pos);
 
        // Return number of bits written so far
        uint64 written() const
@@ -117,6 +122,25 @@ namespace kanzi
        if (_position >= _bufferSize - 8)
            flush();
    }
+
+   // Return the position at the byte boundary
+   inline int64 DefaultOutputBitStream::tell()
+   {
+       const int64 res = int64(_os.tellp());
+       return (res < 0) ? res : 8 * res;
+   }
+
+   // Only support a new position at the byte boundary (pos & 7 == 0)
+   inline bool DefaultOutputBitStream::seek(int64 pos)
+   {
+       if ((pos & 7) != 0)
+           return false;
+
+       flush();
+       _os.seekp(std::streampos(pos >> 3));
+       return true;
+   }
+
 }
 #endif
 

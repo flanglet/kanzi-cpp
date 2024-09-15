@@ -14,12 +14,17 @@ limitations under the License.
 */
 
 #include <algorithm>
+#include <cstdio>
 #include <iostream>
 #include <fstream>
+#include <streambuf>
 #include <time.h>
 #include "../bitstream/DebugOutputBitStream.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
+#include "../BitStreamException.hpp"
+#include "../util.hpp"
+#include "../io/IOException.hpp"
 
 using namespace std;
 using namespace kanzi;
@@ -492,6 +497,84 @@ int testBitStreamCorrectnessMisaligned2()
     return res;
 }
 
+int testSeek(const string& name)
+{
+    // Test correctness (not byte aligned)
+    cout << endl << "Seek Test" << endl << endl;
+    byte input[256];
+    byte output[256];
+
+    for (int i = 0; i < 256; i++)
+       input[i] = byte(i);
+
+    cout << "Test OutputBitStream" << endl;
+    ofstream ofs(name);
+    DefaultOutputBitStream obs(ofs);
+
+    for (int i = 0; i < 256; i++)
+       obs.writeBits(uint64(0xAA), 8);
+
+    obs.seek(0);
+    obs.writeBits(&input[0], 8 * 256);
+    obs.close();
+    ofs.close();
+    cout << "Bits written: " << obs.written() << endl;
+
+    cout << endl;
+    cout << "Test InputBitStream" << endl;
+    ifstream ifs(name);
+    DefaultInputBitStream ibs(ifs);
+    ibs.readBits(&output[0], 80);
+
+    for (int i = 0; i < 10; i++) {
+       if (output[i] != byte(i)) {
+          cout << "Read failure" << endl;
+          return 1;
+       }
+    }
+
+    // Positions in bytes
+    int64 positions[5] = { 50, 0, 20, 33, 0 };
+
+    for (int i = 0; i < 5; i ++) {
+       int64 pos = positions[i];
+       cout << "Seek " << pos << endl;
+       ibs.seek(8 * pos);
+
+       if (ibs.tell() != 8 * pos) {
+          cout << "Seek/tell mismatch" << endl;
+          return 2;
+       }
+
+       if (ibs.tell() != 8 * ifs.tellg()) {
+          cout << "Seek/tell mismatch" << endl;
+          return 3;
+       }
+
+       cout << "read bits at position " << pos << endl;
+       ibs.readBits(&output[0], 80);
+
+       if (ibs.read() != uint64((i + 1) * 80 + 80)) {
+          cout << "Incorrect number of read bits" << endl;
+          return 4;
+       }
+
+       for (int j = 0; j < 10; j++) {
+          if (output[j] != byte(pos + j)) {
+             cout << "Read failure" << endl;
+             return 5;
+          }
+       }
+
+       cout << "OK" << endl;
+    }
+
+    cout << "Bits read: " << ibs.read() << endl;
+    remove(name.c_str());
+    cout << endl << "Success" << endl;
+    return 0;
+}
+
 int testBitStreamSpeed2(const string& fileName)
 {
     // Test speed
@@ -576,15 +659,25 @@ int TestDefaultBitStream_main(int argc, const char* argv[])
     }
 
     int res = 0;
-    string fileName = argv[1];
-    res |= testBitStreamCorrectnessAligned1();
-    res |= testBitStreamCorrectnessAligned2();
-    res |= testBitStreamCorrectnessMisaligned1();
-    res |= testBitStreamCorrectnessMisaligned2();
 
-    if (doPerf == true) {
-       res |= testBitStreamSpeed1(fileName);
-       res |= testBitStreamSpeed2(fileName);
+    try {
+       string fileName = argv[1];
+       res |= testBitStreamCorrectnessAligned1();
+       res |= testBitStreamCorrectnessAligned2();
+       res |= testBitStreamCorrectnessMisaligned1();
+       res |= testBitStreamCorrectnessMisaligned2();
+       res |= testSeek(fileName);
+
+       if (doPerf == true) {
+          res |= testBitStreamSpeed1(fileName);
+          res |= testBitStreamSpeed2(fileName);
+       }
+    } catch (kanzi::IOException& e) {
+       cout << "Exception: " << e.what() << endl;
+       res = 99;
+    } catch (BitStreamException& e) {
+       cout << "Exception: " << e.what() << endl;
+       res = 99;
     }
 
     return res;
