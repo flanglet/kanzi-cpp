@@ -31,7 +31,7 @@ namespace kanzi
 #if defined(WIN32) || defined(_WIN32)
    class DefaultOutputBitStream FINAL : public OutputBitStream
 #else
-   class DefaultOutputBitStream FINAL : public OutputBitStream, Seekable
+   class DefaultOutputBitStream FINAL : public OutputBitStream, public Seekable
 #endif
    {
    private:

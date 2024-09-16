@@ -30,7 +30,7 @@ namespace kanzi {
 #if defined(WIN32) || defined(_WIN32)
    class DefaultInputBitStream FINAL : public InputBitStream
 #else
-   class DefaultInputBitStream FINAL : public InputBitStream, Seekable
+   class DefaultInputBitStream FINAL : public InputBitStream, public Seekable
 #endif
    {
    private:

@@ -19,12 +19,16 @@ limitations under the License.
 
 #include "../InputBitStream.hpp"
 #include "../OutputStream.hpp"
+#include "../Seekable.hpp"
 
 
-namespace kanzi
-{
+namespace kanzi {
 
-   class DebugInputBitStream : public InputBitStream
+#if defined(WIN32) || defined(_WIN32)
+   class DebugInputBitStream FINAL : public InputBitStream
+#else
+   class DebugInputBitStream FINAL : public InputBitStream, public Seekable
+#endif
    {
    private:
        InputBitStream& _delegate;
@@ -75,8 +79,47 @@ namespace kanzi
        void setMark(bool mark) { _mark = mark; }
 
        bool mark() const { return _mark; }
+
+#if !defined(WIN32) && !defined(_WIN32)
+       int64 tell();
+
+       bool seek(int64 pos);
+#endif
    };
 
+#if !defined(WIN32) && !defined(_WIN32)
+   // Return a position at the byte boundary
+   inline int64 DebugInputBitStream::tell()
+   {
+#ifdef NO_RTTI
+       throw std::ios_base::failure("Not supported");
+#else     
+       Seekable* seekable = dynamic_cast<Seekable*>(&_delegate);
+
+       if (seekable == nullptr)
+           throw std::ios_base::failure("The stream is not seekable");
+
+       return seekable->tell();
+#endif
+   }
+
+   // Only support a new position at the byte boundary (pos & 7 == 0)
+#ifdef NO_RTTI
+   inline bool DebugInputBitStream::seek(int64)
+   {
+       throw std::ios_base::failure("Not supported");
+#else     
+   inline bool DebugInputBitStream::seek(int64 pos)
+   {
+       Seekable* seekable = dynamic_cast<Seekable*>(&_delegate);
+
+       if (seekable == nullptr)
+           throw std::ios_base::failure("The stream is not seekable");
+
+       return seekable->seek(pos);
+#endif
+    }
+#endif
 }
 #endif
 
