@@ -81,14 +81,15 @@ namespace kanzi {
        SliceArray<byte>* _data;
        SliceArray<byte>* _buffer;
        OutputBitStream* _obs;
-       XXHash32* _hasher;
+       XXHash32* _hasher32;
+       XXHash64* _hasher64;
        ATOMIC_INT* _processedBlockId;
        std::vector<Listener<Event>*> _listeners;
        Context _ctx;
 
    public:
        EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
-           OutputBitStream* obs, XXHash32* hasher,
+           OutputBitStream* obs, XXHash32* hasher32, XXHash64* hasher64,
            ATOMIC_INT* processedBlockId, std::vector<Listener<Event>*>& listeners,
            const Context& ctx);
 
@@ -103,11 +104,11 @@ namespace kanzi {
    public:
 #ifdef CONCURRENCY_ENABLED
        CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform,
-          int blockSize = 4 * 1024 * 1024, bool checksum = false, int jobs = 1,
+           int blockSize = 4 * 1024 * 1024, int checksum = 0, int jobs = 1,
            uint64 fileSize = 0, ThreadPool* pool = nullptr, bool headerless = false);
 #else
        CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform,
-          int blockSize = 4 * 1024 * 1024, bool checksum = false, int jobs = 1,
+          int blockSize = 4 * 1024 * 1024, int checksum = 0, int jobs = 1,
           uint64 fileSize = 0, bool headerless = false);
 #endif
 
@@ -162,7 +163,8 @@ namespace kanzi {
        int _bufferThreshold;
        int _nbInputBlocks;
        int64 _inputSize;
-       XXHash32* _hasher;
+       XXHash32* _hasher32;
+       XXHash64* _hasher64;
        SliceArray<byte>** _buffers; // input & output per block
        short _entropyType;
        uint64 _transformType;

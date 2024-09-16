@@ -46,8 +46,9 @@ static const int ARG_IDX_ENTROPY = 6;
 static const int ARG_IDX_JOBS = 7;
 static const int ARG_IDX_VERBOSE = 8;
 static const int ARG_IDX_LEVEL = 9;
-//static const int ARG_IDX_FROM = 10;
-//static const int ARG_IDX_TO = 11;
+//static const int ARG_IDX_CHECKSUM = 10;
+//static const int ARG_IDX_FROM = 11;
+//static const int ARG_IDX_TO = 12;
 
 static const string KANZI_VERSION = "2.3.0";
 static const string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
@@ -137,8 +138,9 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("        Transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
        log.println("                  [MTFT|RANK|SRT|TEXT|MM|EXE|UTF|PACK]", true);
        log.println("        EG: BWT+RANK or BWTS+MTFT\n", true);
-       log.println("   -x, --checksum", true);
-       log.println("        Enable block checksum\n", true);
+       log.println("   -x, -c32, -x64, --checksum=<size>", true);
+       log.println("        Enable block checksum (32 or 64 bits).", true);
+       log.println("        -x is equivalent to -x32.\n", true);
        log.println("   -s, --skip", true);
        log.println("        Copy blocks with high entropy instead of compressing them.\n", true);
    }
@@ -286,7 +288,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
     string outputName;
     int remove = -1;
     int overwrite = -1;
-    int checksum = -1;
+    int checksum = 0;
     int skip = -1;
     int reorder = -1;
     int noDotFiles = -1;
@@ -463,11 +465,8 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
             continue;
         }
 
-        if ((arg == "--checksum") || (arg == "-x")) {
-            if (ctx != -1) {
-                WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
-            }
-            else if (checksum >= 0) {
+        if ((arg == "-x") || (arg == "-x32") || (arg == "-x64")) {
+            if (checksum >= 0) {
                 WARNING_OPT_DUPLICATE(arg, "true");
             }
 
@@ -478,7 +477,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
                 continue;
             }
 
-            checksum = 1;
+            checksum = (arg == "-x64") ? 64 : 32;
             continue;
         }
 
@@ -679,7 +678,29 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
             continue;
         }
 
-        if ((ctx == ARG_IDX_BLOCK) || (arg.compare(0, 8, "--block=") == 0)) {
+       if (arg.compare(0, 11, "--checksum=") == 0) {
+            arg = arg.substr(11);
+
+            if (mode != "c") {
+                WARNING_OPT_COMP_ONLY(arg);
+                ctx = -1;
+                continue;
+            }
+
+            if (checksum > 0) {
+                WARNING_OPT_DUPLICATE("--checksum", arg);
+            } else {
+                if ((toInt(arg, checksum) == false) || ((checksum != 32) && (checksum != 64))) {
+                    cerr << "Invalid block checksum size provided on command line: " << arg << endl;
+                    return Error::ERR_INVALID_PARAM;
+                }
+            }
+
+            ctx = -1;
+            continue;
+        }
+
+       if ((ctx == ARG_IDX_BLOCK) || (arg.compare(0, 8, "--block=") == 0)) {
             if (ctx != ARG_IDX_BLOCK)
                arg = arg.substr(8);
 
@@ -841,6 +862,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
     map.putString("mode", mode);
     map.putString("inputName", inputName);
     map.putString("outputName", outputName);
+    map.putInt("checksum", checksum);
 
     if (autoBlockSize == 1)
         map.putInt("autoBlock", 1);
@@ -859,9 +881,6 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
 
     if (transf.length() > 0)
         map.putString("transform", transf);
-
-    if (checksum == 1)
-        map.putInt("checksum", 1);
 
     if (skip == 1)
         map.putInt("skipBlocks", 1);

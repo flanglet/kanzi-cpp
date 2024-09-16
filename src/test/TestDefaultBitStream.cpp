@@ -508,7 +508,7 @@ int testSeek(const string& name)
        input[i] = byte(i);
 
     cout << "Test OutputBitStream" << endl;
-    ofstream ofs(name);
+    ofstream ofs(name.c_str());
     DefaultOutputBitStream obs(ofs);
 
     for (int i = 0; i < 256; i++)
@@ -522,7 +522,7 @@ int testSeek(const string& name)
 
     cout << endl;
     cout << "Test InputBitStream" << endl;
-    ifstream ifs(name);
+    ifstream ifs(name.c_str());
     DefaultInputBitStream ibs(ifs);
     ibs.readBits(&output[0], 80);
 

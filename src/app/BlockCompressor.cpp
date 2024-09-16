@@ -73,6 +73,12 @@ BlockCompressor::BlockCompressor(const Context& ctx) :
        }
     }
 
+    _checksum = _ctx.getInt("checksum", 0);
+
+    if ((_checksum != 0) && (_checksum != 32) && (_checksum != 64))
+       throw invalid_argument("Invalid block checksum size");
+
+    _ctx.putInt("checksum", _checksum);
     _ctx.putString("entropy", _codec);
     _ctx.putString("transform", _transform);
     _overwrite = _ctx.getInt("overwrite", 0) != 0;
@@ -83,8 +89,6 @@ BlockCompressor::BlockCompressor(const Context& ctx) :
     _ctx.putInt("verbosity", _verbosity);
     _jobs = _ctx.getInt("jobs", 1);
     _ctx.putInt("jobs", _jobs);
-    _checksum = _ctx.getInt("checksum", 0) != 0;
-    _ctx.putInt("checksum", _checksum ? 1 : 0);
     _noDotFiles = _ctx.getInt("noDotFiles", 0) != 0;
     _ctx.putInt("noDotFiles", _noDotFiles ? 1 : 0);
     _noLinks = _ctx.getInt("noLinks", 0) != 0;
@@ -222,7 +226,14 @@ int BlockCompressor::compress(uint64& outputSize)
 
         ss << "Verbosity: " << _verbosity << endl;
         ss << "Overwrite: " << (_overwrite ? "true" : "false") << endl;
-        ss << "Checksum: " << (_checksum ? "true" : "false") << endl;
+        string ckSize = "NONE";
+
+        if (_checksum == 32)
+           ckSize = "32 bits";
+        else if (_checksum == 64)
+           ckSize = "64 bits";
+
+        ss << "Block checksum: " << ckSize << endl;
         string etransform = _transform;
         transform(etransform.begin(), etransform.end(), etransform.begin(), ::toupper);
         ss << "Using " << (etransform == "NONE" ? "no" : _transform) << " transform (stage 1)" << endl;

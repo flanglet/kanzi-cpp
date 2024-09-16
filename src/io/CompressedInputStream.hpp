@@ -44,7 +44,7 @@ namespace kanzi
        byte* _data;
        int _error; // 0 = OK
        std::string _msg;
-       int _checksum;
+       uint64 _checksum;
        bool _skipped;
        clock_t _completionTime;
 
@@ -59,7 +59,7 @@ namespace kanzi
            _completionTime = clock();
        }
 
-       DecodingTaskResult(const SliceArray<byte>& data, int blockId, int decoded, int checksum,
+       DecodingTaskResult(const SliceArray<byte>& data, int blockId, int decoded, uint64 checksum,
           int error, const std::string& msg, bool skipped = false)
            : _blockId(blockId)
            , _decoded(decoded)
@@ -109,14 +109,15 @@ namespace kanzi
        SliceArray<byte>* _buffer;
        int _blockLength;
        InputBitStream* _ibs;
-       XXHash32* _hasher;
+       XXHash32* _hasher32;
+       XXHash64* _hasher64;
        ATOMIC_INT* _processedBlockId;
        std::vector<Listener<Event>*> _listeners;
        Context _ctx;
 
    public:
        DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
-           int blockSize, InputBitStream* ibs, XXHash32* hasher,
+           int blockSize, InputBitStream* ibs, XXHash32* hasher32, XXHash64* hasher64,
            ATOMIC_INT* processedBlockId, std::vector<Listener<Event>*>& listeners,
            const Context& ctx);
 
@@ -136,7 +137,7 @@ namespace kanzi
                   ThreadPool* pool = nullptr,
 #endif
                    bool headerless = false,
-                   bool checksum = false,
+                   int checksum = 0,
                    int blockSize = 4*1024*1024,
                    std::string transform = "NONE",
                    std::string entropy = "NONE",
@@ -205,7 +206,8 @@ namespace kanzi
        int _bufferThreshold;
        int _available; // decoded not consumed bytes
        int64 _outputSize;
-       XXHash32* _hasher;
+       XXHash32* _hasher32;
+       XXHash64* _hasher64;
        SliceArray<byte>** _buffers; // input & output per block
        short _entropyType;
        uint64 _transformType;

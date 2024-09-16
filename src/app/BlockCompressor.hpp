@@ -139,8 +139,8 @@ namespace kanzi {
        static const int MAX_BLOCK_SIZE;
 
        int _verbosity;
+       int _checksum;
        bool _overwrite;
-       bool _checksum;
        bool _skipBlocks;
        std::string _inputName;
        std::string _outputName;

@@ -38,11 +38,17 @@ namespace kanzi
               AFTER_HEADER_DECODING
           };
 
+          enum HashType {
+              NO_HASH,
+              SIZE_32,
+              SIZE_64
+          };
+
           Event(Type type, int id, const std::string& msg, clock_t evtTime);
 
           Event(Type type, int id, int64 size, clock_t evtTime);
 
-          Event(Type type, int id, int64 size, int hash, bool hashing, clock_t evtTime);
+          Event(Type type, int id, int64 size, uint64 hash, HashType hashType, clock_t evtTime);
 
           virtual ~Event() {}
 
@@ -56,7 +62,9 @@ namespace kanzi
 
           clock_t getTime() const { return _time; }
 
-          int getHash() const { return _hashing ? _hash : 0; }
+          uint64 getHash() const { return _hashType != NO_HASH ? _hash : 0; }
+
+          HashType getHashType() const { return _hashType; }
 
           std::string toString() const;
 
@@ -66,8 +74,8 @@ namespace kanzi
           std::string _msg;
           int _id;
           int64 _size;
-          int _hash;
-          bool _hashing;
+          uint64 _hash;
+          HashType _hashType;
       };
 }
 #endif

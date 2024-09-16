@@ -45,11 +45,11 @@ const int CompressedOutputStream::MAX_CONCURRENCY = 64;
 
 #ifdef CONCURRENCY_ENABLED
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& entropyCodec,
-          const string& transform, int bSize, bool checksum, int tasks, uint64 fileSize,
+          const string& transform, int bSize, int checksum, int tasks, uint64 fileSize,
           ThreadPool* pool, bool headerless)
 #else
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& entropyCodec,
-          const string& transform, int bSize, bool checksum, int tasks, uint64 fileSize, bool headerless)
+          const string& transform, int bSize, int checksum, int tasks, uint64 fileSize, bool headerless)
 #endif
     : OutputStream(os.rdbuf())
 {
@@ -94,11 +94,27 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
     _entropyType = EntropyEncoderFactory::getType(entropyCodec.c_str());
     _transformType = TransformFactory<byte>::getType(transform.c_str());
-    _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
+
+    if (checksum == 0) {
+       _hasher32 = nullptr;
+       _hasher64 = nullptr;
+    }
+    else if (checksum == 32) {
+       _hasher32 = new XXHash32(BITSTREAM_TYPE);
+       _hasher64 = nullptr;
+    }
+    else if (checksum == 64) {
+       _hasher32 = nullptr;
+       _hasher64 = new XXHash64(BITSTREAM_TYPE);
+    }
+    else {
+        throw invalid_argument("The block checksum size must be 0, 32 or 64");
+    }
+
     _jobs = tasks;
     _buffers = new SliceArray<byte>*[2 * _jobs];
     _ctx.putInt("blockSize", _blockSize);
-    _ctx.putInt("checksum", (checksum == true) ? 1 : 0);
+    _ctx.putInt("checksum", checksum);
     _ctx.putString("entropy", entropyCodec);
     _ctx.putString("transform", transform);
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
@@ -179,8 +195,24 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
     string transform = ctx.getString("transform");
     _entropyType = EntropyEncoderFactory::getType(entropyCodec.c_str());
     _transformType = TransformFactory<byte>::getType(transform.c_str());
-    bool checksum = ctx.getInt("checksum", 0) == 1;
-    _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
+    int checksum = ctx.getInt("checksum", 0);
+
+    if (checksum == 0) {
+       _hasher32 = nullptr;
+       _hasher64 = nullptr;
+    }
+    else if (checksum == 32) {
+       _hasher32 = new XXHash32(BITSTREAM_TYPE);
+       _hasher64 = nullptr;
+    }
+    else if (checksum == 64) {
+       _hasher32 = nullptr;
+       _hasher64 = new XXHash64(BITSTREAM_TYPE);
+    }
+    else {
+        throw invalid_argument("The block checksum size must be 0, 32 or 64");
+    }
+
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
@@ -212,9 +244,14 @@ CompressedOutputStream::~CompressedOutputStream()
     delete[] _buffers;
     delete _obs;
 
-    if (_hasher != nullptr) {
-        delete _hasher;
-        _hasher = nullptr;
+    if (_hasher32 != nullptr) {
+        delete _hasher32;
+        _hasher32 = nullptr;
+    }
+
+    if (_hasher64 != nullptr) {
+        delete _hasher64;
+        _hasher64 = nullptr;
     }
 }
 
@@ -229,8 +266,15 @@ void CompressedOutputStream::writeHeader()
     if (_obs->writeBits(BITSTREAM_FORMAT_VERSION, 4) != 4)
         throw IOException("Cannot write bitstream version to header", Error::ERR_WRITE_FILE);
 
-    if (_obs->writeBits((_hasher != nullptr) ? 1 : 0, 1) != 1)
-        throw IOException("Cannot write checksum to header", Error::ERR_WRITE_FILE);
+    uint ckSize = 0;
+
+    if (_hasher32 != nullptr)
+        ckSize = 1;
+    else if (_hasher64 != nullptr)
+        ckSize = 2;
+
+    if (_obs->writeBits(ckSize, 2) != 2)
+        throw IOException("Cannot write block checksum size to header", Error::ERR_WRITE_FILE);
 
     if (_obs->writeBits(_entropyType, 5) != 5)
         throw IOException("Cannot write entropy type to header", Error::ERR_WRITE_FILE);
@@ -270,6 +314,11 @@ void CompressedOutputStream::writeHeader()
 
     if (_obs->writeBits(cksum, 24) != 24)
         throw IOException("Cannot write checksum to header", Error::ERR_WRITE_FILE);
+
+    const uint64 padding = 0;
+
+    if (_obs->writeBits(padding, 15) != 15)
+        throw IOException("Cannot write padding to header", Error::ERR_WRITE_FILE);
 }
 
 bool CompressedOutputStream::addListener(Listener<Event>& bl)
@@ -420,8 +469,8 @@ void CompressedOutputStream::processBlock()
 
             EncodingTask<EncodingTaskResult>* task = new EncodingTask<EncodingTaskResult>(_buffers[taskId],
                 _buffers[_jobs + taskId],
-                _obs, _hasher, &_blockId,
-                blockListeners, copyCtx);
+                _obs, _hasher32, _hasher64,
+                &_blockId, blockListeners, copyCtx);
             tasks.push_back(task);
         }
 
@@ -509,7 +558,7 @@ void CompressedOutputStream::notifyListeners(vector<Listener<Event>*>& listeners
 
 template <class T>
 EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
-    OutputBitStream* obs, XXHash32* hasher,
+    OutputBitStream* obs, XXHash32* hasher32, XXHash64* hasher64,
     ATOMIC_INT* processedBlockId, vector<Listener<Event>*>& listeners,
     const Context& ctx)
     : _obs(obs)
@@ -518,7 +567,8 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
 {
     _data = iBuffer;
     _buffer = oBuffer;
-    _hasher = hasher;
+    _hasher32 = hasher32;
+    _hasher64 = hasher64;
     _processedBlockId = processedBlockId;
 }
 
@@ -548,19 +598,25 @@ T EncodingTask<T>::run()
 
         byte mode = byte(0);
         int postTransformLength = blockLength;
-        uint32 checksum = 0;
+        uint64 checksum = 0;
         uint64 tType = _ctx.getLong("tType");
         short eType = short(_ctx.getInt("eType"));
+        Event::HashType hashType = Event::NO_HASH;
 
         // Compute block checksum
-        if (_hasher != nullptr)
-            checksum = _hasher->hash(&_data->_array[_data->_index], blockLength);
+        if (_hasher32 != nullptr) {
+            checksum = _hasher32->hash(&_data->_array[_data->_index], blockLength);
+            hashType = Event::SIZE_32;
+        }
+        else if (_hasher64 != nullptr) {
+            checksum = _hasher64->hash(&_data->_array[_data->_index], blockLength);
+            hashType = Event::SIZE_64;
+        }
 
         if (_listeners.size() > 0) {
             // Notify before transform
             Event evt(Event::BEFORE_TRANSFORM, blockId,
-                int64(blockLength), checksum, _hasher != nullptr, clock());
-
+                int64(blockLength), checksum, hashType, clock());
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
@@ -641,8 +697,7 @@ T EncodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify after transform
             Event evt(Event::AFTER_TRANSFORM, blockId,
-                int64(postTransformLength), checksum, _hasher != nullptr, clock());
-
+                int64(postTransformLength), checksum, hashType, clock());
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
@@ -675,14 +730,15 @@ T EncodingTask<T>::run()
         obs.writeBits(postTransformLength, 8 * dataSize);
 
         // Write checksum
-        if (_hasher != nullptr)
+        if (_hasher32 != nullptr)
             obs.writeBits(checksum, 32);
+        else if (_hasher64 != nullptr)
+            obs.writeBits(checksum, 64);
 
         if (_listeners.size() > 0) {
             // Notify before entropy
             Event evt(Event::BEFORE_ENTROPY, blockId,
-                int64(postTransformLength), checksum, _hasher != nullptr, clock());
-
+                int64(postTransformLength), checksum, hashType, clock());
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
@@ -721,8 +777,7 @@ T EncodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify after entropy
             Event evt(Event::AFTER_ENTROPY, blockId,
-                int64((written + 7) >> 3), checksum, _hasher != nullptr, clock());
-
+                int64((written + 7) >> 3), checksum, hashType, clock());
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 

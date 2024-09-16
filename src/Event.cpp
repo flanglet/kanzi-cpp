@@ -27,7 +27,7 @@ Event::Event(Event::Type type, int id, int64 size, clock_t evtTime)
     , _size(size)
 {
     _hash = 0;
-    _hashing = false;
+    _hashType = NO_HASH;
 }
 
 Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
@@ -38,16 +38,16 @@ Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
 {
     _size = 0;
     _hash = 0;
-    _hashing = false;
+    _hashType = NO_HASH;
 }
 
-Event::Event(Event::Type type, int id, int64 size, int hash, bool hashing, clock_t evtTime)
+Event::Event(Event::Type type, int id, int64 size, uint64 hash, HashType hashType, clock_t evtTime)
     : _type(type)
     , _time(evtTime)
     , _id(id)
     , _size(size)
     , _hash(hash)
-    , _hashing(hashing)
+    , _hashType(hashType)
 {
 }
 
@@ -65,9 +65,14 @@ std::string Event::toString() const
     ss << ", \"size\":" << getSize();
     ss << ", \"time\":" << getTime();
 
-    if (_hashing == true) {
+    if (_hashType != NO_HASH) {
         ss << ", \"hash\":";
-        ss << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << getHash();
+        ss << std::uppercase << std::setfill('0');
+
+        if (_hashType == SIZE_32)
+           ss << std::setw(8) << std::hex << getHash();
+        else
+           ss << std::setw(16) << std::hex << getHash();
     }
 
     ss << " }";

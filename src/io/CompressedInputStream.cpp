@@ -48,7 +48,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
                    ThreadPool* pool,
 #endif
                    bool headerless,
-                   bool checksum,
+                   int checksum,
                    int blockSize,
                    string transform,
                    string entropy,
@@ -70,6 +70,8 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
+    _hasher32 = nullptr;
+    _hasher64 = nullptr;
     _blockId = 0;
     _bufferId = 0;
     _maxBufferId = 0;
@@ -83,7 +85,6 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
     _gcount = 0;
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
     _jobs = tasks;
-    _hasher = (checksum == true) ? new XXHash32(BITSTREAM_TYPE) : nullptr;
     _outputSize = originalSize;
     _nbInputBlocks = 0;
     _buffers = new SliceArray<byte>*[2 * _jobs];
@@ -100,6 +101,18 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
        _ctx.putString("entropy", entropy);
        _ctx.putString("transform", transform);
        _ctx.putInt("blockSize", blockSize);
+
+       if (checksum == 32) {
+          _hasher32 = new XXHash32(BITSTREAM_TYPE);
+          _hasher64 = nullptr;
+       }
+       else if (checksum == 64) {
+          _hasher32 = nullptr;
+          _hasher64 = new XXHash64(BITSTREAM_TYPE);
+       }
+       else {
+           throw invalid_argument("The block checksum size must be 0, 32 or 64");
+       }
     }
 
     for (int i = 0; i < 2 * _jobs; i++)
@@ -152,7 +165,8 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
 #endif
 
     _jobs = tasks;
-    _hasher = nullptr;
+    _hasher32 = nullptr;
+    _hasher64 = nullptr;
     _outputSize = 0;
     _nbInputBlocks = 0;
     _headless = headerless;
@@ -197,8 +211,23 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
         _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
 
         // Optional checksum
-        if (_ctx.getInt("checksum") != 0)
-            _hasher = new XXHash32(BITSTREAM_TYPE);
+        int checksum = ctx.getInt("checksum", 0);
+
+        if (checksum == 0) {
+            _hasher32 = nullptr;
+            _hasher64 = nullptr;
+        }
+        else if (checksum == 32) {
+            _hasher32 = new XXHash32(BITSTREAM_TYPE);
+            _hasher64 = nullptr;
+        }
+        else if (checksum == 64) {
+            _hasher32 = nullptr;
+            _hasher64 = new XXHash64(BITSTREAM_TYPE);
+        }
+        else {
+            throw invalid_argument("The block checksum size must be 0, 32 or 64");
+        }
     }
 
     _buffers = new SliceArray<byte>*[2 * _jobs];
@@ -224,9 +253,14 @@ CompressedInputStream::~CompressedInputStream()
     delete[] _buffers;
     delete _ibs;
 
-    if (_hasher != nullptr) {
-        delete _hasher;
-        _hasher = nullptr;
+    if (_hasher32 != nullptr) {
+        delete _hasher32;
+        _hasher32 = nullptr;
+    }
+
+    if (_hasher64 != nullptr) {
+        delete _hasher64;
+        _hasher64 = nullptr;
     }
 }
 
@@ -234,8 +268,6 @@ void CompressedInputStream::readHeader()
 {
     if ((_headless == true) || (_initialized.exchange(true, memory_order_relaxed)))
         return;
-
-    const uint64 pos0 = _ibs->read();
 
     // Read stream type
     const int type = int(_ibs->readBits(32));
@@ -258,8 +290,24 @@ void CompressedInputStream::readHeader()
     _ctx.putInt("bsVersion", bsVersion);
 
     // Read block checksum
-    if (_ibs->readBit() == 1)
-        _hasher = new XXHash32(BITSTREAM_TYPE);
+    if (bsVersion >= 6) {
+        uint64 ckSize = _ibs->readBits(2);
+
+        if (ckSize == 1) {
+            _hasher32 = new XXHash32(BITSTREAM_TYPE);
+        }
+        else if (ckSize == 2) {
+            _hasher64 = new XXHash64(BITSTREAM_TYPE);
+        }
+        else if (ckSize == 3) {
+           throw IOException("Invalid bitsreamm, incorrect block checksum size",
+               Error::ERR_INVALID_FILE);
+        }
+    }
+    else {
+       if (_ibs->readBit() == 1)
+           _hasher32 = new XXHash32(BITSTREAM_TYPE);
+    }
 
     try {
         // Read entropy codec
@@ -328,12 +376,26 @@ void CompressedInputStream::readHeader()
     cksum2 = (cksum2 >> 23) ^ (cksum2 >> 3);
 
     if (cksum1 != (cksum2 & ((1 << crcSize) - 1)))
-        throw IOException("Invalid bitstream, corrupted header", Error::ERR_CRC_CHECK);
+        throw IOException("Invalid bitstream, header checksum mismatch", Error::ERR_CRC_CHECK);
+
+    if (bsVersion >= 6) {
+       const uint64 padding = _ibs->readBits(15);
+
+       if (padding != 0)
+           throw IOException("Invalid bitstream, corrupted header", Error::ERR_INVALID_FILE);
+    }
 
     if (_listeners.size() > 0) {
         stringstream ss;
         ss << "Bitstream version: " << bsVersion << endl;
-        ss << "Checksum: " << (_hasher != nullptr ? "true" : "false") << endl;
+        string ckSize = "NONE";
+
+        if (_hasher32 != nullptr)
+            ckSize = "32 bits";
+        else if (_hasher64 != nullptr)
+            ckSize = "64 bits";
+
+        ss << "Block checksum: " << ckSize<< endl;
         ss << "Block size: " << _blockSize << " bytes" << endl;
         string w1 = EntropyDecoderFactory::getName(_entropyType);
         ss << "Using " << ((w1 == "NONE") ? "no" : w1) << " entropy codec (stage 1)" << endl;
@@ -350,8 +412,6 @@ void CompressedInputStream::readHeader()
         Event evt(Event::AFTER_HEADER_DECODING, 0, ss.str(), clock());
         CompressedInputStream::notifyListeners(blockListeners, evt);
     }
-
-    _ctx.putInt("headerSize", int(_ibs->read() - pos0));
 }
 
 bool CompressedInputStream::addListener(Listener<Event>& bl)
@@ -509,7 +569,7 @@ int CompressedInputStream::processBlock()
 
                 DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(_buffers[taskId],
                     _buffers[_jobs + taskId], blkSize,
-                    _ibs, _hasher, &_blockId,
+                    _ibs, _hasher32, _hasher64, &_blockId,
                     blockListeners, copyCtx);
                 tasks.push_back(task);
             }
@@ -540,9 +600,16 @@ int CompressedInputStream::processBlock()
                 _buffers[_bufferId]->_index = 0;
 
                 if (blockListeners.size() > 0) {
+                    Event::HashType hashType = Event::NO_HASH;
+
+                    if (_hasher32 != nullptr)
+                        hashType = Event::SIZE_32;
+                    else if (_hasher64 != nullptr)
+                        hashType = Event::SIZE_64;
+
                     // Notify after transform ... in block order !
                     Event evt(Event::AFTER_TRANSFORM, res._blockId,
-                        int64(res._decoded), res._checksum, _hasher != nullptr, res._completionTime);
+                        int64(res._decoded), res._checksum, hashType, res._completionTime);
                     CompressedInputStream::notifyListeners(blockListeners, evt);
                 }
             }
@@ -588,9 +655,16 @@ int CompressedInputStream::processBlock()
                         _buffers[i]->_index = 0;
 
                         if (blockListeners.size() > 0) {
+                           Event::HashType hashType = Event::NO_HASH;
+
+                           if (_hasher32 != nullptr)
+                               hashType = Event::SIZE_32;
+                           else if (_hasher64 != nullptr)
+                               hashType = Event::SIZE_64;
+
                            // Notify after transform ... in block order !
                            Event evt(Event::AFTER_TRANSFORM, res._blockId,
-                               int64(res._decoded), res._checksum, _hasher != nullptr, res._completionTime);
+                               int64(res._decoded), res._checksum, hashType, res._completionTime);
                            CompressedInputStream::notifyListeners(blockListeners, evt);
                         }
                     }
@@ -670,7 +744,7 @@ void CompressedInputStream::notifyListeners(vector<Listener<Event>*>& listeners,
 
 template <class T>
 DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
-    int blockSize, InputBitStream* ibs, XXHash32* hasher,
+    int blockSize, InputBitStream* ibs, XXHash32* hasher32, XXHash64* hasher64,
     ATOMIC_INT* processedBlockId, vector<Listener<Event>*>& listeners,
     const Context& ctx)
     : _listeners(listeners)
@@ -680,7 +754,8 @@ DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
     _data = iBuffer;
     _buffer = oBuffer;
     _ibs = ibs;
-    _hasher = hasher;
+    _hasher32 = hasher32;
+    _hasher64 = hasher64;
     _processedBlockId = processedBlockId;
 }
 
@@ -714,7 +789,7 @@ T DecodingTask<T>::run()
         CPU_PAUSE();
     }
 
-    uint32 checksum1 = 0;
+    uint64 checksum1 = 0;
     EntropyDecoder* ed = nullptr;
     InputBitStream* ibs = nullptr;
     TransformSequence<byte>* transform = nullptr;
@@ -814,13 +889,21 @@ T DecodingTask<T>::run()
             return T(*_data, blockId, 0, checksum1, Error::ERR_READ_FILE, ss.str());
         }
 
+        Event::HashType hashType = Event::NO_HASH;
+
         // Extract checksum from bitstream (if any)
-        if (_hasher != nullptr)
-            checksum1 = uint32(ibs->readBits(32));
+        if (_hasher32 != nullptr) {
+            checksum1 = ibs->readBits(32);
+            hashType = Event::SIZE_32;
+        }
+        else if (_hasher64 != nullptr) {
+            checksum1 = ibs->readBits(64);
+            hashType = Event::SIZE_64;
+        }
 
         if (_listeners.size() > 0) {
             // Notify before entropy (block size in bitstream is unknown)
-            Event evt(Event::BEFORE_ENTROPY, blockId, int64(-1), checksum1, _hasher != nullptr, clock());
+            Event evt(Event::BEFORE_ENTROPY, blockId, int64(-1), checksum1, hashType, clock());
             CompressedInputStream::notifyListeners(_listeners, evt);
         }
 
@@ -859,7 +942,7 @@ T DecodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify after entropy (block size set to size in bitstream)
             Event evt(Event::AFTER_ENTROPY, blockId,
-                int64(r), checksum1, _hasher != nullptr, clock());
+                int64(r), checksum1, hashType, clock());
 
             CompressedInputStream::notifyListeners(_listeners, evt);
         }
@@ -867,7 +950,7 @@ T DecodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify before transform (block size after entropy decoding)
             Event evt(Event::BEFORE_TRANSFORM, blockId,
-                int64(preTransformLength), checksum1, _hasher != nullptr, clock());
+                int64(preTransformLength), checksum1, hashType, clock());
 
             CompressedInputStream::notifyListeners(_listeners, evt);
         }
@@ -889,12 +972,21 @@ T DecodingTask<T>::run()
         const int decoded = _data->_index - savedIdx;
 
         // Verify checksum
-        if (_hasher != nullptr) {
-            const uint32 checksum2 = _hasher->hash(&_data->_array[savedIdx], decoded);
+        if (_hasher32 != nullptr) {
+            const uint32 checksum2 = _hasher32->hash(&_data->_array[savedIdx], decoded);
+
+            if (checksum2 != uint32(checksum1)) {
+                stringstream ss;
+                ss << "Corrupted bitstream: expected checksum " << std::hex << checksum1 << ", found " << std::hex << checksum2;
+                return T(*_data, blockId, decoded, checksum1, Error::ERR_CRC_CHECK, ss.str());
+            }
+        }
+        else if (_hasher64 != nullptr) {
+            const uint64 checksum2 = _hasher64->hash(&_data->_array[savedIdx], decoded);
 
             if (checksum2 != checksum1) {
                 stringstream ss;
-                ss << "Corrupted bitstream: expected checksum " << hex << checksum1 << ", found " << hex << checksum2;
+                ss << "Corrupted bitstream: expected checksum " << std::hex << checksum1 << ", found " << std::hex << checksum2;
                 return T(*_data, blockId, decoded, checksum1, Error::ERR_CRC_CHECK, ss.str());
             }
         }
