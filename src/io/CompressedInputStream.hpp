@@ -27,7 +27,7 @@ limitations under the License.
 #include "../InputStream.hpp"
 #include "../InputBitStream.hpp"
 #include "../SliceArray.hpp"
-#include "../util/XXHash32.hpp"
+#include "../util/XXHash.hpp"
 
 #if __cplusplus >= 201103L
    #include <functional>
