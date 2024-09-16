@@ -499,6 +499,7 @@ int testBitStreamCorrectnessMisaligned2()
 
 int testSeek(const string& name)
 {
+#if !defined(WIN32) && !defined(_WIN32)
     // Test correctness (not byte aligned)
     cout << endl << "Seek Test" << endl << endl;
     byte input[256];
@@ -572,6 +573,8 @@ int testSeek(const string& name)
     cout << "Bits read: " << ibs.read() << endl;
     remove(name.c_str());
     cout << endl << "Success" << endl;
+#endif
+
     return 0;
 }
 

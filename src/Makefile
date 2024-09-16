@@ -9,7 +9,7 @@ ifeq ($(CONCURRENCY_DISABLED), 1)
 endif
 
 ifeq ($(NO_RTTI), 1)
-	RTTI_FLAG = -fno-rtti
+	RTTI_FLAG = -fno-rtti -DNO_RTTI
 else
 	RTTI_FLAG = -frtti
 endif

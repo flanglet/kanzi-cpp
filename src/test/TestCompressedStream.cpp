@@ -29,7 +29,7 @@ uint64 compress1(byte block[], uint length)
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
-    CompressedOutputStream* cos = new CompressedOutputStream(ios, "HUFFMAN", "RLT+TEXT", blockSize, false, 1);
+    CompressedOutputStream* cos = new CompressedOutputStream(ios, "HUFFMAN", "RLT+TEXT", blockSize, 0, 1);
     cos->write((const char*)block, length);
     cos->close();
     uint64 written = cos->getWritten();
@@ -60,22 +60,27 @@ uint64 compress2(byte block[], uint length)
 {
     int jobs;
     srand((uint)time(nullptr));
-    bool check = (rand() & 1) == 0;
+    int checksum = 32 * min(rand() & 3, 2);
     uint blockSize = (length / (1 + (rand() & 3))) & -16;
 
 #ifdef CONCURRENCY_ENABLED
     jobs = 1 + (rand() & 3);
-    cout << "Test - " << jobs << " job(s)" << ((check == true) ? " - checksum" : "") << endl;
+    cout << "Test - " << jobs << " job(s) - ";
 #else
     jobs = 1;
-    cout << "Test" << ((check == true) ? " - checksum" : "") << endl;
+    cout << "Test - ";
 #endif
 
+    if (checksum == 0)
+       cout << "no checksum" << endl;
+    else
+       cout << checksum << " bits checksum" << endl;
+    
     byte* buf = new byte[length];
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
-    CompressedOutputStream* cos = new CompressedOutputStream(ios, "ANS0", "LZX", blockSize, check, jobs);
+    CompressedOutputStream* cos = new CompressedOutputStream(ios, "ANS0", "LZX", blockSize, checksum, jobs);
     cos->write((const char*)block, length);
     cos->close();
     uint64 written = cos->getWritten();
@@ -110,7 +115,7 @@ uint64 compress3(byte block[], uint length)
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
-    CompressedOutputStream* cos = new CompressedOutputStream(ios, "FPAQ", "LZP+ZRLT", blockSize, true, 1);
+    CompressedOutputStream* cos = new CompressedOutputStream(ios, "FPAQ", "LZP+ZRLT", blockSize, 32, 1);
     cos->write((const char*)block, length);
     cos->close();
     uint64 written = cos->getWritten();
@@ -146,7 +151,7 @@ uint64 compress4(byte block[], uint length)
         cout << "Test - write after close" << endl;
         stringbuf buffer;
         iostream os(&buffer);
-        cos = new CompressedOutputStream(os, "HUFFMAN", "TEXT", 4 * 1024 * 1024, false, 1);
+        cos = new CompressedOutputStream(os, "HUFFMAN", "TEXT", 4 * 1024 * 1024, 0, 1);
         cos->write((const char*)block, length);
         cos->close();
         cos->put(char(0));
@@ -172,7 +177,7 @@ uint64 compress5(byte block[], uint length)
         cout << "Test - read after close" << endl;
         stringbuf buffer;
         iostream ios(&buffer);
-        cos = new CompressedOutputStream(ios, "HUFFMAN", "TEXT", 4 * 1024 * 1024, false, 1);
+        cos = new CompressedOutputStream(ios, "HUFFMAN", "TEXT", 4 * 1024 * 1024, 0, 1);
         cos->write((const char*)block, length);
         cos->close();
         ios.seekg(0);

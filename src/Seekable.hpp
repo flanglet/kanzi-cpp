@@ -32,7 +32,7 @@ namespace kanzi
        virtual int64 tell() = 0;
 
        // position in bits
-       // return success or fialure
+       // return success or failure
        virtual bool seek(int64 position) = 0;
 
        virtual ~Seekable(){}

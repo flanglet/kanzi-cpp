@@ -28,7 +28,11 @@ limitations under the License.
 namespace kanzi
 {
 
+#if defined(WIN32) || defined(_WIN32)
+   class DefaultOutputBitStream FINAL : public OutputBitStream
+#else
    class DefaultOutputBitStream FINAL : public OutputBitStream, Seekable
+#endif
    {
    private:
        OutputStream& _os;
@@ -59,9 +63,11 @@ namespace kanzi
 
        void close() { _close(); }
 
+#if !defined(WIN32) && !defined(_WIN32)
        int64 tell();
 
        bool seek(int64 pos);
+#endif
 
        // Return number of bits written so far
        uint64 written() const
@@ -123,6 +129,7 @@ namespace kanzi
            flush();
    }
 
+#if !defined(WIN32) && !defined(_WIN32)
    // Return the position at the byte boundary
    inline int64 DefaultOutputBitStream::tell()
    {
@@ -140,6 +147,7 @@ namespace kanzi
        _os.seekp(std::streampos(pos >> 3));
        return true;
    }
+#endif
 
 }
 #endif
