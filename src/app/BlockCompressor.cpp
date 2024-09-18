@@ -738,7 +738,8 @@ T FileCompressTask<T>::run()
     SliceArray<byte> sa(buf, DEFAULT_BUFFER_SIZE, 0);
 
     if (_listeners.size() > 0) {
-        Event evt(Event::COMPRESSION_START, -1, int64(0), clock());
+        int64 inputSize = _ctx.getLong("fileSize", 0);
+        Event evt(Event::COMPRESSION_START, -1, inputSize, clock());
         BlockCompressor::notifyListeners(_listeners, evt);
     }
 
