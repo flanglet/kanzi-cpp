@@ -106,9 +106,9 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         i += s;
     }
 
-    const int dstEnd = count - (count / 10);
+    const int maxTarget = count - (count / 10);
 
-    if ((res == false) || (n == 0) || ((3 * n + 6) >= dstEnd)) {
+    if ((res == false) || (n == 0) || ((3 * n + 6) >= maxTarget)) {
         delete[] aliasMap;
         return false;
     }
@@ -137,7 +137,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         dstIdx += 3;
     }
 
-    if (estimate >= dstEnd) {
+    if (estimate >= maxTarget) {
         // Not worth it
         delete[] aliasMap;
         return false;
@@ -170,7 +170,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     delete[] aliasMap;
     input._index += srcIdx;
     output._index += dstIdx;
-    return dstIdx < dstEnd;
+    return dstIdx < maxTarget;
 }
 
 bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
@@ -189,12 +189,12 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
-    const int start = int(src[0]);
-    const int adjust = int(src[1]); // adjust end of regular processing
+    const int start = int(src[0]) & 0x03;
+    const int adjust = int(src[1]) & 0x03; // adjust end of regular processing
     const int n = (int(src[2]) << 8) + int(src[3]);
 
     // Protect against invalid map size value
-    if ((n >= 32768) || (3 * n >= count))
+    if ((n == 0) || (n >= 32768) || (3 * n >= count))
         return false;
 
     struct symb {
@@ -210,9 +210,8 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         int s = (uint32(src[srcIdx]) << 16) | (uint32(src[srcIdx + 1]) << 8) | uint32(src[srcIdx + 2]);
         const int sl = unpack(s, (byte*)&m[i].val);
 
-        if (sl == 0) {
+        if (sl == 0)
             return false;
-        }
 
         m[i].len = uint8(sl);
         srcIdx += 3;
@@ -220,12 +219,16 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     int dstIdx = 0;
     const int srcEnd = count - 4 + adjust;
+    const int dstEnd = output._length - 4;
+
+    if (dstEnd < 0)
+        return false;
 
     for (int i = 0; i < start; i++)
         dst[dstIdx++] = src[srcIdx++];
 
     // Emit data
-    while (srcIdx < srcEnd) {
+    while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
         uint alias = uint(src[srcIdx++]);
 
         if (alias >= 128)
@@ -236,8 +239,10 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         dstIdx += s.len;
     }
 
-    for (int i = srcEnd; i < count; i++)
-        dst[dstIdx++] = src[srcIdx++];
+    if ((srcIdx >= srcEnd) && (dstIdx < dstEnd + adjust)) {
+        for (int i = 0; i < 4 - adjust; i++)
+            dst[dstIdx++] = src[srcIdx++];
+    }
 
     input._index += srcIdx;
     output._index += dstIdx;
