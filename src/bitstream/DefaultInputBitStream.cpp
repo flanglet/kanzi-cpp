@@ -15,7 +15,6 @@ limitations under the License.
 
 #include "DefaultInputBitStream.hpp"
 #include "../util.hpp"
-#include "../io/IOException.hpp"
 
 using namespace kanzi;
 using namespace std;
@@ -190,7 +189,8 @@ int DefaultInputBitStream::readFromInputStream(uint count)
         // Clear flags (required for future seeks when EOF is reached)
         _is.clear();
     }
-    catch (IOException& e) {
+    catch (runtime_error& e) {
+        // Catch IOException without depending on io package
         throw BitStreamException(e.what(), BitStreamException::INPUT_OUTPUT);
     }
 

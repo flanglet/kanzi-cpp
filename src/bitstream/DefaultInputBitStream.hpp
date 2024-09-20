@@ -27,7 +27,7 @@ limitations under the License.
 
 namespace kanzi {
 
-#if defined(WIN32) || defined(_WIN32)
+#if defined(_MSC_VER) && _MSC_VER <= 1500
    class DefaultInputBitStream FINAL : public InputBitStream
 #else
    class DefaultInputBitStream FINAL : public InputBitStream, public Seekable
@@ -73,7 +73,7 @@ namespace kanzi {
 
        bool isClosed() const { return _closed; }
 
-#if !defined(WIN32) && !defined(_WIN32)
+#if !defined(_MSC_VER) || _MSC_VER > 1500
        int64 tell();
 
        bool seek(int64 pos);
@@ -141,27 +141,36 @@ namespace kanzi {
        return 64;
    }
 
-#if !defined(WIN32) && !defined(_WIN32)
-   // Return a position at the byte boundary
+#if !defined(_MSC_VER) || _MSC_VER > 1500
    inline int64 DefaultInputBitStream::tell()
    {
+       if (isClosed())
+           return -1;
+
+       _is.clear();
        const int64 res = int64(_is.tellg());
-       return (res < 0) ? -1 : 8 * (res - _maxPosition - 1 + _position);
+       return (res < 0) ? -1 : 8 * (res - int64(_maxPosition + 1 - _position)) - int64(_availBits);
    }
 
-   // Only support a new position at the byte boundary (pos & 7 == 0)
    inline bool DefaultInputBitStream::seek(int64 pos)
    {
-       if ((pos & 7) != 0)
+       if (isClosed())
+           return false;
+
+       if (pos < 0)
            return false;
 
        // Update internal states to force read at new stream position
-       _read += (8 * int64(_position) - _availBits);
-       _availBits = pos & 7;
+       _read += (8 * int64(_position) - int64(_availBits));
+       _availBits = 0;
        _position = 0;
        _maxPosition = -1;
        _is.clear();
        _is.seekg(std::streampos(pos >> 3));
+
+       if ((pos & 7) != 0)
+           readBits(pos & 7);
+
        return true;
    }
 #endif
