@@ -9,22 +9,16 @@ ifeq ($(CONCURRENCY_DISABLED), 1)
 	CONCURRENCY_FLAG = -DCONCURRENCY_DISABLED
 endif
 
-ifeq ($(NO_RTTI), 1)
-	RTTI_FLAG = -fno-rtti -DNO_RTTI
-else
-        RTTI_FLAG = -frtti
-endif
-
 ifeq ($(OS),Windows_NT)
-	CXXFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native $(RTTI_FLAG) $(CONCURRENCY_FLAG)
+	CXXFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 	#LDFLAGS=-static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
 else
 	ARCH ?= $(shell uname -m)
 
 	ifeq ($(ARCH),x86_64)
-		CXXFLAGS=-c -std=c++17 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native $(RTTI_FLAG) $(CONCURRENCY_FLAG)
+		CXXFLAGS=-c -std=c++17 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 	else
-		CXXFLAGS=-c -std=c++17 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic $(RTTI_FLAG) $(CONCURRENCY_FLAG)
+		CXXFLAGS=-c -std=c++17 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 	endif
 endif	
 

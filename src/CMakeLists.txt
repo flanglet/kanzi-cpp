@@ -10,14 +10,7 @@ if(CONCURRENCY_DISABLED)
     add_definitions(-DCONCURRENCY_DISABLED)
 endif()
 
-if(NO_RTTI)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
-    add_definitions(-DNO_RTTI)
-else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frtti")
-endif()
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti")
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
