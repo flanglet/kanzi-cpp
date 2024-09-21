@@ -46,9 +46,7 @@ namespace kanzi
 
           Event(Type type, int id, const std::string& msg, clock_t evtTime);
 
-          Event(Type type, int id, int64 size, clock_t evtTime);
-
-          Event(Type type, int id, int64 size, uint64 hash, HashType hashType, clock_t evtTime);
+          Event(Type type, int id, int64 size, clock_t evtTime, uint64 hash = 0, HashType hashType = NO_HASH);
 
           virtual ~Event() {}
 

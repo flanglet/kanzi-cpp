@@ -20,16 +20,6 @@ limitations under the License.
 
 using namespace kanzi;
 
-Event::Event(Event::Type type, int id, int64 size, clock_t evtTime)
-    : _type(type)
-    , _time(evtTime)
-    , _id(id)
-    , _size(size)
-{
-    _hash = 0;
-    _hashType = NO_HASH;
-}
-
 Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
     : _type(type)
     , _time(evtTime)
@@ -41,7 +31,7 @@ Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
     _hashType = NO_HASH;
 }
 
-Event::Event(Event::Type type, int id, int64 size, uint64 hash, HashType hashType, clock_t evtTime)
+Event::Event(Event::Type type, int id, int64 size, clock_t evtTime, uint64 hash, HashType hashType)
     : _type(type)
     , _time(evtTime)
     , _id(id)

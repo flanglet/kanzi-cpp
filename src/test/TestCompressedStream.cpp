@@ -13,13 +13,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <cstdio>
+#include <fstream>
 #include <iostream>
 #include "../io/CompressedInputStream.hpp"
 #include "../io/CompressedOutputStream.hpp"
+#include "../io/IOException.hpp"
 
 using namespace std;
 using namespace kanzi;
-
 
 uint64 compress1(byte block[], uint length)
 {
@@ -29,7 +31,7 @@ uint64 compress1(byte block[], uint length)
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
-    CompressedOutputStream* cos = new CompressedOutputStream(ios, "HUFFMAN", "RLT+TEXT", blockSize, 0, 1);
+    CompressedOutputStream* cos = new CompressedOutputStream(ios, 1, "HUFFMAN", "RLT+TEXT", blockSize);
     cos->write((const char*)block, length);
     cos->close();
     uint64 written = cos->getWritten();
@@ -75,12 +77,12 @@ uint64 compress2(byte block[], uint length)
        cout << "no checksum" << endl;
     else
        cout << checksum << " bits checksum" << endl;
-    
+
     byte* buf = new byte[length];
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
-    CompressedOutputStream* cos = new CompressedOutputStream(ios, "ANS0", "LZX", blockSize, checksum, jobs);
+    CompressedOutputStream* cos = new CompressedOutputStream(ios, jobs, "ANS0", "LZX", blockSize, checksum);
     cos->write((const char*)block, length);
     cos->close();
     uint64 written = cos->getWritten();
@@ -115,7 +117,7 @@ uint64 compress3(byte block[], uint length)
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
-    CompressedOutputStream* cos = new CompressedOutputStream(ios, "FPAQ", "LZP+ZRLT", blockSize, 32, 1);
+    CompressedOutputStream* cos = new CompressedOutputStream(ios, 1, "FPAQ", "LZP+ZRLT", blockSize, 32);
     cos->write((const char*)block, length);
     cos->close();
     uint64 written = cos->getWritten();
@@ -151,7 +153,7 @@ uint64 compress4(byte block[], uint length)
         cout << "Test - write after close" << endl;
         stringbuf buffer;
         iostream os(&buffer);
-        cos = new CompressedOutputStream(os, "HUFFMAN", "TEXT", 4 * 1024 * 1024, 0, 1);
+        cos = new CompressedOutputStream(os, 1, "HUFFMAN", "TEXT");
         cos->write((const char*)block, length);
         cos->close();
         cos->put(char(0));
@@ -177,7 +179,7 @@ uint64 compress5(byte block[], uint length)
         cout << "Test - read after close" << endl;
         stringbuf buffer;
         iostream ios(&buffer);
-        cos = new CompressedOutputStream(ios, "HUFFMAN", "TEXT", 4 * 1024 * 1024, 0, 1);
+        cos = new CompressedOutputStream(ios, 1, "HUFFMAN", "TEXT");
         cos->write((const char*)block, length);
         cos->close();
         ios.seekg(0);
@@ -257,5 +259,15 @@ int main(int argc, const char* argv[])
 int TestCompressedStream_main(int argc, const char* argv[])
 #endif
 {
-    return testCorrectness(argc, argv);
+    try {
+        return testCorrectness(argc, argv);
+    }
+    catch (IOException& e) {
+        cout << "Exception: " << e.what() << endl;
+        return e.error();
+    }
+    catch (runtime_error& e) {
+        cout << "Exception: " << e.what() << endl;
+        return 255;
+    }
 }

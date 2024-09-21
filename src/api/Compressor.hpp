@@ -36,14 +36,13 @@ limitations under the License.
     *  Compression parameters
     */
    struct cData {
-       // Required fields
-       char transform[64];      /* name of transforms [None|PACK|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX]
-                                                          [RLT|ZRLT|MTFT|RANK|SRT|TEXT|MM|EXE|UTF] */
-       char entropy[16];        /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
-       unsigned int blockSize;  /* size of block in bytes */
-       unsigned int jobs;       /* max number of concurrent tasks */
-       int checksum;            /* bool to indicate use of block checksum */
-       int headerless;          /* bool to indicate if the bitstream has a header (usually yes) */
+       char transform[64];          /* name of transforms [None|PACK|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX]
+                                                          [RLT|ZRLT|MTFT|RANK|SRT|TEXT|MM|EXE|UTF|DNA] */
+       char entropy[16];            /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
+       unsigned int blockSize;      /* size of block in bytes */
+       unsigned int jobs;           /* max number of concurrent tasks */
+       int checksum;                /* 0, 32 or 64 to indicate size of block checksum */
+       int headerless;              /* bool to indicate if the bitstream has a header (usually set to 0) */
    };
 
    /**

@@ -38,15 +38,15 @@ limitations under the License.
        // Required fields
        unsigned int bufferSize;      /* read buffer size (at least block size) */
        unsigned int jobs;            /* max number of concurrent tasks */
-       int headerless;               /* bool to indicate if the bitstream has a header (usually yes) */
+       int headerless;               /* bool to indicate if the bitstream has a header (usually set to 0) */
 
        // Optional fields: only required if headerless is true
        char transform[64];           /* name of transforms [None|PACK|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX]
-                                                       [RLT|ZRLT|MTFT|RANK|SRT|TEXT|MM|EXE|UTF] */
+                                                       [RLT|ZRLT|MTFT|RANK|SRT|TEXT|MM|EXE|UTF|DNA] */
        char entropy[16];             /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
        unsigned int blockSize;       /* size of block in bytes */
        unsigned long originalSize;   /* size of original file in bytes */
-       int checksum;                 /* bool to indicate use of block checksum */
+       int checksum;                 /* 0, 32 or 64 to indicate size of block checksum */
        int bsVersion;                /* version of the bitstream */
    };
 

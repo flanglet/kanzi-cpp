@@ -17,7 +17,6 @@ limitations under the License.
 #include "CompressedInputStream.hpp"
 #include "IOException.hpp"
 #include "../Error.hpp"
-#include "../bitstream/DefaultInputBitStream.hpp"
 #include "../entropy/EntropyDecoderFactory.hpp"
 #include "../transform/TransformFactory.hpp"
 
@@ -44,15 +43,15 @@ const int CompressedInputStream::MAX_BLOCK_ID = int((uint(1) << 31) - 1);
 
 CompressedInputStream::CompressedInputStream(InputStream& is,
                    int tasks,
+                   string entropy,
+                   string transform,
+                   int blockSize,
+                   int checksum,
+                   uint64 originalSize,
 #ifdef CONCURRENCY_ENABLED
                    ThreadPool* pool,
 #endif
                    bool headerless,
-                   int checksum,
-                   int blockSize,
-                   string transform,
-                   string entropy,
-                   uint64 originalSize,
                    int bsVersion)
     : InputStream(is.rdbuf())
     , _parentCtx(nullptr)
@@ -110,7 +109,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
           _hasher32 = nullptr;
           _hasher64 = new XXHash64(BITSTREAM_TYPE);
        }
-       else {
+       else if (checksum != 0) {
            throw invalid_argument("The block checksum size must be 0, 32 or 64");
        }
     }
@@ -119,12 +118,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
         _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
 }
 
-#if __cplusplus >= 201103L
-CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool headerless,
-    std::function<InputBitStream* (InputStream&)>* createBitStream)
-#else
 CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool headerless)
-#endif
     : InputStream(is.rdbuf())
     , _ctx(ctx)
     , _parentCtx(&ctx)
@@ -154,16 +148,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
     _initialized = false;
     _closed = false;
     _gcount = 0;
-
-#if __cplusplus >= 201103L
-    // A hook can be provided by the caller to customize the instantiation of the
-    // input bitstream.
-    _ibs = (createBitStream == nullptr) ? new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE) :
-                             (*createBitStream)(is);
-#else
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
-#endif
-
     _jobs = tasks;
     _hasher32 = nullptr;
     _hasher64 = nullptr;
@@ -379,10 +364,8 @@ void CompressedInputStream::readHeader()
         throw IOException("Invalid bitstream, header checksum mismatch", Error::ERR_CRC_CHECK);
 
     if (bsVersion >= 6) {
-       const uint64 padding = _ibs->readBits(15);
-
-       if (padding != 0)
-           throw IOException("Invalid bitstream, corrupted header", Error::ERR_INVALID_FILE);
+       // Padding
+       _ibs->readBits(15);
     }
 
     if (_listeners.size() > 0) {
@@ -520,6 +503,7 @@ istream& CompressedInputStream::read(char* data, streamsize length)
 int CompressedInputStream::processBlock()
 {
     readHeader();
+
     // Protect against future concurrent modification of the list of block listeners
     vector<Listener<Event>*> blockListeners(_listeners);
     vector<DecodingTask<DecodingTaskResult>*> tasks;
@@ -534,7 +518,6 @@ int CompressedInputStream::processBlock()
         // Assign optimal number of tasks and jobs per task (if the number of blocks is available)
         if (nbTasks > 1) {
             // Limit the number of tasks if there are fewer blocks that _jobs
-            // It allows more jobs per task and reduces memory usage.
             if (_nbInputBlocks != 0)
                 nbTasks = min(_nbInputBlocks, _jobs);
 
@@ -549,7 +532,6 @@ int CompressedInputStream::processBlock()
         while (true) {
             const int firstBlockId = _blockId.load(memory_order_acquire);
 
-            // Create as many tasks as empty buffers to decode
             for (int taskId = 0; taskId < nbTasks; taskId++) {
                 if (_buffers[taskId]->_length < bufSize) {
                     delete[] _buffers[taskId]->_array;
@@ -609,7 +591,7 @@ int CompressedInputStream::processBlock()
 
                     // Notify after transform ... in block order !
                     Event evt(Event::AFTER_TRANSFORM, res._blockId,
-                        int64(res._decoded), res._checksum, hashType, res._completionTime);
+                        int64(res._decoded), res._completionTime, res._checksum, hashType);
                     CompressedInputStream::notifyListeners(blockListeners, evt);
                 }
             }
@@ -664,7 +646,7 @@ int CompressedInputStream::processBlock()
 
                            // Notify after transform ... in block order !
                            Event evt(Event::AFTER_TRANSFORM, res._blockId,
-                               int64(res._decoded), res._checksum, hashType, res._completionTime);
+                               int64(res._decoded), res._completionTime, res._checksum, hashType);
                            CompressedInputStream::notifyListeners(blockListeners, evt);
                         }
                     }
@@ -744,7 +726,7 @@ void CompressedInputStream::notifyListeners(vector<Listener<Event>*>& listeners,
 
 template <class T>
 DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
-    int blockSize, InputBitStream* ibs, XXHash32* hasher32, XXHash64* hasher64,
+    int blockSize, DefaultInputBitStream* ibs, XXHash32* hasher32, XXHash64* hasher64,
     ATOMIC_INT* processedBlockId, vector<Listener<Event>*>& listeners,
     const Context& ctx)
     : _listeners(listeners)
@@ -864,20 +846,9 @@ T DecodingTask<T>::run()
         const int length = dataSize << 3;
         const uint64 mask = (uint64(1) << length) - 1;
         const int preTransformLength = int(ibs->readBits(length) & mask);
-
-        if (preTransformLength == 0) {
-            // Error => cancel concurrent decoding tasks
-            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
-
-            if (streamPerTask == true)
-                delete ibs;
-
-            return T(*_data, blockId, 0, checksum1, 0, "Invalid transform block size");
-        }
-
         const int maxTransformSize = min(max(2 * _blockLength, 1024), CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE);
 
-        if ((preTransformLength < 0) || (preTransformLength > maxTransformSize)) {
+        if ((preTransformLength <= 0) || (preTransformLength > maxTransformSize)) {
             // Error => cancel concurrent decoding tasks
             _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
             stringstream ss;
@@ -903,7 +874,7 @@ T DecodingTask<T>::run()
 
         if (_listeners.size() > 0) {
             // Notify before entropy (block size in bitstream is unknown)
-            Event evt(Event::BEFORE_ENTROPY, blockId, int64(-1), checksum1, hashType, clock());
+            Event evt(Event::BEFORE_ENTROPY, blockId, int64(-1), clock(), checksum1, hashType);
             CompressedInputStream::notifyListeners(_listeners, evt);
         }
 
@@ -942,7 +913,7 @@ T DecodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify after entropy (block size set to size in bitstream)
             Event evt(Event::AFTER_ENTROPY, blockId,
-                int64(r), checksum1, hashType, clock());
+                int64(r), clock(), checksum1, hashType);
 
             CompressedInputStream::notifyListeners(_listeners, evt);
         }
@@ -950,7 +921,7 @@ T DecodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify before transform (block size after entropy decoding)
             Event evt(Event::BEFORE_TRANSFORM, blockId,
-                int64(preTransformLength), checksum1, hashType, clock());
+                int64(preTransformLength), clock(), checksum1, hashType);
 
             CompressedInputStream::notifyListeners(_listeners, evt);
         }

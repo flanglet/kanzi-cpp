@@ -25,8 +25,8 @@ limitations under the License.
 #include "../Event.hpp"
 #include "../Listener.hpp"
 #include "../InputStream.hpp"
-#include "../InputBitStream.hpp"
 #include "../SliceArray.hpp"
+#include "../bitstream/DefaultInputBitStream.hpp"
 #include "../util/XXHash.hpp"
 
 #if __cplusplus >= 201103L
@@ -108,7 +108,7 @@ namespace kanzi
        SliceArray<byte>* _data;
        SliceArray<byte>* _buffer;
        int _blockLength;
-       InputBitStream* _ibs;
+       DefaultInputBitStream* _ibs;
        XXHash32* _hasher32;
        XXHash64* _hasher64;
        ATOMIC_INT* _processedBlockId;
@@ -117,7 +117,7 @@ namespace kanzi
 
    public:
        DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
-           int blockSize, InputBitStream* ibs, XXHash32* hasher32, XXHash64* hasher64,
+           int blockSize, DefaultInputBitStream* ibs, XXHash32* hasher32, XXHash64* hasher64,
            ATOMIC_INT* processedBlockId, std::vector<Listener<Event>*>& listeners,
            const Context& ctx);
 
@@ -132,26 +132,22 @@ namespace kanzi
    public:
         // If headerless == false, all provided compression parameters will be overwritten
         // with values read from the bitstream header.
-        CompressedInputStream(InputStream& is, int jobs = 1,
+        CompressedInputStream(InputStream& is,
+                   int jobs = 1,
+                   std::string entropy = "NONE",
+                   std::string transform = "NONE",
+                   int blockSize = 4*1024*1024,
+                   int checksum = 0,
+                   uint64 originalSize = 0,
 #ifdef CONCURRENCY_ENABLED
-                  ThreadPool* pool = nullptr,
+                   ThreadPool* pool = nullptr,
 #endif
                    bool headerless = false,
-                   int checksum = 0,
-                   int blockSize = 4*1024*1024,
-                   std::string transform = "NONE",
-                   std::string entropy = "NONE",
-                   uint64 originalSize = 0,
                    int bsVersion = BITSTREAM_FORMAT_VERSION);
 
       // If headerless == true, the context must contain "entropy", "transform", "checksum" & "blockSize"
       // If "bsVersion" is missing, the current value of BITSTREAM_FORMAT_VERSION is assumed.
-#if __cplusplus >= 201103L
-       CompressedInputStream(InputStream& is, Context& ctx, bool headerless = false,
-          std::function<InputBitStream*(InputStream&)>* createBitStream = nullptr);
-#else
        CompressedInputStream(InputStream& is, Context& ctx, bool headerless = false);
-#endif
 
        ~CompressedInputStream();
 
@@ -211,7 +207,7 @@ namespace kanzi
        SliceArray<byte>** _buffers; // input & output per block
        short _entropyType;
        uint64 _transformType;
-       InputBitStream* _ibs;
+       DefaultInputBitStream* _ibs;
        ATOMIC_BOOL _initialized;
        ATOMIC_BOOL _closed;
        ATOMIC_INT _blockId;
@@ -246,12 +242,11 @@ namespace kanzi
 
    inline std::streampos CompressedInputStream::tellg()
    {
-       return uint(getRead());
+       throw std::ios_base::failure("Not supported");
    }
 
    inline std::istream& CompressedInputStream::seekg(std::streampos)
    {
-       setstate(std::ios::badbit);
        throw std::ios_base::failure("Not supported");
    }
 

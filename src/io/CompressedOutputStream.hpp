@@ -25,8 +25,8 @@ limitations under the License.
 #include "../Event.hpp"
 #include "../Listener.hpp"
 #include "../OutputStream.hpp"
-#include "../OutputBitStream.hpp"
 #include "../SliceArray.hpp"
+#include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../util/XXHash.hpp"
 
 #if __cplusplus >= 201103L
@@ -80,7 +80,7 @@ namespace kanzi {
    private:
        SliceArray<byte>* _data;
        SliceArray<byte>* _buffer;
-       OutputBitStream* _obs;
+       DefaultOutputBitStream* _obs;
        XXHash32* _hasher32;
        XXHash64* _hasher64;
        ATOMIC_INT* _processedBlockId;
@@ -89,7 +89,7 @@ namespace kanzi {
 
    public:
        EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
-           OutputBitStream* obs, XXHash32* hasher32, XXHash64* hasher64,
+           DefaultOutputBitStream* obs, XXHash32* hasher32, XXHash64* hasher64,
            ATOMIC_INT* processedBlockId, std::vector<Listener<Event>*>& listeners,
            const Context& ctx);
 
@@ -102,22 +102,19 @@ namespace kanzi {
        friend class EncodingTask<EncodingTaskResult>;
 
    public:
+       CompressedOutputStream(OutputStream& os,
+                   int jobs = 1,
+                   std::string entropy = "NONE",
+                   std::string transform = "NONE",
+                   int blockSize = 4*1024*1024,
+                   int checksum = 0,
+                   uint64 originalSize = 0,
 #ifdef CONCURRENCY_ENABLED
-       CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform,
-           int blockSize = 4 * 1024 * 1024, int checksum = 0, int jobs = 1,
-           uint64 fileSize = 0, ThreadPool* pool = nullptr, bool headerless = false);
-#else
-       CompressedOutputStream(OutputStream& os, const std::string& codec, const std::string& transform,
-          int blockSize = 4 * 1024 * 1024, int checksum = 0, int jobs = 1,
-          uint64 fileSize = 0, bool headerless = false);
+                   ThreadPool* pool = nullptr,
 #endif
+                   bool headerless = false);
 
-#if __cplusplus >= 201103L
-       CompressedOutputStream(OutputStream& os, Context& ctx, bool headerless = false,
-          std::function<OutputBitStream*(OutputStream&)>* createBitStream = nullptr);
-#else
        CompressedOutputStream(OutputStream& os, Context& ctx, bool headerless = false);
-#endif
 
        ~CompressedOutputStream();
 
@@ -168,7 +165,7 @@ namespace kanzi {
        SliceArray<byte>** _buffers; // input & output per block
        short _entropyType;
        uint64 _transformType;
-       OutputBitStream* _obs;
+       DefaultOutputBitStream* _obs;
        ATOMIC_BOOL _initialized;
        ATOMIC_BOOL _closed;
        ATOMIC_INT _blockId;
@@ -187,18 +184,17 @@ namespace kanzi {
 
    inline std::streampos CompressedOutputStream::tellp()
    {
-       return uint(getWritten());
+       throw std::ios_base::failure("Not supported");
    }
 
    inline std::ostream& CompressedOutputStream::seekp(std::streampos)
    {
-       setstate(std::ios::badbit);
        throw std::ios_base::failure("Not supported");
    }
 
    inline std::ostream& CompressedOutputStream::flush()
    {
-       // Let the underlying output stream flush itself when needed
+       // NOOP: let the underlying output stream flush itself when needed
        return *this;
    }
 

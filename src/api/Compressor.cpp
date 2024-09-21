@@ -131,14 +131,15 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         // Create compression stream and update context
         fos = new FileOutputStream(fd);
         cctx = new cContext();
-        bool checksum = pData->checksum == 0 ? false : true;
-        bool headerless = pData->headerless == 0 ? false : true;
 
+        cctx->pCos = new CompressedOutputStream(*fos, pData->jobs,
+                                                pData->entropy, pData->transform,
+                                                pData->blockSize, pData->checksum,
+                                                fileSize,
 #ifdef CONCURRENCY_ENABLED
-        cctx->pCos = new CompressedOutputStream(*fos, pData->entropy, pData->transform, pData->blockSize, checksum, pData->jobs, fileSize, nullptr, headerless);
-#else
-        cctx->pCos = new CompressedOutputStream(*fos, pData->entropy, pData->transform, pData->blockSize, checksum, pData->jobs, fileSize, headerless);
+                                                nullptr,
 #endif
+                                                pData->headerless);
 
         cctx->blockSize = pData->blockSize;
         cctx->fos = fos;

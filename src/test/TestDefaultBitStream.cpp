@@ -45,7 +45,7 @@ int testBitStreamCorrectnessAligned1()
         iostream ios(&buffer);
         DefaultOutputBitStream obs(ios, 16384);
         cout << endl;
-        obs.writeBits(0x0123456789ABCDEFLL, t);
+        obs.writeBits(0x01234567L, t);
         cout << "Written (before close): " << obs.written() << endl;
         obs.close();
         cout << "Written (after close): " << obs.written() << endl;
@@ -147,7 +147,7 @@ int testBitStreamCorrectnessMisaligned1()
         DefaultOutputBitStream obs(ios, 16384);
         cout << endl;
         obs.writeBit(1);
-        obs.writeBits(0x0123456789ABCDEFLL, t);
+        obs.writeBits(0x01234567L, t);
         cout << "Written (before close): " << obs.written() << endl;
         obs.close();
         cout << "Written (after close): " << obs.written() << endl;
@@ -499,7 +499,7 @@ int testBitStreamCorrectnessMisaligned2()
 
 int testSeek(const string& name)
 {
-#if !defined(WIN32) && !defined(_WIN32)
+#if !defined(_MSC_VER) || _MSC_VER > 1500
     // Test correctness (not byte aligned)
     cout << endl << "Seek Test" << endl << endl;
     byte input[256];
@@ -509,33 +509,46 @@ int testSeek(const string& name)
        input[i] = byte(i);
 
     cout << "Test OutputBitStream" << endl;
-    ofstream ofs(name.c_str());
+    ofstream ofs(name.c_str(), ios_base::out | ios_base::binary);
     DefaultOutputBitStream obs(ofs);
 
-    for (int i = 0; i < 256; i++)
+    for (int i = 0; i < 128; i++)
        obs.writeBits(uint64(0xAA), 8);
 
-    obs.seek(0);
-    obs.writeBits(&input[0], 8 * 256);
+    obs.seek(8 * 32);
+    obs.writeBits(&input[10], 8 * 32);
+    obs.seek(8 * 2);
+    obs.writeBits(&input[100], 8 * 32);
     obs.close();
     ofs.close();
     cout << "Bits written: " << obs.written() << endl;
+    remove(name.c_str());
 
     cout << endl;
     cout << "Test InputBitStream" << endl;
-    ifstream ifs(name.c_str());
-    DefaultInputBitStream ibs(ifs);
-    ibs.readBits(&output[0], 80);
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 256; i++)
+        input[i] = byte(i);
+
+    ofstream ofs2(name.c_str(), ios_base::out | ios_base::binary);
+    ofs2.write(reinterpret_cast<const char*>(input), 256);
+    ofs2.close();
+    ifstream ifs(name.c_str(), ios_base::in | ios_base::binary);
+    DefaultInputBitStream ibs(ifs);
+    memset(output, 0, 256);
+    ibs.readBits(&output[0], 8 * 16);
+
+    for (int i = 0; i < 16; i++) {
        if (output[i] != byte(i)) {
           cout << "Read failure" << endl;
+          remove(name.c_str());
           return 1;
        }
     }
 
     // Positions in bytes
     int64 positions[5] = { 50, 0, 20, 33, 0 };
+    memset(output, 0, 256);
 
     for (int i = 0; i < 5; i ++) {
        int64 pos = positions[i];
@@ -544,25 +557,30 @@ int testSeek(const string& name)
 
        if (ibs.tell() != 8 * pos) {
           cout << "Seek/tell mismatch" << endl;
+          remove(name.c_str());
           return 2;
        }
 
        if (ibs.tell() != 8 * ifs.tellg()) {
           cout << "Seek/tell mismatch" << endl;
+          remove(name.c_str());
           return 3;
        }
 
-       cout << "read bits at position " << pos << endl;
-       ibs.readBits(&output[0], 80);
+       cout << "Read bits at position " << pos << endl;
+       ibs.readBits(&output[pos], 8 * 10);
+       int64 r = ibs.readBits(8);
 
-       if (ibs.read() != uint64((i + 1) * 80 + 80)) {
+       if (r != pos + 10) {
           cout << "Incorrect number of read bits" << endl;
+          remove(name.c_str());
           return 4;
        }
 
        for (int j = 0; j < 10; j++) {
-          if (output[j] != byte(pos + j)) {
+          if (output[pos + j] != byte(pos + j)) {
              cout << "Read failure" << endl;
+             remove(name.c_str());
              return 5;
           }
        }
@@ -574,7 +592,6 @@ int testSeek(const string& name)
     remove(name.c_str());
     cout << endl << "Success" << endl;
 #endif
-
     return 0;
 }
 
@@ -685,3 +702,4 @@ int TestDefaultBitStream_main(int argc, const char* argv[])
 
     return res;
 }
+

@@ -18,7 +18,6 @@ limitations under the License.
 #include "IOException.hpp"
 #include "../Error.hpp"
 #include "../Magic.hpp"
-#include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../entropy/EntropyEncoderFactory.hpp"
 #include "../entropy/EntropyUtils.hpp"
 #include "../transform/TransformFactory.hpp"
@@ -43,14 +42,17 @@ const int CompressedOutputStream::CANCEL_TASKS_ID = -1;
 const int CompressedOutputStream::MAX_CONCURRENCY = 64;
 
 
+CompressedOutputStream::CompressedOutputStream(OutputStream& os,
+                   int tasks,
+                   string entropy,
+                   string transform,
+                   int blockSize,
+                   int checksum,
+                   uint64 fileSize,
 #ifdef CONCURRENCY_ENABLED
-CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& entropyCodec,
-          const string& transform, int bSize, int checksum, int tasks, uint64 fileSize,
-          ThreadPool* pool, bool headerless)
-#else
-CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& entropyCodec,
-          const string& transform, int bSize, int checksum, int tasks, uint64 fileSize, bool headerless)
+                   ThreadPool* pool,
 #endif
+                   bool headerless)
     : OutputStream(os.rdbuf())
 {
 #ifdef CONCURRENCY_ENABLED
@@ -66,33 +68,33 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
-    if (bSize > MAX_BITSTREAM_BLOCK_SIZE) {
+    if (blockSize > MAX_BITSTREAM_BLOCK_SIZE) {
         std::stringstream ss;
         ss << "The block size must be at most " << (MAX_BITSTREAM_BLOCK_SIZE >> 20) << " MB";
         throw invalid_argument(ss.str());
     }
 
-    if (bSize < MIN_BITSTREAM_BLOCK_SIZE) {
+    if (blockSize < MIN_BITSTREAM_BLOCK_SIZE) {
         std::stringstream ss;
         ss << "The block size must be at least " << MIN_BITSTREAM_BLOCK_SIZE;
         throw invalid_argument(ss.str());
     }
 
-    if ((bSize & -16) != bSize)
+    if ((blockSize & -16) != blockSize)
         throw invalid_argument("The block size must be a multiple of 16");
 
     _blockId = 0;
     _bufferId = 0;
-    _blockSize = bSize;
-    _bufferThreshold = bSize;
+    _blockSize = blockSize;
+    _bufferThreshold = blockSize;
     _inputSize = fileSize;
-    const int nbBlocks = (_inputSize == 0) ? 0 : int((_inputSize + int64(bSize - 1)) / int64(bSize));
+    const int nbBlocks = (_inputSize == 0) ? 0 : int((_inputSize + int64(blockSize - 1)) / int64(blockSize));
     _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
     _headless = headerless;
     _initialized = false;
     _closed = false;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
-    _entropyType = EntropyEncoderFactory::getType(entropyCodec.c_str());
+    _entropyType = EntropyEncoderFactory::getType(entropy.c_str());
     _transformType = TransformFactory<byte>::getType(transform.c_str());
 
     if (checksum == 0) {
@@ -115,7 +117,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     _buffers = new SliceArray<byte>*[2 * _jobs];
     _ctx.putInt("blockSize", _blockSize);
     _ctx.putInt("checksum", checksum);
-    _ctx.putString("entropy", entropyCodec);
+    _ctx.putString("entropy", entropy);
     _ctx.putString("transform", transform);
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
 
@@ -130,12 +132,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, const string& e
     }
 }
 
-#if __cplusplus >= 201103L
-CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx,
-          bool headerless, std::function<OutputBitStream*(OutputStream&)>* createBitStream)
-#else
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, bool headerless)
-#endif
     : OutputStream(os.rdbuf())
     , _ctx(ctx)
 {
@@ -154,43 +151,35 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
         throw invalid_argument("The number of jobs is limited to 1 in this version");
 #endif
 
-    int bSize = ctx.getInt("blockSize");
+    int blockSize = ctx.getInt("blockSize");
 
-    if (bSize > MAX_BITSTREAM_BLOCK_SIZE) {
+    if (blockSize > MAX_BITSTREAM_BLOCK_SIZE) {
         std::stringstream ss;
         ss << "The block size must be at most " << (MAX_BITSTREAM_BLOCK_SIZE >> 20) << " MB";
         throw invalid_argument(ss.str());
     }
 
-    if (bSize < MIN_BITSTREAM_BLOCK_SIZE) {
+    if (blockSize < MIN_BITSTREAM_BLOCK_SIZE) {
         std::stringstream ss;
         ss << "The block size must be at least " << MIN_BITSTREAM_BLOCK_SIZE;
         throw invalid_argument(ss.str());
     }
 
-    if ((bSize & -16) != bSize)
+    if ((blockSize & -16) != blockSize)
         throw invalid_argument("The block size must be a multiple of 16");
 
     _inputSize = ctx.getLong("fileSize", 0);
-    const int nbBlocks = (_inputSize == 0) ? 0 : int((_inputSize + int64(bSize - 1)) / int64(bSize));
+    const int nbBlocks = (_inputSize == 0) ? 0 : int((_inputSize + int64(blockSize - 1)) / int64(blockSize));
     _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
     _jobs = tasks;
     _blockId = 0;
     _bufferId = 0;
-    _blockSize = bSize;
-    _bufferThreshold = bSize;
+    _blockSize = blockSize;
+    _bufferThreshold = blockSize;
     _initialized = false;
     _closed = false;
     _headless = headerless;
-
-#if __cplusplus >= 201103L
-    // A hook can be provided by the caller to customize the instantiation of the
-    // output bitstream.
-    _obs = (createBitStream == nullptr) ? new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE) : (*createBitStream)(os);
-#else
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
-#endif
-
     string entropyCodec = ctx.getString("entropy");
     string transform = ctx.getString("transform");
     _entropyType = EntropyEncoderFactory::getType(entropyCodec.c_str());
@@ -558,7 +547,7 @@ void CompressedOutputStream::notifyListeners(vector<Listener<Event>*>& listeners
 
 template <class T>
 EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
-    OutputBitStream* obs, XXHash32* hasher32, XXHash64* hasher64,
+    DefaultOutputBitStream* obs, XXHash32* hasher32, XXHash64* hasher64,
     ATOMIC_INT* processedBlockId, vector<Listener<Event>*>& listeners,
     const Context& ctx)
     : _obs(obs)
@@ -616,7 +605,7 @@ T EncodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify before transform
             Event evt(Event::BEFORE_TRANSFORM, blockId,
-                int64(blockLength), checksum, hashType, clock());
+                int64(blockLength), clock(), checksum, hashType);
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
@@ -697,7 +686,7 @@ T EncodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify after transform
             Event evt(Event::AFTER_TRANSFORM, blockId,
-                int64(postTransformLength), checksum, hashType, clock());
+                int64(postTransformLength), clock(), checksum, hashType);
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
@@ -738,7 +727,7 @@ T EncodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify before entropy
             Event evt(Event::BEFORE_ENTROPY, blockId,
-                int64(postTransformLength), checksum, hashType, clock());
+                int64(postTransformLength), clock(), checksum, hashType);
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
@@ -777,7 +766,7 @@ T EncodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify after entropy
             Event evt(Event::AFTER_ENTROPY, blockId,
-                int64((written + 7) >> 3), checksum, hashType, clock());
+                int64((written + 7) >> 3), clock(), checksum, hashType);
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
