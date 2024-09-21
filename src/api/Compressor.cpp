@@ -139,7 +139,7 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
 #ifdef CONCURRENCY_ENABLED
                                                 nullptr,
 #endif
-                                                pData->headerless);
+                                                pData->headerless != 0);
 
         cctx->blockSize = pData->blockSize;
         cctx->fos = fos;
