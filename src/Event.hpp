@@ -35,7 +35,8 @@ namespace kanzi
               AFTER_ENTROPY,
               DECOMPRESSION_START,
               DECOMPRESSION_END,
-              AFTER_HEADER_DECODING
+              AFTER_HEADER_DECODING,
+              BLOCK_INFO
           };
 
           enum HashType {
@@ -44,7 +45,7 @@ namespace kanzi
               SIZE_64
           };
 
-          Event(Type type, int id, const std::string& msg, clock_t evtTime);
+          Event(Type type, int id, const std::string& msg, clock_t evtTime = 0);
 
           Event(Type type, int id, int64 size, clock_t evtTime, uint64 hash = 0, HashType hashType = NO_HASH);
 

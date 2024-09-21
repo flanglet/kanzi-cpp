@@ -19,6 +19,7 @@ limitations under the License.
 #include "../Error.hpp"
 #include "../entropy/EntropyDecoderFactory.hpp"
 #include "../transform/TransformFactory.hpp"
+#include "../util/strings.hpp"
 
 #ifdef CONCURRENCY_ENABLED
 #include <future>
@@ -781,6 +782,7 @@ T DecodingTask<T>::run()
 
     try {
         // Read shared bitstream sequentially (each task is gated by _processedBlockId)
+        const uint64 blockOffset = _ibs->tell();
         const uint lr = 3 + uint(_ibs->readBits(5));
         uint64 read = _ibs->readBits(lr);
 
@@ -873,9 +875,19 @@ T DecodingTask<T>::run()
         }
 
         if (_listeners.size() > 0) {
-            // Notify before entropy (block size in bitstream is unknown)
-            Event evt(Event::BEFORE_ENTROPY, blockId, int64(-1), clock(), checksum1, hashType);
-            CompressedInputStream::notifyListeners(_listeners, evt);
+            // Create message (use snprintf because stringstream is too slow)
+            char buf1[16];
+            to_binary(int(skipFlags), buf1, 9);
+            char buf2[100];
+            snprintf(buf2, sizeof(buf2),
+                     "{ \"type\":\"%s\", \"id\":%d, \"offset\":%lu, \"skipFlags\":%s }",
+                     "BLOCK_INFO", blockId, blockOffset, buf1);
+            Event evt1(Event::BLOCK_INFO, blockId, string(buf2));
+            CompressedInputStream::notifyListeners(_listeners, evt1);
+
+            // Notify before entropy
+            Event evt2(Event::BEFORE_ENTROPY, blockId, int64(r), clock(), checksum1, hashType);
+            CompressedInputStream::notifyListeners(_listeners, evt2);
         }
 
         const int bufferSize = max(_blockLength, preTransformLength + CompressedInputStream::EXTRA_BUFFER_SIZE);
@@ -911,19 +923,15 @@ T DecodingTask<T>::run()
         ed = nullptr;
 
         if (_listeners.size() > 0) {
-            // Notify after entropy (block size set to size in bitstream)
-            Event evt(Event::AFTER_ENTROPY, blockId,
-                int64(r), clock(), checksum1, hashType);
-
-            CompressedInputStream::notifyListeners(_listeners, evt);
-        }
-
-        if (_listeners.size() > 0) {
-            // Notify before transform (block size after entropy decoding)
-            Event evt(Event::BEFORE_TRANSFORM, blockId,
+            // Notify after entropy
+            Event evt1(Event::AFTER_ENTROPY, blockId,
                 int64(preTransformLength), clock(), checksum1, hashType);
+            CompressedInputStream::notifyListeners(_listeners, evt1);
 
-            CompressedInputStream::notifyListeners(_listeners, evt);
+            // Notify before transform (block size after entropy decoding)
+            Event evt2(Event::BEFORE_TRANSFORM, blockId,
+                int64(preTransformLength), clock(), checksum1, hashType);
+            CompressedInputStream::notifyListeners(_listeners, evt2);
         }
 
         transform = TransformFactory<byte>::newTransform(_ctx, tType);
