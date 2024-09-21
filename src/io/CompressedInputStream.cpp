@@ -875,9 +875,15 @@ T DecodingTask<T>::run()
         }
 
         if (_listeners.size() > 0) {
+            char buf1[9] = { 0 };
+            uint8 sf = uint8(skipFlags);
+
+            for (int i = 7; i >= 0; i--) {
+                buf1[i] = (sf & 1) ? '1' : '0';
+                sf >>= 1;
+            }
+
             // Create message (use snprintf because stringstream is too slow)
-            char buf1[16];
-            to_binary(int(skipFlags), buf1, 9);
             char buf2[100];
             snprintf(buf2, sizeof(buf2),
                      "{ \"type\":\"%s\", \"id\":%d, \"offset\":%lu, \"skipFlags\":%s }",
