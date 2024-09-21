@@ -39,6 +39,16 @@ limitations under the License.
 #endif
 
 
+inline void to_binary(int num, char* buffer, int length)
+{
+    for (int i = length - 2; i >= 0; i--) {
+        buffer[i] = (num & 1) ? '1' : '0';
+        num >>= 1;
+    }
+
+    buffer[length - 1] = '\0';
+}
+
 // trim from end of string (right)
 inline std::string& rtrim(std::string& s)
 {
