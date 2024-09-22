@@ -130,7 +130,6 @@ namespace kanzi
    }
 
 #if !defined(_MSC_VER) || _MSC_VER > 1500
-   // Return the position at the byte boundary
    inline int64 DefaultOutputBitStream::tell()
    {
        if (isClosed() == true)
@@ -138,7 +137,7 @@ namespace kanzi
 
        _os.clear();
        const int64 res = int64(_os.tellp());
-       return (res < 0) ? -1 : 8 * res;
+       return (res < 0) ? -1 : 8 * res + (int64(_position) << 3) + int64(64 - _availBits);
    }
 
    // Only support a new position at the byte boundary (pos & 7 == 0)

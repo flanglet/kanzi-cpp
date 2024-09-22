@@ -765,9 +765,30 @@ T EncodingTask<T>::run()
 
         if (_listeners.size() > 0) {
             // Notify after entropy
-            Event evt(Event::AFTER_ENTROPY, blockId,
+            Event evt1(Event::AFTER_ENTROPY, blockId,
                 int64((written + 7) >> 3), clock(), checksum, hashType);
-            CompressedOutputStream::notifyListeners(_listeners, evt);
+            CompressedOutputStream::notifyListeners(_listeners, evt1);
+
+#if !defined(_MSC_VER) || _MSC_VER > 1500
+            if (_ctx.getInt("verbosity", 0) > 4) {
+                const int64 blockOffset = _obs->tell();
+                char buf1[9] = { 0 };
+                uint8 sf = uint8(skipFlags);
+
+                for (int i = 7; i >= 0; i--) {
+                    buf1[i] = (sf & 1) ? '1' : '0';
+                    sf >>= 1;
+                }
+
+                // Create message (use snprintf because stringstream is too slow)
+                char buf2[100];
+                snprintf(buf2, sizeof(buf2),
+                         "{ \"type\":\"%s\", \"id\":%d, \"offset\":%lu, \"skipFlags\":%s }",
+                         "BLOCK_INFO", blockId, blockOffset, buf1);
+                Event evt2(Event::BLOCK_INFO, blockId, string(buf2));
+                CompressedOutputStream::notifyListeners(_listeners, evt2);
+            }
+#endif
         }
 
         // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)

@@ -781,7 +781,9 @@ T DecodingTask<T>::run()
 
     try {
         // Read shared bitstream sequentially (each task is gated by _processedBlockId)
+#if !defined(_MSC_VER) || _MSC_VER > 1500
         const uint64 blockOffset = _ibs->tell();
+#endif
         const uint lr = 3 + uint(_ibs->readBits(5));
         uint64 read = _ibs->readBits(lr);
 
@@ -874,6 +876,7 @@ T DecodingTask<T>::run()
         }
 
         if (_listeners.size() > 0) {
+#if !defined(_MSC_VER) || _MSC_VER > 1500
             if (_ctx.getInt("verbosity", 0) > 4) {
                 char buf1[9] = { 0 };
                 uint8 sf = uint8(skipFlags);
@@ -891,6 +894,7 @@ T DecodingTask<T>::run()
                 Event evt1(Event::BLOCK_INFO, blockId, string(buf2));
                 CompressedInputStream::notifyListeners(_listeners, evt1);
             }
+#endif
 
             // Notify before entropy
             Event evt2(Event::BEFORE_ENTROPY, blockId, int64(r), clock(), checksum1, hashType);
