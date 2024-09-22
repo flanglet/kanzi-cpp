@@ -889,8 +889,8 @@ T DecodingTask<T>::run()
                 // Create message (use snprintf because stringstream is too slow)
                 char buf2[100];
                 snprintf(buf2, sizeof(buf2),
-                         "{ \"type\":\"%s\", \"id\":%d, \"offset\":%lu, \"skipFlags\":%s }",
-                         "BLOCK_INFO", blockId, blockOffset, buf1);
+                         "{ \"type\":\"%s\", \"id\":%d, \"offset\":%llu, \"skipFlags\":%s }",
+                         "BLOCK_INFO", blockId, (unsigned long long)blockOffset, buf1);
                 Event evt1(Event::BLOCK_INFO, blockId, string(buf2));
                 CompressedInputStream::notifyListeners(_listeners, evt1);
             }

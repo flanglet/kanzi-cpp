@@ -255,10 +255,11 @@ int testCorrectness(int, const char*[])
 
 void testSeek(string name)
 {
+#if !defined(_MSC_VER) || _MSC_VER > 1500
     ifstream ifs;
     ifs.open(name.c_str(), ios::binary|ios::in);
 
-    byte buf[1024]; 
+    char buf[1024];
     int64 pos1 = 0;
     int64 pos2 = 0;
     CompressedInputStream cis(ifs, 1);
@@ -278,7 +279,7 @@ void testSeek(string name)
         cis.seek(pos1);
         pos2 = cis.tell();
         cout << pos1 << " / " << pos2 << endl;
-        cis.read((char*)buf, 100);
+        cis.read(buf, 100);
 
         for (int i = 0; i < 100; i++)
            cout << buf[i];
@@ -288,6 +289,7 @@ void testSeek(string name)
     
     cis.close();
     ifs.close();
+#endif
 }
 
 #ifdef __GNUG__
