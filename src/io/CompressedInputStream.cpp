@@ -19,7 +19,6 @@ limitations under the License.
 #include "../Error.hpp"
 #include "../entropy/EntropyDecoderFactory.hpp"
 #include "../transform/TransformFactory.hpp"
-#include "../util/strings.hpp"
 
 #ifdef CONCURRENCY_ENABLED
 #include <future>
@@ -875,21 +874,23 @@ T DecodingTask<T>::run()
         }
 
         if (_listeners.size() > 0) {
-            char buf1[9] = { 0 };
-            uint8 sf = uint8(skipFlags);
+            if (_ctx.getInt("verbosity", 0) > 4) {
+                char buf1[9] = { 0 };
+                uint8 sf = uint8(skipFlags);
 
-            for (int i = 7; i >= 0; i--) {
-                buf1[i] = (sf & 1) ? '1' : '0';
-                sf >>= 1;
+                for (int i = 7; i >= 0; i--) {
+                    buf1[i] = (sf & 1) ? '1' : '0';
+                    sf >>= 1;
+                }
+
+                // Create message (use snprintf because stringstream is too slow)
+                char buf2[100];
+                snprintf(buf2, sizeof(buf2),
+                         "{ \"type\":\"%s\", \"id\":%d, \"offset\":%lu, \"skipFlags\":%s }",
+                         "BLOCK_INFO", blockId, blockOffset, buf1);
+                Event evt1(Event::BLOCK_INFO, blockId, string(buf2));
+                CompressedInputStream::notifyListeners(_listeners, evt1);
             }
-
-            // Create message (use snprintf because stringstream is too slow)
-            char buf2[100];
-            snprintf(buf2, sizeof(buf2),
-                     "{ \"type\":\"%s\", \"id\":%d, \"offset\":%lu, \"skipFlags\":%s }",
-                     "BLOCK_INFO", blockId, blockOffset, buf1);
-            Event evt1(Event::BLOCK_INFO, blockId, string(buf2));
-            CompressedInputStream::notifyListeners(_listeners, evt1);
 
             // Notify before entropy
             Event evt2(Event::BEFORE_ENTROPY, blockId, int64(r), clock(), checksum1, hashType);

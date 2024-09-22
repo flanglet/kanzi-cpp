@@ -175,6 +175,12 @@ namespace kanzi
 
        uint64 getRead() const { return (_ibs->read() + 7) >> 3; }
 
+#if !defined(_MSC_VER) || _MSC_VER > 1500
+       bool seek(int64 bitPos);
+
+       int64 tell();
+#endif
+ 
 
    protected:
 
@@ -262,6 +268,22 @@ namespace kanzi
        throw std::ios_base::failure("Not supported");
    }
 
+#if !defined(_MSC_VER) || _MSC_VER > 1500
+   inline bool CompressedInputStream::seek(int64 bitPos)
+   {
+      // Beware. There be dragons !
+      // The only valid bitstream positions are the beginning of a block.
+      // Useful to navigate the bitstream block by block without decompressing.
+      _available = 0;
+      _bufferId = 0;
+      return _ibs->seek(bitPos);
+   }
+
+   inline int64 CompressedInputStream::tell()
+   {
+      return _ibs->tell();
+   }
+#endif
 }
 #endif
 

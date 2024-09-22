@@ -253,6 +253,43 @@ int testCorrectness(int, const char*[])
     return (res == true) ? 0 : 1;
 }
 
+void testSeek(string name)
+{
+    ifstream ifs;
+    ifs.open(name.c_str(), ios::binary|ios::in);
+
+    byte buf[1024]; 
+    int64 pos1 = 0;
+    int64 pos2 = 0;
+    CompressedInputStream cis(ifs, 1);
+    cis.read((char*)buf, 100);
+
+    for (int i = 0; i < 100; i++)
+       cout << buf[i];
+
+    cout << endl << endl;
+
+    // Block positions for enwik8 compressed with L5 & version 2.4
+    // To be updated.
+    int64 positions[4] = { 17729391, 26695626, 8843019, 192 };
+
+    for (int i = 0; i< 4; i++) {
+        pos1 = positions[i]; 
+        cis.seek(pos1);
+        pos2 = cis.tell();
+        cout << pos1 << " / " << pos2 << endl;
+        cis.read((char*)buf, 100);
+
+        for (int i = 0; i < 100; i++)
+           cout << buf[i];
+
+        cout << endl << endl;
+    }
+    
+    cis.close();
+    ifs.close();
+}
+
 #ifdef __GNUG__
 int main(int argc, const char* argv[])
 #else
@@ -260,6 +297,7 @@ int TestCompressedStream_main(int argc, const char* argv[])
 #endif
 {
     try {
+        //testSeek("/tmp/enwik8.knz");
         return testCorrectness(argc, argv);
     }
     catch (IOException& e) {
