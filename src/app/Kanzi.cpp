@@ -70,9 +70,10 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println(APP_HEADER, true);
        log.println("", true);
        log.println(APP_SUB_HEADER, true);
-       log.println(APP_USAGE, true);
    }
 
+   log.println(APP_USAGE, true);
+   log.println("", true);
    log.println("Credits: Matt Mahoney, Yann Collet, Jan Ondrus, Yuta Mori, Ilya Muravyov,", true);
    log.println("         Neal Burns, Fabian Giesen, Jarek Duda, Ilya Grebnov", true);
    log.println("", true);
@@ -195,9 +196,8 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
 
     log.println("", true);
     log.println(APP_HEADER, true);
-    log.println("", true);
-    log.println(APP_SUB_HEADER, true);
-    log.println(APP_USAGE, true);
+    log.println("", verbose > 1);
+    log.println(APP_SUB_HEADER, verbose > 1);
 
     if (verbose >= 4) {
        stringstream extraHeader;
@@ -466,7 +466,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
         }
 
         if ((arg == "-x") || (arg == "-x32") || (arg == "-x64")) {
-            if (checksum >= 0) {
+            if (checksum > 0) {
                 WARNING_OPT_DUPLICATE(arg, "true");
             }
 
