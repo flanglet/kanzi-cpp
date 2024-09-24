@@ -99,6 +99,9 @@ std::string Event::getTypeAsString() const
     case COMPRESSION_START:
         return "COMPRESSION_START";
 
+    case BLOCK_INFO:
+        return "BLOCK_INFO";
+
     default:
         return "Unknown Type";
     }
