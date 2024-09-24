@@ -75,14 +75,13 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, const uint alphabet[], in
         obs.writeBit(PARTIAL_ALPHABET);
         byte masks[32] = { byte(0) };
 
+        // Encode presence flags
         for (int i = 0; i < count; i++)
             masks[alphabet[i] >> 3] |= byte(1 << (alphabet[i] & 7));
 
         const int lastMask = alphabet[count - 1] >> 3;
         obs.writeBits(lastMask, 5);
-
-        for (int i = 0; i <= lastMask; i++)
-            obs.writeBits(uint64(masks[i]), 8);
+        obs.writeBits(masks, 8 * (lastMask + 1));
     }
 
     return count;
@@ -103,16 +102,19 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[])
 
     // Partial alphabet
     const int lastMask = int(ibs.readBits(5));
+    byte masks[32] = { byte(0) };
     int count = 0;
 
     // Decode presence flags
-    for (int i = 0; i <= lastMask; i++) {
-        const byte mask = byte(ibs.readBits(8));
+    ibs.readBits(masks, 8 * (lastMask + 1));
 
-        for (int j = 0; j < 8; j++) {
-            if ((mask & byte(1 << j)) != byte(0)) {
-                alphabet[count++] = (i << 3) + j;
-            }
+    for (int i = 0; i <= lastMask; i++) {
+        const int n = 8 * i;
+
+        for (uint j = 0; j < 8; j++) {
+            const int bit = int(masks[i] >> j) & 1;
+            alphabet[count] = n + j;
+            count += bit;
         }
     }
 
@@ -122,7 +124,7 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[])
 
 // Returns the size of the alphabet
 // length is the length of the alphabet array
-// 'totalFreq 'is the sum of frequencies.
+// 'totalFreq' is the sum of frequencies.
 // 'scale' is the target new total of frequencies
 // The alphabet and freqs parameters are updated
 int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length, uint totalFreq, uint scale)
