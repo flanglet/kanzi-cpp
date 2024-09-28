@@ -55,12 +55,10 @@ namespace kanzi
     private:
 
         static const int MIN_BLOCK_SIZE;
-        static const int SIZES[16];
+        static const int LEN_SEQ[256];
 
         Context* _pCtx;
        
-        static bool validate(const byte src[], int count);
-
         static int pack(const byte in[], uint32& out);
 
         static int unpack(uint32 in, byte out[]);
