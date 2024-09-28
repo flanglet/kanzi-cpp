@@ -136,7 +136,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
                    bool isSeq34 = (first == 0xEE) || (first == 0xEF);
 
                    // Combine second and third bytes
-                   const uint16 val = uint16(src[i + 1]) << 8 | uint16(src[i + 2]);
+                   const uint16 val = (uint16(src[i + 1]) << 8) | uint16(src[i + 2]);
                    // Third byte in [0x80..0xBF]
                    res &= !((src[i + 2] < byte(0x80)) || (src[i + 2] > byte(0xBF)));
                    // If first byte is 0xE0 then second byte in [0xA0..0xBF]
@@ -159,7 +159,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
                    bool secondByteBF = src[i + 1] > byte(0xBF);
 
                    // Combine third and fourth bytes
-                   const uint16 val = uint16(src[i + 2]) << 8 | uint16(src[i + 3]);
+                   const uint16 val = (uint16(src[i + 2]) << 8) | uint16(src[i + 3]);
                    // Third and fourth bytes in [0x80..0xBF]
                    res &= ((val & 0xC0C0) == 0x8080);
                    // If first byte is is 0xF0 then second byte in [0x90..0x8F]
