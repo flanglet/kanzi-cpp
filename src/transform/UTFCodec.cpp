@@ -136,17 +136,17 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
                    bool isSeq34 = (first == 0xEE) || (first == 0xEF);
 
                    // Combine second and third bytes
-                   const uint16 val = (uint16(src[i + 1]) << 8) | uint16(src[i + 2]);
+                   const uint16 val2 = (uint16(src[i + 1]) << 8) | uint16(src[i + 2]);
                    // Third byte in [0x80..0xBF]
                    res &= !((src[i + 2] < byte(0x80)) || (src[i + 2] > byte(0xBF)));
                    // If first byte is 0xE0 then second byte in [0xA0..0xBF]
                    res &= (!isSeq31 || ((src[i + 1] >= byte(0xA0) && (src[i + 1] <= byte(0xBF)))));
                    // If first byte in [0xE1..0xEC] then second and third byte in [0x80..0xBF]
-                   res &= (!isSeq32 || ((val & 0xC0C0) == 0x8080));
+                   res &= (!isSeq32 || ((val2 & 0xC0C0) == 0x8080));
                    // If first byte is 0xED then second byte in [0x80..0x9F]
                    res &= (!isSeq33 || ((src[i + 1] >= byte(0x80)) && (src[i + 1] <= byte(0x9F))));
                    // If first byte in [0xEE..0xEF] then second and third byte in [0x80..0xBF]
-                   res &= (!isSeq34 || ((val & 0xC0C0) == 0x8080));
+                   res &= (!isSeq34 || ((val2 & 0xC0C0) == 0x8080));
                    break;
                 }
 
@@ -159,9 +159,9 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
                    bool secondByteBF = src[i + 1] > byte(0xBF);
 
                    // Combine third and fourth bytes
-                   const uint16 val = (uint16(src[i + 2]) << 8) | uint16(src[i + 3]);
+                   const uint16 val2 = (uint16(src[i + 2]) << 8) | uint16(src[i + 3]);
                    // Third and fourth bytes in [0x80..0xBF]
-                   res &= ((val & 0xC0C0) == 0x8080);
+                   res &= ((val2 & 0xC0C0) == 0x8080);
                    // If first byte is is 0xF0 then second byte in [0x90..0x8F]
                    res &= !(isSeq41 && ((src[i + 1] < byte(0x90) || secondByteBF)));
                    // If first byte is in [0xF1..0xF3] then second byte in [0x80..0xBF]
