@@ -59,6 +59,8 @@ namespace kanzi
 
         Context* _pCtx;
        
+        static bool validate(const byte block[], int count);
+
         static int pack(const byte in[], uint32& out);
 
         static int unpack(uint32 in, byte out[]);

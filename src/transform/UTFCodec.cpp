@@ -62,22 +62,32 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
+    bool mustValidate = true;
+
+    if (_pCtx != nullptr) {
+        Global::DataType dt = (Global::DataType)_pCtx->getInt("dataType", Global::UNDEFINED);
+
+        if ((dt != Global::UNDEFINED) && (dt != Global::UTF8))
+            return false;
+
+        mustValidate = dt != Global::UTF8;
+    }
+
     int start = 0;
     const uint32 bom = 0xEFBBBF;
 
-    if (memcmp(&src[start], &bom, 3) == 0) {
+    if (memcmp(&src[0], &bom, 3) == 0) {
         // Byte Order Mark (BOM)
         start = 3;
     }
     else {
         // First (possibly) invalid symbols (due to block truncation).
-        // It is possible to start in the middle of a file and end up
-        // with invalid looking UTF data even if it is valid as a whole
-        // (the current block may start in the middle of a symbol sequence).
-        // A strict validation will reject the processing in this case.
         while ((start < 4) && (LEN_SEQ[uint8(src[start])] == 0))
             start++;
     }
+
+    if ((mustValidate == true) && (validate(&src[start], count - start - 4)) == false)
+        return false;
 
     // 1-3 bit size + (7 or 11 or 16 or 21) bit payload
     // 3 MSBs indicate symbol size (limit map size to 22 bits)
@@ -92,17 +102,6 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int n = 0;
     bool res = true;
 
-    // Valid UTF-8
-    // See Unicode 16 Standard - UTF-8 Table 3.7
-    // U+0000..U+007F          00..7F
-    // U+0080..U+07FF          C2..DF 80..BF
-    // U+0800..U+0FFF          E0 A0..BF 80..BF
-    // U+1000..U+CFFF          E1..EC 80..BF 80..BF
-    // U+D000..U+D7FF          ED 80..9F 80..BF 80..BF
-    // U+E000..U+FFFF          EE..EF 80..BF 80..BF
-    // U+10000..U+3FFFF        F0 90..BF 80..BF 80..BF
-    // U+40000..U+FFFFF        F1..F3 80..BF 80..BF 80..BF
-    // U+100000..U+10FFFF      F4 80..8F 80..BF 80..BF
     for (int i = start; i < (count - 4); ) {
         uint32 val;
         const int s = pack(&src[i], val);
@@ -114,67 +113,15 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         // Add to map ?
         if (aliasMap[val] == 0) {
-            // Validate sequence
-            const uint8 first = uint8(src[i]);
-
-            switch( LEN_SEQ[first]) {
-                case 1:
-                   // First byte in [0x00..0x7F]
-                   res &= (first < 0x80);
-                   break;
-
-                case 2:
-                   // Second byte in [0x80..0xBF]
-                   res &= !((src[i + 1] < byte(0x80) || (src[i + 1] > byte(0xBF))));
-                   break;
-
-                case 3:
-                {
-                   bool isSeq31 = first == 0xE0;
-                   bool isSeq32 = (first >= 0xE1) && (first <= 0xEC);
-                   bool isSeq33 = first == 0xED;
-                   bool isSeq34 = (first == 0xEE) || (first == 0xEF);
-
-                   // Combine second and third bytes
-                   const uint16 val2 = (uint16(src[i + 1]) << 8) | uint16(src[i + 2]);
-                   // Third byte in [0x80..0xBF]
-                   res &= !((src[i + 2] < byte(0x80)) || (src[i + 2] > byte(0xBF)));
-                   // If first byte is 0xE0 then second byte in [0xA0..0xBF]
-                   res &= (!isSeq31 || ((src[i + 1] >= byte(0xA0) && (src[i + 1] <= byte(0xBF)))));
-                   // If first byte in [0xE1..0xEC] then second and third byte in [0x80..0xBF]
-                   res &= (!isSeq32 || ((val2 & 0xC0C0) == 0x8080));
-                   // If first byte is 0xED then second byte in [0x80..0x9F]
-                   res &= (!isSeq33 || ((src[i + 1] >= byte(0x80)) && (src[i + 1] <= byte(0x9F))));
-                   // If first byte in [0xEE..0xEF] then second and third byte in [0x80..0xBF]
-                   res &= (!isSeq34 || ((val2 & 0xC0C0) == 0x8080));
-                   break;
-                }
-
-                case 4:
-                {
-                   bool isSeq41 = first == 0xF0;
-                   bool isSeq42 = (first >= 0xF1) && (first <= 0xF3);
-                   bool isSeq43 = first == 0xF4;
-                   bool secondByte80 = src[i + 1] < byte(0x80);
-                   bool secondByteBF = src[i + 1] > byte(0xBF);
-
-                   // Combine third and fourth bytes
-                   const uint16 val2 = (uint16(src[i + 2]) << 8) | uint16(src[i + 3]);
-                   // Third and fourth bytes in [0x80..0xBF]
-                   res &= ((val2 & 0xC0C0) == 0x8080);
-                   // If first byte is is 0xF0 then second byte in [0x90..0x8F]
-                   res &= !(isSeq41 && ((src[i + 1] < byte(0x90) || secondByteBF)));
-                   // If first byte is in [0xF1..0xF3] then second byte in [0x80..0xBF]
-                   res &= !(isSeq42 && (secondByte80 || secondByteBF));
-                   // If first byte is 0xF4 then second byte in [0x80..0x8F]
-                   res &= !(isSeq43 && (secondByte80 || (src[i + 1] > byte(0x8F))));
-                   break;
-                }
-
-                default:
-                   // Symbols that can never appear: 0xC0, 0xC1 and 0xF5..0xFF
-                   res = false;
-                   break;
+            // Validation of longer sequences
+            if (s == 3) {
+               // Third byte in [0x80..0xBF]
+               res &= !((src[i+2] < byte(0x80)) || (src[i+2] > byte(0xBF)));
+            } else if (s == 4) {
+               // Combine third and fourth bytes
+               uint16 val2 = (uint16(src[i+2]) << 8) | uint16(src[i+3]);
+               // Third and fourth bytes in [0x80..0xBF]
+               res &= ((val2 & 0xC0C0) == 0x8080);
             }
 
             n++;
@@ -338,3 +285,126 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return srcIdx == count;
 }
 
+// A quick partial validation
+// A more complete validation is done during processing for the remaining cases
+// (rules for 3 and 4 byte sequences)
+bool UTFCodec::validate(const byte block[], int count)
+{
+    uint freqs0[256] = { 0 };
+    uint* freqs1 = new uint[65536];
+    memset(&freqs1[0], 0, 65536 * sizeof(uint));
+    uint f0[256] = { 0 };
+    uint f1[256] = { 0 };
+    uint f3[256] = { 0 };
+    uint f2[256] = { 0 };
+    uint8 prv = 0;
+    const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
+    const int count4 = count & -4;
+    bool res = true;
+
+    // Unroll loop
+    for (int i = 0; i < count4; i += 4) {
+        const uint8 cur0 = data[i];
+        const uint8 cur1 = data[i + 1];
+        const uint8 cur2 = data[i + 2];
+        const uint8 cur3 = data[i + 3];
+        f0[cur0]++;
+        f1[cur1]++;
+        f2[cur2]++;
+        f3[cur3]++;
+        freqs1[(prv * 256) + cur0]++;
+        freqs1[(cur0 * 256) + cur1]++;
+        freqs1[(cur1 * 256) + cur2]++;
+        freqs1[(cur2 * 256) + cur3]++;
+        prv = cur3;
+    }
+
+    for (int i = count4; i < count; i++) {
+        freqs0[data[i]]++;
+        freqs1[(prv * 256) + data[i]]++;
+        prv = data[i];
+    }
+
+    for (int i = 0; i < 256; i++) {
+        freqs0[i] += (f0[i] + f1[i] + f2[i] + f3[i]);
+    }
+
+    // Valid UTF-8 sequences
+    // See Unicode 16 Standard - UTF-8 Table 3.7
+    // U+0000..U+007F          00..7F
+    // U+0080..U+07FF          C2..DF 80..BF
+    // U+0800..U+0FFF          E0 A0..BF 80..BF
+    // U+1000..U+CFFF          E1..EC 80..BF 80..BF
+    // U+D000..U+D7FF          ED 80..9F 80..BF 80..BF
+    // U+E000..U+FFFF          EE..EF 80..BF 80..BF
+    // U+10000..U+3FFFF        F0 90..BF 80..BF 80..BF
+    // U+40000..U+FFFFF        F1..F3 80..BF 80..BF 80..BF
+    // U+100000..U+10FFFF      F4 80..8F 80..BF 80..BF
+
+    // Check rules for 1 byte
+    uint sum = freqs0[0xC0] + freqs0[0xC1];
+    uint sum2 = 0;
+
+    for (int i = 0xF5; i <= 0xFF; i++)
+        sum += freqs0[i];
+
+    if (sum != 0) {
+        res = false;
+        goto end;
+    }
+
+    // Check rules for first 2 bytes
+    for (int i = 0; i < 256; i++) {
+        // Exclude < 0xE0A0 || > 0xE0BF
+        if ((i < 0xA0) || (i > 0xBF))
+            sum += freqs1[0xE0 * 256 + i];
+
+        // Exclude < 0xED80 || > 0xEDE9F
+        if ((i < 0x80) || (i > 0x9F))
+            sum += freqs1[0xED * 256 + i];
+
+        // Exclude < 0xF090 || > 0xF0BF
+        if ((i < 0x90) || (i > 0xBF))
+            sum += freqs1[0xF0 * 256 + i];
+
+        // Exclude < 0xF480 || > 0xF48F
+        if ((i < 0x80) || (i > 0x8F))
+            sum += freqs1[0xF4 * 256 + i];
+
+        if ((i < 0x80) || (i > 0xBF)) {
+            // Exclude < 0x??80 || > 0x??BF with ?? in [C2..DF]
+            for (int j = 0xC2; j <= 0xDF; j++)
+                sum += freqs1[j * 256 + i];
+
+            // Exclude < 0x??80 || > 0x??BF with ?? in [E1..EC]
+            for (int j = 0xE1; j <= 0xEC; j++)
+                sum += freqs1[j * 256 + i];
+
+            // Exclude < 0x??80 || > 0x??BF with ?? in [F1..F3]
+            sum += freqs1[0xF1 * 256 + i];
+            sum += freqs1[0xF2 * 256 + i];
+            sum += freqs1[0xF3 * 256 + i];
+
+            // Exclude < 0xEE80 || > 0xEEBF
+            sum += freqs1[0xEE * 256 + i];
+
+            // Exclude < 0xEF80 || > 0xEFBF
+            sum += freqs1[0xEF * 256 + i];
+       }
+       else {
+            // Count non-primary bytes
+            sum2 += freqs0[i];
+       }
+
+       if (sum != 0) {
+            res = false;
+            break;
+       }
+    }
+
+end:
+    delete[] freqs1;
+
+    // Ad-hoc threshold
+    return (res == true) && (sum2 >= uint(count / 8));
+}
