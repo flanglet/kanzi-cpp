@@ -105,30 +105,20 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     for (int i = start; i < (count - 4); ) {
         uint32 val;
         const int s = pack(&src[i], val);
+        res = s != 0;
 
-        if (s == 0) {
-            res = false;
-            break;
-        }
+        // Validation of longer sequences
+        // Third byte in [0x80..0xBF]
+        res &= ((s != 3) || ((src[i+2] >= byte(0x80)) && (src[i+2] <= byte(0xBF))));
+        // Combine third and fourth bytes
+        uint16 val2 = (uint16(src[i+2]) << 8) | uint16(src[i+3]);
+        // Third and fourth bytes in [0x80..0xBF]
+        res &= ((s != 4) || ((val2 & 0xC0C0) == 0x8080));
 
         // Add to map ?
         if (aliasMap[val] == 0) {
-            // Validation of longer sequences
-            if (s == 3) {
-               // Third byte in [0x80..0xBF]
-               res &= !((src[i+2] < byte(0x80)) || (src[i+2] > byte(0xBF)));
-            } else if (s == 4) {
-               // Combine third and fourth bytes
-               uint16 val2 = (uint16(src[i+2]) << 8) | uint16(src[i+3]);
-               // Third and fourth bytes in [0x80..0xBF]
-               res &= ((val2 & 0xC0C0) == 0x8080);
-            }
-
             n++;
             res &= (n < 32768);
-
-            if (res == false)
-               break;
 
 #if __cplusplus >= 201103L
             v.emplace_back(val, 0);
@@ -137,6 +127,9 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             v.push_back(u);
 #endif
         }
+
+        if (res == false)
+           break;
 
         aliasMap[val]++;
         i += s;
