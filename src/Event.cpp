@@ -56,13 +56,13 @@ std::string Event::toString() const
     ss << ", \"time\":" << getTime();
 
     if (_hashType != NO_HASH) {
-        ss << ", \"hash\":";
+        ss << ", \"hash\":\"";
         ss << std::uppercase << std::setfill('0');
 
         if (_hashType == SIZE_32)
-           ss << std::setw(8) << std::hex << getHash();
+           ss << std::setw(8) << std::hex << getHash() << "\"";
         else
-           ss << std::setw(16) << std::hex << getHash();
+           ss << std::setw(16) << std::hex << getHash() << "\"";
     }
 
     ss << " }";
