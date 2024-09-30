@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <algorithm>
 #include <sstream>
 #include "CompressedOutputStream.hpp"
 #include "IOException.hpp"
@@ -771,7 +772,13 @@ T EncodingTask<T>::run()
 
 #if !defined(_MSC_VER) || _MSC_VER > 1500
             if (_ctx.getInt("verbosity", 0) > 4) {
-                const int64 blockOffset = _obs->tell();
+                string oName = _ctx.getString("outputName");
+
+                if (oName.length() == 4) {
+                    std::transform(oName.begin(), oName.end(), oName.begin(), ::toupper);
+                }
+
+                const int64 blockOffset = (oName != "NONE") ? _obs->tell() : _obs->written();
                 char buf1[9] = { 0 };
                 uint8 sf = uint8(skipFlags);
 
@@ -783,8 +790,8 @@ T EncodingTask<T>::run()
                 // Create message (use snprintf because stringstream is too slow)
                 char buf2[100];
                 snprintf(buf2, sizeof(buf2),
-                         "{ \"type\":\"%s\", \"id\":%d, \"offset\":%llu, \"skipFlags\":%s }",
-                         "BLOCK_INFO", blockId, (unsigned long long)blockOffset, buf1);
+                         "{ \"type\":\"%s\", \"id\":%d, \"offset\":%lli, \"skipFlags\":%s }",
+                         "BLOCK_INFO", blockId, (long long)blockOffset, buf1);
                 Event evt2(Event::BLOCK_INFO, blockId, string(buf2));
                 CompressedOutputStream::notifyListeners(_listeners, evt2);
             }
