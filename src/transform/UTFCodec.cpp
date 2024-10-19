@@ -98,7 +98,7 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     uint32* aliasMap = new uint32[1 << 22];
     memset(aliasMap, 0, size_t(1 << 22) * sizeof(uint32));
     vector<sdUTF> v;
-    v.reserve(max(count >> 10, 256));
+    v.reserve(max(count >> 9, 256));
     int n = 0;
     bool res = true;
 
@@ -109,11 +109,9 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         // Validation of longer sequences
         // Third byte in [0x80..0xBF]
-        res &= ((s != 3) || ((src[i+2] >= byte(0x80)) && (src[i+2] <= byte(0xBF))));
-        // Combine third and fourth bytes
-        uint16 val2 = (uint16(src[i+2]) << 8) | uint16(src[i+3]);
+        res &= ((s != 3) || ((src[i + 2] & byte(0xC0)) == byte(0x80)));
         // Third and fourth bytes in [0x80..0xBF]
-        res &= ((s != 4) || ((val2 & 0xC0C0) == 0x8080));
+        res &= ((s != 4) || ((((uint16(src[i + 2]) << 8) | uint16(src[i + 3])) & 0xC0C0) == 0x8080));
 
         // Add to map ?
         if (aliasMap[val] == 0) {
@@ -383,16 +381,16 @@ bool UTFCodec::validate(const byte block[], int count)
 
             // Exclude < 0xEF80 || > 0xEFBF
             sum += freqs1[0xEF * 256 + i];
-       }
-       else {
+        }
+        else {
             // Count non-primary bytes
             sum2 += freqs0[i];
-       }
+        }
 
-       if (sum != 0) {
+        if (sum != 0) {
             res = false;
             break;
-       }
+        }
     }
 
 end:
