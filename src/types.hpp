@@ -200,7 +200,9 @@ namespace kanzi
     typedef uint64_t uint64;
 }
 
-   #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+   #if defined(__MINGW32__)
+      #define PATH_SEPARATOR '/'
+   #elif defined(WIN32) || defined(_WIN32) || defined(_WIN64)
       #define PATH_SEPARATOR '\\'
    #else
       #define PATH_SEPARATOR '/'
@@ -209,10 +211,8 @@ namespace kanzi
 
    #if defined(_MSC_VER)
       #define ALIGNED_(x) __declspec(align(x))
-   #else
-      #if defined(__GNUC__)
-         #define ALIGNED_(x) __attribute__ ((aligned(x)))
-      #endif
+   #elif defined(__GNUC__)
+      #define ALIGNED_(x) __attribute__ ((aligned(x)))
    #endif
 
 #endif
