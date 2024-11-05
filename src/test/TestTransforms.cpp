@@ -359,7 +359,7 @@ int testTransformsSpeed(const string& name)
     srand((uint)time(nullptr));
     int iter = 50000;
 
-    if ((name == "ROLZ") || (name == "SRT") || (name == "RANK"))
+    if ((name == "ROLZ") || (name == "SRT") || (name == "RANK") || (name == "MTFT"))
         iter = 4000;
 
     int size = 30000;

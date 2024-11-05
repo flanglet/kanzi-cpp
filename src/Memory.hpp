@@ -119,24 +119,20 @@ namespace kanzi {
          #define IS_BIG_ENDIAN 1
    #elif defined(_AIX) || defined(__hpux) || (defined(__sun) && defined(__sparc)) || defined(__OS400__) || defined(__MVS__)
          #define IS_BIG_ENDIAN 1
-   #elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN|| defined(__LITTLE_ENDIAN__)
+   #elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || defined(__LITTLE_ENDIAN__)
          #define IS_BIG_ENDIAN 0
-   #elif defined(_WIN32)
-         #define IS_BIG_ENDIAN 0
-   #elif defined(__amd64) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)
+   #else
          #define IS_BIG_ENDIAN 0
    #endif
 #endif
 
 
-   static inline bool isBigEndian() {
+   static inline bool isLittleEndian() {
       #if defined(IS_BIG_ENDIAN)
-         return IS_BIG_ENDIAN == 1;
+         return IS_BIG_ENDIAN == 0;
       #else
-         union { uint32 v; uint8 c[4]; } one = { 0x03020100 };
-         return one.c[0] == 0;
-         //const union { uint32 u; uint8 c[4]; } one = { 1 };
-         //return one.c[3] == 1;
+         uint32_t v = 1;
+         return *(char*) &v;
       #endif
    }
 

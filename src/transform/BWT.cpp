@@ -238,7 +238,7 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
 
         #define S(t, d) ptr = _buffer[t]; \
            d[n] = byte(ptr); \
-           t = ptr >> 8;
+           t = ptr >> 8
 
         while (n < 0) {
             S(t0, d0);

@@ -45,8 +45,8 @@ const int CompressedOutputStream::MAX_CONCURRENCY = 64;
 
 CompressedOutputStream::CompressedOutputStream(OutputStream& os,
                    int tasks,
-                   string entropy,
-                   string transform,
+                   const string& entropy,
+                   const string& transform,
                    int blockSize,
                    int checksum,
                    uint64 fileSize,

@@ -281,8 +281,8 @@ void testSeek(string name)
         cout << pos1 << " / " << pos2 << endl;
         cis.read(buf, 100);
 
-        for (int i = 0; i < 100; i++)
-           cout << buf[i];
+        for (int j = 0; j < 100; j++)
+           cout << buf[j];
 
         cout << endl << endl;
     }

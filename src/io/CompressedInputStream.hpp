@@ -134,8 +134,8 @@ namespace kanzi
         // with values read from the bitstream header.
         CompressedInputStream(InputStream& is,
                    int jobs = 1,
-                   std::string entropy = "NONE",
-                   std::string transform = "NONE",
+                   const std::string& entropy = "NONE",
+                   const std::string& transform = "NONE",
                    int blockSize = 4*1024*1024,
                    int checksum = 0,
                    uint64 originalSize = 0,

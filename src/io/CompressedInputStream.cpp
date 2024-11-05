@@ -43,8 +43,8 @@ const int CompressedInputStream::MAX_BLOCK_ID = int((uint(1) << 31) - 1);
 
 CompressedInputStream::CompressedInputStream(InputStream& is,
                    int tasks,
-                   string entropy,
-                   string transform,
+                   const string& entropy,
+                   const string& transform,
                    int blockSize,
                    int checksum,
                    uint64 originalSize,
