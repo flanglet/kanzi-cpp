@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <algorithm>
 #include <sstream>
+#include <stdio.h>
 #include "CompressedOutputStream.hpp"
 #include "IOException.hpp"
 #include "../Error.hpp"
@@ -779,20 +780,8 @@ T EncodingTask<T>::run()
                 }
 
                 const int64 blockOffset = (oName != "NONE") ? _obs->tell() : _obs->written();
-                char buf1[9] = { 0 };
-                uint8 sf = uint8(skipFlags);
-
-                for (int i = 7; i >= 0; i--) {
-                    buf1[i] = (sf & 1) ? '1' : '0';
-                    sf >>= 1;
-                }
-
-                // Create message (use snprintf because stringstream is too slow)
-                char buf2[100];
-                snprintf(buf2, sizeof(buf2),
-                         "{ \"type\":\"%s\", \"id\":%d, \"offset\":%lli, \"skipFlags\":%s }",
-                         "BLOCK_INFO", blockId, (long long)blockOffset, buf1);
-                Event evt2(Event::BLOCK_INFO, blockId, string(buf2));
+                Event evt2(Event::BLOCK_INFO, blockId, 
+                   int64((written + 7) >> 3), clock(), checksum, hashType, blockOffset); 
                 CompressedOutputStream::notifyListeners(_listeners, evt2);
             }
 #endif

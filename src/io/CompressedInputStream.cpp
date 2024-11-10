@@ -878,20 +878,7 @@ T DecodingTask<T>::run()
         if (_listeners.size() > 0) {
 #if !defined(_MSC_VER) || _MSC_VER > 1500
             if (_ctx.getInt("verbosity", 0) > 4) {
-                char buf1[9] = { 0 };
-                uint8 sf = uint8(skipFlags);
-
-                for (int i = 7; i >= 0; i--) {
-                    buf1[i] = (sf & 1) ? '1' : '0';
-                    sf >>= 1;
-                }
-
-                // Create message (use snprintf because stringstream is too slow)
-                char buf2[100];
-                snprintf(buf2, sizeof(buf2),
-                         "{ \"type\":\"%s\", \"id\":%d, \"offset\":%lli, \"skipFlags\":%s }",
-                         "BLOCK_INFO", blockId, (long long)blockOffset, buf1);
-                Event evt1(Event::BLOCK_INFO, blockId, string(buf2));
+                Event evt1(Event::BLOCK_INFO, blockId, int64(r), clock(), checksum1, hashType, blockOffset);
                 CompressedInputStream::notifyListeners(_listeners, evt1);
             }
 #endif

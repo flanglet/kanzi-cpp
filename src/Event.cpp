@@ -31,11 +31,12 @@ Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
     _hashType = NO_HASH;
 }
 
-Event::Event(Event::Type type, int id, int64 size, clock_t evtTime, uint64 hash, HashType hashType)
+Event::Event(Event::Type type, int id, int64 size, clock_t evtTime, uint64 hash, HashType hashType, int64 offset)
     : _type(type)
     , _time(evtTime)
     , _id(id)
     , _size(size)
+    , _offset(offset)
     , _hash(hash)
     , _hashType(hashType)
 {
