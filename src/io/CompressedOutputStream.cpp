@@ -780,8 +780,8 @@ T EncodingTask<T>::run()
                 }
 
                 const int64 blockOffset = (oName != "NONE") ? _obs->tell() : _obs->written();
-                Event evt2(Event::BLOCK_INFO, blockId, 
-                   int64((written + 7) >> 3), clock(), checksum, hashType, blockOffset); 
+                Event evt2(Event::BLOCK_INFO, blockId,
+                   int64((written + 7) >> 3), clock(), checksum, hashType, blockOffset, uint8(skipFlags));
                 CompressedOutputStream::notifyListeners(_listeners, evt2);
             }
 #endif

@@ -878,7 +878,8 @@ T DecodingTask<T>::run()
         if (_listeners.size() > 0) {
 #if !defined(_MSC_VER) || _MSC_VER > 1500
             if (_ctx.getInt("verbosity", 0) > 4) {
-                Event evt1(Event::BLOCK_INFO, blockId, int64(r), clock(), checksum1, hashType, blockOffset);
+                Event evt1(Event::BLOCK_INFO, blockId, int64(r), clock(), checksum1,
+                           hashType, blockOffset, uint8(skipFlags));
                 CompressedInputStream::notifyListeners(_listeners, evt1);
             }
 #endif

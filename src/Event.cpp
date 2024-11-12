@@ -29,9 +29,12 @@ Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
     _size = 0;
     _hash = 0;
     _hashType = NO_HASH;
+    _offset = -1;
+    _skipFlags = 0;
 }
 
-Event::Event(Event::Type type, int id, int64 size, clock_t evtTime, uint64 hash, HashType hashType, int64 offset)
+Event::Event(Event::Type type, int id, int64 size, clock_t evtTime,
+             uint64 hash, HashType hashType, int64 offset, uint8 skipFlags)
     : _type(type)
     , _time(evtTime)
     , _id(id)
@@ -39,6 +42,7 @@ Event::Event(Event::Type type, int id, int64 size, clock_t evtTime, uint64 hash,
     , _offset(offset)
     , _hash(hash)
     , _hashType(hashType)
+    , _skipFlags(skipFlags)
 {
 }
 
@@ -54,7 +58,9 @@ std::string Event::toString() const
         ss << ", \"id\":" << getId();
 
     ss << ", \"size\":" << getSize();
-    ss << ", \"time\":" << getTime();
+
+    if (getType() != BLOCK_INFO)
+        ss << ", \"time\":" << getTime();
 
     if (_hashType != NO_HASH) {
         ss << ", \"hash\":\"";
@@ -64,6 +70,14 @@ std::string Event::toString() const
            ss << std::setw(8) << std::hex << getHash() << "\"";
         else
            ss << std::setw(16) << std::hex << getHash() << "\"";
+    }
+
+    if (getType() == BLOCK_INFO) {
+         ss << ", \"offset\":" << getOffset();
+         ss << ", \"skipFlags\": ";
+
+        for (int i = 128; i >= 1; i >>= 1)
+           ss << ((_skipFlags & i) == 0 ? "0" : "1");
     }
 
     ss << " }";
