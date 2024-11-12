@@ -473,7 +473,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         try
         {
             // Decode literal, length and match index buffers
-            istreambuf<char> buffer(reinterpret_cast<char*>(&src[srcIdx]), max(min(count - srcIdx, sizeChunk + 16), 0));
+            istreambuf<char> buffer(reinterpret_cast<char*>(&src[srcIdx]), max(min(count - srcIdx, sizeChunk + 16), 65536));
             istream is(&buffer);
             DefaultInputBitStream ibs(is, 65536);
             const int litLen = int(ibs.readBits(32));
