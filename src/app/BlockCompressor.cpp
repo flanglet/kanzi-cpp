@@ -354,9 +354,8 @@ int BlockCompressor::compress(uint64& outputSize)
     }
     else {
         vector<FileCompressTask<FileCompressResult>*> tasks;
-        int* jobsPerTask = new int[nbFiles];
-        Global::computeJobsPerTask(jobsPerTask, _jobs, nbFiles);
-        int n = 0;
+        vector<int> jobsPerTask(nbFiles);
+        Global::computeJobsPerTask(jobsPerTask.data(), _jobs, nbFiles);
 
         if (_reorderFiles == true)
             sortFilesByPathAndSize(files, true);
@@ -384,7 +383,7 @@ int BlockCompressor::compress(uint64& outputSize)
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
             taskCtx.putInt("blockSize", _blockSize);
-            taskCtx.putInt("jobs", jobsPerTask[n++]);
+            taskCtx.putInt("jobs", jobsPerTask[i]);
             FileCompressTask<FileCompressResult>* task = new FileCompressTask<FileCompressResult>(taskCtx, _listeners);
             tasks.push_back(task);
         }
@@ -439,8 +438,6 @@ int BlockCompressor::compress(uint64& outputSize)
                 }
             }
         }
-
-        delete[] jobsPerTask;
 
         for (int i = 0; i < nbFiles; i++)
             delete tasks[i];
