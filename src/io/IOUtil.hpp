@@ -242,8 +242,10 @@ namespace kanzi
 
    static inline void sortFilesByPathAndSize(std::vector<FileData>& files, bool sortBySize = false)
    {
-       FileDataComparator c = { sortBySize };
-       sort(files.begin(), files.end(), c);
+       if (files.size() > 1) {
+          FileDataComparator c = { sortBySize };
+          sort(files.begin(), files.end(), c);
+       }
    }
 
 

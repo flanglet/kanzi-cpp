@@ -733,8 +733,8 @@ T FileDecompressTask<T>::run()
         }
 
         if ((verbosity > 1) && (delta > 0)) {
-            double b2KB = double(1000) / double(1024);
-            ss << "Throughput (KB/s):  " << uint(double(read) * b2KB / delta);
+            double b2KiB = double(1000) / double(1024);
+            ss << "Throughput (KiB/s): " << uint(double(read) * b2KiB / delta);
             log.println(ss.str(), true);
             ss.str(string());
         }

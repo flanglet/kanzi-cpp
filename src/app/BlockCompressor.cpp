@@ -738,7 +738,7 @@ T FileCompressTask<T>::run()
     SliceArray<byte> sa(buf, DEFAULT_BUFFER_SIZE, 0);
 
     if (_listeners.size() > 0) {
-        int64 inputSize = _ctx.getLong("fileSize", 0);
+        int64 inputSize = _ctx.getLong("fileSize", -1);
         Event evt(Event::COMPRESSION_START, -1, inputSize, clock());
         BlockCompressor::notifyListeners(_listeners, evt);
     }
@@ -828,24 +828,24 @@ T FileCompressTask<T>::run()
             if (delta >= 1e5) {
                 ss.precision(1);
                 ss.setf(ios::fixed);
-                ss << "Compression time:  " << (delta / 1000) << " s" << endl;
+                ss << "Compression time:   " << (delta / 1000) << " s" << endl;
             }
             else {
-                ss << "Compression time:  " << int(delta) << " ms" << endl;
+                ss << "Compression time:   " << int(delta) << " ms" << endl;
             }
 
-            ss << "Input size:        " << read << endl;
-            ss << "Output size:       " << encoded << endl;
+            ss << "Input size:         " << read << endl;
+            ss << "Output size:        " << encoded << endl;
 
             if (read > 0) {
                 ss.precision(6);
-                ss << "Compression ratio: " << (double(encoded) / double(read)) << endl;
+                ss << "Compression ratio:  " << (double(encoded) / double(read)) << endl;
             }
 
             log.print(ss.str(), true);
             ss.str(string());
         } else {
-            ss << "Compressed " << inputName << ": " << read << " => " << encoded;
+            ss << "Compressed " << inputName << ":  " << read << " => " << encoded;
             ss.precision(2);
             ss.setf(ios::fixed);
 
@@ -867,8 +867,8 @@ T FileCompressTask<T>::run()
         }
 
         if ((verbosity > 1) && (delta > 0) && (read > 0)) {
-            double b2KB = double(1000) / double(1024);
-            ss << "Throughput (KB/s): " << uint(double(read) * b2KB / delta);
+            double b2KiB = double(1000) / double(1024);
+            ss << "Throughput (KiB/s): " << uint(double(read) * b2KiB / delta);
             log.println(ss.str(), true);
             ss.str(string());
         }
