@@ -168,7 +168,7 @@ lz4@97291fc50
 
 kanzi@af12d07f2
 
-lzzv@10f7e2ac
+lzav@10f7e2ac
 
 
 ### More benchmarks
