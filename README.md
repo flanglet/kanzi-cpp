@@ -142,9 +142,9 @@ Tested on Ubuntu 22.04.4 LTS, i7-7700K CPU @ 4.20GHz, 32 GB RAM, clang-15
 |----------------------|----------------|-----------------|------------------|------------|------------|------------|
 |FastLZ -2	           |     1.85	      |       0.84	    |     101114153	   |  1014.66	  |   104.63	 |   13.63    |
 |Lizard 1.1.0 -11	     |     0.76	      |      	0.24	    |      93967850	   | 	 940.91   |	  95.20	   |   10.63    |
-|lzav	                 |     0.52	      |       0.19	    |      89232384	   |	 893.23   |   90.14	   |	  9.83    |
 |Lz4 1.9.5 -2	-T1      |     0.81	      |      	0.21	    |    	 89208908	   |   893.32   |   90.44    |	 10.15    |
 |Lzturbo 1.2 -11 -p0   |	   1.09	      |      	0.34	    |      88657053	   |	 888.35   |   90.43	   |	 10.64    |
+|lzav	                 |     0.52	      |       0.19	    |      88221200	   |	 883.12   |   89.13	   |	  9.73    |
 |s2 -cpu 1	           |     0.81	      |      	0.40	    |	     86646819	   |	 868.08   |   88.25	   |	 10.27    |
 |LZ4x 1.60 -2	         |     1.13	      |      	0.22	    |	     87883674	   |	 880.40   |   89.44	   |	 10.35    |
 |Lizard 1.1.0 -12	     |     1.48	      |      	0.23	    |      86340434	   |	 865.35   |   88.29	   |	 10.58    |
@@ -168,12 +168,14 @@ lz4@97291fc50
 
 kanzi@af12d07f2
 
+lzzv@10f7e2ac
+
 
 ### More benchmarks
 
 [Comprehensive lzbench benchmarks](https://github.com/flanglet/kanzi-cpp/wiki/Performance)
 
-[Mode round trip scores](https://github.com/flanglet/kanzi-cpp/wiki/Round%E2%80%90trips-scores)
+[More round trip scores](https://github.com/flanglet/kanzi-cpp/wiki/Round%E2%80%90trips-scores)
 
 
 ## Build Kanzi
