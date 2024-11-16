@@ -83,9 +83,9 @@ int BlockDecompressor::decompress(uint64& inputSize)
     int nbFiles = 1;
     Printer log(cout);
     stringstream ss;
-    string str = _inputName;
-    transform(str.begin(), str.end(), str.begin(), ::toupper);
-    bool isStdIn = str == "STDIN";
+    string upperInputName = _inputName;
+    transform(upperInputName.begin(), upperInputName.end(), upperInputName.begin(), ::toupper);
+    bool isStdIn = upperInputName == "STDIN";
 
     if (isStdIn == false) {
         vector<string> errors;
@@ -204,40 +204,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     _ctx.putInt("verbosity", _verbosity);
 
     // Run the task(s)
-    if (nbFiles == 1) {
-        string oName = formattedOutName;
-        string iName = "STDIN";
-
-
-        if (isStdIn == true) {
-            if (oName.length() == 0) {
-                oName = "STDOUT";
-            }
-        }
-        else {
-            iName = files[0].fullPath();
-            _ctx.putLong("fileSize", files[0]._size);
-
-            if (oName.length() == 0) {
-                oName = iName + ".bak";
-            }
-            else if ((inputIsDir == true) && (specialOutput == false)) {
-                oName = formattedOutName + iName.substr(formattedInName.size()) + ".bak";
-            }
-        }
-
-        _ctx.putString("inputName", iName);
-        _ctx.putString("outputName", oName);
-        FileDecompressTask<FileDecompressResult> task(_ctx, _listeners);
-        FileDecompressResult fdr = task.run();
-        res = fdr._code;
-        read = fdr._read;
-
-        if (res != 0) {
-            cerr << fdr._errMsg << endl;
-        }
-    }
-    else {
+    {
         vector<FileDecompressTask<FileDecompressResult>*> tasks;
         vector<int> jobsPerTask(nbFiles);
         Global::computeJobsPerTask(jobsPerTask.data(), _jobs, nbFiles);
@@ -247,12 +214,24 @@ int BlockDecompressor::decompress(uint64& inputSize)
         for (int i = 0; i < nbFiles; i++) {
             string oName = formattedOutName;
             string iName = files[i].fullPath();
+            upperInputName = iName;
+            transform(upperInputName.begin(), upperInputName.end(), upperInputName.begin(), ::toupper);
 
             if (oName.length() == 0) {
-                oName = iName + ".bak";
+                oName = iName;
+
+                if ((upperInputName.length() >= 4) && (upperInputName.substr(upperInputName.length() - 4) == ".KNZ"))
+                    oName.resize(oName.length() - 4);
+                else
+                    oName = oName + ".bak";
             }
             else if ((inputIsDir == true) && (specialOutput == false)) {
-                oName = formattedOutName + iName.substr(formattedInName.size()) + ".bak";
+                oName = formattedOutName + iName.substr(formattedInName.size());
+
+                if ((upperInputName.length() >= 4) && (upperInputName.substr(upperInputName.length() - 4) == ".KNZ"))
+                    oName.resize(oName.length() - 4);
+                else
+                    oName = oName + ".bak";
             }
 
             Context taskCtx(_ctx);

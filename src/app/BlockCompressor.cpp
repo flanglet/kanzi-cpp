@@ -172,9 +172,9 @@ int BlockCompressor::compress(uint64& outputSize)
     int nbFiles = 1;
     Printer log(cout);
     stringstream ss;
-    string str = _inputName;
-    transform(str.begin(), str.end(), str.begin(), ::toupper);
-    bool isStdIn = str == "STDIN";
+    string upperInputName = _inputName;
+    transform(upperInputName.begin(), upperInputName.end(), upperInputName.begin(), ::toupper);
+    bool isStdIn = upperInputName == "STDIN";
 
     if (isStdIn == false) {
         vector<string> errors;
@@ -314,45 +314,7 @@ int BlockCompressor::compress(uint64& outputSize)
     _ctx.putInt("verbosity", _verbosity);
 
     // Run the task(s)
-    if (nbFiles == 1) {
-        string oName = formattedOutName;
-        string iName = "STDIN";
-
-        if (isStdIn == true) {
-            if (oName.length() == 0) {
-                oName = "STDOUT";
-            }
-        } else {
-            iName = files[0].fullPath();
-            _ctx.putLong("fileSize", files[0]._size);
-
-            // Set the block size to optimize compression ratio when possible
-            if ((_autoBlockSize == true) && (_jobs > 0)) {
-                const int64 bl = files[0]._size / _jobs;
-                _blockSize = int(max(min((bl + 63) & ~63, int64(MAX_BLOCK_SIZE)), int64(MIN_BLOCK_SIZE)));
-            }
-
-            if (oName.length() == 0) {
-                oName = iName + ".knz";
-            }
-            else if ((inputIsDir == true) && (specialOutput == false)) {
-                oName = formattedOutName + iName.substr(formattedInName.size()) + ".knz";
-            }
-        }
-
-        _ctx.putString("inputName", iName);
-        _ctx.putString("outputName", oName);
-        FileCompressTask<FileCompressResult> task(_ctx, _listeners);
-        FileCompressResult fcr = task.run();
-        res = fcr._code;
-        read = fcr._read;
-        written = fcr._written;
-
-        if (res != 0) {
-            cerr << fcr._errMsg << endl;
-        }
-    }
-    else {
+    {
         vector<FileCompressTask<FileCompressResult>*> tasks;
         vector<int> jobsPerTask(nbFiles);
         Global::computeJobsPerTask(jobsPerTask.data(), _jobs, nbFiles);
