@@ -204,7 +204,49 @@ int BlockDecompressor::decompress(uint64& inputSize)
     _ctx.putInt("verbosity", _verbosity);
 
     // Run the task(s)
-    {
+    if (nbFiles == 1) {
+        string oName = formattedOutName;
+        string iName = "STDIN";
+
+        if (isStdIn == true) {
+            if (oName.length() == 0) {
+                oName = "STDOUT";
+            }
+        }
+        else {
+            iName = files[0].fullPath();
+            _ctx.putLong("fileSize", files[0]._size);
+
+            if (oName.length() == 0) {
+                oName = iName;
+
+                if ((upperInputName.length() >= 4) && (upperInputName.substr(upperInputName.length() - 4) == ".KNZ"))
+                    oName.resize(oName.length() - 4);
+                else
+                    oName = oName + ".bak";
+            }
+            else if ((inputIsDir == true) && (specialOutput == false)) {
+                oName = formattedOutName + iName.substr(formattedInName.size());
+
+                if ((upperInputName.length() >= 4) && (upperInputName.substr(upperInputName.length() - 4) == ".KNZ"))
+                    oName.resize(oName.length() - 4);
+                else
+                    oName = oName + ".bak";
+            }
+        }
+
+         _ctx.putString("inputName", iName);
+         _ctx.putString("outputName", oName);
+         FileDecompressTask<FileDecompressResult> task(_ctx, _listeners);
+         FileDecompressResult fdr = task.run();
+         res = fdr._code;
+         read = fdr._read;
+
+         if (res != 0) {
+            cerr << fdr._errMsg << endl;
+         }
+    }
+    else {
         vector<FileDecompressTask<FileDecompressResult>*> tasks;
         vector<int> jobsPerTask(nbFiles);
         Global::computeJobsPerTask(jobsPerTask.data(), _jobs, nbFiles);
