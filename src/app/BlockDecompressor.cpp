@@ -248,8 +248,10 @@ int BlockDecompressor::decompress(uint64& inputSize)
     }
     else {
         vector<FileDecompressTask<FileDecompressResult>*> tasks;
+#ifdef CONCURRENCY_ENABLED
         vector<int> jobsPerTask(nbFiles);
         Global::computeJobsPerTask(jobsPerTask.data(), _jobs, nbFiles);
+#endif
         sortFilesByPathAndSize(files, true);
 
         //  Create one task per file
@@ -280,7 +282,11 @@ int BlockDecompressor::decompress(uint64& inputSize)
             taskCtx.putLong("fileSize", files[i]._size);
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
+#ifdef CONCURRENCY_ENABLED
             taskCtx.putInt("jobs", jobsPerTask[i]);
+#else
+            taskCtx.putInt("jobs", 1);
+#endif
             FileDecompressTask<FileDecompressResult>* task = new FileDecompressTask<FileDecompressResult>(taskCtx, _listeners);
             tasks.push_back(task);
         }

@@ -354,8 +354,10 @@ int BlockCompressor::compress(uint64& outputSize)
     }
     else {
         vector<FileCompressTask<FileCompressResult>*> tasks;
+#ifdef CONCURRENCY_ENABLED
         vector<int> jobsPerTask(nbFiles);
         Global::computeJobsPerTask(jobsPerTask.data(), _jobs, nbFiles);
+#endif
 
         if (_reorderFiles == true)
             sortFilesByPathAndSize(files, true);
@@ -383,7 +385,11 @@ int BlockCompressor::compress(uint64& outputSize)
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
             taskCtx.putInt("blockSize", _blockSize);
+#ifdef CONCURRENCY_ENABLED
             taskCtx.putInt("jobs", jobsPerTask[i]);
+#else
+            taskCtx.putInt("jobs", 1);
+#endif
             FileCompressTask<FileCompressResult>* task = new FileCompressTask<FileCompressResult>(taskCtx, _listeners);
             tasks.push_back(task);
         }
