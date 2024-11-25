@@ -102,7 +102,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         }
 
         if (files.size() == 0) {
-            cerr << "Cannot access input file '" << _inputName << "'" << endl;
+            cerr << "Cannot find any file to decompress" << endl;
             return Error::ERR_OPEN_FILE;
         }
 

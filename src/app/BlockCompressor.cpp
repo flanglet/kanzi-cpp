@@ -192,7 +192,7 @@ int BlockCompressor::compress(uint64& outputSize)
         }
 
         if (files.size() == 0) {
-            cerr << "Cannot access input file '" << _inputName << "'" << endl;
+            cerr << "Cannot find any file to compress" << endl;
             return Error::ERR_OPEN_FILE;
         }
 
