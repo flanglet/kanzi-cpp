@@ -237,15 +237,9 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     }
 
     const int inc = (delta > 0) ? -1 : 1;
-
-    if (queue.empty()) {
-        freqs[idxMax] += inc * delta;
-        return alphabetSize;
-    }
-
     sort(queue.begin(), queue.end(), FreqDataComparator());
 
-    while (sumScaledFreq != scale) {
+    while (queue.size() != 0) {
         // Remove next symbol
 #if __cplusplus >= 201103L
         FreqSortData fsd = std::move(queue.front()); // qualified move (std::) to avoid warning
@@ -255,20 +249,28 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         queue.pop_front();
 
         // Do not zero out any frequency
-        if (int(*fsd._freq) == -inc) {
-            if (queue.empty()) {
-                delta = int(sumScaledFreq - scale);
-                freqs[idxMax] += inc * delta;
-                break;
-            }
-
+        if (int(*fsd._freq) == -inc)
             continue;
-        }
 
         // Distort frequency and re-enqueue
         *fsd._freq += inc;
         sumScaledFreq += inc;
         queue.push_back(fsd);
+
+        if (sumScaledFreq == scale)
+           break;
+    }
+
+    if (sumScaledFreq != scale) {
+        for (int i = 0; i < alphabetSize; i++) {
+            if (freqs[alphabet[i]] != -inc) {
+               freqs[alphabet[i]] += inc;
+               sumScaledFreq += inc;
+
+               if (sumScaledFreq == scale)
+                   break;
+            }
+        }
     }
 
     return alphabetSize;
