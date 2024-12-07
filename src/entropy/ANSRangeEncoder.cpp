@@ -63,7 +63,7 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
     _freqs = new uint[dim * 257]; // freqs[x][256] = total(freqs[x][0..255])
     _buffer = new byte[0];
     _bufferSize = 0;
-    _logRange = (order == 0) ? logRange : logRange - 1;
+    _logRange = (order == 0) ? logRange : max(logRange - 1, 8);
 }
 
 ANSRangeEncoder::~ANSRangeEncoder()
