@@ -263,7 +263,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
 
     if (sumScaledFreq != scale) {
         for (int i = 0; i < alphabetSize; i++) {
-            if (freqs[alphabet[i]] != -inc) {
+            if (int(freqs[alphabet[i]]) != -inc) {
                freqs[alphabet[i]] += inc;
                sumScaledFreq += inc;
 
