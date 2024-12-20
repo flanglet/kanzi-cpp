@@ -139,7 +139,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("        Transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]", true);
        log.println("                  [MTFT|RANK|SRT|TEXT|MM|EXE|UTF|PACK]", true);
        log.println("        EG: BWT+RANK or BWTS+MTFT\n", true);
-       log.println("   -x, -c32, -x64, --checksum=<size>", true);
+       log.println("   -x, -x32, -x64, --checksum=<size>", true);
        log.println("        Enable block checksum (32 or 64 bits).", true);
        log.println("        -x is equivalent to -x32.\n", true);
        log.println("   -s, --skip", true);
