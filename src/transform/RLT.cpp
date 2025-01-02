@@ -127,7 +127,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
                 if ((run < MAX_RUN4) && (srcIdx < srcEnd4))
                     continue;
             }
-            else if (prev == src[srcIdx]) {
+            else {
                 srcIdx++; run++;
 
                 if (prev == src[srcIdx]) {
