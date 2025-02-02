@@ -104,10 +104,6 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
        byte mode = input._array[input._index++];
        const uint logNbChunks = uint(mode >> 2) & 0x07;
        const int pIndexSize = (int(mode) & 0x03) + 1;
-
-       if (pIndexSize == 0)
-           return false;
-
        const int chunks = 1 << logNbChunks;
 
        if (chunks != BWT::getBWTChunks(blockSize))
