@@ -170,6 +170,10 @@ int DivSufSort::computeBWT(const byte input[], byte output[], int bwt[], int len
     reset();
     const int m = sortTypeBstar(_bucketA, _bucketB, length);
     const int pIdx = constructBWT(_bucketA, _bucketB, length, m, indexes, idxCount);
+
+    if (pIdx < 0)
+        return -1;
+
     output[0] = input[length - 1];
 
     for (int i = 0; i < pIdx; i++)
