@@ -182,8 +182,10 @@ End:
         if (runLength > dstEnd - dstIdx)
             return false;
 
-        memset(&dst[dstIdx], 0, size_t(runLength));
-        dstIdx += runLength;
+        if (runLength > 0) {
+            memset(&dst[dstIdx], 0, size_t(runLength));
+            dstIdx += runLength;
+        }
     }
 
     input._index += srcIdx;
