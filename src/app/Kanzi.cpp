@@ -530,7 +530,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
-            else if (noDotFiles >= 0) {
+            else if (noLinks >= 0) {
                 WARNING_OPT_DUPLICATE(arg, "true");
             }
 
