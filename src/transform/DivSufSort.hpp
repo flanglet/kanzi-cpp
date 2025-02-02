@@ -191,7 +191,7 @@ namespace kanzi
 
        uint64 trPartition(int isad, int first, int middle, int last, int v);
 
-       bool trIntroSort(int isa, int isad, int first, int last, TRBudget& budget);
+       void trIntroSort(int isa, int isad, int first, int last, TRBudget& budget);
 
        int trPivot(const int arr[], int isad, int first, int last) const;
 

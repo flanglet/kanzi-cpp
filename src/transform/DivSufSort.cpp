@@ -1602,7 +1602,7 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
     return ((uint64(first) << 32) | (uint64(last) & uint64(0xFFFFFFFF)));
 }
 
-bool DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& budget)
+void DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& budget)
 {
     const int incr = isad - isa;
     int limit = trIlg(last - first);
@@ -1648,7 +1648,7 @@ bool DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                         const StackElement* se = _trStack->pop();
 
                         if (se == nullptr)
-                            return false;
+                            return;
 
                         isad = se->_a;
                         first = se->_b;
@@ -1671,7 +1671,7 @@ bool DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                         const StackElement* se = _trStack->pop();
 
                         if (se == nullptr)
-                            return false;
+                            return;
 
                         isad = se->_a;
                         first = se->_b;
@@ -1686,7 +1686,7 @@ bool DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                 const StackElement* se = _trStack->pop();
 
                 if (se == nullptr)
-                    return false;
+                    return;
 
                 if (se->_d == 0) {
                     trCopy(isa, first, se->_b, se->_c, last, isad - isa);
@@ -1701,7 +1701,7 @@ bool DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                 se = _trStack->pop();
 
                 if (se == nullptr)
-                    return false;
+                    return;
 
                 isad = se->_a;
                 first = se->_b;
@@ -1773,7 +1773,7 @@ bool DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                             const StackElement* se = _trStack->pop();
 
                             if (se == nullptr)
-                                return false;
+                                return;
 
                             isad = se->_a;
                             first = se->_b;
@@ -1787,7 +1787,7 @@ bool DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                     const StackElement* se = _trStack->pop();
 
                     if (se == nullptr)
-                        return false;
+                        return;
 
                     isad = se->_a;
                     first = se->_b;
@@ -1950,7 +1950,7 @@ bool DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                         const StackElement* se = _trStack->pop();
 
                         if (se == nullptr)
-                            return false;
+                            return;
 
                         isad = se->_a;
                         first = se->_b;
@@ -1971,7 +1971,7 @@ bool DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                         const StackElement* se = _trStack->pop();
 
                         if (se == nullptr)
-                            return false;
+                            return;
 
                         isad = se->_a;
                         first = se->_b;
@@ -1994,7 +1994,7 @@ bool DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
                 const StackElement* se = _trStack->pop();
 
                 if (se == nullptr)
-                    return false;
+                    return;
 
                 isad = se->_a;
                 first = se->_b;
@@ -2004,8 +2004,6 @@ bool DivSufSort::trIntroSort(int isa, int isad, int first, int last, TRBudget& b
             }
         }
     }
-
-    return true;
 }
 
 int DivSufSort::trPivot(const int arr[], int isad, int first, int last) const
