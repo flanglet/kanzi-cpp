@@ -575,7 +575,6 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int dstIdx = 4;
 
     while ((srcIdx < srcEnd - MIN_MATCH) && (dstIdx < dstEnd)) {
-        prefetchRead(&src[srcIdx + MIN_MATCH]);
         const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
         const int32 ref = _hashes[h];
         _hashes[h] = srcIdx;
