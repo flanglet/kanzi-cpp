@@ -42,6 +42,7 @@ FPAQEncoder::~FPAQEncoder()
 
 bool FPAQEncoder::reset()
 {
+    _index = 0;
     _low = 0;
     _high = TOP;
     _disposed = false;
