@@ -170,8 +170,8 @@ namespace kanzi {
     template <bool T>
     inline void LZXCodec<T>::emitLiterals(const byte src[], byte dst[], int len)
     {
-        for (int i = 0; i < len; i += 8)
-            memcpy(&dst[i], &src[i], 8);
+        for (int i = 0; i < len; i += 16)
+            memcpy(&dst[i], &src[i], 16);
     }
 
     template <bool T>

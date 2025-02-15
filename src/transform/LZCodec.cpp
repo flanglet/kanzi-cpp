@@ -132,16 +132,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         _hashes = new int32[_hashSize];
     }
 
-    if (_bufferSize < max(count / 5, 256)) {
-        _bufferSize = max(count / 5, 256);
-        delete[] _mLenBuf;
-        _mLenBuf = new byte[_bufferSize];
-        delete[] _mBuf;
-        _mBuf = new byte[_bufferSize];
-        delete[] _tkBuf;
-        _tkBuf = new byte[_bufferSize];
-    }
-
     memset(_hashes, 0, sizeof(int32) * _hashSize);
     const int srcEnd = count - 16 - 1;
     const byte* src = &input._array[input._index];
@@ -161,6 +151,16 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         else if (dt == Global::SMALL_ALPHABET) {
             return false;
         }
+    }
+
+    if (_bufferSize < max(count / 5, 256)) {
+        _bufferSize = max(count / 5, 256);
+        delete[] _mLenBuf;
+        _mLenBuf = new byte[_bufferSize];
+        delete[] _mBuf;
+        _mBuf = new byte[_bufferSize];
+        delete[] _tkBuf;
+        _tkBuf = new byte[_bufferSize];
     }
 
     const int minMatch = mm;
