@@ -125,7 +125,7 @@ bool EXECodec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int
         return false;
 
     if (codeStart > 0) {
-        memcpy(&dst[dstIdx], &src[0], codeStart);
+        memcpy(&dst[dstIdx], &src[0], size_t(codeStart));
         dstIdx += codeStart;
     }
 
@@ -177,7 +177,7 @@ bool EXECodec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     LittleEndian::writeInt32(&dst[1], codeStart);
     LittleEndian::writeInt32(&dst[5], dstIdx);
-    memcpy(&dst[dstIdx], &src[srcIdx], count - srcIdx);
+    memcpy(&dst[dstIdx], &src[srcIdx], size_t(count - srcIdx));
     dstIdx += (count - srcIdx);
 
     // Cap expansion due to false positives
@@ -206,7 +206,7 @@ bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int
         return false;
 
     if (codeStart > 0) {
-        memcpy(&dst[dstIdx], &src[0], codeStart);
+        memcpy(&dst[dstIdx], &src[0], size_t(codeStart));
         dstIdx += codeStart;
     }
 
@@ -273,7 +273,7 @@ bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     LittleEndian::writeInt32(&dst[1], codeStart);
     LittleEndian::writeInt32(&dst[5], dstIdx);
-    memcpy(&dst[dstIdx], &src[srcIdx], count - srcIdx);
+    memcpy(&dst[dstIdx], &src[srcIdx], size_t(count - srcIdx));
     dstIdx += (count - srcIdx);
 
     // Cap expansion due to false positives
@@ -321,7 +321,7 @@ bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int
         return false;
 
     if (codeStart > 0) {
-        memcpy(&dst[dstIdx], &src[srcIdx], codeStart);
+        memcpy(&dst[dstIdx], &src[srcIdx], size_t(codeStart));
         dstIdx += codeStart;
         srcIdx += codeStart;
     }
@@ -357,7 +357,7 @@ bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int
     }
 
     if (srcIdx < count) {
-       memcpy(&dst[dstIdx], &src[srcIdx], count - srcIdx);
+       memcpy(&dst[dstIdx], &src[srcIdx], size_t(count - srcIdx));
        dstIdx += (count - srcIdx);
     }
 
@@ -380,7 +380,7 @@ bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
         return false;
 
     if (codeStart > 0) {
-        memcpy(&dst[dstIdx], &src[srcIdx], codeStart);
+        memcpy(&dst[dstIdx], &src[srcIdx], size_t(codeStart));
         dstIdx += codeStart;
         srcIdx += codeStart;
     }
@@ -426,7 +426,7 @@ bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     }
 
     if (srcIdx < count) {
-       memcpy(&dst[dstIdx], &src[srcIdx], count - srcIdx);
+       memcpy(&dst[dstIdx], &src[srcIdx], size_t(count - srcIdx));
        dstIdx += (count - srcIdx);
     }
 

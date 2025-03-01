@@ -59,7 +59,7 @@ namespace kanzi
        if (output._index + length > output._length)
            return false;
 
-       memcpy(&output._array[output._index], &input._array[input._index], length);
+       memcpy(&output._array[output._index], &input._array[input._index], size_t(length));
        input._index += length;
        output._index += length;
        return true;

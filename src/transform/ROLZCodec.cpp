@@ -314,7 +314,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 if (litLen >= 31)
                     lenBuf._index += emitLength(&lenBuf._array[lenBuf._index], litLen - 31);
 
-                memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], litLen);
+                memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], size_t(litLen));
                 litBuf._index += litLen;
             }
 
@@ -338,7 +338,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         if (litLen >= 31)
             lenBuf._index += emitLength(&lenBuf._array[lenBuf._index], litLen - 31);
 
-        memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], litLen);
+        memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], size_t(litLen));
         litBuf._index += litLen;
 
         try {
@@ -514,7 +514,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         if (onlyLiterals == true) {
             // Shortcut when no match
-            memcpy(&output._array[output._index], &litBuf._array[0], sizeChunk);
+            memcpy(&output._array[output._index], &litBuf._array[0], size_t(sizeChunk));
             startChunk = endChunk;
             output._index += sizeChunk;
             continue;
@@ -547,7 +547,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     goto End;
                 }
 
-                memcpy(&buf[dstIdx], &litBuf._array[litBuf._index], litLen);
+                memcpy(&buf[dstIdx], &litBuf._array[litBuf._index], size_t(litLen));
                 int srcInc = 0;
 
                 if (cond == true) {

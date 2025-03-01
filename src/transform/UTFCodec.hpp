@@ -32,7 +32,7 @@ namespace kanzi
 
         friend bool operator< (ssUTF const& lhs, ssUTF const& rhs) {
             int r;
-            return ((r = lhs.freq - rhs.freq) != 0) ? r > 0 : lhs.val > rhs.val;
+            return ((r = int(lhs.freq - rhs.freq)) != 0) ? r > 0 : lhs.val > rhs.val;
         }
     } sdUTF;
 

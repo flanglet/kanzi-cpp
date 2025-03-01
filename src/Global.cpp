@@ -170,7 +170,7 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
 
     if (isOrder0 == true) {
         if (withTotal == true)
-            freqs[256] = length;
+            freqs[256] = uint(length);
 
         uint f0[256] = { 0 };
         uint f1[256] = { 0 };
@@ -302,7 +302,7 @@ int Global::computeFirstOrderEntropy1024(int blockLen, const uint histo[])
         return 0;
 
     uint64 sum = 0;
-    const int logLength1024 = Global::log2_1024(blockLen);
+    const int logLength1024 = Global::log2_1024(uint32(blockLen));
 
     for (int i = 0; i < 256; i++) {
         if (histo[i] == 0)

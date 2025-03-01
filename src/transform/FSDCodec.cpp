@@ -305,7 +305,7 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     // Emit first bytes
-    memcpy(&dst[0], &src[2], dist);
+    memcpy(&dst[0], &src[2], size_t(dist));
     int srcIdx = dist + 2;
     int dstIdx = dist;
 

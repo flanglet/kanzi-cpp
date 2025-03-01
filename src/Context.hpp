@@ -35,7 +35,7 @@ namespace kanzi
        int64 lVal;
        std::string sVal;
 
-       ContextVal(bool b, uint64 val, const std::string& str) : isString(b), lVal(val), sVal(str) {}
+       ContextVal(bool b, int64 val, const std::string& str) : isString(b), lVal(val), sVal(str) {}
        ContextVal() { isString = false; lVal = 0; }
    } ctxVal;
 

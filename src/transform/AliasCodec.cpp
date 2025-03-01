@@ -122,7 +122,7 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 // 4 symbols or less
                 const int c3 = count & 3;
                 dst[dstIdx++] = byte(c3);
-                memcpy(&dst[dstIdx], &src[srcIdx], c3);
+                memcpy(&dst[dstIdx], &src[srcIdx], size_t(c3));
                 srcIdx += c3;
                 dstIdx += c3;
 
@@ -268,7 +268,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             if ((oSize < 0) || (output._index + oSize > output._length))
                 return false;
 
-            memset(&dst[0], int(val), oSize);
+            memset(&dst[0], int(val), size_t(oSize));
             srcIdx = count;
             dstIdx = oSize;
         }
@@ -300,7 +300,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     decodeMap[i] = val;
                 }
 
-                memcpy(&dst[dstIdx], &src[srcIdx], adjust);
+                memcpy(&dst[dstIdx], &src[srcIdx], size_t(adjust));
                 srcIdx += adjust;
                 dstIdx += adjust;
 
