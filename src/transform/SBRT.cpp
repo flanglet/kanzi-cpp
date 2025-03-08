@@ -78,12 +78,12 @@ bool SBRT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         // Move up symbol to correct rank
         while ((r > 0) && (q[r2s[r - 1]] <= qc)) {
             r2s[r] = r2s[r - 1];
-            s2r[r2s[r]] = r;
+            s2r[r2s[r]] = uint8(r);
             r--;
         }
 
         r2s[r] = c;
-        s2r[c] = r;
+        s2r[c] = uint8(r);
     }
 
     input._index += count;

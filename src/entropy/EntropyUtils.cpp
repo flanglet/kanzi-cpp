@@ -47,7 +47,7 @@ struct FreqDataComparator {
     {
         // Decreasing frequency then decreasing symbol
         int r;
-        return  ((r = *fd1._freq - *fd2._freq) == 0) ? fd1._symbol > fd2._symbol: r > 0;
+        return ((r = int(*fd1._freq - *fd2._freq)) == 0) ? fd1._symbol > fd2._symbol: r > 0;
     }
 };
 
@@ -233,7 +233,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
        if (freqs[alphabet[i]] <= 2) // Do not distort small frequencies
           continue;
 
-       queue.push_back(FreqSortData(&freqs[alphabet[i]], alphabet[i]));
+       queue.push_back(FreqSortData(&freqs[alphabet[i]], uint8(alphabet[i])));
     }
 
     const int inc = (delta > 0) ? -1 : 1;
