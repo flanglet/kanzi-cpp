@@ -105,13 +105,12 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
        const uint logNbChunks = uint(mode >> 2) & 0x07;
        const int pIndexSize = (int(mode) & 0x03) + 1;
        const int chunks = 1 << logNbChunks;
-
-       if (chunks != BWT::getBWTChunks(blockSize))
-           return false;
-
        const int headerSize = 1 + chunks * pIndexSize;
 
        if ((input._length < headerSize) || (blockSize < headerSize))
+           return false;
+
+       if (chunks != BWT::getBWTChunks(blockSize - headerSize))
            return false;
 
        // Read header
@@ -135,7 +134,7 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
        const int chunks = BWT::getBWTChunks(blockSize);
 
        for (int i = 0; i < chunks; i++) {
-           // Read block header (mode + primary index). See top of header file for format
+           // Read block header (mode + primary index)
            const int blockMode = int(input._array[input._index++]);
            const int pIndexSizeBytes = 1 + ((blockMode >> 6) & 0x03);
 
