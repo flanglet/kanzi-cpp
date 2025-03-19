@@ -288,6 +288,11 @@ void CompressedOutputStream::writeHeader()
             throw IOException("Cannot write size of input to header", Error::ERR_WRITE_FILE);
     }
 
+    const uint64 padding = 0;
+
+    if (_obs->writeBits(padding, 15) != 15)
+        throw IOException("Cannot write padding to header", Error::ERR_WRITE_FILE);
+
     uint32 seed = 0x01030507 * BITSTREAM_FORMAT_VERSION; // no const to avoid VS2008 warning
     const uint32 HASH = 0x1E35A7BD;
     uint32 cksum = HASH * seed;
@@ -305,11 +310,6 @@ void CompressedOutputStream::writeHeader()
 
     if (_obs->writeBits(cksum, 24) != 24)
         throw IOException("Cannot write checksum to header", Error::ERR_WRITE_FILE);
-
-    const uint64 padding = 0;
-
-    if (_obs->writeBits(padding, 15) != 15)
-        throw IOException("Cannot write padding to header", Error::ERR_WRITE_FILE);
 }
 
 bool CompressedOutputStream::addListener(Listener<Event>& bl)

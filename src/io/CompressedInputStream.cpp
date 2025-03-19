@@ -341,6 +341,11 @@ void CompressedInputStream::readHeader()
         _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
     }
 
+    if (bsVersion >= 6) {
+       // Padding
+       _ibs->readBits(15);
+    }
+
     // Read & verify checksum
     const int crcSize = bsVersion <= 5 ? 16 : 24;
     const uint32 cksum1 = uint32(_ibs->readBits(crcSize));
@@ -362,11 +367,6 @@ void CompressedInputStream::readHeader()
 
     if (cksum1 != (cksum2 & ((1 << crcSize) - 1)))
         throw IOException("Invalid bitstream, header checksum mismatch", Error::ERR_CRC_CHECK);
-
-    if (bsVersion >= 6) {
-       // Padding
-       _ibs->readBits(15);
-    }
 
     if (_listeners.size() > 0) {
         stringstream ss;
