@@ -301,6 +301,7 @@ namespace kanzi
        uint hashSize = HASH_SIZE;
        uint extraMem = (T == true) ? 1 : 0;
        uint bufferSize = BUFFER_SIZE;
+       uint bsVersion = 6;
 
        if (ctx != nullptr) {
            // Block size requested by the user
@@ -333,12 +334,19 @@ namespace kanzi
                mixersSize = (absz >= 1 * 1024 * 1024) ? 1 << 11 : 1 << 8;
 
            bufferSize = rbsz < BUFFER_SIZE ? rbsz : BUFFER_SIZE;
-           hashSize = hashSize < 16 * uint(absz) ? hashSize : 16 * uint(absz);
+           const uint mxsz = absz < (1 << 26) ? absz * 16 : 1 << 30;
+           hashSize = hashSize < mxsz ? hashSize : mxsz;
+           bsVersion = ctx->getInt("bsVersion", bsVersion);
        }
 
        mixersSize <<= (2 * extraMem);
        statesSize <<= (2 * extraMem);
        hashSize <<= (2 * extraMem);
+
+       // Cap hash size for java compatibility
+       if ((bsVersion > 5) && (hashSize > 1024 * 1024 * 1024))
+           hashSize = 1024 * 1024 * 1024;
+
        _statesMask = statesSize - 1;
        _mixersMask = (mixersSize - 1) & ~1;
        _hashMask = hashSize - 1;
