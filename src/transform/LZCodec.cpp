@@ -132,6 +132,16 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         _hashes = new int32[_hashSize];
     }
 
+    if (_bufferSize < max(count / 5, 256)) {
+        _bufferSize = max(count / 5, 256);
+        delete[] _mLenBuf;
+        _mLenBuf = new byte[_bufferSize];
+        delete[] _mBuf;
+        _mBuf = new byte[_bufferSize];
+        delete[] _tkBuf;
+        _tkBuf = new byte[_bufferSize];
+    }
+
     memset(_hashes, 0, sizeof(int32) * _hashSize);
     const int srcEnd = count - 16 - 1;
     const byte* src = &input._array[input._index];
@@ -151,16 +161,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         else if (dt == Global::SMALL_ALPHABET) {
             return false;
         }
-    }
-
-    if (_bufferSize < max(count / 5, 256)) {
-        _bufferSize = max(count / 5, 256);
-        delete[] _mLenBuf;
-        _mLenBuf = new byte[_bufferSize];
-        delete[] _mBuf;
-        _mBuf = new byte[_bufferSize];
-        delete[] _tkBuf;
-        _tkBuf = new byte[_bufferSize];
     }
 
     const int minMatch = mm;
@@ -208,7 +208,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             // No good match ?
             if (bestLen < minMatch) {
                 srcIdx++;
-                srcIdx += (srcInc >> 7);
+                srcIdx += (srcInc >> 6);
                 srcInc++;
                 repIdx = 0;
                 continue;
@@ -356,7 +356,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             const int32 h = hash(&src[srcIdx]);
             _hashes[h] = srcIdx;
         }
-
     }
 
     // Emit last literals
@@ -388,7 +387,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     dstIdx += mLenIdx;
     input._index += count;
     output._index += dstIdx;
-    return true;
+    return dstIdx <= count - (count / 100);
 }
 
 template <bool T>
@@ -480,6 +479,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
             mIdx += t;
         }
 
+        prefetchRead(&src[mLenIdx]);
         repd1 = repd0;
         repd0 = dist;
         const int mEnd = dstIdx + mLen;
@@ -491,7 +491,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
             goto exit;
         }
 
-        prefetchRead(&src[mLenIdx]);
+        prefetchWrite(&dst[dstIdx]);
 
         // Copy match
         if (dist >= 16) {
@@ -575,6 +575,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int dstIdx = 4;
 
     while ((srcIdx < srcEnd - MIN_MATCH) && (dstIdx < dstEnd)) {
+        prefetchRead(&src[srcIdx + MIN_MATCH]);
         const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
         const int32 ref = _hashes[h];
         _hashes[h] = srcIdx;
