@@ -206,7 +206,7 @@ namespace kanzi
        int _nbInputBlocks;
        int _jobs;
        int _bufferThreshold;
-       int _available; // decoded not consumed bytes
+       int64 _available; // decoded not consumed bytes
        int64 _outputSize;
        XXHash32* _hasher32;
        XXHash64* _hasher64;
@@ -226,7 +226,7 @@ namespace kanzi
        ThreadPool* _pool;
 #endif
 
-       int processBlock();
+       int64 processBlock();
 
        int _get(int inc);
 

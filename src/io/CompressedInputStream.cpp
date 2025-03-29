@@ -465,7 +465,7 @@ istream& CompressedInputStream::read(char* data, streamsize length)
 
     while (remaining > 0) {
         // Limit to number of available bytes in current buffer
-        const int lenChunk = min(remaining, min(_available, _bufferThreshold - _buffers[_bufferId]->_index));
+        const int lenChunk = min(remaining, int(min(_available, int64(_bufferThreshold - _buffers[_bufferId]->_index))));
 
         if (lenChunk > 0) {
             // Process a chunk of in-buffer data. No access to bitstream required
@@ -500,7 +500,7 @@ istream& CompressedInputStream::read(char* data, streamsize length)
     return *this;
 }
 
-int CompressedInputStream::processBlock()
+int64 CompressedInputStream::processBlock()
 {
     readHeader();
 
@@ -511,7 +511,7 @@ int CompressedInputStream::processBlock()
     try {
         // Add a padding area to manage any block temporarily expanded
         const int blkSize = max(_blockSize + EXTRA_BUFFER_SIZE, _blockSize + (_blockSize >> 4));
-        int decoded = 0;
+        int64 decoded = 0;
         int nbTasks = _jobs;
         int jobsPerTask[MAX_CONCURRENCY];
 
