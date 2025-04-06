@@ -131,11 +131,12 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count)
 
         while (remaining >= 64) {
             const uint64 v = _current;
-            _availBits = pullCurrent() - r;
+            _availBits = pullCurrent();
 
-            if (_availBits < 0)
+            if (_availBits < r)
                throw BitStreamException("No more data to read in the bitstream", BitStreamException::END_OF_STREAM);
 
+            _availBits -= r;
             BigEndian::writeLong64(&bits[start], (v << r) | (_current >> _availBits));
             start += 8;
             remaining -= 64;
