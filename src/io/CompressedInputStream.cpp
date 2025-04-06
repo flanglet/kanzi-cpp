@@ -285,7 +285,7 @@ void CompressedInputStream::readHeader()
             _hasher64 = new XXHash64(BITSTREAM_TYPE);
         }
         else if (ckSize == 3) {
-           throw IOException("Invalid bitsreamm, incorrect block checksum size",
+           throw IOException("Invalid bitstream, incorrect block checksum size",
                Error::ERR_INVALID_FILE);
         }
     }
