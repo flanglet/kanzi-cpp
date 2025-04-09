@@ -849,7 +849,7 @@ T DecodingTask<T>::run()
         const int length = dataSize << 3;
         const uint64 mask = (uint64(1) << length) - 1;
         const int preTransformLength = int(ibs->readBits(length) & mask);
-        const int maxTransformSize = min(max(2 * _blockLength, 1024), CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE);
+        const int maxTransformSize = min(max(_blockLength + _blockLength / 2, 2048), CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE);
 
         if ((preTransformLength <= 0) || (preTransformLength > maxTransformSize)) {
             // Error => cancel concurrent decoding tasks

@@ -793,7 +793,7 @@ T EncodingTask<T>::run()
         _obs->writeBits(written, lw);
 
         // Emit data to shared bitstream
-        for (int n = 0; written > 0; ) {
+        for (uint n = 0; written > 0; ) {
             uint chkSize = uint(min(written, uint64(1) << 30));
             _obs->writeBits(&_data->_array[n], chkSize);
             n += ((chkSize + 7) >> 3);
