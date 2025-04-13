@@ -512,7 +512,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
         else {
             // dist = 1
-            memset(&dst[dstIdx], dst[ref], mLen);
+            memset(&dst[dstIdx], int(dst[ref]), mLen);
         }
 
         dstIdx = mEnd;
