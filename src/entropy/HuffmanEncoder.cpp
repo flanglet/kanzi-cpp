@@ -138,8 +138,14 @@ int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16
        n++;
    }
 
+   if (debt == 0)
+       return HuffmanCommon::MAX_SYMBOL_SIZE;
+
    // Check (up to) 6 levels; one vector per size delta
    vector<int> v[6];
+
+   for (int i = 0; i < 6; i++)
+       v[i].resize(count - n);
 
    while (n < count) {
        const int idx = HuffmanCommon::MAX_SYMBOL_SIZE - 1 - sizes[ranks[n]];
@@ -212,14 +218,16 @@ int HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count) 
     vector<uint> v(ranks, ranks + count);
     sort(v.begin(), v.end());
     uint freqs[256] = { 0 };
+    bool valid = true;
 
     for (int i = 0; i < count; i++) {
         ranks[i] = v[i] & 0xFF;
         freqs[i] = v[i] >> 8;
-
-        if (freqs[i] == 0)
-            return 0;
+        valid &= (freqs[i] != 0);
     }
+
+    if (valid == false)
+        return 0;
 
     // See [In-Place Calculation of Minimum-Redundancy Codes]
     // by Alistair Moffat & Jyrki Katajainen
