@@ -145,7 +145,7 @@ int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16
    vector<int> v[6];
 
    for (int i = 0; i < 6; i++)
-       v[i].resize(count - n);
+       v[i].reserve(count - n);
 
    while (n < count) {
        const int idx = HuffmanCommon::MAX_SYMBOL_SIZE - 1 - sizes[ranks[n]];
