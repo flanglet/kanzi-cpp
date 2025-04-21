@@ -177,24 +177,27 @@ void Global::computeHistogram(const byte block[], int length, uint freqs[], bool
         uint f2[256] = { 0 };
         uint f3[256] = { 0 };
         const uint8* end16 = reinterpret_cast<const uint8*>(&block[length & -16]);
+        uint64 q;
 
         while (p < end16) {
-            f0[p[0]]++;
-            f1[p[1]]++;
-            f2[p[2]]++;
-            f3[p[3]]++;
-            f0[p[4]]++;
-            f1[p[5]]++;
-            f2[p[6]]++;
-            f3[p[7]]++;
-            f0[p[8]]++;
-            f1[p[9]]++;
-            f2[p[10]]++;
-            f3[p[11]]++;
-            f0[p[12]]++;
-            f1[p[13]]++;
-            f2[p[14]]++;
-            f3[p[15]]++;
+            memcpy(&q, &p[0], 8);
+            f0[uint8(q>>56)]++;
+            f1[uint8(q>>48)]++;
+            f2[uint8(q>>40)]++;
+            f3[uint8(q>>32)]++;
+            f0[uint8(q>>24)]++;
+            f1[uint8(q>>16)]++;
+            f2[uint8(q>>8)]++;
+            f3[uint8(q)]++;
+            memcpy(&q, &p[8], 8);
+            f0[uint8(q>>56)]++;
+            f1[uint8(q>>48)]++;
+            f2[uint8(q>>40)]++;
+            f3[uint8(q>>32)]++;
+            f0[uint8(q>>24)]++;
+            f1[uint8(q>>16)]++;
+            f2[uint8(q>>8)]++;
+            f3[uint8(q)]++;
             p += 16;
         }
 
