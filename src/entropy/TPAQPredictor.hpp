@@ -422,7 +422,7 @@ namespace kanzi
            _binCount += ((_c4 >> 7) & 1);
 
            // Select Neural Net
-           _mixer = &_mixers[(_matchLen != 0) ? (_c4 & _mixersMask) + 1 : _c4 & _mixersMask];
+           _mixer = &_mixers[(_c4 & _mixersMask) | ((_matchLen == 0) ? 0 : 1)];
 
            // Add contexts to NN
            _ctx0 = (_c4 & 0xFF) << 8;

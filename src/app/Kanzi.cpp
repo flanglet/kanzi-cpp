@@ -269,7 +269,7 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
                  log.println(ss.str(), verbose > 0)
 
 
-bool toInt(string& s, int& res)
+static bool toInt(string& s, int& res)
 {
    // Check that all characters are valid
    for (size_t i = 0; i < s.length(); i++) {
