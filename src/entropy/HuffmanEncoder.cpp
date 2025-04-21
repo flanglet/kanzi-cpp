@@ -215,14 +215,13 @@ int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16
 int HuffmanEncoder::computeCodeLengths(uint16 sizes[], uint ranks[], int count) const
 {
     // Sort ranks by increasing freqs (first key) and increasing value (second key)
-    vector<uint> v(ranks, ranks + count);
-    sort(v.begin(), v.end());
+    sort(ranks, ranks + count);
     uint freqs[256] = { 0 };
     bool valid = true;
 
     for (int i = 0; i < count; i++) {
-        ranks[i] = v[i] & 0xFF;
-        freqs[i] = v[i] >> 8;
+        freqs[i] = ranks[i] >> 8;
+        ranks[i] = ranks[i] & 0xFF;
         valid &= (freqs[i] != 0);
     }
 
