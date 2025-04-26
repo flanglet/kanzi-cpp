@@ -21,11 +21,11 @@ limitations under the License.
 #include "types.hpp"
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__DragonFly__) || defined(BSD)
-#include <machine/endian.h>
-#elif defined(OS_MACOSX)
-        #include <machine/endian.h>
+    #include <machine/endian.h>
+#elif defined(__APPLE__)
+    #include <machine/endian.h>
 #elif defined(__linux__) || defined(__linux) || defined(__gnu_linux__)
-#include <endian.h>
+    #include <endian.h>
 #endif
 
 

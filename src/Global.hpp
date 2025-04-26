@@ -58,7 +58,7 @@ namespace kanzi {
 
    private:
        Global();
-       ~Global() {};
+       ~Global() {}
 
        static const Global _singleton;
        static const int LOG2_4096[257]; // 4096*Math.log2(x)

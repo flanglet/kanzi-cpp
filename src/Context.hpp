@@ -31,11 +31,11 @@ namespace kanzi
    // The extra memory used does not matter for the application context since
    // the map is small.
    typedef struct ContextVal {
-       bool isString;
        int64 lVal;
        std::string sVal;
+       bool isString;
 
-       ContextVal(bool b, int64 val, const std::string& str) : isString(b), lVal(val), sVal(str) {}
+       ContextVal(bool b, int64 val, const std::string& str) : lVal(val), sVal(str), isString(b) {}
        ContextVal() { isString = false; lVal = 0; }
    } ctxVal;
 

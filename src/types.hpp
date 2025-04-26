@@ -127,10 +127,6 @@ limitations under the License.
       #endif
    #endif
 
-    #ifndef _GLIBCXX_USE_NOEXCEPT
-       #define _GLIBCXX_USE_NOEXCEPT
-    #endif
-
     // Notice: in Visual Studio (prior to VS2017 version 15.7)
     // __cplusplus always defaults to 199711L (aka C++98) !!! (unless
     // the extra option /Zc:__cplusplus is added to the command line).
@@ -138,9 +134,11 @@ limitations under the License.
     #if __cplusplus >= 201103L
        // C++ 11
        #define FINAL final
+       #define NOEXCEPT noexcept
        #include <cstdint>
     #else
        #define FINAL
+       #define NOEXCEPT throw()
 
        #if defined(_MSC_VER)
           #if _MSC_VER < 1300
@@ -167,12 +165,15 @@ limitations under the License.
              typedef unsigned char uint8_t;
              typedef unsigned short uint16_t;
              typedef unsigned int uint32_t;
-             typedef signed long int64_t;
-             typedef unsigned long uint64_t;
+
+             #if !defined(__APPLE__)
+                 typedef signed long int64_t;
+                 typedef unsigned long uint64_t;
+             #endif
        #endif
 
 
-      #if !defined(_MSC_VER) || _MSC_VER < 1910
+      #if !defined(nullptr)
           #define nullptr NULL
       #endif
     #endif
@@ -193,11 +194,17 @@ namespace kanzi
     typedef uint8_t uint8;
     typedef int16_t int16;
     typedef int32_t int32;
-    typedef int64_t int64;
     typedef uint16_t uint16;
     typedef uint32_t uint;
     typedef uint32_t uint32;
-    typedef uint64_t uint64;
+
+    #if defined(__APPLE__)
+        typedef signed long int64;
+        typedef unsigned long uint64;
+    #else
+        typedef int64_t int64;
+        typedef uint64_t uint64;
+    #endif
 }
 
    #if defined(__MINGW32__)
