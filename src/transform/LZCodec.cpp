@@ -31,13 +31,13 @@ LZCodec::LZCodec(Context& ctx)
     const int lzType = ctx.getInt("lz", TransformFactory<byte>::LZ_TYPE);
 
     if (lzType == TransformFactory<byte>::LZP_TYPE) {
-        _delegate = (Transform<byte>*)new LZPCodec(ctx);
+        _delegate = new LZPCodec(ctx);
     }
     else if (lzType == TransformFactory<byte>::LZX_TYPE) {
-        _delegate = (Transform<byte>*)new LZXCodec<true>(ctx);
+        _delegate = new LZXCodec<true>(ctx);
     }
     else {
-        _delegate = (Transform<byte>*)new LZXCodec<false>(ctx);
+        _delegate = new LZXCodec<false>(ctx);
     }
 }
 
