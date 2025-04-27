@@ -121,6 +121,7 @@ namespace kanzi {
        int _dictSize;
        int _logHashSize;
        int _hashMask;
+       int _bsVersion;
        bool _isCRLF; // EOL = CR + LF
        Context* _pCtx;
 
@@ -128,7 +129,7 @@ namespace kanzi {
 
        void reset(int count);
 
-       static int emitWordIndex(byte dst[], int val, int mask);
+       static int emitWordIndex(byte dst[], int val);
 
        int emitSymbols(const byte src[], byte dst[], const int srcEnd, const int dstEnd) const;
    };
@@ -147,6 +148,7 @@ namespace kanzi {
        static const byte ESCAPE_TOKEN1;
        static const byte ESCAPE_TOKEN2;
        static const byte MASK_1F;
+       static const byte MASK_3F;
        static const byte MASK_20;
        static const byte MASK_40;
        static const byte MASK_80;
