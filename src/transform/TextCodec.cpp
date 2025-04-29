@@ -35,6 +35,7 @@ const byte TextCodec::MASK_3F = byte(0x3F);
 const byte TextCodec::MASK_20 = byte(0x20);
 const byte TextCodec::MASK_40 = byte(0x40);
 const byte TextCodec::MASK_80 = byte(0x80);
+const byte TextCodec::MASK_FLIP_CASE = byte(0x80);
 const int TextCodec::HASH1 = 0x7FEB352D;
 const int TextCodec::HASH2 = 0x846CA68B;
 const byte TextCodec::CR = byte(0x0D);
@@ -775,14 +776,16 @@ int TextCodec1::emitWordIndex(byte dst[], int val)
 {
     // Emit word index (varint 5 bits + 7 bits + 7 bits)
     if (val >= TextCodec::THRESHOLD1) {
-        int dstIdx = 0;
+        if (val >= TextCodec::THRESHOLD2) {
+            dst[0] = byte(0xE0 | (val >> 14));
+            dst[1] = byte(0x80 | (val >> 7));
+            dst[2] = byte(0x7F & val);
+            return 3;
+        }
 
-        if (val >= TextCodec::THRESHOLD2)
-            dst[dstIdx++] = byte(0xE0 | (val >> 14));
-
-        dst[dstIdx] = byte(0x80 | (val >> 7));
-        dst[dstIdx + 1] = byte(0x7F & val);
-        return dstIdx + 2;
+        dst[0] = byte(0x80 | (val >> 7));
+        dst[1] = byte(0x7F & val);
+        return 2;
     }
 
     dst[0] = byte(val);
@@ -1148,7 +1151,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     }
 
                     // Case flip is encoded as 0x80
-                    dst[dstIdx] = TextCodec::MASK_80;
+                    dst[dstIdx] = TextCodec::MASK_FLIP_CASE;
                     dstIdx += (pe == pe1 ? 0 : 1);
                     dstIdx += emitWordIndex(&dst[dstIdx], pe->_data & TextCodec::MASK_LENGTH);
                     emitAnchor = delimAnchor + 1 + (pe->_data >> 24);
@@ -1283,28 +1286,25 @@ int TextCodec2::emitSymbols(const byte src[], byte dst[], const int srcEnd, cons
 
 int TextCodec2::emitWordIndex(byte dst[], int wIdx)
 {
-    // Increment word index because 0x80 is reserved to first symbol case flip
+    // 0x80 is reserved to first symbol case flip
     wIdx++;
 
-    // Emit word index (varint 6 bits + 7 bits + 7 bits)
-    // first byte: 0x80 => word idx, 0x40 => more bytes
-    // next bytes: 0x80 => 1 more byte
     if (wIdx >= TextCodec::THRESHOLD3) {
         if (wIdx >= TextCodec::THRESHOLD4) {
-            // 6 + 7 + 7 => 2^20 = 64*128*128
-            dst[0] = byte(0xC0 | (wIdx >> 14));
-            dst[1] = byte(0x80 | (wIdx >> 7));
-            dst[2] = byte(wIdx & 0x7F);
+            // 3 byte index (1111xxxx xxxxxxxx xxxxxxxx)
+            dst[0] = byte(0xF0 | (wIdx >> 16));
+            dst[1] = byte(wIdx >> 8);
+            dst[2] = byte(wIdx);
             return 3;
         }
 
-        // 6 + 7 => 2^13 = 64*128
-        dst[0] = byte(0xC0 | (wIdx >> 7));
-        dst[1] = byte(wIdx & 0x7F);
+        // 2 byte index (110xxxxx xxxxxxxx)
+        dst[0] = byte(0xC0 | (wIdx >> 8));
+        dst[1] = byte(wIdx);
         return 2;
     }
 
-    // 6 => 64
+    // 1 byte index (10xxxxxx) with 0x80 excluded
     dst[0] = byte(0x80 | wIdx);
     return 1;
 }
@@ -1422,18 +1422,20 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     cur = src[srcIdx++];
                 }
 
-                // Read word index (varint 6 bits + 7 bits + 7 bits)
-                idx = int(cur & TextCodec::MASK_3F);
+                // Read word index
+                // 10xxxxxx => 1 byte
+                // 110xxxxx => 2 bytes
+                // 1111xxxx => 3 bytes
+                idx = int(cur) & 0x7F;
 
-                if ((cur & TextCodec::MASK_40) != byte(0)) {
-                    const int idx2 = int(src[srcIdx++]);
-
-                    if (idx2 >= 128) {
-                        idx = (idx << 14) | ((idx2 & 0x7F) << 7) | int(src[srcIdx]);
-                        srcIdx++;
+                if (idx >= 64) {
+                    if (idx >= 112) {
+                        idx = ((idx & 0x0F) << 16) | (int(src[srcIdx]) << 8) | int(src[srcIdx + 1]);
+                        srcIdx += 2;
                     }
                     else {
-                        idx = (idx << 7) | idx2;
+                        idx = ((idx & 0x1F) << 8) | int(src[srcIdx]);
+                        srcIdx++;
                     }
 
                     // Sanity check before adjusting index

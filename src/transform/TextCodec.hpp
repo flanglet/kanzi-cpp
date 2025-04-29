@@ -152,6 +152,7 @@ namespace kanzi {
        static const byte MASK_20;
        static const byte MASK_40;
        static const byte MASK_80;
+       static const byte MASK_FLIP_CASE;
 
        TextCodec();
 
