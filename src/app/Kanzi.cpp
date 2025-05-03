@@ -102,13 +102,11 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
 
    if (mode.compare(0, 1, "c") == 0) {
        log.println("        Optional name of the output file or directory (defaults to", true);
-       log.println("        <inputName.knz>) or 'none' or 'stdout'. 'stdout' is not valid", true);
-       log.println("        when the number of jobs is greater than 1.\n", true);
+       log.println("        <inputName.knz>) or 'none' or 'stdout'.\n", true);
    }
    else if (mode.compare(0, 1, "d") == 0) {
        log.println("        Optional name of the output file or directory (defaults to", true);
-       log.println("        <inputName.bak>) or 'none' or 'stdout'. 'stdout' is not valid", true);
-       log.println("        when the number of jobs is greater than 1.\n", true);
+       log.println("        <inputName.bak>) or 'none' or 'stdout'.\n", true);
    }
    else {
        log.println("        Optional name of the output file or 'none' or 'stdout'.\n", true);
@@ -962,12 +960,12 @@ int main(int argc, const char* argv[])
         Context ctx(args);
 #else
         if (jobs == 0) {
-           int cores = max(int(thread::hardware_concurrency()), 1); // User provided 0 => use all the cores
-           jobs = min(cores, MAX_CONCURRENCY);
+            int cores = max(int(thread::hardware_concurrency()), 1); // User provided 0 => use all the cores
+            jobs = min(cores, MAX_CONCURRENCY);
         }
         else if (jobs == -1) {
-           int cores = max(int(thread::hardware_concurrency()) / 2, 1); // Defaults to half the cores
-           jobs = min(cores, MAX_CONCURRENCY);
+            int cores = max(int(thread::hardware_concurrency()) / 2, 1); // Defaults to half the cores
+            jobs = min(cores, MAX_CONCURRENCY);
         }
         else if (jobs > MAX_CONCURRENCY) {
             const int verbosity = args.getInt("verbosity");
