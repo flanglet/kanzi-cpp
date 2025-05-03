@@ -102,11 +102,13 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
 
    if (mode.compare(0, 1, "c") == 0) {
        log.println("        Optional name of the output file or directory (defaults to", true);
-       log.println("        <inputName.knz>) or 'none' or 'stdout'.\n", true);
+       log.println("        <inputName.knz> if input is <inputName> or 'stdout' if input is 'stdin').", true);
+       log.println("        or 'none' or 'stdout'.\n", true);
    }
    else if (mode.compare(0, 1, "d") == 0) {
        log.println("        Optional name of the output file or directory (defaults to", true);
-       log.println("        <inputName.bak>) or 'none' or 'stdout'.\n", true);
+       log.println("        <inputName> if input is <inputName.knz> or 'stdout' if input is 'stdin').", true);
+       log.println("        or 'none' or 'stdout'.\n", true);
    }
    else {
        log.println("        Optional name of the output file or 'none' or 'stdout'.\n", true);
