@@ -79,6 +79,8 @@ const int LZXCodec<false>::MAX_DISTANCE2 = (1 << 24) - 2;
 template<>
 const int LZXCodec<false>::MIN_MATCH4 = 4;
 template<>
+const int LZXCodec<false>::MIN_MATCH6 = 6;
+template<>
 const int LZXCodec<false>::MIN_MATCH9 = 9;
 template<>
 const int LZXCodec<false>::MAX_MATCH = 65535 + 254 + 15 + MIN_MATCH4;
@@ -98,6 +100,8 @@ template<>
 const int LZXCodec<true>::MAX_DISTANCE2 = (1 << 24) - 2;
 template<>
 const int LZXCodec<true>::MIN_MATCH4 = 4;
+template<>
+const int LZXCodec<true>::MIN_MATCH6 = 6;
 template<>
 const int LZXCodec<true>::MIN_MATCH9 = 9;
 template<>
@@ -155,8 +159,8 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         if (dt == Global::DNA) {
             // Longer min match for DNA input
-            mm = MIN_MATCH9;
-            dst[12] |= byte(2);
+            mm = MIN_MATCH6;
+            dst[12] |= byte(4);
         }
         else if (dt == Global::SMALL_ALPHABET) {
             return false;
@@ -283,22 +287,22 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             }
 
             _mBuf[mIdx++] = byte(dist);
-            const int mLen = bestLen - minMatch - 14;
+            const int mLen = bestLen - minMatch;
             
             // Emit match length
-            if (mLen >= 0) {
-                if (mLen == 0) {
+            if (mLen >= 14) {
+                if (mLen == 14) {
                     // Avoid the penalty of one extra byte to encode match length
                     token = (dist >= dThreshold) ? 0x1D : 0x0D;
                     bestLen--;
                 }
                 else {
                     token = (dist >= dThreshold) ? 0x1E : 0x0E;
-                    mLenIdx += emitLength(&_mLenBuf[mLenIdx], mLen);
+                    mLenIdx += emitLength(&_mLenBuf[mLenIdx], mLen - 14);
                 }
             }
             else {
-                token = (dist >= dThreshold) ? mLen + 30 : mLen + 14;
+                token = (dist >= dThreshold) ? mLen + 16 : mLen;
             }
         }
 
@@ -426,7 +430,9 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
     const int srcEnd = tkIdx - 13;
     const int mFlag = int(src[12]) & 1;
     const int maxDist = (mFlag == 0) ? MAX_DISTANCE1 : MAX_DISTANCE2;
-    const int minMatch = ((int(src[12]) & 2) == 0) ? MIN_MATCH4 : MIN_MATCH9;
+    const int mmIdx = (int(src[12]) >> 1) & 0x03;
+    const int MIN_MATCHES[4] = { MIN_MATCH4, MIN_MATCH9, MIN_MATCH6, MIN_MATCH6 };
+    const int minMatch = MIN_MATCHES[mmIdx];
     bool res = true;
     int srcIdx = 13;
     int dstIdx = 0;

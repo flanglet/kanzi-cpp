@@ -101,6 +101,7 @@ namespace kanzi {
         static const int MAX_DISTANCE1;
         static const int MAX_DISTANCE2;
         static const int MIN_MATCH4;
+        static const int MIN_MATCH6;
         static const int MIN_MATCH9;
         static const int MAX_MATCH;
         static const int MIN_BLOCK_LENGTH;
