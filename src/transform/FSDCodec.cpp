@@ -329,12 +329,16 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
             dstIdx++;
         }
     }
-    else { // mode == XOR_CODING
+    else if (mode == XOR_CODING) {
         while (srcIdx < srcEnd) {
             dst[dstIdx] = src[srcIdx] ^ dst[dstIdx - dist];
             srcIdx++;
             dstIdx++;
         }
+    }
+    else {
+        // Invalid mode
+        return false;
     }
 
     input._index += srcIdx;
