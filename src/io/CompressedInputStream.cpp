@@ -573,8 +573,11 @@ int64 CompressedInputStream::processBlock()
                 if (res._skipped == true)
                     skipped++;
 
-                if (decoded > _blockSize)
-                    throw IOException("Invalid data", Error::ERR_PROCESS_BLOCK); // deallocate in catch code
+                if (decoded > _blockSize) {
+                    stringstream ss;
+                    ss << "Block " << res._blockId << " incorrectly decompressed";
+                    throw IOException(ss.str(), Error::ERR_PROCESS_BLOCK); // deallocate in catch code
+                }
 
                 if (_buffers[_bufferId]->_array != res._data)
                    memcpy(&_buffers[_bufferId]->_array[0], &res._data[0], res._decoded);
@@ -624,7 +627,9 @@ int64 CompressedInputStream::processBlock()
 
                     if (res._decoded > _blockSize) {
                         error = Error::ERR_PROCESS_BLOCK;
-                        msg = "Invalid data";
+                        stringstream ss;
+                        ss << "Block " << res._blockId << " incorrectly decompressed";
+                        msg = ss.str();
                         continue;
                     }
 
