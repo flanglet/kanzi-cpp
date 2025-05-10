@@ -97,8 +97,7 @@ namespace kanzi
 
       // Normalize
       const int x = (st < ANS_TOP) ? -1 : 0;
-      st <<= (x & 16);
-      st |= (x & ((uint(p[0]) << 8) | uint(p[1])));
+      st = (st << (x & 16)) | (x & ((uint(p[0]) << 8) | uint(p[1])));
       p -= (x + x);
       return st;
    }

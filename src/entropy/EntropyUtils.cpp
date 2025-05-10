@@ -182,9 +182,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
             const int64 prod = int64(scaledFreq) * int64(totalFreq);
             const int64 errCeiling = prod + int64(totalFreq) - sf;
             const int64 errFloor = sf - prod;
-
-            if (errCeiling < errFloor)
-                scaledFreq++;
+            scaledFreq += (errCeiling < errFloor ? 1 : 0);
         }
 
         alphabet[alphabetSize++] = i;
@@ -209,70 +207,53 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
         return alphabetSize;
 
     int delta = int(sumScaledFreq - scale);
+    const int errThr = int(freqs[idxMax]) >> 4;
 
-    if (abs(delta) * 16 <= int(freqs[idxMax])) {
+    if (abs(delta) <= errThr) {
         // Fast path (small error): just adjust the max frequency
         freqs[idxMax] -= delta;
         return alphabetSize;
     }
 
     if (delta < 0) {
-        sumScaledFreq += (freqs[idxMax] >> 4);
-        freqs[idxMax] += (freqs[idxMax] >> 4);
+        delta += errThr;
+        freqs[idxMax] += uint(errThr);
     }
     else {
-        sumScaledFreq -= (freqs[idxMax] >> 4);
-        freqs[idxMax] -= (freqs[idxMax] >> 4);
+        delta -= errThr;
+        freqs[idxMax] -= uint(errThr);
     }
 
     // Slow path: spread error across frequencies
-    deque<FreqSortData> queue;
+    const int inc = (delta < 0) ? 1 : -1;
+    delta = abs(delta);
+    int round = 0;
 
-    // Create sorted queue of present symbols
-    for (int i = 0; i < alphabetSize; i++) {
-       if (freqs[alphabet[i]] <= 2) // Do not distort small frequencies
-          continue;
+    while ((++round < 6) && (delta > 0)) {
+        int adjustments = 0;
 
-       queue.push_back(FreqSortData(&freqs[alphabet[i]], uint8(alphabet[i])));
-    }
+        for (int i = 0; i < alphabetSize; i++) {
+            const int idx = alphabet[i];
 
-    const int inc = (delta > 0) ? -1 : 1;
-    sort(queue.begin(), queue.end(), FreqDataComparator());
+            // Skip small frequencies to avoid big distortion
+            // Do not zero out frequencies
+            if (freqs[idx] <= 2)
+                continue;
 
-    while (queue.size() != 0) {
-        // Remove next symbol
-#if __cplusplus >= 201103L
-        FreqSortData fsd = std::move(queue.front()); // qualified move (std::) to avoid warning
-#else
-        FreqSortData fsd = queue.front();
-#endif
-        queue.pop_front();
+            // Adjust frequency
+            freqs[idx] += inc;
+            adjustments++;
+            delta--;
 
-        // Do not zero out any frequency
-        if (int(*fsd._freq) == -inc)
-            continue;
+            if (delta == 0)
+                break;
+        }
 
-        // Distort frequency and re-enqueue
-        *fsd._freq += inc;
-        sumScaledFreq += inc;
-        queue.push_back(fsd);
-
-        if (sumScaledFreq == scale)
+        if (adjustments == 0)
            break;
     }
 
-    if (sumScaledFreq != scale) {
-        for (int i = 0; i < alphabetSize; i++) {
-            if (int(freqs[alphabet[i]]) != -inc) {
-               freqs[alphabet[i]] += inc;
-               sumScaledFreq += inc;
-
-               if (sumScaledFreq == scale)
-                   break;
-            }
-        }
-    }
-
+    freqs[idxMax] -= delta;
     return alphabetSize;
 }
 

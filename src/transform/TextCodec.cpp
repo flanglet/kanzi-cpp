@@ -152,12 +152,10 @@ const int TextCodec::STATIC_DICT_WORDS = TextCodec::createDictionary(DICT_EN_102
 bool TextCodec::init(int8 cType[256])
 {
     for (int i = 0; i < 256; i++) {
-        bool delim;
-
         if ((i >= ' ') && (i <= '/')) // [ !"#$%&'()*+,-./]
-            delim = true;
+            cType[i] = 1;
         else if ((i >= ':') && (i <= '?')) // [:;<=>?]
-            delim = true;
+            cType[i] = 1;
         else {
             switch (i) {
             case '\n':
@@ -169,19 +167,12 @@ bool TextCodec::init(int8 cType[256])
             case '}':
             case '[':
             case ']':
-                delim = true;
+                cType[i] = 1;
                 break;
             default:
-                delim = false;
+                cType[i] = (isUpperCase(byte(i)) || isLowerCase(byte(i))) == true ? 0 : -1;
             }
         }
-
-        if (delim == true)
-           cType[i] = 1;
-        else if (isUpperCase(byte(i)) || isLowerCase(byte(i)))
-           cType[i] = 0;
-        else
-           cType[i] = -1;
     }
 
     return true;
