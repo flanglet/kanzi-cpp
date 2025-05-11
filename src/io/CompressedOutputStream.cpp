@@ -296,6 +296,7 @@ void CompressedOutputStream::writeHeader()
     uint32 seed = 0x01030507 * BITSTREAM_FORMAT_VERSION; // no const to avoid VS2008 warning
     const uint32 HASH = 0x1E35A7BD;
     uint32 cksum = HASH * seed;
+    cksum ^= (HASH * uint32(~ckSize));
     cksum ^= (HASH * uint32(~_entropyType));
     cksum ^= (HASH * uint32((~_transformType) >> 32));
     cksum ^= (HASH * uint32(~_transformType));

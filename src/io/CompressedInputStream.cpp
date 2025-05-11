@@ -273,10 +273,11 @@ void CompressedInputStream::readHeader()
     }
 
     _ctx.putInt("bsVersion", bsVersion);
+    uint64 ckSize = 0;
 
     // Read block checksum
     if (bsVersion >= 6) {
-        uint64 ckSize = _ibs->readBits(2);
+        ckSize = _ibs->readBits(2);
 
         if (ckSize == 1) {
             _hasher32 = new XXHash32(BITSTREAM_TYPE);
@@ -352,7 +353,9 @@ void CompressedInputStream::readHeader()
 
     uint32 seed = (bsVersion <= 5 ? 1 : 0x01030507) * uint32(bsVersion);
     const uint32 HASH = 0x1E35A7BD;
+
     uint32 cksum2 = HASH * seed;
+    cksum2 ^= (HASH * uint32(~ckSize));
     cksum2 ^= (HASH * uint32(~_entropyType));
     cksum2 ^= (HASH * uint32((~_transformType) >> 32));
     cksum2 ^= (HASH * uint32(~_transformType));
