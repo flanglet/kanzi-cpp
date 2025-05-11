@@ -565,14 +565,12 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
 }
 
 // Encode mode + transformed entropy coded data
-// mode | 0b10000000 => copy block
+// mode | 0b1yy0xxxx => copy block
 //      | 0b0yy00000 => size(size(block))-1
-//      | 0b000y0000 => 1 if more than 4 transforms
 //  case 4 transforms or less
-//      | 0b0000yyyy => transform sequence skip flags (1 means skip)
+//      | 0b0001xxxx => transform sequence skip flags (1 means skip)
 //  case more than 4 transforms
-//      | 0b00000000
-//      then 0byyyyyyyy => transform sequence skip flags (1 means skip)
+//      | 0b0yy00000 0bxxxxxxxx => transform sequence skip flags in next byte (1 means skip)
 template <class T>
 T EncodingTask<T>::run()
 {
@@ -620,7 +618,7 @@ T EncodingTask<T>::run()
         else {
             int checkSkip = _ctx.getInt("skipBlocks", 0);
 
-            if (checkSkip == 1) {
+            if (checkSkip != 0) {
                 bool skip = Magic::isCompressed(Magic::getType(&_data->_array[_data->_index]));
 
                 if (skip == false) {
