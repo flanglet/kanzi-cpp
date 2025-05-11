@@ -229,10 +229,13 @@ namespace kanzi {
        int requiredSize = srcLength;
 
        for (int i = 0; i < _length; i++) {
-           const int max = _transforms[i]->getMaxEncodedLength(requiredSize);
+           if (_transforms[i] == nullptr)
+               continue;
 
-           if (max > requiredSize)
-               requiredSize = max;
+           const int nxtSize = _transforms[i]->getMaxEncodedLength(requiredSize);
+
+           if (nxtSize > requiredSize)
+               requiredSize = nxtSize;
        }
 
        return requiredSize;
