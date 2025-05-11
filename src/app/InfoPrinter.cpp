@@ -56,9 +56,7 @@ void InfoPrinter::processEvent(const Event& evt)
         BlockInfo* bi = new BlockInfo();
         _clock12.start();
 
-        if (_type == InfoPrinter::ENCODING)
-            bi->_stage0Size = evt.getSize();
-
+        bi->_stage0Size = evt.getSize();
         _map[hash(currentBlockId)] = bi;
 
         if (_level >= 5) {
@@ -70,9 +68,6 @@ void InfoPrinter::processEvent(const Event& evt)
 
         if (bi == nullptr)
             return;
-
-        if (_type == InfoPrinter::DECODING)
-            bi->_stage0Size = evt.getSize();
 
         _clock12.stop();
         _clock23.start();
