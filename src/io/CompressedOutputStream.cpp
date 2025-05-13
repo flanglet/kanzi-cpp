@@ -124,7 +124,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
 
     // Allocate first buffer and add padding for incompressible blocks
-    const int bufSize = max(_blockSize + (_blockSize >> 3),  512 * 1024);
+    const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
     _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
     _buffers[_jobs] = new SliceArray<byte>(new byte[0], 0, 0);
 
@@ -208,7 +208,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
     // Allocate first buffer and add padding for incompressible blocks
-    const int bufSize = max(_blockSize + (_blockSize >> 3),  512 * 1024);
+    const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
     _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
     _buffers[_jobs] = new SliceArray<byte>(new byte[0], 0, 0);
 
@@ -356,7 +356,7 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length)
 
                 if (_bufferId + 1 < nbTasks) {
                     _bufferId++;
-                    const int bufSize = max(_blockSize + (_blockSize >> 3), 512 * 1024);
+                    const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
 
                     if (_buffers[_bufferId]->_length == 0) {
                         delete[] _buffers[_bufferId]->_array;
@@ -691,7 +691,8 @@ T EncodingTask<T>::run()
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
-        const int bufSize = max(512 * 1024, max(postTransformLength, blockLength + (blockLength >> 3)));
+        const int bufSize = max(CompressedOutputStream::DEFAULT_BUFFER_SIZE,
+                                max(postTransformLength, blockLength + (blockLength >> 3)));
 
         if (_data->_length < bufSize) {
             // Rare case where the transform expanded the input or
