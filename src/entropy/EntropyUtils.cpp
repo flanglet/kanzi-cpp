@@ -253,7 +253,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
            break;
     }
 
-    freqs[idxMax] -= delta;
+    freqs[idxMax] = max(freqs[idxMax] - delta, uint(1));
     return alphabetSize;
 }
 

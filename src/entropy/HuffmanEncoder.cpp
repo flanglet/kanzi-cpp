@@ -197,9 +197,9 @@ int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16
        }
 
        // Renormalize to a smaller scale
-       EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq, HuffmanCommon::MAX_CHUNK_SIZE >> 3);
+       int alphabetSize = EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq, HuffmanCommon::MAX_CHUNK_SIZE >> 3);
 
-       for (int i = 0; i < count; i++) {
+       for (int i = 0; i < alphabetSize; i++) {
            freqs[alphabet[i]] = f[i];
            ranks[i] = (f[i] << 8) | alphabet[i];
        }
