@@ -89,6 +89,9 @@ bool UTFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if ((mustValidate == true) && (validate(&src[start], count - start - 4)) == false)
         return false;
 
+    if (_pCtx != nullptr)
+        _pCtx->putInt("dataType", Global::UTF8);
+
     // 1-3 bit size + (7 or 11 or 16 or 21) bit payload
     // 3 MSBs indicate symbol size (limit map size to 22 bits)
     // 000 -> 7 bits

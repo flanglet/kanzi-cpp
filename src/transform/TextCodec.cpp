@@ -344,8 +344,8 @@ byte TextCodec::detectType(const uint freqs0[], const uint freqs1[], int count) 
     if (dt != Global::UNDEFINED)
        return TextCodec::MASK_NOT_TEXT | byte(dt);
 
-    // Check UTF-8
-    // See Unicode 14 Standard - UTF-8 Table 3.7
+    // Valid UTF-8 sequences
+    // See Unicode 16 Standard - UTF-8 Table 3.7
     // U+0000..U+007F          00..7F
     // U+0080..U+07FF          C2..DF 80..BF
     // U+0800..U+0FFF          E0 A0..BF 80..BF
@@ -356,40 +356,72 @@ byte TextCodec::detectType(const uint freqs0[], const uint freqs1[], int count) 
     // U+40000..U+FFFFF        F1..F3 80..BF 80..BF 80..BF
     // U+100000..U+10FFFF      F4 80..8F 80..BF 80..BF
 
-    if ((freqs0[0xC0] > 0) || (freqs0[0xC1] > 0))
-        return TextCodec::MASK_NOT_TEXT;
+    // Check rules for 1 byte
+    uint sum = freqs0[0xC0] + freqs0[0xC1];
+    uint sum2 = 0;
+    bool res = true;
 
-    for (int i = 0xF5; i <= 0xFF; i++) {
-        if (freqs0[i] > 0)
-            return TextCodec::MASK_NOT_TEXT;
+    for (int i = 0xF5; i <= 0xFF; i++)
+        sum += freqs0[i];
+
+    if (sum != 0) {
+        res = false;
+        goto end;
     }
 
-    int sum = 0;
-
+    // Check rules for first 2 bytes
     for (int i = 0; i < 256; i++) {
         // Exclude < 0xE0A0 || > 0xE0BF
-        if (((i < 0xA0) || (i > 0xBF)) && (freqs1[(0xE0 << 8) + i] > 0))
-            return TextCodec::MASK_NOT_TEXT;
+        if ((i < 0xA0) || (i > 0xBF))
+            sum += freqs1[0xE0 * 256 + i];
 
         // Exclude < 0xED80 || > 0xEDE9F
-        if (((i < 0x80) || (i > 0x9F)) && (freqs1[(0xED << 8) + i] > 0))
-            return TextCodec::MASK_NOT_TEXT;
+        if ((i < 0x80) || (i > 0x9F))
+            sum += freqs1[0xED * 256 + i];
 
         // Exclude < 0xF090 || > 0xF0BF
-        if (((i < 0x90) || (i > 0xBF)) && (freqs1[(0xF0 << 8) + i] > 0))
-            return TextCodec::MASK_NOT_TEXT;
+        if ((i < 0x90) || (i > 0xBF))
+            sum += freqs1[0xF0 * 256 + i];
 
-        // Exclude < 0xF480 || > 0xF4BF
-        if (((i < 0x80) || (i > 0xBF)) && (freqs1[(0xF4 << 8) + i] > 0))
-            return TextCodec::MASK_NOT_TEXT;
+        // Exclude < 0xF480 || > 0xF48F
+        if ((i < 0x80) || (i > 0x8F))
+            sum += freqs1[0xF4 * 256 + i];
 
-        // Count non-primary bytes
-        if ((i >= 0x80) && (i <= 0xBF))
-           sum += freqs0[i];
+        if ((i < 0x80) || (i > 0xBF)) {
+            // Exclude < 0x??80 || > 0x??BF with ?? in [C2..DF]
+            for (int j = 0xC2; j <= 0xDF; j++)
+                sum += freqs1[j * 256 + i];
+
+            // Exclude < 0x??80 || > 0x??BF with ?? in [E1..EC]
+            for (int j = 0xE1; j <= 0xEC; j++)
+                sum += freqs1[j * 256 + i];
+
+            // Exclude < 0x??80 || > 0x??BF with ?? in [F1..F3]
+            sum += freqs1[0xF1 * 256 + i];
+            sum += freqs1[0xF2 * 256 + i];
+            sum += freqs1[0xF3 * 256 + i];
+
+            // Exclude < 0xEE80 || > 0xEEBF
+            sum += freqs1[0xEE * 256 + i];
+
+            // Exclude < 0xEF80 || > 0xEFBF
+            sum += freqs1[0xEF * 256 + i];
+        }
+        else {
+            // Count non-primary bytes
+            sum2 += freqs0[i];
+        }
+
+        if (sum != 0) {
+            res = false;
+            break;
+        }
     }
 
-    // Another ad-hoc threshold
-    return (sum < count / 4) ? TextCodec::MASK_NOT_TEXT : TextCodec::MASK_NOT_TEXT | byte(Global::UTF8);
+end:
+    // Ad-hoc threshold
+    res &= (sum2 >= uint(count / 8));
+    return res == true ? TextCodec::MASK_NOT_TEXT | byte(Global::UTF8) : TextCodec::MASK_NOT_TEXT;
 }
 
 
