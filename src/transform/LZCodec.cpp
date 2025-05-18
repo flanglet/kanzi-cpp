@@ -93,7 +93,7 @@ const uint LZXCodec<true>::HASH_LOG = 21;
 template<>
 const uint LZXCodec<true>::HASH_RSHIFT = 64 - HASH_LOG;
 template<>
-const uint LZXCodec<true>::HASH_LSHIFT = 16;
+const uint LZXCodec<true>::HASH_LSHIFT = 24;
 template<>
 const int LZXCodec<true>::MAX_DISTANCE1 = (1 << 16) - 2;
 template<>
@@ -168,7 +168,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     }
 
     const int minMatch = mm;
-    const int dThreshold = (maxDist == MAX_DISTANCE1) ? 1 << 8 : 1 << 16;
     int srcIdx = 0;
     int dstIdx = 13;
     int anchor = 0;
@@ -227,7 +226,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
                     const int bestLen1 = findMatch(src, srcIdx1, ref1, min(srcEnd - srcIdx1, MAX_MATCH));
 
                     // Select best match
-                    if ((bestLen1 > bestLen) || ((bestLen1 == bestLen) && (ref1 > ref))) {
+                    if (bestLen1 >= bestLen) {
                         ref = ref1;
                         bestLen = bestLen1;
                         srcIdx = srcIdx1;
@@ -257,52 +256,51 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // Emit match
         srcInc = 0;
 
-        // Token: 3 bits litLen + 1 bit flag + 4 bits mLen (LLLFMMMM)
-        // LLL  : <= 7  --> LLL == literal length (if 7, remainder encoded outside of token)
-        // MMMM : <= 14 --> MMMM == match length (if 14, remainder encoded outside of token)
-        //        == 15 if dist == repd0 or repd1 && matchLen fully encoded outside of token
-        // F    : if MMMM == 15, flag = 0 if dist == repd0 and 1 if dist == repd1
-        //        else flag = 1 if dist >= dThreshold and 0 otherwise
+        // Token: 3 bits litLen + 1 bit flag + 4 bits mLen (LLLFFMMM)
+        // LLL : <= 7 --> LLL == literal length (if 7, remainder encoded outside of token)
+        // MMM : <= 6 --> MMMM == match length (if 6, remainder encoded outside of token)
+        // FF  : if MMM == 7
+        //          FF = 00 if dist == repd0
+        //          FF = 01 if dist == repd1
+        //       else
+        //          FF=00 => 1 byte dist
+        //          FF=01 => 2 byte dist
+        //          FF=10 => 3 byte dist
+        //          FF=11 => 3 byte dist
         const int dist = srcIdx - ref;
         int token;
 
         if (dist == repd[0]) {
-            token = 0x0F;
+            token = 0x07;
             mLenIdx += emitLength(&_mLenBuf[mLenIdx], bestLen - minMatch);
         }
         else if (dist == repd[1]) {
-            token = 0x1F;
+            token = 0x0F;
             mLenIdx += emitLength(&_mLenBuf[mLenIdx], bestLen - minMatch);
         }
         else {
             // Emit distance (since not repeat)
-            if (maxDist == MAX_DISTANCE2) {
-                _mBuf[mIdx] = byte(dist >> 16);
-                mIdx += ((dist >= 65536) ? 1 : 0);
-                _mBuf[mIdx++] = byte(dist >> 8);
-            }
-            else {
-                _mBuf[mIdx] = byte(dist >> 8);
-                mIdx += ((dist >= 256) ? 1 : 0);
+            int flag = 0;
+
+            if (dist >= 65536 ) {
+                _mBuf[mIdx++] = byte(dist >> 16);
+                flag = 2;
             }
 
+            _mBuf[mIdx] = byte(dist >> 8);
+            const int inc = (dist >= 256 ? 1 : 0);
+            mIdx += inc;
+            flag += inc;
             _mBuf[mIdx++] = byte(dist);
             const int mLen = bestLen - minMatch;
             
             // Emit match length
-            if (mLen >= 14) {
-                if (mLen == 14) {
-                    // Avoid the penalty of one extra byte to encode match length
-                    token = (dist >= dThreshold) ? 0x1D : 0x0D;
-                    bestLen--;
-                }
-                else {
-                    token = (dist >= dThreshold) ? 0x1E : 0x0E;
-                    mLenIdx += emitLength(&_mLenBuf[mLenIdx], mLen - 14);
-                }
+            if (mLen >= 6) {
+                token = 6 + (flag << 3);
+                mLenIdx += emitLength(&_mLenBuf[mLenIdx], mLen - 6);
             }
             else {
-                token = (dist >= dThreshold) ? mLen + 16 : mLen;
+                token = mLen + (flag << 3);
             }
         }
 
@@ -428,8 +426,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
     mLenIdx += mIdx;
 
     const int srcEnd = tkIdx - 13;
-    const int mFlag = int(src[12]) & 1;
-    const int maxDist = (mFlag == 0) ? MAX_DISTANCE1 : MAX_DISTANCE2;
+    const int maxDist = ((int(src[12]) & 1) == 0) ? MAX_DISTANCE1 : MAX_DISTANCE2;
     const int mmIdx = (int(src[12]) >> 1) & 0x03;
     const int MIN_MATCHES[4] = { MIN_MATCH4, MIN_MATCH9, MIN_MATCH6, MIN_MATCH6 };
     const int minMatch = MIN_MATCHES[mmIdx];
@@ -461,28 +458,24 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
 
         // Get match length and distance
-        int mLen = token & 0x0F;
+        int mLen = token & 0x07;
         int dist;
 
-        if (mLen == 15) {
+        if (mLen == 7) {
             // Repetition distance, read mLen fully outside of token
             mLen = minMatch + readLength(src, mLenIdx);
-            dist = ((token & 0x10) == 0) ? repd0 : repd1;
+            dist = ((token & 0x08) == 0) ? repd0 : repd1;
         }
         else {
             // Read mLen remainder (if any) outside of token
-            mLen = (mLen == 14) ? 14 + minMatch + readLength(src, mLenIdx) : mLen + minMatch;
+            mLen = (mLen == 6) ? 6 + minMatch + readLength(src, mLenIdx) : mLen + minMatch;
             dist = int(src[mIdx++]);
-
-            if (mFlag != 0)
-                dist = (dist << 8) | int(src[mIdx++]);
-
-            //if ((token & 0x10) != 0) {
-            //    dist = (dist << 8) | int(src[mIdx++]);
-            //}
-            const int t = (token >> 4) & 1;
-            dist = (dist << (8 * t)) | (-t & int(src[mIdx]));
-            mIdx += t;
+            const int f1 = (token >> 3) & 1;
+            dist = (dist << (8 * f1)) | (-f1 & int(src[mIdx]));
+            mIdx += f1;
+            const int f2 = (token >> 4) & 1;
+            dist = (dist << (8 * f2)) | (-f2 & int(src[mIdx]));
+            mIdx += f2;
         }
 
         prefetchRead(&src[mLenIdx]);
