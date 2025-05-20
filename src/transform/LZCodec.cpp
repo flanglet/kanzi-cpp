@@ -256,17 +256,17 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // Emit match
         srcInc = 0;
 
-        // Token: 3 bits litLen + 1 bit flag + 4 bits mLen (LLLFFMMM)
+        // Token: 3 bits litLen + 2 bits flag + 3 bits mLen (LLLFFMMM)
         // LLL : <= 7 --> LLL == literal length (if 7, remainder encoded outside of token)
         // MMM : <= 6 --> MMMM == match length (if 6, remainder encoded outside of token)
         // FF  : if MMM == 7
-        //          FF = 00 if dist == repd0
-        //          FF = 01 if dist == repd1
+        //          FF = x0 if dist == repd0
+        //          FF = x1 if dist == repd1
         //       else
-        //          FF=00 => 1 byte dist
-        //          FF=01 => 2 byte dist
-        //          FF=10 => 3 byte dist
-        //          FF=11 => 3 byte dist
+        //          FF = 00 => 1 byte dist
+        //          FF = 01 => 2 byte dist
+        //          FF = 10 => 2 byte dist
+        //          FF = 11 => 3 byte dist
         const int dist = srcIdx - ref;
         int token;
 
@@ -280,17 +280,21 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
         else {
             // Emit distance (since not repeat)
-            int flag = 0;
+            int flag;
 
             if (dist >= 65536 ) {
-                _mBuf[mIdx++] = byte(dist >> 16);
+                _mBuf[mIdx] = byte(dist >> 16);
+                _mBuf[mIdx + 1] = byte(dist >> 8);
+                mIdx += 2;
                 flag = 2;
             }
+            else {
+                _mBuf[mIdx] = byte(dist >> 8);
+                const int inc = (dist >= 256 ? 1 : 0);
+                mIdx += inc;
+                flag = inc;
+            }
 
-            _mBuf[mIdx] = byte(dist >> 8);
-            const int inc = (dist >= 256 ? 1 : 0);
-            mIdx += inc;
-            flag += inc;
             _mBuf[mIdx++] = byte(dist);
             const int mLen = bestLen - minMatch;
             
@@ -469,11 +473,11 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
         else {
             // Read mLen remainder (if any) outside of token
             mLen = (mLen == 6) ? 6 + minMatch + readLength(src, mLenIdx) : mLen + minMatch;
+            const int f2 = (token >> 4) & 1;
+            const int f1 = ((token >> 4) | (token >> 3)) & 1;
             dist = int(src[mIdx++]);
-            const int f1 = (token >> 3) & 1;
             dist = (dist << (8 * f1)) | (-f1 & int(src[mIdx]));
             mIdx += f1;
-            const int f2 = (token >> 4) & 1;
             dist = (dist << (8 * f2)) | (-f2 & int(src[mIdx]));
             mIdx += f2;
         }
