@@ -401,15 +401,15 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
 {
     int bsVersion = _pCtx == nullptr ? 6 : _pCtx->getInt("bsVersion", 6);
 
-    if (bsVersion < 5)
-       return inverseV4(input, output, count);
+    if (bsVersion < 6)
+       return inverseV5(input, output, count);
 
-    return inverseV5(input, output, count);
+    return inverseV6(input, output, count);
 }
 
 
 template <bool T>
-bool LZXCodec<T>::inverseV5(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -541,7 +541,7 @@ exit:
 
 
 template <bool T>
-bool LZXCodec<T>::inverseV4(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZXCodec<T>::inverseV5(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     if (count == 0)
         return true;
