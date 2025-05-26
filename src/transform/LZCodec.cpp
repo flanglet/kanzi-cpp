@@ -190,14 +190,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         if ((ref > minRef) && (memcmp(&src[srcIdx1], &src[ref], 4) == 0)) {
             // Check repd first
             bestLen = findMatch(src, srcIdx1, ref, min(srcEnd - srcIdx1, MAX_MATCH));
-
-            if (bestLen < minMatch) {
-                ref = srcIdx1 - repd[1 - repIdx];
-
-                if ((ref > minRef) && (memcmp(&src[srcIdx1], &src[ref], 4) == 0)) {
-                    bestLen = findMatch(src, srcIdx1, ref, min(srcEnd - srcIdx1, MAX_MATCH));
-                }
-            }
         }
 
         if (bestLen < minMatch) {
@@ -486,12 +478,12 @@ bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, i
             // Read mLen remainder (if any) outside of token
             mLen = (mLen == 6) ? 6 + minMatch + readLength(src, mLenIdx) : mLen + minMatch;
             const int f2 = (token >> 4) & 1;
-            const int f1 = ((token >> 4) | (token >> 3)) & 1;
+            const int f1 = f2 | ((token >> 3) & 1); //faster with or
             dist = int(src[mIdx++]);
-            dist = (dist << (8 * f1)) | (-f1 & int(src[mIdx]));
-            mIdx += f1;
             dist = (dist << (8 * f2)) | (-f2 & int(src[mIdx]));
             mIdx += f2;
+            dist = (dist << (8 * f1)) | (-f1 & int(src[mIdx]));
+            mIdx += f1;
         }
 
         prefetchRead(&src[mLenIdx]);
