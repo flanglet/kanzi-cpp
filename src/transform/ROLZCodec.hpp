@@ -287,19 +287,15 @@ namespace kanzi {
        return length;
    }
 
-   inline int ROLZCodec::emitCopy(byte dst[], int dstIdx, int ref, int matchLen)
+   inline int ROLZCodec::emitCopy(byte buf[], int dstIdx, int ref, int matchLen)
    {
-       if (dstIdx >= ref + 8) {
-           while (matchLen >= 8) {
-               memcpy(&dst[dstIdx], &dst[ref], 8);
-               dstIdx += 8;
-               ref += 8;
-               matchLen -= 8;
-           }
+       if (dstIdx >= ref + matchLen) {
+           memcpy(&buf[dstIdx], &buf[ref], size_t(matchLen));
+           return dstIdx + matchLen;
        }
 
        while (matchLen != 0) {
-           dst[dstIdx++] = dst[ref++];
+           buf[dstIdx++] = buf[ref++];
            matchLen--;
        }
 

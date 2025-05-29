@@ -170,9 +170,6 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 hash32, con
         if (n > bestLen) {
             bestIdx = i;
             bestLen = n;
-
-            if (bestLen == maxMatch)
-                break;
         }
     }
 
@@ -289,24 +286,24 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             if ((match2 >= 0) && ((match2 & 0xFFFF) > (match & 0xFFFF))) {
                 // New match is better
                 match = match2;
-                srcIdx++;
+                srcIdx = srcIdx1;
 
                 // Register current position
                 *counter = (*counter + 1) & _maskChecks;
                 matches[*counter] = hash32 | int32(srcIdx);
             }
-            
-            // mode LLLLLMMM -> L lit length, M match length
+
+            // token LLLLLMMM -> L lit length, M match length
             const int litLen = srcIdx - firstLitIdx;
-            const int mode = (litLen < 31) ? (litLen << 3) : 0xF8;
+            const int token = (litLen < 31) ? (litLen << 3) : 0xF8;
             const int mLen = match & 0xFFFF;
 
             if (mLen >= 7) {
-                tkBuf._array[tkBuf._index++] = byte(mode | 0x07);
+                tkBuf._array[tkBuf._index++] = byte(token | 0x07);
                 lenBuf._index += emitLength(&lenBuf._array[lenBuf._index], mLen - 7);
             }
             else {
-                tkBuf._array[tkBuf._index++] = byte(mode | mLen);
+                tkBuf._array[tkBuf._index++] = byte(token | mLen);
             }
 
             // Emit literals
@@ -331,8 +328,8 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         if (tkBuf._index != 0) {
            // At least one match to emit
-           const int mode = (litLen < 31) ? (litLen << 3) : 0xF8;
-           tkBuf._array[tkBuf._index++] = byte(mode);
+           const int token = (litLen < 31) ? (litLen << 3) : 0xF8;
+           tkBuf._array[tkBuf._index++] = byte(token);
         }
 
         if (litLen >= 31)
@@ -531,15 +528,15 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         // Next chunk
         while (dstIdx < sizeChunk) {
-            // mode LLLLLMMM -> L lit length, M match length
-            const int mode = int(tkBuf._array[tkBuf._index++]);
-            int matchLen = mode & 0x07;
+            // token LLLLLMMM -> L lit length, M match length
+            const int token = int(tkBuf._array[tkBuf._index++]);
+            int matchLen = token & 0x07;
 
             if (matchLen == 7)
                 matchLen += readLength(lenBuf._array, lenBuf._index);
 
             // Emit literals
-            const int litLen = (mode < 0xF8) ? mode >> 3 : readLength(lenBuf._array, lenBuf._index) + 31;
+            const int litLen = (token < 0xF8) ? token >> 3 : readLength(lenBuf._array, lenBuf._index) + 31;
 
             if (litLen > 0) {
                 if (dstIdx + litLen > litBufSize) {
@@ -841,7 +838,7 @@ int ROLZCodec2::findMatch(const byte buf[], int pos, int end, uint32 key)
             }
 
             n += 4;
-        } 
+        }
 
         if (n > bestLen) {
             bestIdx = counter - i;
@@ -966,7 +963,7 @@ bool ROLZCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     byte* src = &input._array[input._index];
     const int dstEnd = BigEndian::readInt32(&src[0]);
-    
+
     if ((dstEnd <= 0) || (dstEnd > output._length - output._index))
         return false;
 
