@@ -295,7 +295,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             // token LLLLLMMM -> L lit length, M match length
             const int litLen = srcIdx - firstLitIdx;
-            const int token = (litLen < 31) ? (litLen << 3) : 0xF8;
+            const int token = (litLen < 31) ? litLen << 3 : 0xF8;
             const int mLen = match & 0xFFFF;
 
             if (mLen >= 7) {
@@ -308,9 +308,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             // Emit literals
             if (litLen > 0) {
-                if (litLen >= 31)
-                    lenBuf._index += emitLength(&lenBuf._array[lenBuf._index], litLen - 31);
-
+                lenBuf._index += (litLen >= 31 ? emitLength(&lenBuf._array[lenBuf._index], litLen - 31) : 0);
                 memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], size_t(litLen));
                 litBuf._index += litLen;
             }
@@ -323,18 +321,15 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
 
         // Emit last chunk literals
-        srcIdx = sizeChunk;
-        const int litLen = srcIdx - firstLitIdx;
+        const int litLen = sizeChunk - firstLitIdx;
 
         if (tkBuf._index != 0) {
            // At least one match to emit
-           const int token = (litLen < 31) ? (litLen << 3) : 0xF8;
+           const int token = (litLen < 31) ? litLen << 3 : 0xF8;
            tkBuf._array[tkBuf._index++] = byte(token);
         }
 
-        if (litLen >= 31)
-            lenBuf._index += emitLength(&lenBuf._array[lenBuf._index], litLen - 31);
-
+        lenBuf._index += (litLen >= 31 ? emitLength(&lenBuf._array[lenBuf._index], litLen - 31) : 0);
         memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], size_t(litLen));
         litBuf._index += litLen;
 
@@ -530,10 +525,8 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         while (dstIdx < sizeChunk) {
             // token LLLLLMMM -> L lit length, M match length
             const int token = int(tkBuf._array[tkBuf._index++]);
-            int matchLen = token & 0x07;
-
-            if (matchLen == 7)
-                matchLen += readLength(lenBuf._array, lenBuf._index);
+            int mLen = token & 0x07;
+            mLen += (mLen == 7 ? _minMatch + readLength(lenBuf._array, lenBuf._index) : _minMatch);
 
             // Emit literals
             const int litLen = (token < 0xF8) ? token >> 3 : readLength(lenBuf._array, lenBuf._index) + 31;
@@ -585,18 +578,18 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             }
 
             // Sanity check
-            if (output._index + dstIdx + matchLen + _minMatch > dstEnd) {
+            if (output._index + dstIdx + mLen > dstEnd) {
                 success = false;
                 goto End;
             }
 
-            const uint8 matchIdx = uint8(mIdxBuf._array[mIdxBuf._index++]);
+            const uint8 mIdx = uint8(mIdxBuf._array[mIdxBuf._index++]);
             const uint32 key = (cond == true) ? ROLZCodec::getKey1(&refBuf[dstIdx]) : ROLZCodec::getKey2(&refBuf[dstIdx]);
             uint32* matches = &_matches[key << _logPosChecks];
-            const int32 ref = matches[(_counters[key] - matchIdx) & _maskChecks];
+            const int32 ref = matches[(_counters[key] - mIdx) & _maskChecks];
             _counters[key] = (_counters[key] + 1) & _maskChecks;
             matches[_counters[key]] = dstIdx;
-            dstIdx = ROLZCodec::emitCopy(buf, dstIdx, ref, matchLen + _minMatch);
+            dstIdx = ROLZCodec::emitCopy(buf, dstIdx, ref, mLen);
         }
 
         startChunk = endChunk;
