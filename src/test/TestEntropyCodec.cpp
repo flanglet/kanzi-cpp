@@ -13,9 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 #include <time.h>
+#include <vector>
 #include "../types.hpp"
 #include "../entropy/HuffmanEncoder.hpp"
 #include "../entropy/RangeEncoder.hpp"
