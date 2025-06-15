@@ -29,6 +29,8 @@ There is Go implementation available here: https://github.com/flanglet/kanzi-go
        src="https://img.shields.io/coverity/scan/16859.svg"/>
 </a>
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/flanglet/kanzi-cpp)
+
 
 ## Why Kanzi
 
