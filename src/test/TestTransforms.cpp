@@ -120,7 +120,7 @@ int testTransformsCorrectness(const string& name)
         else if (ii == 10) {
             size = 255;
             memset(values, ii, size);
-            values[127] = 255;
+            values[127] = byte(255);
         }
         else if (ii == 11) {
             size = 80000;
