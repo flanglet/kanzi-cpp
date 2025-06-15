@@ -13,13 +13,13 @@ Unlike the most common lossless data compressors, Kanzi uses a variety of differ
 
 Kanzi is a lossless data compressor, not an archiver. It uses checksums (optional but recommended) to validate data integrity but does not have a mechanism for data recovery. It also lacks data deduplication across files. However, Kanzi generates a bitstream that is seekable (one or several consecutive blocks can be decompressed without the need for the whole bitstream to be decompressed).
 
-For more details, see [Wiki](https://github.com/flanglet/kanzi/wiki) and [Q&A](https://github.com/flanglet/kanzi/wiki/q&a)
+For more details, see [Wiki](https://github.com/flanglet/kanzi/wiki), [Q&A](https://github.com/flanglet/kanzi/wiki/q&a) and [DeepWiki](https://deepwiki.com/flanglet/kanzi-cpp/1-overview)
 
 See how to reuse the C and C++ APIs: [here](https://github.com/flanglet/kanzi-cpp/wiki/Using-and-extending-the-code)
 
 There is a Java implementation available here: https://github.com/flanglet/kanzi
 
-There is Go implementation available here: https://github.com/flanglet/kanzi-go
+There is a Go implementation available here: https://github.com/flanglet/kanzi-go
 
 ![Build Status](https://github.com/flanglet/kanzi-cpp/actions/workflows/c-cpp.yml/badge.svg)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=flanglet_kanzi-cpp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=flanglet_kanzi-cpp)
