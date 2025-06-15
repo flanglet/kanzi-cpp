@@ -265,7 +265,7 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
 
 #define WARNING_OPT_DUPLICATE(opt, val) \
                  stringstream ss; \
-                 ss << "Warning: ignoring duplicate optiom [" << opt << "]: " << val;\
+                 ss << "Warning: ignoring duplicate option [" << opt << "]: " << val;\
                  log.println(ss.str(), verbose > 0)
 
 
