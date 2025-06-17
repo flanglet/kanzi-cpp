@@ -260,9 +260,9 @@ int testBWTSpeed(bool isBWT, int iter, bool isSmallSize)
         double d1_sec = double(delta1) / CLOCKS_PER_SEC;
         double d2_sec = double(delta2) / CLOCKS_PER_SEC;
         cout << "Forward transform [ms] : " << int(d1_sec * 1000) << endl;
-        cout << "Throughput [KiB/s]      : " << int(prod * b2KiB / d1_sec) << endl;
+        cout << "Throughput [KiB/s]     : " << int(prod * b2KiB / d1_sec) << endl;
         cout << "Reverse transform [ms] : " << int(d2_sec * 1000) << endl;
-        cout << "Throughput [KiB/s]      : " << int(prod * b2KiB / d2_sec) << endl;
+        cout << "Throughput [KiB/s]     : " << int(prod * b2KiB / d2_sec) << endl;
         cout << endl;
     }
 
