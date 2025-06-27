@@ -300,7 +300,10 @@ int DivSufSort::sortTypeBstar(int bucketA[], int bucketB[], int n)
             c1 = c0;
             bucketA[c1]++;
             i--;
-        } while ((i >= 0) && ((c0 = _buffer[i]) >= c1));
+
+           if (i < 0)
+              break;
+        } while ((c0 = _buffer[i]) >= c1);
 
         if (i < 0)
             break;
@@ -311,7 +314,10 @@ int DivSufSort::sortTypeBstar(int bucketA[], int bucketB[], int n)
         i--;
         c1 = c0;
 
-        while ((i >= 0) && ((c0 = _buffer[i]) <= c1)) {
+        while (i >= 0) {
+            if ((c0 = _buffer[i]) > c1)
+                break;
+
             bucketB[(c1 << 8) + c0]++;
             c1 = c0;
             i--;
@@ -407,7 +413,10 @@ int DivSufSort::sortTypeBstar(int bucketA[], int bucketB[], int n)
         for (int i = n - 1, j = m; i >= 0;) {
             i--;
 
-            for (int c1 = c0; (i >= 0) && ((c0 = _buffer[i]) >= c1); i--) {
+            for (int c1 = c0; i >= 0; i--) {
+                if ((c0 = _buffer[i]) < c1)
+                   break;
+
                 c1 = c0;
             }
 
@@ -415,7 +424,10 @@ int DivSufSort::sortTypeBstar(int bucketA[], int bucketB[], int n)
                 const int tt = i;
                 i--;
 
-                for (int c1 = c0; (i >= 0) && ((c0 = _buffer[i]) <= c1); i--) {
+                for (int c1 = c0; i >= 0; i--) {
+                    if ((c0 = _buffer[i]) > c1)
+                       break;
+
                     c1 = c0;
                 }
 
@@ -1529,7 +1541,10 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
     int a = b;
 
     if ((a < last) && (x < v)) {
-        while ((++b < last) && ((x = p[_sa[b]]) <= v)) {
+        while (++b < last) {
+            if ((x = p[_sa[b]]) > v)
+                break;
+
             if (x == v) {
                 std::swap(_sa[a], _sa[b]);
                 a++;
@@ -1551,7 +1566,10 @@ uint64 DivSufSort::trPartition(int isad, int first, int middle, int last, int v)
     int d = c;
 
     if ((b < d) && (x > v)) {
-        while ((--c > b) && ((x = p[_sa[c]]) >= v)) {
+        while (--c > b) {
+            if ((x = p[_sa[c]]) < v)
+                break;
+
             if (x == v) {
                 std::swap(_sa[c], _sa[d]);
                 d--;
