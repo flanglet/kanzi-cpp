@@ -248,7 +248,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // Emit match
         srcInc = 0;
 
-        // Token: 3 bits litLen + 2 bits flag + 3 bits mLen (LLLFFMMM)
+       // Token: 3 bits litLen + 2 bits flag + 3 bits mLen (LLLFFMMM)
         //    or  3 bits litLen + 3 bits flag + 2 bits mLen (LLLFFFMM)
         // LLL : <= 7 --> LLL == literal length (if 7, remainder encoded outside of token)
         // MMM : <= 7 --> MMM == match length (if 7, remainder encoded outside of token)
@@ -424,7 +424,7 @@ bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, i
     if ((tkIdx < 0) || (mIdx < 0) || (mLenIdx < 0))
         return false;
 
-    if ((tkIdx >= count) || (mIdx >= count - tkIdx) || (mLenIdx >= count - tkIdx - mIdx))
+    if ((tkIdx > count) || (mIdx > count - tkIdx) || (mLenIdx > count - tkIdx - mIdx))
         return false;
 
     mIdx += tkIdx;
