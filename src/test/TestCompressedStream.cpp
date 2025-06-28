@@ -25,7 +25,7 @@ using namespace kanzi;
 
 uint64 compress1(byte block[], uint length)
 {
-    cout << "Test - Regular" << endl;
+    cout << "Test - Regular (RLT+TEXT&HUFFMAN)" << endl;
     uint blockSize = (length / (1 + (rand() & 3))) & -16;
     byte* buf = new byte[length];
     memcpy(&buf[0], &block[0], size_t(length));
@@ -72,14 +72,18 @@ uint64 compress2(byte block[], uint length)
     jobs = 1;
     cout << "Test - ";
 #endif
-
     if (checksum == 0)
-       cout << "no checksum" << endl;
+       cout << "no checksum";
     else
-       cout << checksum << " bits checksum" << endl;
+       cout << checksum << " bits checksum";
+
+    cout << " (LZX&ANS0)" << endl;
 
     byte* buf = new byte[length];
     memcpy(&buf[0], &block[0], size_t(length));
+ofstream ofs("/tmp/data.bin");
+ofs.write((const char*)block, length);
+ofs.close();
     stringbuf buffer;
     iostream ios(&buffer);
     CompressedOutputStream* cos = new CompressedOutputStream(ios, jobs, "ANS0", "LZX", blockSize, checksum);
@@ -111,7 +115,7 @@ uint64 compress2(byte block[], uint length)
 
 uint64 compress3(byte block[], uint length)
 {
-    cout << "Test - incompressible data" << endl;
+    cout << "Test - incompressible data (LZP+RLT&FPAQ)" << endl;
     uint blockSize = (length / (1 + (rand() & 3))) & -16;
     byte* buf = new byte[length];
     memcpy(&buf[0], &block[0], size_t(length));
@@ -150,7 +154,7 @@ uint64 compress4(byte block[], uint length)
     uint64 res;
 
     try {
-        cout << "Test - write after close" << endl;
+        cout << "Test - write after close (TEXT&HUFFMAN)" << endl;
         stringbuf buffer;
         iostream os(&buffer);
         cos = new CompressedOutputStream(os, 1, "HUFFMAN", "TEXT");
@@ -176,7 +180,7 @@ uint64 compress5(byte block[], uint length)
     uint64 res;
 
     try {
-        cout << "Test - read after close" << endl;
+        cout << "Test - read after close (TEXT&HUFFMAN)" << endl;
         stringbuf buffer;
         iostream ios(&buffer);
         cos = new CompressedOutputStream(ios, 1, "HUFFMAN", "TEXT");

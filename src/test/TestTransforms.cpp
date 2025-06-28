@@ -279,7 +279,7 @@ int testTransformsCorrectness(const string& name)
         cout << endl
              << "Original: " << endl;
 
-        if (ii == 1) {
+        if (ii == 11) {
             cout << "1 8 (" << (size - 1) << " times)";
         }
         else {
@@ -349,7 +349,7 @@ int testTransformsCorrectness(const string& name)
 
         cout << "Decoded: " << endl;
 
-        if (ii == 1) {
+        if (ii == 11) {
             cout << "1 8 (" << (size - 1) << " times)";
         }
         else {
