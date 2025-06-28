@@ -124,7 +124,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("        Providing this option forces entropy and transform.", true);
        log.println("        Defaults to level 3 if not provided.", true);
        log.println("        0 = NONE&NONE (store)", true);
-       log.println("        1 = PACK+LZ&NONE", true);
+       log.println("        1 = LZX&NONE", true);
        log.println("        2 = DNA+LZ&HUFFMAN", true);
        log.println("        3 = TEXT+UTF+PACK+MM+LZX&HUFFMAN", true);
        log.println("        4 = TEXT+UTF+EXE+PACK+MM+ROLZ&NONE", true);

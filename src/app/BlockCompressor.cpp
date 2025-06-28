@@ -518,7 +518,7 @@ void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2]
         break;
 
     case 1:
-        tranformAndCodec[0] = "PACK+LZ";
+        tranformAndCodec[0] = "LZX";
         tranformAndCodec[1] = "NONE";
         break;
 
