@@ -462,6 +462,8 @@ bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, i
             emitLiterals(s, d, litLen);
         }
 
+        prefetchRead(&src[mLenIdx]);
+
         // Get match length and distance
         int mLen, dist;
 
@@ -484,7 +486,6 @@ bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, i
             mIdx += f2;
         }
 
-        prefetchRead(&src[mLenIdx]);
         repd1 = repd0;
         repd0 = dist;
         const int mEnd = dstIdx + mLen;
