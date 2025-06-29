@@ -81,9 +81,6 @@ uint64 compress2(byte block[], uint length)
 
     byte* buf = new byte[length];
     memcpy(&buf[0], &block[0], size_t(length));
-ofstream ofs("/tmp/data.bin");
-ofs.write((const char*)block, length);
-ofs.close();
     stringbuf buffer;
     iostream ios(&buffer);
     CompressedOutputStream* cos = new CompressedOutputStream(ios, jobs, "ANS0", "LZX", blockSize, checksum);
