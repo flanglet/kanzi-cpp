@@ -175,13 +175,20 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint count)
         return count;
     }
 
+    const uint minBufSize = 2 * uint(_chunkSize);
+
+    if (_bufferSize < minBufSize) {
+        delete[] _buffer;
+        _bufferSize = minBufSize;
+        _buffer = new byte[_bufferSize];
+    }
+
     const uint end = blkptr + count;
     uint startChunk = blkptr;
-    uint sz = uint(_chunkSize);
     uint alphabet[256];
 
     while (startChunk < end) {
-        const uint sizeChunk = min(sz, end - startChunk);
+        const uint sizeChunk = min(uint(_chunkSize), end - startChunk);
         const int alphabetSize = decodeHeader(_freqs, alphabet);
 
         if (alphabetSize == 0)
@@ -217,14 +224,6 @@ bool ANSRangeDecoder::decodeChunk(byte block[], uint count)
 
     if (count == 0)
         return true;
-
-    const uint minBufSize = max(2 * count, 256u); // protect against corrupted bitstream
-
-    if (_bufferSize < minBufSize) {
-        delete[] _buffer;
-        _bufferSize = minBufSize;
-        _buffer = new byte[_bufferSize];
-    }
 
     // Read encoded data from bitstream
     memset(_buffer, 0, _bufferSize);
