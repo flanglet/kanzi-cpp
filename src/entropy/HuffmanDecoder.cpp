@@ -30,7 +30,7 @@ const int HuffmanDecoder::TABLE_MASK = (1 << DECODING_BATCH_SIZE) - 1;
 
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats.
-HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) : _bitstream(bitstream)
+HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, Context* pCtx, int chunkSize) : _bitstream(bitstream)
 {
     if (chunkSize < 1024)
         throw invalid_argument("Huffman codec: The chunk size must be at least 1024");
@@ -44,6 +44,7 @@ HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int chunkSize) : _bits
     _chunkSize = chunkSize;
     _buffer = new byte[0];
     _bufferSize = 0;
+    _pCtx = pCtx;
     reset();
 }
 
@@ -108,7 +109,7 @@ int HuffmanDecoder::readLengths()
 // max(CodeLen) must be <= MAX_SYMBOL_SIZE
 bool HuffmanDecoder::buildDecodingTable(int count)
 {
-    // Initialize table with non zero value.
+    // Initialize table with non zero values.
     // If the bitstream is altered, the decoder may access these default table values.
     // The number of consumed bits cannot be 0.
     memset(_table, 8, sizeof(_table));
@@ -138,6 +139,187 @@ bool HuffmanDecoder::buildDecodingTable(int count)
 }
 
 int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
+{
+    int bsVersion = _pCtx == nullptr ? 6 : _pCtx->getInt("bsVersion", 6);
+
+    if (bsVersion < 6)
+        return decodeV5(block, blkptr, count);
+
+    return decodeV6(block, blkptr, count);
+}
+
+
+int HuffmanDecoder::decodeV6(byte block[], uint blkptr, uint count)
+{
+    if (count == 0)
+        return 0;
+
+    const uint minBufSize = 2 * uint(_chunkSize);
+
+    if (_bufferSize < minBufSize) {
+        delete[] _buffer;
+        _bufferSize = minBufSize;
+        _buffer = new byte[_bufferSize];
+    }
+
+    uint startChunk = blkptr;
+    const uint end = blkptr + count;
+
+    while (startChunk < end) {
+        const uint sizeChunk = min(uint(_chunkSize), end - startChunk);
+
+        if (sizeChunk < 32) {
+            // Special case for small chunks
+            _bitstream.readBits(&block[startChunk], 8 * sizeChunk);
+        }
+        else {
+            // For each chunk, read code lengths, rebuild codes, rebuild decoding table
+            const int alphabetSize = readLengths();
+
+            if (alphabetSize <= 0)
+                return startChunk - blkptr;
+
+            if (alphabetSize == 1) {
+                // Shortcut for chunks with only one symbol
+                memset(&block[startChunk], _alphabet[0], size_t(sizeChunk));
+            }
+            else {
+                if (buildDecodingTable(alphabetSize) == false)
+                    return -1;
+
+                if (decodeChunk(&block[startChunk], sizeChunk) == false)
+                    break;
+            }
+        }
+
+        startChunk += sizeChunk;
+    }
+
+    return count;
+}
+
+// count is at least 32
+bool HuffmanDecoder::decodeChunk(byte block[], uint count)
+{
+    // Read fragment sizes
+    const int szBits0 = EntropyUtils::readVarInt(_bitstream);
+    const int szBits1 = EntropyUtils::readVarInt(_bitstream);
+    const int szBits2 = EntropyUtils::readVarInt(_bitstream);
+    const int szBits3 = EntropyUtils::readVarInt(_bitstream);
+
+    if ((szBits0 < 0) || (szBits1 < 0) || (szBits2 < 0) || (szBits3 < 0))
+        return false;
+
+    memset(_buffer, 0, _bufferSize);
+
+    int idx0 = 0 * (_bufferSize / 4);
+    int idx1 = 1 * (_bufferSize / 4);
+    int idx2 = 2 * (_bufferSize / 4);
+    int idx3 = 3 * (_bufferSize / 4);
+
+    // Read all compressed data from bitstream
+    _bitstream.readBits(&_buffer[idx0], szBits0);
+    _bitstream.readBits(&_buffer[idx1], szBits1);
+    _bitstream.readBits(&_buffer[idx2], szBits2);
+    _bitstream.readBits(&_buffer[idx3], szBits3);
+
+    // State variables for each of the four parallel streams
+    uint64 state0 = 0, state1 = 0, state2 = 0, state3 = 0; // bits read from bitstream
+    uint8 bits0 = 0, bits1 = 0, bits2 = 0, bits3 = 0;      // number of available bits in state
+    uint8 bs0, bs1, bs2, bs3, shift;
+
+#define READ_STATE(shift, state, idx, bits, bs)  \
+    shift = (56 - bits) & -8; \
+    bs = bits + shift - DECODING_BATCH_SIZE; \
+    state = (state << shift) | (uint64(BigEndian::readLong64(&_buffer[idx])) >> 1 >> (63 - shift)); /* handle shift = 0 */ \
+    idx += (shift >> 3);
+
+    const int szFrag = count / 4;
+    byte* block0 = &block[0 * szFrag];
+    byte* block1 = &block[1 * szFrag];
+    byte* block2 = &block[2 * szFrag];
+    byte* block3 = &block[3 * szFrag];
+    int n = 0;
+
+    while (n < szFrag - 4) {
+        // Fill 64 bits of state from the bitstream for each stream
+        READ_STATE(shift, state0, idx0, bits0, bs0);
+        READ_STATE(shift, state1, idx1, bits1, bs1);
+        READ_STATE(shift, state2, idx2, bits2, bs2);
+        READ_STATE(shift, state3, idx3, bits3, bs3);
+
+        // Decompress 4 symbols per stream
+        const uint16 val00 = _table[(state0 >> bs0) & TABLE_MASK]; bs0 -= uint8(val00);
+        const uint16 val10 = _table[(state1 >> bs1) & TABLE_MASK]; bs1 -= uint8(val10);
+        const uint16 val20 = _table[(state2 >> bs2) & TABLE_MASK]; bs2 -= uint8(val20);
+        const uint16 val30 = _table[(state3 >> bs3) & TABLE_MASK]; bs3 -= uint8(val30);
+        const uint16 val01 = _table[(state0 >> bs0) & TABLE_MASK]; bs0 -= uint8(val01);
+        const uint16 val11 = _table[(state1 >> bs1) & TABLE_MASK]; bs1 -= uint8(val11);
+        const uint16 val21 = _table[(state2 >> bs2) & TABLE_MASK]; bs2 -= uint8(val21);
+        const uint16 val31 = _table[(state3 >> bs3) & TABLE_MASK]; bs3 -= uint8(val31);
+        const uint16 val02 = _table[(state0 >> bs0) & TABLE_MASK]; bs0 -= uint8(val02);
+        const uint16 val12 = _table[(state1 >> bs1) & TABLE_MASK]; bs1 -= uint8(val12);
+        const uint16 val22 = _table[(state2 >> bs2) & TABLE_MASK]; bs2 -= uint8(val22);
+        const uint16 val32 = _table[(state3 >> bs3) & TABLE_MASK]; bs3 -= uint8(val32);
+        const uint16 val03 = _table[(state0 >> bs0) & TABLE_MASK]; bs0 -= uint8(val03);
+        const uint16 val13 = _table[(state1 >> bs1) & TABLE_MASK]; bs1 -= uint8(val13);
+        const uint16 val23 = _table[(state2 >> bs2) & TABLE_MASK]; bs2 -= uint8(val23);
+        const uint16 val33 = _table[(state3 >> bs3) & TABLE_MASK]; bs3 -= uint8(val33);
+
+        bits0 = bs0 + DECODING_BATCH_SIZE;
+        bits1 = bs1 + DECODING_BATCH_SIZE;
+        bits2 = bs2 + DECODING_BATCH_SIZE;
+        bits3 = bs3 + DECODING_BATCH_SIZE;
+
+        block0[n + 0] = byte(val00 >> 8);
+        block1[n + 0] = byte(val10 >> 8);
+        block2[n + 0] = byte(val20 >> 8);
+        block3[n + 0] = byte(val30 >> 8);
+        block0[n + 1] = byte(val01 >> 8);
+        block1[n + 1] = byte(val11 >> 8);
+        block2[n + 1] = byte(val21 >> 8);
+        block3[n + 1] = byte(val31 >> 8);
+        block0[n + 2] = byte(val02 >> 8);
+        block1[n + 2] = byte(val12 >> 8);
+        block2[n + 2] = byte(val22 >> 8);
+        block3[n + 2] = byte(val32 >> 8);
+        block0[n + 3] = byte(val03 >> 8);
+        block1[n + 3] = byte(val13 >> 8);
+        block2[n + 3] = byte(val23 >> 8);
+        block3[n + 3] = byte(val33 >> 8);
+        n += 4;
+    }
+
+    // Fill 64 bits of state from the bitstream for each stream
+    READ_STATE(shift, state0, idx0, bits0, bs0);
+    READ_STATE(shift, state1, idx1, bits1, bs1);
+    READ_STATE(shift, state2, idx2, bits2, bs2);
+    READ_STATE(shift, state3, idx3, bits3, bs3);
+
+    while (n < szFrag) {
+        // Decompress 1 symbol per stream
+        const uint16 val0 = _table[(state0 >> bs0) & TABLE_MASK]; bs0 -= uint8(val0);
+        const uint16 val1 = _table[(state1 >> bs1) & TABLE_MASK]; bs1 -= uint8(val1);
+        const uint16 val2 = _table[(state2 >> bs2) & TABLE_MASK]; bs2 -= uint8(val2);
+        const uint16 val3 = _table[(state3 >> bs3) & TABLE_MASK]; bs3 -= uint8(val3);
+
+        block0[n] = byte(val0 >> 8);
+        block1[n] = byte(val1 >> 8);
+        block2[n] = byte(val2 >> 8);
+        block3[n] = byte(val3 >> 8);
+        n++;
+    }
+
+    // Process any remaining bytes at the end of the whole chunk
+    const uint count4 = 4 * szFrag;
+
+    for (uint i = count4; i < count; i++)
+        block[i] = byte(_bitstream.readBits(8));
+
+    return true;
+}
+
+int HuffmanDecoder::decodeV5(byte block[], uint blkptr, uint count)
 {
     if (count == 0)
         return 0;
@@ -230,7 +412,7 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
 
                 // Sanity check
                 if (bits > 64)
-                   return n;
+                    return n;
 
                 uint16 val;
 
@@ -249,4 +431,3 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
 
     return count;
 }
-

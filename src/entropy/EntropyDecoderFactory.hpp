@@ -64,7 +64,7 @@ namespace kanzi {
        // Each block is decoded separately
        // Rebuild the entropy decoder to reset block statistics
        case HUFFMAN_TYPE:
-           return new HuffmanDecoder(ibs);
+           return new HuffmanDecoder(ibs, &ctx);
 
        case ANS0_TYPE:
            return new ANSRangeDecoder(ibs, 0);

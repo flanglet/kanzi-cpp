@@ -18,6 +18,7 @@ limitations under the License.
 #define _HuffmanDecoder_
 
 #include "HuffmanCommon.hpp"
+#include "../Context.hpp"
 #include "../EntropyDecoder.hpp"
 
 
@@ -28,7 +29,7 @@ namespace kanzi
    class HuffmanDecoder : public EntropyDecoder
    {
    public:
-       HuffmanDecoder(InputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE);
+       HuffmanDecoder(InputBitStream& bitstream, Context* pCtx = nullptr, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE) ;
 
        ~HuffmanDecoder() { _dispose(); delete[] _buffer; }
 
@@ -50,12 +51,19 @@ namespace kanzi
        uint16 _sizes[256];
        uint16 _table[1 << 12]; // decoding table: code -> size, symbol
        int _chunkSize;
+       Context* _pCtx;
 
        int readLengths();
+
+       bool decodeChunk(byte block[], uint count);
 
        bool buildDecodingTable(int count);
 
        bool reset();
+
+       int decodeV5(byte block[], uint blkptr, uint len);
+
+       int decodeV6(byte block[], uint blkptr, uint len);
 
        void _dispose() const {}
    };

@@ -49,6 +49,8 @@ namespace kanzi
        byte* _buffer;
        uint _bufferSize;
 
+       void encodeChunk(const byte block[], uint count);
+
        int computeCodeLengths(uint16 sizes[], uint sranks[], int count) const;
 
        int limitCodeLengths(const uint alphabet[], uint freqs[], uint16 sizes[], uint sranks[], int count) const;

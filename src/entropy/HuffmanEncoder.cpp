@@ -99,9 +99,9 @@ int HuffmanEncoder::updateFrequencies(uint freqs[])
             uint16 n = 0;
 
             for (int i = 0; i < count; i++) {
-               _codes[alphabet[i]] = n;
-               sizes[alphabet[i]] = 8;
-               n++;
+                _codes[alphabet[i]] = n;
+                sizes[alphabet[i]] = 8;
+                n++;
             }
         }
         else {
@@ -128,86 +128,86 @@ int HuffmanEncoder::updateFrequencies(uint freqs[])
 
 int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16 sizes[], uint ranks[], int count) const
 {
-   int n = 0;
-   int debt = 0;
+    int n = 0;
+    int debt = 0;
 
-   // Fold over-the-limit sizes, skip at-the-limit sizes => incur bit debt
-   while (sizes[ranks[n]] >= HuffmanCommon::MAX_SYMBOL_SIZE) {
-       debt += (sizes[ranks[n]] - HuffmanCommon::MAX_SYMBOL_SIZE);
-       sizes[ranks[n]] = HuffmanCommon::MAX_SYMBOL_SIZE;
-       n++;
-   }
+    // Fold over-the-limit sizes, skip at-the-limit sizes => incur bit debt
+    while (sizes[ranks[n]] >= HuffmanCommon::MAX_SYMBOL_SIZE) {
+        debt += (sizes[ranks[n]] - HuffmanCommon::MAX_SYMBOL_SIZE);
+        sizes[ranks[n]] = HuffmanCommon::MAX_SYMBOL_SIZE;
+        n++;
+    }
 
-   if (debt == 0)
-       return HuffmanCommon::MAX_SYMBOL_SIZE;
+    if (debt == 0)
+        return HuffmanCommon::MAX_SYMBOL_SIZE;
 
-   // Check (up to) 6 levels; one vector per size delta
-   vector<int> v[6];
+    // Check (up to) 6 levels; one vector per size delta
+    vector<int> v[6];
 
-   for (int i = 0; i < 6; i++)
-       v[i].reserve(count - n);
+    for (int i = 0; i < 6; i++)
+        v[i].reserve(count - n);
 
-   while (n < count) {
-       const int idx = HuffmanCommon::MAX_SYMBOL_SIZE - 1 - sizes[ranks[n]];
+    while (n < count) {
+        const int idx = HuffmanCommon::MAX_SYMBOL_SIZE - 1 - sizes[ranks[n]];
 
-       if ((idx > 5) || (debt < (1 << idx)))
-          break;
+        if ((idx > 5) || (debt < (1 << idx)))
+            break;
 
-       v[idx].push_back(n);
-       n++;
-   }
+        v[idx].push_back(n);
+        n++;
+    }
 
-   int idx = 5;
+    int idx = 5;
 
-   // Repay bit debt in a "semi optimized" way
-   while ((debt > 0) && (idx >= 0)) {
-      if ((v[idx].empty() == true) || (debt < (1 << idx))) {
-         idx--;
-         continue;
-      }
+    // Repay bit debt in a "semi optimized" way
+    while ((debt > 0) && (idx >= 0)) {
+        if ((v[idx].empty() == true) || (debt < (1 << idx))) {
+            idx--;
+            continue;
+        }
 
-      sizes[ranks[v[idx][0]]]++;
-      debt -= (1 << idx);
-      v[idx].erase(v[idx].begin());
-   }
+        sizes[ranks[v[idx][0]]]++;
+        debt -= (1 << idx);
+        v[idx].erase(v[idx].begin());
+    }
 
-   idx = 0;
+    idx = 0;
 
-   // Adjust if necessary
-   while ((debt > 0) && (idx < 6)) {
-      if (v[idx].empty() == true) {
-         idx++;
-         continue;
-      }
+    // Adjust if necessary
+    while ((debt > 0) && (idx < 6)) {
+        if (v[idx].empty() == true) {
+            idx++;
+            continue;
+        }
 
-      sizes[ranks[v[idx][0]]]++;
-      debt -= (1 << idx);
-      v[idx].erase(v[idx].begin());
-   }
+        sizes[ranks[v[idx][0]]]++;
+        debt -= (1 << idx);
+        v[idx].erase(v[idx].begin());
+    }
 
-   if (debt > 0) {
-       // Fallback to slow (more accurate) path if fast path failed to repay the debt
-       uint alpha[256] = { 0 };
-       uint f[256];
-       uint totalFreq = 0;
+    if (debt > 0) {
+        // Fallback to slow (more accurate) path if fast path failed to repay the debt
+        uint alpha[256] = { 0 };
+        uint f[256];
+        uint totalFreq = 0;
 
-       for (int i = 0; i < count; i++) {
-           f[i] = freqs[alphabet[i]];
-           totalFreq += f[i];
-       }
+        for (int i = 0; i < count; i++) {
+            f[i] = freqs[alphabet[i]];
+            totalFreq += f[i];
+        }
 
-       // Renormalize to a smaller scale
-       int alphabetSize = EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq, HuffmanCommon::MAX_CHUNK_SIZE >> 3);
+        // Renormalize to a smaller scale
+        EntropyUtils::normalizeFrequencies(f, alpha, count, totalFreq, HuffmanCommon::MAX_CHUNK_SIZE >> 3);
 
-       for (int i = 0; i < alphabetSize; i++) {
-           freqs[alphabet[i]] = f[i];
-           ranks[i] = (f[i] << 8) | alphabet[i];
-       }
+        for (int i = 0; i < count; i++) {
+            freqs[alphabet[i]] = f[i];
+            ranks[i] = (f[i] << 8) | alphabet[i];
+        }
 
-       return computeCodeLengths(sizes, ranks, count);
-   }
+        return computeCodeLengths(sizes, ranks, count);
+    }
 
-   return HuffmanCommon::MAX_SYMBOL_SIZE;
+    return HuffmanCommon::MAX_SYMBOL_SIZE;
 }
 
 
@@ -269,7 +269,7 @@ void HuffmanEncoder::computeInPlaceSizesPhase1(uint data[], int n)
 uint HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
 {
     if (n < 2)
-       return 0;
+        return 0;
 
     uint topLevel = n - 2; //root
     uint depth = 1;
@@ -295,6 +295,7 @@ uint HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
     return depth - 1;
 }
 
+
 // Dynamically compute the frequencies for every chunk of data in the block
 int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
 {
@@ -302,7 +303,7 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
         return 0;
 
     uint startChunk = blkptr;
-    uint sz = uint(_chunkSize);
+    const uint sz = uint(_chunkSize);
     const uint minLenBuf = max(min(sz + (sz >> 3), 2 * count), uint(65536));
 
     if (_bufferSize < minLenBuf) {
@@ -315,70 +316,99 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
 
     while (startChunk < end) {
         // Update frequencies and rebuild Huffman codes
-        const uint endChunk = min(startChunk + sz, end);
-        uint freqs[256] = { 0 };
-        Global::computeHistogram(&block[startChunk], endChunk - startChunk, freqs);
+        const uint sizeChunk = min(uint(_chunkSize), end - startChunk);
 
-        if (updateFrequencies(freqs) <= 1) {
-           // Skip chunk if only one symbol
-           startChunk = endChunk;
-           continue;
+        if (sizeChunk < 32) {
+            // Special case for small chunks
+            _bitstream.writeBits(&block[startChunk], 8 * sizeChunk);
+        }
+        else {
+            uint freqs[256] = { 0 };
+            Global::computeHistogram(&block[startChunk], sizeChunk, freqs);
+
+            // Skip chunk if only one symbol
+            if (updateFrequencies(freqs) > 1) {
+                encodeChunk(&block[startChunk], sizeChunk);
+            }
         }
 
-        const uint endChunk4 = ((endChunk - startChunk) & -4) + startChunk;
-        int idx = 0;
-        uint64 state = 0;
-        int bits = 0; // number of accumulated bits
+        startChunk += sizeChunk;
+    }
 
-        // Encode chunk
-        for (uint i = startChunk; i < endChunk4; i += 4) {
-            const uint16 code0 = _codes[int(block[i])];
+    return count;
+}
+
+
+// count is at least 32
+void HuffmanEncoder::encodeChunk(const byte block[], uint count)
+{
+    uint nbBits[4] = { 0 };
+    const uint szFrag = count / 4;
+    const uint szFrag4 = szFrag & ~3;
+    const uint szBuf = _bufferSize / 4;
+
+    // Encode chunk
+    for (int j = 0; j < 4; j++) {
+        const byte* src = &block[j * szFrag];
+        byte* buf = &_buffer[j * szBuf];
+        int idx = 0;
+        int bits = 0; // number of accumulated bits
+        uint64 state = 0;
+
+        // Encode fragments sequentially
+        for (uint i = 0; i < szFrag4; i += 4) {
+            const uint16 code0 = _codes[int(src[i])];
             const uint16 codeLen0 = code0 >> 12;
-            const uint16 code1 = _codes[int(block[i + 1])];
+            const uint16 code1 = _codes[int(src[i + 1])];
             const uint16 codeLen1 = code1 >> 12;
-            const uint16 code2 = _codes[int(block[i + 2])];
+            const uint16 code2 = _codes[int(src[i + 2])];
             const uint16 codeLen2 = code2 >> 12;
-            const uint16 code3 = _codes[int(block[i + 3])];
+            const uint16 code3 = _codes[int(src[i + 3])];
             const uint16 codeLen3 = code3 >> 12;
             state = (state << codeLen0) | uint64(code0 & 0x0FFF);
             state = (state << codeLen1) | uint64(code1 & 0x0FFF);
             state = (state << codeLen2) | uint64(code2 & 0x0FFF);
             state = (state << codeLen3) | uint64(code3 & 0x0FFF);
             bits += (codeLen0 + codeLen1 + codeLen2 + codeLen3);
-            BigEndian::writeLong64(&_buffer[idx], state << (64 - bits));
+            BigEndian::writeLong64(&buf[idx], state << (64 - bits)); // bits cannot be 0
             idx += (bits >> 3);
             bits &= 7;
         }
 
-        for (uint i = endChunk4; i < endChunk; i++) {
-            const uint16 code = _codes[int(block[i])];
+        // Fragment last bytes
+        for (uint i = szFrag4; i < szFrag; i++) {
+            const uint16 code = _codes[int(src[i])];
             const uint16 codeLen = code >> 12;
             state = (state << codeLen) | uint64(code & 0x0FFF);
             bits += codeLen;
         }
 
-        const uint nbBits = (idx * 8) + bits;
+        nbBits[j] = (idx * 8) + bits;
 
         while (bits >= 8) {
             bits -= 8;
-            _buffer[idx++] = byte(state >> bits);
+            buf[idx++] = byte(state >> bits);
         }
 
         if (bits > 0)
-            _buffer[idx++] = byte(state << (8 - bits));
-
-        // Write number of streams (0->1, 1->4, 2->8, 3->32)
-        _bitstream.writeBits(uint64(0), 2);
-
-        // Write chunk size in bits
-        EntropyUtils::writeVarInt(_bitstream, nbBits);
-
-        // Write compressed data to bitstream
-        _bitstream.writeBits(&_buffer[0], nbBits);
-
-        startChunk = endChunk;
+            buf[idx++] = byte(state << (8 - bits));
     }
 
-    return count;
-}
+    // Write chunk size in bits
+    EntropyUtils::writeVarInt(_bitstream, nbBits[0]);
+    EntropyUtils::writeVarInt(_bitstream, nbBits[1]);
+    EntropyUtils::writeVarInt(_bitstream, nbBits[2]);
+    EntropyUtils::writeVarInt(_bitstream, nbBits[3]);
 
+    // Write compressed data to bitstream
+    _bitstream.writeBits(&_buffer[0 * szBuf], nbBits[0]);
+    _bitstream.writeBits(&_buffer[1 * szBuf], nbBits[1]);
+    _bitstream.writeBits(&_buffer[2 * szBuf], nbBits[2]);
+    _bitstream.writeBits(&_buffer[3 * szBuf], nbBits[3]);
+
+    // Chunk last bytes
+    const uint count4 = 4 * szFrag;
+
+    for (uint i = count4; i < count; i++)
+        _bitstream.writeBits(uint64(block[i]), 8);
+}
