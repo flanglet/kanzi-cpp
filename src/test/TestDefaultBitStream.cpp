@@ -304,9 +304,9 @@ int testBitStreamSpeed1(const string& fileName)
     cout << written << " bits written (" << (written / 1024 / 1024 / 8) << " MB)" << endl;
     cout << read << " bits read (" << (read / 1024 / 1024 / 8) << " MB)" << endl;
     cout << endl;
-    cout << "Write [ms]        : " << (int)(delta1 / CLOCKS_PER_SEC * 1000) << endl;
+    cout << "Write [ms]         : " << (int)(delta1 / CLOCKS_PER_SEC * 1000) << endl;
     cout << "Throughput [MiB/s] : " << (int)((double)written / d / (delta1 / CLOCKS_PER_SEC)) << endl;
-    cout << "Read [ms]         : " << (int)(delta2 / CLOCKS_PER_SEC * 1000) << endl;
+    cout << "Read [ms]          : " << (int)(delta2 / CLOCKS_PER_SEC * 1000) << endl;
     cout << "Throughput [MiB/s] : " << (int)((double)read / d / (delta2 / CLOCKS_PER_SEC)) << endl;
     return 0;
 }
@@ -648,9 +648,9 @@ int testBitStreamSpeed2(const string& fileName)
     cout << written << " bits written (" << (written / 1024 / 1024 / 8) << " MiB)" << endl;
     cout << read << " bits read (" << (read / 1024 / 1024 / 8) << " MiB)" << endl;
     cout << endl;
-    cout << "Write [ms]        : " << (int)(delta1 / CLOCKS_PER_SEC * 1000) << endl;
+    cout << "Write [ms]         : " << (int)(delta1 / CLOCKS_PER_SEC * 1000) << endl;
     cout << "Throughput [MiB/s] : " << (int)((double)written / d / (delta1 / CLOCKS_PER_SEC)) << endl;
-    cout << "Read [ms]         : " << (int)(delta2 / CLOCKS_PER_SEC * 1000) << endl;
+    cout << "Read [ms]          : " << (int)(delta2 / CLOCKS_PER_SEC * 1000) << endl;
     cout << "Throughput [MiB/s] : " << (int)((double)read / d / (delta2 / CLOCKS_PER_SEC)) << endl;
 
     delete[] input;
