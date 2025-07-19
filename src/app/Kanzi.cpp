@@ -50,7 +50,7 @@ static const int ARG_IDX_LEVEL = 9;
 //static const int ARG_IDX_FROM = 11;
 //static const int ARG_IDX_TO = 12;
 
-static const string KANZI_VERSION = "2.3.0";
+static const string KANZI_VERSION = "2.4.0";
 static const string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
 static const string APP_SUB_HEADER = "Fast lossless data compressor.";
 static const string APP_USAGE = "Usage: kanzi [-c|-d] [flags and files in any order]";
