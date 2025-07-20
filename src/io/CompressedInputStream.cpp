@@ -831,8 +831,11 @@ T DecodingTask<T>::run()
         const int to = _ctx.getInt("to", CompressedInputStream::MAX_BLOCK_ID);
 
         // Check if the block must be skipped
-        if ((blockId < from) || (blockId >= to)) {
+        if (blockId < from) {
             return T(*_data, blockId, 0, 0, 0, "Skipped", true);
+        }
+        else if (blockId >= to) {
+            return T(*_data, blockId, 0, 0, 0, "Success");
         }
 
         istreambuf<char> buf(reinterpret_cast<char*>(&_data->_array[0]), streamsize(r));
