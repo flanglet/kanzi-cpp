@@ -140,6 +140,9 @@ bool HuffmanDecoder::buildDecodingTable(int count)
 
 int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
 {
+    if (count == 0)
+        return 0;
+
     int bsVersion = _pCtx == nullptr ? 6 : _pCtx->getInt("bsVersion", 6);
 
     if (bsVersion < 6)
@@ -151,9 +154,6 @@ int HuffmanDecoder::decode(byte block[], uint blkptr, uint count)
 
 int HuffmanDecoder::decodeV6(byte block[], uint blkptr, uint count)
 {
-    if (count == 0)
-        return 0;
-
     const uint minBufSize = 2 * uint(_chunkSize);
 
     if (_bufferSize < minBufSize) {
@@ -321,9 +321,6 @@ bool HuffmanDecoder::decodeChunk(byte block[], uint count)
 
 int HuffmanDecoder::decodeV5(byte block[], uint blkptr, uint count)
 {
-    if (count == 0)
-        return 0;
-
     uint startChunk = blkptr;
     const uint end = blkptr + count;
 
