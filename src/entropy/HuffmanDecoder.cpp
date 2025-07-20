@@ -112,7 +112,7 @@ bool HuffmanDecoder::buildDecodingTable(int count)
     // Initialize table with non zero values.
     // If the bitstream is altered, the decoder may access these default table values.
     // The number of consumed bits cannot be 0.
-    memset(_table, 8, sizeof(_table));
+    memset(_table, 7, sizeof(_table));
     uint16 length = 0;
 
     for (int i = 0; i < count; i++) {

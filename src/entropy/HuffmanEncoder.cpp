@@ -302,7 +302,6 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
     if (count == 0)
         return 0;
 
-    uint startChunk = blkptr;
     const uint sz = uint(_chunkSize);
     const uint minLenBuf = max(min(sz + (sz >> 3), 2 * count), uint(65536));
 
@@ -312,6 +311,7 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
         _buffer = new byte[_bufferSize];
     }
 
+    uint startChunk = blkptr;
     const uint end = startChunk + count;
 
     while (startChunk < end) {
