@@ -53,11 +53,11 @@ namespace kanzi {
     public:
         LZXCodec()
         {
-            _hashes = new int32[0];
+            _hashes = nullptr;
             _hashSize = 0;
-            _tkBuf = new byte[0];
-            _mLenBuf = new byte[0];
-            _mBuf = new byte[0];
+            _tkBuf = nullptr;
+            _mLenBuf = nullptr;
+            _mBuf = nullptr;
             _bufferSize = 0;
             _pCtx = nullptr;
         }
@@ -65,11 +65,11 @@ namespace kanzi {
         LZXCodec(Context& ctx) :
             _pCtx(&ctx)
         {
-            _hashes = new int32[0];
+            _hashes = nullptr;
             _hashSize = 0;
-            _tkBuf = new byte[0];
-            _mLenBuf = new byte[0];
-            _mBuf = new byte[0];
+            _tkBuf = nullptr;
+            _mLenBuf = nullptr;
+            _mBuf = nullptr;
             _bufferSize = 0;
         }
 
@@ -77,10 +77,10 @@ namespace kanzi {
         {
             _bufferSize = 0;
             _hashSize = 0;
-            delete[] _hashes;
-            delete[] _mLenBuf;
-            delete[] _mBuf;
-            delete[] _tkBuf;
+            if (_hashes != nullptr) delete[] _hashes;
+            if (_mLenBuf != nullptr) delete[] _mLenBuf;
+            if (_mBuf != nullptr) delete[] _mBuf;
+            if (_tkBuf != nullptr) delete[] _tkBuf;
         }
 
         bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
@@ -133,13 +133,13 @@ namespace kanzi {
     public:
         LZPCodec()
         {
-            _hashes = new int32[0];
+            _hashes = nullptr;
             _hashSize = 0;
         }
 
         LZPCodec(Context&)
         {
-            _hashes = new int32[0];
+            _hashes = nullptr;
             _hashSize = 0;
         }
 

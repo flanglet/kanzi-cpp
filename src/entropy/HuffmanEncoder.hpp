@@ -31,7 +31,7 @@ namespace kanzi
    public:
        HuffmanEncoder(OutputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE);
 
-       ~HuffmanEncoder() { _dispose(); delete[] _buffer; }
+       ~HuffmanEncoder() { _dispose(); if (_buffer != nullptr) delete[] _buffer; }
 
        int updateFrequencies(uint frequencies[]);
 

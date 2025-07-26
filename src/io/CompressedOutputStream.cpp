@@ -126,11 +126,11 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
     // Allocate first buffer and add padding for incompressible blocks
     const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
     _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
-    _buffers[_jobs] = new SliceArray<byte>(new byte[0], 0, 0);
+    _buffers[_jobs] = new SliceArray<byte>(nullptr, 0, 0);
 
     for (int i = 1; i < _jobs; i++) {
-       _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
-       _buffers[i + _jobs] = new SliceArray<byte>(new byte[0], 0, 0);
+       _buffers[i] = new SliceArray<byte>(nullptr, 0, 0);
+       _buffers[i + _jobs] = new SliceArray<byte>(nullptr, 0, 0);
     }
 }
 
@@ -210,11 +210,11 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
     // Allocate first buffer and add padding for incompressible blocks
     const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
     _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
-    _buffers[_jobs] = new SliceArray<byte>(new byte[0], 0, 0);
+    _buffers[_jobs] = new SliceArray<byte>(nullptr, 0, 0);
 
     for (int i = 1; i < _jobs; i++) {
-       _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
-       _buffers[i + _jobs] = new SliceArray<byte>(new byte[0], 0, 0);
+       _buffers[i] = new SliceArray<byte>(nullptr, 0, 0);
+       _buffers[i + _jobs] = new SliceArray<byte>(nullptr, 0, 0);
     }
 }
 
@@ -228,7 +228,9 @@ CompressedOutputStream::~CompressedOutputStream()
     }
 
     for (int i = 0; i < 2 * _jobs; i++) {
-        delete[] _buffers[i]->_array;
+        if (_buffers[i]->_array != nullptr)
+           delete[] _buffers[i]->_array;
+
         delete _buffers[i];
     }
 
@@ -359,7 +361,9 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length)
                     const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
 
                     if (_buffers[_bufferId]->_length == 0) {
-                        delete[] _buffers[_bufferId]->_array;
+                        if (_buffers[_bufferId]->_array != nullptr)
+                           delete[] _buffers[_bufferId]->_array;
+
                         _buffers[_bufferId]->_array = new byte[bufSize];
                         _buffers[_bufferId]->_length = bufSize;
                     }
@@ -407,8 +411,10 @@ void CompressedOutputStream::close()
 
     // Release resources, force error on any subsequent write attempt
     for (int i = 0; i < 2 * _jobs; i++) {
-        delete[] _buffers[i]->_array;
-        _buffers[i]->_array = new byte[0];
+        if (_buffers[i]->_array != nullptr)
+           delete[] _buffers[i]->_array;
+
+        _buffers[i]->_array = nullptr;
         _buffers[i]->_length = 0;
         _buffers[i]->_index = 0;
     }
@@ -653,7 +659,9 @@ T EncodingTask<T>::run()
         }
 
         if (_buffer->_length < requiredSize) {
-            delete[] _buffer->_array;
+            if (_buffer->_array != nullptr)
+               delete[] _buffer->_array;
+
             _buffer->_array = new byte[requiredSize];
             _buffer->_length = requiredSize;
         }

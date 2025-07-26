@@ -18,7 +18,7 @@ else
 	ifeq ($(ARCH), x86_64)
 		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 	else
-		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
+		CXXFLAGS=-c -std=c++17 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 	endif
 endif	
 

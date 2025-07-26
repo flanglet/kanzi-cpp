@@ -42,7 +42,7 @@ HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, Context* pCtx, int chu
     }
 
     _chunkSize = chunkSize;
-    _buffer = new byte[0];
+    _buffer = nullptr;
     _bufferSize = 0;
     _pCtx = pCtx;
     reset();
@@ -157,7 +157,9 @@ int HuffmanDecoder::decodeV6(byte block[], uint blkptr, uint count)
     const uint minBufSize = 2 * uint(_chunkSize);
 
     if (_bufferSize < minBufSize) {
-        delete[] _buffer;
+        if (_buffer != nullptr)
+           delete[] _buffer;
+
         _bufferSize = minBufSize;
         _buffer = new byte[_bufferSize];
     }
@@ -359,7 +361,9 @@ int HuffmanDecoder::decodeV5(byte block[], uint blkptr, uint count)
             const uint minLenBuf = uint(max(sz + (sz >> 3), 1024));
 
             if (_bufferSize < minLenBuf) {
-                delete[] _buffer;
+                if (_buffer != nullptr)
+                   delete[] _buffer;
+
                 _bufferSize = minLenBuf;
                 _buffer = new byte[_bufferSize];
             }

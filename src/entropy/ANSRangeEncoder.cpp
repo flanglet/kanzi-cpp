@@ -61,7 +61,7 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
     const int dim = 255 * order + 1;
     _symbols = new ANSEncSymbol[dim * 256];
     _freqs = new uint[dim * 257]; // freqs[x][256] = total(freqs[x][0..255])
-    _buffer = new byte[0];
+    _buffer = nullptr;
     _bufferSize = 0;
     _logRange = (order == 0) ? logRange : max(logRange - 1, 8);
 }
@@ -69,7 +69,10 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
 ANSRangeEncoder::~ANSRangeEncoder()
 {
     _dispose();
-    delete[] _buffer;
+
+    if (_buffer != nullptr)
+       delete[] _buffer;
+
     delete[] _symbols;
     delete[] _freqs;
 }
@@ -167,7 +170,9 @@ int ANSRangeEncoder::encode(const byte block[], uint blkptr, uint count)
     const uint size = max(min(sz + (sz >> 3), 2 * count), uint(65536));
 
     if (_bufferSize < size) {
-        delete[] _buffer;
+        if (_buffer != nullptr)
+           delete[] _buffer;
+
         _bufferSize = size;
         _buffer = new byte[_bufferSize];
     }

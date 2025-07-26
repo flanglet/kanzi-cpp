@@ -36,8 +36,8 @@ const int BWT::BLOCK_SIZE_THRESHOLD2 = 2 * 1024 * 1024;
 
 BWT::BWT(int jobs)
 {
-    _buffer = new uint[0];
-    _sa = new int[0];
+    _buffer = nullptr;
+    _sa = nullptr;
     _bufferSize = 0;
     _saSize = 0;
 
@@ -58,8 +58,8 @@ BWT::BWT(int jobs)
 
 BWT::BWT(Context& ctx)
 {
-    _buffer = new uint[0];
-    _sa = new int[0];
+    _buffer = nullptr;
+    _sa = nullptr;
     _bufferSize = 0;
     _saSize = 0;
     int jobs = ctx.getInt("jobs", 1);
@@ -111,7 +111,9 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 
     // Lazy dynamic memory allocation
     if (_saSize < count) {
-         delete[] _sa;
+         if (_sa != nullptr)
+             delete[] _sa;
+
          _saSize = count;
          _sa = new int[_saSize];
     }
@@ -160,7 +162,9 @@ bool BWT::inverseMergeTPSI(SliceArray<byte>& input, SliceArray<byte>& output, in
 
     // Lazy dynamic memory allocation
     if (_bufferSize < count) {
-        delete[] _buffer;
+        if (_buffer != nullptr)
+           delete[] _buffer;
+
         _bufferSize = max(count, 256);
         _buffer = new uint[_bufferSize];
     }
@@ -276,7 +280,9 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
 {
     // Lazy dynamic memory allocations
     if (_bufferSize < count + 1) {
-        delete[] _buffer;
+        if (_buffer != nullptr)
+            delete[] _buffer;
+
         _bufferSize = max(count + 1, 256);
         _buffer = new uint[_bufferSize];
     }

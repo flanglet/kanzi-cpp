@@ -122,7 +122,7 @@ libdecomp: $(STATIC_DECOMP_LIB) $(SHARED_DECOMP_LIB)
 
 lib: $(STATIC_LIB) $(SHARED_LIB)
 
-LIB_TCMALLOC=/usr/local/lib/libtcmalloc_minimal.a
+LIB_TCMALLOC=/usr/local/lib/libtcmalloc.a
 
 # Create static libraries
 $(STATIC_LIB):$(LIB_OBJECTS)

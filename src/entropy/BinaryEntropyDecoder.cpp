@@ -33,7 +33,7 @@ BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor*
     : _predictor(predictor)
     , _bitstream(bitstream)
     , _deallocate(deallocate)
-    , _sba(new byte[0], 0)
+    , _sba(nullptr, 0)
 {
     if (predictor == nullptr)
         throw invalid_argument("Invalid null predictor parameter");
@@ -46,7 +46,9 @@ BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor*
 BinaryEntropyDecoder::~BinaryEntropyDecoder()
 {
     _dispose();
-    delete[] _sba._array;
+
+    if (_sba._array != nullptr)
+        delete[] _sba._array;
 
     if (_deallocate)
         delete _predictor;
@@ -70,7 +72,9 @@ int BinaryEntropyDecoder::decode(byte block[], uint blkptr, uint count)
     const uint bufSize = length + (length >> 3);
 
     if (_sba._length < int(bufSize)) {
-        delete[] _sba._array;
+        if (_sba._array != nullptr)
+            delete[] _sba._array;
+
         _sba._length = int(bufSize);
         _sba._array = new byte[_sba._length];
     }

@@ -180,7 +180,7 @@ namespace kanzi
 
        int64 tell();
 #endif
- 
+
 
    protected:
 

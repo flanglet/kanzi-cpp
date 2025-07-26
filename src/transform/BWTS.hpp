@@ -47,22 +47,22 @@ namespace kanzi
    public:
        BWTS()
        {
-           _buffer1 = new int[0];
-           _buffer2 = new int[0];
+           _buffer1 = nullptr;
+           _buffer2 = nullptr;
            _bufferSize = 0;
        }
 
        BWTS(Context&)
        {
-           _buffer1 = new int[0];
-           _buffer2 = new int[0];
+           _buffer1 = nullptr;
+           _buffer2 = nullptr;
            _bufferSize = 0;
        }
 
        ~BWTS()
        {
-          delete[] _buffer1;
-          delete[] _buffer2;
+          if (_buffer1 != nullptr) delete[] _buffer1;
+          if (_buffer2 != nullptr) delete[] _buffer2;
        }
 
        bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length);

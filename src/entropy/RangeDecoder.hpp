@@ -36,7 +36,7 @@ namespace kanzi
 
        RangeDecoder(InputBitStream& bitstream, int chunkSize = DEFAULT_CHUNK_SIZE);
 
-       ~RangeDecoder() { _dispose(); delete[] _f2s; }
+       ~RangeDecoder() { _dispose(); if (_f2s != nullptr) delete[] _f2s; }
 
        int decode(byte block[], uint blkptr, uint len);
 

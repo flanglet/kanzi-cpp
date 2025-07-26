@@ -54,9 +54,9 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
     const int dim = 255 * order + 1;
     _freqs = new uint[dim * 256];
     _symbols = new ANSDecSymbol[dim * 256];
-    _buffer = new byte[0];
+    _buffer = nullptr;
     _bufferSize = 0;
-    _f2s = new uint8[0];
+    _f2s = nullptr;
     _f2sSize = 0;
     _logRange = DEFAULT_LOG_RANGE;
 }
@@ -64,10 +64,15 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
 ANSRangeDecoder::~ANSRangeDecoder()
 {
     _dispose();
-    delete[] _buffer;
-    delete[] _symbols;
-    delete[] _f2s;
+
+    if (_buffer != nullptr)
+       delete[] _buffer;
+
+    if (_f2s != nullptr)
+       delete[] _f2s;
+
     delete[] _freqs;
+    delete[] _symbols;
 }
 
 int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
@@ -84,7 +89,9 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
     const int dim = 255 * _order + 1;
 
     if (_f2sSize < (dim << _logRange)) {
-        delete[] _f2s;
+        if (_f2s != nullptr)
+           delete[] _f2s;
+
         _f2sSize = dim << _logRange;
         _f2s = new uint8[_f2sSize];
     }
@@ -178,7 +185,9 @@ int ANSRangeDecoder::decode(byte block[], uint blkptr, uint count)
     const uint minBufSize = 2 * uint(_chunkSize);
 
     if (_bufferSize < minBufSize) {
-        delete[] _buffer;
+        if (_buffer != nullptr)
+            delete[] _buffer;
+
         _bufferSize = minBufSize;
         _buffer = new byte[_bufferSize];
     }

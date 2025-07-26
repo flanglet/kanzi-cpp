@@ -31,7 +31,7 @@ namespace kanzi
    public:
        HuffmanDecoder(InputBitStream& bitstream, Context* pCtx = nullptr, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE) ;
 
-       ~HuffmanDecoder() { _dispose(); delete[] _buffer; }
+       ~HuffmanDecoder() { _dispose(); if (_buffer != nullptr) delete[] _buffer; }
 
        int decode(byte block[], uint blkptr, uint len);
 

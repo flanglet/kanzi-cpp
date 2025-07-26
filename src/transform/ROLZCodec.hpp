@@ -116,7 +116,7 @@ namespace kanzi {
 
        ROLZCodec1(Context& ctx);
 
-       ~ROLZCodec1() { delete[] _matches; }
+       ~ROLZCodec1() { if (_matches != nullptr) delete[] _matches; }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
@@ -159,7 +159,7 @@ namespace kanzi {
 
        ROLZCodec2(Context& ctx);
 
-       ~ROLZCodec2() { delete[] _matches; }
+       ~ROLZCodec2() { if (_matches != nullptr) delete[] _matches; }
 
        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 

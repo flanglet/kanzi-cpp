@@ -41,7 +41,7 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) : _bit
     }
 
     _chunkSize = chunkSize;
-    _buffer = new byte[0];
+    _buffer = nullptr;
     _bufferSize = 0;
     reset();
 }
@@ -306,7 +306,9 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
     const uint minLenBuf = max(min(sz + (sz >> 3), 2 * count), uint(65536));
 
     if (_bufferSize < minLenBuf) {
-        delete[] _buffer;
+        if (_buffer != nullptr)
+           delete[] _buffer;
+
         _bufferSize = minLenBuf;
         _buffer = new byte[_bufferSize];
     }

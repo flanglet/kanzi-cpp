@@ -113,7 +113,7 @@ ROLZCodec1::ROLZCodec1(uint logPosChecks) :
     _maskChecks = uint8(_posChecks - 1);
     _minMatch = MIN_MATCH3;
     _mSize = 0;
-    _matches = new uint32[0];
+    _matches = nullptr;
     memset(&_counters[0], 0, sizeof(_counters));
 }
 
@@ -125,7 +125,7 @@ ROLZCodec1::ROLZCodec1(Context& ctx) :
     _maskChecks = uint8(_posChecks - 1);
     _minMatch = MIN_MATCH3;
     _mSize = 0;
-    _matches = new uint32[0];
+    _matches = nullptr;
     memset(&_counters[0], 0, sizeof(_counters));
 }
 
@@ -229,7 +229,10 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     if (_mSize == 0) {
        _mSize = size_t(ROLZCodec::HASH_SIZE << _logPosChecks);
-       delete[] _matches;
+
+       if (_matches != nullptr)
+           delete[] _matches;
+
        _matches = new uint32[_mSize];
     }
 
@@ -435,7 +438,10 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     if (_mSize < size_t(ROLZCodec::HASH_SIZE << _logPosChecks)) {
        _mSize = size_t(ROLZCodec::HASH_SIZE << _logPosChecks);
-       delete[] _matches;
+
+       if (_matches != nullptr)
+           delete[] _matches;
+
        _matches = new uint32[_mSize];
     }
 

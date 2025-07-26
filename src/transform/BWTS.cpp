@@ -55,9 +55,15 @@ bool BWTS::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     // Lazy dynamic memory allocation
     if (_bufferSize < count) {
         _bufferSize = count;
-        delete[] _buffer1;
+
+        if (_buffer1 != nullptr)
+           delete[] _buffer1;
+
         _buffer1 = new int[_bufferSize];
-        delete[] _buffer2;
+
+        if (_buffer2 != nullptr)
+           delete[] _buffer2;
+
         _buffer2 = new int[_bufferSize];
     }
 
@@ -184,7 +190,10 @@ bool BWTS::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     // Lazy dynamic memory allocation
     if (_bufferSize < count) {
         _bufferSize = count;
-        delete[] _buffer1;
+
+        if (_buffer1 != nullptr)
+           delete[] _buffer1;
+
         _buffer1 = new int[_bufferSize];
     }
 

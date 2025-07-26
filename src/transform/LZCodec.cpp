@@ -132,17 +132,29 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     if (_hashSize == 0) {
         _hashSize = 1 << HASH_LOG;
-        delete[] _hashes;
+
+        if (_hashes != nullptr)
+            delete[] _hashes;
+
         _hashes = new int32[_hashSize];
     }
 
     if (_bufferSize < max(count / 5, 256)) {
         _bufferSize = max(count / 5, 256);
-        delete[] _mLenBuf;
+
+        if (_mLenBuf != nullptr)
+            delete[] _mLenBuf;
+
         _mLenBuf = new byte[_bufferSize];
-        delete[] _mBuf;
+
+        if (_mBuf != nullptr)
+            delete[] _mBuf;
+
         _mBuf = new byte[_bufferSize];
-        delete[] _tkBuf;
+
+        if (_tkBuf != nullptr)
+            delete[] _tkBuf;
+
         _tkBuf = new byte[_bufferSize];
     }
 
@@ -331,13 +343,19 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             // Expand match buffer
             byte* mBuf = new byte[(_bufferSize * 3) / 2];
             memcpy(&mBuf[0], &_mBuf[0], _bufferSize);
-            delete[] _mBuf;
+
+            if ( _mBuf != nullptr)
+                delete[] _mBuf;
+
             _mBuf = mBuf;
 
             if (mLenIdx >= _bufferSize - 8) {
                 byte* mLenBuf = new byte[(_bufferSize * 3) / 2];
                 memcpy(&mLenBuf[0], &_mLenBuf[0], _bufferSize);
-                delete[] _mLenBuf;
+
+                if (_mLenBuf != nullptr)
+                   delete[] _mLenBuf;
+
                 _mLenBuf = mLenBuf;
             }
 
@@ -704,7 +722,10 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     if (_hashSize == 0) {
         _hashSize = 1 << HASH_LOG;
-        delete[] _hashes;
+
+        if (_hashes != nullptr)
+            delete[] _hashes;
+
         _hashes = new int32[_hashSize];
     }
 

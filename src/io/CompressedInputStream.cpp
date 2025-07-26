@@ -115,7 +115,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
     }
 
     for (int i = 0; i < 2 * _jobs; i++)
-        _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+        _buffers[i] = new SliceArray<byte>(nullptr, 0, 0);
 }
 
 CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool headerless)
@@ -218,7 +218,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
     for (int i = 0; i < 2 * _jobs; i++)
-        _buffers[i] = new SliceArray<byte>(new byte[0], 0, 0);
+        _buffers[i] = new SliceArray<byte>(nullptr, 0, 0);
 }
 
 CompressedInputStream::~CompressedInputStream()
@@ -231,7 +231,9 @@ CompressedInputStream::~CompressedInputStream()
     }
 
     for (int i = 0; i < 2 * _jobs; i++) {
-        delete[] _buffers[i]->_array;
+        if (_buffers[i]->_array != nullptr)
+            delete[] _buffers[i]->_array;
+
         delete _buffers[i];
     }
 
@@ -540,7 +542,9 @@ int64 CompressedInputStream::processBlock()
 
             for (int taskId = 0; taskId < nbTasks; taskId++) {
                 if (_buffers[taskId]->_length < bufSize) {
-                    delete[] _buffers[taskId]->_array;
+                    if (_buffers[taskId]->_array != nullptr)
+                       delete[] _buffers[taskId]->_array;
+
                     _buffers[taskId]->_array = new byte[bufSize];
                     _buffers[taskId]->_length = bufSize;
                 }
@@ -722,8 +726,10 @@ void CompressedInputStream::close()
 
     // Release resources, force error on any subsequent write attempt
     for (int i = 0; i < 2 * _jobs; i++) {
-        delete[] _buffers[i]->_array;
-        _buffers[i]->_array = new byte[0];
+        if (_buffers[i]->_array != nullptr)
+           delete[] _buffers[i]->_array;
+
+        _buffers[i]->_array = nullptr;
         _buffers[i]->_length = 0;
         _buffers[i]->_index = 0;
     }
@@ -905,7 +911,9 @@ T DecodingTask<T>::run()
 
         if (_buffer->_length < bufferSize) {
             _buffer->_length = bufferSize;
-            delete[] _buffer->_array;
+            if (_buffer->_array != nullptr)
+               delete[] _buffer->_array;
+
             _buffer->_array = new byte[_buffer->_length];
         }
 

@@ -111,7 +111,7 @@ namespace kanzi {
 
        BWT(Context& ctx);
 
-       ~BWT() { delete[] _buffer; delete[] _sa; }
+       ~BWT() { if (_buffer != nullptr) delete[] _buffer; if (_sa != nullptr) delete[] _sa; }
 
        bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int length);
 
