@@ -57,8 +57,7 @@ namespace kanzi {
     }
 
 
-#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(__bsdi__) && !defined(__DragonFly__) && !defined(BSD)
-   static inline uint32 bswap32(uint32 x) {
+static inline uint32 bswap32(uint32 x) {
    #if defined(__clang__)
        return __builtin_bswap32(x);
    #elif defined(__GNUC__) && (__GNUC__ >= 5)
@@ -75,7 +74,7 @@ namespace kanzi {
 }
 
 
-   static inline uint16 bswap16(uint16 x) {
+static inline uint16 bswap16(uint16 x) {
    #if defined(__clang__)
        return __builtin_bswap16(x);
    #elif defined(__GNUC__) && (__GNUC__ >= 5)
@@ -88,7 +87,7 @@ namespace kanzi {
 }
 
 
-   static inline uint64 bswap64(uint64 x) {
+static inline uint64 bswap64(uint64 x) {
    #if defined(__clang__)
        return __builtin_bswap64(x);
    #elif defined(__GNUC__) && (__GNUC__ >= 5)
@@ -107,7 +106,6 @@ namespace kanzi {
    #endif
 }
 
-#endif
 
 #ifndef IS_BIG_ENDIAN
    #if defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \
