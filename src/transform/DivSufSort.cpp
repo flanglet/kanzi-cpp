@@ -90,13 +90,18 @@ void DivSufSort::reset()
     memset(&_bucketB[0], 0, sizeof(int) * 65536);
 }
 
-void DivSufSort::computeSuffixArray(const byte input[], int sa[], int length)
+bool DivSufSort::computeSuffixArray(const byte input[], int sa[], int length)
 {
     _buffer = reinterpret_cast<const uint8*>(&input[0]);
     _sa = sa;
     reset();
     const int m = sortTypeBstar(_bucketA, _bucketB, length);
+
+    if (m < 0)
+       return false;
+
     constructSuffixArray(_bucketA, _bucketB, length, m);
+    return true;
 }
 
 void DivSufSort::constructSuffixArray(int bucketA[], int bucketB[], int n, int m)
@@ -163,16 +168,20 @@ void DivSufSort::constructSuffixArray(int bucketA[], int bucketB[], int n, int m
     }
 }
 
-int DivSufSort::computeBWT(const byte input[], byte output[], int bwt[], int length, int indexes[], int idxCount)
+bool DivSufSort::computeBWT(const byte input[], byte output[], int bwt[], int length, int indexes[], int idxCount)
 {
     _buffer = reinterpret_cast<const uint8*>(&input[0]);
     _sa = bwt;
     reset();
     const int m = sortTypeBstar(_bucketA, _bucketB, length);
+
+    if (m < 0)
+        return false;
+
     const int pIdx = constructBWT(_bucketA, _bucketB, length, m, indexes, idxCount);
 
     if (pIdx < 0)
-        return -1;
+        return false;
 
     output[0] = input[length - 1];
 
@@ -182,7 +191,7 @@ int DivSufSort::computeBWT(const byte input[], byte output[], int bwt[], int len
     for (int i = pIdx + 1; i < length; i++)
         output[i] = byte(bwt[i]);
 
-    return pIdx + 1;
+    return true;
 }
 
 int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m, int indexes[], int idxCount)

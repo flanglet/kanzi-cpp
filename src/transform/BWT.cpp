@@ -118,7 +118,7 @@ bool BWT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
          _sa = new int[_saSize];
     }
 
-    if (_saAlgo.computeBWT(src, dst, _sa, count, _primaryIndexes, getBWTChunks(count)) <= 0)
+    if (_saAlgo.computeBWT(src, dst, _sa, count, _primaryIndexes, getBWTChunks(count)) == false)
         return false;
 
     input._index += count;

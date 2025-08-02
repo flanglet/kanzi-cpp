@@ -218,9 +218,9 @@ namespace kanzi
 
        ~DivSufSort();
 
-       void computeSuffixArray(const byte input[], int sa[], int length);
+       bool computeSuffixArray(const byte input[], int sa[], int length);
 
-       int computeBWT(const byte input[], byte output[], int sa[], int length, int indexes[], int idxCount = 8);
+       bool computeBWT(const byte input[], byte output[], int sa[], int length, int indexes[], int idxCount = 8);
    };
 
 
