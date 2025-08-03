@@ -75,7 +75,7 @@ in use, especially with enwik8, but all tests are performed with default values.
 
 Download at http://sun.aei.polsl.pl/~sdeor/corpus/silesia.zip
 
-|        Compressor               | Encoding (sec)  | Decoding (sec)  |    Size          |
+|        Compressor               |  Encoding (ms)  |  Decoding (ms)  |      Size        |
 |---------------------------------|-----------------|-----------------|------------------|
 |Original     	                  |                 |                 |   211,957,760    |
 |**kanzi -l 1**                   |     **461**     |      **252**    |    80,245,856    |
@@ -108,7 +108,7 @@ Download at https://mattmahoney.net/dc/enwik8.zip
 
 Apple M3 24 GB Sonoma 14.6.1
 
-|   Compressor    | Encoding (ms)  | Decoding (ms)  |  Size        |
+|   Compressor    | Encoding (ms)  | Decoding (ms)  |    Size      |
 |-----------------|----------------|----------------|--------------|
 |Original         |                |                |  100,000,000 |
 |kanzi -l 1       |       271      |        135     |   43,644,013 |
