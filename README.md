@@ -45,7 +45,7 @@ While gzip, LZMA, brotli, and zstd are all based on LZ (Lempel-Ziv) compression,
 
 LZ-based compressors are ideal for software distribution, where data is compressed once and decompressed many times, thanks to their fast decompression speeds—though they tend to be slower when compressing at higher ratios. But in other scenarios—such as real-time data generation, one-off data transfers, or backups—**compression speed becomes critical**. Here, Kanzi can shine.
 
-**Kanzi** also features a suite of built-in, customizable data transforms tailored for specific data types (e.g., multimedia, UTF text, DNA, etc.), which can be selectively applied during compression for better efficiency.
+**Kanzi** also features a suite of built-in, customizable data transforms tailored for specific data types (e.g., multimedia, UTF, text, DNA, etc.), which can be selectively applied during compression for better efficiency.
 
 Furthermore, Kanzi is designed to **leverage modern multi-core CPUs** to boost performance.
 
@@ -96,7 +96,7 @@ Download at http://sun.aei.polsl.pl/~sdeor/corpus/silesia.zip
 |zstd 1.5.8 -T4 -19               |     20482       |        151      |    52,858,610    |
 |**kanzi -l 6**                   |    **3065**     |     **2329**    |    49,521,392    |
 |xz 5.8.1 -9                      |     48516       |       1594      |    48,774,000    |
-|bzip3 1.5.1.r3-g428f422          |      8559       |       3948      |    47,256,794    |
+|bzip3 1.5.1.r3-g428f422 -j 4     |      8559       |       3948      |    47,256,794    |
 |**kanzi -l 7**                   |    **3798**     |     **3298**    |    47,312,772    |
 |**kanzi -l 8**                   |   **15272**     |    **16419**    |    43,260,254    |
 |**kanzi -l 9**                   |   **20972**     |    **22375**    |    41,858,886    |
