@@ -433,7 +433,7 @@ namespace kanzi
            if (_binCount < (_pos >> 2)) {
                // Mostly text or mixed
                _ctx4 = createContext(_ctx1, _c4 ^ (_c8 & 0xFFFF));
-               _ctx5 = (_c8 & 0xF0F0F000) | ((_c4 >> 4) & 0x0F0F0F00);
+               _ctx5 = (_c8 & 0xF0F0F000) | ((_c4 & 0xF0F0F000) >> 4);
 
                if (T == true) {
                   const uint h1 = ((_c4 & 0x80808080) == 0) ? _c4 & 0x4F4FFFFF : _c4 & 0x80808080;
