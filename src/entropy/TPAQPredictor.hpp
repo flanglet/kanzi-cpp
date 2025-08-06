@@ -1,5 +1,5 @@
 /*
-Copyright 2011-2025 Frederic Langlet
+Copyright 2011-2024 Frederic Langlet
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 you may obtain a copy of the License at
@@ -74,20 +74,22 @@ namespace kanzi
        static const int BUFFER_SIZE;
        static const int HASH_SIZE;
        static const int HASH;
-
+       static const int MASK_80808080;
+       static const int MASK_F0F0F000;
+       static const int MASK_4F4FFFFF;
 
        #define SSE0_RATE(T) ((T == true) ? 6 : 7)
 
        int _pr; // next predicted value (0-4095)
-       uint _c0; // bitwise context: last 0-7 bits with a leading 1 (1-255)
-       uint _c4; // last 4 whole bytes, last is in low 8 bits
-       uint _c8; // last 8 to 4 whole bytes, last is in low 8 bits
+       int _c0; // bitwise context: last 0-7 bits with a leading 1 (1-255)
+       int _c4; // last 4 whole bytes, last is in low 8 bits
+       int _c8; // last 8 to 4 whole bytes, last is in low 8 bits
        int _bpos; // number of bits in c0 (0-7)
        int _pos;
        int _binCount;
        int _matchLen;
        int _matchPos;
-       uint _matchVal;
+       int _matchVal;
        uint _hash;
        LogisticAdaptiveProbMap<false, SSE0_RATE(T)> _sse0;
        LogisticAdaptiveProbMap<false, 7> _sse1;
@@ -109,13 +111,13 @@ namespace kanzi
        uint8* _cp4;
        uint8* _cp5;
        uint8* _cp6;
-       uint _ctx0; // contexts
-       uint _ctx1;
-       uint _ctx2;
-       uint _ctx3;
-       uint _ctx4;
-       uint _ctx5;
-       uint _ctx6;
+       int _ctx0; // contexts
+       int _ctx1;
+       int _ctx2;
+       int _ctx3;
+       int _ctx4;
+       int _ctx5;
+       int _ctx6;
 
        int hash(uint x, uint y) const;
 
@@ -422,7 +424,7 @@ namespace kanzi
            _binCount += ((_c4 >> 7) & 1);
 
            // Select Neural Net
-           _mixer = &_mixers[(_c4 & _mixersMask) | ((_matchLen == 0) ? 0 : 1)];
+           _mixer = &_mixers[(_matchLen != 0) ? (_c4 & _mixersMask) + 1 : _c4 & _mixersMask];
 
            // Add contexts to NN
            _ctx0 = (_c4 & 0xFF) << 8;
@@ -433,11 +435,11 @@ namespace kanzi
            if (_binCount < (_pos >> 2)) {
                // Mostly text or mixed
                _ctx4 = createContext(_ctx1, _c4 ^ (_c8 & 0xFFFF));
-               _ctx5 = (_c8 & 0xF0F0F000) | ((_c4 & 0xF0F0F000) >> 4);
+               _ctx5 = (_c8 & MASK_F0F0F000) | ((_c4 & MASK_F0F0F000) >> 4);
 
                if (T == true) {
-                  const uint h1 = ((_c4 & 0x80808080) == 0) ? _c4 & 0x4F4FFFFF : _c4 & 0x80808080;
-                  const uint h2 = ((_c8 & 0x80808080) == 0) ? _c8 & 0x4F4FFFFF : _c8 & 0x80808080;
+                  const int h1 = ((_c4 & MASK_80808080) == 0) ? _c4 & MASK_4F4FFFFF : _c4 & MASK_80808080;
+                  const int h2 = ((_c8 & MASK_80808080) == 0) ? _c8 & MASK_4F4FFFFF : _c8 & MASK_80808080;
                   _ctx6 = hash(h1 << 2, h2 >> 2);
                }
            }
@@ -452,7 +454,7 @@ namespace kanzi
            }
 
            findMatch();
-           _matchVal = uint(_buffer[_matchPos & _bufferMask]) | 0x100;
+           _matchVal = int(_buffer[_matchPos & _bufferMask]) | 0x100;
 
            // Keep track current position
            _hashes[_hash] = _pos;
@@ -463,10 +465,10 @@ namespace kanzi
        // on SandyBridge/Windows and slower on SkyLake/Linux except when [ctx & 255 == 0]
        // (with c < 256). Hence, use XOR for _ctx5 which is the only context that fulfills
        // the condition.
-       const int idx2 = (_ctx2 + _c0) & _statesMask;
-       const int idx3 = (_ctx3 + _c0) & _statesMask;
-       const int idx4 = (_ctx4 + _c0) & _statesMask;
-       const int idx5 = (_ctx5 ^ _c0) & _statesMask;
+       const int idx2 = (uint(_ctx2) + _c0) & _statesMask;
+       const int idx3 = (uint(_ctx3) + _c0) & _statesMask;
+       const int idx4 = (uint(_ctx4) + _c0) & _statesMask;
+       const int idx5 = (uint(_ctx5) ^ _c0) & _statesMask;
        prefetchRead(&_bigStatesMap[idx2]);
        prefetchRead(&_bigStatesMap[idx3]);
        prefetchRead(&_bigStatesMap[idx4]);
@@ -505,7 +507,7 @@ namespace kanzi
           }
        } else {
           // One more prediction
-          const int idx6 = (_ctx6 + _c0) & _statesMask;
+          const int idx6 = (uint(_ctx6) + _c0) & _statesMask;
           prefetchRead(&_bigStatesMap[idx6]);
           *_cp6 = table[*_cp6];
           _cp6 = &_bigStatesMap[idx6];
@@ -565,7 +567,7 @@ namespace kanzi
    template <bool T>
    inline int TPAQPredictor<T>::hash(uint x, uint y) const
    {
-       const uint h = x * HASH ^ y * HASH;
+       const int h = x * HASH ^ y * HASH;
        return (h >> 1) ^ (h >> 9) ^ (x >> 2) ^ (y >> 3) ^ HASH;
    }
 

@@ -29,6 +29,12 @@ const int TPAQPredictor<true>::HASH_SIZE = 16 * 1024 * 1024;
 template<>
 const int TPAQPredictor<true>::HASH = 0x7FEB352D;
 template<>
+const int TPAQPredictor<true>::MASK_80808080 = 0x80808080;
+template<>
+const int TPAQPredictor<true>::MASK_F0F0F000 = 0xF0F0F000;
+template<>
+const int TPAQPredictor<true>::MASK_4F4FFFFF = 0x4F4FFFFF;
+template<>
 const int TPAQPredictor<false>::MAX_LENGTH = 88;
 template<>
 const int TPAQPredictor<false>::BUFFER_SIZE = 64 * 1024 * 1024;
@@ -36,6 +42,12 @@ template<>
 const int TPAQPredictor<false>::HASH_SIZE = 16 * 1024 * 1024;
 template<>
 const int TPAQPredictor<false>::HASH = 0x7FEB352D;
+template<>
+const int TPAQPredictor<false>::MASK_80808080 = 0x80808080;
+template<>
+const int TPAQPredictor<false>::MASK_F0F0F000 = 0xF0F0F000;
+template<>
+const int TPAQPredictor<false>::MASK_4F4FFFFF = 0x4F4FFFFF;
 
 
 TPAQMixer::TPAQMixer()
