@@ -50,7 +50,7 @@ namespace kanzi
 
        int error() const { return _code; }
 
-       virtual ~BitStreamException() NOEXCEPT {}
+       ~BitStreamException() NOEXCEPT {}
    };
 
 }
