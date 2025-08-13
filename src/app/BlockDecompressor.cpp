@@ -644,7 +644,7 @@ T FileDecompressTask<T>::run()
                 sserr << "Failed to write decompressed block to file '" << outputName << "': " << e.what();
                 return T(Error::ERR_READ_FILE, d, sserr.str().c_str());
             }
-        } while (decoded == sa._length);
+        } while (_cis->eof() == 0);
     }
     catch (IOException& e) {
         dispose();
