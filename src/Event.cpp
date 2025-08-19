@@ -70,11 +70,13 @@ std::string Event::toString() const
            ss << std::setw(8) << std::hex << getHash() << "\"";
         else
            ss << std::setw(16) << std::hex << getHash() << "\"";
+
+	ss << std::dec;
     }
 
     if (getType() == BLOCK_INFO) {
          ss << ", \"offset\":" << getOffset();
-         ss << ", \"skipFlags\": ";
+         ss << ", \"skipFlags\":";
 
         for (int i = 128; i >= 1; i >>= 1)
            ss << ((_skipFlags & i) == 0 ? "0" : "1");
