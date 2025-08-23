@@ -74,17 +74,20 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
 
    log.println(APP_USAGE, true);
    log.println("", true);
-   log.println("Credits: Matt Mahoney, Yann Collet, Jan Ondrus, Yuta Mori, Ilya Muravyov,", true);
-   log.println("         Neal Burns, Fabian Giesen, Jarek Duda, Ilya Grebnov", true);
-   log.println("", true);
+   log.println("Options\n", true);
    log.println("   -h, --help", true);
-   log.println("        Display this message\n", true);
 
    if ((mode.compare(0, 1, "c") != 0) && (mode.compare(0, 1, "d") != 0)) {
+       log.println("        Display this message.", true);
+       log.println("        Use in conjunction with -c to print information for compression,", true);
+       log.println("        or -d to print information for decompression.\n", true);
        log.println("   -c, --compress", true);
        log.println("        Compress mode\n", true);
        log.println("   -d, --decompress", true);
        log.println("        Decompress mode\n", true);
+   }
+   else {
+       log.println("        Display this message.\n", true);
    }
 
    log.println("   -i, --input=<inputName>", true);
@@ -162,7 +165,14 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("   -f, --force", true);
    log.println("        Overwrite the output file if it already exists\n", true);
    log.println("   --rm", true);
-   log.println("        Remove the input file after successful (de)compression.", true);
+
+   if (mode.compare(0, 1, "c") == 0) {
+       log.println("        Remove the input file after successful compression.", true);
+   }
+   else {
+       log.println("        Remove the input file after successful decompression.", true);
+   }
+
    log.println("        If the input is a folder, all processed files under the folder are removed.\n", true);
    log.println("   --no-link", true);
    log.println("        Skip links\n", true);
@@ -176,17 +186,77 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("   --to=blockId", true);
        log.println("        Decompress ending at the provided block (excluded).\n", true);
        log.println("", true);
-       log.println("EG. kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
-       log.println("EG. kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
+       log.println("Examples\n", true);
+       log.println("  kanzi -d -i foo.knz -f -v 2 -j 2\n", true);
+       log.println("  kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
    }
 
    if (mode.compare(0, 1, "c") == 0) {
        log.println("", true);
-       log.println("EG. kanzi -c -i foo.txt -o none -b 4m -l 4 -v 3\n", true);
-       log.println("EG. kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -j 4\n", true);
-       log.println("EG. kanzi --compress --input=foo.txt --output=foo.knz --force", true);
-       log.println("          --transform=BWT+MTFT+ZRLT --block=4m --entropy=FPAQ --jobs=4\n", true);
+       log.println("Transforms\n", true);
+       log.println("  BWT: Burrows Wheeler Transform is a transform that reorders symbols", true);
+       log.println("       in a reversible way that is more amenable to entropy coding.", true);
+       log.println("       This implementation uses a linear time foward transform and parallel", true);
+       log.println("       inverse tranform.\n", true);
+       log.println("  BWTS: Burrows Wheeler Transform by Scott is a bijective variant of the BWT.\n", true);
+       log.println("  LZ: Lempel Ziv implementation of the dictionary based LZ77 transform that", true);
+       log.println("      removes redundancy in the data.\n", true);
+       log.println("  LZX: Lempel Ziv Extra. Same as above with a bigger hash table and more", true);
+       log.println("       match searches.\n", true);
+       log.println("  LZP: Lempel Ziv Prediction can be described as an LZ implementation with only", true);
+       log.println("       one possible match (no offset is emitted).\n", true);
+       log.println("  RLT: Run Length Transform is a simple transform that replaces runs of similar", true);
+       log.println("       symbols with a compact representation.\n", true);
+       log.println("  ZRLT: Zero Run Length Transform. Similar to RLT but only processes runs of 0.", true);
+       log.println("        Usually used post BWT.\n", true);
+       log.println("  MTFT: Move-To-Front Transform is a transform that reduces entropy by assigning", true);
+       log.println("        shorter symbols to recent data (like a LRU cache). Usually used post BWT.\n", true);
+       log.println("  RANK: Rank Transform is a transform that that reduces entropy by assigning shorter", true);
+       log.println("        symbols based on symbol frequency ranks. Usually used post BWT.\n", true);
+       log.println("  EXE: a transform that reduces the entropy of executable files (X86 & ARM64)", true);
+       log.println("       by replacing relative jump addresses with absolute ones.\n", true);
+       log.println("  TEXT: a text transform that uses a dictionary to replace common words with", true);
+       log.println("        their dictionary index.\n", true);
+       log.println("  ROLZ: Reduced Offset Lempel Ziv is an implementation of LZ that replaces match offsets", true);
+       log.println("        with indexes, creating a more compact output with slower decoding speeds.\n", true);
+       log.println("  ROLZX: Extended ROLZ with more match searches and a more compact encoding.\n", true);
+       log.println("  SRT: Sorted Rank Transform is a transform that that reduces entropy by assigning", true);
+       log.println("       shorter symbols based on symbol frequency ranks. Usually used post BWT.\n", true);
+       log.println("  MM: Multimedia transform is a fast transform that removes redundancy in correlated", true);
+       log.println("      channels in some multimedia files (EG. wav, pnm).\n", true);
+       log.println("  UTF: a fast transform replacing UTF-8 codewords with aliases based on frequencies.\n", true);
+       log.println("  PACK: a fast transform replacing unused symbols with aliases based on frequencies.\n", true);
+       log.println("  DNA: same as PACK but triggered only when DNA data is detected.\n", true);
+       log.println("", true);
+       log.println("Entropy codecs\n", true);
+       log.println("  Huffman: a fast implementation of canonical Huffman. Both encoder and decoder", true);
+       log.println("           use code tables and multi-streams to improve performance.\n", true);
+       log.println("  RANGE: a fast implementation of a static range codec.\n", true);
+       log.println("  ANS: based on Range Asymmetric Numeral Systems by Jarek Duda (specifically", true);
+       log.println("       an implementation by Fabian Giesen). Works in a similar fashion to the Range", true);
+       log.println("       codec but uses only 1 state instead of 2, and encodes in reverse byte order.\n", true);
+       log.println("  FPAQ: a binary arithmetic codec based on FPAQ1 by Matt Mahoney. Uses a simple", true);
+       log.println("        adaptive order 0 predictor based on frequencies.\n", true);
+       log.println("  CM: a binary arithmetic codec derived from BCM by Ilya Muravyov. Uses context", true);
+       log.println("      mixing of counters to generate a prediction of the next bit value.\n", true);
+       log.println("  TPAQ: a binary arithmetic codec based initially on Tangelo 2.4 (itself derived", true);
+       log.println("        from FPAQ8). Uses context mixing of predictions produced by one layer", true);
+       log.println("        neural networks. The initial code has been heavily tuned to improve", true);
+       log.println("        compression ratio and speed. Slow but usually excellent compression ratio.\n", true);
+       log.println("  TPAQX: Extended TPAQ with more predictions and more memory usage. Slowest but", true);
+       log.println("         usually the best compression ratio.\n", true);
+       log.println("", true);
+       log.println("Examples\n", true);
+       log.println("  kanzi -c -i foo.txt -o none -b 4m -l 4 -v 3\n", true);
+       log.println("  kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -j 4\n", true);
+       log.println("  kanzi --compress --input=foo.txt --output=foo.knz --force", true);
+       log.println("        --transform=BWT+MTFT+ZRLT --block=4m --entropy=FPAQ --jobs=4\n", true);
    }
+
+   log.println("", true);
+   log.println("Credits\n", true);
+   log.println("   Matt Mahoney, Yann Collet, Jan Ondrus, Yuta Mori, Ilya Muravyov,", true);
+   log.println("   Neal Burns, Fabian Giesen, Jarek Duda, Ilya Grebnov\n", true);
 }
 
 void printHeader(Printer& log, int verbose, bool& showHeader)
@@ -558,7 +628,8 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
             if (outputName != "") {
                 string msg = (ctx == ARG_IDX_OUTPUT) ? CMD_LINE_ARGS[ctx] : arg;
                 WARNING_OPT_DUPLICATE(msg, arg);
-            } else {
+            }
+            else {
                 if ((arg.length() >= 2) && (arg[0] == '.') && (arg[1] == PATH_SEPARATOR)) {
                    arg = (arg.length() == 2) ? arg.substr(0, 1) : arg.substr(2);
                 }
@@ -577,7 +648,8 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
             if (inputName != "") {
                 string msg = (ctx == ARG_IDX_INPUT) ? CMD_LINE_ARGS[ctx] : arg;
                 WARNING_OPT_DUPLICATE(msg, arg);
-            } else {
+            }
+            else {
                 if ((arg.length() >= 2) && (arg[0] == '.') && (arg[1] == PATH_SEPARATOR)) {
                    arg = (arg.length() == 2) ? arg.substr(0, 1) : arg.substr(2);
                 }
