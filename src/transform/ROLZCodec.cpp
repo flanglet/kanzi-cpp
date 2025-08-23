@@ -139,7 +139,7 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 hash32, con
     const byte* curBuf = &buf[pos];
     int bestLen = 0;
     int bestIdx = -1;
-    const int maxMatch = min(ROLZCodec1::MAX_MATCH, end - pos) - 4;
+    const int maxMatch = min(ROLZCodec1::MAX_MATCH, end - pos) - 8;
 
     // Check all recorded positions
     for (int i = s; i > e; i--) {
@@ -157,14 +157,14 @@ int ROLZCodec1::findMatch(const byte buf[], int pos, int end, uint32 hash32, con
         int n = 0;
 
         while (n < maxMatch) {
-            const int32 diff = LittleEndian::readInt32(&buf[ref + n]) ^ LittleEndian::readInt32(&curBuf[n]);
+            const int64 diff = LittleEndian::readLong64(&buf[ref + n]) ^ LittleEndian::readLong64(&curBuf[n]);
 
             if (diff != 0) {
-                n += (Global::trailingZeros(uint32(diff)) >> 3);
+                n += (Global::trailingZeros(uint64(diff)) >> 3);
                 break;
             }
 
-            n += 4;
+            n += 8;
         }
 
         if (n > bestLen) {
@@ -811,7 +811,7 @@ int ROLZCodec2::findMatch(const byte buf[], int pos, int end, uint32 key)
     const uint32 hash32 = ROLZCodec::hash(curBuf);
     int bestLen = 0;
     int bestIdx = -1;
-    const int maxMatch = min(ROLZCodec2::MAX_MATCH, end - pos) - 4;
+    const int maxMatch = min(ROLZCodec2::MAX_MATCH, end - pos) - 8;
 
     // Check all recorded positions
     for (int i = counter; i > counter - _posChecks; i--) {
@@ -829,14 +829,14 @@ int ROLZCodec2::findMatch(const byte buf[], int pos, int end, uint32 key)
         int n = 0;
 
         while (n < maxMatch) {
-            const int32 diff = LittleEndian::readInt32(&buf[ref + n]) ^ LittleEndian::readInt32(&curBuf[n]);
+            const int64 diff = LittleEndian::readLong64(&buf[ref + n]) ^ LittleEndian::readLong64(&curBuf[n]);
 
             if (diff != 0) {
-                n += (Global::trailingZeros(uint32(diff)) >> 3);
+                n += (Global::trailingZeros(uint64(diff)) >> 3);
                 break;
             }
 
-            n += 4;
+            n += 8;
         }
 
         if (n > bestLen) {
