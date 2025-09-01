@@ -352,10 +352,8 @@ void CompressedInputStream::readHeader()
     // Read & verify checksum
     const int crcSize = bsVersion <= 5 ? 16 : 24;
     const uint32 cksum1 = uint32(_ibs->readBits(crcSize));
-
     uint32 seed = (bsVersion >= 6 ? 0x01030507 : 1) * uint32(bsVersion);
     const uint32 HASH = 0x1E35A7BD;
-
     uint32 cksum2 = HASH * seed;
 
     if (bsVersion >= 6)
@@ -401,7 +399,7 @@ void CompressedInputStream::readHeader()
         // Protect against future concurrent modification of the list of block listeners
         vector<Listener<Event>*> blockListeners(_listeners);
         Event evt(Event::AFTER_HEADER_DECODING, 0, ss.str(), clock());
-        CompressedInputStream::notifyListeners(blockListeners, evt);
+        notifyListeners(blockListeners, evt);
     }
 }
 

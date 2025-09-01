@@ -142,7 +142,7 @@ BlockCompressor::BlockCompressor(const Context& ctx) :
 
         if (bl < MIN_BLOCK_SIZE) {
             stringstream sserr;
-            sserr << "Minimum block size is " << (MIN_BLOCK_SIZE / 1024) << " KB (";
+            sserr << "Minimum block size is " << (MIN_BLOCK_SIZE / 1024) << " KiB (";
             sserr << MIN_BLOCK_SIZE << " bytes), got " << bl;
             sserr << (bl > 1 ? " bytes" : " byte");
             throw invalid_argument(sserr.str().c_str());
@@ -150,7 +150,7 @@ BlockCompressor::BlockCompressor(const Context& ctx) :
 
         if (bl > MAX_BLOCK_SIZE) {
             stringstream sserr;
-            sserr << "Maximum block size is " << (MAX_BLOCK_SIZE / (1024 * 1024 * 1024)) << " GB (";
+            sserr << "Maximum block size is " << (MAX_BLOCK_SIZE / (1024 * 1024 * 1024)) << " GiB (";
             sserr << MAX_BLOCK_SIZE << " bytes), got " << bl << " bytes";
             throw invalid_argument(sserr.str().c_str());
         }

@@ -71,7 +71,7 @@ std::string Event::toString() const
         else
            ss << std::setw(16) << std::hex << getHash() << "\"";
 
-	ss << std::dec;
+        ss << std::dec;
     }
 
     if (getType() == BLOCK_INFO) {
