@@ -89,8 +89,9 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     if (isStdIn == false) {
         vector<string> errors;
-        bool isRecursive = (_inputName.length() < 2) ||                                                                                                                  (_inputName[_inputName.length() - 2] != PATH_SEPARATOR) ||
-            (_inputName[_inputName.length() - 1] != '.');
+        bool isRecursive = (_inputName.length() < 2) ||
+                           (_inputName[_inputName.length() - 2] != PATH_SEPARATOR) ||
+                           (_inputName[_inputName.length() - 1] != '.');
         FileListConfig cfg = { isRecursive, _noLinks, false, _noDotFiles };
         createFileList(_inputName, files, cfg, errors);
 

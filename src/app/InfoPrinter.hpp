@@ -38,7 +38,8 @@ namespace kanzi
    public:
        enum Type {
            ENCODING,
-           DECODING
+           DECODING,
+           INFO
        };
 
        InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os);
@@ -61,7 +62,7 @@ namespace kanzi
        Clock _clock12;
        Clock _clock23;
        Clock _clock34;
-	   
+
        static uint hash(uint id) { return (id * 0x1E35A7BD) & 0x03FF; }
    };
 }

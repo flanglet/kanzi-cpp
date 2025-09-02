@@ -376,24 +376,27 @@ void CompressedInputStream::readHeader()
 
     if (_listeners.size() > 0) {
         stringstream ss;
-        ss << "Bitstream version: " << bsVersion << endl;
+        string inputName = _ctx.getString("inputName", "");
+        ss << inputName << ",";
+        ss << bsVersion << ",";
         string ckSize = "NONE";
 
         if (_hasher32 != nullptr)
-            ckSize = "32 bits";
+            ckSize = "32";
         else if (_hasher64 != nullptr)
-            ckSize = "64 bits";
+            ckSize = "64";
 
-        ss << "Block checksum: " << ckSize<< endl;
-        ss << "Block size: " << _blockSize << " bytes" << endl;
+        ss << ckSize << ",";
+        ss << _blockSize << ",";
         string w1 = EntropyDecoderFactory::getName(_entropyType);
-        ss << "Using " << ((w1 == "NONE") ? "no" : w1) << " entropy codec (stage 1)" << endl;
+        ss << ((w1 == "NONE") ? "" : w1) << ",";
         string w2 = TransformFactory<byte>::getName(_transformType);
-        ss << "Using " << ((w2 == "NONE") ? "no" : w2) << " transform (stage 2)" << endl;
+        ss << ((w2 == "NONE") ? "" : w2) << ",";
+        long fileSize = _ctx.getLong("fileSize", 0);
+        ss << fileSize << ",";
 
         if (szMask != 0) {
-            ss << "Original size: " << _outputSize;
-            ss << (_outputSize < 2 ? " byte" : " bytes") << endl;
+            ss << _outputSize << ",";
         }
 
         // Protect against future concurrent modification of the list of block listeners

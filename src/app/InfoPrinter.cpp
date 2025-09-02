@@ -17,6 +17,7 @@ limitations under the License.
 #include <ios>
 #include <sstream>
 #include "InfoPrinter.hpp"
+#include "../util.hpp"
 
 using namespace kanzi;
 using namespace std;
@@ -135,8 +136,34 @@ void InfoPrinter::processEvent(const Event& evt)
         delete bi;
         _map[hash(currentBlockId)] = nullptr;
     }
-    else if ((evt.getType() == Event::AFTER_HEADER_DECODING) && (_level >= 3)) {
-        _os << evt.toString() << endl;
+    else if (evt.getType() == Event::AFTER_HEADER_DECODING) {
+        if (_level >= 3) {
+            stringstream ss(evt.toString());
+            string s = ss.str();
+            vector<string> tokens;
+            const int nbTokens = tokenizeCSV(s, tokens);
+            ss.str(string());
+            
+            if (nbTokens > 1)
+                ss << "Bitstream version: " << tokens[1] << endl;
+
+            if (nbTokens > 2)
+                ss << "Block checksum: " << tokens[2] << (tokens[2] == "NONE" ? "" : " bits") << endl;
+
+            if (nbTokens > 3)
+                ss << "Block size: " << tokens[3] << " bytes" << endl;
+
+            if (nbTokens > 4)
+                ss << "Using " << (tokens[4] == "" ? "no" : tokens[4]) << " entropy codec (stage 1)" << endl;
+
+            if (nbTokens > 5)
+                ss << "Using " << (tokens[5] == "" ? "no" : tokens[5]) << " transform (stage 2)" << endl;
+
+            if (nbTokens > 7)
+                ss << "Original size: " << tokens[7] << " byte(s)" << endl;;
+
+            _os << ss.str() << endl;
+        }
     }
     else if (_level >= 5) {
         _os << evt.toString() << endl;
