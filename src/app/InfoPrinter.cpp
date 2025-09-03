@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <cstdlib>
 #include <iomanip>
 #include <ios>
 #include <sstream>
@@ -46,11 +47,18 @@ InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os
 	
     for (int i = 0; i < 1024; i++)
         _map[i] = nullptr;
+
+    _headerInfo = 0;
 }
 
 void InfoPrinter::processEvent(const Event& evt)
 {
-    int currentBlockId = evt.getId();
+    if (_type == InfoPrinter::INFO) {
+       processHeaderInfo(evt);
+       return;
+    }
+
+    const int currentBlockId = evt.getId();
 
     if (evt.getType() == _thresholds[1]) {
         // Register initial block size
@@ -136,36 +144,131 @@ void InfoPrinter::processEvent(const Event& evt)
         delete bi;
         _map[hash(currentBlockId)] = nullptr;
     }
-    else if (evt.getType() == Event::AFTER_HEADER_DECODING) {
-        if (_level >= 3) {
-            stringstream ss(evt.toString());
-            string s = ss.str();
-            vector<string> tokens;
-            const int nbTokens = tokenizeCSV(s, tokens);
-            ss.str(string());
-            
-            if (nbTokens > 1)
-                ss << "Bitstream version: " << tokens[1] << endl;
+    else if ((evt.getType() == Event::AFTER_HEADER_DECODING) && (_level >= 3)) {
+        stringstream ss(evt.toString());
+        string s = ss.str();
+        vector<string> tokens;
+        const int nbTokens = tokenizeCSV(s, tokens);
+        ss.str(string());
 
-            if (nbTokens > 2)
-                ss << "Block checksum: " << tokens[2] << (tokens[2] == "NONE" ? "" : " bits") << endl;
+        if (nbTokens > 1)
+            ss << "Bitstream version: " << tokens[1] << endl;
 
-            if (nbTokens > 3)
-                ss << "Block size: " << tokens[3] << " bytes" << endl;
+        if (nbTokens > 2)
+            ss << "Block checksum: " << tokens[2] << (tokens[2] == "NONE" ? "" : " bits") << endl;
 
-            if (nbTokens > 4)
-                ss << "Using " << (tokens[4] == "" ? "no" : tokens[4]) << " entropy codec (stage 1)" << endl;
+        if (nbTokens > 3)
+            ss << "Block size: " << tokens[3] << " bytes" << endl;
 
-            if (nbTokens > 5)
-                ss << "Using " << (tokens[5] == "" ? "no" : tokens[5]) << " transform (stage 2)" << endl;
+        if (nbTokens > 4)
+            ss << "Using " << (tokens[4] == "" ? "no" : tokens[4]) << " entropy codec (stage 1)" << endl;
 
-            if (nbTokens > 7)
-                ss << "Original size: " << tokens[7] << " byte(s)" << endl;;
+        if (nbTokens > 5)
+            ss << "Using " << (tokens[5] == "" ? "no" : tokens[5]) << " transform (stage 2)" << endl;
 
-            _os << ss.str() << endl;
-        }
+        if (nbTokens > 7)
+            ss << "Original size: " << tokens[7] << " byte(s)" << endl;;
+
+        _os << ss.str() << endl;
     }
     else if (_level >= 5) {
         _os << evt.toString() << endl;
     }
+}
+
+
+void InfoPrinter::processHeaderInfo(const Event& evt)
+{
+   if ((_level == 0) || (evt.getType() != Event::AFTER_HEADER_DECODING))
+      return;
+
+   stringstream ss(evt.toString());
+   string s = ss.str();
+   vector<string> tokens;
+   const int nbTokens = tokenizeCSV(s, tokens);
+   ss.str(string());
+
+   if (_headerInfo++ == 0) {
+      // Display header
+      ss << "|" << "     File Name      ";
+      ss << "|" << "Ver";
+      ss << "|" << "Check";
+      ss << "|" << "Block Size";
+      ss << "|" << "  File Size ";
+      ss << "|" << " Orig. Size ";
+      ss << "|" << " Ratio ";
+
+      if (_level >= 4) {
+         ss << "|" << " Entropy";
+         ss << "|" << "      Transforms      ";
+      }
+
+      ss << "|" << endl;
+   }
+
+   ss << "|";
+
+   if (nbTokens > 0) {
+       string inputName = tokens[0];
+       size_t idx = inputName.find_last_of(PATH_SEPARATOR);
+
+       if (idx != string::npos)
+          inputName = inputName.substr(idx + 1);
+
+       if (inputName.length() > 20)
+          inputName = inputName.substr(0, 18) + "..";
+
+       ss << std::left << setw(20) << inputName << "|" << std::right; // inputName
+   }
+
+   if (nbTokens > 1)
+       ss << setw(3) << tokens[1] << "|"; //bsVersion
+
+   if (nbTokens > 2)
+       ss << setw(5) << tokens[2] << "|"; // checksum
+
+   if (nbTokens > 3)
+       ss << setw(10) << tokens[3] << "|"; // block size
+
+   if (nbTokens > 6)
+       ss << setw(12) << formatSize(tokens[6]) << "|"; // compressed size
+   else
+       ss << setw(12) << "    N/A    " << "|";
+
+   if (nbTokens > 7)
+       ss << setw(12) << formatSize(tokens[7]) << "|"; // original size
+   else
+       ss << setw(12) << "    N/A    " << "|";
+
+   if ((tokens[6] != "") && (tokens[7] != "")) {
+      string compStr = tokens[6];
+      string origStr = tokens[7];
+      double compSz = atof(compStr.c_str());
+      double origSz = atof(origStr.c_str());
+
+      if (origSz == double(0)) {
+        ss << setw(7) << "  N/A  " << "|";
+      }
+      else {
+         double ratio = compSz / origSz;
+         ss << setw(7) << std::fixed << std::setprecision(3) << ratio << "|"; // compression ratio
+      }
+   }
+   else {
+      ss << setw(7) << "  N/A  " << "|";
+   }
+
+   if ((_level >= 4) && (nbTokens > 4))
+       ss << setw(8) << (tokens[4] == "" ? "NONE" : tokens[4]) << "|"; // entropy
+
+   if ((_level >= 4) && (nbTokens > 5)) {
+       string t = tokens[5];
+
+       if (t.length() > 22)
+          t = t.substr(0, 20) + "..";
+
+       ss << setw(22) << (t == "" ? "NONE" : t) << "|"; // transforms
+   }
+
+   _os << ss.str() << endl;
 }

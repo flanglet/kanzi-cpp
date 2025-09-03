@@ -59,9 +59,12 @@ namespace kanzi
        Event::Type _thresholds[6];
        InfoPrinter::Type _type;
        int _level;
+       int _headerInfo;
        Clock _clock12;
        Clock _clock23;
        Clock _clock34;
+
+       void processHeaderInfo(const Event& evt);
 
        static uint hash(uint id) { return (id * 0x1E35A7BD) & 0x03FF; }
    };
