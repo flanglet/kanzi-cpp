@@ -45,7 +45,7 @@ namespace kanzi
    #ifdef CONCURRENCY_ENABLED
                std::lock_guard<std::mutex> lock(_mtx);
    #endif
-               (*_os) << msg ;
+               (*_os) << msg;
             }
          }
 
@@ -63,7 +63,7 @@ namespace kanzi
    #ifdef CONCURRENCY_ENABLED
                std::lock_guard<std::mutex> lock(_mtx);
    #endif
-               (*_os) << msg ;
+               (*_os) << msg;
             }
          }
 
