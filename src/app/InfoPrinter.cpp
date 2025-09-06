@@ -175,6 +175,8 @@ void InfoPrinter::processEvent(const Event& evt)
 
             if (nbTokens > 7)
                 ss << ", \"original\":" << (tokens[7] == "" ? "N/A" : tokens[7]);
+
+            ss << " }";
         }
         else {
             // Raw text
