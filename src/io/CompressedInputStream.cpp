@@ -379,7 +379,7 @@ void CompressedInputStream::readHeader()
         string inputName = _ctx.getString("inputName", "");
         ss << inputName << ",";
         ss << bsVersion << ",";
-        string ckSize = "NONE";
+        string ckSize = "0";
 
         if (_hasher32 != nullptr)
             ckSize = "32";

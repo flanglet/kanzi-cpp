@@ -32,8 +32,8 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-static const string CMD_LINE_ARGS[14] = {
-    "-c", "-d", "-i", "-o", "-b", "-t", "-e", "-j", "-v", "-l", "-s", "-x", "-f", "-h"
+static const string CMD_LINE_ARGS[15] = {
+    "-c", "-d", "-i", "-o", "-b", "-t", "-e", "-j", "-v", "-l", "-s", "-x", "-f", "-h", "-y"
 };
 
 //static const int ARG_IDX_COMPRESS = 0;
@@ -53,7 +53,7 @@ static const int ARG_IDX_LEVEL = 9;
 static const string KANZI_VERSION = "2.4.0";
 static const string APP_HEADER = "Kanzi " + KANZI_VERSION + " (c) Frederic Langlet";
 static const string APP_SUB_HEADER = "Fast lossless data compressor.";
-static const string APP_USAGE = "Usage: kanzi [-c|-d] [flags and files in any order]";
+static const string APP_USAGE = "Usage: kanzi [-c|-d|-y] [flags and files in any order]";
 
 
 #ifdef CONCURRENCY_ENABLED
@@ -77,7 +77,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("Options\n", true);
    log.println("   -h, --help", true);
 
-   if ((mode.compare(0, 1, "c") != 0) && (mode.compare(0, 1, "d") != 0)) {
+   if ((mode != "c") && (mode != "d") && (mode != "y")) {
        log.println("        Display this message.", true);
        log.println("        Use in conjunction with -c to print information for compression,", true);
        log.println("        or -d to print information for decompression.\n", true);
@@ -85,6 +85,8 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("        Compress mode\n", true);
        log.println("   -d, --decompress", true);
        log.println("        Decompress mode\n", true);
+       log.println("   -y, --info", true);
+       log.println("        Info mode: display information about compressed files\n", true);
    }
    else {
        log.println("        Display this message.\n", true);
@@ -101,23 +103,26 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println(ss.str(), true);
    log.println("        If this option is not provided, kanzi reads data from stdin.\n", true);
    ss.str(string());
-   log.println("   -o, --output=<outputName>", true);
 
-   if (mode.compare(0, 1, "c") == 0) {
-       log.println("        Optional name of the output file or directory (defaults to", true);
-       log.println("        <inputName.knz> if input is <inputName> or 'stdout' if input is 'stdin').", true);
-       log.println("        or 'none' or 'stdout'.\n", true);
-   }
-   else if (mode.compare(0, 1, "d") == 0) {
-       log.println("        Optional name of the output file or directory (defaults to", true);
-       log.println("        <inputName> if input is <inputName.knz> or 'stdout' if input is 'stdin').", true);
-       log.println("        or 'none' or 'stdout'.\n", true);
-   }
-   else {
-       log.println("        Optional name of the output file or 'none' or 'stdout'.\n", true);
+   if (mode != "y") {
+       log.println("   -o, --output=<outputName>", true);
+   
+       if (mode == "c") {
+           log.println("        Optional name of the output file or directory (defaults to", true);
+           log.println("        <inputName.knz> if input is <inputName> or 'stdout' if input is 'stdin').", true);
+           log.println("        or 'none' or 'stdout'.\n", true);
+       }
+       else if (mode == "d") {
+           log.println("        Optional name of the output file or directory (defaults to", true);
+           log.println("        <inputName> if input is <inputName.knz> or 'stdout' if input is 'stdin').", true);
+           log.println("        or 'none' or 'stdout'.\n", true);
+       }
+       else {
+           log.println("        Optional name of the output file or 'none' or 'stdout'.\n", true);
+       }
    }
 
-   if (mode.compare(0, 1, "c") == 0) {
+   if (mode == "c") {
        log.println("   -b, --block=<size>", true);
        log.println("        Size of blocks (default 4|8|16|32 MiB based on level, max 1 GiB, min 1 KiB).", true);
        log.println("        'auto' means that the compressor derives the best value", true);
@@ -162,24 +167,29 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("        4=display block size and timings, 5=display extra information", true);
    log.println("        Verbosity is reduced to 1 when files are processed concurrently", true);
    log.println("        Verbosity is reduced to 0 when the output is 'stdout'\n", true);
-   log.println("   -f, --force", true);
-   log.println("        Overwrite the output file if it already exists\n", true);
-   log.println("   --rm", true);
 
-   if (mode.compare(0, 1, "c") == 0) {
+   if (mode != "y") {
+       log.println("   -f, --force", true);
+       log.println("        Overwrite the output file if it already exists\n", true);
+   }
+
+   if (mode == "c") {
+       log.println("   --rm", true);
        log.println("        Remove the input file after successful compression.", true);
+       log.println("        If the input is a folder, all processed files under the folder are removed.\n", true);
    }
-   else {
+   else if (mode == "d") {
+       log.println("   --rm", true);
        log.println("        Remove the input file after successful decompression.", true);
+       log.println("        If the input is a folder, all processed files under the folder are removed.\n", true);
    }
 
-   log.println("        If the input is a folder, all processed files under the folder are removed.\n", true);
    log.println("   --no-link", true);
    log.println("        Skip links\n", true);
    log.println("   --no-dot-file", true);
    log.println("        Skip dot files\n", true);
 
-   if (mode.compare(0, 1, "d") == 0) {
+   if (mode == "d") {
        log.println("   --from=blockId", true);
        log.println("        Decompress starting at the provided block (included).", true);
        log.println("        The first block ID is 1.\n", true);
@@ -191,7 +201,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("  kanzi --decompress --input=foo.knz --force --verbose=2 --jobs=2\n", true);
    }
 
-   if (mode.compare(0, 1, "c") == 0) {
+   if (mode == "c") {
        log.println("", true);
        log.println("Transforms\n", true);
        log.println("  BWT: Burrows Wheeler Transform is a transform that reorders symbols", true);
@@ -399,8 +409,8 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
 
         // Extract verbosity, output and mode first
         if ((arg == "-c") || (arg.compare(0, 10, "--compress") == 0)) {
-            if (mode == "d") {
-                cerr << "Both compression and decompression options were provided." << endl;
+            if (mode != "") {
+                cerr << "Only one mode can be provided (already got '" << mode << "'" << endl;
                 return Error::ERR_INVALID_PARAM;
             }
 
@@ -409,12 +419,22 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
         }
 
         if ((arg == "-d") || (arg.compare(0, 12, "--decompress") == 0)) {
-            if (mode == "c") {
-                cerr << "Both compression and decompression options were provided." << endl;
+            if (mode != "") {
+                cerr << "Only one mode can be provided (already got '" << mode << "'" << endl;
                 return Error::ERR_INVALID_PARAM;
             }
 
             mode = "d";
+            continue;
+        }
+
+        if ((arg == "-y") || (arg.compare(0, 10, "--info") == 0)) {
+            if (mode != "") {
+                cerr << "Only one mode can be provided (already got '" << mode << "')" << endl;
+                return Error::ERR_INVALID_PARAM;
+            }
+
+            mode = "y";
             continue;
         }
 
@@ -467,12 +487,17 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
         }
     }
     else {
-        string str = outputName;
-        transform(str.begin(), str.end(), str.begin(), ::toupper);
+        if (mode == "y") {
+           log.println("Warning: ignoring option [" + outputName + "]. Only applicable in compression or decompression mode.", verbose > 0);
+        }
+        else {
+           string str = outputName;
+           transform(str.begin(), str.end(), str.begin(), ::toupper);
 
-        if (str == "STDOUT") {
-            verbose = 0;
-            verboseFlag = true;
+           if (str == "STDOUT") {
+               verbose = 0;
+               verboseFlag = true;
+           }
         }
     }
 
@@ -494,7 +519,8 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
            arg = arg.substr(k);
         }
 
-        if ((arg == "-c") || (arg == "-d") || (arg == "--compress") || (arg == "--decompress")) {
+        if ((arg == "-c") || (arg == "-d") || (arg == "-y") || (arg == "--compress") || (arg == "--decompress") ||
+            (arg == "--info")) {
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
@@ -509,6 +535,11 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
             }
             else if (overwrite >= 0) {
                 WARNING_OPT_DUPLICATE(arg, "true");
+            }
+
+            if (mode == "y") {
+                WARNING_OPT_COMP_ONLY(arg);
+                continue;
             }
 
             overwrite = 1;
@@ -559,6 +590,10 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
                 WARNING_OPT_DUPLICATE(arg, "true");
             }
 
+            if (mode == "y") {
+                WARNING_OPT_COMP_ONLY(arg);
+                continue;
+            }
             remove = 1;
             ctx = -1;
             continue;
@@ -630,6 +665,11 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
                 WARNING_OPT_DUPLICATE(msg, arg);
             }
             else {
+                if (mode == "y") {
+                    WARNING_OPT_COMP_ONLY(arg);
+                    continue;
+                }
+
                 if ((arg.length() >= 2) && (arg[0] == '.') && (arg[1] == PATH_SEPARATOR)) {
                    arg = (arg.length() == 2) ? arg.substr(0, 1) : arg.substr(2);
                 }
@@ -1072,7 +1112,7 @@ int main(int argc, const char* argv[])
             }
         }
 
-        if (mode == "d") {
+        if ((mode == "d") || (mode == "y")) {
             try {
                 BlockDecompressor bd(ctx);
                 uint64 read = 0;

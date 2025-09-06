@@ -18,7 +18,7 @@ limitations under the License.
 #include <ios>
 #include <sstream>
 #include "InfoPrinter.hpp"
-#include "../util.hpp"
+#include "../util/strings.hpp"
 
 using namespace kanzi;
 using namespace std;
@@ -145,29 +145,55 @@ void InfoPrinter::processEvent(const Event& evt)
         _map[hash(currentBlockId)] = nullptr;
     }
     else if ((evt.getType() == Event::AFTER_HEADER_DECODING) && (_level >= 3)) {
-        stringstream ss(evt.toString());
-        string s = ss.str();
+        // Special CSV format
+        stringstream ss;
         vector<string> tokens;
+        string s = evt.toString();
         const int nbTokens = tokenizeCSV(s, tokens);
-        ss.str(string());
 
-        if (nbTokens > 1)
-            ss << "Bitstream version: " << tokens[1] << endl;
+        if (_level >= 5) {
+            // JSON text
+            if (nbTokens > 1)
+                ss << ", \"bsVersion\":" << tokens[1];
 
-        if (nbTokens > 2)
-            ss << "Block checksum: " << tokens[2] << (tokens[2] == "NONE" ? "" : " bits") << endl;
+            if (nbTokens > 2)
+                ss << ", \"checksize\":" << tokens[2];
 
-        if (nbTokens > 3)
-            ss << "Block size: " << tokens[3] << " bytes" << endl;
+            if (nbTokens > 3)
+                ss << ", \"blocksize\":" << tokens[3];
 
-        if (nbTokens > 4)
-            ss << "Using " << (tokens[4] == "" ? "no" : tokens[4]) << " entropy codec (stage 1)" << endl;
+            if (nbTokens > 4)
+                ss << ", \"entropy\":" << (tokens[4] == "" ? "none" : "\"" + tokens[4] + "\"");
 
-        if (nbTokens > 5)
-            ss << "Using " << (tokens[5] == "" ? "no" : tokens[5]) << " transform (stage 2)" << endl;
+            if (nbTokens > 5)
+                ss << ", \"transforms\":" << (tokens[5] == "" ? "none" : "\"" + tokens[5] + "\"");
 
-        if (nbTokens > 7)
-            ss << "Original size: " << tokens[7] << " byte(s)" << endl;;
+            if (nbTokens > 6)
+                ss << ", \"compressed\":" << (tokens[6] == "" ? "N/A" : tokens[6]);
+
+            if (nbTokens > 7)
+                ss << ", \"original\":" << (tokens[7] == "" ? "N/A" : tokens[7]);
+        }
+        else {
+            // Raw text
+            if (nbTokens > 1)
+                ss << "Bitstream version: " << tokens[1] << endl;
+
+            if (nbTokens > 2)
+                ss << "Block checksum: " << (tokens[2] == "0" ? "NONE" : tokens[2] + " bits") << endl;
+
+            if (nbTokens > 3)
+                ss << "Block size: " << tokens[3] << " bytes" << endl;
+
+            if (nbTokens > 4)
+                ss << "Using " << (tokens[4] == "" ? "no" : tokens[4]) << " entropy codec (stage 1)" << endl;
+
+            if (nbTokens > 5)
+                ss << "Using " << (tokens[5] == "" ? "no" : tokens[5]) << " transform (stage 2)" << endl;
+
+            if ((nbTokens > 7) && (tokens[7] != ""))
+                ss << "Original size: " << tokens[7] << " byte(s)" << endl;
+        }
 
         _os << ss.str() << endl;
     }
@@ -190,6 +216,7 @@ void InfoPrinter::processHeaderInfo(const Event& evt)
 
    if (_headerInfo++ == 0) {
       // Display header
+      ss << endl;
       ss << "|" << "     File Name      ";
       ss << "|" << "Ver";
       ss << "|" << "Check";
@@ -200,7 +227,7 @@ void InfoPrinter::processHeaderInfo(const Event& evt)
 
       if (_level >= 4) {
          ss << "|" << " Entropy";
-         ss << "|" << "      Transforms      ";
+         ss << "|" << "        Transforms        ";
       }
 
       ss << "|" << endl;
@@ -264,10 +291,10 @@ void InfoPrinter::processHeaderInfo(const Event& evt)
    if ((_level >= 4) && (nbTokens > 5)) {
        string t = tokens[5];
 
-       if (t.length() > 22)
-          t = t.substr(0, 20) + "..";
+       if (t.length() > 26)
+          t = t.substr(0, 24) + "..";
 
-       ss << setw(22) << (t == "" ? "NONE" : t) << "|"; // transforms
+       ss << setw(26) << (t == "" ? "NONE" : t) << "|"; // transforms
    }
 
    _os << ss.str() << endl;

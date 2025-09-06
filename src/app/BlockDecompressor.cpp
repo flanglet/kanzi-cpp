@@ -87,6 +87,24 @@ int BlockDecompressor::decompress(uint64& inputSize)
     transform(upperInputName.begin(), upperInputName.end(), upperInputName.begin(), ::toupper);
     bool isStdIn = upperInputName == "STDIN";
 
+    // In mode "info", we want to display the information in the stream header only.
+    // We can reuse the existing code but we need to:
+    //   create an InfoPrinter with a dedicated INFO type
+    //   disable logging outside of this printer (=> _verbosity=0)
+    //   decompress no block (=> _outputName = NONE and --from=1 and --to=1)
+    //   disable threading for proper display (=> _jobs=1)
+    bool isInfo = _ctx.getString("mode") == "y";
+    int vl = _verbosity;
+
+    if (isInfo) {
+        _verbosity = 0;
+        _outputName = "NONE";
+        _ctx.putString("outputName", _outputName);
+        _ctx.putInt("from", 1);
+        _ctx.putInt("to", 1);
+        _ctx.putInt("jobs", 1);
+    }
+
     if (isStdIn == false) {
         vector<string> errors;
         bool isRecursive = (_inputName.length() < 2) ||
@@ -137,9 +155,10 @@ int BlockDecompressor::decompress(uint64& inputSize)
         ss.str(string());
     }
 
-    InfoPrinter listener(_verbosity, InfoPrinter::DECODING, cout);
+    InfoPrinter::Type ipt = isInfo ? InfoPrinter::INFO : InfoPrinter::DECODING;
+    InfoPrinter listener(vl, ipt, cout);
 
-    if (_verbosity > 2)
+    if ((vl > 2) || ((isInfo == true) && (vl > 0)))
         addListener(listener);
 
     int res = 0;
