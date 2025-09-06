@@ -153,6 +153,8 @@ void InfoPrinter::processEvent(const Event& evt)
 
         if (_level >= 5) {
             // JSON text
+            ss << "{ \"type\":\"" << evt.getTypeAsString() << "\"";
+
             if (nbTokens > 1)
                 ss << ", \"bsVersion\":" << tokens[1];
 
