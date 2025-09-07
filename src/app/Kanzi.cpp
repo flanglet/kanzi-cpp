@@ -106,7 +106,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
 
    if (mode != "y") {
        log.println("   -o, --output=<outputName>", true);
-   
+
        if (mode == "c") {
            log.println("        Optional name of the output file or directory (defaults to", true);
            log.println("        <inputName.knz> if input is <inputName> or 'stdout' if input is 'stdin').", true);
@@ -343,6 +343,11 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
                  ss << "Warning: ignoring option [" << opt << "]. Only applicable in decompression mode."; \
                  log.println(ss.str(), verbose > 0)
 
+#define WARNING_OPT_INVALID(opt) \
+                 stringstream ss; \
+                 ss << "Warning: ignoring option [" << opt << "]. Not applicable in this mode."; \
+                 log.println(ss.str(), verbose > 0)
+
 #define WARNING_OPT_DUPLICATE(opt, val) \
                  stringstream ss; \
                  ss << "Warning: ignoring duplicate option [" << opt << "]: " << val;\
@@ -488,7 +493,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
     }
     else {
         if (mode == "y") {
-           log.println("Warning: ignoring option [" + outputName + "]. Only applicable in compression or decompression mode.", verbose > 0);
+           WARNING_OPT_INVALID(outputName);
         }
         else {
            string str = outputName;
@@ -538,7 +543,8 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
             }
 
             if (mode == "y") {
-                WARNING_OPT_COMP_ONLY(arg);
+                WARNING_OPT_INVALID(arg);
+                ctx = - 1;
                 continue;
             }
 
@@ -590,12 +596,14 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
                 WARNING_OPT_DUPLICATE(arg, "true");
             }
 
+            ctx = -1;
+
             if (mode == "y") {
-                WARNING_OPT_COMP_ONLY(arg);
+                WARNING_OPT_INVALID(arg);
                 continue;
             }
+
             remove = 1;
-            ctx = -1;
             continue;
         }
 
@@ -662,11 +670,20 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
 
             if (outputName != "") {
                 string msg = (ctx == ARG_IDX_OUTPUT) ? CMD_LINE_ARGS[ctx] : arg;
+
+                if (mode == "y") {
+                    WARNING_OPT_INVALID(msg);
+                    ctx = -1;
+                    continue;
+                }
+
                 WARNING_OPT_DUPLICATE(msg, arg);
             }
             else {
                 if (mode == "y") {
-                    WARNING_OPT_COMP_ONLY(arg);
+                    string msg = (ctx == ARG_IDX_OUTPUT) ? CMD_LINE_ARGS[ctx] : arg;
+                    WARNING_OPT_INVALID(msg);
+                    ctx = -1;
                     continue;
                 }
 

@@ -156,7 +156,7 @@ void InfoPrinter::processEvent(const Event& evt)
             ss << "{ \"type\":\"" << evt.getTypeAsString() << "\"";
 
             if (nbTokens > 1)
-                ss << ", \"bsVersion\":" << tokens[1];
+                ss << ", \"bsversion\":" << tokens[1];
 
             if (nbTokens > 2)
                 ss << ", \"checksize\":" << tokens[2];
@@ -165,10 +165,10 @@ void InfoPrinter::processEvent(const Event& evt)
                 ss << ", \"blocksize\":" << tokens[3];
 
             if (nbTokens > 4)
-                ss << ", \"entropy\":" << (tokens[4] == "" ? "none" : "\"" + tokens[4] + "\"");
+                ss << ", \"entropy\":" << (tokens[4] == "" ? "\"NONE\"" : "\"" + tokens[4] + "\"");
 
             if (nbTokens > 5)
-                ss << ", \"transforms\":" << (tokens[5] == "" ? "none" : "\"" + tokens[5] + "\"");
+                ss << ", \"transforms\":" << (tokens[5] == "" ? "\"NONE\"" : "\"" + tokens[5] + "\"");
 
             if (nbTokens > 6)
                 ss << ", \"compressed\":" << (tokens[6] == "" ? "N/A" : tokens[6]);
