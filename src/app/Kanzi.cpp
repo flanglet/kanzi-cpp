@@ -157,8 +157,11 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("   -j, --jobs=<jobs>", true);
    log.println("        Maximum number of jobs the program may start concurrently", true);
    #ifdef CONCURRENCY_ENABLED
+      int cores = max(int(thread::hardware_concurrency()) / 2, 1);
+      stringstream sstr;
+      sstr << cores;
       log.println("        If 0 is provided, use all available cores (maximum is 64).", true);
-      log.println("        (default is half of available cores).\n", true);
+      log.println("        Default is half of available cores (" + sstr.str() + " on this machine).\n", true);
    #else
       log.println("        (always 1 in this version).\n", true);
    #endif
