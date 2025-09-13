@@ -40,7 +40,8 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
     uint srcIdx = 0;
     uint dstIdx = 0;
     const uint srcEnd = length;
-    const uint dstEnd = length; // do not expand
+    const uint dstEnd = length - 16; // do not expand
+    const uint srcEnd4 = length - 4;
     bool res = true;
     byte zeros[4] = { byte(0) };
 
@@ -48,7 +49,7 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
         if (src[srcIdx] == byte(0)) {
             uint runLength = 1;
 
-            while ((srcIdx + runLength + 4 < srcEnd) && (memcmp(&src[srcIdx + runLength], &zeros[0], 4) == 0))
+            while ((srcIdx + runLength < srcEnd4) && (memcmp(&src[srcIdx + runLength], &zeros[0], 4) == 0))
                 runLength += 4;
 
             while ((srcIdx + runLength < srcEnd) && src[srcIdx + runLength] == byte(0))
@@ -58,14 +59,26 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
 
             // Encode length
             runLength++;
-            int log = Global::_log2(uint32(runLength));
 
-            if (dstIdx >= dstEnd - log) {
+            if (dstIdx >= dstEnd) {
                 res = false;
                 break;
             }
 
+            int log = Global::_log2(uint32(runLength));
+
             // Write every bit as a byte except the most significant one
+            while (log > 3) {
+                log--;
+                dst[dstIdx++] = byte((runLength >> log) & 1);
+                log--;
+                dst[dstIdx++] = byte((runLength >> log) & 1);
+                log--;
+                dst[dstIdx++] = byte((runLength >> log) & 1);
+                log--;
+                dst[dstIdx++] = byte((runLength >> log) & 1);
+            }
+
             while (log > 0) {
                 log--;
                 dst[dstIdx++] = byte((runLength >> log) & 1);
@@ -74,24 +87,19 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
             continue;
         }
 
+        if (dstIdx >= dstEnd) {
+            res = false;
+            break;
+        }
+
         const int val = int(src[srcIdx]);
 
         if (val >= 0xFE) {
-           if (dstIdx >= dstEnd - 1) {
-                res = false;
-                break;
-            }
-
             dst[dstIdx] = byte(0xFF);
+            dst[dstIdx + 1] = byte(val - 0xFE);
             dstIdx++;
-            dst[dstIdx] = byte(val - 0xFE);
         }
         else {
-           if (dstIdx >= dstEnd) {
-                res = false;
-                break;
-            }
-
             dst[dstIdx] = byte(val + 1);
         }
 
