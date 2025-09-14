@@ -210,7 +210,7 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
          }
 
         // Worth it?
-        if (savings * 20 < count)
+        if (savings < count / 20)
             return false;
 
         v.clear();
