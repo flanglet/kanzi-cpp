@@ -51,11 +51,9 @@ uint64 compress1(byte block[], uint length)
     delete cos;
     delete cis;
 
-    if (memcmp(&buf[0], &block[0], length) != 0)
-       return 3;
-
+    uint64 res = (memcmp(&buf[0], &block[0], length) != 0) ? 3 : read ^ written;
     delete[] buf;
-    return read ^ written;
+    return res;
 }
 
 uint64 compress2(byte block[], uint length)
@@ -103,11 +101,9 @@ uint64 compress2(byte block[], uint length)
     delete cos;
     delete cis;
 
-    if (memcmp(&buf[0], &block[0], length) != 0)
-       return 3;
-
+    uint64 res = (memcmp(&buf[0], &block[0], length) != 0) ? 3 : read ^ written;
     delete[] buf;
-    return read ^ written;
+    return res;
 }
 
 uint64 compress3(byte block[], uint length)
@@ -138,11 +134,9 @@ uint64 compress3(byte block[], uint length)
     delete cos;
     delete cis;
 
-    if (memcmp(&buf[0], &block[0], length) != 0)
-       return 3;
-
+    uint64 res = (memcmp(&buf[0], &block[0], length) != 0) ? 3 : read ^ written;
     delete[] buf;
-    return read ^ written;
+    return res;
 }
 
 uint64 compress4(byte block[], uint length)
