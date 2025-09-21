@@ -209,8 +209,8 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("Transforms\n", true);
        log.println("  BWT: Burrows Wheeler Transform is a transform that reorders symbols", true);
        log.println("       in a reversible way that is more amenable to entropy coding.", true);
-       log.println("       This implementation uses a linear time foward transform and parallel", true);
-       log.println("       inverse tranform.\n", true);
+       log.println("       This implementation uses a linear time forward transform and parallel", true);
+       log.println("       inverse transform.\n", true);
        log.println("  BWTS: Burrows Wheeler Transform by Scott is a bijective variant of the BWT.\n", true);
        log.println("  LZ: Lempel Ziv implementation of the dictionary based LZ77 transform that", true);
        log.println("      removes redundancy in the data.\n", true);
