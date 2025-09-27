@@ -3,7 +3,7 @@ LDFLAGS=-lpthread
 OBJ_DIR = obj
 TEST_OBJ_DIR=$(OBJ_DIR)/test
 APP=kanzi
-
+OS := $(shell uname -s)
 
 ifeq ($(CONCURRENCY_DISABLED), 1)
 	CONCURRENCY_FLAG = -DCONCURRENCY_DISABLED
@@ -168,12 +168,15 @@ kanzi: $(LIB_OBJECTS) $(APP_OBJECTS)
 
 all: lib test $(APP)
 
-# Install / uninstall (may require sudo or admin rights)
 ifeq ($(OS),Windows_NT)
-	INSTALL_DIR="C:\Program Files"
+INSTALL_DIR=C:/Program\ Files
 else
-	INSTALL_DIR=/usr/local
+INSTALL_DIR=/usr/local
 endif
+
+print-vars:
+	@echo "OS=$(OS)"
+	@echo "INSTALL_DIR=$(INSTALL_DIR)"
 
 install: $(STATIC_LIB) $(SHARED_LIB) $(APP)
 ifeq ($(OS),Windows_NT)

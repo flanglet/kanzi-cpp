@@ -3,12 +3,13 @@ LDFLAGS=-lpthread
 OBJ_DIR = obj
 TEST_OBJ_DIR=$(OBJ_DIR)/test
 APP=kanzi
+OS := $(shell uname -s)
 
 ifeq ($(CONCURRENCY_DISABLED), 1)
 	CONCURRENCY_FLAG = -DCONCURRENCY_DISABLED
 endif
 
-ifeq ($(OS), Windows_NT)
+ifeq ($(OS),Windows_NT)
 	CXXFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 	LDFLAGS=-lpthread -static
 	#LDFLAGS=-static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
@@ -18,7 +19,8 @@ else
 	ifeq ($(ARCH), x86_64)
 		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 	else
-		CXXFLAGS=-c -std=c++17 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
+		#CXXFLAGS=-c -std=c++17 -fsanitize=signed-integer-overflow -ftrapv -D_FORTIFY_SOURCE=3 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
+		CXXFLAGS=-c -std=c++17 -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 	endif
 endif	
 
@@ -169,10 +171,14 @@ all: lib test $(APP)
 
 # Install / uninstall (may require sudo or admin rights)
 ifeq ($(OS),Windows_NT)
-	INSTALL_DIR="C:\Program Files"
+INSTALL_DIR=C:/Program\ Files
 else
-	INSTALL_DIR=/usr/local
+INSTALL_DIR=/usr/local
 endif
+
+print-vars:
+	@echo "OS=$(OS)"
+	@echo "INSTALL_DIR=$(INSTALL_DIR)"
 
 install: $(STATIC_LIB) $(SHARED_LIB) $(APP)
 ifeq ($(OS),Windows_NT)
