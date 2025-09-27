@@ -132,3 +132,60 @@ add_custom_target(shared_lib
 add_custom_target(lib
     DEPENDS static_lib shared_lib
 )
+
+# Install the main executable
+install(TARGETS kanzi
+    RUNTIME DESTINATION bin
+)
+
+# Install the libraries (static and shared)
+install(TARGETS libkanzi libkanzi_shared
+    ARCHIVE DESTINATION lib    # For static libraries (.a, .lib)
+    LIBRARY DESTINATION lib    # For shared libraries (.so, .dylib, .dll)
+)
+
+# Dynamically discover and install public headers
+# We assume all header files (.h and .hpp) in the project directories
+# (excluding test/ and app/ directories) are public headers.
+
+# Define the base directories where headers might reside
+# PROJECT_SOURCE_DIR refers to the directory containing CMakeLists.txt
+set(HEADER_BASE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR} # For headers like Global.h, Event.h at root
+    ${CMAKE_CURRENT_SOURCE_DIR}/api
+    ${CMAKE_CURRENT_SOURCE_DIR}/bitstream
+    ${CMAKE_CURRENT_SOURCE_DIR}/entropy
+    ${CMAKE_CURRENT_SOURCE_DIR}/io
+    ${CMAKE_CURRENT_SOURCE_DIR}/transform
+)
+
+# List to hold all found header files
+set(ALL_HEADERS)
+
+# Iterate through the base directories and find headers
+foreach(dir IN LISTS HEADER_BASE_DIRS)
+    file(GLOB_RECURSE CURRENT_DIR_HEADERS "${dir}/*.h" "${dir}/*.hpp")
+    list(APPEND ALL_HEADERS ${CURRENT_DIR_HEADERS})
+endforeach()
+
+# Install each header, preserving its relative path within the 'kanzi' include directory
+foreach(header_file IN LISTS ALL_HEADERS)
+    # Calculate the relative path from the project root
+    file(RELATIVE_PATH REL_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${header_file})
+
+    # Install to include/kanzi/ followed by its relative path
+    install(FILES "${header_file}"
+        DESTINATION "include/kanzi/${REL_PATH}"
+    )
+endforeach()
+
+# Uninstall all files added during install
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    @ONLY)
+
+add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
+    COMMENT "Uninstalling..."
+)

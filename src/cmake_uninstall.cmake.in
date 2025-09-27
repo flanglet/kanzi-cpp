@@ -1,0 +1,39 @@
+# Used by smake to uninstall kanzi binary, libraries and header files
+if(NOT EXISTS "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt")
+    message(FATAL_ERROR "Cannot find install manifest")
+endif()
+
+file(READ "@CMAKE_CURRENT_BINARY_DIR@/install_manifest.txt" files)
+string(REPLACE "\n" ";" files "${files}")
+
+foreach(file ${files})
+    if(EXISTS "${file}")
+        message(STATUS "Removing file: ${file}")
+        file(REMOVE "${file}")
+    endif()
+endforeach()
+
+set(install_dirs "")
+foreach(file ${files})
+    get_filename_component(dir "${file}" DIRECTORY)
+    list(APPEND install_dirs "${dir}")
+endforeach()
+
+# Remove duplicates
+list(REMOVE_DUPLICATES install_dirs)
+
+# Sort deepest directories first
+list(SORT install_dirs)
+list(REVERSE install_dirs)
+
+foreach(dir ${install_dirs})
+    if(IS_DIRECTORY "${dir}")
+        file(GLOB children "${dir}/*")
+        list(LENGTH children num_children)
+        if(num_children EQUAL 0)
+            message(STATUS "Removing empty directory: ${dir}")
+            file(REMOVE_RECURSE "${dir}")
+        endif()
+    endif()
+endforeach()
+
