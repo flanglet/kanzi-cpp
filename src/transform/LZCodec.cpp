@@ -67,7 +67,7 @@ bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int cou
 template<>
 const uint LZXCodec<false>::HASH_SEED = 0x1E35A7BD;
 template<>
-const uint LZXCodec<false>::HASH_LOG = 15;
+const uint LZXCodec<false>::HASH_LOG = 16;
 template<>
 const uint LZXCodec<false>::HASH_RSHIFT = 64 - HASH_LOG;
 template<>
@@ -391,24 +391,22 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         anchor = srcIdx + bestLen;
         prefetchRead(&src[anchor + 64]);
         prefetchRead(&src[anchor + 128]);
-        srcIdx++;
 
         while (srcIdx + 4 < anchor) {
-            const int32 h0 = hash(&src[srcIdx + 0]);
-            const int32 h1 = hash(&src[srcIdx + 1]);
-            const int32 h2 = hash(&src[srcIdx + 2]);
-            const int32 h3 = hash(&src[srcIdx + 3]);
-            _hashes[h0] = srcIdx + 0;
-            _hashes[h1] = srcIdx + 1;
-            _hashes[h2] = srcIdx + 2;
-            _hashes[h3] = srcIdx + 3;
             srcIdx += 4;
+            const int32 h0 = hash(&src[srcIdx - 3]);
+            const int32 h1 = hash(&src[srcIdx - 2]);
+            const int32 h2 = hash(&src[srcIdx - 1]);
+            const int32 h3 = hash(&src[srcIdx - 0]);
+            _hashes[h0] = srcIdx - 3;
+            _hashes[h1] = srcIdx - 2;
+            _hashes[h2] = srcIdx - 1;
+            _hashes[h3] = srcIdx - 0;
         }
 
-        while (srcIdx < anchor) {
+        while (++srcIdx < anchor) {
             const int32 h = hash(&src[srcIdx]);
             _hashes[h] = srcIdx;
-            srcIdx++;
         }
     }
 
