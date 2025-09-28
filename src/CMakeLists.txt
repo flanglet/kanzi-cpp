@@ -132,3 +132,18 @@ add_custom_target(shared_lib
 add_custom_target(lib
     DEPENDS static_lib shared_lib
 )
+
+# Install targets
+install(TARGETS kanzi DESTINATION bin)
+install(TARGETS libkanzi libkanzi_shared ARCHIVE DESTINATION lib LIBRARY DESTINATION lib)
+
+# Install headers (public API)
+# Install all .hpp files from src/, excluding app/ and test/ subtrees.
+install(
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+    DESTINATION include/kanzi
+    FILES_MATCHING
+        PATTERN "*.hpp"
+        PATTERN "app/*"  EXCLUDE
+        PATTERN "test/*" EXCLUDE
+)
