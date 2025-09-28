@@ -178,7 +178,12 @@ endif
 
 print-vars:
 	@echo "OS=$(OS)"
+	@echo "APP=$(APP)"
+	@echo "CXX=$(CXX)"
+	@echo "CXXFLAGS=$(CXXFLAGS)"
+	@echo "LDFLAGS=$(LDFLAGS)"
 	@echo "INSTALL_DIR=$(INSTALL_DIR)"
+
 
 install: $(STATIC_LIB) $(SHARED_LIB) $(APP)
 ifeq ($(OS),Windows_NT)
