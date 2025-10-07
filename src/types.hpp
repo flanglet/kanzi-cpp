@@ -27,11 +27,11 @@ limitations under the License.
     #endif
 
 
-    #ifdef _MSC_VER
+    #if defined(_MSC_VER)
         #include <intrin.h>
         #define popcount __popcnt
     #else
-        #ifdef  __INTEL_COMPILER
+        #if defined(__INTEL_COMPILER)
             #include <intrin.h>
             #define popcount _popcnt32
         #else
@@ -132,7 +132,7 @@ limitations under the License.
     // the extra option /Zc:__cplusplus is added to the command line).
     // Otherwise, using the _MSVC_LANG macro returns the proper C++ version.
     #if __cplusplus >= 201103L
-       // C++ 11
+       // C++ 11 or higher
        #define FINAL final
        #define NOEXCEPT noexcept
        #include <cstdint>
@@ -172,10 +172,9 @@ limitations under the License.
              #endif
        #endif
 
-
-      #if !defined(nullptr)
+       #if !defined(nullptr)
           #define nullptr NULL
-      #endif
+       #endif
     #endif
 
 #if __cplusplus >= 201703L
