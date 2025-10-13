@@ -1,5 +1,5 @@
 #CXX=clang++
-LDFLAGS=-lpthread
+LDFLAGS=-lpthread -ltcmalloc_minimal
 OBJ_DIR = obj
 TEST_OBJ_DIR=$(OBJ_DIR)/test
 APP=kanzi
@@ -122,8 +122,6 @@ libdecomp: $(STATIC_DECOMP_LIB) $(SHARED_DECOMP_LIB)
 
 lib: $(STATIC_LIB) $(SHARED_LIB)
 
-LIB_TCMALLOC=/usr/local/lib/libtcmalloc.a
-
 # Create static libraries
 $(STATIC_LIB):$(LIB_OBJECTS)
 	$(AR) cr ../lib/$@ $+
@@ -164,7 +162,7 @@ test: testBWT testTransforms testEntropyCodec testDefaultBitStream testCompresse
 
 # Target for the main application
 kanzi: $(LIB_OBJECTS) $(APP_OBJECTS)
-	$(CXX) $^ -o ../bin/$@ $(LIB_TCMALLOC) $(LDFLAGS)
+	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
 all: lib test $(APP)
 
