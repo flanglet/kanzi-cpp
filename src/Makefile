@@ -1,9 +1,14 @@
 #CXX=clang++
-LDFLAGS=-lpthread
 OBJ_DIR = obj
 TEST_OBJ_DIR=$(OBJ_DIR)/test
 APP=kanzi
 OS := $(shell uname -s)
+
+ifeq ($(TCMALLOC_ENABLED), 1)
+	LDFLAGS=-lpthread -ltcmalloc_minimal
+else
+	LDFLAGS=-lpthread
+endif
 
 ifeq ($(CONCURRENCY_DISABLED), 1)
 	CONCURRENCY_FLAG = -DCONCURRENCY_DISABLED
