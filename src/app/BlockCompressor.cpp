@@ -330,6 +330,7 @@ int BlockCompressor::compress(uint64& outputSize)
             if ((_autoBlockSize == true) && (_jobs > 0)) {
                 const int64 bl = files[0]._size / _jobs;
                 _blockSize = int(max(min((bl + 63) & ~63, int64(MAX_BLOCK_SIZE)), int64(MIN_BLOCK_SIZE)));
+                _ctx.putInt("blockSize", _blockSize);
             }
 
             if (oName.length() == 0) {
