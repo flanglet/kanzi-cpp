@@ -98,6 +98,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     if (isInfo) {
         _verbosity = 0;
+        _jobs = 1;
         _outputName = "NONE";
         _ctx.putString("outputName", _outputName);
         _ctx.putInt("from", 1);
