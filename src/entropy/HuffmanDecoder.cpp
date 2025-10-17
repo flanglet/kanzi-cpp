@@ -228,13 +228,13 @@ bool HuffmanDecoder::decodeChunk(byte block[], uint count)
     // State variables for each of the four parallel streams
     uint64 state0 = 0, state1 = 0, state2 = 0, state3 = 0; // bits read from bitstream
     uint8 bits0 = 0, bits1 = 0, bits2 = 0, bits3 = 0;      // number of available bits in state
-    uint8 bs0, bs1, bs2, bs3, shift;
 
-#define READ_STATE(shift, state, idx, bits, bs)  \
-    shift = (56 - bits) & -8; \
-    bs = bits + shift - DECODING_BATCH_SIZE; \
-    state = (state << shift) | (uint64(BigEndian::readLong64(&_buffer[idx])) >> 1 >> (63 - shift)); /* handle shift = 0 */ \
-    idx += (shift >> 3);
+#define READ_STATE(shift, state, idx, bits) do {\
+       const uint8 shift = (56 - bits) & -8; \
+       bits += shift - DECODING_BATCH_SIZE; \
+       state = (state << shift) | (uint64(BigEndian::readLong64(&_buffer[idx])) >> 1 >> (63 - shift)); /* handle shift = 0 */ \
+       idx += (shift >> 3); \
+    } while (0);
 
     const int szFrag = count / 4;
     byte* block0 = &block[0 * szFrag];
@@ -245,33 +245,33 @@ bool HuffmanDecoder::decodeChunk(byte block[], uint count)
 
     while (n < szFrag - 4) {
         // Fill 64 bits of state from the bitstream for each stream
-        READ_STATE(shift, state0, idx0, bits0, bs0);
-        READ_STATE(shift, state1, idx1, bits1, bs1);
-        READ_STATE(shift, state2, idx2, bits2, bs2);
-        READ_STATE(shift, state3, idx3, bits3, bs3);
+        READ_STATE(shift, state0, idx0, bits0);
+        READ_STATE(shift, state1, idx1, bits1);
+        READ_STATE(shift, state2, idx2, bits2);
+        READ_STATE(shift, state3, idx3, bits3);
 
         // Decompress 4 symbols per stream
-        const uint16 val00 = _table[(state0 >> bs0) & TABLE_MASK]; bs0 -= uint8(val00);
-        const uint16 val10 = _table[(state1 >> bs1) & TABLE_MASK]; bs1 -= uint8(val10);
-        const uint16 val20 = _table[(state2 >> bs2) & TABLE_MASK]; bs2 -= uint8(val20);
-        const uint16 val30 = _table[(state3 >> bs3) & TABLE_MASK]; bs3 -= uint8(val30);
-        const uint16 val01 = _table[(state0 >> bs0) & TABLE_MASK]; bs0 -= uint8(val01);
-        const uint16 val11 = _table[(state1 >> bs1) & TABLE_MASK]; bs1 -= uint8(val11);
-        const uint16 val21 = _table[(state2 >> bs2) & TABLE_MASK]; bs2 -= uint8(val21);
-        const uint16 val31 = _table[(state3 >> bs3) & TABLE_MASK]; bs3 -= uint8(val31);
-        const uint16 val02 = _table[(state0 >> bs0) & TABLE_MASK]; bs0 -= uint8(val02);
-        const uint16 val12 = _table[(state1 >> bs1) & TABLE_MASK]; bs1 -= uint8(val12);
-        const uint16 val22 = _table[(state2 >> bs2) & TABLE_MASK]; bs2 -= uint8(val22);
-        const uint16 val32 = _table[(state3 >> bs3) & TABLE_MASK]; bs3 -= uint8(val32);
-        const uint16 val03 = _table[(state0 >> bs0) & TABLE_MASK]; bs0 -= uint8(val03);
-        const uint16 val13 = _table[(state1 >> bs1) & TABLE_MASK]; bs1 -= uint8(val13);
-        const uint16 val23 = _table[(state2 >> bs2) & TABLE_MASK]; bs2 -= uint8(val23);
-        const uint16 val33 = _table[(state3 >> bs3) & TABLE_MASK]; bs3 -= uint8(val33);
+        const uint16 val00 = _table[(state0 >> bits0) & TABLE_MASK]; bits0 -= uint8(val00);
+        const uint16 val10 = _table[(state1 >> bits1) & TABLE_MASK]; bits1 -= uint8(val10);
+        const uint16 val20 = _table[(state2 >> bits2) & TABLE_MASK]; bits2 -= uint8(val20);
+        const uint16 val30 = _table[(state3 >> bits3) & TABLE_MASK]; bits3 -= uint8(val30);
+        const uint16 val01 = _table[(state0 >> bits0) & TABLE_MASK]; bits0 -= uint8(val01);
+        const uint16 val11 = _table[(state1 >> bits1) & TABLE_MASK]; bits1 -= uint8(val11);
+        const uint16 val21 = _table[(state2 >> bits2) & TABLE_MASK]; bits2 -= uint8(val21);
+        const uint16 val31 = _table[(state3 >> bits3) & TABLE_MASK]; bits3 -= uint8(val31);
+        const uint16 val02 = _table[(state0 >> bits0) & TABLE_MASK]; bits0 -= uint8(val02);
+        const uint16 val12 = _table[(state1 >> bits1) & TABLE_MASK]; bits1 -= uint8(val12);
+        const uint16 val22 = _table[(state2 >> bits2) & TABLE_MASK]; bits2 -= uint8(val22);
+        const uint16 val32 = _table[(state3 >> bits3) & TABLE_MASK]; bits3 -= uint8(val32);
+        const uint16 val03 = _table[(state0 >> bits0) & TABLE_MASK]; bits0 -= uint8(val03);
+        const uint16 val13 = _table[(state1 >> bits1) & TABLE_MASK]; bits1 -= uint8(val13);
+        const uint16 val23 = _table[(state2 >> bits2) & TABLE_MASK]; bits2 -= uint8(val23);
+        const uint16 val33 = _table[(state3 >> bits3) & TABLE_MASK]; bits3 -= uint8(val33);
 
-        bits0 = bs0 + DECODING_BATCH_SIZE;
-        bits1 = bs1 + DECODING_BATCH_SIZE;
-        bits2 = bs2 + DECODING_BATCH_SIZE;
-        bits3 = bs3 + DECODING_BATCH_SIZE;
+        bits0 += DECODING_BATCH_SIZE;
+        bits1 += DECODING_BATCH_SIZE;
+        bits2 += DECODING_BATCH_SIZE;
+        bits3 += DECODING_BATCH_SIZE;
 
         block0[n + 0] = byte(val00 >> 8);
         block1[n + 0] = byte(val10 >> 8);
@@ -293,17 +293,17 @@ bool HuffmanDecoder::decodeChunk(byte block[], uint count)
     }
 
     // Fill 64 bits of state from the bitstream for each stream
-    READ_STATE(shift, state0, idx0, bits0, bs0);
-    READ_STATE(shift, state1, idx1, bits1, bs1);
-    READ_STATE(shift, state2, idx2, bits2, bs2);
-    READ_STATE(shift, state3, idx3, bits3, bs3);
+    READ_STATE(shift, state0, idx0, bits0);
+    READ_STATE(shift, state1, idx1, bits1);
+    READ_STATE(shift, state2, idx2, bits2);
+    READ_STATE(shift, state3, idx3, bits3);
 
     while (n < szFrag) {
         // Decompress 1 symbol per stream
-        const uint16 val0 = _table[(state0 >> bs0) & TABLE_MASK]; bs0 -= uint8(val0);
-        const uint16 val1 = _table[(state1 >> bs1) & TABLE_MASK]; bs1 -= uint8(val1);
-        const uint16 val2 = _table[(state2 >> bs2) & TABLE_MASK]; bs2 -= uint8(val2);
-        const uint16 val3 = _table[(state3 >> bs3) & TABLE_MASK]; bs3 -= uint8(val3);
+        const uint16 val0 = _table[(state0 >> bits0) & TABLE_MASK]; bits0 -= uint8(val0);
+        const uint16 val1 = _table[(state1 >> bits1) & TABLE_MASK]; bits1 -= uint8(val1);
+        const uint16 val2 = _table[(state2 >> bits2) & TABLE_MASK]; bits2 -= uint8(val2);
+        const uint16 val3 = _table[(state3 >> bits3) & TABLE_MASK]; bits3 -= uint8(val3);
 
         block0[n] = byte(val0 >> 8);
         block1[n] = byte(val1 >> 8);
