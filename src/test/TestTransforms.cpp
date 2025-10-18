@@ -92,12 +92,8 @@ int testTransformsCorrectness(const string& name)
     for (int ii = 0; ii < 51; ii++) {
         cout << endl
              << "Test " << ii << endl;
-        int size; // Declare size, will be set in conditions
+        int size = 80000; // Declare size, will be updated in conditions
         byte values[1024 * 1024] = { byte(0xAA) };
-
-        if (ii != 50) {
-            size = 80000;
-        }
 
         if (name == "ALIAS")
           mod = 15 + 12 * ii;
