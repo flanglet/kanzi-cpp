@@ -162,7 +162,19 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
             if (r == 0)
                 continue;
 
+        if (r <= 8) {
+            if (r >= 1) r2s[0] = r2s[1];
+            if (r >= 2) r2s[1] = r2s[2];
+            if (r >= 3) r2s[2] = r2s[3];
+            if (r >= 4) r2s[3] = r2s[4];
+            if (r >= 5) r2s[4] = r2s[5];
+            if (r >= 6) r2s[5] = r2s[6];
+            if (r >= 7) r2s[6] = r2s[7];
+            if (r >= 8) r2s[7] = r2s[8];
+        } else {
             memmove(&r2s[0], &r2s[1], size_t(r));
+        }
+
             r2s[r] = c;
             c = r2s[0];
         }
