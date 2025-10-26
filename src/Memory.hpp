@@ -20,6 +20,16 @@ limitations under the License.
 #include <cstring>
 #include "types.hpp"
 
+#if defined(__GNUC__) || defined(__clang__)
+    #define LIKELY(x)   __builtin_expect(!!(x), 1)
+    #define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+    // For MSVC and other compilers, the macro does nothing.
+    #define LIKELY(x)   (x)
+    #define UNLIKELY(x) (x)
+#endif
+
+
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__bsdi__) || defined(__DragonFly__) || defined(BSD)
     #include <machine/endian.h>
 #elif defined(__APPLE__)

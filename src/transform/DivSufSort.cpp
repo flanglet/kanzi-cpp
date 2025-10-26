@@ -22,7 +22,7 @@ using namespace kanzi;
 
 
 const int DivSufSort::SS_INSERTIONSORT_THRESHOLD = 16;
-const int DivSufSort::SS_BLOCKSIZE = 4096;
+const int DivSufSort::SS_BLOCKSIZE = 8192;
 const int DivSufSort::SS_MISORT_STACKSIZE = 16;
 const int DivSufSort::SS_SMERGE_STACKSIZE = 32;
 const int DivSufSort::TR_STACKSIZE = 64;
@@ -486,9 +486,7 @@ void DivSufSort::ssSort(const int pa, int first, int last, int buf, int bufSize,
         limit = ssIsqrt(last - first);
 
         if (bufSize < limit) {
-            if (limit > SS_BLOCKSIZE)
-                limit = SS_BLOCKSIZE;
-
+            limit = limit > SS_BLOCKSIZE ? SS_BLOCKSIZE : limit;
             middle = last - limit;
             buf = middle;
             bufSize = limit;
@@ -554,7 +552,6 @@ void DivSufSort::ssSort(const int pa, int first, int last, int buf, int bufSize,
 
 int DivSufSort::ssCompare(int pa, int pb, int p2, const int depth) const
 {
-    prefetchRead(&_sa[p2]);
     int u1 = depth + pa;
     int u2 = depth + _sa[p2];
     const int u1n = pb + 2;
@@ -579,8 +576,6 @@ int DivSufSort::ssCompare(int pa, int pb, int p2, const int depth) const
 
 int DivSufSort::ssCompare(const int sa1[], const int sa2[], const int depth) const
 {
-    prefetchRead(&sa1[0]);
-    prefetchRead(&sa2[2]);
     int u1 = depth + sa1[0];
     int u2 = depth + sa2[0];
     const int u1n = sa1[1] + 2;
@@ -1103,9 +1098,7 @@ void DivSufSort::ssInsertionSort(const int pa, int first, int last, int depth)
                 break;
         }
 
-        if (r == 0)
-            _sa[j] = ~_sa[j];
-
+        _sa[j] = r == 0 ? ~_sa[j] : _sa[j];
         _sa[j - 1] = t - pa;
     }
 }
