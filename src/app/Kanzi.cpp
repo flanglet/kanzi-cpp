@@ -1019,6 +1019,8 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
 
     if (reorder == 0)
         map.putInt("fileReorder", 0);
+    else
+        map.putInt("fileReorder", 1);
 
     if (noDotFiles == 1)
         map.putInt("noDotFiles", 1);
