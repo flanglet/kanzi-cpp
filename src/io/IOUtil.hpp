@@ -109,7 +109,7 @@ namespace kanzi
        // Note: old version of Windows/Visual Studio require a trailing '/' to stat network folders !
        // In this scenario, "//PC/share" does not work but "//PC/share/" does
    #ifndef _MSC_VER
-       if (target[target.size() - 1] == PATH_SEPARATOR)
+       if ((target.size() > 1) && (target[target.size() - 1] == PATH_SEPARATOR))
            target.resize(target.size() - 1);
    #endif
 
