@@ -159,7 +159,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     }
 
     memset(_hashes, 0, sizeof(int32) * _hashSize);
-    const int srcEnd = count - 16 - 1;
+    const int srcEnd = count - 16 - 2;
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     const int maxDist = (srcEnd < 4 * MAX_DISTANCE1) ? MAX_DISTANCE1 : MAX_DISTANCE2;
