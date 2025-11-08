@@ -289,17 +289,24 @@ namespace kanzi {
 
    inline int ROLZCodec::emitCopy(byte buf[], int dstIdx, int ref, int matchLen)
    {
-       if (dstIdx >= ref + matchLen) {
-           memcpy(&buf[dstIdx], &buf[ref], size_t(matchLen));
-           return dstIdx + matchLen;
+       const int res = dstIdx + matchLen;
+
+       if (dstIdx - ref >= 8) {
+           while (matchLen > 0) {
+               memcpy(&buf[dstIdx], &buf[ref], 8);
+               ref += 8;
+               dstIdx += 8;
+               matchLen -= 8;
+           }
+       }
+       else {
+           while (matchLen != 0) {
+              buf[dstIdx++] = buf[ref++];
+              matchLen--;
+           }
        }
 
-       while (matchLen != 0) {
-           buf[dstIdx++] = buf[ref++];
-           matchLen--;
-       }
-
-       return dstIdx;
+       return res;
    }
 
    inline void ROLZEncoder::encodeBit(int bit)
