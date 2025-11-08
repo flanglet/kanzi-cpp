@@ -136,7 +136,7 @@ namespace kanzi {
        }
 
        // Regular processing, buffer length is multiple of 8
-       _current = BigEndian::readLong64(&_buffer[_position]);
+       _current = uint64(BigEndian::readLong64(&_buffer[_position]));
        _position += 8;
        return 64;
    }

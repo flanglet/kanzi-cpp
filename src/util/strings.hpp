@@ -115,7 +115,7 @@ inline int tokenizeCSV(std::string& s, std::vector<std::string>& tokens, char de
     if (tk.size() > 0)
         tokens.push_back(tk);
 
-    return tokens.size();
+    return int(tokens.size());
 }
 
 inline std::string formatSize(const std::string& input)

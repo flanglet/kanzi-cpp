@@ -78,7 +78,7 @@ class Task {
 #ifdef CONCURRENCY_ENABLED
    class ThreadPool FINAL {
    public:
-       ThreadPool(uint32_t threads = 8);
+       ThreadPool(int threads = 8);
        template<class F, class... Args>
 #if __cplusplus >= 201703L // result_of deprecated from C++17
        std::future<typename std::invoke_result_t<F, Args...>> schedule(F&& f, Args&&... args);
@@ -96,14 +96,14 @@ class Task {
    };
 
 
-   inline ThreadPool::ThreadPool(uint32_t threads)
+   inline ThreadPool::ThreadPool(int threads)
        :   _stop(false)
    {
        if ((threads == 0) || (threads > 1024))
            throw std::invalid_argument("The number of threads must be in [1..1024]");
 
        // Start and run threads
-       for (uint32_t i = 0; i < threads; i++)
+       for (int i = 0; i < threads; i++)
            _workers.emplace_back(
                [this]
                {

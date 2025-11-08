@@ -120,7 +120,7 @@ namespace kanzi
    // Push 64 bits of current value into buffer.
    inline void DefaultOutputBitStream::pushCurrent()
    {
-       BigEndian::writeLong64(&_buffer[_position], _current);
+       BigEndian::writeLong64(&_buffer[_position], int64(_current));
        _availBits = 64;
        _current = 0;
        _position += 8;
@@ -151,7 +151,7 @@ namespace kanzi
 
        // Flush buffer
        // Round down to byte alignment
-       const uint a = _availBits & -8;
+       const uint a = _availBits & ~7;
 
        for (uint i = 56; i >= a; i -= 8) {
           _buffer[_position++] = byte(_current >> i);
