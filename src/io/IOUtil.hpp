@@ -49,7 +49,7 @@ limitations under the License.
    #define LSTAT _stat64
 #else
    #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__MINGW32__)
-      #define LSTAT stat
+      #define LSTAT lstat
    #else
       #define LSTAT lstat64
    #endif
@@ -100,6 +100,17 @@ namespace kanzi
    };
 
 
+   #define HANDLE_DOT_FILES(f, ignore)\
+      do {\
+         if (ignore) {\
+            size_t idx = f.rfind(PATH_SEPARATOR);\
+            if ((idx != std::string::npos) && (idx < f.length() - 1) && (f[idx + 1] == '.'))\
+                return;\
+         }\
+      } while(false);
+
+
+
    static inline void createFileList(std::string& target, std::vector<FileData>& files, const FileListConfig& cfg,
                                      std::vector<std::string>& errors)
    {
@@ -113,8 +124,9 @@ namespace kanzi
            target.resize(target.size() - 1);
    #endif
 
+       HANDLE_DOT_FILES(target, cfg._ignoreDotFiles);
        struct STAT buffer;
-       int res = cfg._ignoreLinks == true ? LSTAT(target.c_str(), &buffer) : STAT(target.c_str(), &buffer);
+       int res = LSTAT(target.c_str(), &buffer);
 
        if (res != 0) {
            std::stringstream ss;
@@ -125,26 +137,17 @@ namespace kanzi
               return;
        }
 
-       if ((buffer.st_mode & S_IFMT) == S_IFREG) {
-           // Target is regular file
-           if (cfg._ignoreDotFiles == true) {
-              size_t idx = target.rfind(PATH_SEPARATOR);
-
-              if ((idx != std::string::npos) && (idx < target.length() - 1) && (target[idx + 1] == '.'))
-                  return;
-           }
-
-           if ((cfg._ignoreLinks == false) || (buffer.st_mode & S_IFMT) != S_IFLNK)
+       if (S_ISREG(buffer.st_mode) || (!cfg._ignoreLinks && S_ISLNK(buffer.st_mode))) {
    #if __cplusplus >= 201103L
-               files.emplace_back(target, buffer.st_size, buffer.st_mtime);
+           files.emplace_back(target, buffer.st_size, buffer.st_mtime);
    #else
-               files.push_back(FileData(target, buffer.st_size, buffer.st_mtime));
+           files.push_back(FileData(target, buffer.st_size, buffer.st_mtime));
    #endif
 
            return;
        }
 
-       if ((buffer.st_mode & S_IFMT) != S_IFDIR) {
+       if (!S_ISDIR(buffer.st_mode)) {
            // Target is neither regular file nor directory, ignore
            return;
        }
@@ -169,8 +172,7 @@ namespace kanzi
                   continue;
 
                std::string fullpath = target + dirName;
-               res = cfg._ignoreLinks == true ? LSTAT(fullpath.c_str(), &buffer) :
-                  STAT(fullpath.c_str(), &buffer);
+               res = LSTAT(fullpath.c_str(), &buffer);
 
                if (res != 0) {
                    std::stringstream ss;
@@ -183,30 +185,19 @@ namespace kanzi
                    }
                }
 
-               if ((buffer.st_mode & S_IFMT) == S_IFREG) {
+               if (S_ISREG(buffer.st_mode)) {
                   // Target is regular file
-                  if (cfg._ignoreDotFiles == true) {
-                     size_t idx = fullpath.rfind(PATH_SEPARATOR);
+                  HANDLE_DOT_FILES(fullpath, cfg._ignoreDotFiles);
 
-                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1) && (fullpath[idx + 1] == '.'))
-                        continue;
-                  }
-
-                  if ((cfg._ignoreLinks == false) || (buffer.st_mode & S_IFMT) != S_IFLNK)
+                  if (!cfg._ignoreLinks || !S_ISLNK(buffer.st_mode))
    #if __cplusplus >= 201103L
                      files.emplace_back(fullpath, buffer.st_size, buffer.st_mtime);
    #else
                      files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
    #endif
                }
-               else if ((cfg._recursive) && ((buffer.st_mode & S_IFMT) == S_IFDIR)) {
-                  if (cfg._ignoreDotFiles == true) {
-                     size_t idx = fullpath.rfind(PATH_SEPARATOR);
-
-                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1) && (fullpath[idx + 1] == '.'))
-                        continue;
-                  }
-
+               else if (cfg._recursive && S_ISDIR(buffer.st_mode)) {
+                  HANDLE_DOT_FILES(fullpath, cfg._ignoreDotFiles);
                   createFileList(fullpath, files, cfg, errors);
                }
            }
