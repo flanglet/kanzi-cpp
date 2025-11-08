@@ -187,9 +187,9 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("        If the input is a folder, all processed files under the folder are removed.\n", true);
    }
 
-   log.println("   --no-link", true);
-   log.println("        Skip links\n", true);
-   log.println("   --no-dot-file", true);
+   log.println("   --skip-links", true);
+   log.println("        Do not follow links\n", true);
+   log.println("   --skip-dot-files", true);
    log.println("        Skip dot files\n", true);
 
    if (mode == "d") {
@@ -629,7 +629,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
             continue;
         }
 
-        if (arg == "--no-dot-file") {
+        if (arg == "--skip-dot-files") {
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
@@ -642,7 +642,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
             continue;
         }
 
-        if (arg == "--no-link") {
+        if (arg == "--skip-links") {
             if (ctx != -1) {
                 WARNING_OPT_NOVALUE(CMD_LINE_ARGS[ctx]);
             }
@@ -1022,10 +1022,10 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
     else
         map.putInt("fileReorder", 1);
 
-    if (noDotFiles == 1)
+    if (noDotFiles == 1) // Skip dot files
         map.putInt("noDotFiles", 1);
 
-    if (noLinks == 1)
+    if (noLinks == 1) // Do not follow links
         map.putInt("noLinks", 1);
 
     if (from >= 0)

@@ -94,9 +94,9 @@ namespace kanzi
    struct FileListConfig
    {
       bool _recursive;
-      bool _ignoreLinks;
+      bool _ignoreLinks; // Do not follow links
       bool _continueOnErrors;
-      bool _ignoreDotFiles;
+      bool _ignoreDotFiles; // Do not process dot files
    };
 
 
@@ -126,7 +126,7 @@ namespace kanzi
 
        HANDLE_DOT_FILES(target, cfg._ignoreDotFiles);
        struct STAT buffer;
-       int res = LSTAT(target.c_str(), &buffer);
+       int res = cfg._ignoreLinks ? LSTAT(target.c_str(), &buffer) : STAT(target.c_str(), &buffer);
 
        if (res != 0) {
            std::stringstream ss;
@@ -172,7 +172,7 @@ namespace kanzi
                   continue;
 
                std::string fullpath = target + dirName;
-               res = LSTAT(fullpath.c_str(), &buffer);
+               res = cfg._ignoreLinks ? LSTAT(fullpath.c_str(), &buffer) : STAT(fullpath.c_str(), &buffer);
 
                if (res != 0) {
                    std::stringstream ss;
@@ -185,15 +185,14 @@ namespace kanzi
                    }
                }
 
-               if (S_ISREG(buffer.st_mode)) {
+               if (S_ISREG(buffer.st_mode) || (!cfg._ignoreLinks && S_ISLNK(buffer.st_mode))) {
                   // Target is regular file
                   HANDLE_DOT_FILES(fullpath, cfg._ignoreDotFiles);
 
-                  if (!cfg._ignoreLinks || !S_ISLNK(buffer.st_mode))
    #if __cplusplus >= 201103L
-                     files.emplace_back(fullpath, buffer.st_size, buffer.st_mtime);
+                  files.emplace_back(fullpath, buffer.st_size, buffer.st_mtime);
    #else
-                     files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
+                  files.push_back(FileData(fullpath, buffer.st_size, buffer.st_mtime));
    #endif
                }
                else if (cfg._recursive && S_ISDIR(buffer.st_mode)) {
