@@ -208,12 +208,12 @@ namespace kanzi {
                if (_bufferId + 1 < nbTasks) {
                    _bufferId++;
                    const int bSize = _blockSize + (_blockSize >> 6);
-                   const size_t bufSize = (bSize > 65536) ? bSize : 65536;
+                   const uint bufSize = (bSize > 65536) ? uint(bSize) : 65536u;
 
                    if (_buffers[_bufferId]->_length == 0) {
                        delete[] _buffers[_bufferId]->_array;
                        _buffers[_bufferId]->_array = new byte[bufSize];
-                       _buffers[_bufferId]->_length = bufSize;
+                       _buffers[_bufferId]->_length = int(bufSize);
                    }
 
                    _buffers[_bufferId]->_index = 0;

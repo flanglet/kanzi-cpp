@@ -226,7 +226,7 @@ namespace kanzi
 
    inline int DivSufSort::ssIlg(int n)
    {
-       return (n > 0x00FF) ? 8 + LOG_TABLE[n >> 8] : LOG_TABLE[n];
+       return (n > 255) ? 8 + LOG_TABLE[n >> 8] : LOG_TABLE[n & 0xFF];
    }
 
 

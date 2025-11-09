@@ -151,7 +151,7 @@ namespace kanzi
 
        // Flush buffer
        // Round down to byte alignment
-       const uint a = _availBits & ~7;
+       const uint a = _availBits - (_availBits & 7);
 
        for (uint i = 56; i >= a; i -= 8) {
           _buffer[_position++] = byte(_current >> i);

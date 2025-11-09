@@ -45,16 +45,16 @@ namespace kanzi
           static const uint32 PRIME32_5 = uint32(374761393);
 #endif 
 
-       int _seed;
+       uint32 _seed;
 
        uint32 round(uint32 acc, int32 val) const;
 
    public:
-       XXHash32() { _seed = int(time(nullptr)); }
-       XXHash32(int seed) : _seed(seed) {}
+       XXHash32() { _seed = uint32(time(nullptr)); }
+       XXHash32(uint32 seed) : _seed(seed) {}
        ~XXHash32(){}
 
-       void setSeed(int seed) { _seed = seed; }
+       void setSeed(uint32 seed) { _seed = seed; }
        uint32 hash(const byte data[], int length) const;
    };
 
