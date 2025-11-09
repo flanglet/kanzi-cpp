@@ -59,10 +59,10 @@ limitations under the License.
    #elif _MSC_VER
        #define CPU_PAUSE() _mm_pause()
    #else
-      #define CPU_PAUSE()
+      #define CPU_PAUSE() std::this_thread::yield();
    #endif
 #else
-   #define CPU_PAUSE()
+   #define CPU_PAUSE() std::this_thread::yield();
 #endif
 
 
