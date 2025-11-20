@@ -126,12 +126,9 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
     // Allocate first buffer and add padding for incompressible blocks
     const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
     _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
-    _buffers[_jobs] = new SliceArray<byte>(nullptr, 0, 0);
 
-    for (int i = 1; i < _jobs; i++) {
+    for (int i = 1; i < 2 * _jobs; i++)
        _buffers[i] = new SliceArray<byte>(nullptr, 0, 0);
-       _buffers[i + _jobs] = new SliceArray<byte>(nullptr, 0, 0);
-    }
 }
 
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, bool headerless)
@@ -210,12 +207,9 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
     // Allocate first buffer and add padding for incompressible blocks
     const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
     _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
-    _buffers[_jobs] = new SliceArray<byte>(nullptr, 0, 0);
 
-    for (int i = 1; i < _jobs; i++) {
+    for (int i = 1; i < 2 * _jobs; i++)
        _buffers[i] = new SliceArray<byte>(nullptr, 0, 0);
-       _buffers[i + _jobs] = new SliceArray<byte>(nullptr, 0, 0);
-    }
 }
 
 CompressedOutputStream::~CompressedOutputStream()
