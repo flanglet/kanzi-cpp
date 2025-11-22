@@ -392,7 +392,7 @@ void CompressedInputStream::readHeader()
         ss << ((w1 == "NONE") ? "" : w1) << ",";
         string w2 = TransformFactory<byte>::getName(_transformType);
         ss << ((w2 == "NONE") ? "" : w2) << ",";
-        long fileSize = _ctx.getLong("fileSize", 0);
+        int64 fileSize = _ctx.getLong("fileSize", 0);
         ss << fileSize << ",";
 
         if (szMask != 0) {

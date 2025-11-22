@@ -95,8 +95,8 @@ inline int tokenizeCSV(std::string& s, std::vector<std::string>& tokens, char de
     std::stringstream ss;
     char prv = 0;
 
-    for (auto& c : s) {
-        if (c == delim) {
+    for (size_t i =0; i < s.length(); i++) {
+        if (s[i] == delim) {
             if (prv != '\\') {
                 std::string tk = ss.str();
                 tokens.push_back(tk);
@@ -106,8 +106,8 @@ inline int tokenizeCSV(std::string& s, std::vector<std::string>& tokens, char de
             }
         }
 
-        ss << c;
-        prv = c;
+        ss << s[i];
+        prv = s[i];
     }
 
     std::string tk = ss.str();
