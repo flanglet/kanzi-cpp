@@ -49,20 +49,22 @@ limitations under the License.
    #include <future>
    #include <functional>
    #include <stdexcept>
-#endif
 
-#ifdef __x86_64__
-   #ifdef __clang__
-       #define CPU_PAUSE() __builtin_ia32_pause()
-   #elif __GNUC__
-       #define CPU_PAUSE() __builtin_ia32_pause()
-   #elif _MSC_VER
-       #define CPU_PAUSE() _mm_pause()
+   #ifdef __x86_64__
+      #ifdef __clang__
+          #define CPU_PAUSE() __builtin_ia32_pause()
+      #elif __GNUC__
+          #define CPU_PAUSE() __builtin_ia32_pause()
+      #elif _MSC_VER
+          #define CPU_PAUSE() _mm_pause()
+      #else
+         #define CPU_PAUSE() std::this_thread::yield();
+      #endif
    #else
       #define CPU_PAUSE() std::this_thread::yield();
    #endif
 #else
-   #define CPU_PAUSE() std::this_thread::yield();
+   #define CPU_PAUSE()
 #endif
 
 

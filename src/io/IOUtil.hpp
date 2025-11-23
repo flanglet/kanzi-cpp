@@ -23,6 +23,9 @@ limitations under the License.
 #include <sys/stat.h>
 #include <string.h>
 
+#if __cplusplus >= 201703L
+#include <filesystem>
+#endif
 
 #include "../types.hpp"
 
@@ -295,6 +298,12 @@ namespace kanzi
 
    static inline bool samePaths(const std::string& f1, const std::string& f2)
    {
+#if __cplusplus >= 201703L
+      // Simpler and safer code with C++17
+      std::error_code ec;
+      return std::filesystem::equivalent(f1, f2, ec);
+#endif
+
       if (f1.compare(f2) == 0)
          return true;
 

@@ -48,6 +48,12 @@ namespace kanzi
        {
        }
 
+#if __cplusplus >= 201103L
+       BitStreamException(const BitStreamException&) = default;
+
+       BitStreamException& operator=(const BitStreamException&) = default;
+#endif
+
        int error() const { return _code; }
 
        ~BitStreamException() NOEXCEPT {}

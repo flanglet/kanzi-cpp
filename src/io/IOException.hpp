@@ -43,6 +43,12 @@ namespace kanzi
            _code = error;
        }
 
+#if __cplusplus >= 201103L
+       IOException(const IOException&) = default;
+
+       IOException& operator=(const IOException&) = default;
+#endif
+
        int error() const { return _code; }
 
        ~IOException() NOEXCEPT {}
