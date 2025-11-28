@@ -111,8 +111,20 @@ add_executable(testCompressedStream test/TestCompressedStream.cpp)
 target_link_libraries(testCompressedStream libkanzi)
 
 # Main executable
+
+# Dynamically linked executable
 add_executable(kanzi ${APP_SOURCES})
-target_link_libraries(kanzi libkanzi)
+target_link_libraries(kanzi libkanzi_shared)
+
+# Set RPATH for Linux so it finds libkanzi.so at runtime
+set_target_properties(kanzi PROPERTIES
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH "$ORIGIN/../lib"
+)
+
+# Statically linked executable
+add_executable(kanzi_static ${APP_SOURCES})
+target_link_libraries(kanzi_static libkanzi)
 
 # Custom target to build all tests
 add_custom_target(test
@@ -133,7 +145,12 @@ add_custom_target(lib
     DEPENDS static_lib shared_lib
 )
 
-# Install the main executable
+# Install the statically linked executable
+install(TARGETS kanzi_static
+    RUNTIME DESTINATION bin
+)
+
+# Install dynamically linked executable
 install(TARGETS kanzi
     RUNTIME DESTINATION bin
 )
