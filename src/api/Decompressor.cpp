@@ -49,31 +49,36 @@ namespace kanzi {
        char _buffer[BUF_SIZE];
 
        virtual int_type underflow() {
-           if (gptr() < egptr())
-               return traits_type::to_int_type(*gptr());
+          if (gptr() < egptr())
+              return traits_type::to_int_type(*gptr());
 
-           const int pbSz = min(int(gptr() - eback()), BUF_SIZE - 4);
-           memmove(&_buffer[BUF_SIZE - pbSz], gptr() - pbSz, pbSz);
-           const int r = int(READ(_fd, &_buffer[4], BUF_SIZE - 4));
+          // Preserve up to 4 bytes of putback
+          const int putback = std::min<int>(gptr() - eback(), 4);
 
-           if (r <= 0)
-               return EOF;
+          // Move putback bytes to the front
+          std::memmove(_buffer + (4 - putback), gptr() - putback, putback);
 
-           setg(&_buffer[4 - pbSz], &_buffer[4], &_buffer[4 + r]);
-           return traits_type::to_int_type(*gptr());
-       }
-    };
+          // Read new bytes after putback
+          const int n = READ(_fd, _buffer + 4, BUF_SIZE - 4);
+          if (n <= 0)
+              return traits_type::eof();
 
-    class FileInputStream FINAL : public istream
-    {
-       private:
-          ifstreambuf _buf;
+          // Set new buffer pointers
+          setg(_buffer + (4 - putback), _buffer + 4, _buffer + 4 + n);
+          return traits_type::to_int_type(*gptr());
+      }
+   };
 
-       public:
-          FileInputStream(int fd) : istream(nullptr), _buf(fd) {
-             rdbuf(&_buf);
-          }
-    };
+   class FileInputStream FINAL : public istream
+   {
+      private:
+         ifstreambuf _buf;
+
+      public:
+         FileInputStream(int fd) : istream(nullptr), _buf(fd) {
+            rdbuf(&_buf);
+         }
+   };
 }
 
 
@@ -103,25 +108,16 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
         if (pData->headerless != 0) {
            // Headerless mode: process params
            string transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(pData->transform));
-
-           if (transform.length() >= 63) {
-               delete fis;
-               delete dctx;
-               return Error::ERR_INVALID_PARAM;
-           }
-
-           strncpy(pData->transform, transform.data(), transform.length());
-           pData->transform[transform.length() + 1] = 0;
            string entropy = EntropyEncoderFactory::getName(EntropyEncoderFactory::getType(pData->entropy));
 
-           if (entropy.length() >= 15) {
+           if ((transform.length() >= 63) || (entropy.length() >= 15)) {
                delete fis;
                delete dctx;
                return Error::ERR_INVALID_PARAM;
            }
 
-           strncpy(pData->entropy, entropy.data(), entropy.length());
-           pData->entropy[entropy.length() + 1] = 0;
+           strncpy(pData->transform, transform.c_str(), 63);
+           strncpy(pData->entropy,   entropy.c_str(),   15);
            pData->blockSize = (pData->blockSize + 15) & -16;
 
            dctx->pCis = new CompressedInputStream(*fis, pData->jobs,
@@ -141,7 +137,7 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
         dctx->fis = fis;
         *pCtx = dctx;
     }
-    catch (exception&) {
+    catch (const exception&) {
         if (fis != nullptr)
            delete fis;
 
@@ -154,30 +150,38 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
     return 0;
 }
 
-int CDECL decompress(struct dContext* pCtx, BYTE* dst, int* inSize, int* outSize)
+int CDECL decompress(struct dContext* pCtx, unsigned char* dst, int* inSize, int* outSize)
 {
-    *inSize = 0;
-    int res = 0;
-
-    if ((pCtx == nullptr) || (*outSize > int(pCtx->bufferSize))) {
+    if ((pCtx == nullptr) || (inSize == nullptr) || (outSize == nullptr) ||
+        (*outSize < 0) || (*outSize > int(pCtx->bufferSize))) {
         *outSize = 0;
         return Error::ERR_INVALID_PARAM;
     }
 
-    CompressedInputStream* pCis = (CompressedInputStream*)pCtx->pCis;
-    *outSize = 0;
+    if (*outSize == 0)
+        return 0;
 
-    if (pCis == nullptr)
+    *inSize = 0;
+    int res = 0;
+    CompressedInputStream* pCis = static_cast<CompressedInputStream*>(pCtx->pCis);
+
+    if (pCis == nullptr) {
+        *outSize = 0;
         return Error::ERR_INVALID_PARAM;
+    }
 
     try {
-        const uint64 r = int(pCis->getRead());
+        const uint64 r = pCis->getRead();
         pCis->read((char*)dst, streamsize(*outSize));
-        res = pCis->good() ? 0 : Error::ERR_READ_FILE;
+
+        if (!pCis->good() && !pCis->eof())
+            return Error::ERR_READ_FILE;
+
         *inSize = int(pCis->getRead() - r);
         *outSize = int(pCis->gcount());
     }
-    catch (exception&) {
+    catch (const exception&) {
+        *outSize = 0;
         return Error::ERR_UNKNOWN;
     }
 
@@ -190,20 +194,14 @@ int CDECL disposeDecompressor(struct dContext* pCtx)
     if (pCtx == nullptr)
         return Error::ERR_INVALID_PARAM;
 
-    CompressedInputStream* pCis = (CompressedInputStream*)pCtx->pCis;
+    CompressedInputStream* pCis = static_cast<CompressedInputStream*>(pCtx->pCis);
 
     try {
         if (pCis != nullptr) {
             pCis->close();
-        }
-    }
-    catch (exception&) {
-        return Error::ERR_UNKNOWN;
-    }
-
-    try {
-        if (pCis != nullptr)
             delete pCis;
+            pCis = nullptr;
+        }
 
         if (pCtx->fis != nullptr)
             delete (FileInputStream*)pCtx->fis;
@@ -211,7 +209,10 @@ int CDECL disposeDecompressor(struct dContext* pCtx)
         pCtx->fis = nullptr;
         delete pCtx;
     }
-    catch (exception&) {
+    catch (const exception&) {
+        if (pCis != nullptr)
+            delete pCis;
+
         if (pCtx->fis != nullptr)
             delete (FileInputStream*)pCtx->fis;
 

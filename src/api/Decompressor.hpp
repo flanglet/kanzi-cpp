@@ -29,8 +29,6 @@ limitations under the License.
    extern "C" {
 #endif
 
-   typedef unsigned char BYTE;
-
    /**
     *  Decompression parameters
     */
@@ -62,7 +60,8 @@ limitations under the License.
    /**
     *  Initialize the decompressor internal states.
     *
-    *  @param dParam [IN] - the decompression parameters
+    *  @param dParam [IN|OUT] - the decompression parameters. Transform and entropy are
+                                validated and rewritten.
     *  @param src [IN] - the source stream of compressed data
     *  @param ctx [IN|OUT] - a pointer to the decompression context created by the call
     *
@@ -81,7 +80,7 @@ limitations under the License.
     *
     *  @return 0 in case of success
     */
-   int CDECL decompress(struct dContext* ctx, BYTE* dst, int* inSize, int* outSize);
+   int CDECL decompress(struct dContext* ctx, unsigned char* dst, int* inSize, int* outSize);
 
    /**
     *  Dispose the decompressor and cleanup memory resources.

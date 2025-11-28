@@ -24,13 +24,12 @@ limitations under the License.
 #endif
 
 #include <stdio.h>
+#include <stdint.h>
 
 
 #ifdef __cplusplus
    extern "C" {
 #endif
-
-   typedef unsigned char BYTE;
 
    /**
     *  Compression parameters
@@ -58,7 +57,7 @@ limitations under the License.
     /**
     *  Initialize the compressor internal states.
     *
-    *  @param cParam [IN] - the compression parameters
+    *  @param cParam [IN|OUT] - the compression parameters, transform and enropy are validated and rewritten
     *  @param dst [IN] - the destination stream of compressed data
     *  @param ctx [IN|OUT] - pointer to the compression context created by the call
     *
@@ -77,7 +76,7 @@ limitations under the License.
     *
     *  @return 0 in case of success
     */
-   int CDECL compress(struct cContext* ctx, const BYTE* src, int* inSize, int* outSize);
+   int CDECL compress(struct cContext* ctx, const unsigned char* src, int* inSize, int* outSize);
 
    /**
     *  Dispose the compressor and cleanup memory resources.

@@ -73,6 +73,11 @@ namespace kanzi {
         virtual streamsize xsputn(const char* s, streamsize sz) {
             return WRITE(_fd, s, sz);
         }
+
+        int sync() {
+            // No internal buffer — nothing to flush. Indicate success
+            return 0;
+        }
     };
 
     class FileOutputStream FINAL : public ostream
@@ -105,19 +110,13 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
            return Error::ERR_CREATE_COMPRESSOR;
 
         string transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(pData->transform));
-
-        if (transform.length() >= 63)
-            return Error::ERR_INVALID_PARAM;
-
-        strncpy(pData->transform, transform.data(), transform.length());
-        pData->transform[transform.length() + 1] = 0;
         string entropy = EntropyEncoderFactory::getName(EntropyEncoderFactory::getType(pData->entropy));
 
-        if (entropy.length() >= 15)
+        if ((transform.length() >= 63) || (entropy.length() >= 15))
             return Error::ERR_INVALID_PARAM;
 
-        strncpy(pData->entropy, entropy.data(), entropy.length());
-        pData->entropy[entropy.length() + 1] = 0;
+        snprintf(pData->transform, sizeof(pData->transform), "%s", transform.c_str());
+        snprintf(pData->entropy, sizeof(pData->entropy), "%s", entropy.c_str());
         pData->blockSize = (pData->blockSize + 15) & -16;
 
         *pCtx = nullptr;
@@ -145,7 +144,7 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         cctx->fos = fos;
         *pCtx = cctx;
     }
-    catch (exception&) {
+    catch (const exception& e) {
         if (fos != nullptr)
            delete fos;
 
@@ -158,21 +157,21 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
     return 0;
 }
 
-int CDECL compress(struct cContext* pCtx, const BYTE* src, int* inSize, int* outSize)
+int CDECL compress(struct cContext* pCtx, const unsigned char* src, int* inSize, int* outSize)
 {
-    *outSize = 0;
-    int res = 0;
-
-    if ((pCtx == nullptr) || (*inSize > int(pCtx->blockSize))) {
+    if ((pCtx == nullptr) || (inSize == nullptr) || (outSize == nullptr) || (*inSize > int(pCtx->blockSize))) {
         *inSize = 0;
         return Error::ERR_INVALID_PARAM;
     }
 
-    CompressedOutputStream* pCos = (CompressedOutputStream*)pCtx->pCos;
-    *inSize = 0;
+    *outSize = 0;
+    int res = 0;
+    CompressedOutputStream* pCos = static_cast<CompressedOutputStream*>(pCtx->pCos);
 
-    if (pCos == nullptr)
+    if (pCos == nullptr) {
+        *outSize = 0;
         return Error::ERR_INVALID_PARAM;
+    }
 
     try {
         const uint64 w = pCos->getWritten();
@@ -180,7 +179,8 @@ int CDECL compress(struct cContext* pCtx, const BYTE* src, int* inSize, int* out
         res = pCos->good() ? 0 : Error::ERR_WRITE_FILE;
         *outSize = int(pCos->getWritten() - w);
     }
-    catch (exception&) {
+    catch (const exception&) {
+        *outSize = 0;
         return Error::ERR_UNKNOWN;
     }
 
@@ -204,7 +204,7 @@ int CDECL disposeCompressor(struct cContext* pCtx, int* outSize)
             *outSize = int(pCos->getWritten() - w);
         }
     }
-    catch (exception&) {
+    catch (const exception&) {
         return Error::ERR_UNKNOWN;
     }
 
@@ -218,7 +218,7 @@ int CDECL disposeCompressor(struct cContext* pCtx, int* outSize)
         pCtx->fos = nullptr;
         delete pCtx;
     }
-    catch (exception&) {
+    catch (const exception&) {
         if (pCtx->fos != nullptr)
             delete (FileOutputStream*)pCtx->fos;
 
