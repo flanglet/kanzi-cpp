@@ -57,8 +57,16 @@ namespace kanzi {
 
            if (putback > 4) putback = 4;
 
+           // Prevent reading before buffer start
+           const char* src = gptr() - putback;
+
+           if (src < _buffer) {
+               putback = int(gptr() - _buffer);
+               src = _buffer;
+           }
+
            // Move putback characters to start of buffer
-           std::memmove(_buffer + (4 - putback), gptr() - putback, putback);
+           std::memmove(_buffer + (4 - putback), src, putback);
 
            // Read new characters into buffer
            const int n = int(READ(_fd, _buffer + 4, BUF_SIZE - 4));

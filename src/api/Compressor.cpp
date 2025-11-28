@@ -144,7 +144,7 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         cctx->fos = fos;
         *pCtx = cctx;
     }
-    catch (const exception& e) {
+    catch (const exception&) {
         if (fos != nullptr)
            delete fos;
 
