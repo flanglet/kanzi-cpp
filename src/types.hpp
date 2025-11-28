@@ -17,7 +17,27 @@ limitations under the License.
 #ifndef _types_
 #define _types_
 
-    #ifdef _MSC_VER
+    #if defined(_MSC_VER) && _MSC_VER < 1600
+       // Visual Studio < 2010: no stdint.h
+       typedef unsigned char      uint8_t;
+       typedef signed char        int8_t;
+       typedef unsigned short     uint16_t;
+       typedef short              int16_t;
+       typedef unsigned int       uint32_t;
+       typedef int                int32_t;
+       typedef unsigned __int64   uint64_t;
+       typedef __int64            int64_t;
+    #else
+       // Modern compilers
+       #include <cstdint>
+    #endif
+
+    #if defined(_MSC_VER)
+        #if _MSC_VER < 1900
+            // snprintf macro for MSVC < 2015
+            #define snprintf _snprintf
+        #endif
+
         #if !defined(__x86_64__)
             #define __x86_64__  _M_X64
         #endif
