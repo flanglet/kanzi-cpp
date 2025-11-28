@@ -705,7 +705,7 @@ T EncodingTask<T>::run()
         }
 
         _data->_index = 0;
-        ostreambuf<char> buf(reinterpret_cast<char*>(&_data->_array[_data->_index]), streamsize(_data->_length));
+        ofixedbuf buf(reinterpret_cast<char*>(&_data->_array[_data->_index]), streamsize(_data->_length));
         ostream os(&buf);
         DefaultOutputBitStream obs(os);
 

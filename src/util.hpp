@@ -23,23 +23,36 @@ limitations under the License.
 #include "types.hpp"
 
 
-
 // Ahem ... Visual Studio
-// This ostreambuf class is required because Microsoft cannot bother to implement
-// streambuf::pubsetbuf().
-template <typename T>
-struct ostreambuf : public std::basic_streambuf<T, std::char_traits<T> >
-{
-    ostreambuf(T* buffer, std::streamsize length) {
-       this->setp(buffer, &buffer[length]);
+// This code is required because Microsoft cannot bother to implement streambuf::pubsetbuf().
+// Also On libstdc++, pubsetbuf() silently ignores the supplied buffer and leaves internal pointers null.
+
+class ifixedbuf : public std::streambuf {
+public:
+    ifixedbuf(char* data, std::size_t size) {
+        // Always manually set the read pointers.
+        // pubsetbuf() is unreliable on libstdc++, and MSVC doesn't implement it.
+        this->setg(data, data, data + size);
     }
 };
 
-template <typename T>
-struct istreambuf : public std::basic_streambuf<T, std::char_traits<T> >
-{
-    istreambuf(T* buffer, std::streamsize length) {
-       this->setg(buffer, buffer, &buffer[length]);
+class ofixedbuf : public std::streambuf {
+public:
+    ofixedbuf(char* data, std::size_t size) {
+        // Always set buffer manually — pubsetbuf is useless on libstdc++
+        this->setp(data, data + size);
+    }
+
+    std::size_t written() const {
+        return this->pptr() - this->pbase();
+    }
+};
+
+class iofixedbuf : public std::streambuf {
+public:
+    iofixedbuf(char* data, std::size_t size) {
+        this->setg(data, data, data + size);
+        this->setp(data, data + size);
     }
 };
 

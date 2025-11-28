@@ -845,8 +845,8 @@ T DecodingTask<T>::run()
             return T(*_data, blockId, 0, 0, 0, "Success");
         }
 
-        istreambuf<char> buf(reinterpret_cast<char*>(&_data->_array[0]), streamsize(r));
-        iostream ios(&buf);
+        ifixedbuf buf(reinterpret_cast<char*>(&_data->_array[0]), streamsize(r));
+        istream ios(&buf);
         ibs = (streamPerTask == true) ? new DefaultInputBitStream(ios) : _ibs;
 
         // Extract block header from bitstream
