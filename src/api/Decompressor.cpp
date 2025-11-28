@@ -49,24 +49,34 @@ namespace kanzi {
        char _buffer[BUF_SIZE];
 
        virtual int_type underflow() {
-          if (gptr() < egptr())
-              return traits_type::to_int_type(*gptr());
+           if (gptr() < egptr())
+               return traits_type::to_int_type(*gptr());
 
-          // Preserve up to 4 bytes of putback
-          const int putback = std::min<int>(gptr() - eback(), 4);
+           // Number of characters to preserve (putback)
+           int putback = int(gptr() - eback());
 
-          // Move putback bytes to the front
-          std::memmove(_buffer + (4 - putback), gptr() - putback, putback);
+           if (putback > 4) putback = 4;
 
-          // Read new bytes after putback
-          const int n = READ(_fd, _buffer + 4, BUF_SIZE - 4);
-          if (n <= 0)
-              return traits_type::eof();
+           // Prevent reading before buffer start
+           const char* src = gptr() - putback;
 
-          // Set new buffer pointers
-          setg(_buffer + (4 - putback), _buffer + 4, _buffer + 4 + n);
-          return traits_type::to_int_type(*gptr());
-      }
+           if (src < _buffer) {
+               putback = int(gptr() - _buffer);
+               src = _buffer;
+           }
+
+           // Move putback characters to start of buffer
+           std::memmove(_buffer + (4 - putback), src, putback);
+
+           // Read new characters into buffer
+           const int n = int(READ(_fd, _buffer + 4, BUF_SIZE - 4));
+
+           if (n <= 0)
+               return EOF;
+
+           setg(_buffer + (4 - putback), _buffer + 4, _buffer + 4 + n);
+           return traits_type::to_int_type(*gptr());
+       }
    };
 
    class FileInputStream FINAL : public istream
