@@ -193,7 +193,7 @@ int testBitStreamCorrectnessMisaligned1()
             try {
                 cout << "\nTrying to write to closed stream" << endl;
                 dbs.writeBit(1);
-            } catch (BitStreamException& e) {
+            } catch (const BitStreamException& e) {
                 cout << "\nException: " << e.what() << endl;
             }
         }
@@ -244,7 +244,7 @@ int testBitStreamCorrectnessMisaligned1()
             try {
                 cout << "\nTrying to read from closed stream" << endl;
                 ibs.readBit();
-            } catch (BitStreamException& e) {
+            } catch (const BitStreamException& e) {
                 cout << "\nException: " << e.what() << endl;
             }
         }
@@ -351,7 +351,7 @@ int testBitStreamCorrectnessAligned2()
             try {
                 cout << "\nTrying to write to closed stream" << endl;
                 dbs.writeBit(1);
-            } catch (BitStreamException& e) {
+            } catch (const BitStreamException& e) {
                 cout << "\nException: " << e.what() << endl;
             }
         }
@@ -402,7 +402,7 @@ int testBitStreamCorrectnessAligned2()
             try {
                 cout << "\nTrying to read from closed stream" << endl;
                 ibs.readBit();
-            } catch (BitStreamException& e) {
+            } catch (const BitStreamException& e) {
                 cout << "\nException: " << e.what() << endl;
             }
         }
@@ -692,10 +692,10 @@ int TestDefaultBitStream_main(int argc, const char* argv[])
           res |= testBitStreamSpeed1(fileName);
           res |= testBitStreamSpeed2(fileName);
        }
-    } catch (kanzi::IOException& e) {
+    } catch (const kanzi::IOException& e) {
        cout << "Exception: " << e.what() << endl;
        res = 99;
-    } catch (BitStreamException& e) {
+    } catch (const BitStreamException& e) {
        cout << "Exception: " << e.what() << endl;
        res = 99;
     }

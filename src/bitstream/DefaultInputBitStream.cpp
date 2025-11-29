@@ -189,7 +189,7 @@ int DefaultInputBitStream::readFromInputStream(uint count)
         // Clear flags (required for future seeks when EOF is reached)
         _is.clear();
     }
-    catch (runtime_error& e) {
+    catch (const runtime_error& e) {
         // Catch IOException without depending on io package
         throw BitStreamException(e.what(), BitStreamException::INPUT_OUTPUT);
     }
@@ -215,7 +215,7 @@ bool DefaultInputBitStream::hasMoreToRead()
     try {
         readFromInputStream(_bufferSize);
     }
-    catch (BitStreamException&) {
+    catch (const BitStreamException&) {
         return false;
     }
 

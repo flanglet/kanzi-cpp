@@ -226,7 +226,7 @@ CompressedInputStream::~CompressedInputStream()
     try {
         close();
     }
-    catch (exception&) {
+    catch (const exception&) {
         // Ignore and continue
     }
 
@@ -302,7 +302,7 @@ void CompressedInputStream::readHeader()
         _entropyType = short(_ibs->readBits(5));
         _ctx.putString("entropy", EntropyDecoderFactory::getName(_entropyType));
     }
-    catch (invalid_argument&) {
+    catch (const invalid_argument&) {
         stringstream err;
         err << "Invalid bitstream, unknown entropy type: " << _entropyType;
         throw IOException(err.str(), Error::ERR_INVALID_CODEC);
@@ -313,7 +313,7 @@ void CompressedInputStream::readHeader()
         _transformType = _ibs->readBits(48);
         _ctx.putString("transform", TransformFactory<byte>::getName(_transformType));
     }
-    catch (invalid_argument&) {
+    catch (const invalid_argument&) {
         stringstream err;
         err << "Invalid bitstream, unknown transform type: " << _transformType;
         throw IOException(err.str(), Error::ERR_INVALID_CODEC);
@@ -453,11 +453,11 @@ int CompressedInputStream::_get(int inc)
 
         return res;
     }
-    catch (IOException&) {
+    catch (const IOException&) {
         setstate(ios::badbit);
         throw; // rethrow
     }
-    catch (exception&) {
+    catch (const exception&) {
         setstate(ios::badbit);
         throw; // rethrow
     }
@@ -694,14 +694,14 @@ int64 CompressedInputStream::processBlock()
 
         return decoded;
     }
-    catch (IOException&) {
+    catch (const IOException&) {
         for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
             delete *it;
 
         tasks.clear();
         throw;
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         for (vector<DecodingTask<DecodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
             delete *it;
 
@@ -718,7 +718,7 @@ void CompressedInputStream::close()
     try {
         _ibs->close();
     }
-    catch (BitStreamException& e) {
+    catch (const BitStreamException& e) {
         throw IOException(e.what(), e.error());
     }
 
@@ -992,7 +992,7 @@ T DecodingTask<T>::run()
 
         return T(*_data, blockId, decoded, checksum1, 0, "Success");
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         // Make sure to unfreeze next block
         if (_processedBlockId->load(memory_order_acquire) == blockId - 1)
             _processedBlockId->store(blockId, memory_order_release);

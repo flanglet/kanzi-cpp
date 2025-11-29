@@ -442,7 +442,7 @@ FileDecompressTask<T>::~FileDecompressTask()
 
         _os = nullptr;
     }
-    catch (exception&) {
+    catch (const exception&) {
         // Ignore: best effort
     }
 }
@@ -564,7 +564,7 @@ T FileDecompressTask<T>::run()
 
             _os = ofs;
         }
-        catch (exception& e) {
+        catch (const exception& e) {
             stringstream sserr;
             sserr << "Cannot open output file '" << outputName << "' for writing: " << e.what();
             return T(Error::ERR_CREATE_FILE, 0, sserr.str().c_str());
@@ -605,7 +605,7 @@ T FileDecompressTask<T>::run()
             for (uint i = 0; i < _listeners.size(); i++)
                 _cis->addListener(*_listeners[i]);
         }
-        catch (invalid_argument& e) {
+        catch (const invalid_argument& e) {
             CLEANUP_DECOMP_IS
             CLEANUP_DECOMP_OS
             stringstream sserr;
@@ -613,7 +613,7 @@ T FileDecompressTask<T>::run()
             return T(Error::ERR_CREATE_DECOMPRESSOR, 0, sserr.str().c_str());
         }
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         CLEANUP_DECOMP_IS
         CLEANUP_DECOMP_OS
         stringstream sserr;
@@ -653,7 +653,7 @@ T FileDecompressTask<T>::run()
                     read += decoded;
                 }
             }
-            catch (exception& e) {
+            catch (const exception& e) {
                 dispose();
                 const uint64 d = _cis->getRead();
                 CLEANUP_DECOMP_IS
@@ -667,7 +667,7 @@ T FileDecompressTask<T>::run()
             }
         } while (_cis->eof() == 0);
     }
-    catch (IOException& e) {
+    catch (const IOException& e) {
         dispose();
         const uint64 d = _cis->getRead();
         bool isEOF = _cis->eof();
@@ -684,7 +684,7 @@ T FileDecompressTask<T>::run()
         sserr << e.what();
         return T(e.error(), d, sserr.str().c_str());
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         dispose();
         const uint64 d = _cis->getRead();
         bool isEOF = _cis->eof();
@@ -720,7 +720,7 @@ T FileDecompressTask<T>::run()
         CLEANUP_DECOMP_OS
         _os = nullptr;
     }
-    catch (exception&) {
+    catch (const exception&) {
         // Ignore: best effort
     }
 
@@ -815,7 +815,7 @@ void FileDecompressTask<T>::dispose()
             _cis->close();
         }
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         cerr << "Decompression failure: " << e.what() << endl;
         exit(Error::ERR_WRITE_FILE);
     }

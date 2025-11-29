@@ -155,7 +155,7 @@ uint64 compress4(byte block[], uint length)
         cout << "Failure: no exception thrown in write after close" << endl;
         res = 1;
     }
-    catch (ios_base::failure& e) {
+    catch (const ios_base::failure& e) {
         cout << "OK, Exception " << e.what() << endl;
         res = 0;
     }
@@ -192,7 +192,7 @@ uint64 compress5(byte block[], uint length)
         cout << "Failure: no exception thrown in read after close" << endl;
         res = 1;
     }
-    catch (ios_base::failure& e) {
+    catch (const ios_base::failure& e) {
         cout << "OK, Exception " << e.what() << endl;
         res = 0;
     }
@@ -297,11 +297,11 @@ int TestCompressedStream_main(int argc, const char* argv[])
         //testSeek("/tmp/enwik8.knz");
         return testCorrectness(argc, argv);
     }
-    catch (IOException& e) {
+    catch (const IOException& e) {
         cout << "Exception: " << e.what() << endl;
         return e.error();
     }
-    catch (runtime_error& e) {
+    catch (const runtime_error& e) {
         cout << "Exception: " << e.what() << endl;
         return 255;
     }

@@ -584,7 +584,7 @@ int TestTransforms_main(int argc, const char* argv[])
         }
 
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         cout << e.what() << endl;
         res = 123;
     }

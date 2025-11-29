@@ -352,7 +352,7 @@ bool ROLZCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             mEnc.encode(mIdxBuf._array, 0, mIdxBuf._index);
             mEnc.dispose();
         }
-        catch (BitStreamException&) {
+        catch (const BitStreamException&) {
             delete[] litBuf._array;
             delete[] lenBuf._array;
             delete[] mIdxBuf._array;
@@ -505,7 +505,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             onlyLiterals = tkLen == 0;
             srcIdx += int((ibs.read() + 7) >> 3);
         }
-        catch (BitStreamException&) {
+        catch (const BitStreamException&) {
             delete[] arena;
             throw;
         }

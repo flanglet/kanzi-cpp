@@ -391,7 +391,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
                res |= testEntropyCodecSpeed(*it);
         }
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         cout << e.what() << endl;
         res = 123;
     }

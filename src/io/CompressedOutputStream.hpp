@@ -230,7 +230,7 @@ namespace kanzi {
            _buffers[_bufferId]->_array[_buffers[_bufferId]->_index++] = byte(c);
            return *this;
        }
-       catch (std::exception& e) {
+       catch (const std::exception& e) {
            setstate(std::ios::badbit);
            throw std::ios_base::failure(e.what());
        }

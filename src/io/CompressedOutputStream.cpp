@@ -217,7 +217,7 @@ CompressedOutputStream::~CompressedOutputStream()
     try {
         close();
     }
-    catch (exception&) {
+    catch (const exception&) {
         // Ignore and continue
     }
 
@@ -395,7 +395,7 @@ void CompressedOutputStream::close()
         _obs->writeBits(uint64(0), 3); // write 0 (3 bits)
         _obs->close();
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         setstate(ios::badbit);
         throw ios_base::failure(e.what());
     }
@@ -519,21 +519,21 @@ void CompressedOutputStream::processBlock()
 
         _bufferId = 0;
     }
-    catch (IOException&) {
+    catch (const IOException&) {
         for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
             delete *it;
 
         tasks.clear();
         throw; // rethrow
     }
-    catch (BitStreamException& e) {
+    catch (const BitStreamException& e) {
         for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
             delete *it;
 
         tasks.clear();
         throw IOException(e.what(), e.error());
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
             delete *it;
 
@@ -808,7 +808,7 @@ T EncodingTask<T>::run()
 
         return T(blockId, 0, "Success");
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         // Make sure to unfreeze next block
         if (_processedBlockId->load(memory_order_acquire) == blockId - 1)
             _processedBlockId->store(blockId, memory_order_release);

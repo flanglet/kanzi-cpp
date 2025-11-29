@@ -1128,7 +1128,7 @@ int main(int argc, const char* argv[])
                 int code = bc.compress(written);
                 return code;
             }
-            catch (exception& e) {
+            catch (const exception& e) {
                 cerr << "Could not create the compressor: " << e.what() << endl;
                 return Error::ERR_CREATE_COMPRESSOR;
             }
@@ -1141,7 +1141,7 @@ int main(int argc, const char* argv[])
                 int code = bd.decompress(read);
                 return code;
             }
-            catch (exception& e) {
+            catch (const exception& e) {
                 cerr << "Could not create the decompressor: " << e.what() << endl;
                 return Error::ERR_CREATE_DECOMPRESSOR;
             }
@@ -1150,12 +1150,12 @@ int main(int argc, const char* argv[])
         cout << "Missing arguments: try --help or -h" << endl;
         return Error::ERR_MISSING_PARAM;
     }
-    catch (invalid_argument& e) {
+    catch (const invalid_argument& e) {
        // May be thrown by ThreadPool
        cerr << e.what() << endl;
        return Error::ERR_INVALID_PARAM;
     }
-    catch (runtime_error& e) {
+    catch (const runtime_error& e) {
        // May be thrown by ThreadPool
        cerr << e.what() << endl;
        return Error::ERR_INVALID_PARAM;

@@ -682,14 +682,14 @@ T FileCompressTask<T>::run()
             for (uint i = 0; i < _listeners.size(); i++)
                 _cos->addListener(*_listeners[i]);
         }
-        catch (invalid_argument& e) {
+        catch (const invalid_argument& e) {
             CLEANUP_COMP_OS
             stringstream sserr;
             sserr << "Cannot create compressed stream: " << e.what();
             return T(Error::ERR_CREATE_COMPRESSOR, 0, 0, sserr.str().c_str());
         }
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         CLEANUP_COMP_OS
         stringstream sserr;
         sserr << "Cannot open output file '" << outputName << "' for writing: " << e.what();
@@ -723,7 +723,7 @@ T FileCompressTask<T>::run()
             _is = ifs;
         }
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         CLEANUP_COMP_IS
         CLEANUP_COMP_OS
         delete _cos;
@@ -757,7 +757,7 @@ T FileCompressTask<T>::run()
                 _is->read(reinterpret_cast<char*>(&sa._array[0]), sa._length);
                 len = *_is ? sa._length : int(_is->gcount());
             }
-            catch (exception& e) {
+            catch (const exception& e) {
                 CLEANUP_COMP_IS
                 CLEANUP_COMP_OS
                 const uint64 w = _cos->getWritten();
@@ -778,7 +778,7 @@ T FileCompressTask<T>::run()
             _cos->write(reinterpret_cast<const char*>(&sa._array[0]), len);
         }
     }
-    catch (IOException& ioe) {
+    catch (const IOException& ioe) {
         CLEANUP_COMP_IS
         CLEANUP_COMP_OS
         const uint64 w = _cos->getWritten();
@@ -787,7 +787,7 @@ T FileCompressTask<T>::run()
         _cos = nullptr;
         return T(ioe.error(), read, w, ioe.what());
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         CLEANUP_COMP_IS
         CLEANUP_COMP_OS
         const uint64 w = _cos->getWritten();
@@ -817,7 +817,7 @@ T FileCompressTask<T>::run()
         CLEANUP_COMP_IS
         _is = nullptr;
     }
-    catch (exception&) {
+    catch (const exception&) {
         // Ignore: best effort
     }
 
@@ -917,7 +917,7 @@ FileCompressTask<T>::~FileCompressTask()
 
         _is = nullptr;
     }
-    catch (exception&) {
+    catch (const exception&) {
         // Ignore: best effort
     }
 }
@@ -931,7 +931,7 @@ void FileCompressTask<T>::dispose()
             _cos->close();
         }
     }
-    catch (exception& e) {
+    catch (const exception& e) {
         cerr << "Compression failure: " << e.what() << endl;
         exit(Error::ERR_WRITE_FILE);
     }

@@ -150,7 +150,7 @@ void DefaultOutputBitStream::_close()
         _availBits = 64;
         flush();
     }
-    catch (BitStreamException&) {
+    catch (const BitStreamException&) {
         // Revert fields to allow subsequent attempts in case of transient failure
         _position = savedPosition;
         _availBits = savedBitIndex;
@@ -164,7 +164,7 @@ void DefaultOutputBitStream::_close()
         if (_os.bad())
             throw BitStreamException("Write to bitstream failed.", BitStreamException::INPUT_OUTPUT);
     }
-    catch (ios_base::failure& e) {
+    catch (const ios_base::failure& e) {
         throw BitStreamException(e.what(), BitStreamException::INPUT_OUTPUT);
     }
 
@@ -198,7 +198,7 @@ void DefaultOutputBitStream::flush()
             _position = 0;
         }
     }
-    catch (ios_base::failure& e) {
+    catch (const ios_base::failure& e) {
         throw BitStreamException(e.what(), BitStreamException::INPUT_OUTPUT);
     }
 }
@@ -208,7 +208,7 @@ DefaultOutputBitStream::~DefaultOutputBitStream()
     try {
         _close();
     }
-    catch (exception&) {
+    catch (const exception&) {
         // Ignore and continue
     }
 

@@ -35,7 +35,7 @@ namespace kanzi
             try  {
                 _os->flush();
             }
-            catch (std::exception&) {
+            catch (const std::exception&) {
                 // Ignore: best effort
             }
          }
