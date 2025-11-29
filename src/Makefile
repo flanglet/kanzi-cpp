@@ -1,7 +1,9 @@
-CXX=clang++
+#CXX=clang++
 OBJ_DIR = obj
 TEST_OBJ_DIR=$(OBJ_DIR)/test
 APP=kanzi
+APP_STATIC=$(APP)_static
+APP_DYNAMIC=$(APP)_dynamic
 OS := $(shell uname -s)
 
 ifeq ($(TCMALLOC_ENABLED), 1)
@@ -16,16 +18,17 @@ endif
 
 ifeq ($(OS),Windows_NT)
 	CXXFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
-	LDFLAGS=-lpthread -static
-	#LDFLAGS=-static-libgcc -static-libstdc++ -Wl,-Bstatic -lstdc++ -lpthread -Wl,-Bdynamic
+	LDFLAGS=-lpthread
 else
 	ARCH ?= $(shell uname -m)
 
 	ifeq ($(ARCH), x86_64)
-		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
+		#CXXFLAGS=-c -std=c++17 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fstrict-aliasing -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
+		CXXFLAGS=-c -std=c++17 -fstrict-aliasing -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 	else
 		#CXXFLAGS=-c -std=c++17 -fsanitize=signed-integer-overflow -ftrapv -D_FORTIFY_SOURCE=3 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
-		CXXFLAGS=-c -std=c++17 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
+		#CXXFLAGS=-c -std=c++17 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
+		CXXFLAGS=-c -std=c++17 -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 	endif
 endif	
 
@@ -171,11 +174,27 @@ testCompressedStream: $(LIB_OBJECTS) $(TEST_OBJ_DIR)/TestCompressedStream.o
 
 test: testAPI testBWT testTransforms testEntropyCodec testDefaultBitStream testCompressedStream
 
-# Target for the main application
+# Default executable target
 kanzi: $(LIB_OBJECTS) $(APP_OBJECTS)
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
-all: lib test $(APP)
+# Statically linked executable
+ifeq ($(OS),Darwin)
+# macOS does not support -static => disable static target
+kanzi_static:
+	@echo "Static linking is not supported on macOS"
+else
+kanzi_static: LDFLAGS += -static-libstdc++ -static-libgcc
+kanzi_static: $(LIB_OBJECTS) $(APP_OBJECTS)
+	$(CXX) $^ -o ../bin/kanzi_static$(PROG_SUFFIX) $(LDFLAGS)
+endif
+
+# Dynamically linked executable
+kanzi_dynamic: LDFLAGS := $(filter-out -static,$(LDFLAGS))
+kanzi_dynamic: $(LIB_OBJECTS) $(APP_OBJECTS)
+	$(CXX) $^ -o ../bin/kanzi_dynamic$(PROG_SUFFIX) $(LDFLAGS)
+
+all: lib test $(APP_STATIC) $(APP_DYNAMIC)
 
 # Install / uninstall (may require sudo or admin rights)
 ifeq ($(OS),Windows_NT)
@@ -223,30 +242,39 @@ uninstall:
 ifeq ($(OS),Windows_NT)
 	del /Q $(INSTALL_DIR)\$(APP)$(PROG_SUFFIX)
 else
-	rm -f -r $(INSTALL_DIR)/include/kanzi
+	rm -f -r $(INSTALL_DIR)/include/$(APP)
 	rm -f $(INSTALL_DIR)/lib/$(STATIC_LIB)
 	rm -f $(INSTALL_DIR)/lib/$(SHARED_LIB)
+	rm -f $(INSTALL_DIR)/bin/$(APP_STATIC)$(PROG_SUFFIX)
+	rm -f $(INSTALL_DIR)/bin/$(APP_DYNAMIC)$(PROG_SUFFIX)
 	rm -f $(INSTALL_DIR)/bin/$(APP)$(PROG_SUFFIX)
 endif
 
 clean:
 ifeq ($(OS),Windows_NT)
-	del /S $(OBJ_DIR)\*.o ..\bin\$(APP)$(PROG_SUFFIX) ..\bin\test*$(PROG_SUFFIX) \
+	del /S $(OBJ_DIR)\*.o
+	..\bin\$(APP)$(PROG_SUFFIX) \
+	..\bin\$(APP_STATIC)$(PROG_SUFFIX) \
+	..\bin\$(APP_DYNAMIC)$(PROG_SUFFIX) ..\bin\test*$(PROG_SUFFIX) \
 	..\lib\$(STATIC_LIB) ..\lib\$(SHARED_LIB) \
 	..\lib\$(STATIC_COMP_LIB) ..\lib\$(STATIC_DECOMP_LIB) \
 	..\lib\$(SHARED_COMP_LIB) ..\lib\$(SHARED_DECOMP_LIB)
 else
 	rm -f ../bin/test*$(PROG_SUFFIX) $(OBJECTS) $(RPTS) \
-	../bin/$(APP)$(PROG_SUFFIX) ../lib/$(STATIC_LIB) ../lib/$(SHARED_LIB) \
+	..\bin\$(APP)$(PROG_SUFFIX) \
+	..\bin\$(APP_STATIC)$(PROG_SUFFIX) \
+	..\bin\$(APP_STATIC)$(PROG_SUFFIX) \
+	..\bin\$(APP_DYNAMIC)$(PROG_SUFFIX) \
+	../lib/$(STATIC_LIB) ../lib/$(SHARED_LIB) \
 	../lib/$(STATIC_COMP_LIB) ../lib/$(STATIC_DECOMP_LIB) \
 	../lib/$(SHARED_COMP_LIB) ../lib/$(SHARED_DECOMP_LIB)
 	rm -rf $(OBJ_DIR)
 endif
 
 ifeq ($(OS),Windows_NT)
-   MKDIR = if not exist $(subst /,\,$(dir $@)) mkdir $(subst /,\,$(dir $@))
+MKDIR = if not exist $(subst /,\,$(dir $@)) mkdir $(subst /,\,$(dir $@))
 else
-   MKDIR = mkdir -p $(dir $@)
+MKDIR = mkdir -p $(dir $@)
 endif
 
 $(OBJ_DIR)/%.o: %.cpp
