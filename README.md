@@ -167,22 +167,26 @@ targets. Multithreading is supported.
 
 ### Makefile targets
 ```
-clean:     removes objects, libraries and binaries
-kanzi:     builds the kanzi executable
-lib:       builds static and dynamic libraries
-test:      builds test binaries
-all:       kanzi + lib + test
-install:   installs libraries, headers and executable
-uninstall: removes installed libraries, headers and executable
+clean:          removes objects, libraries and binaries
+kanzi:          builds the kanzi executable
+kanzi_static:   builds a statically linked executable
+kanzi_dynamic:  builds a dynamically linked executable
+lib:            builds static and dynamic libraries
+test:           builds test binaries
+all:            kanzi + kanzi_static + kanzi_dynamic + lib + test
+install:        installs libraries, headers and executable
+uninstall:      removes installed libraries, headers and executable
 ```
 
-For those who prefer cmake, run the following commands:
+For those who prefer cmake, run the following commands from the src directory:
 ```
 mkdir build
 cd build
 cmake ..
-make
+make kanzi
 ```
+By default, the cmake build generates a dynamically linked executable. 
+Choose ```make kanzi_static``` to build a statically linked executable.
 
 Credits
 
