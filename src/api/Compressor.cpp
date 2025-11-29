@@ -159,8 +159,8 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
 
 int CDECL compress(struct cContext* pCtx, const unsigned char* src, int* inSize, int* outSize)
 {
-    if ((pCtx == nullptr) || (inSize == nullptr) || (outSize == nullptr) || (*inSize > int(pCtx->blockSize))) {
-        *inSize = 0;
+    if ((pCtx == nullptr) || (inSize == nullptr) || (outSize == nullptr) ||
+        (*inSize < 0) || (*inSize > int(pCtx->blockSize))) {
         return Error::ERR_INVALID_PARAM;
     }
 

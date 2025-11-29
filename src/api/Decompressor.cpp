@@ -164,7 +164,6 @@ int CDECL decompress(struct dContext* pCtx, unsigned char* dst, int* inSize, int
 {
     if ((pCtx == nullptr) || (inSize == nullptr) || (outSize == nullptr) ||
         (*outSize < 0) || (*outSize > int(pCtx->bufferSize))) {
-        *outSize = 0;
         return Error::ERR_INVALID_PARAM;
     }
 
