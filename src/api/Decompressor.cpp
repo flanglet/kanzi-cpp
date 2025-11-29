@@ -37,10 +37,12 @@ using namespace std;
 using namespace kanzi;
 
 namespace kanzi {
+
    class ifstreambuf : public streambuf {
      public:
        ifstreambuf(int fd) : _fd(fd) {
-           setg(&_buffer[4], &_buffer[4], &_buffer[4]);
+          // gptr() = egptr() initially forces underflow() on first read
+          setg(_buffer + 4, _buffer + 4, _buffer + 4);
        }
 
      private:
@@ -52,28 +54,26 @@ namespace kanzi {
            if (gptr() < egptr())
                return traits_type::to_int_type(*gptr());
 
-           // Number of characters to preserve (putback)
+           // Preserve up to 4 characters for putback
            int putback = int(gptr() - eback());
 
            if (putback > 4) putback = 4;
 
-           // Prevent reading before buffer start
-           const char* src = gptr() - putback;
-
-           if (src < _buffer) {
-               putback = int(gptr() - _buffer);
-               src = _buffer;
+           // Only move putback if > 0
+           if (putback > 0) {
+               std::memmove(_buffer + (4 - putback), gptr() - putback, putback);
            }
 
-           // Move putback characters to start of buffer
-           std::memmove(_buffer + (4 - putback), src, putback);
-
-           // Read new characters into buffer
+           // Read new data
            const int n = int(READ(_fd, _buffer + 4, BUF_SIZE - 4));
 
            if (n <= 0)
                return EOF;
 
+           // Reset get pointers:
+           //   eback = start of buffer (including putback area)
+           //   gptr  = first new byte
+           //   egptr = end of new data
            setg(_buffer + (4 - putback), _buffer + 4, _buffer + 4 + n);
            return traits_type::to_int_type(*gptr());
        }

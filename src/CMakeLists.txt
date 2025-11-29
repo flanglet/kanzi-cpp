@@ -73,6 +73,7 @@ set(TEST_SOURCES
     test/TestCompressedStream.cpp
     test/TestDefaultBitStream.cpp
     test/TestTransforms.cpp
+    test/TestAPI.cpp
 )
 
 set(APP_SOURCES
@@ -110,6 +111,9 @@ target_link_libraries(testDefaultBitStream libkanzi)
 add_executable(testCompressedStream test/TestCompressedStream.cpp)
 target_link_libraries(testCompressedStream libkanzi)
 
+add_executable(testAPI test/TestAPI.cpp)
+target_link_libraries(testAPI libkanzi)
+
 # Main executable
 
 # Dynamically linked executable
@@ -128,7 +132,7 @@ target_link_libraries(kanzi_static libkanzi)
 
 # Custom target to build all tests
 add_custom_target(test
-    DEPENDS testBWT testTransforms testEntropyCodec testDefaultBitStream testCompressedStream
+    DEPENDS testBWT testTransforms testEntropyCodec testDefaultBitStream testCompressedStream testAPI
 )
 # Custom target to build static libraries
 add_custom_target(static_lib

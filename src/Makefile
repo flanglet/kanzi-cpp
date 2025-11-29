@@ -1,4 +1,4 @@
-#CXX=clang++
+CXX=clang++
 OBJ_DIR = obj
 TEST_OBJ_DIR=$(OBJ_DIR)/test
 APP=kanzi
@@ -25,7 +25,7 @@ else
 		CXXFLAGS=-c -std=c++14 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 	else
 		#CXXFLAGS=-c -std=c++17 -fsanitize=signed-integer-overflow -ftrapv -D_FORTIFY_SOURCE=3 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
-		CXXFLAGS=-c -std=c++17 -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
+		CXXFLAGS=-c -std=c++17 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 	endif
 endif	
 
@@ -151,6 +151,9 @@ $(SHARED_DECOMP_LIB):$(LIB_DECOMP_OBJECTS)
 
 
 # Targets for test executables
+testAPI: $(LIB_OBJECTS) $(TEST_OBJ_DIR)/TestAPI.o
+	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
+
 testBWT: $(LIB_OBJECTS) $(TEST_OBJ_DIR)/TestBWT.o
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
@@ -166,7 +169,7 @@ testDefaultBitStream: $(LIB_OBJECTS) $(TEST_OBJ_DIR)/TestDefaultBitStream.o
 testCompressedStream: $(LIB_OBJECTS) $(TEST_OBJ_DIR)/TestCompressedStream.o
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
-test: testBWT testTransforms testEntropyCodec testDefaultBitStream testCompressedStream
+test: testAPI testBWT testTransforms testEntropyCodec testDefaultBitStream testCompressedStream
 
 # Target for the main application
 kanzi: $(LIB_OBJECTS) $(APP_OBJECTS)
