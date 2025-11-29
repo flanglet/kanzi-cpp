@@ -36,26 +36,16 @@ limitations under the License.
 #include <dirent.h>
 #endif
 
+// Note stat64/lstat64 are deprecated on MacOS/Linux
+// Use _FILE_OFFSET_BITS and stat/lstat instead
 
-#ifdef _MSC_VER
+#ifdef _WIN32
    #define STAT _stat64
-#else
-   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__MINGW32__)
-      #define STAT stat
-   #else
-      #define STAT stat64
-   #endif
-#endif
-
-
-#ifdef _MSC_VER
    #define LSTAT _stat64
 #else
-   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__MINGW32__)
-      #define LSTAT lstat
-   #else
-      #define LSTAT lstat64
-   #endif
+   #define _FILE_OFFSET_BITS 64
+   #define STAT stat
+   #define LSTAT lstat
 #endif
 
 #if defined(__MINGW32__)
