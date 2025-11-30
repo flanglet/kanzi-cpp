@@ -15,6 +15,8 @@ limitations under the License.
 
 #include <cstring>
 #include <stddef.h>
+#include <stdexcept>
+
 #include "../Global.hpp"
 #include "ZRLT.hpp"
 

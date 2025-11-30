@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <algorithm>
 #include <vector>
+#include <stdexcept>
 
 #include "AliasCodec.hpp"
 #include "../Global.hpp"

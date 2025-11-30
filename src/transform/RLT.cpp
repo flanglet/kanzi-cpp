@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <algorithm>
 #include <cstring>
+#include <stdexcept>
 
 #include "RLT.hpp"
 #include "../Global.hpp"

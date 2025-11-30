@@ -15,7 +15,9 @@ limitations under the License.
 
 #include <algorithm>
 #include <cstring>
+#include <stdexcept>
 #include <vector>
+
 #include "UTFCodec.hpp"
 #include "../Global.hpp"
 #include "../types.hpp"
