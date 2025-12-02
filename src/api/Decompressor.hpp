@@ -67,7 +67,7 @@ limitations under the License.
     * @return the version number of the library.
     * Useful for checking for compatibility at runtime.
     */
-   KANZI_API unsigned int CDECL getVersion(void);
+   KANZI_API unsigned int CDECL getDecompressorVersion(void);
 
    /**
     *  Initialize the decompressor internal states.
