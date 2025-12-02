@@ -36,6 +36,16 @@ limitations under the License.
 using namespace std;
 using namespace kanzi;
 
+/**
+ *  Decompression context: encapsulates decompressor state (opaque: could change in future versions)
+ */
+struct dContext {
+    kanzi::CompressedInputStream* pCis;
+    size_t bufferSize;
+    void* fis;
+};
+
+
 namespace kanzi {
 
    class ifstreambuf : public streambuf {
@@ -93,12 +103,13 @@ namespace kanzi {
 
 
 // Create internal dContext and CompressedInputStream
-int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCtx)
+ARCHIVER_API int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCtx)
 {
     if ((pData == nullptr) || (pCtx == nullptr) || (src == nullptr))
         return Error::ERR_INVALID_PARAM;
 
-    if (pData->bufferSize > uint(2) * 1024 * 1024 * 1024) // max buffer size
+    // Validate buffer size (sanity check against huge allocations, e.g., > 2GB)
+    if (pData->bufferSize > size_t(2) * 1024 * 1024 * 1024)
         return Error::ERR_INVALID_PARAM;
 
     dContext* dctx = nullptr;
@@ -110,24 +121,31 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
         if (fd == -1)
            return Error::ERR_CREATE_DECOMPRESSOR;
 
-        // Create decompression stream and update context
+        // Create decompression stream and context
         *pCtx = nullptr;
         fis = new FileInputStream(fd);
         dctx = new dContext();
+        dctx->pCis = nullptr;
+        dctx->fis = nullptr;
 
         if (pData->headerless != 0) {
            // Headerless mode: process params
            string transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(pData->transform));
            string entropy = EntropyEncoderFactory::getName(EntropyEncoderFactory::getType(pData->entropy));
 
-           if ((transform.length() >= 63) || (entropy.length() >= 15)) {
+           // Validate sizes
+           if ((transform.length() >= sizeof(pData->transform)) ||
+               (entropy.length() >= sizeof(pData->entropy))) {
                delete fis;
                delete dctx;
                return Error::ERR_INVALID_PARAM;
            }
 
-           strncpy(pData->transform, transform.c_str(), 63);
-           strncpy(pData->entropy,   entropy.c_str(),   15);
+           memset(pData->transform, 0, sizeof(pData->transform));
+           strncpy(pData->transform, transform.c_str(), sizeof(pData->transform) - 1);
+           memset(pData->entropy, 0, sizeof(pData->entropy));
+           strncpy(pData->entropy, entropy.c_str(), sizeof(pData->entropy) - 1);
+
            pData->blockSize = (pData->blockSize + 15) & -16;
 
            dctx->pCis = new CompressedInputStream(*fis, pData->jobs,
@@ -148,11 +166,17 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
         *pCtx = dctx;
     }
     catch (const exception&) {
-        if (fis != nullptr)
-           delete fis;
+        if (dctx != nullptr) {
+            // pCis is managed by dctx, but might not be assigned yet
+            if (dctx->pCis)
+               delete dctx->pCis;
 
-        if (dctx != nullptr)
-           delete dctx;
+            delete dctx;
+        }
+
+        // fis is usually owned by pCis, but if pCis wasn't created, we delete it
+        if (fis != nullptr && (dctx == nullptr || dctx->pCis == nullptr))
+           delete fis;
 
         return Error::ERR_CREATE_DECOMPRESSOR;
     }
@@ -160,19 +184,24 @@ int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCt
     return 0;
 }
 
-int CDECL decompress(struct dContext* pCtx, unsigned char* dst, int* inSize, int* outSize)
+
+ARCHIVER_API int CDECL decompress(struct dContext* pCtx, unsigned char* dst, size_t* inSize, size_t* outSize)
 {
-    if ((pCtx == nullptr) || (inSize == nullptr) || (outSize == nullptr) ||
-        (*outSize < 0) || (*outSize > int(pCtx->bufferSize))) {
+    if ((pCtx == nullptr) || (outSize == nullptr)) {
         return Error::ERR_INVALID_PARAM;
+    }
+
+    if (*outSize > pCtx->bufferSize) {
+         return Error::ERR_INVALID_PARAM;
     }
 
     if (*outSize == 0)
         return 0;
 
-    *inSize = 0;
-    int res = 0;
-    CompressedInputStream* pCis = static_cast<CompressedInputStream*>(pCtx->pCis);
+    if (inSize)
+        *inSize = 0;
+
+    CompressedInputStream* pCis = pCtx->pCis;
 
     if (pCis == nullptr) {
         *outSize = 0;
@@ -181,28 +210,31 @@ int CDECL decompress(struct dContext* pCtx, unsigned char* dst, int* inSize, int
 
     try {
         const uint64 r = pCis->getRead();
-        pCis->read((char*)dst, streamsize(*outSize));
+        pCis->read((char*)dst, std::streamsize(*outSize));
 
         if (!pCis->good() && !pCis->eof())
             return Error::ERR_READ_FILE;
 
-        *inSize = int(pCis->getRead() - r);
-        *outSize = int(pCis->gcount());
+        if (inSize)
+            *inSize = size_t(pCis->getRead() - r);
+
+        *outSize = size_t(pCis->gcount());
     }
     catch (const exception&) {
         *outSize = 0;
         return Error::ERR_UNKNOWN;
     }
 
-    return res;
+    return 0;
 }
 
 // Cleanup allocated internal data structures
-int CDECL disposeDecompressor(struct dContext* pCtx)
+ARCHIVER_API int CDECL disposeDecompressor(struct dContext** ppCtx)
 {
-    if (pCtx == nullptr)
+    if ((ppCtx == nullptr) || (*ppCtx == nullptr))
         return Error::ERR_INVALID_PARAM;
 
+    dContext* pCtx = *ppCtx;
     CompressedInputStream* pCis = static_cast<CompressedInputStream*>(pCtx->pCis);
 
     try {
@@ -226,6 +258,7 @@ int CDECL disposeDecompressor(struct dContext* pCtx)
             delete (FileInputStream*)pCtx->fis;
 
         delete pCtx;
+        *ppCtx = 0;
         return Error::ERR_UNKNOWN;
     }
 

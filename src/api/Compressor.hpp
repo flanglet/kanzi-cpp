@@ -19,16 +19,32 @@ limitations under the License.
 
 #ifdef _WIN32
    #define CDECL __cdecl
+
+   #ifdef ARCHIVER_EXPORTS
+      #define ARCHIVER_API __declspec(dllexport)
+   #else
+      #define ARCHIVER_API __declspec(dllimport)
+   #endif
 #else
    #define CDECL
+   #define ARCHIVER_API
 #endif
 
 #include <stdio.h>
 
 
+#define ARCHIVER_VERSION_STRING "1.0.0"
+
+
 #ifdef __cplusplus
    extern "C" {
 #endif
+
+   /**
+    *  Compression context: encapsulates compressor state (opaque: could change in future versions)
+    */
+   struct cContext;
+
 
    /**
     *  Compression parameters
@@ -37,45 +53,43 @@ limitations under the License.
        char transform[64];          /* name of transforms [None|PACK|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX]
                                                           [RLT|ZRLT|MTFT|RANK|SRT|TEXT|MM|EXE|UTF|DNA] */
        char entropy[16];            /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
-       unsigned int blockSize;      /* size of block in bytes */
+       size_t blockSize;            /* size of block in bytes */
        unsigned int jobs;           /* max number of concurrent tasks */
        int checksum;                /* 0, 32 or 64 to indicate size of block checksum */
        int headerless;              /* bool to indicate if the bitstream has a header (usually set to 0) */
    };
 
+
    /**
-    *  Compression context: encapsulates compressor state (opaque: could change in future versions)
+    * @return the version number of the library.
+    * Useful for checking for compatibility at runtime.
     */
-   struct cContext {
-       void* pCos;
-       unsigned int blockSize;
-       void* fos;
-   };
+   ARCHIVER_API unsigned int CDECL Archiver_GetVersion(void);
 
 
-    /**
+   /**
     *  Initialize the compressor internal states.
     *
     *  @param cParam [IN|OUT] - the compression parameters, transform and enropy are validated and rewritten
     *  @param dst [IN] - the destination stream of compressed data
     *  @param ctx [IN|OUT] - pointer to the compression context created by the call
     *
-    *  @return 0 in case of success
+    *  @return 0 in case of success, else see error code in Error.hpp
     */
-   int CDECL initCompressor(struct cData* cParam, FILE* dst, struct cContext** ctx);
+   ARCHIVER_API int CDECL initCompressor(struct cData* cParam, FILE* dst, struct cContext** ctx);
 
     /**
     *  Compress a block of data. The compressor must have been initialized.
     *
     *  @param ctx [IN] - the compression context created during initialization
     *  @param src [IN] - the source block of data to compress
-    *  @param inSize [IN|OUT] - the size of the source block to compress.
-                                Updated to reflect the number bytes written to the destination.
-    *  @param outSize [OUT] - the size of the compressed data
+    *  @param inSize [IN] - the size of the source block to compress.
+    *  @param outSize [IN|OUT] - the size of the compressed data
+                              Updated to reflect the number bytes written to the destination.
     *
-    *  @return 0 in case of success
+    *  @return 0 in case of success, else see error code in Error.hpp
     */
-   int CDECL compress(struct cContext* ctx, const unsigned char* src, int* inSize, int* outSize);
+   ARCHIVER_API int CDECL compress(struct cContext* ctx, const unsigned char* src, size_t inSize, size_t* outSize);
 
    /**
     *  Dispose the compressor and cleanup memory resources.
@@ -84,9 +98,9 @@ limitations under the License.
     *  @param outSize [IN|OUT] - the number of bytes written to the destination
     *                            (the compressor may flush internal data)
     *
-    *  @return 0 in case of success
+    *  @return 0 in case of success, else see error code in Error.hpp
     */
-   int CDECL disposeCompressor(struct cContext* ctx, int* outSize);
+   ARCHIVER_API int CDECL disposeCompressor(struct cContext** ctx, size_t* outSize);
 
 #ifdef __cplusplus
    }

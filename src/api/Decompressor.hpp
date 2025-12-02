@@ -19,8 +19,15 @@ limitations under the License.
 
 #ifdef _WIN32
    #define CDECL __cdecl
+
+   #ifdef ARCHIVER_EXPORTS
+      #define ARCHIVER_API __declspec(dllexport)
+   #else
+      #define ARCHIVER_API __declspec(dllimport)
+   #endif
 #else
    #define CDECL
+   #define ARCHIVER_API
 #endif
 
 #include <stdio.h>
@@ -28,13 +35,17 @@ limitations under the License.
 #ifdef __cplusplus
    extern "C" {
 #endif
+   /**
+    *  Decompression context: encapsulates decompressor state (opaque: could change in future versions)
+    */
+   struct dContext;
 
    /**
     *  Decompression parameters
     */
    struct dData {
        // Required fields
-       unsigned int bufferSize;      /* read buffer size (at least block size) */
+       size_t bufferSize;            /* read buffer size (at least block size) */
        unsigned int jobs;            /* max number of concurrent tasks */
        int headerless;               /* bool to indicate if the bitstream has a header (usually set to 0) */
 
@@ -43,31 +54,22 @@ limitations under the License.
                                                        [RLT|ZRLT|MTFT|RANK|SRT|TEXT|MM|EXE|UTF|DNA] */
        char entropy[16];             /* name of entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM] */
        unsigned int blockSize;       /* size of block in bytes */
-       unsigned long originalSize;   /* size of original file in bytes */
+       size_t originalSize;          /* size of original file in bytes */
        int checksum;                 /* 0, 32 or 64 to indicate size of block checksum */
        int bsVersion;                /* version of the bitstream */
-   };
-
-   /**
-    *  Decompression context: encapsulates decompressor state (opaque: could change in future versions)
-    */
-   struct dContext {
-       void* pCis;
-       unsigned int bufferSize;
-       void* fis;
    };
 
    /**
     *  Initialize the decompressor internal states.
     *
     *  @param dParam [IN|OUT] - the decompression parameters. Transform and entropy are
-                                validated and rewritten.
+    *                           validated and rewritten.
     *  @param src [IN] - the source stream of compressed data
     *  @param ctx [IN|OUT] - a pointer to the decompression context created by the call
     *
-    *  @return 0 in case of success
+    *  @return 0 in case of success, else see error code in Error.hpp
     */
-   int CDECL initDecompressor(struct dData* dParam, FILE* src, struct dContext** ctx);
+   ARCHIVER_API int CDECL initDecompressor(struct dData* dParam, FILE* src, struct dContext** ctx);
 
    /**
     *  Decompress a block of data. The decompressor must have been initialized.
@@ -78,18 +80,18 @@ limitations under the License.
     *  @param outSize [IN|OUT] - the size of the block to decompress.
     *                            Updated to reflect the number of decompressed bytes
     *
-    *  @return 0 in case of success
+    *  @return 0 in case of success, else see error code in Error.hpp
     */
-   int CDECL decompress(struct dContext* ctx, unsigned char* dst, int* inSize, int* outSize);
+   ARCHIVER_API int CDECL decompress(struct dContext* ctx, unsigned char* dst, size_t* inSize, size_t* outSize);
 
    /**
     *  Dispose the decompressor and cleanup memory resources.
     *
     *  @param ctx [IN] - the compression context created during initialization
     *
-    *  @return 0 in case of success
+    *  @return 0 in case of success, else see error code in Error.hpp
     */
-   int CDECL disposeDecompressor(struct dContext* ctx);
+   ARCHIVER_API int CDECL disposeDecompressor(struct dContext** ctx);
 
 #ifdef __cplusplus
    }

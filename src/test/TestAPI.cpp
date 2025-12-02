@@ -136,8 +136,8 @@ static void test_init_dispose()
     ASSERT(initCompressor(&p, f, &ctx) == 0, "init failed");
     ASSERT(ctx != NULL, "ctx should not be NULL");
 
-    int out = -1;
-    ASSERT(disposeCompressor(ctx, &out) == 0, "dispose failed");
+    size_t out = size_t(-1);
+    ASSERT(disposeCompressor(&ctx, &out) == 0, "dispose failed");
 
     fclose(f);
 }
@@ -159,13 +159,13 @@ static void test_compress_small()
     uint8_t data[256];
     fill_buffer(data, 256);
 
-    int inSize = 256;
-    int outSize = 0;
+    size_t inSize = 256;
+    size_t outSize = 0;
 
-    ASSERT(compress(ctx, data, &inSize, &outSize) == 0, "compress failed");
+    ASSERT(compress(ctx, data, inSize, &outSize) == 0, "compress failed");
 
-    int flushed = -1;
-    ASSERT(disposeCompressor(ctx, &flushed) == 0, "dispose failed");
+    size_t flushed = size_t(-1);
+    ASSERT(disposeCompressor(&ctx, &flushed) == 0, "dispose failed");
     ASSERT(flushed >= 0, "invalid flush size");
 
     fclose(f);
@@ -190,15 +190,14 @@ static void test_compress_too_big()
     uint8_t big[4096];
     fill_buffer(big, 4096);
 
-    int inSize = sizeof(big);
-    int outSize = 0;
+    size_t inSize = sizeof(big);
+    size_t outSize = 0;
 
-    ASSERT(compress(ctx, big, &inSize, &outSize) != 0, "compress should fail on oversized input");
-    ASSERT(inSize == 0, "input size should be zeroed on error");
+    ASSERT(compress(ctx, big, inSize, &outSize) != 0, "compress should fail on oversized input");
     ASSERT(outSize == 0, "output size must be zero on error");
 
-    int flushed = 0;
-    ASSERT(disposeCompressor(ctx, &flushed) == 0, "dispose failed");
+    size_t flushed = 0;
+    ASSERT(disposeCompressor(&ctx, &flushed) == 0, "dispose failed");
 
     fclose(f);
 }
@@ -223,19 +222,19 @@ static void test_compress_two_blocks()
     fill_buffer(a, 300);
     fill_buffer(b, 500);
 
-    int inSize, outSize;
+    size_t inSize, outSize;
 
     inSize = 300;
     outSize = 0;
-    ASSERT(compress(ctx, a, &inSize, &outSize) == 0, "block 1 failed");
+    ASSERT(compress(ctx, a, inSize, &outSize) == 0, "block 1 failed");
     ASSERT(outSize <= 0, "block 1 written bytes invalid");
 
     inSize = 500;
     outSize = 0;
-    ASSERT(compress(ctx, b, &inSize, &outSize) == 0, "block 2 failed");
+    ASSERT(compress(ctx, b, inSize, &outSize) == 0, "block 2 failed");
 
-    int flushed = 0;
-    ASSERT(disposeCompressor(ctx, &flushed) == 0, "dispose failed");
+    size_t flushed = 0;
+    ASSERT(disposeCompressor(&ctx, &flushed) == 0, "dispose failed");
 
     fclose(f);
 }
@@ -256,7 +255,7 @@ static void test_basic_decompression()
     printf("TEST: basic decompression...\n");
 
     const char* input  = "Hello Kanzi! Hello Compression!";
-    const int   in_len = (int)strlen(input);
+    const size_t in_len = strlen(input);
 
     // Step 1: Compress to temporary file
     FILE* fcomp = fopen("tmp_comp.bin", "wb");
@@ -275,12 +274,12 @@ static void test_basic_decompression()
     struct cContext* cctx = NULL;
     ASSERT(initCompressor(&cparams, fcomp, &cctx) == 0, "failed to init compressor");
 
-    int inSize  = in_len;
-    int outSize = 0;
-    ASSERT(compress(cctx, (const unsigned char*)input, &inSize, &outSize) == 0, "failed to compress data");
+    size_t inSize  = in_len;
+    size_t outSize = 0;
+    ASSERT(compress(cctx, (const unsigned char*)input, inSize, &outSize) == 0, "failed to compress data");
 
-    int flushed = 0;
-    ASSERT(disposeCompressor(cctx, &flushed) == 0, "failed to dispose compressor");
+    size_t flushed = 0;
+    ASSERT(disposeCompressor(&cctx, &flushed) == 0, "failed to dispose compressor");
 
     fclose(fcomp);
 
@@ -299,8 +298,8 @@ static void test_basic_decompression()
     ASSERT(initDecompressor(&dparams, fdec, &dctx) == 0, "failed to init decompressor");
 
     unsigned char outbuf[1024];
-    int readComp = 0;
-    int produced = sizeof(outbuf);
+    size_t readComp = 0;
+    size_t produced = sizeof(outbuf);
 
     ASSERT(decompress(dctx, outbuf, &readComp, &produced) == 0, "failed to decompress data");
 
@@ -308,7 +307,7 @@ static void test_basic_decompression()
     ASSERT(produced == in_len, "failed to decompress data: invalid data size");
     ASSERT(memcmp(outbuf, input, in_len) == 0, "failed to decompress data: data differ from original");
 
-    ASSERT(disposeDecompressor(dctx) == 0, "failed to dispose decompressor");
+    ASSERT(disposeDecompressor(&dctx) == 0, "failed to dispose decompressor");
 
     fclose(fdec);
 }
@@ -348,19 +347,19 @@ static void test_large_multi_block()
     unsigned char* p = data;
 
     while (remaining > 0) {
-        int chunk = (int)((remaining > cparams.blockSize) ?
-                           cparams.blockSize : remaining);
+        size_t chunk = ((remaining > cparams.blockSize) ?
+                         cparams.blockSize : remaining);
 
-        int inSize  = chunk;
-        int outSize = 0;
-        ASSERT(compress(cctx, p, &inSize, &outSize) == 0, "failed to compress data");
+        size_t inSize  = chunk;
+        size_t outSize = 0;
+        ASSERT(compress(cctx, p, inSize, &outSize) == 0, "failed to compress data");
 
         p         += chunk;
         remaining -= chunk;
     }
 
-    int flushed = 0;
-    ASSERT(disposeCompressor(cctx, &flushed) == 0, "failed to dispose compressor");
+    size_t flushed = 0;
+    ASSERT(disposeCompressor(&cctx, &flushed) == 0, "failed to dispose compressor");
 
     fclose(fcomp);
 
@@ -383,8 +382,8 @@ static void test_large_multi_block()
 
     size_t totalOut = 0;
     while (1) {
-        int inBytes  = 0;
-        int outBytes = (int)dparams.bufferSize;
+        size_t inBytes  = 0;
+        size_t outBytes = dparams.bufferSize;
 
         int r = decompress(dctx, out + totalOut, &inBytes, &outBytes);
 
@@ -400,7 +399,7 @@ static void test_large_multi_block()
     ASSERT(totalOut == size, "failed to decompress: invalid data size");
     ASSERT(memcmp(out, data, size) == 0, "failed to decompress: data differ from original");
 
-    disposeDecompressor(dctx);
+    disposeDecompressor(&dctx);
     fclose(fdec);
 
     free(out);
@@ -433,12 +432,12 @@ static void test_headerless()
     struct cContext* cctx = NULL;
     ASSERT(initCompressor(&cparams, fcomp, &cctx) == 0, "failed to init compressor");
 
-    int inSize  = (int)strlen(input);
-    int outSize = 0;
-    ASSERT(compress(cctx, (const unsigned char*)input, &inSize, &outSize) == 0, "failed to compress data");
+    size_t inSize  = strlen(input);
+    size_t outSize = 0;
+    ASSERT(compress(cctx, (const unsigned char*)input, inSize, &outSize) == 0, "failed to compress data");
 
-    int flushed = 0;
-    ASSERT(disposeCompressor(cctx, &flushed) == 0, "failed to dispose compressor");
+    size_t flushed = 0;
+    ASSERT(disposeCompressor(&cctx, &flushed) == 0, "failed to dispose compressor");
 
     fclose(fcomp);
 
@@ -464,14 +463,14 @@ static void test_headerless()
     ASSERT(initDecompressor(&dparams, fdec, &dctx) == 0, "failed to init decompressor");
 
     unsigned char outbuf[256];
-    int inBytes  = 0;
-    int outBytes = sizeof(outbuf);
+    size_t inBytes  = 0;
+    size_t outBytes = sizeof(outbuf);
 
     ASSERT(decompress(dctx, outbuf, &inBytes, &outBytes) == 0, "failed to decompress data");
     ASSERT(outBytes == (int)strlen(input), "failed to decompress data: wrong data size");
     ASSERT(memcmp(outbuf, input, strlen(input)) == 0, "failed to decompress data: data differ from original");
 
-    disposeDecompressor(dctx);
+    disposeDecompressor(&dctx);
     fclose(fdec);
 }
 

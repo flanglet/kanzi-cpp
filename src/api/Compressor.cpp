@@ -22,19 +22,17 @@ limitations under the License.
 #include "../entropy/EntropyEncoderFactory.hpp"
 
 
-#ifdef _MSC_VER
+// Note stat64/lstat64 are deprecated on MacOS/Linux
+// Use _FILE_OFFSET_BITS and stat/lstat instead
+
+#ifdef _WIN32
    #define FSTAT _fstat64
    #define STAT _stat64
 #else
-   #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__MINGW32__)
-      #define FSTAT fstat
-      #define STAT stat
-   #else
-      #define FSTAT fstat64
-      #define STAT stat64
-   #endif
+   #define _FILE_OFFSET_BITS 64
+   #define FSTAT fstat
+   #define STAT stat
 #endif
-
 
 
 #ifdef _MSC_VER
@@ -52,30 +50,94 @@ limitations under the License.
 using namespace std;
 using namespace kanzi;
 
+
+struct cContext {
+   kanzi::CompressedOutputStream* pCos;
+   unsigned int blockSize;
+   void* fos;
+};
+
+
 namespace kanzi {
    // Utility classes to map C FILEs to C++ streams
-   class ofstreambuf : public streambuf
-   {
-     public:
-        ofstreambuf (int fd) : _fd(fd) { }
+    class ofstreambuf : public streambuf
+    {
+    public:
+        ofstreambuf(int fd) : _fd(fd), _buffer(65536) {
+            // Initialize put pointers to the beginning of the buffer
+            setp(_buffer.data(), _buffer.data() + _buffer.size());
+        }
 
-     private:
-        int _fd;
+        virtual ~ofstreambuf() {
+            sync();
+        }
 
+    protected:
+        // Called when the buffer is full
         virtual int_type overflow(int_type c) {
-            if (c == EOF)
-               return EOF;
+            if (flush() == EOF) return EOF;
 
-            char d = char(c);
-            return (WRITE(_fd, &d, 1) == 1) ? c : EOF;
+            if (c != EOF) {
+                *pptr() = char(c);
+                pbump(1);
+            }
+            return c;
         }
 
-        virtual streamsize xsputn(const char* s, streamsize sz) {
-            return WRITE(_fd, s, sz);
+        // Called for explicit sync/flush
+        virtual int sync() {
+            return (flush() == EOF) ? -1 : 0;
         }
 
-        int sync() {
-            // No internal buffer — nothing to flush. Indicate success
+        // Optimized block write
+        virtual streamsize xsputn(const char* s, streamsize n) {
+            streamsize remaining = n;
+            const char* src = s;
+
+            while (remaining > 0) {
+                streamsize avail = epptr() - pptr();
+
+                if (avail >= remaining) {
+                    // Fits in current buffer
+                    memcpy(pptr(), src, remaining);
+                    pbump(int(remaining));
+                    return n;
+                }
+
+                if (avail > 0) {
+                    // Fill the rest of the buffer
+                    memcpy(pptr(), src, avail);
+                    pbump(int(avail));
+                    src += avail;
+                    remaining -= avail;
+                }
+
+                // Flush full buffer
+                if (flush() == EOF) return n - remaining;
+
+                // If the remaining chunk is large, write directly to FD to avoid double copy
+                if (remaining >= streamsize(_buffer.size())) {
+                    if (WRITE(_fd, src, remaining) != remaining) {
+                         return n - remaining; // Error
+                    }
+
+                    remaining = 0;
+                }
+            }
+
+            return n;
+        }
+
+    private:
+        int _fd;
+        std::vector<char> _buffer;
+
+        int flush() {
+            ptrdiff_t n = pptr() - pbase();
+            if (n > 0) {
+                if (WRITE(_fd, pbase(), n) != n) return EOF;
+                pbump(-int(n)); // Reset pbump by subtracting the amount written
+            }
             return 0;
         }
     };
@@ -94,7 +156,7 @@ namespace kanzi {
 
 
 // Create internal cContext and CompressedOutputStream
-int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
+ARCHIVER_API int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
 {
     if ((pData == nullptr) || (pCtx == nullptr) || (dst == nullptr))
         return Error::ERR_INVALID_PARAM;
@@ -112,19 +174,24 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         string transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(pData->transform));
         string entropy = EntropyEncoderFactory::getName(EntropyEncoderFactory::getType(pData->entropy));
 
-        if ((transform.length() >= 63) || (entropy.length() >= 15))
+        if ((transform.length() >= sizeof(pData->transform)) ||
+            (entropy.length() >= sizeof(pData->entropy))) {
             return Error::ERR_INVALID_PARAM;
+        }
 
-        snprintf(pData->transform, sizeof(pData->transform), "%s", transform.c_str());
-        snprintf(pData->entropy, sizeof(pData->entropy), "%s", entropy.c_str());
+        memset(pData->transform, 0, sizeof(pData->transform));
+        strncpy(pData->transform, transform.c_str(), sizeof(pData->transform) - 1);
+        memset(pData->entropy, 0, sizeof(pData->entropy));
+        strncpy(pData->entropy, entropy.c_str(), sizeof(pData->entropy) - 1);
+
         pData->blockSize = (pData->blockSize + 15) & -16;
 
         *pCtx = nullptr;
-        uint64 fileSize = 0;
+        size_t fileSize = 0;
         struct STAT sbuf;
 
         if (FSTAT(fd, &sbuf) == 0) {
-           fileSize = uint64(sbuf.st_size);
+           fileSize = sbuf.st_size;
         }
 
         // Create compression stream and update context
@@ -134,7 +201,7 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
         cctx->pCos = new CompressedOutputStream(*fos, pData->jobs,
                                                 pData->entropy, pData->transform,
                                                 pData->blockSize, pData->checksum,
-                                                fileSize,
+                                                uint64(fileSize),
 #ifdef CONCURRENCY_ENABLED
                                                 nullptr,
 #endif
@@ -157,30 +224,31 @@ int CDECL initCompressor(struct cData* pData, FILE* dst, struct cContext** pCtx)
     return 0;
 }
 
-int CDECL compress(struct cContext* pCtx, const unsigned char* src, int* inSize, int* outSize)
+ARCHIVER_API int CDECL compress(struct cContext* pCtx, const unsigned char* src, size_t inSize, size_t* outSize)
 {
-    if ((pCtx == nullptr) || (inSize == nullptr) || (outSize == nullptr) ||
-        (*inSize < 0) || (*inSize > int(pCtx->blockSize))) {
+    if ((pCtx == nullptr) || (outSize == nullptr)) {
+        return Error::ERR_INVALID_PARAM;
+    }
+
+    if (inSize > size_t(pCtx->blockSize)) {
         return Error::ERR_INVALID_PARAM;
     }
 
     *outSize = 0;
     int res = 0;
-    CompressedOutputStream* pCos = static_cast<CompressedOutputStream*>(pCtx->pCos);
+    CompressedOutputStream* pCos = pCtx->pCos;
 
     if (pCos == nullptr) {
-        *outSize = 0;
         return Error::ERR_INVALID_PARAM;
     }
 
     try {
         const uint64 w = pCos->getWritten();
-        pCos->write((const char*)src, streamsize(*inSize));
+        pCos->write((const char*)src, streamsize(inSize));
         res = pCos->good() ? 0 : Error::ERR_WRITE_FILE;
         *outSize = int(pCos->getWritten() - w);
     }
     catch (const exception&) {
-        *outSize = 0;
         return Error::ERR_UNKNOWN;
     }
 
@@ -188,41 +256,39 @@ int CDECL compress(struct cContext* pCtx, const unsigned char* src, int* inSize,
 }
 
 // Cleanup allocated internal data structures
-int CDECL disposeCompressor(struct cContext* pCtx, int* outSize)
+ARCHIVER_API int CDECL disposeCompressor(struct cContext** ppCtx, size_t* outSize)
 {
     *outSize = 0;
 
-    if (pCtx == nullptr)
+    if ((ppCtx == nullptr) || (*ppCtx == nullptr))
         return Error::ERR_INVALID_PARAM;
 
-    CompressedOutputStream* pCos = (CompressedOutputStream*)pCtx->pCos;
+    cContext* pCtx = *ppCtx;
+    CompressedOutputStream* pCos = pCtx->pCos;
 
     try {
         if (pCos != nullptr) {
             const uint64 w = pCos->getWritten();
             pCos->close();
-            *outSize = int(pCos->getWritten() - w);
-        }
-    }
-    catch (const exception&) {
-        return Error::ERR_UNKNOWN;
-    }
 
-    try {
-        if (pCos != nullptr)
+            if (outSize)
+               *outSize = int(pCos->getWritten() - w);
+
             delete pCos;
+        }
 
         if (pCtx->fos != nullptr)
-            delete (FileOutputStream*)pCtx->fos;
+            delete static_cast<FileOutputStream*>(pCtx->fos);
 
         pCtx->fos = nullptr;
         delete pCtx;
     }
     catch (const exception&) {
         if (pCtx->fos != nullptr)
-            delete (FileOutputStream*)pCtx->fos;
+            delete static_cast<FileOutputStream*>(pCtx->fos);
 
         delete pCtx;
+        *ppCtx = 0;
         return Error::ERR_UNKNOWN;
     }
 
