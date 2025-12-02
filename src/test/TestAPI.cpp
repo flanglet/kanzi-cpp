@@ -467,7 +467,7 @@ static void test_headerless()
     size_t outBytes = sizeof(outbuf);
 
     ASSERT(decompress(dctx, outbuf, &inBytes, &outBytes) == 0, "failed to decompress data");
-    ASSERT(outBytes == (int)strlen(input), "failed to decompress data: wrong data size");
+    ASSERT(outBytes == strlen(input), "failed to decompress data: wrong data size");
     ASSERT(memcmp(outbuf, input, strlen(input)) == 0, "failed to decompress data: data differ from original");
 
     disposeDecompressor(&dctx);

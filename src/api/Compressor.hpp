@@ -20,20 +20,22 @@ limitations under the License.
 #ifdef _WIN32
    #define CDECL __cdecl
 
-   #ifdef ARCHIVER_EXPORTS
-      #define ARCHIVER_API __declspec(dllexport)
+   #ifdef KANZI_EXPORTS
+      #define KANZI_API __declspec(dllexport)
    #else
-      #define ARCHIVER_API __declspec(dllimport)
+      #define KANZI_API __declspec(dllimport)
    #endif
 #else
    #define CDECL
-   #define ARCHIVER_API
+   #define KANZI_API
 #endif
 
 #include <stdio.h>
 
 
-#define ARCHIVER_VERSION_STRING "1.0.0"
+#define KANZI_COMP_VERSION_MAJOR 1
+#define KANZI_COMP_VERSION_MINOR 0
+#define KANZI_COMP_VERSION_PATCH 0
 
 
 #ifdef __cplusplus
@@ -64,7 +66,7 @@ limitations under the License.
     * @return the version number of the library.
     * Useful for checking for compatibility at runtime.
     */
-   ARCHIVER_API unsigned int CDECL Archiver_GetVersion(void);
+   KANZI_API unsigned int CDECL getVersion(void);
 
 
    /**
@@ -76,7 +78,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   ARCHIVER_API int CDECL initCompressor(struct cData* cParam, FILE* dst, struct cContext** ctx);
+   KANZI_API int CDECL initCompressor(struct cData* cParam, FILE* dst, struct cContext** ctx);
 
     /**
     *  Compress a block of data. The compressor must have been initialized.
@@ -89,7 +91,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   ARCHIVER_API int CDECL compress(struct cContext* ctx, const unsigned char* src, size_t inSize, size_t* outSize);
+   KANZI_API int CDECL compress(struct cContext* ctx, const unsigned char* src, size_t inSize, size_t* outSize);
 
    /**
     *  Dispose the compressor and cleanup memory resources.
@@ -100,7 +102,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   ARCHIVER_API int CDECL disposeCompressor(struct cContext** ctx, size_t* outSize);
+   KANZI_API int CDECL disposeCompressor(struct cContext** ctx, size_t* outSize);
 
 #ifdef __cplusplus
    }

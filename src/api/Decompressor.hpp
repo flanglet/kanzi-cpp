@@ -20,17 +20,21 @@ limitations under the License.
 #ifdef _WIN32
    #define CDECL __cdecl
 
-   #ifdef ARCHIVER_EXPORTS
-      #define ARCHIVER_API __declspec(dllexport)
+   #ifdef KANZI_EXPORTS
+      #define KANZI_API __declspec(dllexport)
    #else
-      #define ARCHIVER_API __declspec(dllimport)
+      #define KANZI_API __declspec(dllimport)
    #endif
 #else
    #define CDECL
-   #define ARCHIVER_API
+   #define KANZI_API
 #endif
 
 #include <stdio.h>
+
+#define KANZI_DECOMP_VERSION_MAJOR 1
+#define KANZI_DECOMP_VERSION_MINOR 0
+#define KANZI_DECOMP_VERSION_PATCH 0
 
 #ifdef __cplusplus
    extern "C" {
@@ -60,6 +64,12 @@ limitations under the License.
    };
 
    /**
+    * @return the version number of the library.
+    * Useful for checking for compatibility at runtime.
+    */
+   KANZI_API unsigned int CDECL getVersion(void);
+
+   /**
     *  Initialize the decompressor internal states.
     *
     *  @param dParam [IN|OUT] - the decompression parameters. Transform and entropy are
@@ -69,7 +79,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   ARCHIVER_API int CDECL initDecompressor(struct dData* dParam, FILE* src, struct dContext** ctx);
+   KANZI_API int CDECL initDecompressor(struct dData* dParam, FILE* src, struct dContext** ctx);
 
    /**
     *  Decompress a block of data. The decompressor must have been initialized.
@@ -82,7 +92,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   ARCHIVER_API int CDECL decompress(struct dContext* ctx, unsigned char* dst, size_t* inSize, size_t* outSize);
+   KANZI_API int CDECL decompress(struct dContext* ctx, unsigned char* dst, size_t* inSize, size_t* outSize);
 
    /**
     *  Dispose the decompressor and cleanup memory resources.
@@ -91,7 +101,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   ARCHIVER_API int CDECL disposeDecompressor(struct dContext** ctx);
+   KANZI_API int CDECL disposeDecompressor(struct dContext** ctx);
 
 #ifdef __cplusplus
    }
