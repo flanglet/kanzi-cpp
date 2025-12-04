@@ -32,10 +32,16 @@ limitations under the License.
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+   #define KANZI_NOEXCEPT noexcept
+#else
+   #define KANZI_NOEXCEPT
+#endif
 
-#define KANZI_COMP_VERSION_MAJOR 1
-#define KANZI_COMP_VERSION_MINOR 0
-#define KANZI_COMP_VERSION_PATCH 0
+
+static constexpr unsigned KANZI_COMP_VERSION_MAJOR = 1;
+static constexpr unsigned KANZI_COMP_VERSION_MINOR = 0;
+static constexpr unsigned KANZI_COMP_VERSION_PATCH = 0;
 
 
 #ifdef __cplusplus
@@ -66,7 +72,7 @@ limitations under the License.
     * @return the version number of the library.
     * Useful for checking for compatibility at runtime.
     */
-   KANZI_API unsigned int CDECL getCompressorVersion(void);
+   KANZI_API unsigned int CDECL getCompressorVersion(void) KANZI_NOEXCEPT;
 
 
    /**
@@ -78,7 +84,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   KANZI_API int CDECL initCompressor(struct cData* cParam, FILE* dst, struct cContext** ctx);
+   KANZI_API int CDECL initCompressor(struct cData* cParam, FILE* dst, struct cContext** ctx) KANZI_NOEXCEPT;
 
     /**
     *  Compress a block of data. The compressor must have been initialized.
@@ -91,7 +97,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   KANZI_API int CDECL compress(struct cContext* ctx, const unsigned char* src, size_t inSize, size_t* outSize);
+   KANZI_API int CDECL compress(struct cContext* ctx, const unsigned char* src, size_t inSize, size_t* outSize) KANZI_NOEXCEPT;
 
    /**
     *  Dispose the compressor and cleanup memory resources.
@@ -102,7 +108,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   KANZI_API int CDECL disposeCompressor(struct cContext** ctx, size_t* outSize);
+   KANZI_API int CDECL disposeCompressor(struct cContext** ctx, size_t* outSize) KANZI_NOEXCEPT;
 
 #ifdef __cplusplus
    }

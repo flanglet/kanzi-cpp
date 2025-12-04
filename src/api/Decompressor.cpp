@@ -103,7 +103,7 @@ namespace kanzi {
 
 
 // Create internal dContext and CompressedInputStream
-KANZI_API int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCtx)
+KANZI_API int CDECL initDecompressor(struct dData* pData, FILE* src, struct dContext** pCtx) KANZI_NOEXCEPT
 {
     if ((pData == nullptr) || (pCtx == nullptr) || (src == nullptr))
         return Error::ERR_INVALID_PARAM;
@@ -185,7 +185,8 @@ KANZI_API int CDECL initDecompressor(struct dData* pData, FILE* src, struct dCon
 }
 
 
-KANZI_API int CDECL decompress(struct dContext* pCtx, unsigned char* dst, size_t* inSize, size_t* outSize)
+KANZI_API int CDECL decompress(struct dContext* pCtx, unsigned char* dst, 
+                               size_t* inSize, size_t* outSize) KANZI_NOEXCEPT
 {
     if ((pCtx == nullptr) || (outSize == nullptr)) {
         return Error::ERR_INVALID_PARAM;
@@ -229,7 +230,7 @@ KANZI_API int CDECL decompress(struct dContext* pCtx, unsigned char* dst, size_t
 }
 
 // Cleanup allocated internal data structures
-KANZI_API int CDECL disposeDecompressor(struct dContext** ppCtx)
+KANZI_API int CDECL disposeDecompressor(struct dContext** ppCtx) KANZI_NOEXCEPT
 {
     if ((ppCtx == nullptr) || (*ppCtx == nullptr))
         return Error::ERR_INVALID_PARAM;
@@ -265,7 +266,7 @@ KANZI_API int CDECL disposeDecompressor(struct dContext** ppCtx)
     return 0;
 }
 
-KANZI_API unsigned int CDECL getDecompressorVersion(void)
+KANZI_API unsigned int CDECL getDecompressorVersion(void) KANZI_NOEXCEPT
 {
     return  (KANZI_DECOMP_VERSION_MAJOR << 16) |
             (KANZI_DECOMP_VERSION_MINOR << 8)  |

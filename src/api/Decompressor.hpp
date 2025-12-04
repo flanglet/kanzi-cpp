@@ -32,9 +32,17 @@ limitations under the License.
 
 #include <stdio.h>
 
-#define KANZI_DECOMP_VERSION_MAJOR 1
-#define KANZI_DECOMP_VERSION_MINOR 0
-#define KANZI_DECOMP_VERSION_PATCH 0
+#ifdef __cplusplus
+   #define KANZI_NOEXCEPT noexcept
+#else
+   #define KANZI_NOEXCEPT
+#endif
+
+
+static constexpr unsigned KANZI_DECOMP_VERSION_MAJOR  = 1;
+static constexpr unsigned KANZI_DECOMP_VERSION_MINOR  = 0;
+static constexpr unsigned KANZI_DECOMP_VERSION_PATCH  = 0;
+
 
 #ifdef __cplusplus
    extern "C" {
@@ -67,7 +75,7 @@ limitations under the License.
     * @return the version number of the library.
     * Useful for checking for compatibility at runtime.
     */
-   KANZI_API unsigned int CDECL getDecompressorVersion(void);
+   KANZI_API unsigned int CDECL getDecompressorVersion(void) KANZI_NOEXCEPT;
 
    /**
     *  Initialize the decompressor internal states.
@@ -79,7 +87,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   KANZI_API int CDECL initDecompressor(struct dData* dParam, FILE* src, struct dContext** ctx);
+   KANZI_API int CDECL initDecompressor(struct dData* dParam, FILE* src, struct dContext** ctx) KANZI_NOEXCEPT;
 
    /**
     *  Decompress a block of data. The decompressor must have been initialized.
@@ -92,7 +100,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   KANZI_API int CDECL decompress(struct dContext* ctx, unsigned char* dst, size_t* inSize, size_t* outSize);
+   KANZI_API int CDECL decompress(struct dContext* ctx, unsigned char* dst, size_t* inSize, size_t* outSize) KANZI_NOEXCEPT;
 
    /**
     *  Dispose the decompressor and cleanup memory resources.
@@ -101,7 +109,7 @@ limitations under the License.
     *
     *  @return 0 in case of success, else see error code in Error.hpp
     */
-   KANZI_API int CDECL disposeDecompressor(struct dContext** ctx);
+   KANZI_API int CDECL disposeDecompressor(struct dContext** ctx) KANZI_NOEXCEPT;
 
 #ifdef __cplusplus
    }
