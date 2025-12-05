@@ -185,7 +185,7 @@ KANZI_API int CDECL initDecompressor(struct dData* pData, FILE* src, struct dCon
 }
 
 
-KANZI_API int CDECL decompress(struct dContext* pCtx, unsigned char* dst, 
+KANZI_API int CDECL decompress(struct dContext* pCtx, unsigned char* dst,
                                size_t* inSize, size_t* outSize) KANZI_NOEXCEPT
 {
     if ((pCtx == nullptr) || (outSize == nullptr)) {

@@ -1,3 +1,4 @@
+#CC=clang
 #CXX=clang++
 OBJ_DIR = obj
 TEST_OBJ_DIR=$(OBJ_DIR)/test
@@ -15,6 +16,8 @@ endif
 ifeq ($(CONCURRENCY_DISABLED), 1)
 	CONCURRENCY_FLAG = -DCONCURRENCY_DISABLED
 endif
+
+CFLAGS=-c -std=c11 -Wall -Wextra -O3 -fPIC -pedantic -march=native
 
 ifeq ($(OS),Windows_NT)
 	CXXFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
@@ -86,7 +89,8 @@ TEST_SOURCES=test/TestEntropyCodec.cpp \
 	test/TestBWT.cpp \
 	test/TestCompressedStream.cpp \
 	test/TestDefaultBitStream.cpp \
-	test/TestTransforms.cpp
+	test/TestTransforms.cpp \
+	test/TestAPI.c
 
 APP_SOURCES=app/Kanzi.cpp \
 	app/InfoPrinter.cpp \
@@ -280,4 +284,8 @@ endif
 $(OBJ_DIR)/%.o: %.cpp
 	@$(MKDIR)
 	$(CXX) $(CXXFLAGS) $< -o $@
+
+$(OBJ_DIR)/%.o: %.c
+	@$(MKDIR)
+	$(CC) $(CFLAGS) $< -o $@
 

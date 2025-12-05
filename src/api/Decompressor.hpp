@@ -39,9 +39,9 @@ limitations under the License.
 #endif
 
 
-static constexpr unsigned KANZI_DECOMP_VERSION_MAJOR  = 1;
-static constexpr unsigned KANZI_DECOMP_VERSION_MINOR  = 0;
-static constexpr unsigned KANZI_DECOMP_VERSION_PATCH  = 0;
+#define KANZI_DECOMP_VERSION_MAJOR 1
+#define KANZI_DECOMP_VERSION_MINOR 0
+#define KANZI_DECOMP_VERSION_PATCH 0
 
 
 #ifdef __cplusplus

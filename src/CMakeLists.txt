@@ -1,16 +1,24 @@
 cmake_minimum_required(VERSION 3.10)
-project(kanzi)
+project(kanzi LANGUAGES C CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 #set(CMAKE_CXX_STANDARD_REQUIRED True)
 #set(CMAKE_CXX_COMPILER "clang++")
 
+# Set C standard (for TestAPI.c)
+set(CMAKE_C_STANDARD 11)
+#set(CMAKE_C_STANDARD_REQUIRED True)
+#set(CMAKE_C_COMPILER "clang")
+
 if(CONCURRENCY_DISABLED)
     add_definitions(-DCONCURRENCY_DISABLED)
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti")
+set(COMMON_FLAGS "-Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
+
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -95,7 +103,7 @@ set_target_properties(libkanzi_shared PROPERTIES OUTPUT_NAME "kanzi")
 #add_library(libkanzi_comp_shared SHARED ${LIB_COMP_SOURCES})
 #add_library(libkanzi_decomp_shared SHARED ${LIB_DECOMP_SOURCES})
 
-# Test executables
+# Executable target for C++
 add_executable(testBWT test/TestBWT.cpp)
 target_link_libraries(testBWT libkanzi)
 
@@ -111,8 +119,11 @@ target_link_libraries(testDefaultBitStream libkanzi)
 add_executable(testCompressedStream test/TestCompressedStream.cpp)
 target_link_libraries(testCompressedStream libkanzi)
 
-add_executable(testAPI test/TestAPI.cpp)
+# Executable target for C API test (TestAPI.c)
+add_executable(testAPI test/TestAPI.c)
 target_link_libraries(testAPI libkanzi)
+# IMPORTANT: Force use of C++ Linker because we link against C++ lib 'archon_static'
+set_target_properties(testAPI PROPERTIES LINKER_LANGUAGE CXX)
 
 # Main executable
 
