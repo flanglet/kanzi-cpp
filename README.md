@@ -12,7 +12,7 @@ Unlike most mainstream lossless compressors, Kanzi is not limited to a single co
 
 Most traditional compressors underutilize modern hardware by running single-threaded—even on machines with many cores. Kanzi, in contrast, is concurrent by design, compressing multiple blocks in parallel across threads for significant performance gains. However, it is not compatible with standard compression formats.
 
-It’s important to note that Kanzi is a data compressor, not an archiver. It includes optional checksums for verifying data integrity, but does not provide features like cross-file deduplication or data recovery mechanisms. That said, it produces a seekable bitstream—meaning one or more consecutive blocks can be decompressed independently, without needing to process the entire stream.
+It’s important to note that Kanzi is a data compressor, not an archiver. It includes optional checksums for verifying data integrity, but does not provide features like cross-file deduplication or data recovery mechanisms. That said, it produces a seekable bitstream, meaning one or more consecutive blocks can be decompressed independently, without needing to process the entire stream.
 
 For more details, see [Wiki](https://github.com/flanglet/kanzi-cpp/wiki), [Q&A](https://github.com/flanglet/kanzi-cpp/wiki/q&a) and [DeepWiki](https://deepwiki.com/flanglet/kanzi-cpp/1-overview)
 
@@ -43,13 +43,13 @@ However, there are scenarios where **Kanzi** may offer superior performance:
 
 While gzip, LZMA, brotli, and zstd are all based on LZ (Lempel-Ziv) compression, they are inherently limited in the compression ratios they can achieve. **Kanzi** goes further by incorporating **BWT (Burrows-Wheeler Transform)** and **CM (Context Modeling)**, which can outperform traditional LZ-based methods in certain cases.
 
-LZ-based compressors are ideal for software distribution, where data is compressed once and decompressed many times, thanks to their fast decompression speeds—though they tend to be slower when compressing at higher ratios. But in other scenarios—such as real-time data generation, one-off data transfers, or backups—**compression speed becomes critical**. Here, Kanzi can shine.
+LZ-based compressors are ideal for software distribution, where data is compressed once and decompressed many times, thanks to their fast decompression speeds—though they tend to be slower when compressing at higher ratios. But in other scenarios such as real-time data generation, one-off data transfers, or backups **compression speed becomes critical**. Here, Kanzi can shine.
 
 **Kanzi** also features a suite of built-in, customizable data transforms tailored for specific data types (e.g., multimedia, UTF, text, DNA, etc.), which can be selectively applied during compression for better efficiency.
 
 Furthermore, Kanzi is designed to **leverage modern multi-core CPUs** to boost performance.
 
-Finally, **extensibility** is a key strength: implementing new transforms or entropy codecs—whether for experimentation or to improve performance on niche data types—is straightforward and developer-friendly.
+Finally, **extensibility** is a key strength: implementing new transforms or entropy codecs, whether for experimentation or to improve performance on niche data types, is straightforward and developer-friendly.
 
 
 
@@ -178,7 +178,7 @@ install:        installs libraries, headers and executable
 uninstall:      removes installed libraries, headers and executable
 ```
 
-For those who prefer cmake, run the following commands from the src directory:
+For those who prefer cmake, run the following commands from the top directory:
 ```
 mkdir build
 cd build
