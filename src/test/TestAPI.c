@@ -253,7 +253,8 @@ static void test_basic_decompression(void)
     const size_t in_len = strlen(input);
 
     // Step 1: Compress to temporary file
-    FILE* fcomp = fopen("tmp_comp.bin", "wb");
+    const char* f_name = "tmp_comp.bin";
+    FILE* fcomp = fopen(f_name, "wb");
     ASSERT(fcomp != NULL, "failed to open file");
 
     struct cData cparams;
@@ -279,7 +280,7 @@ static void test_basic_decompression(void)
     fclose(fcomp);
 
     // Step 2: Decompress from temporary file
-    FILE* fdec = fopen("tmp_comp.bin", "rb");
+    FILE* fdec = fopen(f_name, "rb");
     ASSERT(fdec != NULL, "failed to open file for reading");
 
     struct dData dparams;
@@ -305,6 +306,7 @@ static void test_basic_decompression(void)
     ASSERT(disposeDecompressor(&dctx) == 0, "failed to dispose decompressor");
 
     fclose(fdec);
+    remove(f_name);
 }
 
 // Decompress much larger data (multi-block)
@@ -319,10 +321,12 @@ static void test_large_multi_block(void)
     for (size_t i = 0; i < size; i++)
         data[i] = (unsigned char)(i * 7);
 
-    write_file("tmp_large_input.bin", data, size);
+    const char* f_name = "tmp_large_input.bin";
+    write_file(f_name, data, size);
 
     // Compress
-    FILE* fcomp = fopen("tmp_large_comp.bin", "wb");
+    const char* fcomp_name = "tmp_large_comp.bin";
+    FILE* fcomp = fopen(fcomp_name, "wb");
     ASSERT(fcomp, "failed to open file for writing");
 
     struct cData cparams;
@@ -359,7 +363,7 @@ static void test_large_multi_block(void)
     fclose(fcomp);
 
     // Decompress
-    FILE* fdec = fopen("tmp_large_comp.bin", "rb");
+    FILE* fdec = fopen(fcomp_name, "rb");
     ASSERT(fdec, "failed to open file for reading");
 
     struct dData dparams;
@@ -397,6 +401,9 @@ static void test_large_multi_block(void)
     disposeDecompressor(&dctx);
     fclose(fdec);
 
+    remove(f_name);
+    remove(fcomp_name);
+
     free(out);
     free(data);
 }
@@ -408,10 +415,12 @@ static void test_headerless(void)
 
     const char* input = "HEADERLESS MODE IS ACTIVE";
 
-    write_file("tmp_hl_input.bin", (const unsigned char*)input, strlen(input));
+    const char* f_name = "tmp_hl_input.bin";
+    write_file(f_name, (const unsigned char*)input, strlen(input));
 
     // Compress with headerless = 1
-    FILE* fcomp = fopen("tmp_hl_comp.bin", "wb");
+    const char* fcomp_name = "tmp_hl_comp.bin";
+    FILE* fcomp = fopen(fcomp_name, "wb");
     ASSERT(fcomp, "failed to open file for writing");
 
     struct cData cparams;
@@ -437,7 +446,7 @@ static void test_headerless(void)
     fclose(fcomp);
 
     // Decompress with headerless = 1
-    FILE* fdec = fopen("tmp_hl_comp.bin", "rb");
+    FILE* fdec = fopen(fcomp_name, "rb");
     ASSERT(fdec, "failed to open file for reading");
 
     struct dData dparams;
@@ -467,6 +476,9 @@ static void test_headerless(void)
 
     disposeDecompressor(&dctx);
     fclose(fdec);
+
+    remove(f_name);
+    remove(fcomp_name);
 }
 
 int main(void)
