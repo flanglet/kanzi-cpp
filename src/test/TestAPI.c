@@ -22,33 +22,13 @@
 #ifndef PORTABLE_FMEMOPEN_H
 #define PORTABLE_FMEMOPEN_H
 
-#if defined(__APPLE__) || defined(__MACH__)
+#if defined(_WIN32)
 
-// macOS does not have fmemopen, but has funopen
-static inline FILE* portable_fmemopen(void* buf, size_t size, const char* mode)
-{
-    (void)mode; // Only "wb" or "rb" used in tests
-
-    // Simple implementation: use a temporary file and preload the buffer
-    FILE* f = tmpfile();
-    if (!f)
-        return NULL;
-
-    if (buf && size > 0 && strchr(mode, 'w') == NULL) {
-        // reading: preload buffer
-        fwrite(buf, 1, size, f);
-        rewind(f);
-    }
-
-    return f;
-}
-
-#elif defined(_WIN32)
-
-// Windows also has no fmemopen
+// Windows has no fmemopen
 static inline FILE* portable_fmemopen(void* buf, size_t size, const char* mode)
 {
     FILE* f = tmpfile();
+
     if (!f)
         return NULL;
 
@@ -62,10 +42,26 @@ static inline FILE* portable_fmemopen(void* buf, size_t size, const char* mode)
 
 #else
 
-// Linux/glibc supports real fmemopen
+// macOS does not have fmemopen, but has funopen
+// BSD may not have fmemopen
+// Most Linux distros do have fmemopen
 static inline FILE* portable_fmemopen(void* buf, size_t size, const char* mode)
 {
-    return fmemopen(buf, size, mode);
+    (void)mode; // Only "wb" or "rb" used in tests
+
+    // Simple implementation: use a temporary file and preload the buffer
+    FILE* f = tmpfile();
+
+    if (!f)
+        return NULL;
+
+    if (buf && size > 0 && strchr(mode, 'w') == NULL) {
+        // reading: preload buffer
+        fwrite(buf, 1, size, f);
+        rewind(f);
+    }
+
+    return f;
 }
 
 #endif
