@@ -18,7 +18,7 @@ endif()
 set(COMMON_FLAGS "-Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -fno-rtti")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
-
+set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -26,69 +26,69 @@ endif()
 
 # Source files
 set(LIB_COMMON_SOURCES
-    Global.cpp
-    Event.cpp
-    entropy/EntropyUtils.cpp
-    entropy/HuffmanCommon.cpp
-    entropy/CMPredictor.cpp
-    entropy/TPAQPredictor.cpp
-    transform/AliasCodec.cpp
-    transform/BWT.cpp
-    transform/BWTS.cpp
-    transform/DivSufSort.cpp
-    transform/SBRT.cpp
-    transform/BWTBlockCodec.cpp
-    transform/LZCodec.cpp
-    transform/FSDCodec.cpp
-    transform/ROLZCodec.cpp
-    transform/RLT.cpp
-    transform/SRT.cpp
-    transform/TextCodec.cpp
-    transform/UTFCodec.cpp
-    transform/EXECodec.cpp
-    transform/ZRLT.cpp
+    ${SRC_DIR}/Global.cpp
+    ${SRC_DIR}/Event.cpp
+    ${SRC_DIR}/entropy/EntropyUtils.cpp
+    ${SRC_DIR}/entropy/HuffmanCommon.cpp
+    ${SRC_DIR}/entropy/CMPredictor.cpp
+    ${SRC_DIR}/entropy/TPAQPredictor.cpp
+    ${SRC_DIR}/transform/AliasCodec.cpp
+    ${SRC_DIR}/transform/BWT.cpp
+    ${SRC_DIR}/transform/BWTS.cpp
+    ${SRC_DIR}/transform/DivSufSort.cpp
+    ${SRC_DIR}/transform/SBRT.cpp
+    ${SRC_DIR}/transform/BWTBlockCodec.cpp
+    ${SRC_DIR}/transform/LZCodec.cpp
+    ${SRC_DIR}/transform/FSDCodec.cpp
+    ${SRC_DIR}/transform/ROLZCodec.cpp
+    ${SRC_DIR}/transform/RLT.cpp
+    ${SRC_DIR}/transform/SRT.cpp
+    ${SRC_DIR}/transform/TextCodec.cpp
+    ${SRC_DIR}/transform/UTFCodec.cpp
+    ${SRC_DIR}/transform/EXECodec.cpp
+    ${SRC_DIR}/transform/ZRLT.cpp
 )
 
 set(LIB_COMP_SOURCES
-    api/Compressor.cpp
-    bitstream/DebugOutputBitStream.cpp
-    bitstream/DefaultOutputBitStream.cpp
-    io/CompressedOutputStream.cpp
-    entropy/ANSRangeEncoder.cpp
-    entropy/BinaryEntropyEncoder.cpp
-    entropy/ExpGolombEncoder.cpp
-    entropy/FPAQEncoder.cpp
-    entropy/HuffmanEncoder.cpp
-    entropy/RangeEncoder.cpp
+    ${SRC_DIR}/api/Compressor.cpp
+    ${SRC_DIR}/bitstream/DebugOutputBitStream.cpp
+    ${SRC_DIR}/bitstream/DefaultOutputBitStream.cpp
+    ${SRC_DIR}/io/CompressedOutputStream.cpp
+    ${SRC_DIR}/entropy/ANSRangeEncoder.cpp
+    ${SRC_DIR}/entropy/BinaryEntropyEncoder.cpp
+    ${SRC_DIR}/entropy/ExpGolombEncoder.cpp
+    ${SRC_DIR}/entropy/FPAQEncoder.cpp
+    ${SRC_DIR}/entropy/HuffmanEncoder.cpp
+    ${SRC_DIR}/entropy/RangeEncoder.cpp
 )
 
 set(LIB_DECOMP_SOURCES
-    api/Decompressor.cpp
-    bitstream/DebugInputBitStream.cpp
-    bitstream/DefaultInputBitStream.cpp
-    io/CompressedInputStream.cpp
-    entropy/ANSRangeDecoder.cpp
-    entropy/BinaryEntropyDecoder.cpp
-    entropy/ExpGolombDecoder.cpp
-    entropy/FPAQDecoder.cpp
-    entropy/HuffmanDecoder.cpp
-    entropy/RangeDecoder.cpp
+    ${SRC_DIR}/api/Decompressor.cpp
+    ${SRC_DIR}/bitstream/DebugInputBitStream.cpp
+    ${SRC_DIR}/bitstream/DefaultInputBitStream.cpp
+    ${SRC_DIR}/io/CompressedInputStream.cpp
+    ${SRC_DIR}/entropy/ANSRangeDecoder.cpp
+    ${SRC_DIR}/entropy/BinaryEntropyDecoder.cpp
+    ${SRC_DIR}/entropy/ExpGolombDecoder.cpp
+    ${SRC_DIR}/entropy/FPAQDecoder.cpp
+    ${SRC_DIR}/entropy/HuffmanDecoder.cpp
+    ${SRC_DIR}/entropy/RangeDecoder.cpp
 )
 
 set(TEST_SOURCES
-    test/TestEntropyCodec.cpp
-    test/TestBWT.cpp
-    test/TestCompressedStream.cpp
-    test/TestDefaultBitStream.cpp
-    test/TestTransforms.cpp
-    test/TestAPI.cpp
+    ${SRC_DIR}/test/TestEntropyCodec.cpp
+    ${SRC_DIR}/test/TestBWT.cpp
+    ${SRC_DIR}/test/TestCompressedStream.cpp
+    ${SRC_DIR}/test/TestDefaultBitStream.cpp
+    ${SRC_DIR}/test/TestTransforms.cpp
+    ${SRC_DIR}/test/TestAPI.cpp
 )
 
 set(APP_SOURCES
-    app/Kanzi.cpp
-    app/InfoPrinter.cpp
-    app/BlockCompressor.cpp
-    app/BlockDecompressor.cpp
+    ${SRC_DIR}/app/Kanzi.cpp
+    ${SRC_DIR}/app/InfoPrinter.cpp
+    ${SRC_DIR}/app/BlockCompressor.cpp
+    ${SRC_DIR}/app/BlockDecompressor.cpp
 )
 
 # Libraries
@@ -104,23 +104,23 @@ set_target_properties(libkanzi_shared PROPERTIES OUTPUT_NAME "kanzi")
 #add_library(libkanzi_decomp_shared SHARED ${LIB_DECOMP_SOURCES})
 
 # Executable target for C++
-add_executable(testBWT test/TestBWT.cpp)
+add_executable(testBWT ${SRC_DIR}/test/TestBWT.cpp)
 target_link_libraries(testBWT libkanzi)
 
-add_executable(testTransforms test/TestTransforms.cpp)
+add_executable(testTransforms ${SRC_DIR}/test/TestTransforms.cpp)
 target_link_libraries(testTransforms libkanzi)
 
-add_executable(testEntropyCodec test/TestEntropyCodec.cpp)
+add_executable(testEntropyCodec ${SRC_DIR}/test/TestEntropyCodec.cpp)
 target_link_libraries(testEntropyCodec libkanzi)
 
-add_executable(testDefaultBitStream test/TestDefaultBitStream.cpp)
+add_executable(testDefaultBitStream ${SRC_DIR}/test/TestDefaultBitStream.cpp)
 target_link_libraries(testDefaultBitStream libkanzi)
 
-add_executable(testCompressedStream test/TestCompressedStream.cpp)
+add_executable(testCompressedStream ${SRC_DIR}/test/TestCompressedStream.cpp)
 target_link_libraries(testCompressedStream libkanzi)
 
 # Executable target for C API test (TestAPI.c)
-add_executable(testAPI test/TestAPI.c)
+add_executable(testAPI ${SRC_DIR}/test/TestAPI.c)
 target_link_libraries(testAPI libkanzi)
 # IMPORTANT: Force use of C++ Linker because we link against C++ lib 'archon_static'
 set_target_properties(testAPI PROPERTIES LINKER_LANGUAGE CXX)
