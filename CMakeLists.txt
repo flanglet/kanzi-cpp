@@ -141,10 +141,35 @@ set_target_properties(kanzi PROPERTIES
 add_executable(kanzi_static ${APP_SOURCES})
 target_link_libraries(kanzi_static libkanzi)
 
-# Custom target to build all tests
-add_custom_target(test
+# Custom target to build all tests (Named to avoid conflict with CTest 'make test')
+add_custom_target(build_tests
     DEPENDS testBWT testTransforms testEntropyCodec testDefaultBitStream testCompressedStream testAPI
 )
+
+# --- CTest Configuration ---
+enable_testing()
+
+if(DEFINED ENV{TMPDIR})
+    set(SYSTEM_TEMP_DIR "$ENV{TMPDIR}") # Linux/macOS standard
+elseif(DEFINED ENV{TEMP})
+    set(SYSTEM_TEMP_DIR "$ENV{TEMP}")   # Windows standard
+elseif(DEFINED ENV{TMP})
+    set(SYSTEM_TEMP_DIR "$ENV{TMP}")    # Windows fallback
+else()
+    set(SYSTEM_TEMP_DIR "/tmp")         # Fallback default
+endif()
+
+file(TO_CMAKE_PATH "${SYSTEM_TEMP_DIR}" SYSTEM_TEMP_DIR)
+
+# Register executables as CTest tests
+# Syntax: add_test(NAME <NameInReport> COMMAND <TargetName>)
+add_test(NAME BWT COMMAND testBWT -noperf)
+add_test(NAME Transforms COMMAND testTransforms -type=all -noperf)
+add_test(NAME EntropyCodec COMMAND testEntropyCodec -type=all -noperf)
+add_test(NAME DefaultBitStream COMMAND testDefaultBitStream ${SYSTEM_TEMP_DIR}/testDefaultBitStream.tmp -noperf)
+add_test(NAME CompressedStream COMMAND testCompressedStream)
+add_test(NAME API COMMAND testAPI)
+
 # Custom target to build static libraries
 add_custom_target(static_lib
     DEPENDS libkanzi #libkanzi_comp libkanzi_decomp

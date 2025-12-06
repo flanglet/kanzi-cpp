@@ -270,16 +270,29 @@ int testBWTSpeed(bool isBWT, int iter, bool isSmallSize)
 }
 
 #ifdef __GNUG__
-int main()
+int main(int argc, const char* argv[])
 #else
-int TestBWT_main()
+int TestBWT_main(int argc, const char* argv[])
 #endif
 {
+    bool doPerf = true;
+
+    if (argc > 1) {
+        string str = argv[1];
+        transform(str.begin(), str.end(), str.begin(), ::toupper);
+        doPerf = str != "-NOPERF";
+    }
+
     int res = 0;
     res |= testBWTCorrectness(true);
     res |= testBWTCorrectness(false);
-    res |= testBWTSpeed(true, 200, true); // test MergeTPSI inverse
-    res |= testBWTSpeed(true, 5, false); // test BiPSIv2 inverse
-    res |= testBWTSpeed(false, 200, true);
+
+    if (doPerf) {
+       res |= testBWTSpeed(true, 200, true); // test MergeTPSI inverse
+       res |= testBWTSpeed(true, 5, false); // test BiPSIv2 inverse
+       res |= testBWTSpeed(false, 200, true);
+    }
+
     return res;
 }
+
