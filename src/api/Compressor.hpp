@@ -33,7 +33,12 @@ limitations under the License.
 #include <stdio.h>
 
 #ifdef __cplusplus
-   #define KANZI_NOEXCEPT noexcept
+    #if __cplusplus >= 201103L
+       // C++ 11 or higher
+       #define KANZI_NOEXCEPT noexcept
+    #else
+       #define KANZI_NOEXCEPT
+    #endif
 #else
    #define KANZI_NOEXCEPT
 #endif
