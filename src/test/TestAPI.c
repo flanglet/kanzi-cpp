@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "../api/Compressor.hpp"
 #include "../api/Decompressor.hpp"
