@@ -339,9 +339,6 @@ void Global::computeJobsPerTask(int jobsPerTask[], int jobs, int tasks)
         jobsPerTask[n]++;
         r--;
         n++;
-
-        if (n == tasks)
-            n = 0;
     }
 }
 

@@ -81,13 +81,11 @@ class Task {
    class ThreadPool FINAL {
    public:
        ThreadPool(int threads = 8);
+
        template<class F, class... Args>
-#if __cplusplus >= 201703L // result_of deprecated from C++17
-       std::future<typename std::invoke_result_t<F, Args...>> schedule(F&& f, Args&&... args);
-#else
-       std::future<typename std::result_of<F(Args...)>::type> schedule(F&& f, Args&&... args);
-#endif
-       ~ThreadPool();
+       auto schedule(F&& f, Args&&... args);
+
+       ~ThreadPool() noexcept;
 
    private:
        std::vector<std::thread> _workers;
@@ -101,7 +99,7 @@ class Task {
    inline ThreadPool::ThreadPool(int threads)
        :   _stop(false)
    {
-       if ((threads == 0) || (threads > 1024))
+       if ((threads <= 0) || (threads > 1024))
            throw std::invalid_argument("The number of threads must be in [1..1024]");
 
        // Start and run threads
@@ -116,9 +114,9 @@ class Task {
                        {
                            std::unique_lock<std::mutex> lock(_mutex);
                            _condition.wait(lock,
-                               [this] { return (_stop == true) || (_tasks.size() > 0); });
+                               [this] { return _stop || !_tasks.empty(); });
 
-                           if (_stop == true)
+                           if (_stop && _tasks.empty())
                                return;
 
                            task = std::move(_tasks.front());
@@ -133,26 +131,24 @@ class Task {
 
 
    template<class F, class... Args>
-#if __cplusplus >= 201703L // result_of deprecated from C++17
-   std::future<typename std::invoke_result_t<F, Args...> > ThreadPool::schedule(F&& f, Args&&... args)
+   auto ThreadPool::schedule(F&& f, Args&&... args)
    {
-       using return_type = typename std::invoke_result<F, Args...>::type;
-#else
-   std::future<typename std::result_of<F(Args...)>::type> ThreadPool::schedule(F&& f, Args&&... args)
-   {
-       using return_type = typename std::result_of<F(Args...)>::type;
-#endif
+       using return_type = std::invoke_result_t<F, Args...>;
 
-       auto task = std::make_shared< std::packaged_task<return_type()> >(
-               std::bind(std::forward<F>(f), std::forward<Args>(args)...)
-           );
+       auto task = std::make_shared<std::packaged_task<return_type()>>(
+           [fn = std::forward<F>(f),
+            tup = std::make_tuple(std::forward<Args>(args)...)]() mutable
+           {
+               return std::apply(std::move(fn), std::move(tup));
+           }
+       );
 
        std::future<return_type> res = task->get_future();
 
        {
            std::unique_lock<std::mutex> lock(_mutex);
 
-           if (_stop == true)
+           if (_stop)
                throw std::runtime_error("ThreadPool stopped");
 
            _tasks.emplace([task](){ (*task)(); });
@@ -164,7 +160,7 @@ class Task {
 
 
    // the destructor joins all threads
-   inline ThreadPool::~ThreadPool()
+   inline ThreadPool::~ThreadPool() noexcept
    {
        {
            std::unique_lock<std::mutex> lock(_mutex);
