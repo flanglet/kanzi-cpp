@@ -24,7 +24,7 @@ limitations under the License.
     #include <variant>
 #endif
 
-#include "types.hpp"
+#include "concurrent.hpp" // definition of CONCURRENCY_ENABLED
 
 namespace kanzi {
 
