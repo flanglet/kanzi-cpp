@@ -210,15 +210,12 @@ namespace kanzi
 
        bool operator() (const FileData& f1, const FileData& f2) const
        {
-           if (_sortBySize == false)
-              return f1.fullPath() < f2.fullPath();
-
            // First, compare parent directory paths
            if (f1._path != f2._path)
               return f1._path < f2._path;
 
            // Then compare file sizes (decreasing order)
-           return f1._size > f2._size;
+           return _sortBySize ? f1._size > f2._size : f1._name < f2._name;
        }
    };
 
