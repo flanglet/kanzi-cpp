@@ -56,6 +56,7 @@ limitations under the License.
       #elif __GNUC__
           #define CPU_PAUSE() __builtin_ia32_pause()
       #elif _MSC_VER
+          #include <immintrin.h>
           #define CPU_PAUSE() _mm_pause()
       #else
          #define CPU_PAUSE() std::this_thread::yield();
@@ -83,7 +84,11 @@ class Task {
        ThreadPool(int threads = 8);
 
        template<class F, class... Args>
-       auto schedule(F&& f, Args&&... args);
+#if __cplusplus >= 201703L // result_of deprecated from C++17
+       std::future<typename std::invoke_result_t<F, Args...>> schedule(F&& f, Args&&... args);
+#else
+       std::future<typename std::result_of<F(Args...)>::type> schedule(F&& f, Args&&... args);
+#endif
 
        ~ThreadPool() noexcept;
 
@@ -131,24 +136,26 @@ class Task {
 
 
    template<class F, class... Args>
-   auto ThreadPool::schedule(F&& f, Args&&... args)
+#if __cplusplus >= 201703L // result_of deprecated from C++17
+   std::future<typename std::invoke_result_t<F, Args...> > ThreadPool::schedule(F&& f, Args&&... args)
    {
-       using return_type = std::invoke_result_t<F, Args...>;
+       using return_type = typename std::invoke_result<F, Args...>::type;
+#else
+   std::future<typename std::result_of<F(Args...)>::type> ThreadPool::schedule(F&& f, Args&&... args)
+   {
+       using return_type = typename std::result_of<F(Args...)>::type;
+#endif
 
-       auto task = std::make_shared<std::packaged_task<return_type()>>(
-           [fn = std::forward<F>(f),
-            tup = std::make_tuple(std::forward<Args>(args)...)]() mutable
-           {
-               return std::apply(std::move(fn), std::move(tup));
-           }
-       );
+       auto task = std::make_shared< std::packaged_task<return_type()> >(
+               std::bind(std::forward<F>(f), std::forward<Args>(args)...)
+           );
 
        std::future<return_type> res = task->get_future();
 
        {
            std::unique_lock<std::mutex> lock(_mutex);
 
-           if (_stop)
+           if (_stop == true)
                throw std::runtime_error("ThreadPool stopped");
 
            _tasks.emplace([task](){ (*task)(); });
@@ -182,7 +189,7 @@ class Task {
 
         ~BoundedConcurrentQueue() { }
 
-        T* get() { int idx = _index.fetch_add(1); return (idx >= _size) ? nullptr : &_data[idx]; }
+        T* get() { int idx = _index.fetch_add(1, std::memory_order_acq_rel); return (idx >= _size) ? nullptr : &_data[idx]; }
 
         void clear() { _index.store(_size); }
 
