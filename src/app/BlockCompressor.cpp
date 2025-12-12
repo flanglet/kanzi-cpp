@@ -174,7 +174,7 @@ int BlockCompressor::compress(uint64& outputSize)
     Printer log(cout);
     stringstream ss;
     string upperInputName = _inputName;
-    transform(upperInputName.begin(), upperInputName.end(), upperInputName.begin(), ::toupper);
+    transform(upperInputName.begin(), upperInputName.end(), upperInputName.begin(), safeToUpper);
     bool isStdIn = upperInputName == "STDIN";
 
     if (isStdIn == false) {
@@ -205,7 +205,7 @@ int BlockCompressor::compress(uint64& outputSize)
     }
 
     string upperOutputName = _outputName;
-    transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), ::toupper);
+    transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), safeToUpper);
     bool isStdOut = upperOutputName == "STDOUT";
 
     // Limit verbosity level when output is stdout
@@ -236,10 +236,10 @@ int BlockCompressor::compress(uint64& outputSize)
 
         ss << "Block checksum: " << ckSize << endl;
         string etransform = _transform;
-        transform(etransform.begin(), etransform.end(), etransform.begin(), ::toupper);
+        transform(etransform.begin(), etransform.end(), etransform.begin(), safeToUpper);
         ss << "Using " << (etransform == "NONE" ? "no" : _transform) << " transform (stage 1)" << endl;
         string ecodec = _codec;
-        transform(ecodec.begin(), ecodec.end(), ecodec.begin(), ::toupper);
+        transform(ecodec.begin(), ecodec.end(), ecodec.begin(), safeToUpper);
         ss << "Using " << (ecodec == "NONE" ? "no" : _codec) << " entropy codec (stage 2)" << endl;
         ss << "Using " << _jobs << " job" << (_jobs > 1 ? "s" : "") << endl;
         log.print(ss.str(), true);
@@ -607,7 +607,7 @@ T FileCompressTask<T>::run()
 
     try {
         string str = outputName;
-        transform(str.begin(), str.end(), str.begin(), ::toupper);
+        transform(str.begin(), str.end(), str.begin(), safeToUpper);
 
         if (str == "NONE") {
             os = new NullOutputStream();
@@ -706,7 +706,7 @@ T FileCompressTask<T>::run()
 
     try {
         string str = inputName;
-        transform(str.begin(), str.end(), str.begin(), ::toupper);
+        transform(str.begin(), str.end(), str.begin(), safeToUpper);
 
         if (str == "STDIN") {
             _is = &cin;

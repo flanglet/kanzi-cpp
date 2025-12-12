@@ -75,6 +75,12 @@ inline std::string& ltrim(std::string& s)
     return s;
 }
 
+// Ensures that the function works on platforms where char is signed
+inline char safeToUpper(char c)
+{
+    return static_cast<char>(::toupper(static_cast<unsigned char>(c)));
+}
+
 // trim from both ends of string (right then left)
 inline std::string& trim(std::string& s)
 {

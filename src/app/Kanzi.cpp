@@ -500,7 +500,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
         }
         else {
            string str = outputName;
-           transform(str.begin(), str.end(), str.begin(), ::toupper);
+           transform(str.begin(), str.end(), str.begin(), safeToUpper);
 
            if (str == "STDOUT") {
                verbose = 0;
@@ -742,7 +742,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
                 }
 
                 codec = arg;
-                transform(codec.begin(), codec.end(), codec.begin(), ::toupper);
+                transform(codec.begin(), codec.end(), codec.begin(), safeToUpper);
             }
 
             ctx = -1;
@@ -770,7 +770,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
                 }
 
                 transf = arg;
-                transform(transf.begin(), transf.end(), transf.begin(), ::toupper);
+                transform(transf.begin(), transf.end(), transf.begin(), safeToUpper);
             }
 
             while ((transf.length() > 0) && (transf[0] == '+')) {
@@ -855,7 +855,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
                 continue;
             }
 
-            transform(arg.begin(), arg.end(), arg.begin(), ::toupper);
+            transform(arg.begin(), arg.end(), arg.begin(), safeToUpper);
 
             if (arg == "AUTO") {
                 autoBlockSize = 1;

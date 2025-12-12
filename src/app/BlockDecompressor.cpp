@@ -84,7 +84,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     Printer log(cout);
     stringstream ss;
     string upperInputName = _inputName;
-    transform(upperInputName.begin(), upperInputName.end(), upperInputName.begin(), ::toupper);
+    transform(upperInputName.begin(), upperInputName.end(), upperInputName.begin(), safeToUpper);
     bool isStdIn = upperInputName == "STDIN";
 
     // In mode "info", we want to display the information in the stream header only.
@@ -134,7 +134,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
     }
 
     string upperOutputName = _outputName;
-    transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), ::toupper);
+    transform(upperOutputName.begin(), upperOutputName.end(), upperOutputName.begin(), safeToUpper);
     bool isStdOut = upperOutputName == "STDOUT";
 
     // Limit verbosity level when output is stdout
@@ -280,7 +280,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
             string oName = formattedOutName;
             string iName = files[i].fullPath();
             upperInputName = iName;
-            transform(upperInputName.begin(), upperInputName.end(), upperInputName.begin(), ::toupper);
+            transform(upperInputName.begin(), upperInputName.end(), upperInputName.begin(), safeToUpper);
 
             if (oName.length() == 0) {
                 oName = iName;
@@ -477,7 +477,7 @@ T FileDecompressTask<T>::run()
     }
 
     string str = outputName;
-    transform(str.begin(), str.end(), str.begin(), ::toupper);
+    transform(str.begin(), str.end(), str.begin(), safeToUpper);
 
 #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
     bool checkOutputSize = str != "NUL";
@@ -580,7 +580,7 @@ T FileDecompressTask<T>::run()
 
     try {
         str = inputName;
-        transform(str.begin(), str.end(), str.begin(), ::toupper);
+        transform(str.begin(), str.end(), str.begin(), safeToUpper);
 
         if (str == "STDIN") {
             is = &cin;
