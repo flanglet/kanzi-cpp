@@ -118,8 +118,11 @@ namespace kanzi {
 
        int decompress(uint64& read);
 
+       // Register a copy of the listener
+       // Not thread safe
        bool addListener(Listener<Event>& bl);
 
+       // Not thread safe
        bool removeListener(Listener<Event>& bl);
 
        void dispose() const {};

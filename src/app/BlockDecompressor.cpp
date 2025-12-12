@@ -214,7 +214,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
             inputIsDir = false;
 
             if ((formattedOutName.size() != 0) && (specialOutput == false)) {
-                if ((STAT(formattedOutName.c_str(), &buffer) != 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
+                if ((STAT(formattedOutName.c_str(), &buffer) == 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
                     cerr << "Output must be a file (or 'NONE')" << endl;
                     return Error::ERR_CREATE_FILE;
                 }
@@ -412,8 +412,8 @@ bool BlockDecompressor::removeListener(Listener<Event>& bl)
 
 void BlockDecompressor::notifyListeners(vector<Listener<Event>*>& listeners, const Event& evt)
 {
-    for (vector<Listener<Event>*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
-        (*it)->processEvent(evt);
+    for (size_t i = 0; i < listeners.size(); i++)
+       listeners[i]->processEvent(evt);
 }
 
 template <class T>
@@ -503,7 +503,7 @@ T FileDecompressTask<T>::run()
             if (samePaths(inputName, outputName)) {
                 stringstream sserr;
                 sserr << "The input and output files must be different";
-                return T(Error::ERR_CREATE_FILE, 0, sserr.str().c_str());
+                return T(Error::ERR_CREATE_FILE, 0, sserr.str());
             }
 
             struct STAT buffer;
@@ -512,14 +512,14 @@ T FileDecompressTask<T>::run()
                 if ((buffer.st_mode & S_IFDIR) != 0) {
                     stringstream sserr;
                     sserr << "The output file is a directory";
-                    return T(Error::ERR_OUTPUT_IS_DIR, 0, sserr.str().c_str());
+                    return T(Error::ERR_OUTPUT_IS_DIR, 0, sserr.str());
                 }
 
                 if (overwrite == false) {
                     stringstream sserr;
                     sserr << "File '" << outputName << "' exists and the 'force' command "
                           << "line option has not been provided";
-                    return T(Error::ERR_OVERWRITE_FILE, 0, sserr.str().c_str());
+                    return T(Error::ERR_OVERWRITE_FILE, 0, sserr.str());
                 }
 
                 // Delete output file to ensure consistent performance
@@ -558,7 +558,7 @@ T FileDecompressTask<T>::run()
                     if (errMsg != "")
                         sserr << ": " << errMsg;
 
-                    return T(Error::ERR_CREATE_FILE, 0, sserr.str().c_str());
+                    return T(Error::ERR_CREATE_FILE, 0, sserr.str());
                 }
             }
 
@@ -567,7 +567,7 @@ T FileDecompressTask<T>::run()
         catch (const exception& e) {
             stringstream sserr;
             sserr << "Cannot open output file '" << outputName << "' for writing: " << e.what();
-            return T(Error::ERR_CREATE_FILE, 0, sserr.str().c_str());
+            return T(Error::ERR_CREATE_FILE, 0, sserr.str());
         }
     }
 
@@ -593,7 +593,7 @@ T FileDecompressTask<T>::run()
                 CLEANUP_DECOMP_OS
                 stringstream sserr;
                 sserr << "Cannot open input file '" << inputName << "'";
-                return T(Error::ERR_OPEN_FILE, 0, sserr.str().c_str());
+                return T(Error::ERR_OPEN_FILE, 0, sserr.str());
             }
 
             is = ifs;
@@ -610,7 +610,7 @@ T FileDecompressTask<T>::run()
             CLEANUP_DECOMP_OS
             stringstream sserr;
             sserr << "Cannot create compressed stream: " << e.what();
-            return T(Error::ERR_CREATE_DECOMPRESSOR, 0, sserr.str().c_str());
+            return T(Error::ERR_CREATE_DECOMPRESSOR, 0, sserr.str());
         }
     }
     catch (const exception& e) {
@@ -618,7 +618,7 @@ T FileDecompressTask<T>::run()
         CLEANUP_DECOMP_OS
         stringstream sserr;
         sserr << "Cannot open input file '" << inputName << "': " << e.what();
-        return T(Error::ERR_OPEN_FILE, _cis->getRead(), sserr.str().c_str());
+        return T(Error::ERR_OPEN_FILE, _cis->getRead(), sserr.str());
     }
 
     Clock stopClock;
@@ -637,14 +637,14 @@ T FileDecompressTask<T>::run()
             if (decoded < 0) {
                 dispose();
                 const uint64 d = _cis->getRead();
+                delete _cis;
+                _cis = nullptr;
                 CLEANUP_DECOMP_IS
                 CLEANUP_DECOMP_OS
                 delete[] buf;
-                delete _cis;
-                _cis = nullptr;
                 stringstream sserr;
                 sserr << "Reached end of stream";
-                return T(Error::ERR_READ_FILE, d, sserr.str().c_str());
+                return T(Error::ERR_READ_FILE, d, sserr.str());
             }
 
             try {
@@ -656,14 +656,14 @@ T FileDecompressTask<T>::run()
             catch (const exception& e) {
                 dispose();
                 const uint64 d = _cis->getRead();
+                delete _cis;
+                _cis = nullptr;
                 CLEANUP_DECOMP_IS
                 CLEANUP_DECOMP_OS
                 delete[] buf;
-                delete _cis;
-                _cis = nullptr;
                 stringstream sserr;
                 sserr << "Failed to write decompressed block to file '" << outputName << "': " << e.what();
-                return T(Error::ERR_READ_FILE, d, sserr.str().c_str());
+                return T(Error::ERR_READ_FILE, d, sserr.str());
             }
         } while (_cis->eof() == 0);
     }
@@ -671,35 +671,35 @@ T FileDecompressTask<T>::run()
         dispose();
         const uint64 d = _cis->getRead();
         bool isEOF = _cis->eof();
+        delete _cis;
+        _cis = nullptr;
         CLEANUP_DECOMP_IS
         CLEANUP_DECOMP_OS
         delete[] buf;
-        delete _cis;
-        _cis = nullptr;
 
         if (isEOF == true)
             return T(Error::ERR_READ_FILE, d, "Reached end of stream");
 
         stringstream sserr;
         sserr << e.what();
-        return T(e.error(), d, sserr.str().c_str());
+        return T(e.error(), d, sserr.str());
     }
     catch (const exception& e) {
         dispose();
         const uint64 d = _cis->getRead();
         bool isEOF = _cis->eof();
+        delete _cis;
+        _cis = nullptr;
         CLEANUP_DECOMP_IS
         CLEANUP_DECOMP_OS
         delete[] buf;
-        delete _cis;
-        _cis = nullptr;
 
         if (isEOF == true)
             return T(Error::ERR_READ_FILE, d, "Reached end of stream");
 
         stringstream sserr;
         sserr << "An unexpected condition happened. Exiting ..." << endl << e.what();
-        return T(Error::ERR_UNKNOWN, d, sserr.str().c_str());
+        return T(Error::ERR_UNKNOWN, d, sserr.str());
     }
 
     // Close streams to ensure all data are flushed
@@ -708,21 +708,14 @@ T FileDecompressTask<T>::run()
     const uint64 decoded = _cis->getRead();
     const uint64 written = (checkOutputSize == true) ? uint64(_os->tellp()) : 0;
 
-    // is destructor will call close if ifstream
-    CLEANUP_DECOMP_IS
-
     // Clean up resources at the end of the method as the task may be
     // recycled in a threadpool and the destructor not called.
     delete _cis;
     _cis = nullptr;
 
-    try {
-        CLEANUP_DECOMP_OS
-        _os = nullptr;
-    }
-    catch (const exception&) {
-        // Ignore: best effort
-    }
+    // is destructor will call close if ifstream
+    CLEANUP_DECOMP_IS
+    CLEANUP_DECOMP_OS
 
     stopClock.stop();
     double delta = stopClock.elapsed();
@@ -737,7 +730,7 @@ T FileDecompressTask<T>::run()
             stringstream sserr;
             sserr << "Corrupted bitstream: invalid output size (expected " << outputSize;
             sserr << ", got " << written << ")";
-            return T(Error::ERR_INVALID_FILE, decoded, sserr.str().c_str());
+            return T(Error::ERR_INVALID_FILE, decoded, sserr.str());
         }
     }
 
@@ -817,7 +810,6 @@ void FileDecompressTask<T>::dispose()
     }
     catch (const exception& e) {
         cerr << "Decompression failure: " << e.what() << endl;
-        exit(Error::ERR_WRITE_FILE);
     }
 
     // _os destructor will call close if ofstream

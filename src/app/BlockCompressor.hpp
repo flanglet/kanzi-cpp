@@ -127,8 +127,11 @@ namespace kanzi {
 
        int compress(uint64& written);
 
+       // Register a copy of the listener
+       // Not thread safe
        bool addListener(Listener<Event>& bl);
 
+       // Not thread safe
        bool removeListener(Listener<Event>& bl);
 
        void dispose() const {};

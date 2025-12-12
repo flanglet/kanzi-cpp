@@ -145,17 +145,18 @@ BlockCompressor::BlockCompressor(const Context& ctx) :
             sserr << "Minimum block size is " << (MIN_BLOCK_SIZE / 1024) << " KiB (";
             sserr << MIN_BLOCK_SIZE << " bytes), got " << bl;
             sserr << (bl > 1 ? " bytes" : " byte");
-            throw invalid_argument(sserr.str().c_str());
+            throw invalid_argument(sserr.str());
         }
 
         if (bl > MAX_BLOCK_SIZE) {
             stringstream sserr;
             sserr << "Maximum block size is " << (MAX_BLOCK_SIZE / (1024 * 1024 * 1024)) << " GiB (";
             sserr << MAX_BLOCK_SIZE << " bytes), got " << bl << " bytes";
-            throw invalid_argument(sserr.str().c_str());
+            throw invalid_argument(sserr.str());
         }
 
-        _blockSize = min((int(bl) + 15) & -16, MAX_BLOCK_SIZE);
+        bl = (bl + 15) & ~uint64(15);
+        _blockSize = int(min(bl, uint64(MAX_BLOCK_SIZE)));
     }
 }
 
@@ -303,7 +304,7 @@ int BlockCompressor::compress(uint64& outputSize)
         }
         else {
             if ((formattedOutName.size() != 0) && (specialOutput == false)) {
-                if ((STAT(formattedOutName.c_str(), &buffer) != 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
+                if ((STAT(formattedOutName.c_str(), &buffer) == 0) && ((buffer.st_mode & S_IFDIR) != 0)) {
                     cerr << "Output must be a file (or 'NONE')" << endl;
                     return Error::ERR_CREATE_FILE;
                 }
@@ -375,17 +376,19 @@ int BlockCompressor::compress(uint64& outputSize)
                 oName = formattedOutName + iName.substr(formattedInName.size()) + ".knz";
             }
 
+            int blockSize = _blockSize;
+
             // Set the block size to optimize compression ratio when possible
             if ((_autoBlockSize == true) && (_jobs > 0)) {
                 const int64 bl = files[i]._size / _jobs;
-                _blockSize = int(max(min((bl + 63) & ~63, int64(MAX_BLOCK_SIZE)), int64(MIN_BLOCK_SIZE)));
+                blockSize = int(max(min((bl + 63) & ~63, int64(MAX_BLOCK_SIZE)), int64(MIN_BLOCK_SIZE)));
             }
 
             Context taskCtx(_ctx);
             taskCtx.putLong("fileSize", files[i]._size);
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
-            taskCtx.putInt("blockSize", _blockSize);
+            taskCtx.putInt("blockSize", blockSize);
 #ifdef CONCURRENCY_ENABLED
             taskCtx.putInt("jobs", jobsPerTask[i]);
 #else
@@ -401,7 +404,7 @@ int BlockCompressor::compress(uint64& outputSize)
         if (doConcurrent) {
             vector<FileCompressWorker<FCTask*, FileCompressResult>*> workers;
             vector<future<FileCompressResult> > results;
-            BoundedConcurrentQueue<FCTask*> queue(nbFiles, &tasks[0]);
+            BoundedConcurrentQueue<FCTask*> queue(nbFiles, &tasks[0]); // !tasks.empty()
 
             // Create one worker per job and run it. A worker calls several tasks sequentially.
             for (int i = 0; i < _jobs; i++) {
@@ -506,8 +509,8 @@ bool BlockCompressor::removeListener(Listener<Event>& bl)
 
 void BlockCompressor::notifyListeners(vector<Listener<Event>*>& listeners, const Event& evt)
 {
-    for (vector<Listener<Event>*>::iterator it = listeners.begin(); it != listeners.end(); ++it)
-        (*it)->processEvent(evt);
+    for (size_t i = 0; i < listeners.size(); i++)
+        listeners[i]->processEvent(evt);
 }
 
 void BlockCompressor::getTransformAndCodec(int level, string tranformAndCodec[2])
@@ -616,7 +619,7 @@ T FileCompressTask<T>::run()
             if (samePaths(inputName, outputName)) {
                 stringstream sserr;
                 sserr << "The input and output files must be different" << endl;
-                return T(Error::ERR_CREATE_FILE, 0, 0, sserr.str().c_str());
+                return T(Error::ERR_CREATE_FILE, 0, 0, sserr.str());
             }
 
             struct STAT buffer;
@@ -632,7 +635,7 @@ T FileCompressTask<T>::run()
                     stringstream sserr;
                     sserr << "File '" << outputName << "' exists and the 'force' command "
                           << "line option has not been provided";
-                    return T(Error::ERR_OVERWRITE_FILE, 0, 0, sserr.str().c_str());
+                    return T(Error::ERR_OVERWRITE_FILE, 0, 0, sserr.str());
                 }
 
                 // Delete output file to ensure consistent performance
@@ -656,7 +659,7 @@ T FileCompressTask<T>::run()
 
                     if ((rmkd == 0) || (rmkd == EEXIST)) {
                         delete os;
-                        os = new ofstream(outputName.c_str(), ofstream::binary);
+                        os = new ofstream(outputName.c_str(), ofstream::out | ofstream::binary);
                     }
                     else {
                         errMsg = strerror(rmkd);
@@ -671,7 +674,7 @@ T FileCompressTask<T>::run()
                     if (errMsg != "")
                         sserr << ": " << errMsg;
 
-                    return T(Error::ERR_CREATE_FILE, 0, 0, sserr.str().c_str());
+                    return T(Error::ERR_CREATE_FILE, 0, 0, sserr.str());
                 }
             }
         }
@@ -686,14 +689,14 @@ T FileCompressTask<T>::run()
             CLEANUP_COMP_OS
             stringstream sserr;
             sserr << "Cannot create compressed stream: " << e.what();
-            return T(Error::ERR_CREATE_COMPRESSOR, 0, 0, sserr.str().c_str());
+            return T(Error::ERR_CREATE_COMPRESSOR, 0, 0, sserr.str());
         }
     }
     catch (const exception& e) {
         CLEANUP_COMP_OS
         stringstream sserr;
         sserr << "Cannot open output file '" << outputName << "' for writing: " << e.what();
-        return T(Error::ERR_CREATE_FILE, 0, 0, sserr.str().c_str());
+        return T(Error::ERR_CREATE_FILE, 0, 0, sserr.str());
     }
 
 #define CLEANUP_COMP_IS  if ((_is != nullptr) && (_is != &cin)) {\
@@ -717,20 +720,20 @@ T FileCompressTask<T>::run()
                 _cos = nullptr;
                 stringstream sserr;
                 sserr << "Cannot open input file '" << inputName << "'";
-                return T(Error::ERR_OPEN_FILE, 0, 0, sserr.str().c_str());
+                return T(Error::ERR_OPEN_FILE, 0, 0, sserr.str());
             }
 
             _is = ifs;
         }
     }
     catch (const exception& e) {
-        CLEANUP_COMP_IS
-        CLEANUP_COMP_OS
         delete _cos;
         _cos = nullptr;
+        CLEANUP_COMP_IS
+        CLEANUP_COMP_OS
         stringstream sserr;
         sserr << "Cannot open input file '" << inputName << "': " << e.what();
-        return T(Error::ERR_OPEN_FILE, 0, 0, sserr.str().c_str());
+        return T(Error::ERR_OPEN_FILE, 0, 0, sserr.str());
     }
 
     // Compress
@@ -779,25 +782,25 @@ T FileCompressTask<T>::run()
         }
     }
     catch (const IOException& ioe) {
-        CLEANUP_COMP_IS
-        CLEANUP_COMP_OS
         const uint64 w = _cos->getWritten();
-        delete[] buf;
         delete _cos;
         _cos = nullptr;
+        CLEANUP_COMP_IS
+        CLEANUP_COMP_OS
+        delete[] buf;
         return T(ioe.error(), read, w, ioe.what());
     }
     catch (const exception& e) {
-        CLEANUP_COMP_IS
-        CLEANUP_COMP_OS
         const uint64 w = _cos->getWritten();
-        delete[] buf;
         delete _cos;
         _cos = nullptr;
+        CLEANUP_COMP_IS
+        CLEANUP_COMP_OS
+        delete[] buf;
         stringstream sserr;
         sserr << "An unexpected condition happened. Exiting ..." << endl
               << e.what();
-        return T(Error::ERR_UNKNOWN, read, w, sserr.str().c_str());
+        return T(Error::ERR_UNKNOWN, read, w, sserr.str());
     }
 
     // Close streams to ensure all data are flushed
@@ -805,21 +808,14 @@ T FileCompressTask<T>::run()
 
     uint64 encoded = _cos->getWritten();
 
-    // os destructor will call close if ofstream
-    CLEANUP_COMP_OS
-
     // Clean up resources at the end of the method as the task may be
     // recycled in a threadpool and the destructor not called.
     delete _cos;
     _cos = nullptr;
 
-    try {
-        CLEANUP_COMP_IS
-        _is = nullptr;
-    }
-    catch (const exception&) {
-        // Ignore: best effort
-    }
+    // os destructor will call close if ofstream
+    CLEANUP_COMP_OS
+    CLEANUP_COMP_IS
 
     stopClock.stop();
     double delta = stopClock.elapsed();
@@ -933,7 +929,6 @@ void FileCompressTask<T>::dispose()
     }
     catch (const exception& e) {
         cerr << "Compression failure: " << e.what() << endl;
-        exit(Error::ERR_WRITE_FILE);
     }
 
     // _is destructor will call close if ifstream
