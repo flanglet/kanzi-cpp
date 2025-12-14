@@ -28,8 +28,14 @@ limitations under the License.
        typedef unsigned __int64   uint64_t;
        typedef __int64            int64_t;
     #else
-       // Modern compilers
-       #include <cstdint>
+        #if __cplusplus >= 201103L
+            // C++11 or later
+            #include <cstdint>
+            #include <cstddef>
+        #else
+            // C++98 / C++03
+            #include <stdint.h>
+        #endif
     #endif
 
     #if defined(_MSC_VER)
@@ -155,7 +161,6 @@ limitations under the License.
        // C++ 11 or higher
        #define FINAL final
        #define NOEXCEPT noexcept
-       #include <cstdint>
     #else
        #define FINAL
        #define NOEXCEPT throw()
@@ -197,34 +202,28 @@ limitations under the License.
        #endif
     #endif
 
-#if __cplusplus >= 201703L
-    // byte is defined in C++17 and above
-    #include <cstddef>
-namespace kanzi
-{
-    typedef std::byte byte;
-#else
-namespace kanzi
-{
-    typedef uint8_t byte;
-#endif
 
-    typedef int8_t int8;
-    typedef uint8_t uint8;
-    typedef int16_t int16;
-    typedef int32_t int32;
-    typedef uint16_t uint16;
-    typedef uint32_t uint;
-    typedef uint32_t uint32;
-
-    #if defined(__APPLE__)
-        typedef signed long int64;
-        typedef unsigned long uint64;
+    namespace kanzi
+    {
+    #if __cplusplus >= 201703L
+        typedef std::byte byte;
     #else
-        typedef int64_t int64;
-        typedef uint64_t uint64;
+        // Always an 8-bit unsigned integer
+        typedef uint8_t byte;
     #endif
-}
+
+        typedef int8_t   int8;
+        typedef uint8_t  uint8;
+        typedef int16_t  int16;
+        typedef uint16_t uint16;
+        typedef int32_t  int32;
+        typedef uint32_t uint32;
+        typedef uint32_t uint;
+
+        typedef int64_t  int64;
+        typedef uint64_t uint64;
+    }
+
 
    #if defined(__MINGW32__)
       #define PATH_SEPARATOR '/'

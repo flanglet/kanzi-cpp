@@ -19,7 +19,7 @@ limitations under the License.
 
 #include "types.hpp"
 
-#if __cplusplus >= 201103L || _MSC_VER >= 1700
+#if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1700)
     // C++ 11 (or partial)
     #include <atomic>
 
@@ -199,77 +199,175 @@ class Task {
         T* _data;
     };
 
+#endif
+
+
+#if defined(CONCURRENCY_ENABLED) || (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1700)
+   #include <atomic>
    #define ATOMIC_INT std::atomic_int
    #define ATOMIC_BOOL std::atomic_bool
 
 #else
-   #if defined(__APPLE__)
-        #define ATOMIC_INT std::atomic_int
-        #define ATOMIC_BOOL std::atomic_bool
-   #elif __cplusplus < 201103L
-        // ! Stubs for NON CONCURRENT USAGE !
-        // Used to compile and provide a non concurrent version AND
-        // when atomic.h is not available (VS C++)
-        const int memory_order_relaxed = 0;
-        const int memory_order_acquire = 2;
-        const int memory_order_release = 3;
-        #include <iostream>
+   // ! Stubs for NON CONCURRENT USAGE !
+   // Used when compiling for older C++ standards (C++98/03)
 
-        class atomic_int {
-        private:
-            int _n;
+   // Use enum instead of const int to prevent linkage issues
+   enum fallback_memory_order {
+       memory_order_relaxed = 0,
+       memory_order_consume = 1,
+       memory_order_acquire = 2,
+       memory_order_release = 3,
+       memory_order_acq_rel = 4,
+       memory_order_seq_cst = 5
+   };
 
-        public:
-            atomic_int(int n=0) { _n = n; }
-            atomic_int& operator=(int n) {
-                _n = n;
-                return *this;
-            }
-            int load(int mo = memory_order_relaxed) const { (void)mo; return _n; }
-            void store(int n, int mo = memory_order_release) { (void)mo; _n = n; }
-            atomic_int& operator++(int) {
-                _n++;
-                return *this;
-            }
-            atomic_int fetch_add(atomic_int) {
-               _n++;
-               return atomic_int(_n - 1);
-            }
-            bool compare_exchange_strong(int& expected, int desired) {
-               if (_n != expected)
-                   return false;
+   // Naming the class 'fallback_...' avoids conflicts if the macro
+   // matches the class name recursively in some preprocessors.
+   class fallback_atomic_int {
+   private:
+       volatile int _n;
 
+       // Disable copy constructor and assignment operator
+       // (Atomics should not be copyable)
+       fallback_atomic_int(const fallback_atomic_int&);
+       fallback_atomic_int& operator=(const fallback_atomic_int&);
+
+   public:
+       fallback_atomic_int(int n = 0) : _n(n) {}
+
+       // Assignment returns the value (int), NOT the object reference
+       int operator=(int n)
+       {
+           _n = n;
+           return n;
+       }
+
+       operator int() const
+       {
+           return _n;
+       }
+
+       int load(int mo = memory_order_relaxed) const
+       {
+           (void)mo;
+           return _n;
+       }
+
+       void store(int n, int mo = memory_order_release)
+       {
+           (void)mo;
+           _n = n;
+       }
+
+       // Postfix ++ (x++) returns OLD value
+       int operator++(int)
+       {
+           int old = _n;
+           _n++;
+           return old;
+       }
+
+       // Prefix ++ (++x) returns NEW value
+       int operator++()
+       {
+           return ++_n;
+       }
+
+       // Standard signature: takes int delta, returns OLD value
+       int fetch_add(int delta, int mo = memory_order_seq_cst)
+       {
+          (void)mo;
+          int old = _n;
+          _n += delta;
+          return old;
+       }
+
+       int fetch_sub(int delta, int mo = memory_order_seq_cst)
+       {
+          (void)mo;
+          int old = _n;
+          _n -= delta;
+          return old;
+       }
+
+       // CRITICAL FIX: Must update 'expected' on failure
+       bool compare_exchange_strong(int& expected, int desired, int mo = memory_order_seq_cst)
+       {
+           (void)mo;
+
+           if (_n == expected) {
                _n = desired;
                return true;
-            }
-        };
+           } else {
+               expected = _n;
+               return false;
+           }
+       }
 
-        class atomic_bool {
-        private:
-            bool _b;
+       bool compare_exchange_weak(int& expected, int desired, int mo = memory_order_seq_cst)
+       {
+           return compare_exchange_strong(expected, desired, mo);
+       }
+   };
 
-        public:
-            atomic_bool(bool b=false) { _b = b; }
-            atomic_bool& operator=(bool b) { _b = b; return *this; }
-            bool load(int mo = memory_order_relaxed) const { (void)mo; return _b; }
-            void store(bool b, int mo = memory_order_release) { (void)mo; _b = b; }
-            bool exchange(bool expected, int mo = memory_order_acquire) {
-                (void)mo;
-                bool b = _b;
-                _b = expected;
-                return b;
-            }
-        };
+   class fallback_atomic_bool {
+   private:
+       volatile bool _b;
 
-        #define ATOMIC_INT atomic_int
-        #define ATOMIC_BOOL atomic_bool
-   #else
-        #define ATOMIC_INT std::atomic_int
-        #define ATOMIC_BOOL std::atomic_bool
-   #endif
+       fallback_atomic_bool(const fallback_atomic_bool&);
+       fallback_atomic_bool& operator=(const fallback_atomic_bool&);
 
-#endif //   (__cplusplus && __cplusplus < 201103L) || (_MSC_VER && _MSC_VER < 1700)
+   public:
+       fallback_atomic_bool(bool b = false) : _b(b) {}
 
+       bool operator=(bool b)
+       {
+           _b = b;
+           return b;
+       }
+
+       operator bool() const
+       {
+           return _b;
+       }
+
+       bool load(int mo = memory_order_relaxed) const
+       {
+           (void)mo;
+           return _b;
+       }
+
+       void store(bool b, int mo = memory_order_release)
+       {
+           (void)mo;
+           _b = b;
+       }
+
+       bool exchange(bool val, int mo = memory_order_acquire)
+       {
+           (void)mo;
+           bool old = _b;
+           _b = val;
+           return old;
+       }
+
+       bool compare_exchange_strong(bool& expected, bool desired, int mo = memory_order_seq_cst)
+       {
+           (void)mo;
+           if (_b == expected) {
+               _b = desired;
+               return true;
+           } else {
+               expected = _b;
+               return false;
+           }
+       }
+   };
+
+   #define ATOMIC_INT fallback_atomic_int
+   #define ATOMIC_BOOL fallback_atomic_bool
+
+#endif
 
 
 #endif

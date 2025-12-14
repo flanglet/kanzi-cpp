@@ -16,6 +16,7 @@ limitations under the License.
 #include <algorithm>
 #include <iostream>
 #include <time.h>
+#include <vector>
 #include "../types.hpp"
 #include "../transform/AliasCodec.hpp"
 #include "../transform/FSDCodec.hpp"
