@@ -14,7 +14,9 @@ limitations under the License.
 */
 
 #include <cstring>
+#include <stdexcept>
 #include <vector>
+
 #include "BWT.hpp"
 #include "../Global.hpp"
 #include "../Memory.hpp"

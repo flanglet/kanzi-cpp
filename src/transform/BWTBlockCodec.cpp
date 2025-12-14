@@ -14,6 +14,7 @@ limitations under the License.
 */
 
 #include <cstring>
+#include <stdexcept>
 #include "BWTBlockCodec.hpp"
 #include "../Global.hpp"
 
