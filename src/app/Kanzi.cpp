@@ -1068,32 +1068,31 @@ int main(int argc, const char* argv[])
     }
 #endif
 
-    Context args;
+    Context ctx;
     Printer log(cout);
-    int status =  processCommandLine(argc, argv, args, log);
+    int status =  processCommandLine(argc, argv, ctx, log);
 
     // Command line processing error ?
     if (status != 0)
        return status;
 
     // Help mode only ?
-    if (args.has("mode") == false)
+    if (ctx.has("mode") == false)
        return 0;
 
-    string mode = args.getString("mode");
-    int jobs = args.getInt("jobs", -1);
+    string mode = ctx.getString("mode");
+    int jobs = ctx.getInt("jobs", -1);
 
     try {
 #ifndef CONCURRENCY_ENABLED
         if (jobs > 1) {
-            const int verbosity = args.getInt("verbosity");
+            const int verbosity = ctx.getInt("verbosity");
             stringstream ss;
             ss << "Warning: the number of jobs is limited to 1 in this version";
             log.println(ss.str(), verbosity > 0);
         }
 
         jobs = 1;
-        Context ctx(args);
 #else
         if (jobs == 0) {
             int cores = max(int(thread::hardware_concurrency()), 1); // User provided 0 => use all the cores
@@ -1104,21 +1103,14 @@ int main(int argc, const char* argv[])
             jobs = min(cores, MAX_CONCURRENCY);
         }
         else if (jobs > MAX_CONCURRENCY) {
-            const int verbosity = args.getInt("verbosity");
+            const int verbosity = ctx.getInt("verbosity");
             stringstream ss;
             ss << "Warning: the number of jobs is too high, defaulting to " << MAX_CONCURRENCY;
             log.println(ss.str(), verbosity > 0);
             jobs = MAX_CONCURRENCY;
         }
-
-    #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
-        // Windows already has a built-in threadpool. Using it is better for performance.
-        Context ctx(args);
-    #else
-        ThreadPool pool(jobs);
-        Context ctx(args, &pool);
-    #endif
 #endif
+
         ctx.putInt("jobs", jobs);
 
         if (mode == "c") {

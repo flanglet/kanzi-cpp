@@ -33,6 +33,9 @@ limitations under the License.
    #include <functional>
 #endif
 
+#ifdef CONCURRENCY_ENABLED
+#include <future>
+#endif
 
 namespace kanzi {
 
@@ -169,14 +172,20 @@ namespace kanzi {
        ATOMIC_BOOL _initialized;
        ATOMIC_BOOL _closed;
        ATOMIC_INT _blockId;
+       ATOMIC_INT _inputBlockId; // Counter for input blocks
        std::vector<Listener<Event>*> _listeners;
+       std::vector<int> _jobsPerTask;
        Context _ctx;
        bool _headless;
+
 #ifdef CONCURRENCY_ENABLED
        ThreadPool* _pool;
+       std::vector<std::future<EncodingTaskResult> > _futures; // Futures for async tasks
 #endif
 
-       void processBlock();
+       void processBuffer();
+
+       void submitBlock();
 
        static void notifyListeners(std::vector<Listener<Event>*>& listeners, const Event& evt);
    };
@@ -196,44 +205,6 @@ namespace kanzi {
    {
        // NOOP: let the underlying output stream flush itself when needed
        return *this;
-   }
-
-   inline std::ostream& CompressedOutputStream::put(char c)
-   {
-       try {
-           if (_buffers[_bufferId]->_index >= _bufferThreshold) {
-               // Current write buffer is full
-               const int nbTasks = (_nbInputBlocks == 0) || (_jobs < _nbInputBlocks) ? _jobs : _nbInputBlocks;
-
-               if (_bufferId + 1 < nbTasks) {
-                   _bufferId++;
-                   const int bSize = _blockSize + (_blockSize >> 6);
-                   const uint bufSize = (bSize > 65536) ? uint(bSize) : 65536u;
-
-                   if (_buffers[_bufferId]->_length == 0) {
-                       delete[] _buffers[_bufferId]->_array;
-                       _buffers[_bufferId]->_array = new byte[bufSize];
-                       _buffers[_bufferId]->_length = int(bufSize);
-                   }
-
-                   _buffers[_bufferId]->_index = 0;
-               }
-               else {
-                   if (_closed.load() == true)
-                       throw std::ios_base::failure("Stream closed");
-
-                   // If all buffers are full, time to encode
-                   processBlock();
-               }
-           }
-
-           _buffers[_bufferId]->_array[_buffers[_bufferId]->_index++] = byte(c);
-           return *this;
-       }
-       catch (const std::exception& e) {
-           setstate(std::ios::badbit);
-           throw std::ios_base::failure(e.what());
-       }
    }
 }
 #endif

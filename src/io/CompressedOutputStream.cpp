@@ -24,10 +24,6 @@ limitations under the License.
 #include "../entropy/EntropyUtils.hpp"
 #include "../transform/TransformFactory.hpp"
 
-#ifdef CONCURRENCY_ENABLED
-#include <future>
-#endif
-
 using namespace kanzi;
 using namespace std;
 
@@ -86,6 +82,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
         throw invalid_argument("The block size must be a multiple of 16");
 
     _blockId = 0;
+    _inputBlockId = 0;
     _bufferId = 0;
     _blockSize = blockSize;
     _bufferThreshold = blockSize;
@@ -116,14 +113,31 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
     }
 
     _jobs = tasks;
-    _buffers = new SliceArray<byte>*[2 * _jobs];
     _ctx.putInt("blockSize", _blockSize);
     _ctx.putInt("checksum", checksum);
     _ctx.putString("entropy", entropy);
     _ctx.putString("transform", transform);
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
 
+#ifdef CONCURRENCY_ENABLED
+    _futures.resize(_jobs);
+#endif
+
+    _jobsPerTask.resize(_jobs);
+
+    // Assign optimal number of tasks and jobs per task (if the number of blocks is available)
+    if (_jobs > 1) {
+        // Limit the number of tasks if there are fewer blocks that _jobs
+        // It allows more jobs per task and reduces memory usage.
+        int nbTasks = (_nbInputBlocks != 0) ? min(_nbInputBlocks, _jobs) : _jobs;
+        Global::computeJobsPerTask(_jobsPerTask.data(), _jobs, nbTasks);
+    }
+    else {
+        _jobsPerTask[0] = 1;
+    }
+
     // Allocate first buffer and add padding for incompressible blocks
+    _buffers = new SliceArray<byte>*[2 * _jobs];
     const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
     _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
 
@@ -172,6 +186,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
     _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
     _jobs = tasks;
     _blockId = 0;
+    _inputBlockId = 0;
     _bufferId = 0;
     _blockSize = blockSize;
     _bufferThreshold = blockSize;
@@ -179,6 +194,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
     _closed = false;
     _headless = headerless;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
+    _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
     string entropyCodec = ctx.getString("entropy");
     string transform = ctx.getString("transform");
     _entropyType = EntropyEncoderFactory::getType(entropyCodec.c_str());
@@ -201,7 +217,23 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
         throw invalid_argument("The block checksum size must be 0, 32 or 64");
     }
 
-    _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
+#ifdef CONCURRENCY_ENABLED
+    _futures.resize(_jobs);
+#endif
+
+    _jobsPerTask.resize(_jobs);
+
+    // Assign optimal number of tasks and jobs per task (if the number of blocks is available)
+    if (_jobs > 1) {
+        // Limit the number of tasks if there are fewer blocks that _jobs
+        // It allows more jobs per task and reduces memory usage.
+        int nbTasks = (_nbInputBlocks != 0) ? min(_nbInputBlocks, _jobs) : _jobs;
+        Global::computeJobsPerTask(_jobsPerTask.data(), _jobs, nbTasks);
+    }
+    else {
+        _jobsPerTask[0] = 1;
+    }
+
     _buffers = new SliceArray<byte>*[2 * _jobs];
 
     // Allocate first buffer and add padding for incompressible blocks
@@ -328,82 +360,74 @@ bool CompressedOutputStream::removeListener(Listener<Event>& bl)
 
 ostream& CompressedOutputStream::write(const char* data, streamsize length)
 {
+    int off = 0;
     int remaining = int(length);
 
     if (remaining < 0)
-        throw IOException("Invalid buffer size");
-
-    int off = 0;
+       throw IOException("Invalid buffer size");
 
     while (remaining > 0) {
-        // Limit to number of available bytes in current buffer
         const int lenChunk = min(remaining, _bufferThreshold - _buffers[_bufferId]->_index);
 
         if (lenChunk > 0) {
-            // Process a chunk of in-buffer data. No access to bitstream required
             memcpy(&_buffers[_bufferId]->_array[_buffers[_bufferId]->_index], &data[off], lenChunk);
             _buffers[_bufferId]->_index += lenChunk;
             off += lenChunk;
             remaining -= lenChunk;
 
             if (_buffers[_bufferId]->_index >= _bufferThreshold) {
-                // Current write buffer is full
-                const int nbTasks = _nbInputBlocks == 0 ? _jobs : min(_nbInputBlocks, _jobs);
-
-                if (_bufferId + 1 < nbTasks) {
-                    _bufferId++;
-                    const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
-
-                    if (_buffers[_bufferId]->_length == 0) {
-                        if (_buffers[_bufferId]->_array != nullptr)
-                           delete[] _buffers[_bufferId]->_array;
-
-                        _buffers[_bufferId]->_array = new byte[bufSize];
-                        _buffers[_bufferId]->_length = bufSize;
-                    }
-
-                    _buffers[_bufferId]->_index = 0;
-                }
-                else {
-                    // If all buffers are full, time to encode
-                    processBlock();
-                }
+                processBuffer();
             }
-
-            if (remaining == 0)
-                break;
         }
-
-        put(data[off]);
-        off++;
-        remaining--;
+        else {
+            // Handle full buffer / closed stream
+            processBuffer();
+        }
     }
 
     return *this;
 }
 
+
 void CompressedOutputStream::close()
 {
-    if (_closed.exchange(true, memory_order_acquire))
+    if (_closed.load(memory_order_acquire))
         return;
 
-    processBlock();
+    string errMsg;
 
     try {
-        // Write end block of size 0
-        _obs->writeBits(uint64(0), 5); // write length-3 (5 bits max)
-        _obs->writeBits(uint64(0), 3); // write 0 (3 bits)
+        // Submit the last partial block (if any)
+        submitBlock();
+
+#ifdef CONCURRENCY_ENABLED
+        // Wait for ALL pending tasks to complete
+        for (int i = 0; i < _jobs; i++) {
+            if (_futures[i].valid()) {
+                EncodingTaskResult res = _futures[i].get();
+
+                if (res._error != 0)
+                    throw IOException(res._msg, res._error);
+            }
+        }
+#endif
+
+        // Write last block: length-3 (0) and 0 bits
+        _obs->writeBits(uint64(0), 5);
+        _obs->writeBits(uint64(0), 3);
         _obs->close();
     }
     catch (const exception& e) {
         setstate(ios::badbit);
-        throw ios_base::failure(e.what());
+        errMsg = e.what();
     }
 
-    setstate(ios::eofbit);
+    _closed.store(true, memory_order_release);
+
+    // Force subsequent writes to trigger submitBlock immediately
     _bufferThreshold = 0;
 
-    // Release resources, force error on any subsequent write attempt
+    // Release resources
     for (int i = 0; i < 2 * _jobs; i++) {
         if (_buffers[i]->_array != nullptr)
            delete[] _buffers[i]->_array;
@@ -412,133 +436,149 @@ void CompressedOutputStream::close()
         _buffers[i]->_length = 0;
         _buffers[i]->_index = 0;
     }
+
+    if (errMsg != "")
+       throw IOException(errMsg, Error::ERR_WRITE_FILE);
+
+    setstate(ios::eofbit);
 }
 
-void CompressedOutputStream::processBlock()
+
+void CompressedOutputStream::processBuffer()
 {
-    writeHeader();
+    submitBlock();
 
-    // All buffers empty, nothing to do
-    if (_buffers[0]->_index == 0)
-        return;
+    _bufferId = (_bufferId + 1) % _jobs;
 
-    // Protect against future concurrent modification of the list of block listeners
-    vector<Listener<Event>*> blockListeners(_listeners);
-    vector<EncodingTask<EncodingTaskResult>*> tasks;
-
-    try {
-        int firstBlockId = _blockId.load(memory_order_relaxed);
-        int nbTasks = _jobs;
-        int jobsPerTask[MAX_CONCURRENCY];
-
-        // Assign optimal number of tasks and jobs per task (if the number of blocks is available)
-        if (nbTasks > 1) {
-            // Limit the number of tasks if there are fewer blocks that _jobs
-            // It allows more jobs per task and reduces memory usage.
-            if (_nbInputBlocks != 0)
-                nbTasks = min(_nbInputBlocks, _jobs);
-
-            Global::computeJobsPerTask(jobsPerTask, _jobs, nbTasks);
-        }
-        else {
-            jobsPerTask[0] = _jobs;
-        }
-
-        // Create as many tasks as non-empty buffers to encode
-        for (int taskId = 0; taskId < nbTasks; taskId++) {
-            const int dataLength = _buffers[taskId]->_index;
-
-            if (dataLength == 0)
-                break;
-
-            Context copyCtx(_ctx);
-            copyCtx.putInt("jobs", jobsPerTask[taskId]);
-            copyCtx.putLong("tType", _transformType);
-            copyCtx.putInt("eType", _entropyType);
-            copyCtx.putInt("blockId", firstBlockId + taskId + 1);
-            copyCtx.putInt("size", dataLength); // "size" is the actual block size, "blockSize" the provided one
-            _buffers[taskId]->_index = 0;
-
-            EncodingTask<EncodingTaskResult>* task = new EncodingTask<EncodingTaskResult>(_buffers[taskId],
-                _buffers[_jobs + taskId],
-                _obs, _hasher32, _hasher64,
-                &_blockId, blockListeners, copyCtx);
-            tasks.push_back(task);
-        }
-
-        if (tasks.size() == 1) {
-            // Synchronous call
-            EncodingTask<EncodingTaskResult>* task = tasks.back();
-            tasks.pop_back();
-            EncodingTaskResult res = task->run();
-
-            if (res._error != 0)
-                throw IOException(res._msg, res._error); // deallocate in catch block
-
-            delete task;
-        }
 #ifdef CONCURRENCY_ENABLED
-        else {
-            vector<future<EncodingTaskResult> > futures;
-
-            // Register task futures and launch tasks in parallel
-            for (uint i = 0; i < tasks.size(); i++) {
-                if (_pool == nullptr)
-                    futures.push_back(async(launch::async, &EncodingTask<EncodingTaskResult>::run, tasks[i]));
-                else
-                    futures.push_back(_pool->schedule(&EncodingTask<EncodingTaskResult>::run, tasks[i]));
-            }
-
-            int error = 0;
-            string msg;
-
-            // Wait for tasks completion and check results
-            for (uint i = 0; i < tasks.size(); i++) {
-                EncodingTaskResult res = futures[i].get();
-
-                if (error != 0)
-                    continue;
-
-                // Capture first error but continue getting results from other tasks
-                // instead of exiting early, otherwise it is possible that the error
-                // management code is going to deallocate memory used by other tasks
-                // before they are completed.
-                error = res._error;
-                msg = res._msg;
-            }
-
-            if (error != 0)
-               throw IOException(msg, error); // deallocate in catch block
-        }
-
-        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
-            delete *it;
-
-        tasks.clear();
+    if (_futures[_bufferId].valid()) {
+        EncodingTaskResult res = _futures[_bufferId].get();
+        if (res._error != 0) throw IOException(res._msg, res._error);
+    }
 #endif
 
-        _bufferId = 0;
-    }
-    catch (const IOException&) {
-        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
-            delete *it;
+    const int bSize = _blockSize + (_blockSize >> 6);
+    const int bufSize = max(bSize, 65536);
 
-        tasks.clear();
-        throw; // rethrow
-    }
-    catch (const BitStreamException& e) {
-        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
-            delete *it;
+    if (_buffers[_bufferId]->_length == 0) {
+        if (_buffers[_bufferId]->_array != nullptr)
+            delete[] _buffers[_bufferId]->_array;
 
-        tasks.clear();
-        throw IOException(e.what(), e.error());
+        _buffers[_bufferId]->_array = new byte[bufSize];
+        _buffers[_bufferId]->_length = bufSize;
+    }
+
+    _buffers[_bufferId]->_index = 0;
+}
+
+
+void CompressedOutputStream::submitBlock()
+{
+    if (_closed.load(memory_order_acquire))
+        throw IOException("Stream closed", Error::ERR_WRITE_FILE);
+
+    writeHeader(); // Ensure header is written before first block processing
+
+    const int dataLength = _buffers[_bufferId]->_index;
+
+    if (dataLength == 0)
+        return;
+
+    // Increment input block counter (1-based for the Task logic)
+    _inputBlockId++;
+
+    Context copyCtx(_ctx);
+    copyCtx.putLong("tType", _transformType);
+    copyCtx.putInt("eType", _entropyType);
+    copyCtx.putInt("blockId", _inputBlockId);
+    copyCtx.putInt("size", dataLength);
+    copyCtx.putInt("jobs", _jobsPerTask[_bufferId]);
+
+    // Prepare the buffer for processing
+    _buffers[_bufferId]->_index = 0;
+
+    // Create the task
+    // Note: Input is _buffers[_bufferId], Output is _buffers[_jobs + _bufferId]
+    EncodingTask<EncodingTaskResult>* task = new EncodingTask<EncodingTaskResult>(
+        _buffers[_bufferId],
+        _buffers[_jobs + _bufferId],
+        _obs, _hasher32, _hasher64,
+        &_blockId, _listeners, copyCtx);
+
+#ifdef CONCURRENCY_ENABLED
+    auto taskWrapper = [task]() {
+        try {
+            EncodingTaskResult res = task->run();
+            delete task;
+            return res;
+        } catch (...) {
+            delete task;
+            throw;
+        }
+    };
+
+    if (_pool == nullptr) {
+        _futures[_bufferId] = std::async(taskWrapper);
+    }
+    else {
+        // REQUIRES: Pool size > Number of concurrent tasks to avoid deadlock
+        _futures[_bufferId] = _pool->schedule(taskWrapper);
+    }
+#else
+    // Synchronous fallback
+    try {
+        EncodingTaskResult res = task->run();
+
+        if (res._error != 0)
+           throw IOException(res._msg, res._error);
+    } catch (...) {
+        delete task;
+        throw;
+    }
+
+    delete task;
+#endif
+}
+
+ostream& CompressedOutputStream::put(char c)
+{
+    try {
+        if (_buffers[_bufferId]->_index >= _bufferThreshold) {
+            // Submit current buffer
+            submitBlock();
+
+            // Rotate to next buffer
+            _bufferId = (_bufferId + 1) % _jobs;
+
+            // If concurrent, wait if the target buffer is still busy
+#ifdef CONCURRENCY_ENABLED
+            if (_futures[_bufferId].valid()) {
+                EncodingTaskResult res = _futures[_bufferId].get();
+                if (res._error != 0)
+                    throw IOException(res._msg, res._error);
+            }
+#endif
+
+            // Allocation / Reset logic
+            const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
+
+            if (_buffers[_bufferId]->_length == 0) {
+                 if (_buffers[_bufferId]->_array != nullptr)
+                     delete[] _buffers[_bufferId]->_array;
+
+                _buffers[_bufferId]->_array = new byte[bufSize];
+                _buffers[_bufferId]->_length = bufSize;
+            }
+
+            _buffers[_bufferId]->_index = 0;
+        }
+
+        _buffers[_bufferId]->_array[_buffers[_bufferId]->_index++] = byte(c);
+        return *this;
     }
     catch (const exception& e) {
-        for (vector<EncodingTask<EncodingTaskResult>*>::iterator it = tasks.begin(); it != tasks.end(); ++it)
-            delete *it;
-
-        tasks.clear();
-        throw IOException(e.what(), Error::ERR_UNKNOWN);
+        setstate(std::ios::badbit);
+        throw std::ios_base::failure(e.what());
     }
 }
 
@@ -822,3 +862,4 @@ T EncodingTask<T>::run()
         return T(blockId, Error::ERR_PROCESS_BLOCK, e.what());
     }
 }
+

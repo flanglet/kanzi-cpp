@@ -384,16 +384,18 @@ int BlockCompressor::compress(uint64& outputSize)
                 blockSize = int(max(min((bl + 63) & ~63, int64(MAX_BLOCK_SIZE)), int64(MIN_BLOCK_SIZE)));
             }
 
+#ifdef CONCURRENCY_ENABLED
+            ThreadPool pool(_jobs + 1); // +1 to avoid deadlock due to thread exhaustion
+            Context taskCtx(_ctx, &pool);
+            taskCtx.putInt("jobs", jobsPerTask[i]);
+#else
             Context taskCtx(_ctx);
+            taskCtx.putInt("jobs", 1);
+#endif
             taskCtx.putLong("fileSize", files[i]._size);
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
             taskCtx.putInt("blockSize", blockSize);
-#ifdef CONCURRENCY_ENABLED
-            taskCtx.putInt("jobs", jobsPerTask[i]);
-#else
-            taskCtx.putInt("jobs", 1);
-#endif
             FileCompressTask<FileCompressResult>* task = new FileCompressTask<FileCompressResult>(taskCtx, _listeners);
             tasks.push_back(task);
         }

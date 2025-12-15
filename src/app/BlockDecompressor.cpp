@@ -299,15 +299,17 @@ int BlockDecompressor::decompress(uint64& inputSize)
                     oName = oName + ".bak";
             }
 
+#ifdef CONCURRENCY_ENABLED
+            ThreadPool pool(_jobs + 1); // +1 to avoid deadlock due to thread exhaustion
+            Context taskCtx(_ctx, &pool);
+            taskCtx.putInt("jobs", jobsPerTask[i]);
+#else
             Context taskCtx(_ctx);
+            taskCtx.putInt("jobs", 1);
+#endif
             taskCtx.putLong("fileSize", files[i]._size);
             taskCtx.putString("inputName", iName);
             taskCtx.putString("outputName", oName);
-#ifdef CONCURRENCY_ENABLED
-            taskCtx.putInt("jobs", jobsPerTask[i]);
-#else
-            taskCtx.putInt("jobs", 1);
-#endif
             FileDecompressTask<FileDecompressResult>* task = new FileDecompressTask<FileDecompressResult>(taskCtx, _listeners);
             tasks.push_back(task);
         }

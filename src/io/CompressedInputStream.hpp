@@ -33,6 +33,9 @@ limitations under the License.
    #include <functional>
 #endif
 
+#ifdef CONCURRENCY_ENABLED
+   #include <future>
+#endif
 
 namespace kanzi
 {
@@ -217,16 +220,23 @@ namespace kanzi
        ATOMIC_BOOL _initialized;
        ATOMIC_BOOL _closed;
        ATOMIC_INT _blockId;
+       ATOMIC_INT _submitBlockId; // Next block to submit to pool
+       int _consumeBlockId;       // Next block to be consumed by read()
        std::vector<Listener<Event>*> _listeners;
        std::streamsize _gcount;
        Context _ctx;
        Context* _parentCtx; // not owner
        bool _headless;
+       std::vector<int> _jobsPerTask;
+
 #ifdef CONCURRENCY_ENABLED
        ThreadPool* _pool;
+       std::vector<std::future<std::pair<DecodingTaskResult, DecodingTask<DecodingTaskResult>* > > > _futures;
+#else
+       std::vector<DecodingTaskResult> _results;
 #endif
 
-       int64 processBlock();
+       void submitBlock(int bufferId);
 
        int _get(int inc);
 
