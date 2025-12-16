@@ -224,6 +224,10 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
     _ctx.putInt("verbosity", _verbosity);
 
+#ifdef CONCURRENCY_ENABLED
+    ThreadPool pool(_jobs + 1); // +1 to avoid deadlock due to thread exhaustion
+#endif
+
     // Run the task(s)
     if (nbFiles == 1) {
         string oName = formattedOutName;
@@ -300,7 +304,6 @@ int BlockDecompressor::decompress(uint64& inputSize)
             }
 
 #ifdef CONCURRENCY_ENABLED
-            ThreadPool pool(_jobs + 1); // +1 to avoid deadlock due to thread exhaustion
             Context taskCtx(_ctx, &pool);
             taskCtx.putInt("jobs", jobsPerTask[i]);
 #else

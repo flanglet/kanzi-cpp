@@ -312,6 +312,10 @@ int BlockCompressor::compress(uint64& outputSize)
         }
     }
 
+#ifdef CONCURRENCY_ENABLED
+    ThreadPool pool(_jobs + 1); // +1 to avoid deadlock due to thread exhaustion
+#endif
+
     _ctx.putInt("verbosity", _verbosity);
 
     // Run the task(s)
@@ -385,7 +389,6 @@ int BlockCompressor::compress(uint64& outputSize)
             }
 
 #ifdef CONCURRENCY_ENABLED
-            ThreadPool pool(_jobs + 1); // +1 to avoid deadlock due to thread exhaustion
             Context taskCtx(_ctx, &pool);
             taskCtx.putInt("jobs", jobsPerTask[i]);
 #else
