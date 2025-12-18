@@ -110,7 +110,7 @@ namespace kanzi
    private:
        SliceArray<byte>* _data;
        SliceArray<byte>* _buffer;
-       int _blockLength;
+       uint _blockLength;
        DefaultInputBitStream* _ibs;
        XXHash32* _hasher32;
        XXHash64* _hasher64;

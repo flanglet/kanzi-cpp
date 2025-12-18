@@ -727,7 +727,7 @@ void CompressedInputStream::close()
     // Force subsequent reads to trigger submitBlock immediately
     _bufferThreshold = 0;
 
-    // Buffer cleanup: force error on any subsequent write attempt
+    // Buffer cleanup: force error on any subsequent read attempt
     for (int i = 0; i < 2 * _jobs; i++) {
         if (_buffers[i]->_array != nullptr)
            delete[] _buffers[i]->_array;
@@ -773,6 +773,9 @@ template <class T>
 T DecodingTask<T>::run()
 {
     int blockId = _ctx.getInt("blockId");
+    bool streamPerTask = _ctx.getInt("tasks") > 1;
+    uint64 tType = _ctx.getLong("tType");
+    short eType = short(_ctx.getInt("eType"));
 
     // Lock free synchronization
     while (true) {
@@ -794,9 +797,6 @@ T DecodingTask<T>::run()
     EntropyDecoder* ed = nullptr;
     InputBitStream* ibs = nullptr;
     TransformSequence<byte>* transform = nullptr;
-    bool streamPerTask = _ctx.getInt("tasks") > 1;
-    uint64 tType = _ctx.getLong("tType");
-    short eType = short(_ctx.getInt("eType"));
 
     try {
         // Read shared bitstream sequentially (each task is gated by _processedBlockId)
@@ -816,11 +816,11 @@ T DecodingTask<T>::run()
             return T(*_data, blockId, 0, 0, Error::ERR_BLOCK_SIZE, "Invalid block size");
         }
 
-        const int r = int((read + 7) >> 3);
+        const uint r = uint((read + 7) >> 3);
 
         if (streamPerTask == true) {
-            if (_data->_length < max(_blockLength, r)) {
-                _data->_length = max(_blockLength, r);
+            if (_data->_length < int(max(_blockLength, r))) {
+                _data->_length = int(max(_blockLength, r));
                 delete[] _data->_array;
                 _data->_array = new byte[_data->_length];
             }
@@ -871,7 +871,8 @@ T DecodingTask<T>::run()
         const int length = dataSize << 3;
         const uint64 mask = (uint64(1) << length) - 1;
         const int preTransformLength = int(ibs->readBits(length) & mask);
-        const int maxTransformSize = min(max(_blockLength + _blockLength / 2, 2048), CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE);
+        const int maxTransformSize = int(min(max(_blockLength + _blockLength / 2, 2048u),
+                                         uint(CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE)));
 
         if ((preTransformLength <= 0) || (preTransformLength > maxTransformSize)) {
             // Error => cancel concurrent decoding tasks
@@ -911,7 +912,7 @@ T DecodingTask<T>::run()
             CompressedInputStream::notifyListeners(_listeners, evt2);
         }
 
-        const int bufferSize = max(_blockLength, preTransformLength + CompressedInputStream::EXTRA_BUFFER_SIZE);
+        const int bufferSize = max(int(_blockLength), preTransformLength + CompressedInputStream::EXTRA_BUFFER_SIZE);
 
         if (_buffer->_length < bufferSize) {
             _buffer->_length = bufferSize;

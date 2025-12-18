@@ -453,7 +453,9 @@ void CompressedOutputStream::processBuffer()
 #ifdef CONCURRENCY_ENABLED
     if (_futures[_bufferId].valid()) {
         EncodingTaskResult res = _futures[_bufferId].get();
-        if (res._error != 0) throw IOException(res._msg, res._error);
+
+        if (res._error != 0)
+            throw IOException(res._msg, res._error);
     }
 #endif
 
@@ -554,6 +556,7 @@ ostream& CompressedOutputStream::put(char c)
 #ifdef CONCURRENCY_ENABLED
             if (_futures[_bufferId].valid()) {
                 EncodingTaskResult res = _futures[_bufferId].get();
+
                 if (res._error != 0)
                     throw IOException(res._msg, res._error);
             }
@@ -792,6 +795,7 @@ T EncodingTask<T>::run()
         ee = nullptr;
         obs.close();
         uint64 written = obs.written();
+        const uint lw = (written < 8) ? 3 : uint(Global::log2(uint32(written >> 3)) + 4);
 
         // Lock free synchronization
         while (true) {
@@ -806,6 +810,22 @@ T EncodingTask<T>::run()
             // Back-off improves performance
             CPU_PAUSE();
         }
+
+        // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
+        _obs->writeBits(lw - 3, 5); // write length-3 (5 bits max)
+        _obs->writeBits(written, lw);
+
+        // Emit data to shared bitstream
+        for (uint n = 0; written > 0; ) {
+            uint chkSize = uint(min(written, uint64(1) << 30));
+            _obs->writeBits(&_data->_array[n], chkSize);
+            n += ((chkSize + 7) >> 3);
+            written -= uint64(chkSize);
+        }
+
+        // After completion of the entropy coding, increment the block id.
+        // It unblocks the task processing the next block (if any).
+        _processedBlockId->store(blockId, memory_order_release);
 
         if (_listeners.size() > 0) {
             // Notify after entropy
@@ -828,23 +848,6 @@ T EncodingTask<T>::run()
             }
 #endif
         }
-
-        // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
-        const uint lw = (written < 8) ? 3 : uint(Global::log2(uint32(written >> 3)) + 4);
-        _obs->writeBits(lw - 3, 5); // write length-3 (5 bits max)
-        _obs->writeBits(written, lw);
-
-        // Emit data to shared bitstream
-        for (uint n = 0; written > 0; ) {
-            uint chkSize = uint(min(written, uint64(1) << 30));
-            _obs->writeBits(&_data->_array[n], chkSize);
-            n += ((chkSize + 7) >> 3);
-            written -= uint64(chkSize);
-        }
-
-        // After completion of the entropy coding, increment the block id.
-        // It unblocks the task processing the next block (if any).
-        _processedBlockId->store(blockId, memory_order_release);
 
         return T(blockId, 0, "Success");
     }
