@@ -91,6 +91,8 @@ namespace kanzi {
    template <class T>
    class FileDecompressTask FINAL : public Task<T> {
    public:
+       static const int DEFAULT_BUFFER_SIZE = 65536;
+
        FileDecompressTask(const Context& ctx, std::vector<Listener<Event>*>& listeners);
 
        ~FileDecompressTask();
