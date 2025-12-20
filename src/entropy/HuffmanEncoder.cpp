@@ -143,6 +143,7 @@ int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16
 
     // Check (up to) 6 levels; one vector per size delta
     vector<int> v[6];
+    size_t vHead[6] = { 0 };
 
     for (int i = 0; i < 6; i++)
         v[i].reserve(count - n);
@@ -161,28 +162,31 @@ int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16
 
     // Repay bit debt in a "semi optimized" way
     while ((debt > 0) && (idx >= 0)) {
-        if ((v[idx].empty() == true) || (debt < (1 << idx))) {
+        if ((vHead[idx] >= v[idx].size()) || (debt < (1 << idx))) {
             idx--;
             continue;
         }
 
-        sizes[ranks[v[idx][0]]]++;
+        // Access element at current head
+        sizes[ranks[v[idx][vHead[idx]]]]++;
         debt -= (1 << idx);
-        v[idx].erase(v[idx].begin());
+
+        // Advance head
+        vHead[idx]++;
     }
 
     idx = 0;
 
     // Adjust if necessary
     while ((debt > 0) && (idx < 6)) {
-        if (v[idx].empty() == true) {
+        if (vHead[idx] >= v[idx].size()) {
             idx++;
             continue;
         }
 
-        sizes[ranks[v[idx][0]]]++;
+        sizes[ranks[v[idx][vHead[idx]]]]++;
         debt -= (1 << idx);
-        v[idx].erase(v[idx].begin());
+        vHead[idx]++;
     }
 
     if (debt > 0) {
