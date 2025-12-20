@@ -96,7 +96,7 @@ inline void tokenize(const std::string& str, std::vector<std::string>& v, char t
       v.push_back(s);   
 }    
 
-inline int tokenizeCSV(std::string& s, std::vector<std::string>& tokens, char delim = ',')
+inline int tokenizeCSV(const std::string& s, std::vector<std::string>& tokens, char delim = ',')
 {
     std::stringstream ss;
     char prv = 0;

@@ -73,7 +73,7 @@ void InfoPrinter::processEvent(const Event& evt)
         }
     }
     else if (evt.getType() == _thresholds[2]) {
-        BlockInfo* bi = _map[hash(currentBlockId)];
+        const BlockInfo* bi = _map[hash(currentBlockId)];
 
         if (bi == nullptr)
             return;
@@ -244,10 +244,10 @@ void InfoPrinter::processHeaderInfo(const Event& evt)
        size_t idx = inputName.find_last_of(PATH_SEPARATOR);
 
        if (idx != string::npos)
-          inputName = inputName.substr(idx + 1);
+          inputName.erase(0, idx + 1);
 
        if (inputName.length() > 20)
-          inputName = inputName.substr(0, 18) + "..";
+          inputName.replace(18, string::npos, "..");
 
        ss << std::left << setw(20) << inputName << "|" << std::right; // inputName
    }
@@ -296,7 +296,7 @@ void InfoPrinter::processHeaderInfo(const Event& evt)
        string t = tokens[5];
 
        if (t.length() > 26)
-          t = t.substr(0, 24) + "..";
+          t = t.replace(24, string::npos, "..");
 
        ss << setw(26) << (t == "" ? "NONE" : t) << "|"; // transforms
    }

@@ -44,7 +44,7 @@ namespace kanzi
        bool _disposed;
        OutputBitStream& _bitstream;
        std::vector<byte> _buf;
-       int _index;
+       uint _index;
        uint16 _probs[4][256]; // probability of bit=1
 
 

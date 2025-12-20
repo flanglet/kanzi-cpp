@@ -646,14 +646,14 @@ void CompressedInputStream::readHeader()
         string inputName = _ctx.getString("inputName", "");
         ss << inputName << ",";
         ss << bsVersion << ",";
-        string ckSize = "0";
+        string ckBits = "0";
 
         if (_hasher32 != nullptr)
-            ckSize = "32";
+            ckBits = "32";
         else if (_hasher64 != nullptr)
-            ckSize = "64";
+            ckBits = "64";
 
-        ss << ckSize << ",";
+        ss << ckBits << ",";
         ss << _blockSize << ",";
         string w1 = EntropyDecoderFactory::getName(_entropyType);
         ss << ((w1 == "NONE") ? "" : w1) << ",";

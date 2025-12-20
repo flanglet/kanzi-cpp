@@ -393,14 +393,14 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         while (srcIdx + 4 < anchor) {
             srcIdx += 4;
-            const int32 h0 = hash(&src[srcIdx - 3]);
-            const int32 h1 = hash(&src[srcIdx - 2]);
-            const int32 h2 = hash(&src[srcIdx - 1]);
-            const int32 h3 = hash(&src[srcIdx - 0]);
-            _hashes[h0] = srcIdx - 3;
-            _hashes[h1] = srcIdx - 2;
-            _hashes[h2] = srcIdx - 1;
-            _hashes[h3] = srcIdx - 0;
+            const int32 hh0 = hash(&src[srcIdx - 3]);
+            const int32 hh1 = hash(&src[srcIdx - 2]);
+            const int32 hh2 = hash(&src[srcIdx - 1]);
+            const int32 hh3 = hash(&src[srcIdx - 0]);
+            _hashes[hh0] = srcIdx - 3;
+            _hashes[hh1] = srcIdx - 2;
+            _hashes[hh2] = srcIdx - 1;
+            _hashes[hh3] = srcIdx - 0;
         }
 
         while (++srcIdx < anchor) {

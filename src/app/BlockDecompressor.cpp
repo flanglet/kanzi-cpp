@@ -387,7 +387,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         }
 
         ss << "Total output size: " << read << (read > 1 ? " bytes" : " byte") << endl;
-        log.print(ss.str(), _verbosity > 0);
+        log.print(ss.str(), true);
         ss.str(string());
     }
 

@@ -47,6 +47,7 @@ bool FPAQDecoder::reset()
     _high = TOP;
     _current = 0;
     _ctx = 1;
+    _index = 0;
 
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 256; j++)
@@ -73,7 +74,7 @@ int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
         if (szBytes >= 2 * count)
             return 0;
 
-        const size_t bufSize = max(szBytes + (szBytes >> 2), 8192u);
+        const size_t bufSize = max(szBytes + (szBytes >> 3), 8192u);
 
         if (_buf.size() < bufSize)
             _buf.resize(bufSize);

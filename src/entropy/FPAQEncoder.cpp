@@ -62,14 +62,14 @@ int FPAQEncoder::encode(const byte block[], uint blkptr, uint count)
 
     uint startChunk = blkptr;
     const uint end = blkptr + count;
+    const size_t bufSize = max(DEFAULT_CHUNK_SIZE + (DEFAULT_CHUNK_SIZE >> 3), 1024u);
+
+    if (_buf.size() < bufSize)
+        _buf.resize(bufSize);
 
     // Split block into chunks, encode chunk and write bit array to bitstream
     while (startChunk < end) {
         const uint chunkSize = min(DEFAULT_CHUNK_SIZE, end - startChunk);
-        const size_t bufSize = max(chunkSize + (chunkSize >> 3), 1024u);
-
-        if (_buf.size() < bufSize)
-            _buf.resize(bufSize);
 
         _index = 0;
         const uint endChunk = startChunk + chunkSize;

@@ -44,7 +44,7 @@ namespace kanzi
        uint64 _current;
        InputBitStream& _bitstream;
        std::vector<byte> _buf;
-       int _index;
+       uint _index;
        uint16 _probs[4][256]; // probability of bit=1
        uint16* _p; // pointer to current prob
        int _ctx; // previous bits

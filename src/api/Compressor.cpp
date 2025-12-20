@@ -258,11 +258,10 @@ KANZI_API int CDECL compress(struct cContext* pCtx, const unsigned char* src, si
 // Cleanup allocated internal data structures
 KANZI_API int CDECL disposeCompressor(struct cContext** ppCtx, size_t* outSize) KANZI_NOEXCEPT
 {
-    *outSize = 0;
-
-    if ((ppCtx == nullptr) || (*ppCtx == nullptr))
+    if ((ppCtx == nullptr) || (*ppCtx == nullptr) || (outSize == nullptr))
         return Error::ERR_INVALID_PARAM;
 
+    *outSize = 0;
     cContext* pCtx = *ppCtx;
     CompressedOutputStream* pCos = pCtx->pCos;
 

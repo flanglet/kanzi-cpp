@@ -45,5 +45,5 @@ CMPredictor::CMPredictor()
     }
 
     _pc1 = _counter1[_ctx];
-    _pc2 = &_counter2[_ctx | _runMask][8];
+    _pc2 = &_counter2[_ctx][8];
 }
