@@ -36,6 +36,8 @@ limitations under the License.
             #define CONCURRENCY_ENABLED
         #endif
     #endif
+#else
+    #define CONCURRENT_FALLBACK_ATOMICS
 #endif
 
 
@@ -202,15 +204,11 @@ class Task {
 #endif
 
 
-#if defined(CONCURRENCY_ENABLED) || (__cplusplus >= 201103L) || (defined(_MSC_VER) && _MSC_VER >= 1700)
-   #include <atomic>
-   #define ATOMIC_INT std::atomic_int
-   #define ATOMIC_BOOL std::atomic_bool
-
-#else
+#ifdef CONCURRENT_FALLBACK_ATOMICS
    // ! Stubs for NON CONCURRENT USAGE !
    // Used when compiling for older C++ standards (C++98/03)
 
+/*
    // Use enum instead of const int to prevent linkage issues
    enum fallback_memory_order {
        memory_order_relaxed = 0,
@@ -220,6 +218,8 @@ class Task {
        memory_order_acq_rel = 4,
        memory_order_seq_cst = 5
    };
+*/
+
 
    // Naming the class 'fallback_...' avoids conflicts if the macro
    // matches the class name recursively in some preprocessors.
@@ -247,13 +247,13 @@ class Task {
            return _n;
        }
 
-       int load(int mo = memory_order_relaxed) const
+       int load(int mo = 0 /*memory_order_relaxed*/) const
        {
            (void)mo;
            return _n;
        }
 
-       void store(int n, int mo = memory_order_release)
+       void store(int n, int mo = 3 /*memory_order_release*/)
        {
            (void)mo;
            _n = n;
@@ -274,7 +274,7 @@ class Task {
        }
 
        // Standard signature: takes int delta, returns OLD value
-       int fetch_add(int delta, int mo = memory_order_seq_cst)
+       int fetch_add(int delta, int mo = 5 /*memory_order_seq_cst*/)
        {
           (void)mo;
           int old = _n;
@@ -282,7 +282,7 @@ class Task {
           return old;
        }
 
-       int fetch_sub(int delta, int mo = memory_order_seq_cst)
+       int fetch_sub(int delta, int mo = 5 /*memory_order_seq_cst*/)
        {
           (void)mo;
           int old = _n;
@@ -291,7 +291,7 @@ class Task {
        }
 
        // CRITICAL FIX: Must update 'expected' on failure
-       bool compare_exchange_strong(int& expected, int desired, int mo = memory_order_seq_cst)
+       bool compare_exchange_strong(int& expected, int desired, int mo = 5 /*memory_order_seq_cst*/)
        {
            (void)mo;
 
@@ -304,7 +304,7 @@ class Task {
            }
        }
 
-       bool compare_exchange_weak(int& expected, int desired, int mo = memory_order_seq_cst)
+       bool compare_exchange_weak(int& expected, int desired, int mo = 5 /*memory_order_seq_cst*/)
        {
            return compare_exchange_strong(expected, desired, mo);
        }
@@ -331,19 +331,19 @@ class Task {
            return _b;
        }
 
-       bool load(int mo = memory_order_relaxed) const
+       bool load(int mo = 0 /*memory_order_relaxed*/) const
        {
            (void)mo;
            return _b;
        }
 
-       void store(bool b, int mo = memory_order_release)
+       void store(bool b, int mo = 3 /*memory_order_release*/)
        {
            (void)mo;
            _b = b;
        }
 
-       bool exchange(bool val, int mo = memory_order_acquire)
+       bool exchange(bool val, int mo = 2 /*memory_order_acquire*/)
        {
            (void)mo;
            bool old = _b;
@@ -351,7 +351,7 @@ class Task {
            return old;
        }
 
-       bool compare_exchange_strong(bool& expected, bool desired, int mo = memory_order_seq_cst)
+       bool compare_exchange_strong(bool& expected, bool desired, int mo = 5 /*memory_order_seq_cst*/)
        {
            (void)mo;
            if (_b == expected) {
@@ -366,6 +366,9 @@ class Task {
 
    #define ATOMIC_INT fallback_atomic_int
    #define ATOMIC_BOOL fallback_atomic_bool
+#else
+   #define ATOMIC_INT std::atomic_int
+   #define ATOMIC_BOOL std::atomic_bool
 
 #endif
 
