@@ -224,40 +224,10 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
 
     uint* freqs1 = new uint[65536];
     memset(&freqs1[0], 0, 65536 * sizeof(uint));
-    uint f0[256] = { 0 };
-    uint f1[256] = { 0 };
-    uint f3[256] = { 0 };
-    uint f2[256] = { 0 };
-    uint8 prv = 0;
-    const uint8* data = reinterpret_cast<const uint8*>(&block[0]);
-    const int count4 = count & -4;
+    Global::computeHistogram(block, count, freqs1, false);
 
-    // Unroll loop
-    for (int i = 0; i < count4; i += 4) {
-        const uint8 cur0 = data[i];
-        const uint8 cur1 = data[i + 1];
-        const uint8 cur2 = data[i + 2];
-        const uint8 cur3 = data[i + 3];
-        f0[cur0]++;
-        f1[cur1]++;
-        f2[cur2]++;
-        f3[cur3]++;
-        freqs1[(prv  * 256) + cur0]++;
-        freqs1[(cur0 * 256) + cur1]++;
-        freqs1[(cur1 * 256) + cur2]++;
-        freqs1[(cur2 * 256) + cur3]++;
-        prv = cur3;
-    }
-
-    for (int i = count4; i < count; i++) {
-        freqs0[data[i]]++;
-        freqs1[(prv * 256) + data[i]]++;
-        prv = data[i];
-    }
-
-    for (int i = 0; i < 256; i++) {
-        freqs0[i] += (f0[i] + f1[i] + f2[i] + f3[i]);
-    }
+    for (int i = 0; i < 65536; i++)
+       freqs0[i >> 8] += freqs1[i];
 
     const int cr = int(CR);
     const int lf = int(LF);
@@ -276,10 +246,12 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
     bool notText = nbBinChars > (count >> 2);
 
     if (notText == false) {
+        notText = nbTextChars < (count >> 2);
+
         if (strict == true) {
-            notText = ((nbTextChars < (count >> 2)) || (freqs0[0] >= uint(count / 100)) || ((nbASCII / 95) < (count / 100)));
+            notText |= ((freqs0[0] >= uint(count / 100)) || ((nbASCII / 95) < (count / 100)));
         } else {
-            notText = ((nbTextChars < (count >> 1)) || (freqs0[32] < uint(count / 50)));
+            notText |= (freqs0[32] < uint(count / 50));
         }
     }
 
