@@ -813,6 +813,7 @@ T EncodingTask<T>::run()
         // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
         _obs->writeBits(lw - 3, 5); // write length-3 (5 bits max)
         _obs->writeBits(written, lw);
+        int64 ww = int64((written + 7) >> 3);
 
         // Emit data to shared bitstream
         for (uint n = 0; written > 0; ) {
@@ -828,8 +829,7 @@ T EncodingTask<T>::run()
 
         if (_listeners.size() > 0) {
             // Notify after entropy
-            Event evt1(Event::AFTER_ENTROPY, blockId,
-                int64((written + 7) >> 3), clock(), checksum, hashType);
+            Event evt1(Event::AFTER_ENTROPY, blockId, ww, clock(), checksum, hashType);
             CompressedOutputStream::notifyListeners(_listeners, evt1);
 
 #if !defined(_MSC_VER) || _MSC_VER > 1500
