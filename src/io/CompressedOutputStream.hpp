@@ -86,14 +86,14 @@ namespace kanzi {
        DefaultOutputBitStream* _obs;
        XXHash32* _hasher32;
        XXHash64* _hasher64;
-       ATOMIC_INT* _processedBlockId;
+       atomic_int_t* _processedBlockId;
        std::vector<Listener<Event>*> _listeners;
        Context _ctx;
 
    public:
        EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
            DefaultOutputBitStream* obs, XXHash32* hasher32, XXHash64* hasher64,
-           ATOMIC_INT* processedBlockId, std::vector<Listener<Event>*>& listeners,
+           atomic_int_t* processedBlockId, std::vector<Listener<Event>*>& listeners,
            const Context& ctx);
 
        ~EncodingTask(){}
@@ -169,10 +169,10 @@ namespace kanzi {
        short _entropyType;
        uint64 _transformType;
        DefaultOutputBitStream* _obs;
-       ATOMIC_BOOL _initialized;
-       ATOMIC_BOOL _closed;
-       ATOMIC_INT _blockId;
-       ATOMIC_INT _inputBlockId; // Counter for input blocks
+       atomic_int_t _initialized;
+       atomic_int_t _closed;
+       atomic_int_t _blockId;
+       atomic_int_t _inputBlockId; // Counter for input blocks
        std::vector<Listener<Event>*> _listeners;
        std::vector<int> _jobsPerTask;
        Context _ctx;

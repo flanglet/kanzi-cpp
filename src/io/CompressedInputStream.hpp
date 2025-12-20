@@ -114,14 +114,14 @@ namespace kanzi
        DefaultInputBitStream* _ibs;
        XXHash32* _hasher32;
        XXHash64* _hasher64;
-       ATOMIC_INT* _processedBlockId;
+       atomic_int_t* _processedBlockId;
        std::vector<Listener<Event>*> _listeners;
        Context _ctx;
 
    public:
        DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
            int blockSize, DefaultInputBitStream* ibs, XXHash32* hasher32, XXHash64* hasher64,
-           ATOMIC_INT* processedBlockId, std::vector<Listener<Event>*>& listeners,
+           atomic_int_t* processedBlockId, std::vector<Listener<Event>*>& listeners,
            const Context& ctx);
 
        ~DecodingTask(){}
@@ -217,10 +217,10 @@ namespace kanzi
        short _entropyType;
        uint64 _transformType;
        DefaultInputBitStream* _ibs;
-       ATOMIC_BOOL _initialized;
-       ATOMIC_BOOL _closed;
-       ATOMIC_INT _blockId;
-       ATOMIC_INT _submitBlockId; // Next block to submit to pool
+       atomic_int_t _initialized;
+       atomic_int_t _closed;
+       atomic_int_t _blockId;
+       atomic_int_t _submitBlockId; // Next block to submit to pool
        int _consumeBlockId;       // Next block to be consumed by read()
        std::vector<Listener<Event>*> _listeners;
        std::streamsize _gcount;

@@ -76,8 +76,8 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
     _available = 0;
     _entropyType = EntropyDecoderFactory::getType(entropy.c_str()); // throws on error
     _transformType = TransformFactory<byte>::getType(transform.c_str()); // throws on error
-    _initialized = false;
-    _closed = false;
+    _initialized = 0;
+    _closed = 0;
     _gcount = 0;
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
     _jobs = tasks;
@@ -152,8 +152,8 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
     _available = 0;
     _entropyType = EntropyDecoderFactory::NONE_TYPE;
     _transformType = TransformFactory<byte>::NONE_TYPE;
-    _initialized = false;
-    _closed = false;
+    _initialized = 0;
+    _closed = 0;
     _gcount = 0;
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
     _jobs = tasks;
@@ -326,7 +326,7 @@ void CompressedInputStream::submitBlock(int bufferId)
 int CompressedInputStream::_get(int inc)
 {
     try {
-        if (_initialized.load(memory_order_acquire) == false) {
+        if (LOAD_ATOMIC(_initialized) == 0) {
              readHeader();
 
              for (int i = 0; i < _jobs; i++)
@@ -334,7 +334,7 @@ int CompressedInputStream::_get(int inc)
         }
 
         if (_available == 0) {
-            if (_closed.load(memory_order_relaxed) == true)
+            if (LOAD_ATOMIC(_closed) == 1)
                 throw ios_base::failure("Stream closed");
 
             DecodingTaskResult res;
@@ -427,7 +427,7 @@ istream& CompressedInputStream::read(char* data, streamsize length)
 
     while (remaining > 0) {
         // Reuse _get(0) logic logic implicitly
-        if (_initialized.load(memory_order_acquire) == false) {
+        if (LOAD_ATOMIC(_initialized) == 0) {
              readHeader();
 
              for (int i = 0; i < _jobs; i++)
@@ -507,7 +507,7 @@ istream& CompressedInputStream::read(char* data, streamsize length)
 
 void CompressedInputStream::readHeader()
 {
-    if (_initialized.exchange(true, memory_order_acquire))
+    if (EXCHANGE_ATOMIC(_initialized, 1) == 1)
         return;
 
     if (_headless == true)
@@ -695,11 +695,11 @@ bool CompressedInputStream::removeListener(Listener<Event>& bl)
 
 void CompressedInputStream::close()
 {
-    if (_closed.exchange(true, memory_order_relaxed))
+    if (EXCHANGE_ATOMIC(_closed, 1) == 1)
         return;
 
     // Signal to break the spin-loops in DecodingTask::run immediately.
-    _blockId.store(CANCEL_TASKS_ID, memory_order_release);
+    STORE_ATOMIC(_blockId, CANCEL_TASKS_ID);
 
 #ifdef CONCURRENCY_ENABLED
     // We must ensure no thread is writing to _buffers before we delete them.
@@ -748,7 +748,7 @@ void CompressedInputStream::notifyListeners(vector<Listener<Event>*>& listeners,
 template <class T>
 DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
     int blockSize, DefaultInputBitStream* ibs, XXHash32* hasher32, XXHash64* hasher64,
-    ATOMIC_INT* processedBlockId, vector<Listener<Event>*>& listeners,
+    atomic_int_t* processedBlockId, vector<Listener<Event>*>& listeners,
     const Context& ctx)
     : _listeners(listeners)
     , _ctx(ctx)
@@ -779,7 +779,7 @@ T DecodingTask<T>::run()
 
     // Lock free synchronization
     while (true) {
-        const int taskId = _processedBlockId->load(memory_order_acquire);
+        const int taskId = LOAD_ATOMIC(*_processedBlockId);
 
         if (taskId == CompressedInputStream::CANCEL_TASKS_ID) {
             // Skip, an error occurred
@@ -807,12 +807,12 @@ T DecodingTask<T>::run()
         uint64 read = _ibs->readBits(lr);
 
         if (read == 0) {
-            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
+            STORE_ATOMIC(*_processedBlockId, CompressedInputStream::CANCEL_TASKS_ID);
             return T(*_data, blockId, 0, 0, 0, "Success");
         }
 
         if (read > (uint64(1) << 34)) {
-            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
+            STORE_ATOMIC(*_processedBlockId, CompressedInputStream::CANCEL_TASKS_ID);
             return T(*_data, blockId, 0, 0, Error::ERR_BLOCK_SIZE, "Invalid block size");
         }
 
@@ -835,7 +835,7 @@ T DecodingTask<T>::run()
 
         // After completion of the bitstream reading, increment the block id.
         // It unblocks the task processing the next block (if any)
-        _processedBlockId->store(blockId, memory_order_release);
+        STORE_ATOMIC(*_processedBlockId, blockId);
 
         const int from = _ctx.getInt("from", 1);
         const int to = _ctx.getInt("to", CompressedInputStream::MAX_BLOCK_ID);
@@ -876,7 +876,7 @@ T DecodingTask<T>::run()
 
         if ((preTransformLength <= 0) || (preTransformLength > maxTransformSize)) {
             // Error => cancel concurrent decoding tasks
-            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
+            STORE_ATOMIC(*_processedBlockId, CompressedInputStream::CANCEL_TASKS_ID);
             stringstream ss;
             ss << "Invalid compressed block length: " << preTransformLength;
 
@@ -933,7 +933,7 @@ T DecodingTask<T>::run()
         if (ed->decode(_buffer->_array, 0, preTransformLength) != preTransformLength) {
             // Error => cancel concurrent decoding tasks
             delete ed;
-            _processedBlockId->store(CompressedInputStream::CANCEL_TASKS_ID, memory_order_release);
+            STORE_ATOMIC(*_processedBlockId, CompressedInputStream::CANCEL_TASKS_ID);
             return T(*_data, blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
                 "Entropy decoding failed");
         }
@@ -998,8 +998,8 @@ T DecodingTask<T>::run()
     }
     catch (const exception& e) {
         // Make sure to unfreeze next block
-        if (_processedBlockId->load(memory_order_acquire) == blockId - 1)
-            _processedBlockId->store(blockId, memory_order_release);
+	int curBlockId = blockId - 1;
+	COMPARE_EXCHANGE_ATOMIC(*_processedBlockId, curBlockId, blockId);
 
         if (transform != nullptr)
             delete transform;

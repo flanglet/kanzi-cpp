@@ -90,8 +90,8 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
     const int nbBlocks = (_inputSize == 0) ? 0 : int((_inputSize + int64(blockSize - 1)) / int64(blockSize));
     _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
     _headless = headerless;
-    _initialized = false;
-    _closed = false;
+    _initialized = 0;
+    _closed = 0;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
     _entropyType = EntropyEncoderFactory::getType(entropy.c_str());
     _transformType = TransformFactory<byte>::getType(transform.c_str());
@@ -190,8 +190,8 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
     _bufferId = 0;
     _blockSize = blockSize;
     _bufferThreshold = blockSize;
-    _initialized = false;
-    _closed = false;
+    _initialized = 0;
+    _closed = 0;
     _headless = headerless;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
@@ -276,7 +276,7 @@ CompressedOutputStream::~CompressedOutputStream()
 
 void CompressedOutputStream::writeHeader()
 {
-    if ((_headless == true) || (_initialized.exchange(true, memory_order_acquire)))
+    if ((_headless == true) || (EXCHANGE_ATOMIC(_initialized, 1) == 1))
         return;
 
     if (_obs->writeBits(BITSTREAM_TYPE, 32) != 32)
@@ -391,7 +391,7 @@ ostream& CompressedOutputStream::write(const char* data, streamsize length)
 
 void CompressedOutputStream::close()
 {
-    if (_closed.load(memory_order_acquire))
+    if (LOAD_ATOMIC(_closed) == 1)
         return;
 
     string errMsg;
@@ -422,7 +422,7 @@ void CompressedOutputStream::close()
         errMsg = e.what();
     }
 
-    _closed.store(true, memory_order_release);
+    STORE_ATOMIC(_closed, 1);
 
     // Force subsequent writes to trigger submitBlock immediately
     _bufferThreshold = 0;
@@ -447,7 +447,6 @@ void CompressedOutputStream::close()
 void CompressedOutputStream::processBuffer()
 {
     submitBlock();
-
     _bufferId = (_bufferId + 1) % _jobs;
 
 #ifdef CONCURRENCY_ENABLED
@@ -476,7 +475,7 @@ void CompressedOutputStream::processBuffer()
 
 void CompressedOutputStream::submitBlock()
 {
-    if (_closed.load(memory_order_acquire))
+    if (LOAD_ATOMIC(_closed) == 1)
         throw IOException("Stream closed", Error::ERR_WRITE_FILE);
 
     writeHeader(); // Ensure header is written before first block processing
@@ -594,7 +593,7 @@ void CompressedOutputStream::notifyListeners(vector<Listener<Event>*>& listeners
 template <class T>
 EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
     DefaultOutputBitStream* obs, XXHash32* hasher32, XXHash64* hasher64,
-    ATOMIC_INT* processedBlockId, vector<Listener<Event>*>& listeners,
+    atomic_int_t* processedBlockId, vector<Listener<Event>*>& listeners,
     const Context& ctx)
     : _obs(obs)
     , _listeners(listeners)
@@ -625,7 +624,7 @@ T EncodingTask<T>::run()
     try {
         if (blockLength == 0) {
             // Last block (only block with 0 length)
-            (*_processedBlockId)++;
+            FETCH_ADD_ATOMIC(*_processedBlockId, 1);
             return T(blockId, 0, "Success");
         }
 
@@ -714,7 +713,7 @@ T EncodingTask<T>::run()
         postTransformLength = _buffer->_index;
 
         if (postTransformLength < 0) {
-            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID, memory_order_release);
+            STORE_ATOMIC(*_processedBlockId, CompressedOutputStream::CANCEL_TASKS_ID);
             return T(blockId, Error::ERR_WRITE_FILE, "Invalid transform size");
         }
 
@@ -722,7 +721,7 @@ T EncodingTask<T>::run()
         const int dataSize = (postTransformLength < 256) ? 1 : (Global::_log2(uint32(postTransformLength)) >> 3) + 1;
 
         if (dataSize > 4) {
-            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID, memory_order_release);
+            STORE_ATOMIC(*_processedBlockId, CompressedOutputStream::CANCEL_TASKS_ID);
             return T(blockId, Error::ERR_WRITE_FILE, "Invalid block data length");
         }
 
@@ -785,7 +784,7 @@ T EncodingTask<T>::run()
         // Entropy encode block
         if (ee->encode(_buffer->_array, 0, postTransformLength) != postTransformLength) {
             delete ee;
-            _processedBlockId->store(CompressedOutputStream::CANCEL_TASKS_ID, memory_order_release);
+            STORE_ATOMIC(*_processedBlockId, CompressedOutputStream::CANCEL_TASKS_ID);
             return T(blockId, Error::ERR_PROCESS_BLOCK, "Entropy coding failed");
         }
 
@@ -799,7 +798,7 @@ T EncodingTask<T>::run()
 
         // Lock free synchronization
         while (true) {
-            const int taskId = _processedBlockId->load(memory_order_acquire);
+            const int taskId = LOAD_ATOMIC(*_processedBlockId);
 
             if (taskId == CompressedOutputStream::CANCEL_TASKS_ID)
                 return T(blockId, 0, "Canceled");
@@ -825,7 +824,7 @@ T EncodingTask<T>::run()
 
         // After completion of the entropy coding, increment the block id.
         // It unblocks the task processing the next block (if any).
-        _processedBlockId->store(blockId, memory_order_release);
+        STORE_ATOMIC(*_processedBlockId, blockId);
 
         if (_listeners.size() > 0) {
             // Notify after entropy
@@ -853,8 +852,8 @@ T EncodingTask<T>::run()
     }
     catch (const exception& e) {
         // Make sure to unfreeze next block
-        if (_processedBlockId->load(memory_order_acquire) == blockId - 1)
-            _processedBlockId->store(blockId, memory_order_release);
+	int curBlockId = blockId - 1;
+	COMPARE_EXCHANGE_ATOMIC(*_processedBlockId, curBlockId, blockId);
 
         if (transform != nullptr)
             delete transform;

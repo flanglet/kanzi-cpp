@@ -22,6 +22,7 @@ limitations under the License.
 #if __cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1700)
     // C++ 11 (or partial)
     #include <atomic>
+    #define HAVE_STD_ATOMICS 1
 
     #ifndef CONCURRENCY_DISABLED
         #ifdef __clang__
@@ -37,7 +38,7 @@ limitations under the License.
         #endif
     #endif
 #else
-    #define CONCURRENT_FALLBACK_ATOMICS
+    #define HAVE_STD_ATOMICS 0
 #endif
 
 
@@ -204,171 +205,51 @@ class Task {
 #endif
 
 
-#ifdef CONCURRENT_FALLBACK_ATOMICS
-   // ! Stubs for NON CONCURRENT USAGE !
-   // Used when compiling for older C++ standards (C++98/03)
+#if HAVE_STD_ATOMICS
+    typedef std::atomic_int atomic_int_t;
 
-/*
-   // Use enum instead of const int to prevent linkage issues
-   enum fallback_memory_order {
-       memory_order_relaxed = 0,
-       memory_order_consume = 1,
-       memory_order_acquire = 2,
-       memory_order_release = 3,
-       memory_order_acq_rel = 4,
-       memory_order_seq_cst = 5
-   };
-*/
+    #define LOAD_ATOMIC(a)  ((a).load(std::memory_order_acquire))
+    #define STORE_ATOMIC(a, v) ((a).store((v), std::memory_order_release))
+    #define EXCHANGE_ATOMIC(a, v)  ((a).exchange((v), std::memory_order_acq_rel))
+    #define FETCH_ADD_ATOMIC(a, v) ((a).fetch_add((v), std::memory_order_acq_rel))
+    #define COMPARE_EXCHANGE_ATOMIC(obj, expected, desired) \
+                                    ((obj).compare_exchange_strong((expected), (desired), \
+                                    std::memory_order_release, std::memory_order_acquire))
 
-
-   // Naming the class 'fallback_...' avoids conflicts if the macro
-   // matches the class name recursively in some preprocessors.
-   class fallback_atomic_int {
-   private:
-       volatile int _n;
-
-       // Disable copy constructor and assignment operator
-       // (Atomics should not be copyable)
-       fallback_atomic_int(const fallback_atomic_int&);
-       fallback_atomic_int& operator=(const fallback_atomic_int&);
-
-   public:
-       fallback_atomic_int(int n = 0) : _n(n) {}
-
-       // Assignment returns the value (int), NOT the object reference
-       int operator=(int n)
-       {
-           _n = n;
-           return n;
-       }
-
-       operator int() const
-       {
-           return _n;
-       }
-
-       int load(int mo = 0 /*memory_order_relaxed*/) const
-       {
-           (void)mo;
-           return _n;
-       }
-
-       void store(int n, int mo = 3 /*memory_order_release*/)
-       {
-           (void)mo;
-           _n = n;
-       }
-
-       // Postfix ++ (x++) returns OLD value
-       int operator++(int)
-       {
-           int old = _n;
-           _n++;
-           return old;
-       }
-
-       // Prefix ++ (++x) returns NEW value
-       int operator++()
-       {
-           return ++_n;
-       }
-
-       // Standard signature: takes int delta, returns OLD value
-       int fetch_add(int delta, int mo = 5 /*memory_order_seq_cst*/)
-       {
-          (void)mo;
-          int old = _n;
-          _n += delta;
-          return old;
-       }
-
-       int fetch_sub(int delta, int mo = 5 /*memory_order_seq_cst*/)
-       {
-          (void)mo;
-          int old = _n;
-          _n -= delta;
-          return old;
-       }
-
-       // CRITICAL FIX: Must update 'expected' on failure
-       bool compare_exchange_strong(int& expected, int desired, int mo = 5 /*memory_order_seq_cst*/)
-       {
-           (void)mo;
-
-           if (_n == expected) {
-               _n = desired;
-               return true;
-           } else {
-               expected = _n;
-               return false;
-           }
-       }
-
-       bool compare_exchange_weak(int& expected, int desired, int mo = 5 /*memory_order_seq_cst*/)
-       {
-           return compare_exchange_strong(expected, desired, mo);
-       }
-   };
-
-   class fallback_atomic_bool {
-   private:
-       volatile bool _b;
-
-       fallback_atomic_bool(const fallback_atomic_bool&);
-       fallback_atomic_bool& operator=(const fallback_atomic_bool&);
-
-   public:
-       fallback_atomic_bool(bool b = false) : _b(b) {}
-
-       bool operator=(bool b)
-       {
-           _b = b;
-           return b;
-       }
-
-       operator bool() const
-       {
-           return _b;
-       }
-
-       bool load(int mo = 0 /*memory_order_relaxed*/) const
-       {
-           (void)mo;
-           return _b;
-       }
-
-       void store(bool b, int mo = 3 /*memory_order_release*/)
-       {
-           (void)mo;
-           _b = b;
-       }
-
-       bool exchange(bool val, int mo = 2 /*memory_order_acquire*/)
-       {
-           (void)mo;
-           bool old = _b;
-           _b = val;
-           return old;
-       }
-
-       bool compare_exchange_strong(bool& expected, bool desired, int mo = 5 /*memory_order_seq_cst*/)
-       {
-           (void)mo;
-           if (_b == expected) {
-               _b = desired;
-               return true;
-           } else {
-               expected = _b;
-               return false;
-           }
-       }
-   };
-
-   #define ATOMIC_INT fallback_atomic_int
-   #define ATOMIC_BOOL fallback_atomic_bool
 #else
-   #define ATOMIC_INT std::atomic_int
-   #define ATOMIC_BOOL std::atomic_bool
+
+    typedef int atomic_int_t;
+    #define LOAD_ATOMIC(a) (a)
+    #define STORE_ATOMIC(a, v)  ((a) = (v))
+    #define EXCHANGE_ATOMIC(a, v)  exchange_atomic_int((a), (v))
+    #define FETCH_ADD_ATOMIC(a, v)  fetch_add_atomic_int((a), (v))
+    #define COMPARE_EXCHANGE_ATOMIC(obj, expected, desired) \
+                                    compare_exchange_fallback((obj), (expected), (desired))
+
+    inline int exchange_atomic_int(int& a, int v)
+    {
+        int old = a;
+        a = v;
+        return old;
+    }
+
+    inline int fetch_add_atomic_int(int& a, int v)
+    {
+        int old = a;
+        a += v;
+        return old;
+    }
+
+    inline bool compare_exchange_fallback(int& obj, int& expected, int desired)
+    {
+        if (obj == expected) {
+            obj = desired;
+            return true;
+        } else {
+            expected = obj; // update expected on failure
+            return false;
+        }
+    }
 
 #endif
 
