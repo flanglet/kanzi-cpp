@@ -389,8 +389,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         // Fill _hashes and update positions
         anchor = srcIdx + bestLen;
-        prefetchRead(&src[anchor + 64]);
-        prefetchRead(&src[anchor + 128]);
+        prefetchRead(&src[anchor]);
 
         while (srcIdx + 4 < anchor) {
             srcIdx += 4;
@@ -493,8 +492,8 @@ bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, i
     bool res = true;
     int srcIdx = 13;
     int dstIdx = 0;
-    int repd0 = 0;
-    int repd1 = 0;
+    int repd0 = count;
+    int repd1 = count;
 
     while (true) {
         const int token = int(src[tkIdx++]);
@@ -848,6 +847,7 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     const int srcEnd = count;
+    const int dstEnd = output._length;
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
 
@@ -898,6 +898,9 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         mLen += int(src[srcIdx++]);
         const int mEnd = dstIdx + mLen;
+
+        if (mEnd > dstEnd)
+            return false;
 
         if (dstIdx >= ref + 8) {
             do {
