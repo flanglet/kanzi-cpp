@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _XXHash32_
-#define _XXHash32_
+#ifndef knz_XXHash32
+#define knz_XXHash32
 
 #include <ctime>
 

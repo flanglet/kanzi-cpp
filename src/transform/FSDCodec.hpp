@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _FSDCodec_
-#define _FSDCodec_
+#ifndef knz_FSDCodec
+#define knz_FSDCodec
 
 #include "../Context.hpp"
 #include "../Transform.hpp"

@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Clock_
-#define _Clock_
+#ifndef knz_Clock
+#define knz_Clock
 
 
 #if __cplusplus >= 201103L || _MSC_VER >= 1700

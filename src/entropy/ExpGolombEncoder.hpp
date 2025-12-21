@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _ExpGolombEncoder_
-#define _ExpGolombEncoder_
+#ifndef knz_ExpGolombEncoder
+#define knz_ExpGolombEncoder
 
 #include "../EntropyEncoder.hpp"
 

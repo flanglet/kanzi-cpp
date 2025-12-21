@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _BinaryEntropyEncoder_
-#define _BinaryEntropyEncoder_
+#ifndef knz_BinaryEntropyEncoder
+#define knz_BinaryEntropyEncoder
 
 #include "../EntropyEncoder.hpp"
 #include "../Predictor.hpp"

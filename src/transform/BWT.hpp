@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _BWT_
-#define _BWT_
+#ifndef knz_BWT
+#define knz_BWT
 
 #include "../concurrent.hpp"
 #include "../Context.hpp"

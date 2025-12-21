@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _concurrent_
-#define _concurrent_
+#ifndef knz_concurrent
+#define knz_concurrent
 
 #include "types.hpp"
 

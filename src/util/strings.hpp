@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _strings_
-#define _strings_
+#ifndef knz_strings
+#define knz_strings
 
 #include <cstdlib>
 #include <iomanip>

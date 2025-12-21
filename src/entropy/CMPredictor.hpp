@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _CMPredictor_
-#define _CMPredictor_
+#ifndef knz_CMPredictor
+#define knz_CMPredictor
 
 #include "../Predictor.hpp"
 #include "../types.hpp"

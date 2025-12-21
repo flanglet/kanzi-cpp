@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _EXECodec_
-#define _EXECodec_
+#ifndef knz_EXECodec
+#define knz_EXECodec
 
 #include "../Context.hpp"
 #include "../Transform.hpp"

@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Listener_
-#define _Listener_
+#ifndef knz_Listener
+#define knz_Listener
 
 namespace kanzi
 {

@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _BWTBlockCodec_
-#define _BWTBlockCodec_
+#ifndef knz_BWTBlockCodec
+#define knz_BWTBlockCodec
 
 #include "../transform/BWT.hpp"
 #include "../Context.hpp"

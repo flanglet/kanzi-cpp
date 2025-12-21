@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _HuffmanEncoder_
-#define _HuffmanEncoder_
+#ifndef knz_HuffmanEncoder
+#define knz_HuffmanEncoder
 
 #include "HuffmanCommon.hpp"
 #include "../EntropyEncoder.hpp"

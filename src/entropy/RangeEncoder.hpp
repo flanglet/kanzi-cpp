@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _RangeEncoder_
-#define _RangeEncoder_
+#ifndef knz_RangeEncoder
+#define knz_RangeEncoder
 
 #include "../EntropyEncoder.hpp"
 

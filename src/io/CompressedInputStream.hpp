@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _CompressedInputStream_
-#define _CompressedInputStream_
+#ifndef knz_CompressedInputStream
+#define knz_CompressedInputStream
 
 #include <cstdio> // definition of EOF
 #include <string>

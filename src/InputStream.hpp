@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _InputStream_
-#define _InputStream_
+#ifndef knz_InputStream
+#define knz_InputStream
 
 #include <istream>
 

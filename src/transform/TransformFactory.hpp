@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _TransformFactory_
-#define _TransformFactory_
+#ifndef knz_TransformFactory
+#define knz_TransformFactory
 
 #include <iostream>
 #include <algorithm>

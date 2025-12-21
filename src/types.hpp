@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _types_
-#define _types_
+#ifndef knz_types
+#define knz_types
 
     #if defined(_MSC_VER) && _MSC_VER < 1600
        // Visual Studio < 2010: no stdint.h
@@ -224,7 +224,6 @@ limitations under the License.
         typedef uint64_t uint64;
     }
 
-
    #if defined(__MINGW32__)
       #define PATH_SEPARATOR '/'
    #elif defined(WIN32) || defined(_WIN32) || defined(_WIN64)
@@ -234,10 +233,35 @@ limitations under the License.
    #endif
 
 
+   // Likely / unlikely macros
+   #if defined(__GNUC__) || defined(__clang__)
+       #ifndef LIKELY
+           #define LIKELY(x)   __builtin_expect(!!(x), 1)
+       #endif
+       #ifndef UNLIKELY
+           #define UNLIKELY(x) __builtin_expect(!!(x), 0)
+       #endif
+   #else
+       #ifndef LIKELY
+           #define LIKELY(x)   (x)
+       #endif
+       #ifndef UNLIKELY
+           #define UNLIKELY(x) (x)
+       #endif
+   #endif
+
+   #if defined(__GNUC__) || defined(__clang__)
+      #define KANZI_ALWAYS_INLINE inline __attribute__((always_inline))
+   #elif defined(_MSC_VER)
+      #define KANZI_ALWAYS_INLINE __forceinline
+   #else
+      #define KANZI_ALWAYS_INLINE inline
+   #endif
+
    #if defined(_MSC_VER)
-      #define ALIGNED_(x) __declspec(align(x))
+      #define KANZI_ALIGNED_(x) __declspec(align(x))
    #elif defined(__GNUC__)
-      #define ALIGNED_(x) __attribute__ ((aligned(x)))
+      #define KANZI_ALIGNED_(x) __attribute__ ((aligned(x)))
    #endif
 
 #endif

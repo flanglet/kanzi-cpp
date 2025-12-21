@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Magic_
-#define _Magic_
+#ifndef knz_Magic
+#define knz_Magic
 
 #include "Memory.hpp"
 

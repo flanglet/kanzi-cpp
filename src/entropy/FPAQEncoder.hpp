@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _FPAQEncoder_
-#define _FPAQEncoder_
+#ifndef knz_FPAQEncoder
+#define knz_FPAQEncoder
 
 #include <vector>
 

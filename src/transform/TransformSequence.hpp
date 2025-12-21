@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _TransformSequence_
-#define _TransformSequence_
+#ifndef knz_TransformSequence
+#define knz_TransformSequence
 
 #include <cstring>
 #include <stdexcept>

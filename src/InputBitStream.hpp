@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _InputBitStream_
-#define _InputBitStream_
+#ifndef knz_InputBitStream
+#define knz_InputBitStream
 
 #include "types.hpp"
 

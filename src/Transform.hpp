@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Transform_
-#define _Transform_
+#ifndef knz_Transform
+#define knz_Transform
 
 #include "SliceArray.hpp"
 

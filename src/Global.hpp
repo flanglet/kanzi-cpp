@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Global_
-#define _Global_
+#ifndef knz_Global
+#define knz_Global
 
 #include <set>
 #include <string>

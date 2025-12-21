@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _InfoPrinter_
-#define _InfoPrinter_
+#ifndef knz_InfoPrinter
+#define knz_InfoPrinter
 
 #include "../Event.hpp"
 #include "../Listener.hpp"

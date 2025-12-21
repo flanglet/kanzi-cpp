@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _IOUtil_
-#define _IOUtil_
+#ifndef knz_IOUtil
+#define knz_IOUtil
 
 #include <algorithm>
 #include <sstream>

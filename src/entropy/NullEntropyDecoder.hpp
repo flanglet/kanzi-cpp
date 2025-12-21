@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _NullEntropyDecoder_
-#define _NullEntropyDecoder_
+#ifndef knz_NullEntropyDecoder
+#define knz_NullEntropyDecoder
 
 #include "../EntropyDecoder.hpp"
 #include "../InputBitStream.hpp"

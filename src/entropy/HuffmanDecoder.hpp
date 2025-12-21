@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _HuffmanDecoder_
-#define _HuffmanDecoder_
+#ifndef knz_HuffmanDecoder
+#define knz_HuffmanDecoder
 
 #include "HuffmanCommon.hpp"
 #include "../Context.hpp"

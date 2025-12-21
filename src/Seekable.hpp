@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Seekable_
-#define _Seekable_
+#ifndef knz_Seekable
+#define knz_Seekable
 
 #include "types.hpp"
 

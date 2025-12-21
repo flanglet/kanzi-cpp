@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _NullOutputStream_
-#define _NullOutputStream_
+#ifndef knz_NullOutputStream
+#define knz_NullOutputStream
 
 namespace kanzi
 {

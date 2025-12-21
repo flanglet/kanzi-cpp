@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _LZCodec_
-#define _LZCodec_
+#ifndef knz_LZCodec
+#define knz_LZCodec
 
 #include "../Context.hpp"
 #include "../Global.hpp"

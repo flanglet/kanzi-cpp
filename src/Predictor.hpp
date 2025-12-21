@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Predictor_
-#define _Predictor_
+#ifndef knz_Predictor
+#define knz_Predictor
 
 namespace kanzi
 {

@@ -14,34 +14,18 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Memory_
-#define _Memory_
+#ifndef knz_Memory
+#define knz_Memory
 
 #include <cstring>
 #include "types.hpp"
 
-// Likely / unlikely macros
-#if defined(__GNUC__) || defined(__clang__)
-    #ifndef LIKELY
-        #define LIKELY(x)   __builtin_expect(!!(x), 1)
-    #endif
-    #ifndef UNLIKELY
-        #define UNLIKELY(x) __builtin_expect(!!(x), 0)
-    #endif
-#else
-    #ifndef LIKELY
-        #define LIKELY(x)   (x)
-    #endif
-    #ifndef UNLIKELY
-        #define UNLIKELY(x) (x)
-    #endif
-#endif
 
 namespace kanzi {
 
 // Prefetch helpers
 
-static inline void prefetchRead(const void* ptr) {
+static KANZI_ALWAYS_INLINE void prefetchRead(const void* ptr) {
 #if defined(__GNUG__) || defined(__clang__)
     __builtin_prefetch(ptr, 0, 1);
 #elif defined(__x86_64__) || defined(_M_AMD64)
@@ -53,7 +37,7 @@ static inline void prefetchRead(const void* ptr) {
 #endif
 }
 
-static inline void prefetchWrite(const void* ptr) {
+static KANZI_ALWAYS_INLINE void prefetchWrite(const void* ptr) {
 #if defined(__GNUG__) || defined(__clang__)
     __builtin_prefetch(ptr, 1, 1);
 #elif defined(__x86_64__) || defined(_M_AMD64)
@@ -67,7 +51,7 @@ static inline void prefetchWrite(const void* ptr) {
 
 // Byte-swap helpers
 
-static inline uint16 bswap16(uint16 x) {
+static KANZI_ALWAYS_INLINE uint16 bswap16(uint16 x) {
 #if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 5)
     return __builtin_bswap16(x);
 #elif defined(_MSC_VER)
@@ -77,7 +61,7 @@ static inline uint16 bswap16(uint16 x) {
 #endif
 }
 
-static inline uint32 bswap32(uint32 x) {
+static KANZI_ALWAYS_INLINE uint32 bswap32(uint32 x) {
 #if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 5)
     return __builtin_bswap32(x);
 #elif defined(_MSC_VER)
@@ -90,7 +74,7 @@ static inline uint32 bswap32(uint32 x) {
 #endif
 }
 
-static inline uint64 bswap64(uint64 x) {
+static KANZI_ALWAYS_INLINE uint64 bswap64(uint64 x) {
 #if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 5)
     return __builtin_bswap64(x);
 #elif defined(_MSC_VER)
@@ -118,7 +102,7 @@ static inline uint64 bswap64(uint64 x) {
 
 
 template <typename T, bool SourceIsBigEndian>
-static inline T readEndian(const byte* p) {
+static KANZI_ALWAYS_INLINE T readEndian(const byte* p) {
     T val;
 
 #ifdef AGGRESSIVE_OPTIMIZATION
@@ -145,7 +129,7 @@ static inline T readEndian(const byte* p) {
 }
 
 template <typename T, bool TargetIsBigEndian>
-static inline void writeEndian(byte* p, T val) {
+static KANZI_ALWAYS_INLINE void writeEndian(byte* p, T val) {
 
 #if HOST_IS_LITTLE
     if (TargetIsBigEndian) {

@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _DivSufSort_
-#define _DivSufSort_
+#ifndef knz_DivSufSort
+#define knz_DivSufSort
 
 #include "../types.hpp"
 

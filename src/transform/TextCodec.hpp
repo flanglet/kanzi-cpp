@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _TextCodec_
-#define _TextCodec_
+#ifndef knz_TextCodec
+#define knz_TextCodec
 
 #include "../Context.hpp"
 #include "../Transform.hpp"

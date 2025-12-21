@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _EntropyEncoderFactory_
-#define _EntropyEncoderFactory_
+#ifndef knz_EntropyEncoderFactory
+#define knz_EntropyEncoderFactory
 
 #include <algorithm>
 #include "../Context.hpp"

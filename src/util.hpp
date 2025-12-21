@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _util_
-#define _util_
+#ifndef knz_util
+#define knz_util
 
 
 #include <iostream>

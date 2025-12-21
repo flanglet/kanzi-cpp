@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Error_
-#define _Error_
+#ifndef knz_Error
+#define knz_Error
 
 namespace kanzi
 {

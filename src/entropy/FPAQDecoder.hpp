@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _FPAQDecoder_
-#define _FPAQDecoder_
+#ifndef knz_FPAQDecoder
+#define knz_FPAQDecoder
 
 #include <vector>
 

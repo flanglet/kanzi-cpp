@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _BlockCompressor_
-#define _BlockCompressor_
+#ifndef knz_BlockCompressor
+#define knz_BlockCompressor
 
 #include <map>
 #include <vector>

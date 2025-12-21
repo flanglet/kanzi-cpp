@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _TPAQPredictor_
-#define _TPAQPredictor_
+#ifndef knz_TPAQPredictor
+#define knz_TPAQPredictor
 
 #include <cstring>
 #include "../Context.hpp"

@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _ZRLT_
-#define _ZRLT_
+#ifndef knz_ZRLT
+#define knz_ZRLT
 
 #include "../Context.hpp"
 #include "../Transform.hpp"

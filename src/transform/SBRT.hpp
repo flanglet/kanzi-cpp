@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _SBRT_
-#define _SBRT_
+#ifndef knz_SBRT
+#define knz_SBRT
 
 #include "../Context.hpp"
 #include "../Transform.hpp"

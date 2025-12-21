@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Printer_
-#define _Printer_
+#ifndef knz_Printer
+#define knz_Printer
 
 
 #ifdef CONCURRENCY_ENABLED

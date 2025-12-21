@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _RLT_
-#define _RLT_
+#ifndef knz_RLT
+#define knz_RLT
 
 #include "../Context.hpp"
 #include "../Transform.hpp"

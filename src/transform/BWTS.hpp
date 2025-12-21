@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _BWTS_
-#define _BWTS_
+#ifndef knz_BWTS
+#define knz_BWTS
 
 #include "../Context.hpp"
 #include "../Transform.hpp"

@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _NullTransform_
-#define _NullTransform_
+#ifndef knz_NullTransform
+#define knz_NullTransform
 
 #include "../Context.hpp"
 #include "../Transform.hpp"

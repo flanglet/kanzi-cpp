@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _SliceArray_
-#define _SliceArray_
+#ifndef knz_SliceArray
+#define knz_SliceArray
 
 namespace kanzi
 {

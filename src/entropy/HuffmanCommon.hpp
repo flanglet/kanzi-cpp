@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _HuffmanCommon_
-#define _HuffmanCommon_
+#ifndef knz_HuffmanCommon
+#define knz_HuffmanCommon
 
 #include "../types.hpp"
 

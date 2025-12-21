@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _IOException_
-#define _IOException_
+#ifndef knz_IOException
+#define knz_IOException
 
 #include <string>
 #include <stdexcept>

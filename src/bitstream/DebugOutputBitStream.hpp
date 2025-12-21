@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _DebugOutputBitStream_
-#define _DebugOutputBitStream_
+#ifndef knz_DebugOutputBitStream
+#define knz_DebugOutputBitStream
 
 #include "../OutputBitStream.hpp"
 #include "../OutputStream.hpp"

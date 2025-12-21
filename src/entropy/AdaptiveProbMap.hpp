@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _AdaptiveProbMap_
-#define _AdaptiveProbMap_
+#ifndef knz_AdaptiveProbMap
+#define knz_AdaptiveProbMap
 
 #include "../Global.hpp"
 

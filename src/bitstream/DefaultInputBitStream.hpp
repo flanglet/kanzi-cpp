@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _DefaultInputBitStream_
-#define _DefaultInputBitStream_
+#ifndef knz_DefaultInputBitStream
+#define knz_DefaultInputBitStream
 
 #include "../BitStreamException.hpp"
 #include "../InputBitStream.hpp"

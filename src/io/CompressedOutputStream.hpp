@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _CompressedOutputStream_
-#define _CompressedOutputStream_
+#ifndef knz_CompressedOutputStream
+#define knz_CompressedOutputStream
 
 
 #include <string>

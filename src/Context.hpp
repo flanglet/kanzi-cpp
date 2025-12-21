@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Context_
-#define _Context_
+#ifndef knz_Context
+#define knz_Context
 
 #include <map>
 #include <string>

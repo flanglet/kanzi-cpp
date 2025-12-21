@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Compressor_
-#define _Compressor_
+#ifndef knz_Compressor
+#define knz_Compressor
 
 #ifdef _WIN32
    #define CDECL __cdecl

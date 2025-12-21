@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _AliasCodec_
-#define _AliasCodec_
+#ifndef knz_AliasCodec
+#define knz_AliasCodec
 
 #include "../Context.hpp"
 #include "../Transform.hpp"

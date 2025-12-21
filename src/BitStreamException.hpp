@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _BitStreamException_
-#define _BitStreamException_
+#ifndef knz_BitStreamException
+#define knz_BitStreamException
 
 #include <string>
 #include <stdexcept>

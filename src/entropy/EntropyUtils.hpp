@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _EntropyUtils_
-#define _EntropyUtils_
+#ifndef knz_EntropyUtils
+#define knz_EntropyUtils
 
 #include "../InputBitStream.hpp"
 #include "../OutputBitStream.hpp"

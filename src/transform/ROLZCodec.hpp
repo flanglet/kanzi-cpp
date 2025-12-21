@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _ROLZCodec_
-#define _ROLZCodec_
+#ifndef knz_ROLZCodec
+#define knz_ROLZCodec
 
 #include "../Context.hpp"
 #include "../Memory.hpp"

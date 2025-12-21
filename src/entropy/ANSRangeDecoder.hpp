@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _ANSRangeDecoder_
-#define _ANSRangeDecoder_
+#ifndef knz_ANSRangeDecoder
+#define knz_ANSRangeDecoder
 
 #include "../EntropyDecoder.hpp"
 #include "../types.hpp"

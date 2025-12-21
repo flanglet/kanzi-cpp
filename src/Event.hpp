@@ -14,8 +14,8 @@ limitations under the License.
 */
 
 #pragma once
-#ifndef _Event_
-#define _Event_
+#ifndef knz_Event
+#define knz_Event
 
 #include <string>
 #include <time.h>
