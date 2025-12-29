@@ -79,7 +79,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
 {
     _logRange = int(8 + _bitstream.readBits(3));
 
-    if ((_logRange < 8) || (_logRange > 16)) {
+    if (_logRange > 16) {
         stringstream ss;
         ss << "Invalid bitstream: range = " << _logRange << " (must be in [8..16])";
         throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);

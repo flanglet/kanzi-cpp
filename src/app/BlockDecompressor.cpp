@@ -721,9 +721,6 @@ T FileDecompressTask<T>::run()
     CLEANUP_DECOMP_IS
     CLEANUP_DECOMP_OS
 
-    stopClock.stop();
-    double delta = stopClock.elapsed();
-
     // If the whole input stream has been decoded and the original data size is present,
     // check that the output size matches the original data size.
     if ((checkOutputSize == true) && (_ctx.has("to") == false) && (_ctx.has("from") == false)) {
@@ -737,6 +734,9 @@ T FileDecompressTask<T>::run()
             return T(Error::ERR_INVALID_FILE, decoded, sserr.str());
         }
     }
+
+    stopClock.stop();
+    double delta = stopClock.elapsed();
 
     if (verbosity >= 1) {
         log.println("", verbosity > 1);
