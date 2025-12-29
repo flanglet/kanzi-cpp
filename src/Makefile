@@ -32,6 +32,7 @@ else
 		#CXXFLAGS=-c -std=c++17 -fsanitize=signed-integer-overflow -ftrapv -D_FORTIFY_SOURCE=3 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 		#CXXFLAGS=-c -std=c++17 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 		CXXFLAGS=-c -std=c++17 -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
+
 	endif
 endif	
 
@@ -115,12 +116,19 @@ RPTS=$(SOURCES:.cpp=.optrpt)
 STATIC_LIB_SUFFIX := .a
 SHARED_LIB_SUFFIX := .so
 PROG_SUFFIX       :=
+# Default to -shared (Linux/GNU)
+SHARED_OPTION     := -shared
 
-# Compiling for Windows with MinGW?
+# Detect Windows or macOS
 ifeq ($(OS),Windows_NT)
     STATIC_LIB_SUFFIX := .lib
     SHARED_LIB_SUFFIX := .dll
     PROG_SUFFIX       := .exe
+    SHARED_OPTION     := -shared
+else ifeq ($(OS),Darwin)
+    # macOS Specifics
+    SHARED_LIB_SUFFIX := .dylib
+    SHARED_OPTION     := -dynamiclib
 endif
 
 STATIC_LIB := lib$(APP)$(STATIC_LIB_SUFFIX)
@@ -148,13 +156,13 @@ $(STATIC_DECOMP_LIB):$(LIB_DECOMP_OBJECTS)
 
 # Create shared libraries
 $(SHARED_LIB):$(LIB_OBJECTS)
-	$(CXX) -o ../lib/$@ $(LDFLAGS) -shared $+
+	$(CXX) -o ../lib/$@ $(LDFLAGS) $(SHARED_OPTION) $+
 
 $(SHARED_COMP_LIB):$(LIB_COMP_OBJECTS)
-	$(CXX) -o ../lib/$@ $(LDFLAGS) -shared $+
+	$(CXX) -o ../lib/$@ $(LDFLAGS) $(SHARED_OPTION) $+
 
 $(SHARED_DECOMP_LIB):$(LIB_DECOMP_OBJECTS)
-	$(CXX) -o ../lib/$@ $(LDFLAGS) -shared $+
+	$(CXX) -o ../lib/$@ $(LDFLAGS) $(SHARED_OPTION) $+
 
 
 # Targets for test executables
@@ -288,4 +296,3 @@ $(OBJ_DIR)/%.o: %.cpp
 $(OBJ_DIR)/%.o: %.c
 	@$(MKDIR)
 	$(CC) $(CFLAGS) $< -o $@
-
