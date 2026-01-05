@@ -25,18 +25,19 @@ Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
     , _time(evtTime)
     , _msg(msg)
     , _id(id)
+    , _size(0)
+    , _offset(-1)
+    , _hash(0)
+    , _hashType(NO_HASH)
+    , _skipFlags(0)
 {
-    _size = 0;
-    _hash = 0;
-    _hashType = NO_HASH;
-    _offset = -1;
-    _skipFlags = 0;
 }
 
 Event::Event(Event::Type type, int id, int64 size, clock_t evtTime,
              uint64 hash, HashType hashType, int64 offset, uint8 skipFlags)
     : _type(type)
     , _time(evtTime)
+    , _msg()
     , _id(id)
     , _size(size)
     , _offset(offset)
@@ -45,6 +46,69 @@ Event::Event(Event::Type type, int id, int64 size, clock_t evtTime,
     , _skipFlags(skipFlags)
 {
 }
+
+Event::Event(const Event& other)
+    : _type(other._type)
+    , _time(other._time)
+    , _msg(other._msg)
+    , _id(other._id)
+    , _size(other._size)
+    , _offset(other._offset)
+    , _hash(other._hash)
+    , _hashType(other._hashType)
+    , _skipFlags(other._skipFlags)
+{
+}
+
+Event& Event::operator=(const Event& other)
+{
+    if (this != &other) {
+        _type      = other._type;
+        _time      = other._time;
+        _msg       = other._msg;
+        _id        = other._id;
+        _size      = other._size;
+        _offset    = other._offset;
+        _hash      = other._hash;
+        _hashType  = other._hashType;
+        _skipFlags = other._skipFlags;
+    }
+
+    return *this;
+}
+
+#if defined(__cplusplus) && (__cplusplus >= 201103L)
+
+Event::Event(Event&& other) noexcept
+    : _type(other._type)
+    , _time(other._time)
+    , _msg(std::move(other._msg))
+    , _id(other._id)
+    , _size(other._size)
+    , _offset(other._offset)
+    , _hash(other._hash)
+    , _hashType(other._hashType)
+    , _skipFlags(other._skipFlags)
+{
+}
+
+Event& Event::operator=(Event&& other) noexcept
+{
+    if (this != &other) {
+        _type      = other._type;
+        _time      = other._time;
+        _msg       = std::move(other._msg);
+        _id        = other._id;
+        _size      = other._size;
+        _offset    = other._offset;
+        _hash      = other._hash;
+        _hashType  = other._hashType;
+        _skipFlags = other._skipFlags;
+    }
+    return *this;
+}
+#endif
+
 
 std::string Event::toString() const
 {
@@ -75,8 +139,8 @@ std::string Event::toString() const
     }
 
     if (getType() == BLOCK_INFO) {
-         ss << ", \"offset\":" << getOffset();
-         ss << ", \"skipFlags\":";
+        ss << ", \"offset\":" << getOffset();
+        ss << ", \"skipFlags\":";
 
         for (int i = 128; i >= 1; i >>= 1)
            ss << ((_skipFlags & i) == 0 ? "0" : "1");
@@ -89,38 +153,28 @@ std::string Event::toString() const
 std::string Event::getTypeAsString() const
 {
     switch (_type) {
-    case AFTER_HEADER_DECODING:
-        return "AFTER_HEADER_DECODING";
-
-    case COMPRESSION_END:
-        return "COMPRESSION_END";
-
-    case BEFORE_TRANSFORM:
-        return "BEFORE_TRANSFORM";
-
-    case AFTER_TRANSFORM:
-        return "AFTER_TRANSFORM";
-
-    case BEFORE_ENTROPY:
-        return "BEFORE_ENTROPY";
-
-    case AFTER_ENTROPY:
-        return "AFTER_ENTROPY";
-
-    case DECOMPRESSION_START:
-        return "DECOMPRESSION_START";
-
-    case DECOMPRESSION_END:
-        return "DECOMPRESSION_END";
-
-    case COMPRESSION_START:
-        return "COMPRESSION_START";
-
-    case BLOCK_INFO:
-        return "BLOCK_INFO";
-
-    default:
-        return "Unknown Type";
+       case AFTER_HEADER_DECODING:
+          return "AFTER_HEADER_DECODING";
+       case COMPRESSION_END:
+          return "COMPRESSION_END";
+       case BEFORE_TRANSFORM:
+          return "BEFORE_TRANSFORM";
+       case AFTER_TRANSFORM:
+          return "AFTER_TRANSFORM";
+       case BEFORE_ENTROPY:
+          return "BEFORE_ENTROPY";
+       case AFTER_ENTROPY:
+          return "AFTER_ENTROPY";
+       case DECOMPRESSION_START:
+          return "DECOMPRESSION_START";
+       case DECOMPRESSION_END:
+          return "DECOMPRESSION_END";
+       case COMPRESSION_START:
+          return "COMPRESSION_START";
+       case BLOCK_INFO:
+          return "BLOCK_INFO";
+       default:
+          return "Unknown Type";
     }
 }
 

@@ -21,6 +21,7 @@ limitations under the License.
 #include <time.h>
 #include "types.hpp"
 
+
 namespace kanzi
 {
 
@@ -46,28 +47,27 @@ namespace kanzi
           };
 
           Event(Type type, int id, const std::string& msg, clock_t evtTime = 0);
-
           Event(Type type, int id, int64 size, clock_t evtTime, uint64 hash = 0,
                 HashType hashType = NO_HASH, int64 offset = -1, uint8 skipFlags = 0);
+
+          Event(const Event& other);
+          Event& operator=(const Event& other);
+
+#if defined(__cplusplus) && (__cplusplus >= 201103L)
+          Event(Event&& other) noexcept;
+          Event& operator=(Event&& other) noexcept;
+#endif
 
           virtual ~Event() {}
 
           int getId() const { return _id; }
-
           int64 getSize() const { return _size; }
-
           Event::Type getType() const { return _type; }
-
           std::string getTypeAsString() const;
-
           clock_t getTime() const { return _time; }
-
           uint64 getHash() const { return _hashType != NO_HASH ? _hash : 0; }
-
           int64 getOffset() const { return _offset; }
-
           HashType getHashType() const { return _hashType; }
-
           std::string toString() const;
 
       private:
@@ -82,5 +82,5 @@ namespace kanzi
           uint8 _skipFlags;
       };
 }
-#endif
 
+#endif
