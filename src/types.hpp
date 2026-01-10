@@ -235,21 +235,22 @@ limitations under the License.
 
    // Likely / unlikely macros
    #if defined(__GNUC__) || defined(__clang__)
-       #ifndef LIKELY
-           #define LIKELY(x)   __builtin_expect(!!(x), 1)
+       #ifndef KANZI_LIKELY
+           #define KANZI_LIKELY(x)   __builtin_expect(!!(x), 1)
        #endif
-       #ifndef UNLIKELY
-           #define UNLIKELY(x) __builtin_expect(!!(x), 0)
+       #ifndef KANZI_UNLIKELY
+           #define KANZI_UNLIKELY(x) __builtin_expect(!!(x), 0)
        #endif
    #else
-       #ifndef LIKELY
-           #define LIKELY(x)   (x)
+       #ifndef KANZI_LIKELY
+           #define KANZI_LIKELY(x)   (x)
        #endif
-       #ifndef UNLIKELY
-           #define UNLIKELY(x) (x)
+       #ifndef KANZI_UNLIKELY
+           #define KANZI_UNLIKELY(x) (x)
        #endif
    #endif
 
+   // Force inline macro
    #if defined(__GNUC__) || defined(__clang__)
       #define KANZI_ALWAYS_INLINE inline __attribute__((always_inline))
    #elif defined(_MSC_VER)
