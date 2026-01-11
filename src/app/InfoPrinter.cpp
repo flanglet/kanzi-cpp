@@ -42,7 +42,7 @@ InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os
         _thresholds[5] = Event::COMPRESSION_END;
         _orderedPhase = Event::AFTER_ENTROPY;
     }
-    else if (type == InfoPrinter::DECOMPRESSION) {
+    else {
         _thresholds[0] = Event::DECOMPRESSION_START;
         _thresholds[1] = Event::BEFORE_ENTROPY;
         _thresholds[2] = Event::AFTER_ENTROPY;
@@ -50,9 +50,6 @@ InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os
         _thresholds[4] = Event::AFTER_TRANSFORM;
         _thresholds[5] = Event::DECOMPRESSION_END;
         _orderedPhase = Event::BEFORE_ENTROPY;
-    }
-    else {
-        _orderedPhase = Event::BLOCK_INFO; // unused
     }
 }
 
