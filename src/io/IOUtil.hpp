@@ -289,8 +289,7 @@ namespace kanzi
       // Simpler and safer code with C++17
       std::error_code ec;
       return std::filesystem::equivalent(f1, f2, ec);
-#endif
-
+#else
       if (f1.compare(f2) == 0)
          return true;
 
@@ -339,6 +338,7 @@ namespace kanzi
          return false;
 
       return true;
+#endif
    }
 
 }

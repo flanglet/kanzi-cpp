@@ -105,7 +105,13 @@ inline int tokenizeCSV(const std::string& s, std::vector<std::string>& tokens, c
         if (s[i] == delim) {
             if (prv != '\\') {
                 std::string tk = ss.str();
-                tokens.push_back(tk);
+#if __cplusplus >= 201103L
+                if (tk.size() > 0)
+                    tokens.push_back(std::move(tk));
+#else
+                if (tk.size() > 0)
+                    tokens.push_back(tk);
+#endif
                 ss.str("");
                 prv = 0;
                 continue;
@@ -118,8 +124,13 @@ inline int tokenizeCSV(const std::string& s, std::vector<std::string>& tokens, c
 
     std::string tk = ss.str();
 
+#if __cplusplus >= 201103L
+    if (tk.size() > 0)
+        tokens.push_back(std::move(tk));
+#else
     if (tk.size() > 0)
         tokens.push_back(tk);
+#endif
 
     return int(tokens.size());
 }
