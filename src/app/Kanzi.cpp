@@ -1080,10 +1080,10 @@ int main(int argc, const char* argv[])
     if (ctx.has("mode") == false)
        return 0;
 
-    string mode = ctx.getString("mode");
-    int jobs = ctx.getInt("jobs", -1);
-
     try {
+        string mode = ctx.getString("mode");
+        int jobs = ctx.getInt("jobs", -1);
+
 #ifndef CONCURRENCY_ENABLED
         if (jobs > 1) {
             const int verbosity = ctx.getInt("verbosity");
@@ -1141,6 +1141,11 @@ int main(int argc, const char* argv[])
 
         cout << "Missing arguments: try --help or -h" << endl;
         return Error::ERR_MISSING_PARAM;
+    }
+    catch (const bad_variant_access& e) {
+       // May be thrown by Context
+       cerr << e.what() << endl;
+       return Error::ERR_UNKNOWN;
     }
     catch (const invalid_argument& e) {
        // May be thrown by ThreadPool
