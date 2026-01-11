@@ -1070,17 +1070,18 @@ int main(int argc, const char* argv[])
 
     Context ctx;
     Printer log(cout);
-    int status =  processCommandLine(argc, argv, ctx, log);
-
-    // Command line processing error ?
-    if (status != 0)
-       return status;
-
-    // Help mode only ?
-    if (ctx.has("mode") == false)
-       return 0;
 
     try {
+        int status =  processCommandLine(argc, argv, ctx, log);
+
+        // Command line processing error ?
+        if (status != 0)
+           return status;
+
+        // Help mode only ?
+        if (ctx.has("mode") == false)
+           return 0;
+
         string mode = ctx.getString("mode");
         int jobs = ctx.getInt("jobs", -1);
 

@@ -73,6 +73,27 @@ namespace kanzi {
            return *this;
        }
 
+#if __cplusplus >= 201103L
+       EncodingTaskResult(EncodingTaskResult&& other) noexcept
+           : _blockId(other._blockId)
+           , _error(other._error)
+           , _msg(std::move(other._msg)) // Transfer ownership of string buffer
+       {
+       }
+
+       // Move Assignment Operator
+       EncodingTaskResult& operator=(EncodingTaskResult&& other) noexcept
+       {
+           if (this != &other) {
+               _blockId = other._blockId;
+               _error = other._error;
+               _msg = std::move(other._msg); // Transfer ownership of string buffer
+           }
+
+           return *this;
+       }
+#endif
+
        ~EncodingTaskResult() {}
    };
 

@@ -102,6 +102,40 @@ namespace kanzi
            return *this;
        }
 
+#if __cplusplus >= 201103L // Check for C++11 or later
+
+       DecodingTaskResult(DecodingTaskResult&& other) noexcept
+           : _blockId(other._blockId)
+           , _decoded(other._decoded)
+           , _data(other._data)
+           , _error(other._error)
+           , _msg(std::move(other._msg))
+           , _checksum(other._checksum)
+           , _skipped(other._skipped)
+           , _completionTime(other._completionTime)
+       {
+           other._data = nullptr;
+       }
+
+       DecodingTaskResult& operator=(DecodingTaskResult&& other) noexcept
+       {
+           if (this != &other) {
+               _blockId = other._blockId;
+               _decoded = other._decoded;
+               _data = other._data; // No ownership so don't need to delete
+               _error = other._error;
+               _msg = std::move(other._msg);
+               _checksum = other._checksum;
+               _skipped = other._skipped;
+               _completionTime = other._completionTime;
+
+               other._data = nullptr;
+           }
+
+           return *this;
+       }
+#endif
+
        ~DecodingTaskResult() {}
    };
 
