@@ -93,16 +93,6 @@ namespace kanzi
    };
 
 
-   #define HANDLE_DOT_FILES(f, ignore)\
-      do {\
-         if (ignore) {\
-            size_t idx = f.rfind(PATH_SEPARATOR);\
-            if ((idx != std::string::npos) && (idx < f.length() - 1) && (f[idx + 1] == '.'))\
-                return;\
-         }\
-      } while(false);
-
-
 
    static inline void createFileList(std::string& target, std::vector<FileData>& files, const FileListConfig& cfg,
                                      std::vector<std::string>& errors)
@@ -117,7 +107,13 @@ namespace kanzi
            target.resize(target.size() - 1);
    #endif
 
-       HANDLE_DOT_FILES(target, cfg._ignoreDotFiles);
+       if (cfg._ignoreDotFiles == true) {
+           size_t idx = target.rfind(PATH_SEPARATOR);
+
+           if ((idx != std::string::npos) && (idx < target.length() - 1) && (target[idx + 1] == '.'))
+               return;
+       }
+
        struct STAT buffer;
        int res = cfg._ignoreLinks ? LSTAT(target.c_str(), &buffer) : STAT(target.c_str(), &buffer);
 
@@ -180,7 +176,12 @@ namespace kanzi
 
                if (S_ISREG(buffer.st_mode) || (!cfg._ignoreLinks && S_ISLNK(buffer.st_mode))) {
                   // Target is regular file
-                  HANDLE_DOT_FILES(fullpath, cfg._ignoreDotFiles);
+                  if (cfg._ignoreDotFiles == true) {
+                     size_t idx = fullpath.rfind(PATH_SEPARATOR);
+
+                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1) && (fullpath[idx + 1] == '.'))
+                        continue;
+                  }
 
    #if __cplusplus >= 201103L
                   files.emplace_back(fullpath, buffer.st_size, buffer.st_mtime);
@@ -189,7 +190,13 @@ namespace kanzi
    #endif
                }
                else if (cfg._recursive && S_ISDIR(buffer.st_mode)) {
-                  HANDLE_DOT_FILES(fullpath, cfg._ignoreDotFiles);
+                  if (cfg._ignoreDotFiles == true) {
+                     size_t idx = fullpath.rfind(PATH_SEPARATOR);
+
+                     if ((idx != std::string::npos) && (idx < fullpath.length() - 1) && (fullpath[idx + 1] == '.'))
+                        continue;
+                  }
+
                   createFileList(fullpath, files, cfg, errors);
                }
            }
