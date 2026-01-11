@@ -8,30 +8,36 @@ APP_DYNAMIC=$(APP)_dynamic
 OS := $(shell uname -s)
 
 ifeq ($(TCMALLOC_ENABLED), 1)
-	LDFLAGS=-lpthread -ltcmalloc_minimal
+	LDFLAGS += -lpthread -ltcmalloc_minimal
 else
-	LDFLAGS=-lpthread
+	LDFLAGS += -lpthread
 endif
 
 ifeq ($(CONCURRENCY_DISABLED), 1)
 	CONCURRENCY_FLAG = -DCONCURRENCY_DISABLED
 endif
 
-CFLAGS=-c -std=c11 -Wall -Wextra -O3 -fPIC -pedantic -march=native
+ifndef CXX_STD
+    CXX_STD = c++17
+endif
+
+ifndef C_STD
+    C_STD = c11
+endif
+
+CFLAGS += -c -std=$(C_STD) -Wall -Wextra -O3 -fPIC -pedantic -march=native
 
 ifeq ($(OS),Windows_NT)
-	CXXFLAGS=-c -std=c++11 -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
-	LDFLAGS=-lpthread
+	CXXFLAGS += -c -std=$(CXX_STD) -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 else
 	ARCH ?= $(shell uname -m)
 
 	ifeq ($(ARCH), x86_64)
-		#CXXFLAGS=-c -std=c++17 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fstrict-aliasing -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
-		CXXFLAGS=-c -std=c++17 -fstrict-aliasing -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
+		#CXXFLAGS += -c -std=$(CXX_STD) -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fstrict-aliasing -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
+		CXXFLAGS += -c -std=$(CXX_STD) -fstrict-aliasing -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 	else
-		#CXXFLAGS=-c -std=c++17 -fsanitize=signed-integer-overflow -ftrapv -D_FORTIFY_SOURCE=3 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
-		#CXXFLAGS=-c -std=c++17 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
-		CXXFLAGS=-c -std=c++17 -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
+		#CXXFLAGS += -c -std=$(CXX_STD)-fsanitize=signed-integer-overflow -ftrapv -D_FORTIFY_SOURCE=3 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
+		CXXFLAGS += -c -std=$(CXX_STD) -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 
 	endif
 endif	
