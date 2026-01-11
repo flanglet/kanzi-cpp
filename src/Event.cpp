@@ -20,7 +20,7 @@ limitations under the License.
 
 using namespace kanzi;
 
-Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
+Event::Event(Event::Type type, int id, const std::string& msg, WallTimer::TimeData evtTime)
     : _type(type)
     , _time(evtTime)
     , _msg(msg)
@@ -33,7 +33,7 @@ Event::Event(Event::Type type, int id, const std::string& msg, clock_t evtTime)
 {
 }
 
-Event::Event(Event::Type type, int id, int64 size, clock_t evtTime,
+Event::Event(Event::Type type, int id, int64 size, WallTimer::TimeData evtTime,
              uint64 hash, HashType hashType, int64 offset, uint8 skipFlags)
     : _type(type)
     , _time(evtTime)
@@ -124,7 +124,7 @@ std::string Event::toString() const
     ss << ", \"size\":" << getSize();
 
     if (getType() != BLOCK_INFO)
-        ss << ", \"time\":" << getTime();
+        ss << ", \"time\":" << getTime().to_ms();
 
     if (_hashType != NO_HASH) {
         ss << ", \"hash\":\"";

@@ -282,7 +282,7 @@ void printHeader(Printer& log, int verbose, bool& showHeader)
     log.println("", verbose > 1);
     log.println(APP_SUB_HEADER, verbose > 1);
 
-    if (verbose >= 4) {
+    if (verbose >= 5) {
        stringstream extraHeader;
 
    #ifdef __clang__

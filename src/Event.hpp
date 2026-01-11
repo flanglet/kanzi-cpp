@@ -20,6 +20,7 @@ limitations under the License.
 #include <string>
 #include <time.h>
 #include "types.hpp"
+#include "util.hpp"
 
 
 namespace kanzi
@@ -46,8 +47,8 @@ namespace kanzi
               SIZE_64
           };
 
-          Event(Type type, int id, const std::string& msg, clock_t evtTime = 0);
-          Event(Type type, int id, int64 size, clock_t evtTime, uint64 hash = 0,
+          Event(Type type, int id, const std::string& msg, WallTimer::TimeData evtTime);
+          Event(Type type, int id, int64 size, WallTimer::TimeData evtTime, uint64 hash = 0,
                 HashType hashType = NO_HASH, int64 offset = -1, uint8 skipFlags = 0);
 
           Event(const Event& other);
@@ -64,7 +65,7 @@ namespace kanzi
           int64 getSize() const { return _size; }
           Event::Type getType() const { return _type; }
           std::string getTypeAsString() const;
-          clock_t getTime() const { return _time; }
+          WallTimer::TimeData getTime() const { return _time; }
           uint64 getHash() const { return _hashType != NO_HASH ? _hash : 0; }
           int64 getOffset() const { return _offset; }
           HashType getHashType() const { return _hashType; }
@@ -72,7 +73,7 @@ namespace kanzi
 
       private:
           Event::Type _type;
-          clock_t _time;
+          WallTimer::TimeData _time;
           std::string _msg;
           int _id;
           int64 _size;

@@ -17,6 +17,7 @@ limitations under the License.
 #include <iomanip>
 #include <ios>
 #include <sstream>
+
 #include "InfoPrinter.hpp"
 #include "../util/strings.hpp"
 
@@ -27,94 +28,145 @@ InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os
     : _os(os)
     , _type(type)
     , _level(infoLevel)
+    , _headerInfo(0)
 {
-    if (type == InfoPrinter::ENCODING) {
+    STORE_ATOMIC(_lastEmittedBlockId, 0);
+
+    // Select the ONLY ordered phase
+    if (type == InfoPrinter::COMPRESSION) {
         _thresholds[0] = Event::COMPRESSION_START;
         _thresholds[1] = Event::BEFORE_TRANSFORM;
         _thresholds[2] = Event::AFTER_TRANSFORM;
         _thresholds[3] = Event::BEFORE_ENTROPY;
         _thresholds[4] = Event::AFTER_ENTROPY;
         _thresholds[5] = Event::COMPRESSION_END;
+        _orderedPhase = Event::AFTER_ENTROPY;
     }
-    else {
+    else if (type == InfoPrinter::DECOMPRESSION) {
         _thresholds[0] = Event::DECOMPRESSION_START;
         _thresholds[1] = Event::BEFORE_ENTROPY;
         _thresholds[2] = Event::AFTER_ENTROPY;
         _thresholds[3] = Event::BEFORE_TRANSFORM;
         _thresholds[4] = Event::AFTER_TRANSFORM;
         _thresholds[5] = Event::DECOMPRESSION_END;
+        _orderedPhase = Event::BEFORE_ENTROPY;
     }
-	
-    for (int i = 0; i < 1024; i++)
-        _map[i] = nullptr;
-
-    _headerInfo = 0;
+    else {
+        _orderedPhase = Event::BLOCK_INFO; // unused
+    }
 }
+
 
 void InfoPrinter::processEvent(const Event& evt)
 {
     if (_type == InfoPrinter::INFO) {
-       processHeaderInfo(evt);
-       return;
+        processHeaderInfo(evt);
+        return;
     }
 
-    const int currentBlockId = evt.getId();
+    if (evt.getType() == _orderedPhase) {
+        processOrderedPhase(evt);
+        return;
+    }
 
-    if (evt.getType() == _thresholds[1]) {
-        // Register initial block size
+    processEventOrdered(evt);
+}
+
+
+void InfoPrinter::processOrderedPhase(const Event& evt)
+{
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _orderedPending.insert(std::make_pair(evt.getId(), evt));
+    }
+
+    for (;;)
+    {
+        WallTimer timer;
+        Event next(Event::BLOCK_INFO, 0, "", timer.getCurrentTime());
+
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+
+            int nextId = LOAD_ATOMIC(_lastEmittedBlockId) + 1;
+            std::unordered_map<int, Event>::iterator it =
+                _orderedPending.find(nextId);
+
+            if (it == _orderedPending.end())
+                return;
+
+            next = it->second;
+            _orderedPending.erase(it);
+            STORE_ATOMIC(_lastEmittedBlockId, nextId);
+        }
+
+        // Compression: AFTER_ENTROPY emitted in-order
+        // Decompression: BEFORE_TRANSFORM emitted in-order
+        processEventOrdered(next);
+    }
+}
+
+
+void InfoPrinter::processEventOrdered(const Event& evt)
+{
+    const int blockId = evt.getId();
+    const Event::Type type = evt.getType();
+
+    if (type == _thresholds[1])
+    {
         BlockInfo* bi = new BlockInfo();
-        _clock12.start();
-
+        bi->_timeStamp1 = evt.getTime();
         bi->_stage0Size = evt.getSize();
-        _map[hash(currentBlockId)] = bi;
+        _blocks[blockId] = bi;
+
+        if (_level >= 5)
+            _os << evt.toString() << std::endl;
+
+        _os.flush();
+    }
+    else if (type == _thresholds[2])
+    {
+        std::unordered_map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
+
+        if (it == _blocks.end())
+            return;
+
+        BlockInfo& bi = *it->second;
+        bi._timeStamp2 = evt.getTime();
 
         if (_level >= 5) {
-            _os << evt.toString() << endl;
+            double elapsed = WallTimer::calculateDifference(bi._timeStamp1, bi._timeStamp2);
+            std::stringstream ss;
+            ss << evt.toString() << " [" << int64(elapsed) << " ms]";
+            _os << ss.str() << std::endl;
         }
+
+        _os.flush();
     }
-    else if (evt.getType() == _thresholds[2]) {
-        const BlockInfo* bi = _map[hash(currentBlockId)];
+    else if (type == _thresholds[3])
+    {
+        std::unordered_map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
 
-        if (bi == nullptr)
+        if (it == _blocks.end())
             return;
 
-        _clock12.stop();
-        _clock23.start();
+        BlockInfo& bi = *it->second;
+        bi._timeStamp3 = evt.getTime();
+        bi._stage1Size = evt.getSize();
 
-        if (_level >= 5) {
-            stringstream ss;
-            ss << evt.toString() << " [" << int64(_clock12.elapsed()) << " ms]";
-            _os << ss.str() << endl;
-        }
+        if (_level >= 5)
+            _os << evt.toString() << std::endl;
+
+        _os.flush();
     }
-    else if (evt.getType() == _thresholds[3]) {
-        BlockInfo* bi = _map[hash(currentBlockId)];
+    else if (type == _thresholds[4])
+    {
+        std::unordered_map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
 
-        if (bi == nullptr)
+        if (it == _blocks.end())
             return;
 
-        _clock23.stop();
-        _clock34.start();
-        bi->_stage1Size = evt.getSize();
-
-        if (_level >= 5) {
-            _os << evt.toString() << endl;
-        }
-    }
-    else if (evt.getType() == _thresholds[4]) {
-        BlockInfo* bi = _map[hash(currentBlockId)];
-
-        if (bi == nullptr)
-            return;
-
-        if (_level < 3) {
-            delete bi;
-            _map[hash(currentBlockId)] = nullptr;
-            return;
-        }
-
-        int64 stage2Size = evt.getSize();
-        _clock34.stop();
+        BlockInfo& bi = *it->second;
         stringstream ss;
 
         if (_level >= 5) {
@@ -123,14 +175,19 @@ void InfoPrinter::processEvent(const Event& evt)
 
         // Display block info
         if (_level >= 4) {
-            ss << "Block " << currentBlockId << ": " << bi->_stage0Size << " => ";
-            ss << bi->_stage1Size << " [" << int64(_clock12.elapsed()) << " ms] => " << stage2Size;
-            ss << " [" << int64(_clock34.elapsed()) << " ms]";
+            double elapsed1 = WallTimer::calculateDifference(bi._timeStamp1, bi._timeStamp2);
+            double elapsed2 = WallTimer::calculateDifference(bi._timeStamp3, evt.getTime());
+            ss << "Block " << blockId << ": "
+               << bi._stage0Size
+               << " => "
+               << bi._stage1Size
+               << " [" << int64(elapsed1) << " ms] => " << evt.getSize()
+               << " [" << int64(elapsed2) << " ms]";
 
             // Add compression ratio for encoding
-            if ((_type == InfoPrinter::ENCODING) && (bi->_stage0Size != 0)) {
-                ss << " (" << uint(double(stage2Size) * double(100) / double(bi->_stage0Size));
-                ss << "%)";
+            if ((_type == InfoPrinter::COMPRESSION) && (bi._stage0Size != 0)) {
+                ss << " (" << uint(double(evt.getSize()) * 100.0 / double(bi._stage0Size))
+                   << "%)";
             }
 
             // Optionally add hash
@@ -138,11 +195,13 @@ void InfoPrinter::processEvent(const Event& evt)
                 ss << std::uppercase << std::hex << " [" << evt.getHash() << "]";
             }
 
-            _os << ss.str() << endl;
+            _os << ss.str() << std::endl;
         }
 
-        delete bi;
-        _map[hash(currentBlockId)] = nullptr;
+        delete it->second;
+        _blocks.erase(it);
+
+        _os.flush();
     }
     else if ((evt.getType() == Event::AFTER_HEADER_DECODING) && (_level >= 3)) {
         // Special CSV format
@@ -152,7 +211,7 @@ void InfoPrinter::processEvent(const Event& evt)
         const int nbTokens = tokenizeCSV(s, tokens);
 
         if (_level >= 5) {
-            // JSON text
+            // JSON output
             ss << "{ \"type\":\"" << evt.getTypeAsString() << "\"";
 
             if (nbTokens > 1)
@@ -179,7 +238,7 @@ void InfoPrinter::processEvent(const Event& evt)
             ss << " }";
         }
         else {
-            // Raw text
+            // Raw text output
             if (nbTokens > 1)
                 ss << "Bitstream version: " << tokens[1] << endl;
 
@@ -200,106 +259,98 @@ void InfoPrinter::processEvent(const Event& evt)
         }
 
         _os << ss.str() << endl;
+        _os.flush();
     }
     else if (_level >= 5) {
         _os << evt.toString() << endl;
+        _os.flush();
     }
 }
 
 
 void InfoPrinter::processHeaderInfo(const Event& evt)
 {
-   if ((_level == 0) || (evt.getType() != Event::AFTER_HEADER_DECODING))
-      return;
+    if ((_level == 0) || (evt.getType() != Event::AFTER_HEADER_DECODING))
+        return;
 
-   stringstream ss(evt.toString());
-   string s = ss.str();
-   vector<string> tokens;
-   const int nbTokens = tokenizeCSV(s, tokens);
-   ss.str(string());
+    stringstream ss(evt.toString());
+    vector<string> tokens;
+    tokenizeCSV(ss.str(), tokens);
+    ss.str(string());
 
-   if (_headerInfo++ == 0) {
-      // Display header
-      ss << endl;
-      ss << "|" << "     File Name      ";
-      ss << "|" << "Ver";
-      ss << "|" << "Check";
-      ss << "|" << "Block Size";
-      ss << "|" << "  File Size ";
-      ss << "|" << " Orig. Size ";
-      ss << "|" << " Ratio ";
+    if (_headerInfo++ == 0) {
+        ss << endl;
+        ss << "|" << "     File Name      ";
+        ss << "|" << "Ver";
+        ss << "|" << "Check";
+        ss << "|" << "Block Size";
+        ss << "|" << "  File Size ";
+        ss << "|" << " Orig. Size ";
+        ss << "|" << " Ratio ";
 
-      if (_level >= 4) {
-         ss << "|" << " Entropy";
-         ss << "|" << "        Transforms        ";
-      }
+        if (_level >= 4) {
+            ss << "|" << " Entropy";
+            ss << "|" << "        Transforms        ";
+        }
 
-      ss << "|" << endl;
-   }
+        ss << "|" << endl;
+    }
 
-   ss << "|";
+    ss << "|";
 
-   if (nbTokens > 0) {
-       string inputName = tokens[0];
-       size_t idx = inputName.find_last_of(PATH_SEPARATOR);
+    if (!tokens.empty()) {
+        string inputName = tokens[0];
+        size_t idx = inputName.find_last_of(PATH_SEPARATOR);
 
-       if (idx != string::npos)
-          inputName.erase(0, idx + 1);
+        if (idx != string::npos)
+            inputName.erase(0, idx + 1);
 
-       if (inputName.length() > 20)
-          inputName.replace(18, string::npos, "..");
+        if (inputName.length() > 20)
+            inputName.replace(18, string::npos, "..");
 
-       ss << std::left << setw(20) << inputName << "|" << std::right; // inputName
-   }
+        ss << left << setw(20) << inputName << "|" << right;
+    }
 
-   if (nbTokens > 1)
-       ss << setw(3) << tokens[1] << "|"; //bsVersion
+    if (tokens.size() > 1) ss << setw(3) << tokens[1] << "|";
+    if (tokens.size() > 2) ss << setw(5) << tokens[2] << "|";
+    if (tokens.size() > 3) ss << setw(10) << tokens[3] << "|";
 
-   if (nbTokens > 2)
-       ss << setw(5) << tokens[2] << "|"; // checksum
+    if (tokens.size() > 6)
+        ss << setw(12) << formatSize(tokens[6]) << "|";
+    else
+        ss << setw(12) << "    N/A    |";
 
-   if (nbTokens > 3)
-       ss << setw(10) << tokens[3] << "|"; // block size
+    if (tokens.size() > 7)
+        ss << setw(12) << formatSize(tokens[7]) << "|";
+    else
+        ss << setw(12) << "    N/A    |";
 
-   if (nbTokens > 6)
-       ss << setw(12) << formatSize(tokens[6]) << "|"; // compressed size
-   else
-       ss << setw(12) << "    N/A    " << "|";
+    if (tokens.size() > 7 && tokens[6] != "" && tokens[7] != "") {
+        double compSz = atof(tokens[6].c_str());
+        double origSz = atof(tokens[7].c_str());
 
-   if (nbTokens > 7)
-       ss << setw(12) << formatSize(tokens[7]) << "|"; // original size
-   else
-       ss << setw(12) << "    N/A    " << "|";
+        if (origSz == 0.0)
+            ss << setw(7) << "  N/A  |";
+        else
+            ss << setw(7) << fixed << setprecision(3)
+               << (compSz / origSz) << "|";
+    }
+    else {
+        ss << setw(7) << "  N/A  |";
+    }
 
-   if ((tokens[6] != "") && (tokens[7] != "")) {
-      string compStr = tokens[6];
-      string origStr = tokens[7];
-      double compSz = atof(compStr.c_str());
-      double origSz = atof(origStr.c_str());
+    if (_level >= 4 && tokens.size() > 4)
+        ss << setw(8) << (tokens[4] == "" ? "NONE" : tokens[4]) << "|";
 
-      if (origSz == double(0)) {
-        ss << setw(7) << "  N/A  " << "|";
-      }
-      else {
-         double ratio = compSz / origSz;
-         ss << setw(7) << std::fixed << std::setprecision(3) << ratio << "|"; // compression ratio
-      }
-   }
-   else {
-      ss << setw(7) << "  N/A  " << "|";
-   }
+    if (_level >= 4 && tokens.size() > 5) {
+        string t = tokens[5];
 
-   if ((_level >= 4) && (nbTokens > 4))
-       ss << setw(8) << (tokens[4] == "" ? "NONE" : tokens[4]) << "|"; // entropy
+        if (t.length() > 26)
+            t.replace(24, string::npos, "..");
 
-   if ((_level >= 4) && (nbTokens > 5)) {
-       string t = tokens[5];
+        ss << setw(26) << (t == "" ? "NONE" : t) << "|";
+    }
 
-       if (t.length() > 26)
-          t = t.replace(24, string::npos, "..");
-
-       ss << setw(26) << (t == "" ? "NONE" : t) << "|"; // transforms
-   }
-
-   _os << ss.str() << endl;
+    _os << ss.str() << endl;
 }
+

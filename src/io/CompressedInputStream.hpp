@@ -49,7 +49,7 @@ namespace kanzi
        std::string _msg;
        uint64 _checksum;
        bool _skipped;
-       clock_t _completionTime;
+       WallTimer::TimeData _completionTime;
 
        DecodingTaskResult()
        {
@@ -59,7 +59,8 @@ namespace kanzi
            _error = 0;
            _checksum = 0;
            _skipped = false;
-           _completionTime = clock();
+           WallTimer timer;
+           _completionTime = timer.getCurrentTime();
        }
 
        DecodingTaskResult(const SliceArray<byte>& data, int blockId, int decoded, uint64 checksum,
@@ -72,7 +73,8 @@ namespace kanzi
            , _checksum(checksum)
            , _skipped(skipped)
        {
-           _completionTime = clock();
+           WallTimer timer;
+           _completionTime = timer.getCurrentTime();
        }
 
        DecodingTaskResult(const DecodingTaskResult& result)

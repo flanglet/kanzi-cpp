@@ -56,4 +56,95 @@ public:
     }
 };
 
+
+
+// Portable wall timer
+
+// 1. Detect Standard and Platform
+#if __cplusplus >= 201103L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201103L)
+    #include <chrono>
+    #define USE_CHRONO
+#elif defined(_WIN32) || defined(_WIN64)
+    #include <windows.h>
+    #define USE_WINDOWS_QPC
+#else
+    #include <sys/time.h>
+    #define USE_POSIX_GETTIMEOFDAY
+#endif
+
+class WallTimer {
+public:
+    // Define a wrapper for platform-specific time data
+    struct TimeData {
+#if defined(USE_CHRONO)
+        std::chrono::steady_clock::time_point value;
+#elif defined(USE_WINDOWS_QPC)
+        LARGE_INTEGER value;
+#elif defined(USE_POSIX_GETTIMEOFDAY)
+        struct timeval value;
+#endif
+
+       // Converts the internal timestamp into a double representing total milliseconds
+       // Note: On C++98 Windows, you need the frequency from the WallTimer class.
+#if defined(USE_CHRONO)
+       kanzi::uint64 to_ms() const {
+           return static_cast<kanzi::uint64>(std::chrono::duration<double, std::milli>(value.time_since_epoch()).count());
+       }
+#elif defined(USE_WINDOWS_QPC)
+       double to_ms(long long win_freq = 1) const {
+           return static_cast<kanzi::uint64>(value.QuadPart) * 1000.0 / win_freq;
+       }
+#elif defined(USE_POSIX_GETTIMEOFDAY)
+       double to_ms() const {
+           return (static_cast<kanzi::uint64>(value.tv_sec) * 1000.0) + (value.tv_usec / 1000.0);
+       }
+#endif
+    };
+
+    WallTimer() {
+#if defined(USE_WINDOWS_QPC)
+        QueryPerformanceFrequency(&m_frequency);
+#endif
+        m_start = getCurrentTime();
+    }
+
+    // Method to get the current timestamp
+    TimeData getCurrentTime() const {
+        TimeData now;
+#if defined(USE_CHRONO)
+        now.value = std::chrono::steady_clock::now();
+#elif defined(USE_WINDOWS_QPC)
+        QueryPerformanceCounter(&now.value);
+#elif defined(USE_POSIX_GETTIMEOFDAY)
+        gettimeofday(&now.value, NULL);
+#endif
+        return now;
+    }
+
+    // Method to calculate difference in milliseconds between two timestamps
+    static double calculateDifference(const TimeData& start, const TimeData& end) {
+#if defined(USE_CHRONO)
+        return std::chrono::duration<double, std::milli>(end.value - start.value).count();
+#elif defined(USE_WINDOWS_QPC)
+        return static_cast<double>(end.value.QuadPart - start.value.QuadPart) * 1000.0 / m_frequency.QuadPart;
+#elif defined(USE_POSIX_GETTIMEOFDAY)
+        double sec = end.value.tv_sec - start.value.tv_sec;
+        double usec = end.value.tv_usec - start.value.tv_usec;
+        return (sec * 1000.0) + (usec / 1000.0);
+#endif
+    }
+
+    // Convenience method for elapsed time since start
+    double elapsed_ms() const {
+        return calculateDifference(m_start, getCurrentTime());
+    }
+
+private:
+    TimeData m_start;
+#if defined(USE_WINDOWS_QPC)
+    LARGE_INTEGER m_frequency;
+#endif
+};
+
+
 #endif

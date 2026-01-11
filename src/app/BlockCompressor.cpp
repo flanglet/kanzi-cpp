@@ -246,7 +246,7 @@ int BlockCompressor::compress(uint64& outputSize)
         ss.str(string());
     }
 
-    InfoPrinter listener(_verbosity, InfoPrinter::ENCODING, cout);
+    InfoPrinter listener(_verbosity, InfoPrinter::COMPRESSION, cout);
 
     if (_verbosity > 2)
         addListener(listener);
@@ -748,10 +748,11 @@ T FileCompressTask<T>::run()
     int64 read = 0;
     byte* buf = new byte[DEFAULT_BUFFER_SIZE];
     SliceArray<byte> sa(buf, DEFAULT_BUFFER_SIZE, 0);
+    WallTimer timer;
 
     if (_listeners.size() > 0) {
         int64 inputSize = _ctx.getLong("fileSize", -1);
-        Event evt(Event::COMPRESSION_START, -1, inputSize, clock());
+        Event evt(Event::COMPRESSION_START, 0, inputSize, timer.getCurrentTime());
         BlockCompressor::notifyListeners(_listeners, evt);
     }
 
@@ -882,7 +883,7 @@ T FileCompressTask<T>::run()
     }
 
     if (_listeners.size() > 0) {
-        Event evt(Event::COMPRESSION_END, -1, int64(encoded), clock());
+        Event evt(Event::COMPRESSION_END, 0, int64(encoded), timer.getCurrentTime());
         BlockCompressor::notifyListeners(_listeners, evt);
     }
 

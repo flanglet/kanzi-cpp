@@ -156,7 +156,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
         ss.str(string());
     }
 
-    InfoPrinter::Type ipt = isInfo ? InfoPrinter::INFO : InfoPrinter::DECODING;
+    InfoPrinter::Type ipt = isInfo ? InfoPrinter::INFO : InfoPrinter::DECOMPRESSION;
     InfoPrinter listener(vl, ipt, cout);
 
     if ((vl > 2) || ((isInfo == true) && (vl > 0)))
@@ -475,9 +475,10 @@ T FileDecompressTask<T>::run()
     ss << "\nDecompressing " << inputName << " ...";
     log.println(ss.str(), verbosity > 1);
     log.println("\n", verbosity > 3);
+    WallTimer timer;
 
     if (_listeners.size() > 0) {
-        Event evt(Event::DECOMPRESSION_START, -1, int64(0), clock());
+        Event evt(Event::DECOMPRESSION_START, 0, int64(0), timer.getCurrentTime());
         BlockDecompressor::notifyListeners(_listeners, evt);
     }
 
@@ -785,7 +786,7 @@ T FileDecompressTask<T>::run()
     }
 
     if (_listeners.size() > 0) {
-        Event evt(Event::DECOMPRESSION_END, -1, int64(decoded), clock());
+        Event evt(Event::DECOMPRESSION_END, 0, int64(decoded), timer.getCurrentTime());
         BlockDecompressor::notifyListeners(_listeners, evt);
     }
 

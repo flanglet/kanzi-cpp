@@ -17,57 +17,69 @@ limitations under the License.
 #ifndef knz_InfoPrinter
 #define knz_InfoPrinter
 
+#include <map>
+#include <memory>
+#include <mutex>
+#include <time.h>
+#include <vector>
+
+#include "../concurrent.hpp"
 #include "../Event.hpp"
 #include "../Listener.hpp"
 #include "../OutputStream.hpp"
 #include "../util/Clock.hpp"
 
-
 namespace kanzi
 {
 
    class BlockInfo {
-   public:
-       int64 _stage0Size;
-       int64 _stage1Size;
+      public:
+          int64 _stage0Size;
+          int64 _stage1Size;
+          WallTimer::TimeData _timeStamp1;
+          WallTimer::TimeData _timeStamp2;
+          WallTimer::TimeData _timeStamp3;
+
+       BlockInfo() : _stage0Size(0), _stage1Size(0) {}
    };
 
-   // An implementation of Listener to display block information (verbose option
-   // of the BlockCompressor/BlockDecompressor)
    class InfoPrinter : public Listener<Event> {
-   public:
-       enum Type {
-           ENCODING,
-           DECODING,
-           INFO
-       };
+      public:
+          enum Type { COMPRESSION, DECOMPRESSION, INFO };
 
-       InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os);
+          InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os);
+          ~InfoPrinter() {}
 
-       ~InfoPrinter() {
-          for (int i = 0; i < 1024; i++) {
-             if (_map[i] != nullptr)
-                delete _map[i];
-          }
-       }
+          void processEvent(const Event& evt);
 
-       void processEvent(const Event& evt);
+      private:
+          // Ordered-phase handling
+          void processOrderedPhase(const Event& evt);
 
-   private:
-       OutputStream& _os;
-       BlockInfo* _map[1024];
-       Event::Type _thresholds[6];
-       InfoPrinter::Type _type;
-       int _level;
-       int _headerInfo;
-       Clock _clock12;
-       Clock _clock23;
-       Clock _clock34;
+          // Actual event processing + printing
+          void processEventOrdered(const Event& evt);
 
-       void processHeaderInfo(const Event& evt);
+          // Header-only info
+          void processHeaderInfo(const Event& evt);
 
-       static uint hash(uint id) { return (id * 0x1E35A7BD) & 0x03FF; }
+          OutputStream& _os;
+          InfoPrinter::Type _type;
+          int _level;
+          int _headerInfo;
+
+          // Per-block state
+          std::unordered_map<int, BlockInfo*> _blocks;
+
+          // Ordered-phase state
+          Event::Type _orderedPhase;
+
+          Event::Type _thresholds[6];
+          std::mutex _mutex;
+          std::unordered_map<int, Event> _orderedPending;
+          atomic_int_t _lastEmittedBlockId;
    };
+
 }
+
 #endif
 

@@ -634,6 +634,7 @@ T EncodingTask<T>::run()
         uint64 tType = _ctx.getLong("tType");
         short eType = short(_ctx.getInt("eType"));
         Event::HashType hashType = Event::NO_HASH;
+        WallTimer timer;
 
         // Compute block checksum
         if (_hasher32 != nullptr) {
@@ -648,7 +649,7 @@ T EncodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify before transform
             Event evt(Event::BEFORE_TRANSFORM, blockId,
-                int64(blockLength), clock(), checksum, hashType);
+                int64(blockLength), timer.getCurrentTime(), checksum, hashType);
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
@@ -731,7 +732,7 @@ T EncodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify after transform
             Event evt(Event::AFTER_TRANSFORM, blockId,
-                int64(postTransformLength), clock(), checksum, hashType);
+                int64(postTransformLength), timer.getCurrentTime(), checksum, hashType);
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
@@ -773,7 +774,7 @@ T EncodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify before entropy
             Event evt(Event::BEFORE_ENTROPY, blockId,
-                int64(postTransformLength), clock(), checksum, hashType);
+                int64(postTransformLength), timer.getCurrentTime(), checksum, hashType);
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
@@ -829,7 +830,7 @@ T EncodingTask<T>::run()
 
         if (_listeners.size() > 0) {
             // Notify after entropy
-            Event evt1(Event::AFTER_ENTROPY, blockId, ww, clock(), checksum, hashType);
+            Event evt1(Event::AFTER_ENTROPY, blockId, ww, timer.getCurrentTime(), checksum, hashType);
             CompressedOutputStream::notifyListeners(_listeners, evt1);
 
 #if !defined(_MSC_VER) || _MSC_VER > 1500
@@ -842,7 +843,7 @@ T EncodingTask<T>::run()
 
                 const int64 blockOffset = (oName != "NONE") ? _obs->tell() : _obs->written();
                 Event evt2(Event::BLOCK_INFO, blockId,
-                   int64((written + 7) >> 3), clock(), checksum, hashType, blockOffset, uint8(skipFlags));
+                   int64((written + 7) >> 3), timer.getCurrentTime(), checksum, hashType, blockOffset, uint8(skipFlags));
                 CompressedOutputStream::notifyListeners(_listeners, evt2);
             }
 #endif

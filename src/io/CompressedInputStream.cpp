@@ -668,7 +668,8 @@ void CompressedInputStream::readHeader()
 
         // Protect against future concurrent modification of the list of block listeners
         vector<Listener<Event>*> blockListeners(_listeners);
-        Event evt(Event::AFTER_HEADER_DECODING, 0, ss.str(), clock());
+        WallTimer timer;
+        Event evt(Event::AFTER_HEADER_DECODING, 0, ss.str(), timer.getCurrentTime());
         notifyListeners(blockListeners, evt);
     }
 }
@@ -887,6 +888,7 @@ T DecodingTask<T>::run()
         }
 
         Event::HashType hashType = Event::NO_HASH;
+        WallTimer timer;
 
         // Extract checksum from bitstream (if any)
         if (_hasher32 != nullptr) {
@@ -901,14 +903,14 @@ T DecodingTask<T>::run()
         if (_listeners.size() > 0) {
 #if !defined(_MSC_VER) || _MSC_VER > 1500
             if (_ctx.getInt("verbosity", 0) > 4) {
-                Event evt1(Event::BLOCK_INFO, blockId, int64(r), clock(), checksum1,
+                Event evt1(Event::BLOCK_INFO, blockId, int64(r), timer.getCurrentTime(), checksum1,
                            hashType, blockOffset, uint8(skipFlags));
                 CompressedInputStream::notifyListeners(_listeners, evt1);
             }
 #endif
 
             // Notify before entropy
-            Event evt2(Event::BEFORE_ENTROPY, blockId, int64(r), clock(), checksum1, hashType);
+            Event evt2(Event::BEFORE_ENTROPY, blockId, int64(r), timer.getCurrentTime(), checksum1, hashType);
             CompressedInputStream::notifyListeners(_listeners, evt2);
         }
 
@@ -932,8 +934,12 @@ T DecodingTask<T>::run()
         // Block entropy decode
         if (ed->decode(_buffer->_array, 0, preTransformLength) != preTransformLength) {
             // Error => cancel concurrent decoding tasks
-            delete ed;
             STORE_ATOMIC(*_processedBlockId, CompressedInputStream::CANCEL_TASKS_ID);
+            delete ed;
+
+            if (streamPerTask == true)
+                delete ibs;
+
             return T(*_data, blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
                 "Entropy decoding failed");
         }
@@ -949,12 +955,12 @@ T DecodingTask<T>::run()
         if (_listeners.size() > 0) {
             // Notify after entropy
             Event evt1(Event::AFTER_ENTROPY, blockId,
-                int64(preTransformLength), clock(), checksum1, hashType);
+                int64(preTransformLength), timer.getCurrentTime(), checksum1, hashType);
             CompressedInputStream::notifyListeners(_listeners, evt1);
 
             // Notify before transform (block size after entropy decoding)
             Event evt2(Event::BEFORE_TRANSFORM, blockId,
-                int64(preTransformLength), clock(), checksum1, hashType);
+                int64(preTransformLength), timer.getCurrentTime(), checksum1, hashType);
             CompressedInputStream::notifyListeners(_listeners, evt2);
         }
 
