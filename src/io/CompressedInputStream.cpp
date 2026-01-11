@@ -85,6 +85,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
     _nbInputBlocks = 0;
     _buffers = new SliceArray<byte>*[2 * _jobs];
     _headless = headerless;
+    _consumeBlockId = 0;
 
     if (_headless == true) {
        if ((_blockSize < MIN_BITSTREAM_BLOCK_SIZE) || (_blockSize > MAX_BITSTREAM_BLOCK_SIZE)) {
@@ -162,6 +163,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
     _outputSize = 0;
     _nbInputBlocks = 0;
     _headless = headerless;
+    _consumeBlockId = 0;
 
     if (_headless == true) {
         // Validation of required values
@@ -289,7 +291,6 @@ void CompressedInputStream::submitBlock(int bufferId)
     _buffers[bufferId]->_index = 0;
     _buffers[_jobs + bufferId]->_index = 0;
 
-    // Note: Output is _buffers[_bufferId], temp is _buffers[_jobs + _bufferId]
     DecodingTask<DecodingTaskResult>* task = new DecodingTask<DecodingTaskResult>(
         _buffers[bufferId],
         _buffers[_jobs + bufferId],
@@ -298,14 +299,18 @@ void CompressedInputStream::submitBlock(int bufferId)
         _listeners, copyCtx);
 
 #ifdef CONCURRENCY_ENABLED
-    auto taskRunner = [task]() {
-	return std::make_pair(task->run(), task);
+    std::shared_ptr<DecodingTask<DecodingTaskResult>> safeTask(task);
+
+    auto taskRunner = [safeTask]() {
+        return safeTask->run();
     };
 
     if (_pool == nullptr) {
+        // std::async returns std::future<DecodingTaskResult>
         _futures[bufferId] = std::async(std::launch::async, taskRunner);
     }
     else {
+        // pool->schedule returns std::future<DecodingTaskResult>
         _futures[bufferId] = _pool->schedule(taskRunner);
     }
 #else
@@ -341,9 +346,7 @@ int CompressedInputStream::_get(int inc)
 
 #ifdef CONCURRENCY_ENABLED
             if (_futures[_bufferId].valid()) {
-                 auto ret = _futures[_bufferId].get();
-		 res = ret.first;
-		 delete ret.second;
+                 res = _futures[_bufferId].get();
             } else {
                  setstate(ios::eofbit);
                  return EOF;
@@ -438,9 +441,7 @@ istream& CompressedInputStream::read(char* data, streamsize length)
             DecodingTaskResult res;
 #ifdef CONCURRENCY_ENABLED
             if (_futures[_bufferId].valid()) {
-                 auto ret = _futures[_bufferId].get();
-		 res = ret.first;
-		 delete ret.second;
+                 res = _futures[_bufferId].get();
             } else {
                  setstate(ios::eofbit);
                  break;

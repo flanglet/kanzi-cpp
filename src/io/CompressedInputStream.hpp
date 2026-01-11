@@ -233,7 +233,7 @@ namespace kanzi
 
 #ifdef CONCURRENCY_ENABLED
        ThreadPool* _pool;
-       std::vector<std::future<std::pair<DecodingTaskResult, DecodingTask<DecodingTaskResult>* > > > _futures;
+       std::vector<std::future<DecodingTaskResult>> _futures;
 #else
        std::vector<DecodingTaskResult> _results;
 #endif
