@@ -48,7 +48,7 @@ struct dContext {
 
 namespace kanzi {
 
-   class ifstreambuf : public streambuf {
+   class ifstreambuf FINAL : public streambuf {
      public:
        ifstreambuf(int fd) : _fd(fd) {
           // gptr() = egptr() initially forces underflow() on first read

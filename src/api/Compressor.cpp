@@ -60,7 +60,7 @@ struct cContext {
 
 namespace kanzi {
    // Utility classes to map C FILEs to C++ streams
-    class ofstreambuf : public streambuf
+    class ofstreambuf FINAL : public streambuf
     {
     public:
         ofstreambuf(int fd) : _fd(fd), _buffer(65536) {
@@ -69,7 +69,8 @@ namespace kanzi {
         }
 
         virtual ~ofstreambuf() {
-            sync();
+            // Call the non-virtual implementation directly instead of the virtual sync()
+            flush();
         }
 
     protected:
@@ -138,6 +139,7 @@ namespace kanzi {
                 if (WRITE(_fd, pbase(), n) != n) return EOF;
                 pbump(-int(n)); // Reset pbump by subtracting the amount written
             }
+
             return 0;
         }
     };
