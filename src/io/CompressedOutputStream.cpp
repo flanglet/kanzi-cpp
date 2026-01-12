@@ -507,15 +507,10 @@ void CompressedOutputStream::submitBlock()
         &_blockId, _listeners, copyCtx);
 
 #ifdef CONCURRENCY_ENABLED
-    auto taskWrapper = [task]() {
-        try {
-            EncodingTaskResult res = task->run();
-            delete task;
-            return res;
-        } catch (...) {
-            delete task;
-            throw;
-        }
+    std::shared_ptr<EncodingTask<EncodingTaskResult>> safeTask(task);
+
+    auto taskWrapper = [safeTask]() {
+        return safeTask->run();
     };
 
     if (_pool == nullptr) {
