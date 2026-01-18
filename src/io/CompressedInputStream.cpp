@@ -353,11 +353,6 @@ int CompressedInputStream::_get(int inc)
             }
 #else
             res = _results[_bufferId];
-
-            if (res._blockId == -1) { // Default/Empty result
-                 setstate(ios::eofbit);
-                 return EOF;
-            }
 #endif
             if (res._error != 0)
                 throw IOException(res._msg, res._error);
@@ -385,8 +380,15 @@ int CompressedInputStream::_get(int inc)
             _available = res._decoded;
 
             if (_available == 0) {
-                setstate(ios::eofbit);
-                return EOF;
+                if (res._skipped == false) {
+                    submitBlock(_bufferId);
+                    _bufferId = (_bufferId + 1) % _jobs;
+                    _consumeBlockId++;
+                }
+                else {
+                    setstate(ios::eofbit);
+                    return EOF;
+                }
             }
 
             _buffers[_bufferId]->_index = 0;
@@ -448,11 +450,6 @@ istream& CompressedInputStream::read(char* data, streamsize length)
             }
 #else
             res = _results[_bufferId];
-
-            if (res._blockId == -1) {
-                 setstate(ios::eofbit);
-                 break;
-            }
 #endif
             if (res._error != 0)
                 throw IOException(res._msg, res._error);
@@ -479,10 +476,11 @@ istream& CompressedInputStream::read(char* data, streamsize length)
             _available = res._decoded;
             _buffers[_bufferId]->_index = 0;
 
-            if (_available == 0) {
-                setstate(ios::eofbit);
-                break;
+            if ((_available == 0) && (res._skipped == false)) {
+               setstate(ios::eofbit);
+               break;
             }
+
         }
 
         const int lenChunk = min(remaining, int(_available));
@@ -493,12 +491,12 @@ istream& CompressedInputStream::read(char* data, streamsize length)
             _gcount += lenChunk;
             remaining -= lenChunk;
             _available -= lenChunk;
+        }
 
-            if (_available == 0) {
-                submitBlock(_bufferId);
-                _bufferId = (_bufferId + 1) % _jobs;
-                _consumeBlockId++;
-            }
+        if (_available == 0) {
+            submitBlock(_bufferId);
+            _bufferId = (_bufferId + 1) % _jobs;
+            _consumeBlockId++;
         }
     }
 
@@ -651,18 +649,12 @@ void CompressedInputStream::readHeader()
         info.entropyType = EntropyDecoderFactory::getName(_entropyType);
         info.transformType = TransformFactory<byte>::getName(_transformType);
         int64 fileSize = _ctx.getLong("fileSize", 0);
+        info.fileSize = (fileSize >= 0) ? fileSize : -1;
+        info.originalSize = (szMask != 0) ? _outputSize : -1;
 
-        if (fileSize != 0)
-           info.fileSize = fileSize;
-
-        if (szMask != 0)
-           info.originalSize = _outputSize;
-
-        // Protect against future concurrent modification of the list of block listeners
-        vector<Listener<Event>*> blockListeners(_listeners);
         WallTimer timer;
         Event evt(Event::AFTER_HEADER_DECODING, 0, info, timer.getCurrentTime());
-        notifyListeners(blockListeners, evt);
+        notifyListeners(_listeners, evt);
     }
 }
 
@@ -809,9 +801,14 @@ T DecodingTask<T>::run()
             return T(*_data, blockId, 0, 0, Error::ERR_BLOCK_SIZE, "Invalid block size");
         }
 
+        const int from = _ctx.getInt("from", 1);
+        const int to = _ctx.getInt("to", CompressedInputStream::MAX_BLOCK_ID);
         const uint r = uint((read + 7) >> 3);
 
-        if (streamPerTask == true) {
+        // Read from the shared bitstream if
+        // - there is one that one task (each with their own local bitstream)
+        // - the block is going to be skipped (bits must be consumed)
+        if ((streamPerTask == true) || (blockId < from)) {
             if (_data->_length < int(max(_blockLength, r))) {
                 _data->_length = int(max(_blockLength, r));
                 delete[] _data->_array;
@@ -829,9 +826,6 @@ T DecodingTask<T>::run()
         // After completion of the bitstream reading, increment the block id.
         // It unblocks the task processing the next block (if any)
         STORE_ATOMIC(*_processedBlockId, blockId);
-
-        const int from = _ctx.getInt("from", 1);
-        const int to = _ctx.getInt("to", CompressedInputStream::MAX_BLOCK_ID);
 
         // Check if the block must be skipped
         if (blockId < from) {

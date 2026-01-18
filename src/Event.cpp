@@ -74,12 +74,8 @@ Event::Event(const Event& other)
     , _hash(other._hash)
     , _hashType(other._hashType)
     , _skipFlags(other._skipFlags)
+    , _info(nullptr)
 {
-    if (_info != nullptr) {
-       delete _info;
-       _info = nullptr;
-    }
-
     if (other._info != nullptr) {
        _info = new HeaderInfo{other._info->inputName, other._info->bsVersion, other._info->checksumSize, other._info->blockSize,
                               other._info->entropyType, other._info->transformType, other._info->originalSize, other._info->fileSize};
@@ -142,6 +138,10 @@ Event& Event::operator=(Event&& other) noexcept
         _hash       = other._hash;
         _hashType   = other._hashType;
         _skipFlags  = other._skipFlags;
+
+        if (_info != nullptr)
+           delete _info;
+
         _info       = other._info;
         other._info = nullptr;
     }
