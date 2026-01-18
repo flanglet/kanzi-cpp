@@ -643,34 +643,25 @@ void CompressedInputStream::readHeader()
         throw IOException("Invalid bitstream, header checksum mismatch", Error::ERR_CRC_CHECK);
 
     if (_listeners.size() > 0) {
-        stringstream ss;
-        string inputName = _ctx.getString("inputName", "");
-        ss << inputName << ",";
-        ss << bsVersion << ",";
-        string ckBits = "0";
-
-        if (_hasher32 != nullptr)
-            ckBits = "32";
-        else if (_hasher64 != nullptr)
-            ckBits = "64";
-
-        ss << ckBits << ",";
-        ss << _blockSize << ",";
-        string w1 = EntropyDecoderFactory::getName(_entropyType);
-        ss << ((w1 == "NONE") ? "" : w1) << ",";
-        string w2 = TransformFactory<byte>::getName(_transformType);
-        ss << ((w2 == "NONE") ? "" : w2) << ",";
+        Event::HeaderInfo info;
+        info.inputName = _ctx.getString("inputName", "");
+        info.bsVersion = bsVersion;
+        info.checksumSize = 32 * ckSize;
+        info.blockSize = _blockSize;
+        info.entropyType = EntropyDecoderFactory::getName(_entropyType);
+        info.transformType = TransformFactory<byte>::getName(_transformType);
         int64 fileSize = _ctx.getLong("fileSize", 0);
-        ss << fileSize << ",";
 
-        if (szMask != 0) {
-            ss << _outputSize << ",";
-        }
+        if (fileSize != 0)
+           info.fileSize = fileSize;
+
+        if (szMask != 0)
+           info.originalSize = _outputSize;
 
         // Protect against future concurrent modification of the list of block listeners
         vector<Listener<Event>*> blockListeners(_listeners);
         WallTimer timer;
-        Event evt(Event::AFTER_HEADER_DECODING, 0, ss.str(), timer.getCurrentTime());
+        Event evt(Event::AFTER_HEADER_DECODING, 0, info, timer.getCurrentTime());
         notifyListeners(blockListeners, evt);
     }
 }

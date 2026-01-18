@@ -96,50 +96,10 @@ inline void tokenize(const std::string& str, std::vector<std::string>& v, char t
       v.push_back(s);   
 }    
 
-inline int tokenizeCSV(const std::string& s, std::vector<std::string>& tokens, char delim = ',')
+inline std::string formatSize(double size)
 {
     std::stringstream ss;
-    char prv = 0;
-
-    for (size_t i =0; i < s.length(); i++) {
-        if (s[i] == delim) {
-            if (prv != '\\') {
-                std::string tk = ss.str();
-#if __cplusplus >= 201103L
-                if (tk.size() > 0)
-                    tokens.push_back(std::move(tk));
-#else
-                if (tk.size() > 0)
-                    tokens.push_back(tk);
-#endif
-                ss.str("");
-                prv = 0;
-                continue;
-            }
-        }
-
-        ss << s[i];
-        prv = s[i];
-    }
-
-    std::string tk = ss.str();
-
-#if __cplusplus >= 201103L
-    if (tk.size() > 0)
-        tokens.push_back(std::move(tk));
-#else
-    if (tk.size() > 0)
-        tokens.push_back(tk);
-#endif
-
-    return int(tokens.size());
-}
-
-inline std::string formatSize(const std::string& input)
-{
-    double size = atof(input.c_str());
-    std::stringstream ss;
-    std::string s = input;
+    std::string s;
 
     if (size >= double(1 << 30)) {
        size /= double(1024 * 1024 * 1024);
@@ -156,8 +116,17 @@ inline std::string formatSize(const std::string& input)
        ss << std::fixed << std::setprecision(2) << size << " KiB";
        s = ss.str();
     }
+    else {
+       ss << size;
+       s = ss.str();
+    }
 
    return s;
+}
+
+inline std::string formatSize(const std::string& input)
+{
+    return formatSize(atof(input.c_str()));
 }
 
 #endif

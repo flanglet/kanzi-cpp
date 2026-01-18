@@ -47,9 +47,21 @@ namespace kanzi
               SIZE_64
           };
 
+          typedef struct HeaderInfo {
+              std::string inputName;
+              int bsVersion;
+              int checksumSize;
+              int blockSize;
+              std::string entropyType;
+              std::string transformType;
+              int64 originalSize;
+              int64 fileSize;
+          } HeaderInfo;
+
           Event(Type type, int id, const std::string& msg, WallTimer::TimeData evtTime);
           Event(Type type, int id, int64 size, WallTimer::TimeData evtTime, uint64 hash = 0,
                 HashType hashType = NO_HASH, int64 offset = -1, uint8 skipFlags = 0);
+          Event(Type type, int id, const HeaderInfo& info, WallTimer::TimeData evtTime);
 
           Event(const Event& other);
           Event& operator=(const Event& other);
@@ -59,17 +71,18 @@ namespace kanzi
           Event& operator=(Event&& other) noexcept;
 #endif
 
-          virtual ~Event() {}
+          virtual ~Event() { if (_info != nullptr) delete _info; }
 
           int getId() const { return _id; }
           int64 getSize() const { return _size; }
           Event::Type getType() const { return _type; }
-          std::string getTypeAsString() const;
           WallTimer::TimeData getTime() const { return _time; }
           uint64 getHash() const { return _hashType != NO_HASH ? _hash : 0; }
           int64 getOffset() const { return _offset; }
           HashType getHashType() const { return _hashType; }
+          HeaderInfo* getInfo() const { return _info; }
           std::string toString() const;
+          std::string getTypeAsString() const;
 
       private:
           Event::Type _type;
@@ -81,6 +94,7 @@ namespace kanzi
           uint64 _hash;
           HashType _hashType;
           uint8 _skipFlags;
+          HeaderInfo* _info;
       };
 }
 

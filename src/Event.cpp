@@ -30,7 +30,23 @@ Event::Event(Event::Type type, int id, const std::string& msg, WallTimer::TimeDa
     , _hash(0)
     , _hashType(NO_HASH)
     , _skipFlags(0)
+    , _info(nullptr)
 {
+}
+
+Event::Event(Event::Type type, int id, const HeaderInfo& info, WallTimer::TimeData evtTime)
+    : _type(type)
+    , _time(evtTime)
+    , _msg("")
+    , _id(id)
+    , _size(0)
+    , _offset(-1)
+    , _hash(0)
+    , _hashType(NO_HASH)
+    , _skipFlags(0)
+{
+    _info = new HeaderInfo{info.inputName, info.bsVersion, info.checksumSize, info.blockSize,
+                           info.entropyType, info.transformType, info.originalSize, info.fileSize};
 }
 
 Event::Event(Event::Type type, int id, int64 size, WallTimer::TimeData evtTime,
@@ -44,6 +60,7 @@ Event::Event(Event::Type type, int id, int64 size, WallTimer::TimeData evtTime,
     , _hash(hash)
     , _hashType(hashType)
     , _skipFlags(skipFlags)
+    , _info(nullptr)
 {
 }
 
@@ -58,6 +75,15 @@ Event::Event(const Event& other)
     , _hashType(other._hashType)
     , _skipFlags(other._skipFlags)
 {
+    if (_info != nullptr) {
+       delete _info;
+       _info = nullptr;
+    }
+
+    if (other._info != nullptr) {
+       _info = new HeaderInfo{other._info->inputName, other._info->bsVersion, other._info->checksumSize, other._info->blockSize,
+                              other._info->entropyType, other._info->transformType, other._info->originalSize, other._info->fileSize};
+    }
 }
 
 Event& Event::operator=(const Event& other)
@@ -72,6 +98,16 @@ Event& Event::operator=(const Event& other)
         _hash      = other._hash;
         _hashType  = other._hashType;
         _skipFlags = other._skipFlags;
+
+        if (_info != nullptr) {
+           delete _info;
+           _info = nullptr;
+        }
+
+        if (other._info != nullptr) {
+           _info = new HeaderInfo{other._info->inputName, other._info->bsVersion, other._info->checksumSize, other._info->blockSize,
+                                  other._info->entropyType, other._info->transformType, other._info->originalSize, other._info->fileSize};
+        }
     }
 
     return *this;
@@ -89,22 +125,27 @@ Event::Event(Event&& other) noexcept
     , _hash(other._hash)
     , _hashType(other._hashType)
     , _skipFlags(other._skipFlags)
+    , _info(other._info)
 {
+    other._info = nullptr;
 }
 
 Event& Event::operator=(Event&& other) noexcept
 {
     if (this != &other) {
-        _type      = other._type;
-        _time      = other._time;
-        _msg       = std::move(other._msg);
-        _id        = other._id;
-        _size      = other._size;
-        _offset    = other._offset;
-        _hash      = other._hash;
-        _hashType  = other._hashType;
-        _skipFlags = other._skipFlags;
+        _type       = other._type;
+        _time       = other._time;
+        _msg        = std::move(other._msg);
+        _id         = other._id;
+        _size       = other._size;
+        _offset     = other._offset;
+        _hash       = other._hash;
+        _hashType   = other._hashType;
+        _skipFlags  = other._skipFlags;
+        _info       = other._info;
+        other._info = nullptr;
     }
+
     return *this;
 }
 #endif
@@ -112,7 +153,7 @@ Event& Event::operator=(Event&& other) noexcept
 
 std::string Event::toString() const
 {
-    if (_msg.size() > 0)
+    if (_msg != "")
         return _msg;
 
     std::stringstream ss;
@@ -121,29 +162,45 @@ std::string Event::toString() const
     if (_id >= 0)
         ss << ", \"id\":" << getId();
 
-    ss << ", \"size\":" << getSize();
+    if (_info != nullptr) {
+       ss << ", \"inputName\":\"" << _info->inputName << "\"";
+       ss << ", \"bsVersion\":" << _info->bsVersion;
+       ss << ", \"checksum\":" << _info->checksumSize;
+       ss << ", \"blockSize\":" << _info->blockSize;
+       ss << ", \"entropy\":\"" << _info->entropyType << "\"";
+       ss << ", \"transform\":\"" << _info->transformType << "\"";
 
-    if (getType() != BLOCK_INFO)
-        ss << ", \"time\":" << getTime().to_ms();
+       if (_info->fileSize >= 0)
+          ss << ", \"compressed\":" << _info->fileSize;
 
-    if (_hashType != NO_HASH) {
-        ss << ", \"hash\":\"";
-        ss << std::uppercase << std::setfill('0');
-
-        if (_hashType == SIZE_32)
-           ss << std::setw(8) << std::hex << getHash() << "\"";
-        else
-           ss << std::setw(16) << std::hex << getHash() << "\"";
-
-        ss << std::dec;
+       if (_info->originalSize >= 0)
+          ss << ", \"original\":" << _info->originalSize;
     }
+    else {
+       ss << ", \"size\":" << getSize();
 
-    if (getType() == BLOCK_INFO) {
-        ss << ", \"offset\":" << getOffset();
-        ss << ", \"skipFlags\":";
+       if (getType() != BLOCK_INFO)
+           ss << ", \"time\":" << getTime().to_ms();
 
-        for (int i = 128; i >= 1; i >>= 1)
-           ss << ((_skipFlags & i) == 0 ? "0" : "1");
+       if (_hashType != NO_HASH) {
+           ss << ", \"hash\":\"";
+           ss << std::uppercase << std::setfill('0');
+
+           if (_hashType == SIZE_32)
+              ss << std::setw(8) << std::hex << getHash() << "\"";
+           else
+              ss << std::setw(16) << std::hex << getHash() << "\"";
+
+           ss << std::dec;
+       }
+
+       if (getType() == BLOCK_INFO) {
+           ss << ", \"offset\":" << getOffset();
+           ss << ", \"skipFlags\":";
+
+           for (int i = 128; i >= 1; i >>= 1)
+              ss << ((_skipFlags & i) == 0 ? "0" : "1");
+       }
     }
 
     ss << " }";
