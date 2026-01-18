@@ -47,7 +47,7 @@ namespace kanzi
       public:
           enum Type { COMPRESSION, DECOMPRESSION, INFO };
 
-          InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os);
+          InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os, int firstBlockId = 1);
           ~InfoPrinter() {}
 
           void processEvent(const Event& evt);

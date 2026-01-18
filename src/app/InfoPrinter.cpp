@@ -24,13 +24,13 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os)
+InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os, int firstBlockId)
     : _os(os)
     , _type(type)
     , _level(infoLevel)
     , _headerInfo(0)
 {
-    STORE_ATOMIC(_lastEmittedBlockId, 0);
+    STORE_ATOMIC(_lastEmittedBlockId, max(firstBlockId - 1, 0));
 
     // Select the ONLY ordered phase
     if (type == InfoPrinter::COMPRESSION) {

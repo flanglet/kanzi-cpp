@@ -156,8 +156,9 @@ int BlockDecompressor::decompress(uint64& inputSize)
         ss.str(string());
     }
 
+    const int from = _ctx.getInt("from", 1);
     InfoPrinter::Type ipt = isInfo ? InfoPrinter::INFO : InfoPrinter::DECOMPRESSION;
-    InfoPrinter listener(vl, ipt, cout);
+    InfoPrinter listener(vl, ipt, cout, max(from, 1));
 
     if ((vl > 2) || ((isInfo == true) && (vl > 0)))
         addListener(listener);
