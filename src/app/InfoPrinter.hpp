@@ -19,10 +19,11 @@ limitations under the License.
 
 #include <map>
 #include <memory>
-#include <mutex>
+#ifdef CONCURRENCY_ENABLED
+   #include <mutex>
+#endif
 #include <time.h>
 #include <vector>
-#include <unordered_map>
 
 #include "../concurrent.hpp"
 #include "../Event.hpp"
@@ -54,8 +55,10 @@ namespace kanzi
           void processEvent(const Event& evt);
 
       private:
+#ifdef CONCURRENCY_ENABLED
           // Ordered-phase handling
           void processOrderedPhase(const Event& evt);
+#endif
 
           // Actual event processing + printing
           void processEventOrdered(const Event& evt);
@@ -69,14 +72,16 @@ namespace kanzi
           int _headerInfo;
 
           // Per-block state
-          std::unordered_map<int, BlockInfo*> _blocks;
+          std::map<int, BlockInfo*> _blocks;
 
           // Ordered-phase state
           Event::Type _orderedPhase;
 
           Event::Type _thresholds[6];
+#ifdef CONCURRENCY_ENABLED
           std::mutex _mutex;
-          std::unordered_map<int, Event> _orderedPending;
+#endif
+          std::map<int, Event> _orderedPending;
           atomic_int_t _lastEmittedBlockId;
    };
 

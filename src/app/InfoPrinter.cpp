@@ -61,15 +61,18 @@ void InfoPrinter::processEvent(const Event& evt)
         return;
     }
 
+#ifdef CONCURRENCY_ENABLED
     if (evt.getType() == _orderedPhase) {
         processOrderedPhase(evt);
         return;
     }
+#endif
 
     processEventOrdered(evt);
 }
 
 
+#ifdef CONCURRENCY_ENABLED
 void InfoPrinter::processOrderedPhase(const Event& evt)
 {
     {
@@ -84,10 +87,8 @@ void InfoPrinter::processOrderedPhase(const Event& evt)
 
         {
             std::lock_guard<std::mutex> lock(_mutex);
-
             int nextId = LOAD_ATOMIC(_lastEmittedBlockId) + 1;
-            std::unordered_map<int, Event>::iterator it =
-                _orderedPending.find(nextId);
+            std::map<int, Event>::iterator it = _orderedPending.find(nextId);
 
             if (it == _orderedPending.end())
                 return;
@@ -102,6 +103,7 @@ void InfoPrinter::processOrderedPhase(const Event& evt)
         processEventOrdered(next);
     }
 }
+#endif
 
 
 void InfoPrinter::processEventOrdered(const Event& evt)
@@ -123,7 +125,7 @@ void InfoPrinter::processEventOrdered(const Event& evt)
     }
     else if (type == _thresholds[2])
     {
-        std::unordered_map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
+        std::map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
 
         if (it == _blocks.end())
             return;
@@ -142,7 +144,7 @@ void InfoPrinter::processEventOrdered(const Event& evt)
     }
     else if (type == _thresholds[3])
     {
-        std::unordered_map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
+        std::map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
 
         if (it == _blocks.end())
            return;
@@ -158,7 +160,7 @@ void InfoPrinter::processEventOrdered(const Event& evt)
     }
     else if (type == _thresholds[4])
     {
-        std::unordered_map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
+        std::map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
 
         if (it == _blocks.end())
             return;
