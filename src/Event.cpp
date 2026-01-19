@@ -45,8 +45,15 @@ Event::Event(Event::Type type, int id, const HeaderInfo& info, WallTimer::TimeDa
     , _hashType(NO_HASH)
     , _skipFlags(0)
 {
-    _info = new HeaderInfo{info.inputName, info.bsVersion, info.checksumSize, info.blockSize,
-                           info.entropyType, info.transformType, info.originalSize, info.fileSize};
+    _info = new HeaderInfo();
+    _info->inputName = info.inputName;
+    _info->bsVersion = info.bsVersion;
+    _info->checksumSize = info.checksumSize;
+    _info->blockSize = info.blockSize;
+    _info->entropyType = info.entropyType;
+    _info->transformType = info.transformType;
+    _info->originalSize = info.originalSize;
+    _info->fileSize = info.fileSize;
 }
 
 Event::Event(Event::Type type, int id, int64 size, WallTimer::TimeData evtTime,
@@ -77,8 +84,15 @@ Event::Event(const Event& other)
     , _info(nullptr)
 {
     if (other._info != nullptr) {
-       _info = new HeaderInfo{other._info->inputName, other._info->bsVersion, other._info->checksumSize, other._info->blockSize,
-                              other._info->entropyType, other._info->transformType, other._info->originalSize, other._info->fileSize};
+        _info = new HeaderInfo();
+        _info->inputName = other._info->inputName;
+        _info->bsVersion = other._info->bsVersion;
+        _info->checksumSize = other._info->checksumSize;
+        _info->blockSize = other._info->blockSize;
+        _info->entropyType = other._info->entropyType;
+        _info->transformType = other._info->transformType;
+        _info->originalSize = other._info->originalSize;
+        _info->fileSize = other._info->fileSize;
     }
 }
 
@@ -101,8 +115,15 @@ Event& Event::operator=(const Event& other)
         }
 
         if (other._info != nullptr) {
-           _info = new HeaderInfo{other._info->inputName, other._info->bsVersion, other._info->checksumSize, other._info->blockSize,
-                                  other._info->entropyType, other._info->transformType, other._info->originalSize, other._info->fileSize};
+            _info = new HeaderInfo();
+            _info->inputName = other._info->inputName;
+            _info->bsVersion = other._info->bsVersion;
+            _info->checksumSize = other._info->checksumSize;
+            _info->blockSize = other._info->blockSize;
+            _info->entropyType = other._info->entropyType;
+            _info->transformType = other._info->transformType;
+            _info->originalSize = other._info->originalSize;
+            _info->fileSize = other._info->fileSize;
         }
     }
 

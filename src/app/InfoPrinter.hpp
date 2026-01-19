@@ -22,6 +22,7 @@ limitations under the License.
 #include <mutex>
 #include <time.h>
 #include <vector>
+#include <unordered_map>
 
 #include "../concurrent.hpp"
 #include "../Event.hpp"

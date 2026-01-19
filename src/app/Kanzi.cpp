@@ -1143,11 +1143,13 @@ int main(int argc, const char* argv[])
         cout << "Missing arguments: try --help or -h" << endl;
         return Error::ERR_MISSING_PARAM;
     }
+#if __cplusplus >= 201703L
     catch (const bad_variant_access& e) {
        // May be thrown by Context
        cerr << e.what() << endl;
        return Error::ERR_UNKNOWN;
     }
+#endif
     catch (const invalid_argument& e) {
        // May be thrown by ThreadPool
        cerr << e.what() << endl;
