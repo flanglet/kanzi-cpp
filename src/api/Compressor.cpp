@@ -53,7 +53,7 @@ using namespace kanzi;
 
 struct cContext {
    kanzi::CompressedOutputStream* pCos;
-   unsigned int blockSize;
+   size_t blockSize;
    void* fos;
 };
 
@@ -202,7 +202,7 @@ KANZI_API int CDECL initCompressor(struct cData* pData, FILE* dst, struct cConte
 
         cctx->pCos = new CompressedOutputStream(*fos, pData->jobs,
                                                 pData->entropy, pData->transform,
-                                                pData->blockSize, pData->checksum,
+                                                int(pData->blockSize), pData->checksum,
                                                 uint64(fileSize),
 #ifdef CONCURRENCY_ENABLED
                                                 nullptr,

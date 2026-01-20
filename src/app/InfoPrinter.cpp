@@ -292,12 +292,12 @@ void InfoPrinter::processHeaderInfo(const Event& evt)
     ss << setw(10) << info->blockSize << "|";
 
     if (info->fileSize >= 0)
-        ss << setw(12) << formatSize(info->fileSize) << "|";
+        ss << setw(12) << formatSize(double(info->fileSize)) << "|";
     else
         ss << setw(12) << "    N/A    |";
 
     if (info->originalSize >= 0)
-        ss << setw(12) << formatSize(info->originalSize) << "|";
+        ss << setw(12) << formatSize(double(info->originalSize)) << "|";
     else
         ss << setw(12) << "    N/A    |";
 

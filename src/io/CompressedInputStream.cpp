@@ -644,7 +644,7 @@ void CompressedInputStream::readHeader()
         Event::HeaderInfo info;
         info.inputName = _ctx.getString("inputName", "");
         info.bsVersion = bsVersion;
-        info.checksumSize = 32 * ckSize;
+        info.checksumSize = int(32 * ckSize);
         info.blockSize = _blockSize;
         info.entropyType = EntropyDecoderFactory::getName(_entropyType);
         info.transformType = TransformFactory<byte>::getName(_transformType);

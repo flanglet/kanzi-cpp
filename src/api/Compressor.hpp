@@ -23,7 +23,7 @@ limitations under the License.
    #ifdef KANZI_EXPORTS
       #define KANZI_API __declspec(dllexport)
    #else
-      #define KANZI_API __declspec(dllimport)
+      #define KANZI_API
    #endif
 #else
    #define CDECL

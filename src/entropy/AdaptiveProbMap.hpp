@@ -90,16 +90,21 @@ namespace kanzi {
    template <bool FAST, int RATE>
    inline LogisticAdaptiveProbMap<FAST, RATE>::LogisticAdaptiveProbMap(int n)
    {
-       const int mult = (FAST == false) ? 33 : 32;
-       const int size = (n == 0) ? mult : n * mult;
-       _data = new uint16[size];
+       const int mult = (FAST == false) ? 33 : 32; 
        _index = 0;
 
-       for (int j = 0; j < mult; j++)
-           _data[j] = uint16(Global::squash((j - 16) * 128) << 4);
+       if (n == 0) {
+           _data = new uint16[mult];
+       }
+       else {
+           _data = new uint16[n * mult];
 
-       for (int i = 1; i < n; i++)
-           memcpy(&_data[i * mult], &_data[0], mult * sizeof(uint16));
+           for (int j = 0; j < mult; j++)
+               _data[j] = uint16(Global::squash((j - 16) * 128) << 4);
+
+           for (int i = 1; i < n; i++)
+               memcpy(&_data[i * mult], &_data[0], mult * sizeof(uint16));
+       }
    }
 
    // Return improved prediction given current bit, prediction and context
