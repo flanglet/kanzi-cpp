@@ -57,7 +57,7 @@ namespace kanzi
       private:
 #ifdef CONCURRENCY_ENABLED
           // Ordered-phase handling
-          void processOrderedPhase(const Event& evt);
+          void processBlockEventOrdered(const Event& evt);
 #endif
 
           // Actual event processing + printing
@@ -74,15 +74,13 @@ namespace kanzi
           // Per-block state
           std::map<int, BlockInfo*> _blocks;
 
-          // Ordered-phase state
-          Event::Type _orderedPhase;
-
           Event::Type _thresholds[6];
 #ifdef CONCURRENCY_ENABLED
-          std::mutex _mutex;
+          std::mutex _mutex1;
+          std::mutex _mutex2;
 #endif
-          std::map<int, Event> _orderedPending;
-          atomic_int_t _lastEmittedBlockId;
+          std::map<int, std::vector<Event> > _pendingBlocks;
+          atomic_int_t _nextBlockId;
    };
 
 }

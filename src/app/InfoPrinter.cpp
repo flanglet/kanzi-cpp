@@ -30,9 +30,8 @@ InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os
     , _level(infoLevel)
     , _headerInfo(0)
 {
-    STORE_ATOMIC(_lastEmittedBlockId, max(firstBlockId - 1, 0));
+    STORE_ATOMIC(_nextBlockId, firstBlockId);
 
-    // Select the ONLY ordered phase
     if (type == InfoPrinter::COMPRESSION) {
         _thresholds[0] = Event::COMPRESSION_START;
         _thresholds[1] = Event::BEFORE_TRANSFORM;
@@ -40,7 +39,6 @@ InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os
         _thresholds[3] = Event::BEFORE_ENTROPY;
         _thresholds[4] = Event::AFTER_ENTROPY;
         _thresholds[5] = Event::COMPRESSION_END;
-        _orderedPhase = Event::AFTER_ENTROPY;
     }
     else {
         _thresholds[0] = Event::DECOMPRESSION_START;
@@ -49,7 +47,6 @@ InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os
         _thresholds[3] = Event::BEFORE_TRANSFORM;
         _thresholds[4] = Event::AFTER_TRANSFORM;
         _thresholds[5] = Event::DECOMPRESSION_END;
-        _orderedPhase = Event::BEFORE_ENTROPY;
     }
 }
 
@@ -62,8 +59,11 @@ void InfoPrinter::processEvent(const Event& evt)
     }
 
 #ifdef CONCURRENCY_ENABLED
-    if (evt.getType() == _orderedPhase) {
-        processOrderedPhase(evt);
+    Event::Type t = evt.getType();
+
+    if (t == Event::BEFORE_TRANSFORM || t == Event::AFTER_TRANSFORM ||
+        t == Event::BEFORE_ENTROPY || t == Event::AFTER_ENTROPY) {
+        processBlockEventOrdered(evt);
         return;
     }
 #endif
@@ -73,34 +73,79 @@ void InfoPrinter::processEvent(const Event& evt)
 
 
 #ifdef CONCURRENCY_ENABLED
-void InfoPrinter::processOrderedPhase(const Event& evt)
+void InfoPrinter::processBlockEventOrdered(const Event& evt)
 {
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _orderedPending.insert(std::make_pair(evt.getId(), evt));
+    const int blockId = evt.getId();
+    const Event::Type type = evt.getType();
+    bool blockComplete = false;
+
+    // Determine completion condition
+    if (_type == InfoPrinter::COMPRESSION) {
+        blockComplete = (type == Event::AFTER_ENTROPY);
+    }
+    else if (_type == InfoPrinter::DECOMPRESSION) {
+        blockComplete = (type == Event::AFTER_TRANSFORM);
     }
 
+    {
+#ifdef CONCURRENCY_ENABLED
+        std::lock_guard<std::mutex> lock(_mutex1);
+#endif
+        _pendingBlocks[blockId].push_back(evt);
+
+        // Do not attempt to release unless this block is complete
+        if (blockComplete == false)
+            return;
+    }
+
+    // Try to release completed blocks in strict blockId order
     for (;;)
     {
-        WallTimer timer;
-        Event next(Event::BLOCK_INFO, 0, "", timer.getCurrentTime());
+        std::vector<Event> events;
 
         {
-            std::lock_guard<std::mutex> lock(_mutex);
-            int nextId = LOAD_ATOMIC(_lastEmittedBlockId) + 1;
-            std::map<int, Event>::iterator it = _orderedPending.find(nextId);
+#ifdef CONCURRENCY_ENABLED
+            std::lock_guard<std::mutex> lock(_mutex1);
+#endif
+            int expectedId = LOAD_ATOMIC(_nextBlockId);
+            std::map<int, std::vector<Event> >::iterator it = _pendingBlocks.find(expectedId);
 
-            if (it == _orderedPending.end())
+            if (it == _pendingBlocks.end())
                 return;
 
-            next = it->second;
-            _orderedPending.erase(it);
-            STORE_ATOMIC(_lastEmittedBlockId, nextId);
+            // The block must be complete before release
+            bool complete = false;
+            const std::vector<Event>& evts = it->second;
+
+            for (size_t i = 0; i < evts.size(); i++) {
+                if ((_type == InfoPrinter::COMPRESSION) && (evts[i].getType() == Event::AFTER_ENTROPY)) {
+                    complete = true;
+                    break;
+                }
+
+                if ((_type == InfoPrinter::DECOMPRESSION) && (evts[i].getType() == Event::AFTER_TRANSFORM)) {
+                    complete = true;
+                    break;
+                }
+            }
+
+            if (complete == false)
+                return;
+
+            // Release block
+            events.swap(it->second);
+            _pendingBlocks.erase(it);
+            STORE_ATOMIC(_nextBlockId, expectedId + 1);
         }
 
-        // Compression: AFTER_ENTROPY emitted in-order
-        // Decompression: BEFORE_TRANSFORM emitted in-order
-        processEventOrdered(next);
+        // Process all events for this block in arrival order
+#ifdef CONCURRENCY_ENABLED
+        std::lock_guard<std::mutex> lock(_mutex2);
+#endif
+
+        for (size_t i = 0; i < events.size(); i++) {
+            processEventOrdered(events[i]);
+        }
     }
 }
 #endif
@@ -110,21 +155,19 @@ void InfoPrinter::processEventOrdered(const Event& evt)
 {
     const int blockId = evt.getId();
     const Event::Type type = evt.getType();
+    string msg;
 
-    if (type == _thresholds[1])
-    {
+    if (type == _thresholds[1]) {
         BlockInfo* bi = new BlockInfo();
         bi->_timeStamp1 = evt.getTime();
         bi->_stage0Size = evt.getSize();
         _blocks[blockId] = bi;
 
-        if (_level >= 5)
-            _os << evt.toString() << std::endl;
-
-        _os.flush();
+        if (_level >= 5) {
+            msg = evt.toString();
+        }
     }
-    else if (type == _thresholds[2])
-    {
+    else if (type == _thresholds[2]) {
         std::map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
 
         if (it == _blocks.end())
@@ -137,13 +180,10 @@ void InfoPrinter::processEventOrdered(const Event& evt)
             double elapsed = WallTimer::calculateDifference(bi._timeStamp1, bi._timeStamp2);
             std::stringstream ss;
             ss << evt.toString() << " [" << int64(elapsed) << " ms]";
-            _os << ss.str() << std::endl;
+            msg = ss.str();
         }
-
-        _os.flush();
     }
-    else if (type == _thresholds[3])
-    {
+    else if (type == _thresholds[3]) {
         std::map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
 
         if (it == _blocks.end())
@@ -154,12 +194,9 @@ void InfoPrinter::processEventOrdered(const Event& evt)
         bi._stage1Size = evt.getSize();
 
         if (_level >= 5)
-            _os << evt.toString() << std::endl;
-
-        _os.flush();
+            msg = evt.toString();
     }
-    else if (type == _thresholds[4])
-    {
+    else if (type == _thresholds[4]) {
         std::map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
 
         if (it == _blocks.end())
@@ -194,13 +231,11 @@ void InfoPrinter::processEventOrdered(const Event& evt)
                 ss << std::uppercase << std::hex << " [" << evt.getHash() << "]";
             }
 
-            _os << ss.str() << std::endl;
+            msg = ss.str();
         }
 
         delete it->second;
         _blocks.erase(it);
-
-        _os.flush();
     }
     else if ((evt.getType() == Event::AFTER_HEADER_DECODING) && (_level >= 3)) {
         Event::HeaderInfo* info = evt.getInfo();
@@ -208,14 +243,13 @@ void InfoPrinter::processEventOrdered(const Event& evt)
         if (info == nullptr)
             return;
 
-        stringstream ss;
-
         if (_level >= 5) {
             // JSON output
-            ss << evt.toString();
+            msg = evt.toString();
         }
         else {
             // Raw text output
+            stringstream ss;
             ss << "Bitstream version: " << info->bsVersion << endl;
             string strCk = "NONE";
 
@@ -233,13 +267,16 @@ void InfoPrinter::processEventOrdered(const Event& evt)
 
             if (info->originalSize >= 0)
                ss << "Original size: " << info->originalSize << " byte(s)" << endl;
-        }
 
-        _os << ss.str() << endl;
-        _os.flush();
+            msg = ss.str();
+        }
     }
     else if (_level >= 5) {
-        _os << evt.toString() << endl;
+        msg = evt.toString();
+    }
+
+    if (msg.size() > 0) {
+        _os << msg << endl;
         _os.flush();
     }
 }
