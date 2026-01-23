@@ -1044,8 +1044,8 @@ int main(int argc, const char* argv[])
 {
 #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
     // Force standard input and output to binary mode
-    _setmode(_fileno(stdout), _O_BINARY);
-    _setmode(_fileno(stdin), _O_BINARY);
+    (void) _setmode(_fileno(stdout), _O_BINARY);
+    (void) _setmode(_fileno(stdin), _O_BINARY);
 
     // Users can provide a custom code page to properly display some non ASCII file names
     // eg. 1252 for ANSI Latin-1 or 65001 for utf-8

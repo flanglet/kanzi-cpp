@@ -90,7 +90,7 @@ namespace kanzi {
    template <bool FAST, int RATE>
    inline LogisticAdaptiveProbMap<FAST, RATE>::LogisticAdaptiveProbMap(int n)
    {
-       const int mult = (FAST == false) ? 33 : 32; 
+       const int mult = (FAST == false) ? 33 : 32;
        _index = 0;
 
        if (n == 0) {
