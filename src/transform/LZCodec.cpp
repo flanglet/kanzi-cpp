@@ -775,7 +775,6 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int dstIdx = 4;
 
     while ((srcIdx < srcEnd - MIN_MATCH) && (dstIdx < dstEnd)) {
-        prefetchRead(&src[srcIdx + MIN_MATCH]);
         const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
         const int32 ref = _hashes[h];
         _hashes[h] = srcIdx;
@@ -798,7 +797,6 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
 
         srcIdx += bestLen;
-        prefetchRead(&src[srcIdx - 4]);
         ctx = LittleEndian::readInt32(&src[srcIdx - 4]);
         dst[dstIdx++] = byte(MATCH_FLAG);
         bestLen -= MIN_MATCH;
@@ -871,7 +869,7 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         int ref = _hashes[h];
         _hashes[h] = dstIdx;
 
-        if ((ref == 0) || (src[srcIdx] != byte(MATCH_FLAG))) {
+        if ((src[srcIdx] != byte(MATCH_FLAG)) || (ref == 0)) {
             ctx = (ctx << 8) | uint32(src[srcIdx]);
             dst[dstIdx++] = src[srcIdx++];
             continue;
@@ -888,13 +886,15 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         int mLen = MIN_MATCH;
 
-        while ((srcIdx < srcEnd) && (src[srcIdx] == byte(0xFE))) {
-            srcIdx++;
-            mLen += 254;
-        }
+        if (src[srcIdx] == byte(0xFE)) {
+            while ((srcIdx < srcEnd) && (src[srcIdx] == byte(0xFE))) {
+                srcIdx++;
+                mLen += 254;
+            }
 
-        if (srcIdx >= srcEnd)
-            return false;
+            if (srcIdx >= srcEnd)
+                return false;
+        }
 
         mLen += int(src[srcIdx++]);
         const int mEnd = dstIdx + mLen;
