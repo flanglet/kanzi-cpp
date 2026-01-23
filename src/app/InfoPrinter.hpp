@@ -76,8 +76,7 @@ namespace kanzi
 
           Event::Type _thresholds[6];
 #ifdef CONCURRENCY_ENABLED
-          std::mutex _mutex1;
-          std::mutex _mutex2;
+          std::mutex _mutex;
 #endif
           std::map<int, std::vector<Event> > _pendingBlocks;
           atomic_int_t _nextBlockId;

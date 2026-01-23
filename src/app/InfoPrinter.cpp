@@ -89,7 +89,7 @@ void InfoPrinter::processBlockEventOrdered(const Event& evt)
 
     {
 #ifdef CONCURRENCY_ENABLED
-        std::lock_guard<std::mutex> lock(_mutex1);
+        std::lock_guard<std::mutex> lock(_mutex);
 #endif
         _pendingBlocks[blockId].push_back(evt);
 
@@ -105,7 +105,7 @@ void InfoPrinter::processBlockEventOrdered(const Event& evt)
 
         {
 #ifdef CONCURRENCY_ENABLED
-            std::lock_guard<std::mutex> lock(_mutex1);
+            std::lock_guard<std::mutex> lock(_mutex);
 #endif
             int expectedId = LOAD_ATOMIC(_nextBlockId);
             std::map<int, std::vector<Event> >::iterator it = _pendingBlocks.find(expectedId);
@@ -140,7 +140,7 @@ void InfoPrinter::processBlockEventOrdered(const Event& evt)
 
         // Process all events for this block in arrival order
 #ifdef CONCURRENCY_ENABLED
-        std::lock_guard<std::mutex> lock(_mutex2);
+        std::lock_guard<std::mutex> lock(_mutex);
 #endif
 
         for (size_t i = 0; i < events.size(); i++) {
