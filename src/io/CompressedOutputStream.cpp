@@ -130,7 +130,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
         // Limit the number of tasks if there are fewer blocks that _jobs
         // It allows more jobs per task and reduces memory usage.
         int nbTasks = (_nbInputBlocks != 0) ? min(_nbInputBlocks, _jobs) : _jobs;
-        Global::computeJobsPerTask(_jobsPerTask.data(), _jobs, nbTasks);
+        Global::computeJobsPerTask(&_jobsPerTask[0], _jobs, nbTasks);
     }
     else {
         _jobsPerTask[0] = 1;
@@ -228,7 +228,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
         // Limit the number of tasks if there are fewer blocks that _jobs
         // It allows more jobs per task and reduces memory usage.
         int nbTasks = (_nbInputBlocks != 0) ? min(_nbInputBlocks, _jobs) : _jobs;
-        Global::computeJobsPerTask(_jobsPerTask.data(), _jobs, nbTasks);
+        Global::computeJobsPerTask(&_jobsPerTask[0], _jobs, nbTasks);
     }
     else {
         _jobsPerTask[0] = 1;
