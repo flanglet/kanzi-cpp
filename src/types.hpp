@@ -184,16 +184,16 @@ limitations under the License.
              typedef unsigned __int64 uint64_t;
           #endif
        #else
-             typedef signed char int8_t;
-             typedef signed short int16_t;
-             typedef signed int int32_t;
-             typedef unsigned char uint8_t;
-             typedef unsigned short uint16_t;
-             typedef unsigned int uint32_t;
-
-             #if !defined(__APPLE__)
-                 typedef signed long int64_t;
-                 typedef unsigned long uint64_t;
+             // If stdint.h did not provide fixed-width types, define them here.
+             #ifndef INT64_MAX
+                 typedef signed char        int8_t;
+                 typedef signed short       int16_t;
+                 typedef signed int         int32_t;
+                 typedef unsigned char      uint8_t;
+                 typedef unsigned short     uint16_t;
+                 typedef unsigned int       uint32_t;
+                 typedef signed long long   int64_t;
+                 typedef unsigned long long uint64_t;
              #endif
        #endif
 
@@ -266,4 +266,3 @@ limitations under the License.
    #endif
 
 #endif
-
