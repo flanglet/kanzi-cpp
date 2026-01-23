@@ -65,7 +65,7 @@ namespace kanzi {
     public:
         ofstreambuf(int fd) : _fd(fd), _buffer(65536) {
             // Initialize put pointers to the beginning of the buffer
-            setp(_buffer.data(), _buffer.data() + _buffer.size());
+            setp(&_buffer[0], &_buffer[0] + _buffer.size());
         }
 
         virtual ~ofstreambuf() {

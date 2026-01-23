@@ -576,7 +576,7 @@ void CompressedInputStream::readHeader()
     }
 
     // Read block size
-    _blockSize = int(_ibs->readBits(28)) << 4;
+    _blockSize = int(_ibs->readBits(28) << 4);
     _ctx.putInt("blockSize", _blockSize);
     _bufferThreshold = _blockSize;
 
@@ -609,7 +609,7 @@ void CompressedInputStream::readHeader()
     if (_jobs > 1) {
         // Limit the number of tasks if there are fewer blocks that _jobs
         int nbTasks = (_nbInputBlocks != 0) ? min(_nbInputBlocks, _jobs) : _jobs;
-        Global::computeJobsPerTask(_jobsPerTask.data(), _jobs, nbTasks);
+        Global::computeJobsPerTask(&_jobsPerTask[0], _jobs, nbTasks);
     }
     else {
         _jobsPerTask[0] = 1;
