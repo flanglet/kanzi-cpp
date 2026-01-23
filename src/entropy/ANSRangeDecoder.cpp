@@ -17,6 +17,7 @@ limitations under the License.
 #include <cstring>
 #include <sstream>
 #include "../BitStreamException.hpp"
+#include "../Global.hpp"
 #include "ANSRangeDecoder.hpp"
 #include "EntropyUtils.hpp"
 
@@ -97,10 +98,7 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
     }
 
     const uint scale = 1 << _logRange;
-    int llr = 3;
-
-    while (uint(1 << llr) <= _logRange)
-        llr++;
+    const int llr = Global::_log2(_logRange) + 1;
 
     for (int k = 0; k < dim; k++) {
         const int alphabetSize = EntropyUtils::decodeAlphabet(_bitstream, alphabet);

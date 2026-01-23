@@ -126,10 +126,7 @@ bool ANSRangeEncoder::encodeHeader(int alphabetSize, const uint alphabet[], cons
         return true;
 
     const int chkSize = (alphabetSize >= 64) ? 8 : 6;
-    uint llr = 3;
-
-    while (uint(1 << llr) <= lr)
-        llr++;
+    const int llr = Global::_log2(lr) + 1;
 
     // Encode all frequencies (but the first one) by chunks
     for (int i = 1; i < alphabetSize; i += chkSize) {

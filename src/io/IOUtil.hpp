@@ -18,6 +18,7 @@ limitations under the License.
 #define knz_IOUtil
 
 #include <algorithm>
+#include <errno.h>
 #include <sstream>
 #include <vector>
 #include <sys/stat.h>
