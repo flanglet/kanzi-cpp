@@ -96,20 +96,26 @@ namespace kanzi {
 
    inline uint64 DefaultInputBitStream::readBits(uint count)
    {
-       if ((count == 0) || (count > 64))
-           throw BitStreamException("Invalid bit count: " + TOSTR(count) + " (must be in [1..64])");
+      if ((count == 0) || (count > 64))
+          throw BitStreamException("Invalid bit count: " + TOSTR(count) + " (must be in [1..64])");
 
-       if (count <= _availBits) {
-           // Enough spots available in 'current'
-           _availBits -= count;
-           return (_current >> _availBits) & (uint64(-1) >> (64 - count));
-       }
+      if (count <= _availBits) {
+          _availBits -= count;
+          return (_current >> _availBits) & (uint64(-1) >> (64 - count));
+      }
 
-       // Not enough spots available in 'current'
-       count -= _availBits;
-       const uint64 res = _current & ((uint64(1) << _availBits) - 1);
-       _availBits = pullCurrent();
-       return (res << 1 << (count - 1)) | readBits(count); // handle count = 64 and _availBits < count (at EOS)
+      // Not enough spots available in 'current'
+      count -= _availBits;
+      uint64 res = _current & ((uint64(1) << _availBits) - 1);
+
+      _availBits = pullCurrent();
+      if (_availBits < count)
+          throw BitStreamException("No more data to read in the bitstream", BitStreamException::END_OF_STREAM);
+
+      _availBits -= count;
+      const uint64 tail = (_current >> _availBits) & (uint64(-1) >> (64 - count));
+
+      return (count == 64) ? tail : ((res << count) | tail);
    }
 
    // Pull 64 bits of current value from buffer.
