@@ -297,7 +297,6 @@ bool BWT::inverseBiPSIv2(SliceArray<byte>& input, SliceArray<byte>& output, int 
         return false;
 
     uint* buckets = new uint[65536];
-    memset(&_buffer[0], 0, _bufferSize * sizeof(uint));
     memset(&buckets[0], 0, 65536 * sizeof(uint));
     uint freqs[256] = { 0 };
     Global::computeHistogram(&input._array[input._index], count, freqs);

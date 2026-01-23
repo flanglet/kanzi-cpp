@@ -147,7 +147,7 @@ namespace kanzi {
                 const byte* inPtr  = &in->_array[in->_index];
                 byte* outPtr = &output._array[output._index];
 
-               if ((inPtr + count >= outPtr) || (outPtr + count >= inPtr)) {
+               if ((inPtr + count >= outPtr) && (outPtr + count >= inPtr)) {
                    std::memmove(&output._array[output._index], &in->_array[in->_index], size_t(count));
                }
                else {
@@ -177,7 +177,16 @@ namespace kanzi {
            return true;
 
        if (_skipFlags == SKIP_MASK) {
-           std::memcpy(&output._array[output._index], &input._array[input._index], size_t(count));
+            const byte* inPtr  = &input._array[input._index];
+            byte* outPtr = &output._array[output._index];
+
+           if ((inPtr + count >= outPtr) && (outPtr + count >= inPtr)) {
+               std::memmove(&output._array[output._index], &input._array[input._index], size_t(count));
+           }
+           else {
+               std::memcpy(&output._array[output._index], &input._array[input._index], size_t(count));
+           }
+
            input._index += count;
            output._index += count;
            return true;
@@ -228,7 +237,7 @@ namespace kanzi {
                 const byte* inPtr  = &in->_array[in->_index];
                 byte* outPtr = &output._array[output._index];
 
-               if ((inPtr + count >= outPtr) || (outPtr + count >= inPtr)) {
+               if ((inPtr + count >= outPtr) && (outPtr + count >= inPtr)) {
                    std::memmove(&output._array[output._index], &input._array[input._index], size_t(count));
                }
                else {
