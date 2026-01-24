@@ -11,6 +11,10 @@ set(CMAKE_C_STANDARD 11)
 #set(CMAKE_C_STANDARD_REQUIRED True)
 #set(CMAKE_C_COMPILER "clang")
 
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+find_package(Threads REQUIRED)
+# ----------------------------------------------
+
 if(CONCURRENCY_DISABLED)
     add_definitions(-DCONCURRENCY_DISABLED)
 endif()
@@ -94,6 +98,11 @@ set(APP_SOURCES
 # Libraries
 add_library(libkanzi STATIC ${LIB_COMMON_SOURCES} ${LIB_COMP_SOURCES} ${LIB_DECOMP_SOURCES})
 add_library(libkanzi_shared SHARED ${LIB_COMMON_SOURCES} ${LIB_COMP_SOURCES} ${LIB_DECOMP_SOURCES})
+
+# This ensures -lpthread or -pthread is added to any executable linking these libs
+target_link_libraries(libkanzi PUBLIC Threads::Threads)
+target_link_libraries(libkanzi_shared PUBLIC Threads::Threads)
+
 set_target_properties(libkanzi PROPERTIES OUTPUT_NAME "kanzi")
 set_target_properties(libkanzi_shared PROPERTIES OUTPUT_NAME "kanzi")
 

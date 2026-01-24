@@ -32,13 +32,13 @@ ifeq ($(OS),Windows_NT)
 else
 	ARCH ?= $(shell uname -m)
 
-	ifeq ($(ARCH), x86_64)
+	# Check for both x86_64 (Linux) and amd64 (FreeBSD)
+	ifneq ($(filter x86_64 amd64,$(ARCH)),)
 		#CXXFLAGS += -c -std=$(CXX_STD) -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fstrict-aliasing -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 		CXXFLAGS += -c -std=$(CXX_STD) -fstrict-aliasing -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 	else
 		#CXXFLAGS += -c -std=$(CXX_STD)-fsanitize=signed-integer-overflow -ftrapv -D_FORTIFY_SOURCE=3 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 		CXXFLAGS += -c -std=$(CXX_STD) -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
-
 	endif
 endif	
 
@@ -118,7 +118,7 @@ APP_OBJECTS=$(foreach src,$(APP_SOURCES),$(call OBJ,$(src)))
 OBJECTS=$(LIB_OBJECTS) $(APP_OBJECTS) $(TEST_OBJECTS)
 RPTS=$(SOURCES:.cpp=.optrpt)
 
-	
+
 STATIC_LIB_SUFFIX := .a
 SHARED_LIB_SUFFIX := .so
 PROG_SUFFIX       :=
@@ -279,10 +279,9 @@ ifeq ($(OS),Windows_NT)
 	..\lib\$(SHARED_COMP_LIB) ..\lib\$(SHARED_DECOMP_LIB)
 else
 	rm -f ../bin/test*$(PROG_SUFFIX) $(OBJECTS) $(RPTS) \
-	..\bin\$(APP)$(PROG_SUFFIX) \
-	..\bin\$(APP_STATIC)$(PROG_SUFFIX) \
-	..\bin\$(APP_STATIC)$(PROG_SUFFIX) \
-	..\bin\$(APP_DYNAMIC)$(PROG_SUFFIX) \
+	../bin/$(APP)$(PROG_SUFFIX) \
+	../bin/$(APP_STATIC)$(PROG_SUFFIX) \
+	../bin/$(APP_DYNAMIC)$(PROG_SUFFIX) \
 	../lib/$(STATIC_LIB) ../lib/$(SHARED_LIB) \
 	../lib/$(STATIC_COMP_LIB) ../lib/$(STATIC_DECOMP_LIB) \
 	../lib/$(SHARED_COMP_LIB) ../lib/$(SHARED_DECOMP_LIB)
