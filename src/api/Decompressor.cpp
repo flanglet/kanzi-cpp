@@ -250,6 +250,7 @@ KANZI_API int CDECL disposeDecompressor(struct dContext** ppCtx) KANZI_NOEXCEPT
 
         pCtx->fis = nullptr;
         delete pCtx;
+        *ppCtx = nullptr;
     }
     catch (const exception&) {
         if (pCis != nullptr)
@@ -259,7 +260,7 @@ KANZI_API int CDECL disposeDecompressor(struct dContext** ppCtx) KANZI_NOEXCEPT
             delete (FileInputStream*)pCtx->fis;
 
         delete pCtx;
-        *ppCtx = 0;
+        *ppCtx = nullptr;
         return Error::ERR_UNKNOWN;
     }
 

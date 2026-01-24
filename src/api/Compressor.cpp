@@ -283,13 +283,14 @@ KANZI_API int CDECL disposeCompressor(struct cContext** ppCtx, size_t* outSize) 
 
         pCtx->fos = nullptr;
         delete pCtx;
+        *ppCtx = nullptr;
     }
     catch (const exception&) {
         if (pCtx->fos != nullptr)
             delete static_cast<FileOutputStream*>(pCtx->fos);
 
         delete pCtx;
-        *ppCtx = 0;
+        *ppCtx = nullptr;
         return Error::ERR_UNKNOWN;
     }
 
