@@ -95,23 +95,23 @@ namespace kanzi
    // Write 'count' (in [1..64]) bits. Trigger exception if stream is closed
    inline uint DefaultOutputBitStream::writeBits(uint64 value, uint count)
    {
-       if (count > 64)
-           throw BitStreamException("Invalid bit count: " + TOSTR(count) + " (must be in [1..64])");
+       if ((count == 0) || (count > 64))
+           return 0;
  
-       _current |= ((value << (64 - count)) >> (64 - _availBits));
-
-       if (count >= _availBits) {
+       if (count < _availBits) {
+           _availBits -= count;
+           _current |= (value << _availBits);
+       }
+       else {
            // Not enough spots available in 'current'
            const uint remaining = count - _availBits;
+           _current |= (remaining == 64 ? 0 : (value >> remaining));
            pushCurrent();
 
            if (remaining != 0) {
                _availBits -= remaining;
                _current = value << _availBits;
            }
-       }
-       else {
-           _availBits -= count;
        }
 
        return count;
