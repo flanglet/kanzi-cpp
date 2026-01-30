@@ -150,6 +150,10 @@ namespace kanzi
        DefaultInputBitStream* _ibs;
        XXHash32* _hasher32;
        XXHash64* _hasher64;
+#ifdef CONCURRENCY_ENABLED
+       std::mutex* _blockMutex;
+       std::condition_variable* _blockCondition;
+#endif
        atomic_int_t* _processedBlockId;
        std::vector<Listener<Event>*> _listeners;
        Context _ctx;
@@ -157,6 +161,9 @@ namespace kanzi
    public:
        DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
            int blockSize, DefaultInputBitStream* ibs, XXHash32* hasher32, XXHash64* hasher64,
+#ifdef CONCURRENCY_ENABLED
+           std::mutex* blockMutex, std::condition_variable* blockCondition,
+#endif
            atomic_int_t* processedBlockId, std::vector<Listener<Event>*>& listeners,
            const Context& ctx);
 
@@ -268,6 +275,8 @@ namespace kanzi
 #ifdef CONCURRENCY_ENABLED
        ThreadPool* _pool;
        std::vector<std::future<DecodingTaskResult>> _futures;
+       std::mutex _blockMutex;
+       std::condition_variable _blockCondition;
 #else
        std::vector<DecodingTaskResult> _results;
 #endif
@@ -332,4 +341,3 @@ namespace kanzi
 #endif
 }
 #endif
-
