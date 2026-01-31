@@ -200,14 +200,14 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         int ref = srcIdx1 - repd[repIdx];
         const int minRef = max(srcIdx - maxDist, 0);
 
-        if ((ref > minRef) && (memcmp(&src[srcIdx1], &src[ref], 4) == 0)) {
+        if ((ref > minRef) && KANZI_MEM_EQ4(&src[srcIdx1], &src[ref])) {
             // Check repd0 first
             bestLen = findMatch(src, srcIdx1, ref, min(srcEnd - srcIdx1, MAX_MATCH));
         }
         else {
             ref = srcIdx1 - repd[repIdx ^ 1];
 
-            if ((ref > minRef) && (memcmp(&src[srcIdx1], &src[ref], 4) == 0)) {
+            if ((ref > minRef) && KANZI_MEM_EQ4(&src[srcIdx1], &src[ref])) {
                 // Check repd1 first
                 bestLen = findMatch(src, srcIdx1, ref, min(srcEnd - srcIdx1, MAX_MATCH));
             }
@@ -217,7 +217,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             // Check match at position in hash table
             ref = ref0;
 
-            if ((ref > minRef) && (memcmp(&src[srcIdx], &src[ref], 4) == 0)) {
+            if ((ref > minRef) && KANZI_MEM_EQ4(&src[srcIdx], &src[ref])) {
                 bestLen = findMatch(src, srcIdx, ref, min(srcEnd - srcIdx, MAX_MATCH));
             }
 
@@ -235,7 +235,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
                 const int ref1 = _hashes[h1];
                 _hashes[h1] = srcIdx1;
 
-                if ((ref1 > minRef + 1) && (memcmp(&src[srcIdx1 + bestLen - 3], &src[ref1 + bestLen - 3], 4) == 0)) {
+                if ((ref1 > minRef + 1) && KANZI_MEM_EQ4(&src[srcIdx1 + bestLen - 3], &src[ref1 + bestLen - 3])) {
                     const int bestLen1 = findMatch(src, srcIdx1, ref1, min(srcEnd - srcIdx1, MAX_MATCH));
 
                     // Select best match
@@ -252,7 +252,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
                    const int ref2 = _hashes[h2];
                    _hashes[h2] = srcIdx2;
 
-                   if ((ref2 > minRef + 2) && (memcmp(&src[srcIdx2 + bestLen - 3], &src[ref2 + bestLen - 3], 4) == 0)) {
+                   if ((ref2 > minRef + 2) && KANZI_MEM_EQ4(&src[srcIdx2 + bestLen - 3], &src[ref2 + bestLen - 3])) {
                        const int bestLen2 = findMatch(src, srcIdx2, ref2, min(srcEnd - srcIdx2, MAX_MATCH));
 
                        // Select best match
@@ -780,7 +780,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         int bestLen = 0;
 
         // Find a match
-        if ((ref != 0) && (memcmp(&src[ref + MIN_MATCH - 8], &src[srcIdx + MIN_MATCH - 8], 8) == 0))
+        if ((ref != 0) && KANZI_MEM_EQ8(&src[ref + MIN_MATCH - 8], &src[srcIdx + MIN_MATCH - 8]))
             bestLen = findMatch(src, srcIdx, ref, srcEnd - srcIdx);
 
         // No good match ?

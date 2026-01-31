@@ -90,6 +90,16 @@ static KANZI_ALWAYS_INLINE uint64 bswap64(uint64 x) {
 #endif
 }
 
+#ifdef AGGRESSIVE_OPTIMIZATION
+    // There be dragons!
+    // User assumes responsibility for alignment and aliasing constraints.
+    #define KANZI_MEM_EQ4(x, y) (*(const uint32*)(x) == *(const uint32*)(y))
+    #define KANZI_MEM_EQ8(x, y) (*(const uint64*)(x) == *(const uint64*)(y))
+#else
+    #define KANZI_MEM_EQ4(x, y) (std::memcmp((x), (y), 4) == 0)
+    #define KANZI_MEM_EQ8(x, y) (std::memcmp((x), (y), 8) == 0)
+#endif
+
 // Detect host endianness
 
 #ifndef HOST_IS_LITTLE

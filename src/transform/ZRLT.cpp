@@ -52,7 +52,7 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
         if (src[srcIdx] == byte(0)) {
             uint runLength = 1;
 
-            while ((srcIdx + runLength < srcEnd4) && (memcmp(&src[srcIdx + runLength], &zeros[0], 4) == 0))
+            while ((srcIdx + runLength < srcEnd4) && (KANZI_MEM_EQ4(&src[srcIdx + runLength], &zeros[0])))
                 runLength += 4;
 
             while ((srcIdx + runLength < srcEnd) && src[srcIdx + runLength] == byte(0))

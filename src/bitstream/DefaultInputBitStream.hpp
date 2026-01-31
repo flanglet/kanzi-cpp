@@ -107,14 +107,13 @@ namespace kanzi {
       // Not enough spots available in 'current'
       count -= _availBits;
       uint64 res = _current & ((uint64(1) << _availBits) - 1);
-
       _availBits = pullCurrent();
+
       if (_availBits < count)
           throw BitStreamException("No more data to read in the bitstream", BitStreamException::END_OF_STREAM);
 
       _availBits -= count;
       const uint64 tail = (_current >> _availBits) & (uint64(-1) >> (64 - count));
-
       return (count == 64) ? tail : ((res << count) | tail);
    }
 

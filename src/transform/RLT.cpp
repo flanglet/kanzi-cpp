@@ -19,6 +19,7 @@ limitations under the License.
 
 #include "RLT.hpp"
 #include "../Global.hpp"
+#include "../Memory.hpp"
 
 
 using namespace kanzi;
@@ -122,7 +123,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         if (prev == src[srcIdx]) {
             const uint32 v = 0x01010101 * uint32(prev);
 
-            if (memcmp(&v, &src[srcIdx], 4) == 0) {
+            if (KANZI_MEM_EQ4(&v, &src[srcIdx])) {
                 srcIdx += 4; run += 4;
 
                 if ((run < MAX_RUN4) && (srcIdx < srcEnd4))
