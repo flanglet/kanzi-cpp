@@ -391,7 +391,6 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         // Fill _hashes and update positions
         anchor = srcIdx + bestLen;
-        prefetchRead(&src[anchor]);
 
         while (srcIdx + 4 < anchor) {
             srcIdx += 4;

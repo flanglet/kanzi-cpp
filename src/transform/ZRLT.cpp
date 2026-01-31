@@ -18,6 +18,7 @@ limitations under the License.
 #include <stdexcept>
 
 #include "../Global.hpp"
+#include "../Memory.hpp"
 #include "ZRLT.hpp"
 
 using namespace kanzi;
@@ -70,15 +71,14 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
             int log = Global::_log2(uint32(runLength));
 
             // Write every bit as a byte except the most significant one
-            while (log > 3) {
-                log--;
-                dst[dstIdx++] = byte((runLength >> log) & 1);
-                log--;
-                dst[dstIdx++] = byte((runLength >> log) & 1);
-                log--;
-                dst[dstIdx++] = byte((runLength >> log) & 1);
-                log--;
-                dst[dstIdx++] = byte((runLength >> log) & 1);
+            while (log >= 4) {
+                const uint32 w = (uint32(((runLength >> (log - 1)) & 1) << 24) |
+                                  uint32(((runLength >> (log - 2)) & 1) << 16) |
+                                  uint32(((runLength >> (log - 3)) & 1) << 8)  |
+                                  uint32( (runLength >> (log - 4)) & 1));
+                BigEndian::writeInt32(&dst[dstIdx], int32(w));
+                dstIdx += 4;
+                log -= 4;
             }
 
             while (log > 0) {
