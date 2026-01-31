@@ -130,7 +130,7 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("   -l, --level=<compression>", true);
        log.println("        Set the compression level [0..9]", true);
        log.println("        Providing this option forces entropy and transform.", true);
-       log.println("        Defaults to level 3 if not provided.", true);
+       log.println("        Defaults to level 3 if not provided.\n", true);
        log.println("        0 = NONE&NONE (store)", true);
        log.println("        1 = LZX&NONE", true);
        log.println("        2 = DNA+LZ&HUFFMAN", true);
@@ -141,6 +141,11 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
        log.println("        7 = LZP+TEXT+UTF+BWT+LZP&CM", true);
        log.println("        8 = EXE+RLT+TEXT+UTF+DNA&TPAQ", true);
        log.println("        9 = EXE+RLT+TEXT+UTF+DNA&TPAQX\n", true);
+       log.println("        Kanzi utilizes various algorithm combinations across different compression", true);
+       log.println("        levels. While these levels are calibrated to improve compression monotonically", true);
+       log.println("        this is not guaranteed. Certain data may respond better to specific algorithms", true);
+       log.println("        meaning higher compression levels could occasionally yield lower compression ratios.\n", true);
+
        log.println("   -e, --entropy=<codec>", true);
        log.println("        Entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]\n", true);
        log.println("   -t, --transform=<codec>", true);
