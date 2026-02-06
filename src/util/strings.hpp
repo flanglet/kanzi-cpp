@@ -96,6 +96,36 @@ inline void tokenize(const std::string& str, std::vector<std::string>& v, char t
       v.push_back(s);   
 }    
 
+inline std::string escapeJSONString(const std::string& src)
+{
+    std::stringstream ss;
+
+    for (size_t i = 0; i < src.size(); i++) {
+        const unsigned char c = static_cast<unsigned char>(src[i]);
+
+        switch (c) {
+            case '"':  ss << "\\\""; break;
+            case '\\': ss << "\\\\"; break;
+            case '\b': ss << "\\b";  break;
+            case '\f': ss << "\\f";  break;
+            case '\n': ss << "\\n";  break;
+            case '\r': ss << "\\r";  break;
+            case '\t': ss << "\\t";  break;
+            default:
+                if (c < 0x20) {
+                    ss << "\\u00";
+                    ss << std::uppercase << std::hex << std::setw(2) << std::setfill('0') << int(c);
+                    ss << std::dec;
+                }
+                else {
+                    ss << char(c);
+                }
+        }
+    }
+
+    return ss.str();
+}
+
 inline std::string formatSize(double size)
 {
     std::stringstream ss;
@@ -130,4 +160,3 @@ inline std::string formatSize(const std::string& input)
 }
 
 #endif
-

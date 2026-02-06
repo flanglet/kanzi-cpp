@@ -17,6 +17,7 @@ limitations under the License.
 #include <ios>
 #include <sstream>
 #include "Event.hpp"
+#include "util/strings.hpp"
 
 using namespace kanzi;
 
@@ -184,7 +185,7 @@ std::string Event::toString() const
         ss << ", \"id\":" << getId();
 
     if (_info != nullptr) {
-       ss << ", \"inputName\":\"" << _info->inputName << "\"";
+       ss << ", \"inputName\":\"" << escapeJSONString(_info->inputName) << "\"";
        ss << ", \"bsVersion\":" << _info->bsVersion;
        ss << ", \"checksum\":" << _info->checksumSize;
        ss << ", \"blockSize\":" << _info->blockSize;
@@ -255,4 +256,3 @@ std::string Event::getTypeAsString() const
           return "Unknown Type";
     }
 }
-
