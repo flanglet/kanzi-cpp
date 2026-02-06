@@ -232,6 +232,10 @@ KANZI_API int CDECL compress(struct cContext* pCtx, const unsigned char* src, si
         return Error::ERR_INVALID_PARAM;
     }
 
+    if ((src == nullptr) && (inSize != 0)) {
+        return Error::ERR_INVALID_PARAM;
+    }
+
     if (inSize > size_t(pCtx->blockSize)) {
         return Error::ERR_INVALID_PARAM;
     }

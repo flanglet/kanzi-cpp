@@ -199,6 +199,10 @@ KANZI_API int CDECL decompress(struct dContext* pCtx, unsigned char* dst,
     if (*outSize == 0)
         return 0;
 
+    if (dst == nullptr) {
+        return Error::ERR_INVALID_PARAM;
+    }
+
     if (inSize)
         *inSize = 0;
 
@@ -273,4 +277,3 @@ KANZI_API unsigned int CDECL getDecompressorVersion(void) KANZI_NOEXCEPT
             (KANZI_DECOMP_VERSION_MINOR << 8)  |
              KANZI_DECOMP_VERSION_PATCH;
 }
-
