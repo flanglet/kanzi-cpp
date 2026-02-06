@@ -118,8 +118,16 @@ namespace kanzi {
 
                 // If the remaining chunk is large, write directly to FD to avoid double copy
                 if (remaining >= streamsize(_buffer.size())) {
-                    if (WRITE(_fd, src, remaining) != remaining) {
-                         return n - remaining; // Error
+                    streamsize toWrite = remaining;
+
+                    while (toWrite > 0) {
+                        const ptrdiff_t written = ptrdiff_t(WRITE(_fd, src, toWrite));
+
+                        if (written <= 0)
+                            return n - remaining; // Error
+
+                        src += written;
+                        toWrite -= streamsize(written);
                     }
 
                     remaining = 0;
@@ -136,7 +144,19 @@ namespace kanzi {
         int flush() {
             ptrdiff_t n = pptr() - pbase();
             if (n > 0) {
-                if (WRITE(_fd, pbase(), n) != n) return EOF;
+                char* dst = pbase();
+                ptrdiff_t remaining = n;
+
+                while (remaining > 0) {
+                    const ptrdiff_t written = ptrdiff_t(WRITE(_fd, dst, remaining));
+
+                    if (written <= 0)
+                        return EOF;
+
+                    dst += written;
+                    remaining -= written;
+                }
+
                 pbump(-int(n)); // Reset pbump by subtracting the amount written
             }
 
@@ -280,6 +300,8 @@ KANZI_API int CDECL disposeCompressor(struct cContext** ppCtx, size_t* outSize) 
                *outSize = int(pCos->getWritten() - w);
 
             delete pCos;
+            pCos = nullptr;
+            pCtx->pCos = nullptr;
         }
 
         if (pCtx->fos != nullptr)
@@ -290,6 +312,12 @@ KANZI_API int CDECL disposeCompressor(struct cContext** ppCtx, size_t* outSize) 
         *ppCtx = nullptr;
     }
     catch (const exception&) {
+        if (pCos != nullptr) {
+            delete pCos;
+            pCos = nullptr;
+            pCtx->pCos = nullptr;
+        }
+
         if (pCtx->fos != nullptr)
             delete static_cast<FileOutputStream*>(pCtx->fos);
 
