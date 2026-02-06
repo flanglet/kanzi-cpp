@@ -176,7 +176,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
             throw invalid_argument(ss.str());
         }
 
-        _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
+        _ctx.putInt("bsVersion", bsVersion);
         string entropy = _ctx.getString("entropy");
         _entropyType = EntropyDecoderFactory::getType(entropy.c_str()); // throws on error
 
@@ -385,14 +385,13 @@ int CompressedInputStream::_get(int inc)
 
             if (_available == 0) {
                 if (res._skipped == false) {
-                    submitBlock(_bufferId);
-                    _bufferId = (_bufferId + 1) % _jobs;
-                    _consumeBlockId++;
-                }
-                else {
                     setstate(ios::eofbit);
                     return EOF;
                 }
+
+                submitBlock(_bufferId);
+                _bufferId = (_bufferId + 1) % _jobs;
+                _consumeBlockId++;
             }
 
             _buffers[_bufferId]->_index = 0;

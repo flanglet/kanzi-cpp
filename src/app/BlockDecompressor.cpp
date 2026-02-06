@@ -625,7 +625,8 @@ T FileDecompressTask<T>::run()
         CLEANUP_DECOMP_OS
         stringstream sserr;
         sserr << "Cannot open input file '" << inputName << "': " << e.what();
-        return T(Error::ERR_OPEN_FILE, _cis->getRead(), sserr.str());
+        const uint64 readSoFar = (_cis != nullptr) ? _cis->getRead() : 0;
+        return T(Error::ERR_OPEN_FILE, readSoFar, sserr.str());
     }
 
     Clock stopClock;
