@@ -878,6 +878,7 @@ T EncodingTask<T>::run()
 #endif
 
         // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
+        const int64 blockOffset = _obs->tell();
         _obs->writeBits(lw - 3, 5); // write length-3 (5 bits max)
         _obs->writeBits(written, lw);
         int64 ww = int64((written + 7) >> 3);
@@ -911,7 +912,6 @@ T EncodingTask<T>::run()
                     std::transform(oName.begin(), oName.end(), oName.begin(), ::toupper);
                 }
 
-                const int64 blockOffset = (oName != "NONE") ? _obs->tell() : _obs->written();
                 Event evt2(Event::BLOCK_INFO, blockId,
                    int64((written + 7) >> 3), timer.getCurrentTime(), checksum, hashType, blockOffset, uint8(skipFlags));
                 CompressedOutputStream::notifyListeners(_listeners, evt2);
