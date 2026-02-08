@@ -326,12 +326,53 @@ namespace kanzi
 #if !defined(_MSC_VER) || _MSC_VER > 1500
    inline bool CompressedInputStream::seek(int64 bitPos)
    {
-      // Beware. There be dragons !
-      // The only valid bitstream positions are the beginning of a block.
-      // Useful to navigate the bitstream block by block without decompressing.
+       // The only valid positions are block boundaries.
+       if (LOAD_ATOMIC(_closed) == 1)
+          return false;
+
+       if (bitPos < 0)
+          return false;
+
+#ifdef CONCURRENCY_ENABLED
+      // Cancel any in-flight decode pipeline tied to the previous position.
+      STORE_ATOMIC(_blockId, CANCEL_TASKS_ID);
+
+      // Drain futures so no task can still consume the old underlying bitstream.
+      for (int i = 0; i < _jobs; i++) {
+         if (_futures[i].valid()) {
+            try {
+               (void) _futures[i].get();
+            }
+            catch (...) {
+               // Ignore: we are resetting the stream state anyway.
+            }
+         }
+      }
+#endif
+
+      // Reset decode state.
       _available = 0;
+      _gcount = 0;
       _bufferId = 0;
-      return _ibs->seek(bitPos);
+      _maxBufferId = 0;
+      _submitBlockId = 0;
+      _consumeBlockId = 0;
+      STORE_ATOMIC(_blockId, 0);
+
+      if (_ibs->seek(bitPos) == false)
+         return false;
+
+      // Clear eof/fail flags potentially set by prior reads.
+      this->clear();
+
+      // If stream was already initialized, bootstrap decoding tasks from new pos now.
+      // If not initialized, read()/get() will initialize and submit as usual.
+      if (LOAD_ATOMIC(_initialized) == 1) {
+         for (int i = 0; i < _jobs; i++)
+            submitBlock(i);
+      }
+
+      return true;
    }
 
    inline int64 CompressedInputStream::tell()
