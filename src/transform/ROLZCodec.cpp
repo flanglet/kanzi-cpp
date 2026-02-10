@@ -85,6 +85,9 @@ bool ROLZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
     if (input._array == output._array)
         return false;
 
+    if ((count < 5) || (input._index + count > input._length))
+        return false;
+
     if (count > MAX_BLOCK_SIZE)
         return false;
 
@@ -393,14 +396,13 @@ End:
     delete[] lenBuf._array;
     delete[] mIdxBuf._array;
     delete[] tkBuf._array;
-    return (input._index == count) && (output._index < count);
+    return (input._index == count) && (dstIdx < count);
 }
 
 
 bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
     byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
     const int end = BigEndian::readInt32(&src[0]);
 
     if ((end <= 4) || (end - 4 > output._length - output._index))
@@ -467,6 +469,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         const int endChunk = min(startChunk + sizeChunk, dstEnd);
         sizeChunk = endChunk - startChunk;
         bool onlyLiterals = false;
+        int litLenDecoded = 0;
 
         try
         {
@@ -478,6 +481,7 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             const int tkLen = int(ibs.readBits(32));
             const int mLenLen = int(ibs.readBits(32));
             const int mIdxLen = int(ibs.readBits(32));
+            const int firstLitLen = min(sizeChunk, 8);
 
             if ((litLen < 0) || (tkLen < 0) || (mLenLen < 0) || (mIdxLen < 0)) {
                 input._index += srcIdx;
@@ -486,12 +490,16 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 goto End;
             }
 
-            if ((litLen > litBuf._length) || (tkLen > tkBuf._length) || (mLenLen > lenBuf._length) || (mIdxLen > mIdxBuf._length)) {
+            if ((litLen > litBuf._length) || (tkLen > tkBuf._length) || (mLenLen > lenBuf._length) ||
+                (mIdxLen > mIdxBuf._length) || (litLen < firstLitLen) || (litLen > sizeChunk) ||
+		((tkLen == 0) && (mIdxLen != 0)) || ((tkLen > 0) && (mIdxLen + 1 != tkLen))) {
                 input._index += srcIdx;
                 output._index += startChunk;
                 success = false;
                 goto End;
             }
+
+            litLenDecoded = litLen;
 
             ANSRangeDecoder litDec(ibs, litOrder);
             litDec.decode(litBuf._array, 0, litLen);
@@ -512,6 +520,11 @@ bool ROLZCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         if (onlyLiterals == true) {
             // Shortcut when no match
+            if (litLenDecoded != sizeChunk) {
+                success = false;
+                goto End;
+            }
+
             memcpy(&output._array[output._index], &litBuf._array[0], size_t(sizeChunk));
             startChunk = endChunk;
             output._index += sizeChunk;
@@ -609,7 +622,7 @@ End:
            success = false;
         }
         else {
-           memcpy(&dst[output._index], &src[srcIdx], 4);
+           memcpy(&output._array[output._index], &src[srcIdx], 4);
            output._index += 4;
            srcIdx += 4;
         }
