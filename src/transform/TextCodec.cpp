@@ -476,6 +476,9 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
     if (input._array == output._array)
         return false;
 
+    if ((count < 2) || (input._index + count > input._length))
+        return false;
+
     return _delegate->inverse(input, output, count);
 }
 
@@ -819,6 +822,9 @@ int TextCodec1::emitWordIndex(byte dst[], int val)
 
 bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
+    if ((count < 2) || (input._index + count > input._length))
+       return false;
+
     reset(output._length);
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -827,7 +833,11 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int srcIdx = 1;
     int dstIdx = 0;
     const int srcEnd = count;
-    const int dstEnd = output._length;
+    const int dstEnd = output._length - output._index;
+
+    if (srcIdx >= srcEnd)
+        return false;
+
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
     int words = _staticDictSize;
     bool wordRun = false;
@@ -940,7 +950,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             }
 
             // Sanity check
-            if (dstIdx + length >= dstEnd) {
+            if (dstIdx + length > dstEnd) {
                 res = false;
                 break;
             }
@@ -1336,6 +1346,9 @@ int TextCodec2::emitWordIndex(byte dst[], int wIdx)
 
 bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 {
+    if ((count < 2) || (input._index + count > input._length))
+        return false;
+
     reset(output._length);
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
@@ -1344,7 +1357,11 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int srcIdx = 1;
     int dstIdx = 0;
     const int srcEnd = count;
-    const int dstEnd = output._length;
+    const int dstEnd = output._length - output._index;
+
+    if (srcIdx >= srcEnd)
+        return false;
+
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
     int words = _staticDictSize;
     bool wordRun = false;
@@ -1502,7 +1519,7 @@ bool TextCodec2::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             }
 
             // Sanity check
-            if (dstIdx + length >= dstEnd) {
+            if (dstIdx + length > dstEnd) {
                 res = false;
                 break;
             }

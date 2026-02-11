@@ -42,8 +42,7 @@ namespace kanzi {
 
        static int encodeHeader(const uint freqs[], byte dst[]);
 
-       static int decodeHeader(const byte src[], uint freqs[]);
+       static int decodeHeader(const byte src[], int srcEnd, uint freqs[]);
    };
 }
 #endif
-

@@ -123,7 +123,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("LZ codec: Invalid output block");
 
-    if (output._length < getMaxEncodedLength(count))
+    if (output._length - output._index < getMaxEncodedLength(count))
         return false;
 
     // If too small, skip
@@ -463,13 +463,16 @@ bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, i
     if (count < 13)
         return false;
 
+    if (count > input._length - input._index)
+       return false;
+
     if (!SliceArray<byte>::isValid(input))
         throw invalid_argument("LZ codec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("LZ codec: Invalid output block");
 
-    const int dstEnd = output._length;
+    const int dstEnd = output._length - output._index;
     byte* dst = &output._array[output._index];
     const byte* src = &input._array[input._index];
 
@@ -481,7 +484,7 @@ bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, i
     if ((tkIdx < 0) || (mIdx < 0) || (mLenIdx < 0))
         return false;
 
-    if ((tkIdx > count) || (mIdx > count - tkIdx) || (mLenIdx > count - tkIdx - mIdx))
+    if ((tkIdx < 13) || (tkIdx > count) || (mIdx > count - tkIdx) || (mLenIdx > count - tkIdx - mIdx))
         return false;
 
     mIdx += tkIdx;
@@ -579,7 +582,7 @@ bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, i
 
 exit:
     output._index += dstIdx;
-    input._index += mIdx;
+    input._index += count;
     return res && (srcIdx == srcEnd + 13);
 }
 
@@ -593,13 +596,16 @@ bool LZXCodec<T>::inverseV5(SliceArray<byte>& input, SliceArray<byte>& output, i
     if (count < 13)
         return false;
 
+    if (count > input._length - input._index)
+        return false;
+
     if (!SliceArray<byte>::isValid(input))
         throw invalid_argument("LZ codec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("LZ codec: Invalid output block");
 
-    const int dstEnd = output._length;
+    const int dstEnd = output._length - output._index;
     byte* dst = &output._array[output._index];
     const byte* src = &input._array[input._index];
 
@@ -611,7 +617,7 @@ bool LZXCodec<T>::inverseV5(SliceArray<byte>& input, SliceArray<byte>& output, i
     if ((tkIdx < 0) || (mIdx < 0) || (mLenIdx < 0))
         return false;
 
-    if ((tkIdx > count) || (mIdx > count - tkIdx) || (mLenIdx > count - tkIdx - mIdx))
+    if ((tkIdx < 13) || (tkIdx > count) || (mIdx > count - tkIdx) || (mLenIdx > count - tkIdx - mIdx))
         return false;
 
     mIdx += tkIdx;
@@ -716,7 +722,7 @@ bool LZXCodec<T>::inverseV5(SliceArray<byte>& input, SliceArray<byte>& output, i
 
 exit:
     output._index += dstIdx;
-    input._index += mIdx;
+    input._index += count;
     return res && (srcIdx == srcEnd + 13);
 }
 
@@ -834,6 +840,9 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (count == 0)
         return true;
 
+    if (count > input._length - input._index)
+        return false;
+
     if (!SliceArray<byte>::isValid(input))
         throw invalid_argument("LZP codec: Invalid input block");
 
@@ -844,7 +853,7 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         return false;
 
     const int srcEnd = count;
-    const int dstEnd = output._length;
+    const int dstEnd = output._length - output._index;
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
 
@@ -901,12 +910,12 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         if (mEnd > dstEnd)
             return false;
 
-        if (dstIdx >= ref + 8) {
+        if (dstIdx >= ref + 16) {
             do {
                 // No overlap
-                memcpy(&dst[dstIdx], &dst[ref], 8);
-                ref += 8;
-                dstIdx += 8;
+                memcpy(&dst[dstIdx], &dst[ref], 16);
+                ref += 16;
+                dstIdx += 16;
             } while (dstIdx < mEnd);
         }
         else {

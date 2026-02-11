@@ -292,11 +292,17 @@ bool EXECodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (count == 0)
         return true;
 
+    if ((count < 9) || (count > input._length - input._index))
+        return false;
+
     if (!SliceArray<byte>::isValid(input))
         throw std::invalid_argument("EXECodec: Invalid input block");
 
     if (!SliceArray<byte>::isValid(output))
         throw std::invalid_argument("EXECodec: Invalid output block");
+
+    if (output._length - output._index < count - 9)
+        return false;
 
     byte mode = input._array[input._index];
 
@@ -315,11 +321,13 @@ bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int
     byte* dst = &output._array[output._index];
     int srcIdx = 9;
     int dstIdx = 0;
+    const int dstEnd = output._length - output._index;
     const int codeStart = LittleEndian::readInt32(&src[1]);
     const int codeEnd = LittleEndian::readInt32(&src[5]);
 
     // Sanity check
-    if ((codeEnd > count) || (codeStart + srcIdx > count) || (codeStart + dstIdx > output._length))
+    if ((codeStart < 0) || (codeEnd < srcIdx) || (codeEnd > count) ||
+        (codeStart > codeEnd - srcIdx) || (codeStart > dstEnd - dstIdx))
         return false;
 
     if (codeStart > 0) {
@@ -330,24 +338,30 @@ bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int
 
     while (srcIdx < codeEnd) {
         if (src[srcIdx] == X86_TWO_BYTE_PREFIX) {
+            if (srcIdx + 1 >= codeEnd)
+                return false;
+
             dst[dstIdx++] = src[srcIdx++];
 
             if ((src[srcIdx] & X86_MASK_JCC) != X86_INSTRUCTION_JCC) {
                 // Not a relative jump
-                if (src[srcIdx] == X86_ESCAPE)
-                    srcIdx++;
+                if ((src[srcIdx] == X86_ESCAPE) && (++srcIdx >= codeEnd))
+                    return false;
 
                 dst[dstIdx++] = src[srcIdx++];
                 continue;
             }
         } else if ((src[srcIdx] & X86_MASK_JUMP) != X86_INSTRUCTION_JUMP) {
             // Not a relative call
-            if (src[srcIdx] == X86_ESCAPE)
-                srcIdx++;
+            if ((src[srcIdx] == X86_ESCAPE) && (++srcIdx >= codeEnd))
+                return false;
 
             dst[dstIdx++] = src[srcIdx++];
             continue;
         }
+
+        if (srcIdx + 4 >= codeEnd)
+            return false;
 
         // Current instruction is a jump/call. Decode absolute address
         const int addr = BigEndian::readInt32(&src[srcIdx + 1]) ^ MASK_ADDRESS;
@@ -374,11 +388,13 @@ bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     byte* dst = &output._array[output._index];
     int srcIdx = 9;
     int dstIdx = 0;
+    const int dstEnd = output._length - output._index;
     const int codeStart = LittleEndian::readInt32(&src[1]);
     const int codeEnd = LittleEndian::readInt32(&src[5]);
 
     // Sanity check
-    if ((codeEnd > count) || (codeStart + srcIdx > count) || (codeStart + dstIdx > output._length))
+    if ((codeStart < 0) || (codeEnd < srcIdx) || (codeEnd > count) ||
+        (codeStart > codeEnd - srcIdx) || (codeStart > dstEnd - dstIdx))
         return false;
 
     if (codeStart > 0) {
@@ -388,6 +404,9 @@ bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     }
 
     while (srcIdx < codeEnd) {
+        if (srcIdx + 4 > codeEnd)
+            return false;
+
         const int instr = LittleEndian::readInt32(&src[srcIdx]);
         const int opcode1 = instr & ARM_B_OPCODE_MASK;
         //const int opcode2 = instr & ARM_CB_OPCODE_MASK;
@@ -416,6 +435,9 @@ bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
 
         if (addr == 0) {
+            if (srcIdx + 8 > codeEnd)
+                return false;
+
             memcpy(&dst[dstIdx], &src[srcIdx + 4], 4);
             srcIdx += 8;
             dstIdx += 4;

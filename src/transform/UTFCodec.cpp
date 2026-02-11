@@ -219,6 +219,9 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("UTFCodec: Invalid output block");
 
+    if (input._index + count > input._length)
+        return false;
+
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     const int start = int(src[0]) & 0x03;
@@ -226,7 +229,7 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     const int n = (int(src[2]) << 8) + int(src[3]);
 
     // Protect against invalid map size value
-    if ((n == 0) || (n >= 32768) || (3 * n >= count))
+    if ((n == 0) || (n >= 32768) || (3 * n > count - 4))
         return false;
 
     struct symb {
@@ -239,6 +242,9 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     // Build inverse mapping
     for (int i = 0; i < n; i++) {
+        if (srcIdx + 3 > count)
+            return false;
+
         int s = (uint32(src[srcIdx]) << 16) | (uint32(src[srcIdx + 1]) << 8) | uint32(src[srcIdx + 2]);
         const int sl = unpack(s, (byte*)&m[i].val);
 
@@ -251,27 +257,39 @@ bool UTFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     int dstIdx = 0;
     const int srcEnd = count - 4 + adjust;
-    const int dstEnd = output._length - 4;
+    const int dstCap = output._length - output._index;
+    const int dstEnd = dstCap - 4;
 
     if (dstEnd < 0)
+        return false;
+
+    if ((srcEnd > count) || (srcIdx + start > srcEnd) || (dstIdx + start > dstCap))
         return false;
 
     for (int i = 0; i < start; i++)
         dst[dstIdx++] = src[srcIdx++];
 
     // Emit data
-    while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
+    while (srcIdx < srcEnd) {
         uint alias = uint(src[srcIdx++]);
+        alias = alias >= 128 ? (uint(src[srcIdx++]) << 7) + (alias & 0x7F) : alias;
 
-        if (alias >= 128)
-            alias = (uint(src[srcIdx++]) << 7) + (alias & 0x7F);
+        if (alias >= uint(n))
+            return false;
 
         const symb& s = m[alias];
+
+        if (dstIdx + int(s.len) > dstCap)
+            return false;
+
         memcpy(&dst[dstIdx], &s.val, 4);
         dstIdx += s.len;
     }
 
-    if ((srcIdx >= srcEnd) && (dstIdx < dstEnd + adjust)) {
+    if ((srcIdx == srcEnd) && (dstIdx < dstEnd + adjust)) {
+        if ((srcIdx + 4 - adjust > count) || (dstIdx + 4 - adjust > dstCap))
+            return false;
+
         for (int i = 0; i < 4 - adjust; i++)
             dst[dstIdx++] = src[srcIdx++];
     }

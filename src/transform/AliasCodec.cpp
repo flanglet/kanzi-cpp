@@ -49,7 +49,7 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("Alias codec: Invalid output block");
 
-    if (output._length < getMaxEncodedLength(count))
+    if (output._length - output._index < getMaxEncodedLength(count))
         return false;
 
     Global::DataType dt = Global::UNDEFINED;
@@ -247,8 +247,12 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("Alias codec: Invalid output block");
 
+    if (input._index + count > input._length)
+        return false;
+
     byte* dst = &output._array[output._index];
     const byte* src = &input._array[input._index];
+    const int dstEnd = output._length - output._index;
     int n = int(src[0]);
 
     if (n < 16)
@@ -263,10 +267,13 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         if (n == 1) {
             // One symbol
+            if (count < 6)
+                return false;
+
             const byte val = src[1];
             const int oSize = LittleEndian::readInt32(&src[2]);
 
-            if ((oSize < 0) || (output._index + oSize > output._length))
+            if ((oSize < 0) || (oSize > dstEnd))
                 return false;
 
             memset(&dst[0], int(val), size_t(oSize));
@@ -276,6 +283,9 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         else {
             // Rebuild map alias -> symbol
             byte idx2symb[16] = { byte(0) };
+
+            if (srcIdx + n + 1 > count)
+                return false;
 
             for (int i = 0; i < n; i++)
                 idx2symb[i] = src[srcIdx++];
@@ -301,9 +311,15 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     decodeMap[i] = val;
                 }
 
+                if ((srcIdx + adjust > count) || (dstIdx + adjust > dstEnd))
+                    return false;
+
                 memcpy(&dst[dstIdx], &src[srcIdx], size_t(adjust));
                 srcIdx += adjust;
                 dstIdx += adjust;
+
+                if ((count - srcIdx) > ((dstEnd - dstIdx) >> 2))
+                    return false;
 
                 while (srcIdx < count) {
                     LittleEndian::writeInt32(&dst[dstIdx], decodeMap[int(src[srcIdx++])]);
@@ -322,8 +338,15 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     decodeMap[i] = val;
                 }
 
-                if (adjust != 0)
+                if (adjust != 0) {
+                    if ((srcIdx >= count) || (dstIdx >= dstEnd))
+                        return false;
+
                     dst[dstIdx++] = src[srcIdx++];
+                }
+
+                if ((count - srcIdx) > ((dstEnd - dstIdx) >> 1))
+                    return false;
 
                 while (srcIdx < count) {
                     LittleEndian::writeInt16(&dst[dstIdx], decodeMap[int(src[srcIdx++])]);
@@ -333,13 +356,24 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
     }
     else {
+        if (count < 2)
+            return false;
+
         // Rebuild map alias -> symbol
         int map16[256] = { 0 };
-        const int srcEnd = count - int(src[1]);
+        const int adjust = int(src[1]);
+
+        if ((adjust < 0) || (adjust > 1))
+            return false;
+
+        const int srcEnd = count - adjust;
         srcIdx = 2;
 
         for (int i = 0; i < 256; i++)
             map16[i] = 0x10000 | i;
+
+        if (srcIdx + 3 * n > srcEnd)
+            return false;
 
         for (int i = 0; i < n; i++) {
             map16[int(src[srcIdx + 2])] = 0x20000 | int(src[srcIdx]) | (int(src[srcIdx + 1]) << 8);
@@ -353,11 +387,15 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             dstIdx += (val >> 16);
         }
 
-        if (src[1] != byte(0))
+        if (adjust != 0) {
+            if ((srcIdx >= count) || (dstIdx >= dstEnd))
+                return false;
+
             dst[dstIdx++] = src[srcIdx++];
+        }
     }
 
     input._index += srcIdx;
     output._index += dstIdx;
-    return true;
+    return srcIdx == count;
 }

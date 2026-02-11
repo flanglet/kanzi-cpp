@@ -293,8 +293,11 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (count < 4)
         return false;
 
+    if (input._index + count > input._length)
+        return false;
+
     const int srcEnd = count;
-    const int dstEnd = output._length;
+    const int dstEnd = output._length - output._index;
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
 
@@ -304,6 +307,9 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     // Sanity check
     if ((dist < 1) || ((dist > 4) && (dist != 8) && (dist != 16)))
+        return false;
+
+    if ((count < dist + 2) || (dist > dstEnd))
         return false;
 
     // Emit first bytes
@@ -324,7 +330,7 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
             srcIdx++;
 
             if (srcIdx == srcEnd)
-                break;
+                return false;
 
             dst[dstIdx] = src[srcIdx] ^ dst[dstIdx - dist];
             srcIdx++;
@@ -332,7 +338,7 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         }
     }
     else if (mode == XOR_CODING) {
-        while (srcIdx < srcEnd) {
+        while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
             dst[dstIdx] = src[srcIdx] ^ dst[dstIdx - dist];
             srcIdx++;
             dstIdx++;

@@ -119,10 +119,20 @@ bool SRT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
     if (!SliceArray<byte>::isValid(output))
         throw std::invalid_argument("SRT: Invalid output block");
 
+    if ((length < 256) || (input._index + length > input._length))
+        return false;
+
     uint freqs[256] = { 0 };
-    const int headerSize = decodeHeader(&input._array[input._index], freqs);
+    const int headerSize = decodeHeader(&input._array[input._index], length, freqs);
+
+    if (headerSize < 0)
+        return false;
+
     input._index += headerSize;
     length -= headerSize;
+
+    if (length < 0)
+        return false;
 
     if (length > output._length - output._index)
         return false;
@@ -266,33 +276,29 @@ int SRT::encodeHeader(const uint freqs[], byte dst[])
     return dstIdx;
 }
 
-int SRT::decodeHeader(const byte src[], uint freqs[])
+int SRT::decodeHeader(const byte src[], int srcEnd, uint freqs[])
 {
     int srcIdx = 0;
-    uint res = 0;
 
     for (int i = 0; i < 256; i++) {
-        uint val = uint(src[srcIdx++]);
-        res = val & 0x7F;
+        uint res = 0;
+        int shift = 0;
 
-        if (val >= 128) {
-            val = uint(src[srcIdx++]);
-            res |= ((val & 0x7F) << 7);
+        // Frequencies are encoded as varints with up to 5 bytes.
+        for (int j = 0; j < 5; j++) {
+            if (srcIdx >= srcEnd)
+                return -1;
 
-            if (val >= 128) {
-                val = uint(src[srcIdx++]);
-                res |= ((val & 0x7F) << 14);
+            const uint val = uint(src[srcIdx++]);
+            res |= ((val & 0x7F) << shift);
 
-                if (val >= 128) {
-                    val = uint(src[srcIdx++]);
-                    res |= ((val & 0x7F) << 21);
+            if ((val & 0x80) == 0)
+                break;
 
-                    if (val >= 128) {
-                        val = uint(src[srcIdx++]);
-                        res |= ((val & 0x7F) << 28);
-                    }
-                }
-            }
+            if (j == 4)
+                return -1;
+
+            shift += 7;
         }
 
         freqs[i] = res;

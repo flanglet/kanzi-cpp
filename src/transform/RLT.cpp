@@ -262,20 +262,26 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     if (!SliceArray<byte>::isValid(output))
         throw invalid_argument("RLT: Invalid output block");
 
+    if (input._index + count > input._length)
+        return false;
+
     const byte* src = &input._array[input._index];
     byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;
     const int srcEnd = srcIdx + count;
-    const int dstEnd = output._length;
+    const int dstEnd = output._length - output._index;
     bool res = true;
     const byte escape = src[srcIdx++];
 
-    if (src[srcIdx] == escape) {
+    if ((srcIdx < srcEnd) && (src[srcIdx] == escape)) {
         srcIdx++;
 
         // The data cannot start with a run but may start with an escape literal
         if ((srcIdx < srcEnd) && (src[srcIdx] != byte(0)))
+            return false;
+
+        if (dstIdx >= dstEnd)
             return false;
 
         dst[dstIdx++] = escape;
@@ -340,6 +346,11 @@ bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
         run += (RUN_THRESHOLD - 1);
 
         if ((dstIdx + run >= dstEnd) || (run > MAX_RUN)) {
+            res = false;
+            break;
+        }
+
+        if (dstIdx == 0) {
             res = false;
             break;
         }
