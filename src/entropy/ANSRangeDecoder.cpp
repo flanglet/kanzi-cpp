@@ -220,7 +220,7 @@ bool ANSRangeDecoder::decodeChunk(byte block[], uint count)
     // Read chunk size
     const uint sz = uint(EntropyUtils::readVarInt(_bitstream));
 
-    if (sz >= MAX_CHUNK_SIZE)
+    if ((sz >= MAX_CHUNK_SIZE) || (sz > _bufferSize - 2))
        return false;
 
     // Read initial ANS states

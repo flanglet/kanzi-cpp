@@ -153,8 +153,8 @@ namespace kanzi
        // Round down to byte alignment
        const uint a = _availBits - (_availBits & 7);
 
-       for (uint i = 56; i >= a; i -= 8) {
-          _buffer[_position++] = byte(_current >> i);
+       for (int i = 56; i >= int(a); i -= 8) {
+          _buffer[_position++] = byte(_current >> uint(i));
 
           if (_position >= _bufferSize)
              flush();
@@ -170,4 +170,3 @@ namespace kanzi
 
 }
 #endif
-

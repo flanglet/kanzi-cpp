@@ -79,13 +79,14 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count)
             remaining -= (availBytes << 3);
             _position = _maxPosition + 1;
 
-            if (readFromInputStream(_bufferSize) < int(_bufferSize))
-                break;
-
+            const int read = readFromInputStream(_bufferSize);
             availBytes = uint(_maxPosition + 1 - _position);
+
+            if (read < int(_bufferSize))
+                break;
         }
 
-        const uint r = (remaining >> 6) << 3;
+        const uint r = min((remaining >> 6) << 3, availBytes);
 
         if (r > 0) {
             memcpy(&bits[start], &_buffer[_position], r);

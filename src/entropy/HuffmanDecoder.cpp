@@ -212,6 +212,12 @@ bool HuffmanDecoder::decodeChunk(byte block[], uint count)
     if ((szBits0 < 0) || (szBits1 < 0) || (szBits2 < 0) || (szBits3 < 0))
         return false;
 
+    // Each of the 4 streams is stored in one quarter of _buffer.
+    const int maxFragBits = int((_bufferSize >> 2) << 3);
+
+    if ((szBits0 > maxFragBits) || (szBits1 > maxFragBits) || (szBits2 > maxFragBits) || (szBits3 > maxFragBits))
+        return false;
+
     memset(_buffer, 0, _bufferSize);
 
     int idx0 = 0 * (_bufferSize / 4);
