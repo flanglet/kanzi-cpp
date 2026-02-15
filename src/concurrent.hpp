@@ -51,6 +51,9 @@ limitations under the License.
    #include <condition_variable>
    #include <future>
    #include <functional>
+   #if __cplusplus >= 201703L
+   #include <tuple>
+   #endif
    #include <stdexcept>
 
    #ifdef __x86_64__
@@ -149,9 +152,17 @@ class Task {
        using return_type = typename std::result_of<F(Args...)>::type;
 #endif
 
-       auto task = std::make_shared< std::packaged_task<return_type()> >(
-               std::bind(std::forward<F>(f), std::forward<Args>(args)...)
-           );
+       #if __cplusplus >= 201703L
+       auto task = std::make_shared<std::packaged_task<return_type()>>(
+           [fn = std::forward<F>(f), params = std::make_tuple(std::forward<Args>(args)...)]() mutable -> return_type {
+               return std::apply(std::move(fn), std::move(params));
+           }
+       );
+       #else
+       auto task = std::make_shared<std::packaged_task<return_type()>>(
+           std::bind(std::forward<F>(f), std::forward<Args>(args)...)
+       );
+       #endif
 
        std::future<return_type> res = task->get_future();
 
@@ -255,4 +266,3 @@ class Task {
 
 
 #endif
-
