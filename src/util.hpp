@@ -103,9 +103,9 @@ public:
 
     WallTimer() {
 #if defined(USE_WINDOWS_QPC)
-        QueryPerformanceFrequency(&m_frequency);
+        QueryPerformanceFrequency(&_frequency);
 #endif
-        m_start = getCurrentTime();
+        _start = getCurrentTime();
     }
 
     // Method to get the current timestamp
@@ -121,14 +121,29 @@ public:
         return now;
     }
 
-    // Method to calculate difference in milliseconds between two timestamps
-    static double calculateDifference(const TimeData& start, const TimeData& end) {
+    static double calculateDifference(const TimeData& start,
+                                      const TimeData& end)
+    {
 #if defined(USE_CHRONO)
-        return std::chrono::duration<double, std::milli>(end.value - start.value).count();
+
+    return std::chrono::duration<double, std::milli>(
+        end.value - start.value).count();
+
 #elif defined(USE_WINDOWS_QPC)
-        return static_cast<double>(end.value.QuadPart - start.value.QuadPart) * 1000.0 / m_frequency.QuadPart;
+        // C++98-compatible lazy initialization
+        static LARGE_INTEGER frequency;
+        static bool initialized = false;
+
+        if (!initialized) {
+            QueryPerformanceFrequency(&frequency);
+            initialized = true;
+        }
+
+        return static_cast<double>(end.value.QuadPart - start.value.QuadPart)
+               * 1000.0
+               / static_cast<double>(frequency.QuadPart);
 #elif defined(USE_POSIX_GETTIMEOFDAY)
-        double sec = end.value.tv_sec - start.value.tv_sec;
+        double sec  = end.value.tv_sec  - start.value.tv_sec;
         double usec = end.value.tv_usec - start.value.tv_usec;
         return (sec * 1000.0) + (usec / 1000.0);
 #endif
@@ -136,13 +151,14 @@ public:
 
     // Convenience method for elapsed time since start
     double elapsed_ms() const {
-        return calculateDifference(m_start, getCurrentTime());
+        return calculateDifference(_start, getCurrentTime());
     }
 
 private:
-    TimeData m_start;
+    TimeData _start;
 #if defined(USE_WINDOWS_QPC)
-    LARGE_INTEGER m_frequency;
+    static LARGE_INTEGER _frequency;
+    static bool _initialized;
 #endif
 };
 

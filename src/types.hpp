@@ -205,13 +205,11 @@ limitations under the License.
 
     namespace kanzi
     {
-    #if __cplusplus >= 201703L
-        typedef std::byte byte;
-    #else
-        // Always an 8-bit unsigned integer
+#if __cplusplus >= 201703L
+        using byte = std::byte;
+#else
         typedef uint8_t byte;
-    #endif
-
+#endif
         typedef int8_t   int8;
         typedef uint8_t  uint8;
         typedef int16_t  int16;

@@ -103,7 +103,7 @@ static KANZI_ALWAYS_INLINE uint64 bswap64(uint64 x) {
 // Detect host endianness
 
 #ifndef HOST_IS_LITTLE
-    #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+    #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__BIG_ENDIAN__)
         #define HOST_IS_LITTLE 0
     #else
         #define HOST_IS_LITTLE 1
