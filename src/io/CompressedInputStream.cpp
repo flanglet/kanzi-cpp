@@ -19,6 +19,7 @@ limitations under the License.
 #include "../Error.hpp"
 #include "../entropy/EntropyDecoderFactory.hpp"
 #include "../transform/TransformFactory.hpp"
+#include "../util/fixedbuf.hpp"
 
 using namespace kanzi;
 using namespace std;

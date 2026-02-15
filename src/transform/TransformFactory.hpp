@@ -19,6 +19,7 @@ limitations under the License.
 
 #include <iostream>
 #include <algorithm>
+#include <sstream>
 #include "../types.hpp"
 #include "../Context.hpp"
 #include "AliasCodec.hpp"
@@ -397,4 +398,3 @@ namespace kanzi {
 }
 
 #endif
-

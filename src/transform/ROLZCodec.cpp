@@ -24,6 +24,7 @@ limitations under the License.
 #include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../entropy/ANSRangeDecoder.hpp"
 #include "../entropy/ANSRangeEncoder.hpp"
+#include "../util/fixedbuf.hpp"
 
 using namespace kanzi;
 using namespace std;

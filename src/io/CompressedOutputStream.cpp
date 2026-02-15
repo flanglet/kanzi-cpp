@@ -23,6 +23,7 @@ limitations under the License.
 #include "../entropy/EntropyEncoderFactory.hpp"
 #include "../entropy/EntropyUtils.hpp"
 #include "../transform/TransformFactory.hpp"
+#include "../util/fixedbuf.hpp"
 
 using namespace kanzi;
 using namespace std;

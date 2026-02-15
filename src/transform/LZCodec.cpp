@@ -15,7 +15,6 @@ limitations under the License.
 
 #include "LZCodec.hpp"
 #include "../Memory.hpp"
-#include "../util.hpp" // Visual Studio min/max
 #include "TransformFactory.hpp"
 
 using namespace kanzi;

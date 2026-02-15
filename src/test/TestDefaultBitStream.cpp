@@ -23,7 +23,6 @@ limitations under the License.
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../BitStreamException.hpp"
-#include "../util.hpp"
 #include "../io/IOException.hpp"
 
 using namespace std;
@@ -702,4 +701,3 @@ int TestDefaultBitStream_main(int argc, const char* argv[])
 
     return res;
 }
-

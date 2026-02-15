@@ -44,6 +44,7 @@ endif
 
 LIB_COMMON_SOURCES=Global.cpp \
 	Event.cpp \
+	util/WallTimer.cpp \
 	entropy/EntropyUtils.cpp \
 	entropy/HuffmanCommon.cpp \
 	entropy/CMPredictor.cpp \

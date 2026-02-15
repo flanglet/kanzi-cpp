@@ -18,7 +18,6 @@ limitations under the License.
 #include "TextCodec.hpp"
 #include "../Global.hpp"
 #include "../Magic.hpp"
-#include "../util.hpp"
 
 using namespace kanzi;
 using namespace std;

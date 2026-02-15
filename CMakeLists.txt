@@ -32,6 +32,7 @@ endif()
 set(LIB_COMMON_SOURCES
     ${SRC_DIR}/Global.cpp
     ${SRC_DIR}/Event.cpp
+    ${SRC_DIR}/util/WallTimer.cpp
     ${SRC_DIR}/entropy/EntropyUtils.cpp
     ${SRC_DIR}/entropy/HuffmanCommon.cpp
     ${SRC_DIR}/entropy/CMPredictor.cpp

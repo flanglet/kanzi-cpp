@@ -20,7 +20,6 @@ limitations under the License.
 #include "../Context.hpp"
 #include "../Memory.hpp"
 #include "../Transform.hpp"
-#include "../util.hpp"
 
 // Implementation of a Reduced Offset Lempel Ziv transform
 // More information about ROLZ at http://ezcodesample.com/rolz/rolz_article.html
@@ -366,4 +365,3 @@ namespace kanzi {
    }
 }
 #endif
-

@@ -20,7 +20,7 @@ limitations under the License.
 #include <string>
 #include <time.h>
 #include "types.hpp"
-#include "util.hpp"
+#include "util/WallTimer.hpp"
 
 
 namespace kanzi
