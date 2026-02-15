@@ -630,10 +630,10 @@ T FileDecompressTask<T>::run()
     }
 
     Clock stopClock;
-    byte* buf = new byte[DEFAULT_BUFFER_SIZE];
+    kanzi::byte* buf = new kanzi::byte[DEFAULT_BUFFER_SIZE];
 
     try {
-        SliceArray<byte> sa(buf, DEFAULT_BUFFER_SIZE, 0);
+        SliceArray<kanzi::byte> sa(buf, DEFAULT_BUFFER_SIZE, 0);
         int decoded = 0;
 
         // Decode next block

@@ -23,11 +23,11 @@ limitations under the License.
 using namespace std;
 using namespace kanzi;
 
-uint64 compress1(byte block[], uint length)
+uint64 compress1(kanzi::byte block[], uint length)
 {
     cout << "Test - Regular (RLT+TEXT&HUFFMAN)" << endl;
     uint blockSize = (length / (1 + (rand() & 3))) & -16;
-    byte* buf = new byte[length];
+    kanzi::byte* buf = new kanzi::byte[length];
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
@@ -56,7 +56,7 @@ uint64 compress1(byte block[], uint length)
     return res;
 }
 
-uint64 compress2(byte block[], uint length)
+uint64 compress2(kanzi::byte block[], uint length)
 {
     int jobs;
     srand((uint)time(nullptr));
@@ -77,7 +77,7 @@ uint64 compress2(byte block[], uint length)
 
     cout << " (LZX&ANS0)" << endl;
 
-    byte* buf = new byte[length];
+    kanzi::byte* buf = new kanzi::byte[length];
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
@@ -106,11 +106,11 @@ uint64 compress2(byte block[], uint length)
     return res;
 }
 
-uint64 compress3(byte block[], uint length)
+uint64 compress3(kanzi::byte block[], uint length)
 {
     cout << "Test - incompressible data (LZP+RLT&FPAQ)" << endl;
     uint blockSize = (length / (1 + (rand() & 3))) & -16;
-    byte* buf = new byte[length];
+    kanzi::byte* buf = new kanzi::byte[length];
     memcpy(&buf[0], &block[0], size_t(length));
     stringbuf buffer;
     iostream ios(&buffer);
@@ -139,7 +139,7 @@ uint64 compress3(byte block[], uint length)
     return res;
 }
 
-uint64 compress4(byte block[], uint length)
+uint64 compress4(kanzi::byte block[], uint length)
 {
     CompressedOutputStream* cos = nullptr;
     uint64 res;
@@ -164,7 +164,7 @@ uint64 compress4(byte block[], uint length)
     return res;
 }
 
-uint64 compress5(byte block[], uint length)
+uint64 compress5(kanzi::byte block[], uint length)
 {
     CompressedOutputStream* cos = nullptr;
     CompressedInputStream* cis = nullptr;
@@ -207,8 +207,8 @@ int testCorrectness(int, const char*[])
     // Test correctness
     cout << "Correctness Test" << endl;
     const int length0 = 65536;
-    byte* incompressible = new byte[length0 << 6];
-    byte* values = new byte[length0 << 6];
+    kanzi::byte* incompressible = new kanzi::byte[length0 << 6];
+    kanzi::byte* values = new kanzi::byte[length0 << 6];
     bool res = true;
     srand((uint)time(nullptr));
 
@@ -216,8 +216,8 @@ int testCorrectness(int, const char*[])
         const int length = length0 << (test % 7);
 
         for (int i = 0; i < length; i++) {
-            incompressible[i] = byte(rand());
-            values[i] = byte(rand() % (4 * test + 1));
+            incompressible[i] = kanzi::byte(rand());
+            values[i] = kanzi::byte(rand() % (4 * test + 1));
         }
 
         cout << endl;

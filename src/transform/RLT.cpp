@@ -32,10 +32,10 @@ const int RLT::RUN_THRESHOLD = 3;
 const int RLT::MAX_RUN = 0xFFFF + RUN_LEN_ENCODE2 + RUN_THRESHOLD - 1;
 const int RLT::MAX_RUN4 = MAX_RUN - 4;
 const int RLT::MIN_BLOCK_LENGTH = 16;
-const byte RLT::DEFAULT_ESCAPE = byte(0xFB);
+const kanzi::byte RLT::DEFAULT_ESCAPE = kanzi::byte(0xFB);
 
 
-bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool RLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -43,17 +43,17 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     if (count < MIN_BLOCK_LENGTH)
         return false;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("RLT: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("RLT: Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(count))
         return false;
 
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
     Global::DataType dt = Global::UNDEFINED;
     bool findBestEscape = true;
 
@@ -72,7 +72,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
             findBestEscape = false;
     }
 
-    byte escape = DEFAULT_ESCAPE;
+    kanzi::byte escape = DEFAULT_ESCAPE;
 
     if (findBestEscape == true) {
         uint freqs[256] = { 0 };
@@ -101,7 +101,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
             }
         }
 
-        escape = byte(minIdx);
+        escape = kanzi::byte(minIdx);
     }
 
     int srcIdx = 0;
@@ -111,12 +111,12 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     const int dstEnd = output._length;
     bool res = true;
     int run = 0;
-    byte prev = src[srcIdx++];
+    kanzi::byte prev = src[srcIdx++];
     dst[dstIdx++] = escape;
     dst[dstIdx++] = prev;
 
     if (prev == escape)
-        dst[dstIdx++] = byte(0);
+        dst[dstIdx++] = kanzi::byte(0);
 
     // Main loop
     while (true) {
@@ -173,7 +173,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
 
             while (run-- > 0) {
                dst[dstIdx++] = escape;
-               dst[dstIdx++] = byte(0);
+               dst[dstIdx++] = kanzi::byte(0);
             }
         }
 
@@ -197,7 +197,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
             if (dstIdx + (2 * run) < dstEnd) {
                while (run-- > 0) {
                   dst[dstIdx++] = escape;
-                  dst[dstIdx++] = byte(0);
+                  dst[dstIdx++] = kanzi::byte(0);
                }
             }
         }
@@ -211,7 +211,7 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
                }
 
                dst[dstIdx++] = escape;
-               dst[dstIdx++] = byte(0);
+               dst[dstIdx++] = kanzi::byte(0);
                srcIdx++;
                continue;
             }
@@ -227,9 +227,9 @@ bool RLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
     return res && (dstIdx < srcIdx);
 }
 
-int RLT::emitRunLength(byte dst[], int run, byte escape, byte val) {
+int RLT::emitRunLength(kanzi::byte dst[], int run, kanzi::byte escape, kanzi::byte val) {
     dst[0] = val;
-    dst[1] = byte(0);
+    dst[1] = kanzi::byte(0);
     int dstIdx = (val == escape) ? 2 : 1;
     dst[dstIdx++] = escape;
     run -= RUN_THRESHOLD;
@@ -238,47 +238,47 @@ int RLT::emitRunLength(byte dst[], int run, byte escape, byte val) {
     if (run >= RUN_LEN_ENCODE1) {
         if (run < RUN_LEN_ENCODE2) {
             run -= RUN_LEN_ENCODE1;
-            dst[dstIdx++] = byte(RUN_LEN_ENCODE1 + (run >> 8));
+            dst[dstIdx++] = kanzi::byte(RUN_LEN_ENCODE1 + (run >> 8));
         }
         else {
             run -= RUN_LEN_ENCODE2;
-            dst[dstIdx++] = byte(0xFF);
-            dst[dstIdx++] = byte(run >> 8);
+            dst[dstIdx++] = kanzi::byte(0xFF);
+            dst[dstIdx++] = kanzi::byte(run >> 8);
         }
     }
 
-    dst[dstIdx] = byte(run);
+    dst[dstIdx] = kanzi::byte(run);
     return dstIdx + 1;
 }
 
-bool RLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool RLT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("RLT: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("RLT: Invalid output block");
 
     if (input._index + count > input._length)
         return false;
 
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;
     const int srcEnd = srcIdx + count;
     const int dstEnd = output._length - output._index;
     bool res = true;
-    const byte escape = src[srcIdx++];
+    const kanzi::byte escape = src[srcIdx++];
 
     if ((srcIdx < srcEnd) && (src[srcIdx] == escape)) {
         srcIdx++;
 
         // The data cannot start with a run but may start with an escape literal
-        if ((srcIdx < srcEnd) && (src[srcIdx] != byte(0)))
+        if ((srcIdx < srcEnd) && (src[srcIdx] != kanzi::byte(0)))
             return false;
 
         if (dstIdx >= dstEnd)

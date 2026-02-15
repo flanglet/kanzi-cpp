@@ -29,15 +29,15 @@ BWTBlockCodec::BWTBlockCodec(Context& ctx)
 
 // Return true if the compression chain succeeded. In this case, the input data
 // may be modified. If the compression failed, the input data is returned unmodified.
-bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int blockSize)
+bool BWTBlockCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int blockSize)
 {
     if (blockSize == 0)
         return true;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw std::invalid_argument("BWTBlockCodec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw std::invalid_argument("BWTBlockCodec: Invalid output block");
 
     if (input._array == output._array)
@@ -62,14 +62,14 @@ bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, i
     if (logNbChunks > 7)
         return false;
 
-    byte* dst = &output._array[output._index];
+    kanzi::byte* dst = &output._array[output._index];
     output._index += (1 + chunks * pIndexSize);
 
     // Apply forward transform
     if (_pBWT->forward(input, output, blockSize) == false)
         return false;
 
-    const byte mode = byte((logNbChunks << 2) | (pIndexSize - 1));
+    const kanzi::byte mode = kanzi::byte((logNbChunks << 2) | (pIndexSize - 1));
 
     // Emit header
     for (int i = 0, idx = 1; i < chunks; i++) {
@@ -77,7 +77,7 @@ bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, i
         int shift = (pIndexSize - 1) << 3;
 
         while (shift >= 0) {
-            dst[idx++] = byte(primaryIndex >> shift);
+            dst[idx++] = kanzi::byte(primaryIndex >> shift);
             shift -= 8;
         }
     }
@@ -86,15 +86,15 @@ bool BWTBlockCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, i
     return true;
 }
 
-bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int blockSize)
+bool BWTBlockCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int blockSize)
 {
     if (blockSize <= 1)
         return blockSize == 0;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw std::invalid_argument("BWTBlockCodec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw std::invalid_argument("BWTBlockCodec: Invalid output block");
 
     if (input._array == output._array)
@@ -102,7 +102,7 @@ bool BWTBlockCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, i
 
     if (_bsVersion > 5) {
        // Number of chunks and primary index size in bitstream since bsVersion 6
-       byte mode = input._array[input._index++];
+       kanzi::byte mode = input._array[input._index++];
        const uint logNbChunks = uint(mode >> 2) & 0x07;
        const int pIndexSize = (int(mode) & 0x03) + 1;
        const int chunks = 1 << logNbChunks;

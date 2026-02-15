@@ -148,7 +148,7 @@ int RangeDecoder::decodeHeader(uint frequencies[])
 
 // Initialize once (if necessary) at the beginning, the use the faster decodeByte_()
 // Reset frequency stats for each chunk of data in the block
-int RangeDecoder::decode(byte block[], uint blkptr, uint count)
+int RangeDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
 {
     if (count == 0)
         return 0;
@@ -184,7 +184,7 @@ int RangeDecoder::decode(byte block[], uint blkptr, uint count)
     return count;
 }
 
-byte RangeDecoder::decodeByte()
+kanzi::byte RangeDecoder::decodeByte()
 {
     // Compute next low and range
     _range >>= _shift;
@@ -209,5 +209,5 @@ byte RangeDecoder::decodeByte()
         _low <<= 28;
     }
 
-    return byte(symbol);
+    return kanzi::byte(symbol);
 }

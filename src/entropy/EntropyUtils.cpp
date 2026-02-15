@@ -73,11 +73,11 @@ int EntropyUtils::encodeAlphabet(OutputBitStream& obs, const uint alphabet[], in
     else {
         // Partial alphabet
         obs.writeBit(PARTIAL_ALPHABET);
-        byte masks[32] = { byte(0) };
+        kanzi::byte masks[32] = { kanzi::byte(0) };
 
         // Encode presence flags
         for (int i = 0; i < count; i++)
-            masks[alphabet[i] >> 3] |= byte(1 << (alphabet[i] & 7));
+            masks[alphabet[i] >> 3] |= kanzi::byte(1 << (alphabet[i] & 7));
 
         const int lastMask = alphabet[count - 1] >> 3;
         obs.writeBits(lastMask, 5);
@@ -102,7 +102,7 @@ int EntropyUtils::decodeAlphabet(InputBitStream& ibs, uint alphabet[])
 
     // Partial alphabet
     const int lastMask = int(ibs.readBits(5));
-    byte masks[32] = { byte(0) };
+    kanzi::byte masks[32] = { kanzi::byte(0) };
     int count = 0;
 
     // Decode presence flags

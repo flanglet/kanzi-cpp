@@ -69,7 +69,7 @@ BlockCompressor::BlockCompressor(const Context& ctx) :
            string strTransf = _ctx.getString("transform", "NONE");
 
            // Extract transform names. Curate input (EG. NONE+NONE+xxxx => xxxx)
-           _transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(strTransf.c_str()));
+           _transform = TransformFactory<kanzi::byte>::getName(TransformFactory<kanzi::byte>::getType(strTransf.c_str()));
        }
     }
 
@@ -746,8 +746,8 @@ T FileCompressTask<T>::run()
     log.println(ss.str(), verbosity > 1);
     log.println("\n", verbosity > 3);
     int64 read = 0;
-    byte* buf = new byte[DEFAULT_BUFFER_SIZE];
-    SliceArray<byte> sa(buf, DEFAULT_BUFFER_SIZE, 0);
+    kanzi::byte* buf = new kanzi::byte[DEFAULT_BUFFER_SIZE];
+    SliceArray<kanzi::byte> sa(buf, DEFAULT_BUFFER_SIZE, 0);
     WallTimer timer;
 
     if (_listeners.size() > 0) {

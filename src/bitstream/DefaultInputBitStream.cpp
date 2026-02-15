@@ -31,7 +31,7 @@ DefaultInputBitStream::DefaultInputBitStream(InputStream& is, uint bufferSize) :
         throw invalid_argument("Invalid buffer size (must be a multiple of 8)");
 
     _bufferSize = bufferSize;
-    _buffer = new byte[_bufferSize];
+    _buffer = new kanzi::byte[_bufferSize];
     _availBits = 0;
     _maxPosition = -1;
     _position = 0;
@@ -46,7 +46,7 @@ DefaultInputBitStream::~DefaultInputBitStream()
     delete[] _buffer;
 }
 
-uint DefaultInputBitStream::readBits(byte bits[], uint count)
+uint DefaultInputBitStream::readBits(kanzi::byte bits[], uint count)
 {
     if (isClosed() == true)
         throw BitStreamException("Stream closed", BitStreamException::STREAM_CLOSED);
@@ -64,7 +64,7 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count)
 
         // Empty _current
         while ((_availBits > 0) && (remaining >= 8)) {
-            bits[start] = byte(readBits(8));
+            bits[start] = kanzi::byte(readBits(8));
             start++;
             remaining -= 8;
         }
@@ -96,7 +96,7 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count)
         }
     }
     else if (remaining >= 64) {
-        // Not byte aligned
+        // Not kanzi::byte aligned
         const uint a = _availBits;
         const uint r = 64 - a;
 
@@ -146,13 +146,13 @@ uint DefaultInputBitStream::readBits(byte bits[], uint count)
 
     // Last bytes
     while (remaining >= 8) {
-        bits[start] = byte(readBits(8));
+        bits[start] = kanzi::byte(readBits(8));
         start++;
         remaining -= 8;
     }
 
     if (remaining > 0)
-        bits[start] = byte(readBits(remaining) << (8 - remaining));
+        bits[start] = kanzi::byte(readBits(remaining) << (8 - remaining));
 
     return count;
 }

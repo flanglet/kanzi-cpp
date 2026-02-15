@@ -28,8 +28,8 @@ const int CompressedInputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
 const int CompressedInputStream::BITSTREAM_FORMAT_VERSION = 6;
 const int CompressedInputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
 const int CompressedInputStream::EXTRA_BUFFER_SIZE = 512;
-const byte CompressedInputStream::COPY_BLOCK_MASK = byte(0x80);
-const byte CompressedInputStream::TRANSFORMS_MASK = byte(0x10);
+const kanzi::byte CompressedInputStream::COPY_BLOCK_MASK = kanzi::byte(0x80);
+const kanzi::byte CompressedInputStream::TRANSFORMS_MASK = kanzi::byte(0x10);
 const int CompressedInputStream::MIN_BITSTREAM_BLOCK_SIZE = 1024;
 const int CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
 const int CompressedInputStream::CANCEL_TASKS_ID = -1;
@@ -75,7 +75,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
     _bufferThreshold = 0;
     _available = 0;
     _entropyType = EntropyDecoderFactory::getType(entropy.c_str()); // throws on error
-    _transformType = TransformFactory<byte>::getType(transform.c_str()); // throws on error
+    _transformType = TransformFactory<kanzi::byte>::getType(transform.c_str()); // throws on error
     _initialized = 0;
     _closed = 0;
     _gcount = 0;
@@ -83,7 +83,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
     _jobs = tasks;
     _outputSize = originalSize;
     _nbInputBlocks = 0;
-    _buffers = new SliceArray<byte>*[2 * _jobs];
+    _buffers = new SliceArray<kanzi::byte>*[2 * _jobs];
     _headless = headerless;
     _consumeBlockId = 0;
 
@@ -122,7 +122,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
 #endif
 
     for (int i = 0; i < 2 * _jobs; i++)
-        _buffers[i] = new SliceArray<byte>(nullptr, 0, 0);
+        _buffers[i] = new SliceArray<kanzi::byte>(nullptr, 0, 0);
 }
 
 CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool headerless)
@@ -152,7 +152,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
     _bufferThreshold = 0;
     _available = 0;
     _entropyType = EntropyDecoderFactory::NONE_TYPE;
-    _transformType = TransformFactory<byte>::NONE_TYPE;
+    _transformType = TransformFactory<kanzi::byte>::NONE_TYPE;
     _initialized = 0;
     _closed = 0;
     _gcount = 0;
@@ -181,7 +181,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
         _entropyType = EntropyDecoderFactory::getType(entropy.c_str()); // throws on error
 
         string transform = _ctx.getString("transform");
-        _transformType = TransformFactory<byte>::getType(transform.c_str()); // throws on error
+        _transformType = TransformFactory<kanzi::byte>::getType(transform.c_str()); // throws on error
 
         _blockSize = _ctx.getInt("blockSize", 0);
 
@@ -233,10 +233,10 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
     _results.resize(_jobs);
 #endif
 
-    _buffers = new SliceArray<byte>*[2 * _jobs];
+    _buffers = new SliceArray<kanzi::byte>*[2 * _jobs];
 
     for (int i = 0; i < 2 * _jobs; i++)
-        _buffers[i] = new SliceArray<byte>(nullptr, 0, 0);
+        _buffers[i] = new SliceArray<kanzi::byte>(nullptr, 0, 0);
 }
 
 CompressedInputStream::~CompressedInputStream()
@@ -277,7 +277,7 @@ void CompressedInputStream::submitBlock(int bufferId)
         if (_buffers[bufferId]->_array != nullptr)
            delete[] _buffers[bufferId]->_array;
 
-        _buffers[bufferId]->_array = new byte[blkSize];
+        _buffers[bufferId]->_array = new kanzi::byte[blkSize];
         _buffers[bufferId]->_length = blkSize;
     }
 
@@ -570,7 +570,7 @@ void CompressedInputStream::readHeader()
     try {
         // Read transform: 8*6 bits
         _transformType = _ibs->readBits(48);
-        _ctx.putString("transform", TransformFactory<byte>::getName(_transformType));
+        _ctx.putString("transform", TransformFactory<kanzi::byte>::getName(_transformType));
     }
     catch (const invalid_argument&) {
         stringstream err;
@@ -650,7 +650,7 @@ void CompressedInputStream::readHeader()
         info.checksumSize = int(32 * ckSize);
         info.blockSize = _blockSize;
         info.entropyType = EntropyDecoderFactory::getName(_entropyType);
-        info.transformType = TransformFactory<byte>::getName(_transformType);
+        info.transformType = TransformFactory<kanzi::byte>::getName(_transformType);
         int64 fileSize = _ctx.getLong("fileSize", 0);
         info.fileSize = (fileSize >= 0) ? fileSize : -1;
         info.originalSize = (szMask != 0) ? _outputSize : -1;
@@ -742,7 +742,7 @@ void CompressedInputStream::notifyListeners(vector<Listener<Event>*>& listeners,
 }
 
 template <class T>
-DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
+DecodingTask<T>::DecodingTask(SliceArray<kanzi::byte>* iBuffer, SliceArray<kanzi::byte>* oBuffer,
     int blockSize, DefaultInputBitStream* ibs, XXHash32* hasher32, XXHash64* hasher64,
 #ifdef CONCURRENCY_ENABLED
     std::mutex* blockMutex, std::condition_variable* blockCondition,
@@ -771,7 +771,7 @@ DecodingTask<T>::DecodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
 //  case 4 transforms or less
 //      | 0b0001xxxx => transform sequence skip flags (1 means skip)
 //  case more than 4 transforms
-//      | 0b0yy00000 0bxxxxxxxx => transform sequence skip flags in next byte (1 means skip)
+//      | 0b0yy00000 0bxxxxxxxx => transform sequence skip flags in next kanzi::byte (1 means skip)
 template <class T>
 T DecodingTask<T>::run()
 {
@@ -837,7 +837,7 @@ T DecodingTask<T>::run()
     uint64 checksum1 = 0;
     EntropyDecoder* ed = nullptr;
     InputBitStream* ibs = nullptr;
-    TransformSequence<byte>* transform = nullptr;
+    TransformSequence<kanzi::byte>* transform = nullptr;
 
     try {
         // Read shared bitstream sequentially (each task is gated by _processedBlockId)
@@ -876,7 +876,7 @@ T DecodingTask<T>::run()
             if (_data->_length < int(max(_blockLength, r))) {
                 _data->_length = int(max(_blockLength, r));
                 delete[] _data->_array;
-                _data->_array = new byte[_data->_length];
+                _data->_array = new kanzi::byte[_data->_length];
             }
 
             for (int n = 0; read > 0; ) {
@@ -908,18 +908,18 @@ T DecodingTask<T>::run()
         ibs = (streamPerTask == true) ? new DefaultInputBitStream(ios) : _ibs;
 
         // Extract block header from bitstream
-        byte mode = byte(ibs->readBits(8));
-        byte skipFlags = byte(0);
+        kanzi::byte mode = kanzi::byte(ibs->readBits(8));
+        kanzi::byte skipFlags = kanzi::byte(0);
 
-        if ((mode & CompressedInputStream::COPY_BLOCK_MASK) != byte(0)) {
-            tType = TransformFactory<byte>::NONE_TYPE;
+        if ((mode & CompressedInputStream::COPY_BLOCK_MASK) != kanzi::byte(0)) {
+            tType = TransformFactory<kanzi::byte>::NONE_TYPE;
             eType = EntropyDecoderFactory::NONE_TYPE;
         }
         else {
-            if ((mode & CompressedInputStream::TRANSFORMS_MASK) != byte(0))
-                skipFlags = byte(ibs->readBits(8));
+            if ((mode & CompressedInputStream::TRANSFORMS_MASK) != kanzi::byte(0))
+                skipFlags = kanzi::byte(ibs->readBits(8));
             else
-                skipFlags = (mode << 4) | byte(0x0F);
+                skipFlags = (mode << 4) | kanzi::byte(0x0F);
         }
 
         const int dataSize = 1 + (int(mode >> 5) & 0x03);
@@ -979,7 +979,7 @@ T DecodingTask<T>::run()
             if (_buffer->_array != nullptr)
                delete[] _buffer->_array;
 
-            _buffer->_array = new byte[_buffer->_length];
+            _buffer->_array = new kanzi::byte[_buffer->_length];
         }
 
         const int savedIdx = _data->_index;
@@ -1026,7 +1026,7 @@ T DecodingTask<T>::run()
             CompressedInputStream::notifyListeners(_listeners, evt2);
         }
 
-        transform = TransformFactory<byte>::newTransform(_ctx, tType);
+        transform = TransformFactory<kanzi::byte>::newTransform(_ctx, tType);
         transform->setSkipFlags(skipFlags);
         _buffer->_index = 0;
 

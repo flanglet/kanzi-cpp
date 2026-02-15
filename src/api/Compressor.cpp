@@ -193,7 +193,7 @@ KANZI_API int CDECL initCompressor(struct cData* pData, FILE* dst, struct cConte
         if (fd == -1)
            return Error::ERR_CREATE_COMPRESSOR;
 
-        string transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(pData->transform));
+        string transform = TransformFactory<kanzi::byte>::getName(TransformFactory<kanzi::byte>::getType(pData->transform));
         string entropy = EntropyEncoderFactory::getName(EntropyEncoderFactory::getType(pData->entropy));
 
         if ((transform.length() >= sizeof(pData->transform)) ||
@@ -213,7 +213,7 @@ KANZI_API int CDECL initCompressor(struct cData* pData, FILE* dst, struct cConte
         struct STAT sbuf;
 
         if (FSTAT(fd, &sbuf) == 0) {
-           fileSize = sbuf.st_size;
+           fileSize = size_t(sbuf.st_size);
         }
 
         // Create compression stream and update context

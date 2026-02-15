@@ -23,9 +23,9 @@ ExpGolombDecoder::ExpGolombDecoder(InputBitStream& bitstream, bool sgn)
 }
 
 
-int ExpGolombDecoder::decode(byte block[], uint blkptr, uint len)
+int ExpGolombDecoder::decode(kanzi::byte block[], uint blkptr, uint len)
 {
-    byte* buf = &block[blkptr];
+    kanzi::byte* buf = &block[blkptr];
     const uint len8 = len & uint(-8);
 
     for (uint i = 0; i < len8; i += 8) {

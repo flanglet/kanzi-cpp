@@ -24,9 +24,9 @@ using namespace std;
 
 
 const int FSDCodec::MIN_LENGTH = 1024;
-const byte FSDCodec::ESCAPE_TOKEN = byte(255);
-const byte FSDCodec::DELTA_CODING = byte(0);
-const byte FSDCodec::XOR_CODING = byte(1);
+const kanzi::byte FSDCodec::ESCAPE_TOKEN = kanzi::byte(255);
+const kanzi::byte FSDCodec::DELTA_CODING = kanzi::byte(0);
+const kanzi::byte FSDCodec::XOR_CODING = kanzi::byte(1);
 
 const uint8 FSDCodec::ZIGZAG1[256] = {
 	   253,   251,   249,   247,   245,   243,   241,   239,
@@ -99,15 +99,15 @@ const int8 FSDCodec::ZIGZAG2[256] = {
            124,  -125,   125,  -126,   126,   -127,  127,  -128,
 };
 
-bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("FSD codec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("FSD codec: Invalid output block");
 
     if (input._array == output._array)
@@ -127,8 +127,8 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             return false;
     }
 
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
     uint magic = Magic::getType(src);
 
     // Skip detection except for a few candidate types
@@ -152,12 +152,12 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     memset(&histo[0][0], 0, sizeof(histo));
 
     // Check several step values on a few sub-blocks (no memory allocation)
-    const byte* in0 = &src[count5 * 0];
-    const byte* in1 = &src[count5 * 2];
-    const byte* in2 = &src[count5 * 4];
+    const kanzi::byte* in0 = &src[count5 * 0];
+    const kanzi::byte* in1 = &src[count5 * 2];
+    const kanzi::byte* in2 = &src[count5 * 4];
 
     for (int i = count10; i < count5; i++) {
-        const byte b0 = in0[i];
+        const kanzi::byte b0 = in0[i];
         histo[0][int(b0)]++;
         histo[1][int(b0 ^ in0[i - 1])]++;
         histo[2][int(b0 ^ in0[i - 2])]++;
@@ -165,7 +165,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         histo[4][int(b0 ^ in0[i - 4])]++;
         histo[5][int(b0 ^ in0[i - 8])]++;
         histo[6][int(b0 ^ in0[i - 16])]++;
-        const byte b1 = in1[i];
+        const kanzi::byte b1 = in1[i];
         histo[0][int(b1)]++;
         histo[1][int(b1 ^ in1[i - 1])]++;
         histo[2][int(b1 ^ in1[i - 2])]++;
@@ -173,7 +173,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         histo[4][int(b1 ^ in1[i - 4])]++;
         histo[5][int(b1 ^ in1[i - 8])]++;
         histo[6][int(b1 ^ in1[i - 16])]++;
-        const byte b2 = in2[i];
+        const kanzi::byte b2 = in2[i];
         histo[0][int(b2)]++;
         histo[1][int(b2 ^ in2[i - 1])]++;
         histo[2][int(b2 ^ in2[i - 2])]++;
@@ -219,9 +219,9 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     // Delta coding works better for pictures & xor coding better for wav files
     // Select xor coding if large deltas are over 3% (ad-hoc threshold)
-    const byte mode = (largeDeltas > (count5 >> 5)) ? XOR_CODING : DELTA_CODING;
+    const kanzi::byte mode = (largeDeltas > (count5 >> 5)) ? XOR_CODING : DELTA_CODING;
     dst[0] = mode;
-    dst[1] = byte(dist);
+    dst[1] = kanzi::byte(dist);
     int srcIdx = 0;
     int dstIdx = 2;
 
@@ -235,7 +235,7 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             const int delta = 127 + int(src[srcIdx]) - int(src[srcIdx - dist]);
 
             if ((delta >= 0) && (delta < 255)) {
-                dst[dstIdx++] = byte(ZIGZAG1[delta]); // zigzag encode delta
+                dst[dstIdx++] = kanzi::byte(ZIGZAG1[delta]); // zigzag encode delta
                 srcIdx++;
                 continue;
             }
@@ -258,8 +258,8 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     // Extra check that the transform makes sense
     memset(&histo[0][0], 0, sizeof(uint) * 256);
-    const byte* out1 = &dst[count5 * 1];
-    const byte* out2 = &dst[count5 * 3];
+    const kanzi::byte* out1 = &dst[count5 * 1];
+    const kanzi::byte* out2 = &dst[count5 * 3];
 
     for (int i = 0; i < count10; i++) {
         histo[0][int(out1[i])]++;
@@ -276,15 +276,15 @@ bool FSDCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return true; // Allowed to expand
 }
 
-bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool FSDCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("FSD codec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("FSD codec: Invalid output block");
 
     if (input._array == output._array)
@@ -298,11 +298,11 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     const int srcEnd = count;
     const int dstEnd = output._length - output._index;
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
 
     // Retrieve mode & step value
-    const byte mode = src[0];
+    const kanzi::byte mode = src[0];
     const int dist = int(src[1]);
 
     // Sanity check
@@ -321,7 +321,7 @@ bool FSDCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (mode == DELTA_CODING) {
         while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
             if (src[srcIdx] != ESCAPE_TOKEN) {
-                dst[dstIdx] = byte(int(dst[dstIdx - dist]) + ZIGZAG2[int(src[srcIdx])]);
+                dst[dstIdx] = kanzi::byte(int(dst[dstIdx - dist]) + ZIGZAG2[int(src[srcIdx])]);
                 srcIdx++;
                 dstIdx++;
                 continue;

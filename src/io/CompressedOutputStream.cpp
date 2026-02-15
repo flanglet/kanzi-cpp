@@ -31,8 +31,8 @@ using namespace std;
 const int CompressedOutputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
 const int CompressedOutputStream::BITSTREAM_FORMAT_VERSION = 6;
 const int CompressedOutputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
-const byte CompressedOutputStream::COPY_BLOCK_MASK = byte(0x80);
-const byte CompressedOutputStream::TRANSFORMS_MASK = byte(0x10);
+const kanzi::byte CompressedOutputStream::COPY_BLOCK_MASK = kanzi::byte(0x80);
+const kanzi::byte CompressedOutputStream::TRANSFORMS_MASK = kanzi::byte(0x10);
 const int CompressedOutputStream::MIN_BITSTREAM_BLOCK_SIZE = 1024;
 const int CompressedOutputStream::MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
 const int CompressedOutputStream::SMALL_BLOCK_SIZE = 15;
@@ -94,7 +94,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
     _closed = 0;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
     _entropyType = EntropyEncoderFactory::getType(entropy.c_str());
-    _transformType = TransformFactory<byte>::getType(transform.c_str());
+    _transformType = TransformFactory<kanzi::byte>::getType(transform.c_str());
 
     if (checksum == 0) {
        _hasher32 = nullptr;
@@ -137,12 +137,12 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
     }
 
     // Allocate first buffer and add padding for incompressible blocks
-    _buffers = new SliceArray<byte>*[2 * _jobs];
+    _buffers = new SliceArray<kanzi::byte>*[2 * _jobs];
     const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
-    _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
+    _buffers[0] = new SliceArray<kanzi::byte>(new kanzi::byte[bufSize], bufSize, 0);
 
     for (int i = 1; i < 2 * _jobs; i++)
-       _buffers[i] = new SliceArray<byte>(nullptr, 0, 0);
+       _buffers[i] = new SliceArray<kanzi::byte>(nullptr, 0, 0);
 }
 
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, bool headerless)
@@ -198,7 +198,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
     string entropyCodec = ctx.getString("entropy");
     string transform = ctx.getString("transform");
     _entropyType = EntropyEncoderFactory::getType(entropyCodec.c_str());
-    _transformType = TransformFactory<byte>::getType(transform.c_str());
+    _transformType = TransformFactory<kanzi::byte>::getType(transform.c_str());
     int checksum = ctx.getInt("checksum", 0);
 
     if (checksum == 0) {
@@ -234,14 +234,14 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
         _jobsPerTask[0] = 1;
     }
 
-    _buffers = new SliceArray<byte>*[2 * _jobs];
+    _buffers = new SliceArray<kanzi::byte>*[2 * _jobs];
 
     // Allocate first buffer and add padding for incompressible blocks
     const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
-    _buffers[0] = new SliceArray<byte>(new byte[bufSize], bufSize, 0);
+    _buffers[0] = new SliceArray<kanzi::byte>(new kanzi::byte[bufSize], bufSize, 0);
 
     for (int i = 1; i < 2 * _jobs; i++)
-       _buffers[i] = new SliceArray<byte>(nullptr, 0, 0);
+       _buffers[i] = new SliceArray<kanzi::byte>(nullptr, 0, 0);
 }
 
 CompressedOutputStream::~CompressedOutputStream()
@@ -465,7 +465,7 @@ void CompressedOutputStream::processBuffer()
         if (_buffers[_bufferId]->_array != nullptr)
             delete[] _buffers[_bufferId]->_array;
 
-        _buffers[_bufferId]->_array = new byte[bufSize];
+        _buffers[_bufferId]->_array = new kanzi::byte[bufSize];
         _buffers[_bufferId]->_length = bufSize;
     }
 
@@ -566,14 +566,14 @@ ostream& CompressedOutputStream::put(char c)
                  if (_buffers[_bufferId]->_array != nullptr)
                      delete[] _buffers[_bufferId]->_array;
 
-                _buffers[_bufferId]->_array = new byte[bufSize];
+                _buffers[_bufferId]->_array = new kanzi::byte[bufSize];
                 _buffers[_bufferId]->_length = bufSize;
             }
 
             _buffers[_bufferId]->_index = 0;
         }
 
-        _buffers[_bufferId]->_array[_buffers[_bufferId]->_index++] = byte(c);
+        _buffers[_bufferId]->_array[_buffers[_bufferId]->_index++] = kanzi::byte(c);
         return *this;
     }
     catch (const exception& e) {
@@ -589,7 +589,7 @@ void CompressedOutputStream::notifyListeners(vector<Listener<Event>*>& listeners
 }
 
 template <class T>
-EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuffer,
+EncodingTask<T>::EncodingTask(SliceArray<kanzi::byte>* iBuffer, SliceArray<kanzi::byte>* oBuffer,
     DefaultOutputBitStream* obs, XXHash32* hasher32, XXHash64* hasher64,
 #ifdef CONCURRENCY_ENABLED
     std::mutex* blockMutex, std::condition_variable* blockCondition,
@@ -617,13 +617,13 @@ EncodingTask<T>::EncodingTask(SliceArray<byte>* iBuffer, SliceArray<byte>* oBuff
 //  case 4 transforms or less
 //      | 0b0001xxxx => transform sequence skip flags (1 means skip)
 //  case more than 4 transforms
-//      | 0b0yy00000 0bxxxxxxxx => transform sequence skip flags in next byte (1 means skip)
+//      | 0b0yy00000 0bxxxxxxxx => transform sequence skip flags in next kanzi::byte (1 means skip)
 template <class T>
 T EncodingTask<T>::run()
 {
     const int blockId = _ctx.getInt("blockId");
     const int blockLength = _ctx.getInt("size");
-    TransformSequence<byte>* transform = nullptr;
+    TransformSequence<kanzi::byte>* transform = nullptr;
     EntropyEncoder* ee = nullptr;
 #ifdef CONCURRENCY_ENABLED
     auto storeProcessedBlockId = [this](int value) {
@@ -669,7 +669,7 @@ T EncodingTask<T>::run()
             return T(blockId, 0, "Success");
         }
 
-        byte mode = byte(0);
+        kanzi::byte mode = kanzi::byte(0);
         int postTransformLength = blockLength;
         uint64 checksum = 0;
         uint64 tType = _ctx.getLong("tType");
@@ -695,7 +695,7 @@ T EncodingTask<T>::run()
         }
 
         if (blockLength <= CompressedOutputStream::SMALL_BLOCK_SIZE) {
-            tType = TransformFactory<byte>::NONE_TYPE;
+            tType = TransformFactory<kanzi::byte>::NONE_TYPE;
             eType = EntropyEncoderFactory::NONE_TYPE;
             mode |= CompressedOutputStream::COPY_BLOCK_MASK;
         }
@@ -714,7 +714,7 @@ T EncodingTask<T>::run()
                 }
 
                 if (skip == true) {
-                    tType = TransformFactory<byte>::NONE_TYPE;
+                    tType = TransformFactory<kanzi::byte>::NONE_TYPE;
                     eType = EntropyEncoderFactory::NONE_TYPE;
                     mode |= CompressedOutputStream::COPY_BLOCK_MASK;
                 }
@@ -722,7 +722,7 @@ T EncodingTask<T>::run()
         }
 
         _ctx.putInt("size", blockLength);
-        transform = TransformFactory<byte>::newTransform(_ctx, tType);
+        transform = TransformFactory<kanzi::byte>::newTransform(_ctx, tType);
         const int requiredSize = transform->getMaxEncodedLength(blockLength);
 
         if (blockLength >= 4) {
@@ -740,7 +740,7 @@ T EncodingTask<T>::run()
             if (_buffer->_array != nullptr)
                delete[] _buffer->_array;
 
-            _buffer->_array = new byte[requiredSize];
+            _buffer->_array = new kanzi::byte[requiredSize];
             _buffer->_length = requiredSize;
         }
 
@@ -749,7 +749,7 @@ T EncodingTask<T>::run()
         _buffer->_index = 0;
         transform->forward(*_data, *_buffer, blockLength);
         const int nbTransforms = transform->getNbTransforms();
-        const byte skipFlags = transform->getSkipFlags();
+        const kanzi::byte skipFlags = transform->getSkipFlags();
         delete transform;
         transform = nullptr;
         postTransformLength = _buffer->_index;
@@ -776,7 +776,7 @@ T EncodingTask<T>::run()
         }
 
         // Record size of 'block size' - 1 in bytes
-        mode |= byte(((dataSize - 1) & 0x03) << 5);
+        mode |= kanzi::byte(((dataSize - 1) & 0x03) << 5);
 
         if (_listeners.size() > 0) {
             // Notify after transform
@@ -793,7 +793,7 @@ T EncodingTask<T>::run()
             // entropy coder may expand size.
             delete[] _data->_array;
             _data->_length = bufSize;
-            _data->_array = new byte[_data->_length];
+            _data->_array = new kanzi::byte[_data->_length];
         }
 
         _data->_index = 0;
@@ -802,8 +802,8 @@ T EncodingTask<T>::run()
         DefaultOutputBitStream obs(os);
 
         // Write block 'header' (mode + compressed length)
-        if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != byte(0)) || (nbTransforms <= 4)) {
-            mode |= byte(skipFlags >> 4);
+        if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != kanzi::byte(0)) || (nbTransforms <= 4)) {
+            mode |= kanzi::byte(skipFlags >> 4);
             obs.writeBits(uint64(mode), 8);
         }
         else {
@@ -878,7 +878,9 @@ T EncodingTask<T>::run()
 #endif
 
         // Emit block size in bits (max size pre-entropy is 1 GB = 1 << 30 bytes)
+#if !defined(_MSC_VER) || _MSC_VER > 1500
         const int64 blockOffset = _obs->tell();
+#endif
         _obs->writeBits(lw - 3, 5); // write length-3 (5 bits max)
         _obs->writeBits(written, lw);
         int64 ww = int64((written + 7) >> 3);

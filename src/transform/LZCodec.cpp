@@ -28,12 +28,12 @@ LZCodec::LZCodec()
 
 LZCodec::LZCodec(Context& ctx)
 {
-    const int lzType = ctx.getInt("lz", TransformFactory<byte>::LZ_TYPE);
+    const int lzType = ctx.getInt("lz", TransformFactory<kanzi::byte>::LZ_TYPE);
 
-    if (lzType == TransformFactory<byte>::LZP_TYPE) {
+    if (lzType == TransformFactory<kanzi::byte>::LZP_TYPE) {
         _delegate = new LZPCodec(ctx);
     }
-    else if (lzType == TransformFactory<byte>::LZX_TYPE) {
+    else if (lzType == TransformFactory<kanzi::byte>::LZX_TYPE) {
         _delegate = new LZXCodec<true>(ctx);
     }
     else {
@@ -41,7 +41,7 @@ LZCodec::LZCodec(Context& ctx)
     }
 }
 
-bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -52,7 +52,7 @@ bool LZCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int cou
     return _delegate->forward(input, output, count);
 }
 
-bool LZCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -112,15 +112,15 @@ const int LZXCodec<true>::MIN_BLOCK_LENGTH = 24;
 
 
 template <bool T>
-bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZXCodec<T>::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("LZ codec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("LZ codec: Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(count))
@@ -145,25 +145,25 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         if (_mLenBuf != nullptr)
             delete[] _mLenBuf;
 
-        _mLenBuf = new byte[_bufferSize];
+        _mLenBuf = new kanzi::byte[_bufferSize];
 
         if (_mBuf != nullptr)
             delete[] _mBuf;
 
-        _mBuf = new byte[_bufferSize];
+        _mBuf = new kanzi::byte[_bufferSize];
 
         if (_tkBuf != nullptr)
             delete[] _tkBuf;
 
-        _tkBuf = new byte[_bufferSize];
+        _tkBuf = new kanzi::byte[_bufferSize];
     }
 
     memset(_hashes, 0, sizeof(int32) * _hashSize);
     const int srcEnd = count - 16 - 2;
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
     const int maxDist = (srcEnd < 4 * MAX_DISTANCE1) ? MAX_DISTANCE1 : MAX_DISTANCE2;
-    dst[12] = (maxDist == MAX_DISTANCE1) ? byte(0) : byte(1);
+    dst[12] = (maxDist == MAX_DISTANCE1) ? kanzi::byte(0) : kanzi::byte(1);
     int mm = MIN_MATCH4;
 
     if (_pCtx != nullptr) {
@@ -179,7 +179,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
     }
 
     // dst[12] = 0000MMMD (4 bits + 3 bits minMatch + 1 bit max distance)
-    dst[12] |= byte(((mm - 2) & 0x07) << 1); // minMatch in [2..9]
+    dst[12] |= kanzi::byte(((mm - 2) & 0x07) << 1); // minMatch in [2..9]
     const int minMatch = mm;
     int srcIdx = 0;
     int dstIdx = 13;
@@ -298,9 +298,9 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // LLL : <= 7 --> LLL == literal length (if 7, remainder encoded outside of token)
         // MMM : <= 7 --> MMM == match length (if 7, remainder encoded outside of token)
         // MM  : <= 3 --> MM  == match length (if 3, remainder encoded outside of token)
-        // FF = 01    --> 1 byte dist
-        // FF = 10    --> 2 byte dist
-        // FF = 11    --> 3 byte dist
+        // FF = 01    --> 1 kanzi::byte dist
+        // FF = 10    --> 2 kanzi::byte dist
+        // FF = 11    --> 3 kanzi::byte dist
         // FFF = 000  --> dist == repd0
         // FFF = 001  --> dist == repd1
         const int dist = srcIdx - ref;
@@ -316,13 +316,13 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         }
         else {
             // Emit distance (since not repeat)
-            _mBuf[mIdx] = byte(dist >> 16);
+            _mBuf[mIdx] = kanzi::byte(dist >> 16);
             const int inc1 = dist >= 65536 ? 1 : 0;
             mIdx += inc1;
-            _mBuf[mIdx] = byte(dist >> 8);
+            _mBuf[mIdx] = kanzi::byte(dist >> 8);
             const int inc2 = dist >= 256 ? 1 : 0;
             mIdx += inc2;
-            _mBuf[mIdx++] = byte(dist);
+            _mBuf[mIdx++] = kanzi::byte(dist);
             token = (inc1 + inc2 + 1) << 3;
             mLenTh = 7;
         }
@@ -346,7 +346,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         // Emit token
         // Literals to process ?
         if (litLen == 0) {
-            _tkBuf[tkIdx++] = byte(token);
+            _tkBuf[tkIdx++] = kanzi::byte(token);
         }
         else {
             // Emit literal length
@@ -354,11 +354,11 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
                 if (litLen >= (1 << 24))
                     return false;
 
-                _tkBuf[tkIdx++] = byte((7 << 5) | token);
+                _tkBuf[tkIdx++] = kanzi::byte((7 << 5) | token);
                 dstIdx += emitLength(&dst[dstIdx], litLen - 7);
             }
             else {
-                _tkBuf[tkIdx++] = byte((litLen << 5) | token);
+                _tkBuf[tkIdx++] = kanzi::byte((litLen << 5) | token);
             }
 
             // Emit literals
@@ -368,7 +368,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 
         if (mIdx >= _bufferSize - 8) {
             // Expand match buffer
-            byte* mBuf = new byte[(_bufferSize * 3) / 2];
+            kanzi::byte* mBuf = new kanzi::byte[(_bufferSize * 3) / 2];
             memcpy(&mBuf[0], &_mBuf[0], _bufferSize);
 
             if ( _mBuf != nullptr)
@@ -377,7 +377,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
             _mBuf = mBuf;
 
             if (mLenIdx >= _bufferSize - 8) {
-                byte* mLenBuf = new byte[(_bufferSize * 3) / 2];
+                kanzi::byte* mLenBuf = new kanzi::byte[(_bufferSize * 3) / 2];
                 memcpy(&mLenBuf[0], &_mLenBuf[0], _bufferSize);
 
                 if (_mLenBuf != nullptr)
@@ -417,11 +417,11 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
         return false;
 
     if (litLen >= 7) {
-        _tkBuf[tkIdx++] = byte(7 << 5);
+        _tkBuf[tkIdx++] = kanzi::byte(7 << 5);
         dstIdx += emitLength(&dst[dstIdx], litLen - 7);
     }
     else {
-        _tkBuf[tkIdx++] = byte(litLen << 5);
+        _tkBuf[tkIdx++] = kanzi::byte(litLen << 5);
     }
 
     memcpy(&dst[dstIdx], &src[anchor], litLen);
@@ -443,7 +443,7 @@ bool LZXCodec<T>::forward(SliceArray<byte>& input, SliceArray<byte>& output, int
 }
 
 template <bool T>
-bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZXCodec<T>::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     int bsVersion = _pCtx == nullptr ? 6 : _pCtx->getInt("bsVersion", 6);
 
@@ -455,7 +455,7 @@ bool LZXCodec<T>::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int
 
 
 template <bool T>
-bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -466,15 +466,15 @@ bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, i
     if (count > input._length - input._index)
        return false;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("LZ codec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("LZ codec: Invalid output block");
 
     const int dstEnd = output._length - output._index;
-    byte* dst = &output._array[output._index];
-    const byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
 
     int tkIdx = LittleEndian::readInt32(&src[0]);
     int mIdx = LittleEndian::readInt32(&src[4]);
@@ -507,8 +507,8 @@ bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, i
             const int litLen = (token >= 0xE0) ? 7 + readLength(src, srcIdx) : token >> 5;
 
             // Emit literals
-            const byte* s = &src[srcIdx];
-            byte* d = &dst[dstIdx];
+            const kanzi::byte* s = &src[srcIdx];
+            kanzi::byte* d = &dst[dstIdx];
             srcIdx += litLen;
             dstIdx += litLen;
 
@@ -565,9 +565,9 @@ bool LZXCodec<T>::inverseV6(SliceArray<byte>& input, SliceArray<byte>& output, i
             } while (dstIdx < mEnd);
         }
         else if (dist != 1) {
-            const byte* s = &dst[ref];
-            byte* p = &dst[dstIdx];
-            const byte* pend = &p[mLen];
+            const kanzi::byte* s = &dst[ref];
+            kanzi::byte* p = &dst[dstIdx];
+            const kanzi::byte* pend = &p[mLen];
 
             while (p < pend)
                *p++ = *s++;
@@ -588,7 +588,7 @@ exit:
 
 
 template <bool T>
-bool LZXCodec<T>::inverseV5(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZXCodec<T>::inverseV5(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -599,15 +599,15 @@ bool LZXCodec<T>::inverseV5(SliceArray<byte>& input, SliceArray<byte>& output, i
     if (count > input._length - input._index)
         return false;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("LZ codec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("LZ codec: Invalid output block");
 
     const int dstEnd = output._length - output._index;
-    byte* dst = &output._array[output._index];
-    const byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
 
     int tkIdx = LittleEndian::readInt32(&src[0]);
     int mIdx = LittleEndian::readInt32(&src[4]);
@@ -643,8 +643,8 @@ bool LZXCodec<T>::inverseV5(SliceArray<byte>& input, SliceArray<byte>& output, i
             const int litLen = (token >= 0xE0) ? 7 + readLength(src, srcIdx) : token >> 5;
 
             // Emit literals
-            const byte* s = &src[srcIdx];
-            byte* d = &dst[dstIdx];
+            const kanzi::byte* s = &src[srcIdx];
+            kanzi::byte* d = &dst[dstIdx];
             srcIdx += litLen;
             dstIdx += litLen;
 
@@ -705,9 +705,9 @@ bool LZXCodec<T>::inverseV5(SliceArray<byte>& input, SliceArray<byte>& output, i
             } while (dstIdx < mEnd);
         }
         else if (dist != 1) {
-            const byte* s = &dst[ref];
-            byte* p = &dst[dstIdx];
-            const byte* pend = &p[mLen];
+            const kanzi::byte* s = &dst[ref];
+            kanzi::byte* p = &dst[dstIdx];
+            const kanzi::byte* pend = &p[mLen];
 
             while (p < pend)
                *p++ = *s++;
@@ -735,7 +735,7 @@ const int LZPCodec::MIN_BLOCK_LENGTH = 128;
 const int LZPCodec::MATCH_FLAG = 0xFC;
 
 
-bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZPCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -743,10 +743,10 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (count < 4)
         return false;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("LZP codec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("LZP codec: Invalid output block");
 
     if (output._length < getMaxEncodedLength(count))
@@ -756,8 +756,8 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (count < MIN_BLOCK_LENGTH)
         return false;
 
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
     const int srcEnd = count;
     const int dstEnd = count - (count >> 6);
 
@@ -796,26 +796,26 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
             dst[dstIdx++] = src[srcIdx++];
 
             if ((ref != 0) && (val == MATCH_FLAG))
-                dst[dstIdx++] = byte(0xFF);
+                dst[dstIdx++] = kanzi::byte(0xFF);
 
             continue;
         }
 
         srcIdx += bestLen;
         ctx = LittleEndian::readInt32(&src[srcIdx - 4]);
-        dst[dstIdx++] = byte(MATCH_FLAG);
+        dst[dstIdx++] = kanzi::byte(MATCH_FLAG);
         bestLen -= MIN_MATCH;
 
         // Emit match length
         while (bestLen >= 254) {
             bestLen -= 254;
-            dst[dstIdx++] = byte(0xFE);
+            dst[dstIdx++] = kanzi::byte(0xFE);
 
             if (dstIdx >= dstEnd)
                 break;
         }
 
-        dst[dstIdx++] = byte(bestLen);
+        dst[dstIdx++] = kanzi::byte(bestLen);
     }
 
     while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
@@ -827,7 +827,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
         dst[dstIdx++] = src[srcIdx++];
 
         if ((ref != 0) && (val == MATCH_FLAG))
-            dst[dstIdx++] = byte(0xFF);
+            dst[dstIdx++] = kanzi::byte(0xFF);
     }
 
     input._index += srcIdx;
@@ -835,7 +835,7 @@ bool LZPCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return (srcIdx == count) && (dstIdx < dstEnd);
 }
 
-bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -843,10 +843,10 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if (count > input._length - input._index)
         return false;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("LZP codec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("LZP codec: Invalid output block");
 
     if (count < 4)
@@ -854,8 +854,8 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     const int srcEnd = count;
     const int dstEnd = output._length - output._index;
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
 
     if (_hashSize == 0) {
         _hashSize = 1 << HASH_LOG;
@@ -877,7 +877,7 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
         int ref = _hashes[h];
         _hashes[h] = dstIdx;
 
-        if ((src[srcIdx] != byte(MATCH_FLAG)) || (ref == 0)) {
+        if ((src[srcIdx] != kanzi::byte(MATCH_FLAG)) || (ref == 0)) {
             ctx = (ctx << 8) | uint32(src[srcIdx]);
             dst[dstIdx++] = src[srcIdx++];
             continue;
@@ -885,17 +885,17 @@ bool LZPCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         srcIdx++;
 
-        if (src[srcIdx] == byte(0xFF)) {
+        if (src[srcIdx] == kanzi::byte(0xFF)) {
             ctx = (ctx << 8) | uint32(MATCH_FLAG);
-            dst[dstIdx++] = byte(MATCH_FLAG);
+            dst[dstIdx++] = kanzi::byte(MATCH_FLAG);
             srcIdx++;
             continue;
         }
 
         int mLen = MIN_MATCH;
 
-        if (src[srcIdx] == byte(0xFE)) {
-            while ((srcIdx < srcEnd) && (src[srcIdx] == byte(0xFE))) {
+        if (src[srcIdx] == kanzi::byte(0xFE)) {
+            while ((srcIdx < srcEnd) && (src[srcIdx] == kanzi::byte(0xFE))) {
                 srcIdx++;
                 mLen += 254;
             }

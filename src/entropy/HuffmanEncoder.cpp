@@ -118,7 +118,7 @@ int HuffmanEncoder::updateFrequencies(uint freqs[])
     for (int i = 0; i < count; i++) {
         const int s = alphabet[i];
         _codes[s] |= uint16(sizes[s] << 12);
-        egenc.encodeByte(byte(sizes[s] - prevSize));
+        egenc.encodeByte(kanzi::byte(sizes[s] - prevSize));
         prevSize = sizes[s];
     }
 
@@ -301,7 +301,7 @@ uint HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
 
 
 // Dynamically compute the frequencies for every chunk of data in the block
-int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
+int HuffmanEncoder::encode(const kanzi::byte block[], uint blkptr, uint count)
 {
     if (count == 0)
         return 0;
@@ -314,7 +314,7 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
            delete[] _buffer;
 
         _bufferSize = minLenBuf;
-        _buffer = new byte[_bufferSize];
+        _buffer = new kanzi::byte[_bufferSize];
     }
 
     uint startChunk = blkptr;
@@ -346,7 +346,7 @@ int HuffmanEncoder::encode(const byte block[], uint blkptr, uint count)
 
 
 // count is at least 32
-void HuffmanEncoder::encodeChunk(const byte block[], uint count)
+void HuffmanEncoder::encodeChunk(const kanzi::byte block[], uint count)
 {
     uint nbBits[4] = { 0 };
     const uint szFrag = count / 4;
@@ -355,8 +355,8 @@ void HuffmanEncoder::encodeChunk(const byte block[], uint count)
 
     // Encode chunk
     for (int j = 0; j < 4; j++) {
-        const byte* src = &block[j * szFrag];
-        byte* buf = &_buffer[j * szBuf];
+        const kanzi::byte* src = &block[j * szFrag];
+        kanzi::byte* buf = &_buffer[j * szBuf];
         int idx = 0;
         int bits = 0; // number of accumulated bits
         uint64 state = 0;
@@ -393,11 +393,11 @@ void HuffmanEncoder::encodeChunk(const byte block[], uint count)
 
         while (bits >= 8) {
             bits -= 8;
-            buf[idx++] = byte(state >> bits);
+            buf[idx++] = kanzi::byte(state >> bits);
         }
 
         if (bits > 0)
-            buf[idx++] = byte(state << (8 - bits));
+            buf[idx++] = kanzi::byte(state << (8 - bits));
     }
 
     // Write chunk size in bits

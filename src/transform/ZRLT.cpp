@@ -24,38 +24,38 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length)
+bool ZRLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int length)
 {
     if (length == 0)
         return true;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("ZRLT: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("ZRLT: Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(length))
         return false;
 
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
     uint srcIdx = 0;
     uint dstIdx = 0;
     const uint srcEnd = length;
     const uint dstEnd = length - 16; // do not expand
     const uint srcEnd4 = length - 4;
     bool res = true;
-    byte zeros[4] = { byte(0) };
+    kanzi::byte zeros[4] = { kanzi::byte(0) };
 
     while (srcIdx < srcEnd) {
-        if (src[srcIdx] == byte(0)) {
+        if (src[srcIdx] == kanzi::byte(0)) {
             uint runLength = 1;
 
             while ((srcIdx + runLength < srcEnd4) && (KANZI_MEM_EQ4(&src[srcIdx + runLength], &zeros[0])))
                 runLength += 4;
 
-            while ((srcIdx + runLength < srcEnd) && src[srcIdx + runLength] == byte(0))
+            while ((srcIdx + runLength < srcEnd) && src[srcIdx + runLength] == kanzi::byte(0))
                 runLength++;
 
             srcIdx += runLength;
@@ -70,7 +70,7 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
 
             int log = Global::_log2(uint32(runLength));
 
-            // Write every bit as a byte except the most significant one
+            // Write every bit as a kanzi::byte except the most significant one
             while (log >= 4) {
                 const uint32 w = (uint32(((runLength >> (log - 1)) & 1) << 24) |
                                   uint32(((runLength >> (log - 2)) & 1) << 16) |
@@ -83,7 +83,7 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
 
             while (log > 0) {
                 log--;
-                dst[dstIdx++] = byte((runLength >> log) & 1);
+                dst[dstIdx++] = kanzi::byte((runLength >> log) & 1);
             }
 
             continue;
@@ -97,12 +97,12 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
         const int val = int(src[srcIdx]);
 
         if (val >= 0xFE) {
-            dst[dstIdx] = byte(0xFF);
-            dst[dstIdx + 1] = byte(val - 0xFE);
+            dst[dstIdx] = kanzi::byte(0xFF);
+            dst[dstIdx + 1] = kanzi::byte(val - 0xFE);
             dstIdx++;
         }
         else {
-            dst[dstIdx] = byte(val + 1);
+            dst[dstIdx] = kanzi::byte(val + 1);
         }
 
         srcIdx++;
@@ -114,19 +114,19 @@ bool ZRLT::forward(SliceArray<byte>& input, SliceArray<byte>& output, int length
     return res && (srcIdx == srcEnd);
 }
 
-bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length)
+bool ZRLT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int length)
 {
     if (length == 0)
         return true;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("ZRLT: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("ZRLT: Invalid output block");
 
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
     uint srcIdx = 0;
     uint dstIdx = 0;
     const uint srcEnd = length;
@@ -171,10 +171,10 @@ bool ZRLT::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int length
             if (srcIdx >= srcEnd)
                 goto End;
 
-            dst[dstIdx] = byte(0xFE + int(src[srcIdx]));
+            dst[dstIdx] = kanzi::byte(0xFE + int(src[srcIdx]));
         }
         else {
-            dst[dstIdx] = byte(val - 1);
+            dst[dstIdx] = kanzi::byte(val - 1);
         }
 
         srcIdx++;

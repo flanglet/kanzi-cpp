@@ -22,16 +22,16 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-const byte EXECodec::X86_MASK_JUMP = byte(0xFE);
-const byte EXECodec::X86_INSTRUCTION_JUMP = byte(0xE8);
-const byte EXECodec::X86_INSTRUCTION_JCC = byte(0x80);
-const byte EXECodec::X86_TWO_BYTE_PREFIX = byte(0x0F);
-const byte EXECodec::X86_MASK_JCC = byte(0xF0);
-const byte EXECodec::X86_ESCAPE = byte(0x9B);
-const byte EXECodec::NOT_EXE = byte(0x80);
-const byte EXECodec::X86 = byte(0x40);
-const byte EXECodec::ARM64 = byte(0x20);
-const byte EXECodec::MASK_DT = byte(0x0F);
+const kanzi::byte EXECodec::X86_MASK_JUMP = kanzi::byte(0xFE);
+const kanzi::byte EXECodec::X86_INSTRUCTION_JUMP = kanzi::byte(0xE8);
+const kanzi::byte EXECodec::X86_INSTRUCTION_JCC = kanzi::byte(0x80);
+const kanzi::byte EXECodec::X86_TWO_BYTE_PREFIX = kanzi::byte(0x0F);
+const kanzi::byte EXECodec::X86_MASK_JCC = kanzi::byte(0xF0);
+const kanzi::byte EXECodec::X86_ESCAPE = kanzi::byte(0x9B);
+const kanzi::byte EXECodec::NOT_EXE = kanzi::byte(0x80);
+const kanzi::byte EXECodec::X86 = kanzi::byte(0x40);
+const kanzi::byte EXECodec::ARM64 = kanzi::byte(0x20);
+const kanzi::byte EXECodec::MASK_DT = kanzi::byte(0x0F);
 const int EXECodec::X86_ADDR_MASK = (1 << 24) - 1;
 const int EXECodec::MASK_ADDRESS = 0xF0F0F0F0;
 const int EXECodec::ARM_B_ADDR_MASK = (1 << 26) - 1;
@@ -61,7 +61,7 @@ const int EXECodec::MIN_BLOCK_SIZE = 4096;
 const int EXECodec::MAX_BLOCK_SIZE = (1 << (26 + 2)) - 1; // max offset << 2
 
 
-bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool EXECodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -69,10 +69,10 @@ bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if ((count < MIN_BLOCK_SIZE) || (count > MAX_BLOCK_SIZE))
         return false;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw std::invalid_argument("EXECodec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw std::invalid_argument("EXECodec: Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(count))
@@ -87,9 +87,9 @@ bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
     int codeStart = 0;
     int codeEnd = count - 8;
-    byte mode = detectType(&input._array[input._index], count - 4, codeStart, codeEnd);
+    kanzi::byte mode = detectType(&input._array[input._index], count - 4, codeStart, codeEnd);
 
-    if ((mode & NOT_EXE) != byte(0)) {
+    if ((mode & NOT_EXE) != kanzi::byte(0)) {
         if (_pCtx != nullptr)
             _pCtx->putInt("dataType", Global::DataType(mode & MASK_DT));
 
@@ -110,10 +110,10 @@ bool EXECodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return false;
 }
 
-bool EXECodec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd)
+bool EXECodec::forwardX86(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count, int codeStart, int codeEnd)
 {
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
     dst[0] = X86;
     int srcIdx = codeStart;
     int dstIdx = 9;
@@ -191,10 +191,10 @@ bool EXECodec::forwardX86(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int count, int codeStart, int codeEnd)
+bool EXECodec::forwardARM(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count, int codeStart, int codeEnd)
 {
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
     dst[0] = ARM64;
     int srcIdx = codeStart;
     int dstIdx = 9;
@@ -287,7 +287,7 @@ bool EXECodec::forwardARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-bool EXECodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool EXECodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -295,16 +295,16 @@ bool EXECodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     if ((count < 9) || (count > input._length - input._index))
         return false;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw std::invalid_argument("EXECodec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw std::invalid_argument("EXECodec: Invalid output block");
 
     if (output._length - output._index < count - 9)
         return false;
 
-    byte mode = input._array[input._index];
+    kanzi::byte mode = input._array[input._index];
 
     if (mode == X86)
         return inverseX86(input, output, count);
@@ -315,10 +315,10 @@ bool EXECodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     return false;
 }
 
-bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool EXECodec::inverseX86(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
     int srcIdx = 9;
     int dstIdx = 0;
     const int dstEnd = output._length - output._index;
@@ -382,10 +382,10 @@ bool EXECodec::inverseX86(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool EXECodec::inverseARM(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
-    const byte* src = &input._array[input._index];
-    byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
     int srcIdx = 9;
     int dstIdx = 0;
     const int dstEnd = output._length - output._index;
@@ -459,7 +459,7 @@ bool EXECodec::inverseARM(SliceArray<byte>& input, SliceArray<byte>& output, int
     return true;
 }
 
-byte EXECodec::detectType(const byte src[], int count, int& codeStart, int& codeEnd)
+kanzi::byte EXECodec::detectType(const kanzi::byte src[], int count, int& codeStart, int& codeEnd)
 {
     // Let us check the first bytes ... but this may not be the first block
     // Best effort
@@ -494,7 +494,7 @@ byte EXECodec::detectType(const byte src[], int count, int& codeStart, int& code
 
         // X86
         if ((src[i] & X86_MASK_JUMP) == X86_INSTRUCTION_JUMP) {
-            if ((src[i + 4] == byte(0)) || (src[i + 4] == byte(0xFF))) {
+            if ((src[i + 4] == kanzi::byte(0)) || (src[i + 4] == kanzi::byte(0xFF))) {
                 // Count relative jumps (CALL = E8/ JUMP = E9 .. .. .. 00/FF)
                 jumpsX86++;
                 continue;
@@ -502,7 +502,7 @@ byte EXECodec::detectType(const byte src[], int count, int& codeStart, int& code
         } else if (src[i] == X86_TWO_BYTE_PREFIX) {
             i++;
 
-            if ((src[i] == byte(0x38)) || (src[i] == byte(0x3A)))
+            if ((src[i] == kanzi::byte(0x38)) || (src[i] == kanzi::byte(0x3A)))
                 i++;
 
             // Count relative conditional jumps (0x0F 0x8?) with 16/32 offsets
@@ -528,11 +528,11 @@ byte EXECodec::detectType(const byte src[], int count, int& codeStart, int& code
     Global::DataType dt = Global::detectSimpleType(count, histo);
 
     if (dt != Global::BIN)
-        return NOT_EXE | byte(dt);
+        return NOT_EXE | kanzi::byte(dt);
 
     // Filter out (some/many) multimedia files
     if ((histo[0] < uint(count / 10)) || (histo[255] < uint(count / 100)))
-        return NOT_EXE | byte(dt);
+        return NOT_EXE | kanzi::byte(dt);
 
     int smallVals = 0;
 
@@ -540,7 +540,7 @@ byte EXECodec::detectType(const byte src[], int count, int& codeStart, int& code
         smallVals += histo[i];
 
     if (smallVals > (count / 2))
-        return NOT_EXE | byte(dt);
+        return NOT_EXE | kanzi::byte(dt);
 
     // Ad-hoc thresholds
     if ((jumpsX86 >= (count / 200)) && (histo[255] >= uint(count / 50)))
@@ -550,18 +550,18 @@ byte EXECodec::detectType(const byte src[], int count, int& codeStart, int& code
         return ARM64;
 
     // Number of jump instructions too small => either not an exe or not worth the change, skip.
-    return NOT_EXE | byte(dt);
+    return NOT_EXE | kanzi::byte(dt);
 }
 
 // Return true if known header
-bool EXECodec::parseHeader(const byte src[], int count, uint magic, int& arch, int& codeStart, int& codeEnd)
+bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& arch, int& codeStart, int& codeEnd)
 {
     if (magic == Magic::WIN_MAGIC) {
         if (count >= 64) {
             const int posPE = LittleEndian::readInt32(&src[60]);
 
             if ((posPE > 0) && (posPE <= count - 48) && (LittleEndian::readInt32(&src[posPE]) == WIN_PE)) {
-                const byte* pe = &src[posPE];
+                const kanzi::byte* pe = &src[posPE];
                 codeStart = min(LittleEndian::readInt32(&pe[44]), count);
                 codeEnd = min(codeStart + LittleEndian::readInt32(&pe[28]), count);
                 arch = LittleEndian::readInt16(&pe[4]);
@@ -570,13 +570,13 @@ bool EXECodec::parseHeader(const byte src[], int count, uint magic, int& arch, i
             return true;
         }
     } else if (magic == Magic::ELF_MAGIC) {
-        bool isLittleEndian = src[5] == byte(1);
+        bool isLittleEndian = src[5] == kanzi::byte(1);
 
         if (count >= 64) {
             codeStart = 0;
 
             if (isLittleEndian == true) {
-                if (src[4] == byte(2)) {
+                if (src[4] == kanzi::byte(2)) {
                     // 64 bits
                     int nbEntries = int(LittleEndian::readInt16(&src[0x3C]));
                     int szEntry = int(LittleEndian::readInt16(&src[0x3A]));
@@ -626,7 +626,7 @@ bool EXECodec::parseHeader(const byte src[], int count, uint magic, int& arch, i
 
                 arch = LittleEndian::readInt16(&src[18]);
             } else {
-                if (src[4] == byte(2)) {
+                if (src[4] == kanzi::byte(2)) {
                     // 64 bits
                     int nbEntries = int(BigEndian::readInt16(&src[0x3C]));
                     int szEntry = int(BigEndian::readInt16(&src[0x3A]));
@@ -708,13 +708,13 @@ bool EXECodec::parseHeader(const byte src[], int count, uint magic, int& arch, i
                     if (pos + 14 >= count)
                         return false;
 
-                    if (memcmp(&src[pos + 8], reinterpret_cast<byte*>(MAC_TEXT_SEGMENT), 6) == 0) {
+                    if (memcmp(&src[pos + 8], reinterpret_cast<kanzi::byte*>(MAC_TEXT_SEGMENT), 6) == 0) {
                         int posSection = pos + szSegHdr;
 
                         if (posSection + 0x34 >= count)
                             return false;
 
-                        if (memcmp(&src[posSection], reinterpret_cast<byte*>(MAC_TEXT_SECTION), 6) == 0) {
+                        if (memcmp(&src[posSection], reinterpret_cast<kanzi::byte*>(MAC_TEXT_SECTION), 6) == 0) {
                             // Text section in TEXT segment
                             if (is64Bits == true) {
                                 codeStart = int(LittleEndian::readLong64(&src[posSection + 0x30]));

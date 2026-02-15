@@ -32,8 +32,8 @@ int testBWTCorrectness(bool isBWT)
          << (isBWT ? "BWT" : "BWTS") << " Correctness test" << endl;
     srand((uint)time(nullptr));
     int res = 0;
-    byte* pBuf = new byte[8 * 1024 * 1024];
-    byte* buf1 = pBuf;
+    kanzi::byte* pBuf = new kanzi::byte[8 * 1024 * 1024];
+    kanzi::byte* buf1 = pBuf;
 
     for (int ii = 1; ii <= 20; ii++) {
         int size = 128;
@@ -59,16 +59,16 @@ int testBWTCorrectness(bool isBWT)
         }
         else if (ii < 20) {
             for (int i = 0; i < size; i++)
-                buf1[i] = byte(65 + (rand() % (4 * ii)));
+                buf1[i] = kanzi::byte(65 + (rand() % (4 * ii)));
         }
         else {
             size = 8*1024*1024;
 
             for (int i = 0; i < size; i++)
-                buf1[i] = byte(i);
+                buf1[i] = kanzi::byte(i);
         }
 
-        Transform<byte>* tf;
+        Transform<kanzi::byte>* tf;
 
         if (isBWT) {
             tf = new BWT();
@@ -77,9 +77,9 @@ int testBWTCorrectness(bool isBWT)
             tf = new BWTS();
         }
 
-        byte* input = &buf1[0];
-        byte* transform = new byte[size];
-        byte* reverse = new byte[size];
+        kanzi::byte* input = &buf1[0];
+        kanzi::byte* transform = new kanzi::byte[size];
+        kanzi::byte* reverse = new kanzi::byte[size];
         cout << endl
              << "Test " << ii << endl;
 
@@ -90,8 +90,8 @@ int testBWTCorrectness(bool isBWT)
                 cout << char(input[i]);
         }
 
-        SliceArray<byte> ia1(input, size, 0);
-        SliceArray<byte> ia2(transform, size, 0);
+        SliceArray<kanzi::byte> ia1(input, size, 0);
+        SliceArray<kanzi::byte> ia2(transform, size, 0);
         tf->forward(ia1, ia2, size);
 
         if (size < 512) {
@@ -130,7 +130,7 @@ int testBWTCorrectness(bool isBWT)
             cout << endl;
         }
 
-        SliceArray<byte> ia3(reverse, size, 0);
+        SliceArray<kanzi::byte> ia3(reverse, size, 0);
         ia2._index = 0;
         tf->inverse(ia2, ia3, size);
 
@@ -181,15 +181,15 @@ int testBWTSpeed(bool isBWT, int iter, bool isSmallSize)
     srand(uint(time(nullptr)));
 
     for (int jj = 0; jj < 3; jj++) {
-        byte* input = isSmallSize ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
-        byte* output = isSmallSize ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
-        byte* reverse = isSmallSize ? new byte[256 * 1024] : new byte[10 * 1024 * 1024];
-        SliceArray<byte> ia1(input, size, 0);
-        SliceArray<byte> ia2(output, size, 0);
-        SliceArray<byte> ia3(reverse, size, 0);
+        kanzi::byte* input = isSmallSize ? new kanzi::byte[256 * 1024] : new kanzi::byte[10 * 1024 * 1024];
+        kanzi::byte* output = isSmallSize ? new kanzi::byte[256 * 1024] : new kanzi::byte[10 * 1024 * 1024];
+        kanzi::byte* reverse = isSmallSize ? new kanzi::byte[256 * 1024] : new kanzi::byte[10 * 1024 * 1024];
+        SliceArray<kanzi::byte> ia1(input, size, 0);
+        SliceArray<kanzi::byte> ia2(output, size, 0);
+        SliceArray<kanzi::byte> ia3(reverse, size, 0);
         double delta1 = 0, delta2 = 0;
-        Transform<byte>* tf = nullptr;
-        Transform<byte>* ti = nullptr;
+        Transform<kanzi::byte>* tf = nullptr;
+        Transform<kanzi::byte>* ti = nullptr;
         const int chunks = BWT::getBWTChunks(size);
         int pi[8];
 
@@ -202,7 +202,7 @@ int testBWTSpeed(bool isBWT, int iter, bool isSmallSize)
             }
 
             for (int i = 0; i < size; i++) {
-                input[i] = byte(1 + (rand() % 255));
+                input[i] = kanzi::byte(1 + (rand() % 255));
             }
 
             clock_t before1 = clock();

@@ -63,9 +63,9 @@ ExpGolombEncoder::ExpGolombEncoder(OutputBitStream& bitstream, bool sgn)
 {
 }
 
-int ExpGolombEncoder::encode(const byte block[], uint blkptr, uint len)
+int ExpGolombEncoder::encode(const kanzi::byte block[], uint blkptr, uint len)
 {
-    const byte* buf = &block[blkptr];
+    const kanzi::byte* buf = &block[blkptr];
     const uint len8 = len & uint(-8);
 
     for (uint i = 0; i < len8; i += 8) {

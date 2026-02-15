@@ -82,7 +82,7 @@ namespace kanzi {
 
            // Reset get pointers:
            //   eback = start of buffer (including putback area)
-           //   gptr  = first new byte
+           //   gptr  = first new kanzi::byte
            //   egptr = end of new data
            setg(_buffer + (4 - putback), _buffer + 4, _buffer + 4 + n);
            return traits_type::to_int_type(*gptr());
@@ -130,7 +130,7 @@ KANZI_API int CDECL initDecompressor(struct dData* pData, FILE* src, struct dCon
 
         if (pData->headerless != 0) {
            // Headerless mode: process params
-           string transform = TransformFactory<byte>::getName(TransformFactory<byte>::getType(pData->transform));
+           string transform = TransformFactory<kanzi::byte>::getName(TransformFactory<kanzi::byte>::getType(pData->transform));
            string entropy = EntropyEncoderFactory::getName(EntropyEncoderFactory::getType(pData->entropy));
 
            // Validate sizes

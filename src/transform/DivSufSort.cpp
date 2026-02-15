@@ -90,7 +90,7 @@ void DivSufSort::reset()
     memset(&_bucketB[0], 0, sizeof(int) * 65536);
 }
 
-bool DivSufSort::computeSuffixArray(const byte input[], int sa[], int length)
+bool DivSufSort::computeSuffixArray(const kanzi::byte input[], int sa[], int length)
 {
     _buffer = reinterpret_cast<const uint8*>(&input[0]);
     _sa = sa;
@@ -168,7 +168,7 @@ void DivSufSort::constructSuffixArray(int bucketA[], int bucketB[], int n, int m
     }
 }
 
-bool DivSufSort::computeBWT(const byte input[], byte output[], int bwt[], int length, int indexes[], int idxCount)
+bool DivSufSort::computeBWT(const kanzi::byte input[], kanzi::byte output[], int bwt[], int length, int indexes[], int idxCount)
 {
     _buffer = reinterpret_cast<const uint8*>(&input[0]);
     _sa = bwt;
@@ -186,10 +186,10 @@ bool DivSufSort::computeBWT(const byte input[], byte output[], int bwt[], int le
     output[0] = input[length - 1];
 
     for (int i = 0; i < pIdx; i++)
-        output[i + 1] = byte(bwt[i]);
+        output[i + 1] = kanzi::byte(bwt[i]);
 
     for (int i = pIdx + 1; i < length; i++)
-        output[i] = byte(bwt[i]);
+        output[i] = kanzi::byte(bwt[i]);
 
     return true;
 }

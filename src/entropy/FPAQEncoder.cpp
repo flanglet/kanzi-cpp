@@ -55,7 +55,7 @@ bool FPAQEncoder::reset()
     return true;
 }
 
-int FPAQEncoder::encode(const byte block[], uint blkptr, uint count)
+int FPAQEncoder::encode(const kanzi::byte block[], uint blkptr, uint count)
 {
     if (count >= MAX_BLOCK_SIZE)
         throw invalid_argument("Invalid block size parameter (max is 1<<30)");

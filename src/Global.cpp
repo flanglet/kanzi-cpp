@@ -166,7 +166,7 @@ int Global::log2(uint64 x)
 }
 
 // If withTotal is true, the last spot in each frequencies order 0 array is for the total
-void Global::computeHistogram(const byte block[], int length, uint freqs[], bool isOrder0, bool withTotal)
+void Global::computeHistogram(const kanzi::byte block[], int length, uint freqs[], bool isOrder0, bool withTotal)
 {
     const uint8* p = reinterpret_cast<const uint8*>(&block[0]);
 

@@ -35,7 +35,7 @@ AliasCodec::AliasCodec(Context& ctx) :
 }
 
 
-bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool AliasCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
@@ -43,10 +43,10 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     if (count < MIN_BLOCK_SIZE)
         return false;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("Alias codec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("Alias codec: Invalid output block");
 
     if (output._length - output._index < getMaxEncodedLength(count))
@@ -67,10 +67,10 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             return false;
     }
 
-    byte* dst = &output._array[output._index];
-    const byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
 
-    // Find missing 1-byte symbols
+    // Find missing 1-kanzi::byte symbols
     uint freqs0[256] = { 0 };
     Global::computeHistogram(&src[0], count, freqs0, true);
     int n0 = 0;
@@ -98,7 +98,7 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
     if (n0 >= 240) {
         // Small alphabet => pack bits
-        dst[0] = byte(n0);
+        dst[0] = kanzi::byte(n0);
         dstIdx = 1;
 
         if (n0 == 255) {
@@ -110,19 +110,19 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
         else {
             srcIdx = 0;
-            byte map8[256] = { byte(0) };
+            kanzi::byte map8[256] = { kanzi::byte(0) };
 
             for (int i = 0, j = 0; i < 256; i++) {
                 if (freqs0[i] != 0) {
-                    dst[dstIdx++] = byte(i);
-                    map8[i] = byte(j++);
+                    dst[dstIdx++] = kanzi::byte(i);
+                    map8[i] = kanzi::byte(j++);
                 }
             }
 
             if (n0 >= 252) {
                 // 4 symbols or less
                 const int c3 = count & 3;
-                dst[dstIdx++] = byte(c3);
+                dst[dstIdx++] = kanzi::byte(c3);
                 memcpy(&dst[dstIdx], &src[srcIdx], size_t(c3));
                 srcIdx += c3;
                 dstIdx += c3;
@@ -135,7 +135,7 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             }
             else {
                 // 16 symbols or less
-                dst[dstIdx++] = byte(count & 1);
+                dst[dstIdx++] = kanzi::byte(count & 1);
 
                 if ((count & 1) != 0)
                     dst[dstIdx++] = src[srcIdx++];
@@ -152,7 +152,7 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         vector<sdAlias> v;
 
         {
-            // Find missing 2-byte symbols
+            // Find missing 2-kanzi::byte symbols
             uint* freqs1 = new uint[65536];
             memset(freqs1, 0, 65536 * sizeof(uint));
             Global::computeHistogram(&src[0], count, freqs1, false);
@@ -175,7 +175,7 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             delete[] freqs1;
 
             if (n1 < n0) {
-                // Fewer distinct 2-byte symbols than 1-byte symbols
+                // Fewer distinct 2-kanzi::byte symbols than 1-kanzi::byte symbols
                 n0 = n1;
 
                 if (n0 < 16)
@@ -193,8 +193,8 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             map16[i] = 0x100 | int16(i >> 8);
 
         int savings = 0;
-        dst[0] = byte(n0);
-        dst[1] = byte(0);
+        dst[0] = kanzi::byte(n0);
+        dst[1] = kanzi::byte(0);
         srcIdx = 0;
         dstIdx = 2;
 
@@ -204,9 +204,9 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
             savings += sd.freq; // ignore factor 2
             const int idx = sd.val;
             map16[idx] = int16(absent[i]) | 0x200;
-            dst[dstIdx] = byte(idx >> 8);
-            dst[dstIdx + 1] = byte(idx);
-            dst[dstIdx + 2] = byte(absent[i]);
+            dst[dstIdx] = kanzi::byte(idx >> 8);
+            dst[dstIdx + 1] = kanzi::byte(idx);
+            dst[dstIdx + 2] = kanzi::byte(absent[i]);
             dstIdx += 3;
          }
 
@@ -220,12 +220,12 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         // Emit aliased data
         while (srcIdx < srcEnd) {
             const int16 alias = map16[(int(src[srcIdx]) << 8) | int(src[srcIdx + 1])];
-            dst[dstIdx++] = byte(alias);
+            dst[dstIdx++] = kanzi::byte(alias);
             srcIdx += (alias >> 8);
         }
 
         if (srcIdx != count) {
-            dst[1] = byte(1);
+            dst[1] = kanzi::byte(1);
             dst[dstIdx++] = src[srcIdx++];
         }
     }
@@ -236,22 +236,22 @@ bool AliasCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 }
 
 
-bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+bool AliasCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
         return true;
 
-    if (!SliceArray<byte>::isValid(input))
+    if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("Alias codec: Invalid input block");
 
-    if (!SliceArray<byte>::isValid(output))
+    if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("Alias codec: Invalid output block");
 
     if (input._index + count > input._length)
         return false;
 
-    byte* dst = &output._array[output._index];
-    const byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
+    const kanzi::byte* src = &input._array[input._index];
     const int dstEnd = output._length - output._index;
     int n = int(src[0]);
 
@@ -270,7 +270,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             if (count < 6)
                 return false;
 
-            const byte val = src[1];
+            const kanzi::byte val = src[1];
             const int oSize = LittleEndian::readInt32(&src[2]);
 
             if ((oSize < 0) || (oSize > dstEnd))
@@ -282,7 +282,7 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         }
         else {
             // Rebuild map alias -> symbol
-            byte idx2symb[16] = { byte(0) };
+            kanzi::byte idx2symb[16] = { kanzi::byte(0) };
 
             if (srcIdx + n + 1 > count)
                 return false;
@@ -382,8 +382,8 @@ bool AliasCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
         while (srcIdx < srcEnd) {
             const int val = map16[int(src[srcIdx++])];
-            dst[dstIdx] = byte(val);
-            dst[dstIdx + 1] = byte(val >> 8);
+            dst[dstIdx] = kanzi::byte(val);
+            dst[dstIdx + 1] = kanzi::byte(val >> 8);
             dstIdx += (val >> 16);
         }
 

@@ -58,7 +58,7 @@ bool FPAQDecoder::reset()
     return true;
 }
 
-int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
+int FPAQDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
 {
     if (count >= MAX_BLOCK_SIZE)
         throw invalid_argument("Invalid block size parameter (max is 1<<30)");
@@ -100,7 +100,7 @@ int FPAQDecoder::decode(byte block[], uint blkptr, uint count)
             decodeBit(_p[_ctx]);
             decodeBit(_p[_ctx]);
             decodeBit(_p[_ctx]);
-            block[i] = byte(_ctx);
+            block[i] = kanzi::byte(_ctx);
             _p = _probs[(_ctx & 0xFF) >> 6];
         }
 
