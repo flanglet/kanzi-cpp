@@ -51,7 +51,7 @@ static KANZI_ALWAYS_INLINE void prefetchWrite(const void* ptr) {
 
 // Byte-swap helpers
 
-static KANZI_ALWAYS_INLINE uint16 bswap16(uint16 x) {
+static KANZI_ALWAYS_INLINE uint16 knz_bswap16(uint16 x) {
 #if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 5)
     return __builtin_bswap16(x);
 #elif defined(_MSC_VER)
@@ -61,7 +61,7 @@ static KANZI_ALWAYS_INLINE uint16 bswap16(uint16 x) {
 #endif
 }
 
-static KANZI_ALWAYS_INLINE uint32 bswap32(uint32 x) {
+static KANZI_ALWAYS_INLINE uint32 knz_bswap32(uint32 x) {
 #if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 5)
     return __builtin_bswap32(x);
 #elif defined(_MSC_VER)
@@ -74,7 +74,7 @@ static KANZI_ALWAYS_INLINE uint32 bswap32(uint32 x) {
 #endif
 }
 
-static KANZI_ALWAYS_INLINE uint64 bswap64(uint64 x) {
+static KANZI_ALWAYS_INLINE uint64 knz_bswap64(uint64 x) {
 #if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 5)
     return __builtin_bswap64(x);
 #elif defined(_MSC_VER)
@@ -128,11 +128,11 @@ static KANZI_ALWAYS_INLINE T readEndian(const byte* p) {
     if (!SourceIsBigEndian) {
 #endif
         if (sizeof(T) == 2)
-            val = (T)bswap16((uint16)val);
+            val = (T)knz_bswap16((uint16)val);
         else if (sizeof(T) == 4)
-            val = (T)bswap32((uint32)val);
+            val = (T)knz_bswap32((uint32)val);
         else if (sizeof(T) == 8)
-            val = (T)bswap64((uint64)val);
+            val = (T)knz_bswap64((uint64)val);
     }
 
     return val;
@@ -147,11 +147,11 @@ static KANZI_ALWAYS_INLINE void writeEndian(byte* p, T val) {
     if (!TargetIsBigEndian) {
 #endif
         if (sizeof(T) == 2)
-            val = (T)bswap16((uint16)val);
+            val = (T)knz_bswap16((uint16)val);
         else if (sizeof(T) == 4)
-            val = (T)bswap32((uint32)val);
+            val = (T)knz_bswap32((uint32)val);
         else if (sizeof(T) == 8)
-            val = (T)bswap64((uint64)val);
+            val = (T)knz_bswap64((uint64)val);
     }
 
 #ifdef AGGRESSIVE_OPTIMIZATION
@@ -186,4 +186,3 @@ public:
 
 } // namespace kanzi
 #endif
-
