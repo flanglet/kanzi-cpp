@@ -127,7 +127,11 @@ namespace kanzi
               return;
        }
 
+    #ifdef _WIN32
+       if (S_ISREG(buffer.st_mode)) {
+   #else
        if (S_ISREG(buffer.st_mode) || (!cfg._ignoreLinks && S_ISLNK(buffer.st_mode))) {
+   #endif
    #if __cplusplus >= 201103L
            files.emplace_back(target, buffer.st_size, buffer.st_mtime);
    #else
@@ -175,7 +179,11 @@ namespace kanzi
                    }
                }
 
+            #ifdef _WIN32
+               if (S_ISREG(buffer.st_mode)) {
+            #else
                if (S_ISREG(buffer.st_mode) || (!cfg._ignoreLinks && S_ISLNK(buffer.st_mode))) {
+            #endif
                   // Target is regular file
                   if (cfg._ignoreDotFiles == true) {
                      size_t idx = fullpath.rfind(PATH_SEPARATOR);

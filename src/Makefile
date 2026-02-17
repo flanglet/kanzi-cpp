@@ -5,7 +5,6 @@ TEST_OBJ_DIR=$(OBJ_DIR)/test
 APP=kanzi
 APP_STATIC=$(APP)_static
 APP_DYNAMIC=$(APP)_dynamic
-OS := $(shell uname -s)
 
 ifeq ($(TCMALLOC_ENABLED), 1)
 	LDFLAGS += -lpthread -ltcmalloc_minimal
@@ -25,9 +24,15 @@ ifndef C_STD
     C_STD = c11
 endif
 
+ifeq ($(OS),Windows_NT)
+    DETECTED_OS := Windows
+else
+    DETECTED_OS := $(shell uname -s)
+endif
+
 CFLAGS += -c -std=$(C_STD) -Wall -Wextra -O3 -fPIC -pedantic -march=native
 
-ifeq ($(OS),Windows_NT)
+ifeq ($(DETECTED_OS),Windows)
 	CXXFLAGS += -c -std=$(CXX_STD) -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 else
 	ARCH ?= $(shell uname -m)
