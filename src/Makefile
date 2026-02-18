@@ -132,12 +132,12 @@ PROG_SUFFIX       :=
 SHARED_OPTION     := -shared
 
 # Detect Windows or macOS
-ifeq ($(OS),Windows_NT)
+ifeq ($(DETECTED_OS),Windows)
     STATIC_LIB_SUFFIX := .lib
     SHARED_LIB_SUFFIX := .dll
     PROG_SUFFIX       := .exe
     SHARED_OPTION     := -shared
-else ifeq ($(OS),Darwin)
+else ifeq ($(DETECTED_OS),Darwin)
     # macOS Specifics
     SHARED_LIB_SUFFIX := .dylib
     SHARED_OPTION     := -dynamiclib
@@ -221,14 +221,14 @@ kanzi_dynamic: $(LIB_OBJECTS) $(APP_OBJECTS)
 all: lib test $(APP_STATIC) $(APP_DYNAMIC)
 
 # Install / uninstall (may require sudo or admin rights)
-ifeq ($(OS),Windows_NT)
+ifeq ($(DETECTED_OS),Windows)
 INSTALL_DIR=C:/Program\ Files
 else
 INSTALL_DIR=/usr/local
 endif
 
 print-vars:
-	@echo "OS=$(OS)"
+	@echo "OS=$(DETECTED_OS)"
 	@echo "APP=$(APP)"
 	@echo "CXX=$(CXX)"
 	@echo "CXXFLAGS=$(CXXFLAGS)"
@@ -237,7 +237,7 @@ print-vars:
 
 
 install: $(STATIC_LIB) $(SHARED_LIB) $(APP)
-ifeq ($(OS),Windows_NT)
+ifeq ($(DETECTED_OS),Windows)
 	copy /Y ..\bin\$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)
 else
 	install -d $(INSTALL_DIR)/lib
@@ -263,7 +263,7 @@ endif
 
 # Uninstall may require sudo or admin rights
 uninstall:
-ifeq ($(OS),Windows_NT)
+ifeq ($(DETECTED_OS),Windows)
 	del /Q $(INSTALL_DIR)\$(APP)$(PROG_SUFFIX)
 else
 	rm -f -r $(INSTALL_DIR)/include/$(APP)
@@ -275,7 +275,7 @@ else
 endif
 
 clean:
-ifeq ($(OS),Windows_NT)
+ifeq ($(DETECTED_OS),Windows)
 	del /S $(OBJ_DIR)\*.o
 	..\bin\$(APP)$(PROG_SUFFIX) \
 	..\bin\$(APP_STATIC)$(PROG_SUFFIX) \
@@ -294,7 +294,7 @@ else
 	rm -rf $(OBJ_DIR)
 endif
 
-ifeq ($(OS),Windows_NT)
+ifeq ($(DETECTED_OS),Windows)
 MKDIR = if not exist $(subst /,\,$(dir $@)) mkdir $(subst /,\,$(dir $@))
 else
 MKDIR = mkdir -p $(dir $@)
