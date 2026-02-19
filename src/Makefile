@@ -203,7 +203,7 @@ kanzi: $(LIB_OBJECTS) $(APP_OBJECTS)
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
 # Statically linked executable
-ifeq ($(OS),Darwin)
+ifeq ($(DETECTED_OS),Darwin)
 # macOS does not support -static => disable static target
 kanzi_static:
 	@echo "Static linking is not supported on macOS"
