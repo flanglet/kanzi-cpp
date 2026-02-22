@@ -14,6 +14,7 @@ limitations under the License.
 */
 
 #include <algorithm>
+#include <cstdio>
 #include <iostream>
 #include <map>
 
@@ -95,14 +96,14 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("   -i, --input=<inputName>", true);
    log.println("        Name of the input file or directory or 'stdin'", true);
    log.println("        When the source is a directory, all files in it will be processed.", true);
-   stringstream ss;
-   ss << "        Provide " << PATH_SEPARATOR << ". at the end of the directory name to avoid recursion";
-   log.println(ss.str(), true);
-   ss.str(string());
-   ss << "        (EG: myDir" << PATH_SEPARATOR << ". => no recursion)";
-   log.println(ss.str(), true);
+#if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
+   log.println("        Provide \\. at the end of the directory name to avoid recursion", true);
+   log.println("        (EG: myDir\\. => no recursion)", true);
+#else
+   log.println("        Provide /. at the end of the directory name to avoid recursion", true);
+   log.println("        (EG: myDir/. => no recursion)", true);
+#endif
    log.println("        If this option is not provided, kanzi reads data from stdin.\n", true);
-   ss.str(string());
 
    if (mode != "y") {
        log.println("   -o, --output=<outputName>", true);
@@ -163,10 +164,10 @@ void printHelp(Printer& log, const string& mode, bool showHeader)
    log.println("        Maximum number of jobs the program may start concurrently", true);
    #ifdef CONCURRENCY_ENABLED
       int cores = min(max(int(thread::hardware_concurrency()) / 2, 1), MAX_CONCURRENCY);
-      stringstream sstr;
-      sstr << cores;
+      char msg[96];
+      snprintf(msg, sizeof(msg), "        Default is half of available cores (%d on this machine).\n", cores);
       log.println("        If 0 is provided, use all available cores (maximum is 64).", true);
-      log.println("        Default is half of available cores (" + sstr.str() + " on this machine).\n", true);
+      log.println(msg, true);
    #else
       log.println("        (always 1 in this version).\n", true);
    #endif
@@ -522,7 +523,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
     for (int i = 1; i < argc; i++) {
         string arg(argv[i]);
 
-        if (arg[0] == 0x20) {
+        if ((arg.length() > 0) && (arg[0] == 0x20)) {
            size_t k = 1;
 
            // Left trim limited to spaces (due to possible unicode chars in names)
