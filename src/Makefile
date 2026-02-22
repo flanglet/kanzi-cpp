@@ -39,10 +39,10 @@ else
 
 	# Check for both x86_64 (Linux) and amd64 (FreeBSD)
 	ifneq ($(filter x86_64 amd64,$(ARCH)),)
-		#CXXFLAGS += -c -std=$(CXX_STD) -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fstrict-aliasing -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
+		#CXXFLAGS += -c -std=$(CXX_STD) -fsanitize=undefined -ftrapv -D_FORTIFY_SOURCE=3 -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST -fstrict-aliasing -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 		CXXFLAGS += -c -std=$(CXX_STD) -fstrict-aliasing -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 	else
-		#CXXFLAGS += -c -std=$(CXX_STD)-fsanitize=signed-integer-overflow -ftrapv -D_FORTIFY_SOURCE=3 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
+		#CXXFLAGS += -c -std=$(CXX_STD) -fsanitize=signed-integer-overflow -ftrapv -D_FORTIFY_SOURCE=3 -Wall -Wextra -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 		CXXFLAGS += -c -std=$(CXX_STD) -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 	endif
 endif	

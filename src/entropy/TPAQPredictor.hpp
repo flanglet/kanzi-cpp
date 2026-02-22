@@ -74,16 +74,16 @@ namespace kanzi
        static const int BUFFER_SIZE;
        static const int HASH_SIZE;
        static const int HASH;
-       static const int MASK_80808080;
-       static const int MASK_F0F0F000;
-       static const int MASK_4F4FFFFF;
+       static const uint MASK_80808080;
+       static const uint MASK_F0F0F000;
+       static const uint MASK_4F4FFFFF;
 
        #define SSE0_RATE(T) ((T == true) ? 6 : 7)
 
        int _pr; // next predicted value (0-4095)
-       int _c0; // bitwise context: last 0-7 bits with a leading 1 (1-255)
-       int _c4; // last 4 whole bytes, last is in low 8 bits
-       int _c8; // last 8 to 4 whole bytes, last is in low 8 bits
+       uint _c0; // bitwise context: last 0-7 bits with a leading 1 (1-255)
+       uint _c4; // last 4 whole bytes, last is in low 8 bits
+       uint _c8; // last 8 to 4 whole bytes, last is in low 8 bits
        int _bpos; // number of bits in c0 (0-7)
        int _pos;
        int _binCount;
@@ -438,8 +438,10 @@ namespace kanzi
                _ctx5 = (_c8 & MASK_F0F0F000) | ((_c4 & MASK_F0F0F000) >> 4);
 
                if (T == true) {
-                  const int h1 = ((_c4 & MASK_80808080) == 0) ? _c4 & MASK_4F4FFFFF : _c4 & MASK_80808080;
-                  const int h2 = ((_c8 & MASK_80808080) == 0) ? _c8 & MASK_4F4FFFFF : _c8 & MASK_80808080;
+                  const uint h1 = ((_c4 & MASK_80808080) == 0) ?
+                      _c4 & MASK_4F4FFFFF : _c4 & MASK_80808080;
+                  const uint h2 = ((_c8 & MASK_80808080) == 0) ?
+                      _c8 & MASK_4F4FFFFF : _c8 & MASK_80808080;
                   _ctx6 = hash(h1 << 2, h2 >> 2);
                }
            }
@@ -583,7 +585,9 @@ namespace kanzi
    template <bool T>
    inline int TPAQPredictor<T>::getMatchContextPred()
    {
-       if (_c0 == (_matchVal >> _bpos)) {
+       const uint matchPrefix = uint(_matchVal) >> _bpos;
+
+       if (_c0 == matchPrefix) {
            return (((_matchVal >> (_bpos - 1)) & 1) != 0) ?
                MATCH_PRED[_matchLen - 1] : -MATCH_PRED[_matchLen - 1];
        }
@@ -593,4 +597,3 @@ namespace kanzi
    }
 }
 #endif
-
