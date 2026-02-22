@@ -295,10 +295,7 @@ KANZI_API int CDECL disposeCompressor(struct cContext** ppCtx, size_t* outSize) 
         if (pCos != nullptr) {
             const uint64 w = pCos->getWritten();
             pCos->close();
-
-            if (outSize)
-               *outSize = int(pCos->getWritten() - w);
-
+            *outSize = int(pCos->getWritten() - w);
             delete pCos;
             pCos = nullptr;
             pCtx->pCos = nullptr;

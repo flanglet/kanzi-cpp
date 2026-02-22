@@ -246,7 +246,7 @@ bool UTFCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
             return false;
 
         int s = (uint32(src[srcIdx]) << 16) | (uint32(src[srcIdx + 1]) << 8) | uint32(src[srcIdx + 2]);
-        const int sl = unpack(s, (kanzi::byte*)&m[i].val);
+        const int sl = unpack(s, reinterpret_cast<kanzi::byte*>(&m[i].val));
 
         if (sl == 0)
             return false;

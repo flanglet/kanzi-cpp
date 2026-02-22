@@ -833,10 +833,6 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
     int dstIdx = 0;
     const int srcEnd = count;
     const int dstEnd = output._length - output._index;
-
-    if (srcIdx >= srcEnd)
-        return false;
-
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
     int words = _staticDictSize;
     bool wordRun = false;
@@ -1357,10 +1353,6 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
     int dstIdx = 0;
     const int srcEnd = count;
     const int dstEnd = output._length - output._index;
-
-    if (srcIdx >= srcEnd)
-        return false;
-
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
     int words = _staticDictSize;
     bool wordRun = false;

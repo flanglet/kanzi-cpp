@@ -202,7 +202,7 @@ void InfoPrinter::processEventOrdered(const Event& evt)
         if (it == _blocks.end())
             return;
 
-        BlockInfo& bi = *it->second;
+        const BlockInfo& bi = *it->second;
         stringstream ss;
 
         if (_level >= 5) {
@@ -287,7 +287,7 @@ void InfoPrinter::processHeaderInfo(const Event& evt)
     if ((_level == 0) || (evt.getType() != Event::AFTER_HEADER_DECODING))
         return;
 
-    Event::HeaderInfo* info = evt.getInfo();
+    const Event::HeaderInfo* info = evt.getInfo();
 
     if (info == nullptr)
         return;
