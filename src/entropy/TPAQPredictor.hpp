@@ -100,10 +100,10 @@ namespace kanzi
        uint8* _bigStatesMap;// hash table(context, prediction)
        uint8* _smallStatesMap0; // hash table(context, prediction)
        uint8* _smallStatesMap1; // hash table(context, prediction)
-       int _statesMask;
-       int _mixersMask;
-       int _hashMask;
-       int _bufferMask;
+       uint _statesMask;
+       uint _mixersMask;
+       uint _hashMask;
+       uint _bufferMask;
        uint8* _cp0; // context pointers
        uint8* _cp1;
        uint8* _cp2;
@@ -547,7 +547,7 @@ namespace kanzi
        _matchPos = _hashes[_hash];
 
        // Detect match
-       if ((_matchPos != 0) && (_pos - _matchPos <= _bufferMask)) {
+       if ((_matchPos != 0) && (uint(_pos - _matchPos) <= _bufferMask)) {
            int r = _matchLen + 2;
 
            while (r <= MAX_LENGTH) {
