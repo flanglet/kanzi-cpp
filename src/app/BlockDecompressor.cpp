@@ -104,6 +104,11 @@ int BlockDecompressor::decompress(uint64& inputSize)
         _ctx.putInt("from", 1);
         _ctx.putInt("to", 1);
         _ctx.putInt("jobs", 1);
+
+	if (isStdIn == true) {
+            cerr << "STDIN not allowed in 'info' mode" << endl;
+            return Error::ERR_OPEN_FILE;
+        }
     }
 
     if (isStdIn == false) {
