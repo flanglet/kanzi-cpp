@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(kanzi LANGUAGES C CXX)
+include(GNUInstallDirs)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -204,6 +205,41 @@ install(TARGETS kanzi_static
 install(TARGETS kanzi
     RUNTIME DESTINATION bin
 )
+
+# Install the man page (prefer pre-compressed source file).
+set(KANZI_MANPAGE_GZ "${CMAKE_CURRENT_SOURCE_DIR}/kanzi.1.gz")
+set(KANZI_MANPAGE "${CMAKE_CURRENT_SOURCE_DIR}/kanzi.1")
+set(KANZI_MANPAGE_TO_INSTALL "")
+
+if(EXISTS "${KANZI_MANPAGE_GZ}")
+    set(KANZI_MANPAGE_TO_INSTALL "${KANZI_MANPAGE_GZ}")
+elseif(EXISTS "${KANZI_MANPAGE}")
+    find_program(GZIP_EXECUTABLE gzip)
+
+    if(GZIP_EXECUTABLE)
+        set(KANZI_MANPAGE_GZ_BUILD "${CMAKE_CURRENT_BINARY_DIR}/kanzi.1.gz")
+        execute_process(
+            COMMAND "${GZIP_EXECUTABLE}" -n -c "${KANZI_MANPAGE}"
+            OUTPUT_FILE "${KANZI_MANPAGE_GZ_BUILD}"
+            RESULT_VARIABLE KANZI_GZIP_RESULT
+        )
+
+        if(NOT KANZI_GZIP_RESULT EQUAL 0)
+            message(FATAL_ERROR "Failed to gzip man page: ${KANZI_MANPAGE}")
+        endif()
+
+        set(KANZI_MANPAGE_TO_INSTALL "${KANZI_MANPAGE_GZ_BUILD}")
+    else()
+        message(WARNING "gzip not found. Installing uncompressed man page.")
+        set(KANZI_MANPAGE_TO_INSTALL "${KANZI_MANPAGE}")
+    endif()
+endif()
+
+if(KANZI_MANPAGE_TO_INSTALL)
+    install(FILES "${KANZI_MANPAGE_TO_INSTALL}"
+        DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
+    )
+endif()
 
 # Install the libraries (static and shared)
 install(TARGETS libkanzi libkanzi_shared
