@@ -345,7 +345,10 @@ bool EXECodec::inverseX86(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
 
             if ((src[srcIdx] & X86_MASK_JCC) != X86_INSTRUCTION_JCC) {
                 // Not a relative jump
-                if ((src[srcIdx] == X86_ESCAPE) && (++srcIdx >= codeEnd))
+                if (src[srcIdx] == X86_ESCAPE)
+                    return false;
+
+                if (++srcIdx >= codeEnd)
                     return false;
 
                 dst[dstIdx++] = src[srcIdx++];
@@ -353,7 +356,10 @@ bool EXECodec::inverseX86(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
             }
         } else if ((src[srcIdx] & X86_MASK_JUMP) != X86_INSTRUCTION_JUMP) {
             // Not a relative call
-            if ((src[srcIdx] == X86_ESCAPE) && (++srcIdx >= codeEnd))
+            if (src[srcIdx] == X86_ESCAPE)
+                return false;
+
+            if (++srcIdx >= codeEnd)
                 return false;
 
             dst[dstIdx++] = src[srcIdx++];
