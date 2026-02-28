@@ -35,91 +35,95 @@ There is a Go implementation available here: https://github.com/flanglet/kanzi-g
 
 ## Why Kanzi
 
-There are already many excellent, open-source lossless data compressors available.
+While excellent open-source compressors like zstd and brotli exist, they are primarily based on Lempel-Ziv (LZ) algorithms. Zstd, in particular, is a fantastic general-purpose choice known for its speed. However, LZ-based tools have inherent limits regarding compression ratios.
 
-If gzip is beginning to show its age, modern alternatives like **zstd** and **brotli** offer compelling replacements. Both are open-source, standardized, and used daily by millions. **Zstd** is especially notable for its exceptional speed and is often the best choice in general-purpose compression.
+Kanzi offers a compelling alternative for specific high-performance scenarios:
 
-However, there are scenarios where **Kanzi** may offer superior performance:
+* Beyond LZ: By incorporating Burrows-Wheeler Transform (BWT) and Context Modeling (CM), Kanzi can achieve compression ratios that traditional LZ methods cannot.
 
-While gzip, LZMA, brotli, and zstd are all based on LZ (Lempel-Ziv) compression, they are inherently limited in the compression ratios they can achieve. **Kanzi** goes further by incorporating **BWT (Burrows-Wheeler Transform)** and **CM (Context Modeling)**, which can outperform traditional LZ-based methods in certain cases.
+* Speed where it counts: While LZ is ideal for "compress once, decompress often" (like software distribution), it often slows down significantly at high compression settings. Kanzi leverages multi-core CPUs to maintain performance, making it highly effective for backups, real-time data generation, and one-off transfers.
 
-LZ-based compressors are ideal for software distribution, where data is compressed once and decompressed many times, thanks to their fast decompression speeds—though they tend to be slower when compressing at higher ratios. But in other scenarios such as real-time data generation, one-off data transfers, or backups **compression speed becomes critical**. Here, Kanzi can shine.
+* Content-Aware: Kanzi features built-in, customizable transforms for specific data types (e.g., multimedia, DNA, UTF text), improving efficiency where generic compressors fail.
 
-**Kanzi** also features a suite of built-in, customizable data transforms tailored for specific data types (e.g., multimedia, UTF, text, DNA, etc.), which can be selectively applied during compression for better efficiency.
-
-Furthermore, Kanzi is designed to **leverage modern multi-core CPUs** to boost performance.
-
-Finally, **extensibility** is a key strength: implementing new transforms or entropy codecs, whether for experimentation or to improve performance on niche data types, is straightforward and developer-friendly.
+* Extensible: The architecture is developer-friendly, making it straightforward to implement new transforms or entropy codecs for experimentation or niche data types.
 
 
 
 ## Benchmarks
 
-Test machine:
+Kanzi version 2.5.0 C++ implementation
 
-Apple M3 24 GB Sonoma 14.6.1
-
-Kanzi version 2.4.0 C++ implementation
-
-On this machine, Kanzi uses 4 threads (half of CPUs by default).
-
-bzip3 runs with 4threads. 
-
-zstd and lz4 use 4 threads for compression and 1 for decompression, other compressors are single threaded.
-
-The default block size at level 9 is 32MB, severely limiting the number of threads
-in use, especially with enwik8, but all tests are performed with default values.
+_Note: The default block size at level 9 is 32MB. This limits the number of threads in use, especially with smaller files like enwik8, but all tests below are performed with default values._
 
 
 ### silesia.tar
+
+Test machine:
+
+AMD Ryzen 9 9950X 16-Core Processor running Ubuntu 25.10
 
 Download at http://sun.aei.polsl.pl/~sdeor/corpus/silesia.zip
 
 |        Compressor               |  Encoding (ms)  |  Decoding (ms)  |      Size        |
 |---------------------------------|-----------------|-----------------|------------------|
 |Original                         |                 |                 |   211,957,760    |
-|**kanzi -l 1**                   |     **438**     |      **252**    |    80,245,856    |
-|lz4 1.1.10 -T4 -4                |       527       |        121      |    79,919,901    |
-|zstd 1.5.8 -T4 -2                |       147       |        150      |    69,410,383    |
-|**kanzi -l 2**                   |     **326**     |      **270**    |    68,860,099    |
-|brotli 1.1.0 -2                  |       907       |        402      |    68,039,159    |
-|Apple gzip 430.140.2 -9          |     10406       |        273      |    67,648,481    |
-|**kanzi -l 3**                   |     **584**     |      **344**    |    64,266,936    |
-|zstd 1.5.8 -T4 -5                |       300       |        154      |    62,851,716    |
-|**kanzi -l 4**                   |     **786**     |      **463**    |    61,131,554    |
-|zstd 1.5.8 -T4 -9                |       752       |        137      |    59,190,090    |
-|brotli 1.1.0 -6                  |      3596       |        340      |    58,557,128    |
-|zstd 1.5.8 -T4 -13               |      4537       |        138      |    57,814,719    |
-|brotli 1.1.0 -9                  |     19809       |        329      |    56,414,012    |
-|bzip2 1.0.8 -9                   |      9673       |       3140      |    54,602,583    |
-|**kanzi -l 5**                   |    **2067**     |     **1238**    |    54,025,588    |
-|zstd 1.5.8 -T4 -19               |     20482       |        151      |    52,858,610    |
-|**kanzi -l 6**                   |    **3003**     |     **2309**    |    49,521,392    |
-|xz 5.8.1 -9                      |     48516       |       1594      |    48,774,000    |
-|bsc 3.3.11 -T4                   |      1926       |       1650      |    47,963,044    |
-|**kanzi -l 7**                   |    **3726**     |     **3298**    |    47,312,772    |
-|bzip3 1.5.1.r3-g428f422 -j 4     |      8559       |       3948      |    47,256,794    |
-|**kanzi -l 8**                   |   **14335**     |    **15637**    |    43,260,254    |
-|**kanzi -l 9**                   |   **19727**     |    **21335**    |    41,858,030    |
+|lz4 1.1.10 -T16 -4               |        18       |         13      |    79,910,851    |
+|**kanzi -l 1**                   |      **72**     |       **42**    |    79,331,051    |
+|zstd 1.5.8 -T16 -2               |         6       |         11      |    69,443,247    |
+|**kanzi -l 2**                   |      **64**     |       **42**    |    68,616,621    |
+|brotli 1.1.0 -2                  |       880       |        333      |    68,040,160    |
+|gzip 1.13 -9                     |     10328       |        704      |    67,651,076    |
+|**kanzi -l 3**                   |     **109**     |       **58**    |    63,966,794    |
+|zstd 1.5.8 -T16 -5               |       138       |        123      |    62,867,556    |
+|**kanzi -l 4**                   |     **194**     |      **102**    |    61,183,757    |
+|zstd 1.5.8 -T16 -9               |       320       |        114      |    59,233,481    |
+|brotli 1.1.0 -6                  |      4039       |        299      |    58,511,709    |
+|zstd 1.5.8 -T16 -13              |      1820       |        112      |    57,843,283    |
+|brotli 1.1.0 -9                  |     23030       |        293      |    56,407,229    |
+|bzip2 1.0.8 -9                   |      8223       |       3453      |    54,588,597    |
+|**kanzi -l 5**                   |     **529**     |      **255**    |    53,853,702    |
+|zstd 1.5.8 -T16 -19              |     11290       |        130      |    52,830,213    |
+|**kanzi -l 6**                   |     **919**     |      **532**    |    49,472,084    |
+|xz 5.8.1 -9                      |     43611       |        931      |    48,802,580    |
+|bsc 3.3.11 -T16                  |      1201       |        698      |    47,900,848    |
+|**kanzi -l 7**                   |    **1153**     |      **888**    |    47,330,422    |
+|bzip3 1.5.1.r3-g428f422 -j 16    |      2348       |       2218      |    47,260,281    |
+|**kanzi -l 8**                   |    **4473**     |     **4881**    |    42,962,913    |
+|**kanzi -l 9**                   |   **11618**     |    **12381**    |    41,520,670    |
+
+
+
+
+![Graph for Silesia on AMD Ryzen 9950X](doc/Plot_silesia.png)
+
+Round-trip graph for Silesia on AMD Ryzen 9950X (X = compTime + 2*decompTime, Y = comp size)
+
 
 ### enwik8
 
-Download at https://mattmahoney.net/dc/enwik8.zip
+Test machine:
 
-Apple M3 24 GB Sonoma 14.6.1
+Apple M3 24 GB macOS Sonoma 15.7.3
+
+Download at https://mattmahoney.net/dc/enwik8.zip
 
 |   Compressor    | Encoding (ms)  | Decoding (ms)  |    Size      |
 |-----------------|----------------|----------------|--------------|
 |Original         |                |                |  100,000,000 |
-|kanzi -l 1       |       271      |        135     |   43,644,013 |
-|kanzi -l 2       |       196      |        142     |   37,570,404 |
-|kanzi -l 3       |       350      |        200     |   32,466,232 |
-|kanzi -l 4       |       372      |        249     |   29,536,517 |
-|kanzi -l 5       |       720      |        478     |   26,523,940 |
-|kanzi -l 6       |      1053      |        807     |   24,076,765 |
-|kanzi -l 7       |      1704      |       1416     |   22,817,360 |
-|kanzi -l 8       |      6544      |       6988     |   21,181,992 |
-|kanzi -l 9       |      8194      |       9090     |   20,035,144 |
+|kanzi -l 1       |       139      |         85     |   42,870,183 |
+|kanzi -l 2       |       131      |         92     |   37,544,247 |
+|kanzi -l 3       |       215      |        123     |   32,551,405 |
+|kanzi -l 4       |       303      |        170     |   29,536,581 |
+|kanzi -l 5       |       670      |        372     |   26,528,254 |
+|kanzi -l 6       |      1009      |        727     |   24,076,765 |
+|kanzi -l 7       |      1607      |       1366     |   22,817,360 |
+|kanzi -l 8       |      6371      |       6752     |   21,181,992 |
+|kanzi -l 9       |      8260      |       8760     |   20,035,144 |
+
+
+![Graph for enwik8 on AMD Ryzen 9950X](doc/Plot_enwik8.png)
+
+Round-trip graph for enwik8 on AMD Ryzen 9950X  (X = compTime + 2*decompTime, Y = comp size)
 
 
 
@@ -132,8 +136,10 @@ Apple M3 24 GB Sonoma 14.6.1
 
 ## Build Kanzi
 
-The C++ code can be built on Windows with Visual Studio, Linux, macOS and Android with g++ and/or clang++.
-There are no dependencies. Porting to other operating systems should be straightforward.
+* Platforms: Windows (Visual Studio), Linux, macOS, BSD
+* Dependencies: None.
+* Portability: Designed for easy porting to other OSs.
+* Multithreading: Supported by default.
 
 ### Visual Studio 2008
 Unzip the file "Kanzi_VS2008.zip" in place.
@@ -141,12 +147,12 @@ The solution generates a Windows 32 binary. Multithreading is not supported with
 
 ### Visual Studio 2022
 Unzip the file "Kanzi_VS2022.zip" in place.
-The solution generates a Windows 64 binary and library. Multithreading is supported with this version.
+The solution generates a Windows 64 binary and library.
 
 ### mingw-w64
 Go to the source directory and run 'make clean && mingw32-make.exe kanzi'. The Makefile contains 
 all the necessary targets. Tested successfully on Win64 with mingw-w64 g++ 8.1.0. 
-Multithreading is supportedwith g++ version 5.0.0 or newer.
+Multithreading is supported with g++ version 5.0.0 or newer.
 Builds successfully with C++11, C++14, C++17.
 
 ### Linux
@@ -155,15 +161,15 @@ targets. Build successfully on Ubuntu with many versions of g++ and clang++.
 Multithreading is supported with g++ version 5.0.0 or newer.
 Builds successfully with C++98, C++11, C++14, C++17, C++20.
 
-### MacOS
+### macOS
 Go to the source directory and run 'make clean && make kanzi'. The Makefile contains all the necessary
-targets. Build successfully on MacOs with several versions of clang++.
-Multithreading is supported.
+targets. Build successfully on MacOs with several versions of clang++. 
+Builds successfully with C++98, C++11, C++14, C++17, C++20.
 
 ### BSD
 The makefile uses the gnu-make syntax. First, make sure gmake is present (or install it: 'pkg install gmake').
 Go to the source directory and run 'gmake clean && gmake kanzi'. The Makefile contains all the necessary
-targets. Multithreading is supported.
+targets. Builds successfully with C++98, C++11, C++14, C++17, C++20.
 
 ### Makefile targets
 ```
@@ -183,7 +189,8 @@ For those who prefer cmake, run the following commands from the top directory:
 mkdir build
 cd build
 cmake ..
-make kanzi
+make
+ctest
 ```
 By default, the cmake build generates a dynamically linked executable. 
 Choose ```make kanzi_static``` to build a statically linked executable.
