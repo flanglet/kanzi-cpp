@@ -76,9 +76,8 @@ bool UTFCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     }
 
     int start = 0;
-    const uint32 bom = 0xEFBBBF;
 
-    if (memcmp(&src[0], &bom, 3) == 0) {
+    if ((count >= 3) && (src[0] == kanzi::byte(0xEF)) && (src[1] == kanzi::byte(0xBB)) && (src[2] == kanzi::byte(0xBF))) {
         // Byte Order Mark (BOM)
         start = 3;
     }
