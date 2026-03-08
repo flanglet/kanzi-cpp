@@ -102,6 +102,8 @@ TEST_SOURCES=test/TestEntropyCodec.cpp \
 	test/TestBWT.cpp \
 	test/TestCompressedStream.cpp \
 	test/TestDefaultBitStream.cpp \
+	test/TestFactories.cpp \
+	test/TestMalformedStream.cpp \
 	test/TestTransforms.cpp \
 	test/TestAPI.c
 
@@ -193,10 +195,16 @@ testEntropyCodec: $(LIB_OBJECTS) $(TEST_OBJ_DIR)/TestEntropyCodec.o
 testDefaultBitStream: $(LIB_OBJECTS) $(TEST_OBJ_DIR)/TestDefaultBitStream.o
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
+testFactories: $(LIB_OBJECTS) $(TEST_OBJ_DIR)/TestFactories.o
+	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
+
+testMalformedStream: $(LIB_OBJECTS) $(TEST_OBJ_DIR)/TestMalformedStream.o
+	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
+
 testCompressedStream: $(LIB_OBJECTS) $(TEST_OBJ_DIR)/TestCompressedStream.o
 	$(CXX) $^ -o ../bin/$@ $(LDFLAGS)
 
-test: testAPI testBWT testTransforms testEntropyCodec testDefaultBitStream testCompressedStream
+test: testAPI testBWT testTransforms testEntropyCodec testDefaultBitStream testFactories testMalformedStream testCompressedStream
 
 # Default executable target
 kanzi: $(LIB_OBJECTS) $(APP_OBJECTS)
