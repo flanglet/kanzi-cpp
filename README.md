@@ -150,8 +150,8 @@ Unzip the file "Kanzi_VS2022.zip" in place.
 The solution generates a Windows 64 binary and library.
 
 ### mingw-w64
-Go to the source directory and run 'make clean && mingw32-make.exe kanzi'. The Makefile contains 
-all the necessary targets. Tested successfully on Win64 with mingw-w64 g++ 8.1.0. 
+Go to the source directory and run 'make clean && mingw32-make.exe kanzi'. The Makefile contains
+all the necessary targets. Tested successfully on Win64 with mingw-w64 g++ 8.1.0.
 Multithreading is supported with g++ version 5.0.0 or newer.
 Builds successfully with C++11, C++14, C++17.
 
@@ -163,7 +163,7 @@ Builds successfully with C++98, C++11, C++14, C++17, C++20.
 
 ### macOS
 Go to the source directory and run 'make clean && make kanzi'. The Makefile contains all the necessary
-targets. Build successfully on MacOs with several versions of clang++. 
+targets. Build successfully on MacOs with several versions of clang++.
 Builds successfully with C++98, C++11, C++14, C++17, C++20.
 
 ### BSD
@@ -192,7 +192,7 @@ cmake ..
 make
 ctest
 ```
-By default, the cmake build generates a dynamically linked executable. 
+By default, the cmake build generates a dynamically linked executable.
 Choose ```make kanzi_static``` to build a statically linked executable.
 
 Credits
@@ -204,7 +204,7 @@ Yuta Mori,
 Ilya Muravyov,
 Neal Burns,
 Fabian Giesen,
-Jarek Duda, 
+Jarek Duda,
 Ilya Grebnov
 
 Disclaimer
