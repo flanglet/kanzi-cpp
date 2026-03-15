@@ -4,7 +4,8 @@ include(GNUInstallDirs)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
-#set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 #set(CMAKE_CXX_COMPILER "clang++")
 
 # Set C standard (for TestAPI.c)
@@ -20,14 +21,16 @@ if(CONCURRENCY_DISABLED)
     add_definitions(-DCONCURRENCY_DISABLED)
 endif()
 
-set(COMMON_FLAGS "-Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -fno-rtti")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
-set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
-
 if(MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    set(COMMON_FLAGS "/W4 /O2 /DNDEBUG")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} /GR-")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
+else()
+    set(COMMON_FLAGS "-Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -fno-rtti")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
 endif()
+set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 # Source files
 set(LIB_COMMON_SOURCES
