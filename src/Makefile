@@ -152,6 +152,8 @@ STATIC_DECOMP_LIB := lib$(APP)decomp$(STATIC_LIB_SUFFIX)
 SHARED_COMP_LIB := lib$(APP)comp$(SHARED_LIB_SUFFIX)
 SHARED_DECOMP_LIB := lib$(APP)decomp$(SHARED_LIB_SUFFIX)
 
+all: lib test $(APP_STATIC) $(APP_DYNAMIC)
+
 libcomp: $(STATIC_COMP_LIB) $(SHARED_COMP_LIB)
 
 libdecomp: $(STATIC_DECOMP_LIB) $(SHARED_DECOMP_LIB)
@@ -226,7 +228,6 @@ kanzi_dynamic: LDFLAGS := $(filter-out -static,$(LDFLAGS))
 kanzi_dynamic: $(LIB_OBJECTS) $(APP_OBJECTS)
 	$(CXX) $^ -o ../bin/kanzi_dynamic$(PROG_SUFFIX) $(LDFLAGS)
 
-all: lib test $(APP_STATIC) $(APP_DYNAMIC)
 
 # Install / uninstall (may require sudo or admin rights)
 ifeq ($(DETECTED_OS),Windows)
