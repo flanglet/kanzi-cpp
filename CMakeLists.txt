@@ -218,8 +218,8 @@ install(TARGETS kanzi
 )
 
 # Install the man page (prefer pre-compressed source file).
-set(KANZI_MANPAGE_GZ "${CMAKE_CURRENT_SOURCE_DIR}/kanzi.1.gz")
-set(KANZI_MANPAGE "${CMAKE_CURRENT_SOURCE_DIR}/kanzi.1")
+set(KANZI_MANPAGE_GZ "${CMAKE_CURRENT_SOURCE_DIR}/doc/kanzi.1.gz")
+set(KANZI_MANPAGE "${CMAKE_CURRENT_SOURCE_DIR}/doc/kanzi.1")
 set(KANZI_MANPAGE_TO_INSTALL "")
 
 if(EXISTS "${KANZI_MANPAGE_GZ}")

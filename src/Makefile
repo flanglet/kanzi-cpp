@@ -270,13 +270,13 @@ else
 	install -d $(INSTALL_DIR)/bin
 	install -m577 ../bin/$(APP)$(PROG_SUFFIX) $(INSTALL_DIR)/bin
 	install -d $(MAN_DIR)
-	if [ -f ../kanzi.1.gz ]; then \
-		install -m 644 ../kanzi.1.gz $(MAN_DIR)/$(APP).1.gz; \
-	elif [ -f ../kanzi.1 ]; then \
-		gzip -n -c ../kanzi.1 > $(MAN_DIR)/$(APP).1.gz; \
+	if [ -f ../doc/kanzi.1.gz ]; then \
+		install -m 644 ../doc/kanzi.1.gz $(MAN_DIR)/$(APP).1.gz; \
+	elif [ -f ../doc/kanzi.1 ]; then \
+		gzip -n -c ../doc/kanzi.1 > $(MAN_DIR)/$(APP).1.gz; \
 		chmod 644 $(MAN_DIR)/$(APP).1.gz; \
 	else \
-		echo "Error: missing ../kanzi.1.gz or ../kanzi.1"; \
+		echo "Error: missing ../doc/kanzi.1.gz or ../doc/kanzi.1"; \
 		exit 1; \
 	fi
 endif

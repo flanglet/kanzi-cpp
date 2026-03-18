@@ -1,0 +1,240 @@
+.TH "KANZI" "1" "Feb 2026" "kanzi 2.5" "User Commands"
+.SH "NAME"
+\fBkanzi\fR \- Compress and decompress \.knz files
+.SH "SYNOPSIS"
+\fBkanzi\fR [\fIOPTIONS\fR] [\-i \fIINPUT\-FILE\fR] [\-o \fIOUTPUT\-FILE\fR]
+.SH "DESCRIPTION"
+\fBKanzi\fR is a modern, modular, portable and efficient lossless data compressor\.
+
+Modern algorithms are implemented and multi-core CPUs can take advantage of the built-in multi-threading.
+An entropy codec and a combination of transforms can be provided at runtime to best match the kind of data to compress.
+The code is optimized for efficiency (trade-off between compression ratio and speed)\.
+
+Unlike the most common lossless data compressors, \fBKanzi\fR uses a variety of different compression algorithms and supports a wider range of compression ratios as a result\.
+
+\fBKanzi\fR is multithreaded by design and uses several threads by default to compress or decompress blocks concurrently\. It is not compatible with standard compression formats such as zip, gz, zstd, br, lz4, xz\. \fBKanzi\fR is a lossless data compressor, not an archiver\. It uses checksums (optional but recommended) to validate data integrity but does not have a mechanism for data recovery. It also lacks data deduplication across files\.
+
+\fBKanzi\fR generates a bitstream that is seekable (one or several consecutive blocks can be decompressed without the need for the whole bitstream to be decompressed)\.
+
+.SH "OPTIONS"
+.SS "Operation Mode"
+Help\.
+
+   \fB-h, --help\fR
+        display this message
+
+Compression mode\.
+
+   \fB-i, --input=<inputName>\fR
+        Mandatory name of the input file or directory or 'stdin'
+        When the source is a directory, all files in it will be processed.
+        Provide /. at the end of the directory name to avoid recursion
+        (e.g., myDir/. => no recursion)
+
+   \fB-o, --output=<outputName>\fR
+        Optional name of the output file or directory (defaults to
+        <inputName.knz>) or 'none' or 'stdout'. 'stdout' is not valid
+        when the number of jobs is greater than 1
+
+   \fB-b, --block=<size>\fR
+        Size of blocks (default 4|8|16|32 MB based on level, max 1 GB, min 1 KB)
+        'auto' means that the compressor derives the best value
+        based on input size (when available) and number of jobs
+
+   \fB-l, --level=<compression>\fR
+        Set the compression level [0..9]
+        Providing this option forces the entropy codec and transform.
+        See the definitions of the transforms and entropy codecs in the last section.
+        0 = NONE&NONE (store)
+        1 = LZX&NONE
+        2 = DNA+LZ&HUFFMAN
+        3 = TEXT+UTF+PACK+MM+LZX&HUFFMAN
+        4 = TEXT+UTF+EXE+PACK+MM+ROLZ&NONE
+        5 = TEXT+UTF+BWT+RANK+ZRLT&ANS0
+        6 = TEXT+UTF+BWT+SRT+ZRLT&FPAQ
+        7 = LZP+TEXT+UTF+BWT+LZP&CM
+        8 = EXE+RLT+TEXT+UTF+DNA&TPAQ
+        9 = EXE+RLT+TEXT+UTF+DNA&TPAQX
+
+   \fB-e, --entropy=<codec>\fR
+        entropy codec [None|Huffman|ANS0|ANS1|Range|FPAQ|TPAQ|TPAQX|CM]
+
+   \fB-t, --transform=<codec>\fR
+        transform [None|BWT|BWTS|LZ|LZX|LZP|ROLZ|ROLZX|RLT|ZRLT]
+                  [MTFT|RANK|SRT|TEXT|MM|EXE|UTF|PACK]
+        e.g., BWT+RANK or BWTS+MTFT (default is BWT+RANK+ZRLT)
+
+   \fB-x, -x32, -x64, --checksum=<size>\fR
+        Enable block checksum (32 or 64 bits). During decompression data is verified against the checksum in each block.
+        -x is equivalent to -x32.
+
+   \fB-s, --skip\fR
+        copy blocks with high entropy instead of compressing them
+   
+   \fB--rm\fR
+        Remove the input file after successful (de)compression.
+        If the input is a directory, all processed files under the directory are removed.
+
+
+Decompression mode\.
+
+   \fB-i, --input=<inputName>\fR
+        Mandatory name of the input file or directory or 'stdin'
+        When the source is a directory, all files in it will be processed.
+        Provide /. at the end of the directory name to avoid recursion
+        (e.g., myDir/. => no recursion)
+
+   \fB-o, --output=<outputName>\fR
+        Optional name of the output file or directory (defaults to
+        <inputName.bak>) or 'none' or 'stdout'. 'stdout' is not valid
+        when the number of jobs is greater than 1.
+
+   \fB--from=blockId\fR
+        Decompress starting from the provided block (included).
+        The first block ID is 1.
+
+   \fB--to=blockId\fR
+        Decompress ending at the provided block (excluded).
+   
+   \fB--rm\fR
+        Remove the input file after successful (de)compression.
+        If the input is a directory, all processed files under the directory are removed.
+
+Info mode\.
+
+   \fB-i, --input=<inputName>\fR
+        Mandatory name of the compressed input file.
+        When the source is a directory, all files in it will be processed.
+        Provide /. at the end of the directory name to avoid recursion
+        (e.g., myDir/. => no recursion)
+
+
+Operation modifiers\.
+
+   \fB-j, --jobs=<jobs>\fR
+        Maximum number of jobs the program may start concurrently
+        (default is half the available cores, maximum is 64)
+
+   \fB-v, --verbose=<level>\fR
+        0=silent, 1=default, 2=display details, 3=display configuration,
+        4=display block size and timings, 5=display extra information
+        Verbosity is reduced to 1 when files are processed concurrently
+        Verbosity is reduced to 0 when the output is 'stdout'
+
+   \fB-f, --force\fR
+        Overwrite the output file if it already exists
+   
+   \fB--skip-links\fR
+        Skip symbolic links
+
+   \fB--skip-dot-files\fR
+        Skip dotfiles
+
+
+.SS "Examples"
+
+Compress recursively all files under 'dir' in test mode (no output file) using a 4 MB block, compression level 4, and extra verbosity.
+kanzi -c -i dir -o none -b 4m -l 4 -v 3
+
+Compress foo.txt to foo.txt.knz (overwrite it if it already exists) using the BWT, MTFT, and ZRLT transforms, the FPAQ entropy codec, and 4 threads; generate a checksum for each 4 MB block.
+kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -j 4 -x
+
+Compress from stdin (--input option is omitted) to foo.knz using compression level 2, 64 KB blocks, and the default number of threads.
+cat foo.txt | kanzi -c -o foo.knz -l 2 -b 64k
+
+Decompress foo.txt.knz to foo.txt.knz.bak using 2 threads.
+kanzi -d -i foo.txt.knz -j 2
+
+Decompress foo.txt.knz to stdout and delete the compressed file.
+kanzi -d -i foo.txt.knz -o stdout --rm
+
+Decompress foo.txt.knz to foo.txt (overwrite it if it already exists) from block 5 to block 11, using 8 threads and extra verbosity.
+kanzi -d -i foo.txt.knz -o foo.txt -f -j 8 --from=5 --to=11 -v 4
+
+
+.SS "Transforms"
+
+BWT: Burrows-Wheeler Transform is a transform that reorders symbols
+     in a reversible way that is more amenable to entropy coding.
+     This implementation uses a linear time forward transform and parallel
+     inverse transform.
+
+BWTS: Burrows-Wheeler Transform by Scott is a bijective variant of the BWT.
+
+LZ: Lempel-Ziv implementation of the dictionary-based LZ77 transform that
+    removes redundancy in the data.
+
+LZX: Lempel-Ziv Extra. Same as above with a bigger hash table and more
+     match searches.
+
+LZP: Lempel-Ziv Prediction can be described as an LZ implementation with only
+     one possible match (no offset is emitted).
+
+RLT: Run-Length Transform is a simple transform that replaces runs of similar
+     symbols with a compact representation.
+
+ZRLT: Zero Run-Length Transform. Similar to RLT but only processes runs of 0.
+      Usually used post-BWT.
+
+MTFT: Move-To-Front Transform is a transform that reduces entropy by assigning
+      shorter symbols to recent data (like an LRU cache). Usually used post-BWT.
+
+RANK: Rank Transform is a transform that reduces entropy by assigning shorter
+      symbols based on symbol frequency ranks. Usually used post-BWT.
+
+EXE: A transform that reduces the entropy of executable files (X86 & ARM64)
+     by replacing relative jump addresses with absolute ones.
+
+TEXT: A text transform that uses a dictionary to replace common words with
+      their dictionary index.
+
+ROLZ: Reduced Offset Lempel-Ziv is an implementation of LZ that replaces match offsets
+      with indexes, creating a more compact output with slower decoding speeds.
+
+ROLZX: Extended ROLZ with more match searches and a more compact encoding.
+
+SRT: Sorted Rank Transform is a transform that reduces entropy by assigning
+     shorter symbols based on symbol frequency ranks. Usually used post-BWT.
+
+MM: Multimedia transform is a fast transform that removes redundancy in correlated
+    channels in some multimedia files (e.g., wav, pnm).
+
+UTF: A fast transform replacing UTF-8 codewords with aliases based on frequencies.
+
+PACK: A fast transform replacing unused symbols with aliases based on frequencies.
+
+DNA: Same as PACK but triggered only when DNA data is detected.
+
+
+.SS "Entropy codecs"
+
+Huffman: A fast implementation of canonical Huffman. Both encoder and decoder
+         use code tables and multiple streams to improve performance.
+
+RANGE: A fast implementation of a static range codec.
+
+ANS: Based on Range Asymmetric Numeral Systems by Jarek Duda (specifically
+     an implementation by Fabian Giesen). Works in a similar fashion to the Range
+     codec but uses only one state instead of two, and encodes in reverse byte order.
+
+FPAQ: A binary arithmetic codec based on FPAQ1 by Matt Mahoney. Uses a simple
+      adaptive order 0 predictor based on frequencies.
+
+CM: A binary arithmetic codec derived from BCM by Ilya Muravyov. Uses context
+    mixing of counters to generate a prediction of the next bit value.
+
+TPAQ: A binary arithmetic codec based initially on Tangelo 2.4 (itself derived
+      from FPAQ8). Uses context mixing of predictions produced by one-layer
+      neural networks. The initial code has been heavily tuned to improve
+      compression ratio and speed. Slow but usually excellent compression ratio.
+
+TPAQX: Extended TPAQ with more predictions and more memory usage. Slowest but
+       usually the best compression ratio.
+
+
+.SH BUGS
+Report bugs at: https://github.com/flanglet/kanzi-cpp/issues
+.SH AUTHOR
+Frederic Langlet
+.SH REPORTING BUGS
+https://github.com/flanglet/kanzi-cpp
