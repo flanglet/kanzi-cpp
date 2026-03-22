@@ -23,6 +23,7 @@ limitations under the License.
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
 #include "../BitStreamException.hpp"
+#include "../io/IOUtil.hpp"
 #include "../io/IOException.hpp"
 
 using namespace std;
@@ -681,6 +682,13 @@ int TestDefaultBitStream_main(int argc, const char* argv[])
 
     try {
        string fileName = argv[1];
+       struct STAT buffer;
+
+       if ((STAT(fileName.c_str(), &buffer) == 0) && S_ISDIR(buffer.st_mode)) {
+          cout << "Temp output path must be a file, not a directory" << endl;
+          return 1;
+       }
+
        res |= testBitStreamCorrectnessAligned1();
        res |= testBitStreamCorrectnessAligned2();
        res |= testBitStreamCorrectnessMisaligned1();
