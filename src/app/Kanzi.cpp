@@ -59,8 +59,6 @@ static const string APP_USAGE = "Usage: kanzi [-c|-d|-y] [flags and files in any
 
 #ifdef CONCURRENCY_ENABLED
    static const int MAX_CONCURRENCY = 64;
-
-   mutex Printer::_mtx;
 #endif
 
 void printHelp(Printer& log, const string& mode, bool showHeader)
