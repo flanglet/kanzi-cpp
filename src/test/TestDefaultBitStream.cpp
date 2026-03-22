@@ -658,6 +658,40 @@ int testBitStreamSpeed2(const string& fileName)
     return 0;
 }
 
+int testHasMoreToRead()
+{
+    cout << endl << "hasMoreToRead Test" << endl << endl;
+    stringbuf buffer;
+    iostream ios(&buffer);
+    const char value = char(0xAB);
+    ios.write(&value, 1);
+    ios.rdbuf()->pubseekpos(0);
+    DefaultInputBitStream ibs(ios, 1024);
+
+    if (ibs.hasMoreToRead() == false) {
+        cout << "Unexpected end of stream" << endl;
+        return 1;
+    }
+
+    if (ibs.hasMoreToRead() == false) {
+        cout << "Repeated probe lost buffered data" << endl;
+        return 2;
+    }
+
+    if (ibs.readBits(8) != 0xAB) {
+        cout << "Read failure" << endl;
+        return 3;
+    }
+
+    if (ibs.hasMoreToRead() == true) {
+        cout << "Unexpected data after end of stream" << endl;
+        return 4;
+    }
+
+    cout << "Success" << endl;
+    return 0;
+}
+
 
 #ifdef __GNUG__
 int main(int argc, const char* argv[])
@@ -693,6 +727,7 @@ int TestDefaultBitStream_main(int argc, const char* argv[])
        res |= testBitStreamCorrectnessAligned2();
        res |= testBitStreamCorrectnessMisaligned1();
        res |= testBitStreamCorrectnessMisaligned2();
+       res |= testHasMoreToRead();
        res |= testSeek(fileName);
 
        if (doPerf == true) {
