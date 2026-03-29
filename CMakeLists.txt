@@ -1,6 +1,29 @@
 cmake_minimum_required(VERSION 3.10)
-project(kanzi LANGUAGES C CXX)
+
+set(KANZI_PROJECT_VERSION "2.5.1")
+set(KANZI_ABI_VERSION "1.0.0")
+project(kanzi VERSION ${KANZI_PROJECT_VERSION} LANGUAGES C CXX)
+
 include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+string(REPLACE "." ";" KANZI_ABI_VERSION_PARTS "${KANZI_ABI_VERSION}")
+list(GET KANZI_ABI_VERSION_PARTS 0 KANZI_SOVERSION)
+
+option(KANZI_ENABLE_NATIVE_OPTIMIZATIONS "Enable CPU-specific optimizations such as -march=native" ON)
+
+set(KANZI_INSTALL_RELATIVE_RPATH_DEFAULT ON)
+
+if(CMAKE_INSTALL_PREFIX STREQUAL "/usr")
+    set(KANZI_INSTALL_RELATIVE_RPATH_DEFAULT OFF)
+endif()
+
+option(KANZI_INSTALL_RELATIVE_RPATH
+    "Install the CLI with a relative runtime search path for the shared library"
+    ${KANZI_INSTALL_RELATIVE_RPATH_DEFAULT}
+)
+
+set(KANZI_CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/Kanzi")
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -26,7 +49,12 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} /GR-")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
 else()
-    set(COMMON_FLAGS "-Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native")
+    set(COMMON_FLAGS "-Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic")
+
+    if(KANZI_ENABLE_NATIVE_OPTIMIZATIONS)
+        string(APPEND COMMON_FLAGS " -march=native")
+    endif()
+
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -fno-rtti")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
 endif()
@@ -108,8 +136,24 @@ add_library(libkanzi_shared SHARED ${LIB_COMMON_SOURCES} ${LIB_COMP_SOURCES} ${L
 target_link_libraries(libkanzi PUBLIC Threads::Threads)
 target_link_libraries(libkanzi_shared PUBLIC Threads::Threads)
 
+target_include_directories(libkanzi
+    PUBLIC
+        $<BUILD_INTERFACE:${SRC_DIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/kanzi>
+)
+
+target_include_directories(libkanzi_shared
+    PUBLIC
+        $<BUILD_INTERFACE:${SRC_DIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/kanzi>
+)
+
 set_target_properties(libkanzi PROPERTIES OUTPUT_NAME "kanzi")
-set_target_properties(libkanzi_shared PROPERTIES OUTPUT_NAME "kanzi")
+set_target_properties(libkanzi_shared PROPERTIES
+    OUTPUT_NAME "kanzi"
+    VERSION "${KANZI_ABI_VERSION}"
+    SOVERSION "${KANZI_SOVERSION}"
+)
 
 #add_library(libkanzi_comp STATIC ${LIB_COMP_SOURCES})
 #add_library(libkanzi_decomp STATIC ${LIB_DECOMP_SOURCES})
@@ -151,11 +195,14 @@ set_target_properties(testAPI PROPERTIES LINKER_LANGUAGE CXX)
 add_executable(kanzi ${APP_SOURCES})
 target_link_libraries(kanzi libkanzi_shared)
 
-# Set RPATH for Linux so it finds libkanzi.so at runtime
-set_target_properties(kanzi PROPERTIES
-    BUILD_WITH_INSTALL_RPATH TRUE
-    INSTALL_RPATH "$ORIGIN/../lib"
-)
+# Keep the CLI runnable from relocatable prefixes, but avoid embedding an
+# RPATH for standard system package installs.
+if(UNIX AND NOT APPLE AND KANZI_INSTALL_RELATIVE_RPATH)
+    set_target_properties(kanzi PROPERTIES
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}"
+    )
+endif()
 
 # Statically linked executable
 add_executable(kanzi_static ${APP_SOURCES})
@@ -209,12 +256,14 @@ add_custom_target(lib
 
 # Install the statically linked executable
 install(TARGETS kanzi_static
-    RUNTIME DESTINATION bin
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    COMPONENT Runtime
 )
 
 # Install dynamically linked executable
 install(TARGETS kanzi
-    RUNTIME DESTINATION bin
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    COMPONENT Runtime
 )
 
 # Install the man page (prefer pre-compressed source file).
@@ -249,49 +298,98 @@ endif()
 if(KANZI_MANPAGE_TO_INSTALL)
     install(FILES "${KANZI_MANPAGE_TO_INSTALL}"
         DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
+        COMPONENT Runtime
     )
 endif()
 
 # Install the libraries (static and shared)
 install(TARGETS libkanzi libkanzi_shared
-    ARCHIVE DESTINATION lib    # For static libraries (.a, .lib)
-    LIBRARY DESTINATION lib    # For shared libraries (.so, .dylib, .dll)
+    EXPORT KanziTargets
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Development
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT Runtime NAMELINK_COMPONENT Development
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT Runtime
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/kanzi"
 )
 
 # Dynamically discover and install public headers
-# We assume all header files (.h and .hpp) in the project directories
-# (excluding test/ and app/ directories) are public headers.
-
-# Define the base directories where headers might reside
-# PROJECT_SOURCE_DIR refers to the directory containing CMakeLists.txt
-set(HEADER_BASE_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR} # For headers like Global.h, Event.h at root
-    ${CMAKE_CURRENT_SOURCE_DIR}/api
-    ${CMAKE_CURRENT_SOURCE_DIR}/bitstream
-    ${CMAKE_CURRENT_SOURCE_DIR}/entropy
-    ${CMAKE_CURRENT_SOURCE_DIR}/io
-    ${CMAKE_CURRENT_SOURCE_DIR}/transform
+# We only install headers from the library tree, preserving paths relative to
+# src/ so includes like <kanzi/api/Compressor.hpp> and <kanzi/util/WallTimer.hpp>
+# remain stable across platforms.
+set(PUBLIC_HEADER_BASE_DIRS
+    ${SRC_DIR}
+    ${SRC_DIR}/api
+    ${SRC_DIR}/bitstream
+    ${SRC_DIR}/entropy
+    ${SRC_DIR}/io
+    ${SRC_DIR}/transform
+    ${SRC_DIR}/util
 )
 
 # List to hold all found header files
-set(ALL_HEADERS)
+set(ALL_PUBLIC_HEADERS)
 
 # Iterate through the base directories and find headers
-foreach(dir IN LISTS HEADER_BASE_DIRS)
-    file(GLOB_RECURSE CURRENT_DIR_HEADERS "${dir}/*.h" "${dir}/*.hpp")
-    list(APPEND ALL_HEADERS ${CURRENT_DIR_HEADERS})
+foreach(dir IN LISTS PUBLIC_HEADER_BASE_DIRS)
+    if(EXISTS "${dir}")
+        file(GLOB_RECURSE CURRENT_DIR_HEADERS "${dir}/*.h" "${dir}/*.hpp")
+        list(APPEND ALL_PUBLIC_HEADERS ${CURRENT_DIR_HEADERS})
+    endif()
 endforeach()
+
+list(REMOVE_DUPLICATES ALL_PUBLIC_HEADERS)
 
 # Install each header, preserving its relative path within the 'kanzi' include directory
-foreach(header_file IN LISTS ALL_HEADERS)
-    # Calculate the relative path from the project root
-    file(RELATIVE_PATH REL_PATH ${CMAKE_CURRENT_SOURCE_DIR} ${header_file})
+foreach(header_file IN LISTS ALL_PUBLIC_HEADERS)
+    file(RELATIVE_PATH REL_PATH "${SRC_DIR}" "${header_file}")
 
-    # Install to include/kanzi/ followed by its relative path
-    install(FILES "${header_file}"
-        DESTINATION "include/kanzi/${REL_PATH}"
-    )
+    if(NOT REL_PATH MATCHES "^(app|test|obj|build)/")
+        get_filename_component(REL_DIR "${REL_PATH}" DIRECTORY)
+
+        if(REL_DIR STREQUAL ".")
+            set(HEADER_DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/kanzi")
+        else()
+            set(HEADER_DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/kanzi/${REL_DIR}")
+        endif()
+
+        install(FILES "${header_file}"
+            DESTINATION "${HEADER_DESTINATION}"
+            COMPONENT Development
+        )
+    endif()
 endforeach()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE"
+        DESTINATION "${CMAKE_INSTALL_DOCDIR}"
+        COMPONENT Runtime
+    )
+endif()
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/KanziConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/KanziConfig.cmake"
+    INSTALL_DESTINATION "${KANZI_CMAKE_INSTALL_CMAKEDIR}"
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/KanziConfigVersion.cmake"
+    VERSION "${PROJECT_VERSION}"
+    COMPATIBILITY SameMajorVersion
+)
+
+install(EXPORT KanziTargets
+    FILE KanziTargets.cmake
+    NAMESPACE kanzi::
+    DESTINATION "${KANZI_CMAKE_INSTALL_CMAKEDIR}"
+    COMPONENT Development
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/KanziConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/KanziConfigVersion.cmake"
+    DESTINATION "${KANZI_CMAKE_INSTALL_CMAKEDIR}"
+    COMPONENT Development
+)
 
 # Uninstall all files added during install
 configure_file(
