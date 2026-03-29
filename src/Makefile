@@ -47,6 +47,14 @@ else
 	endif
 endif	
 
+ifeq ($(DETECTED_OS),FreeBSD)
+    STATIC_LINK_FLAGS := -static
+else ifeq ($(DETECTED_OS),Darwin)
+    STATIC_LINK_FLAGS :=
+else
+    STATIC_LINK_FLAGS := -static-libstdc++ -static-libgcc
+endif
+
 LIB_COMMON_SOURCES=Global.cpp \
 	Event.cpp \
 	util/WallTimer.cpp \
@@ -218,7 +226,8 @@ ifeq ($(DETECTED_OS),Darwin)
 kanzi_static:
 	@echo "Static linking is not supported on macOS"
 else
-kanzi_static: LDFLAGS += -static-libstdc++ -static-libgcc
+# Only add the flags if we aren't on macOS
+kanzi_static: LDFLAGS += $(STATIC_LINK_FLAGS)
 kanzi_static: $(LIB_OBJECTS) $(APP_OBJECTS)
 	$(CXX) $^ -o ../bin/kanzi_static$(PROG_SUFFIX) $(LDFLAGS)
 endif
