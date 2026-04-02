@@ -564,7 +564,7 @@ kanzi::byte EXECodec::detectType(const kanzi::byte src[], int count, int& codeSt
         return NOT_EXE | kanzi::byte(dt);
 
     // Ad-hoc thresholds
-    if ((jumpsX86 >= (count / 200)) && (histo[255] >= uint(count / 50)))
+    if (jumpsX86 >= (count / 200))
         return X86;
 
     if (jumpsARM64 >= (count / 200))
