@@ -361,18 +361,18 @@ bool CompressedOutputStream::removeListener(Listener<Event>& bl)
 
 ostream& CompressedOutputStream::write(const char* data, streamsize length)
 {
-    int off = 0;
-    int remaining = int(length);
-
-    if (remaining < 0)
+    if (length < 0)
        throw IOException("Invalid buffer size");
 
+    streamsize off = 0;
+    streamsize remaining = length;
+
     while (remaining > 0) {
-        const int lenChunk = min(remaining, _bufferThreshold - _buffers[_bufferId]->_index);
+        const streamsize lenChunk = min(remaining, streamsize(_bufferThreshold - _buffers[_bufferId]->_index));
 
         if (lenChunk > 0) {
-            memcpy(&_buffers[_bufferId]->_array[_buffers[_bufferId]->_index], &data[off], lenChunk);
-            _buffers[_bufferId]->_index += lenChunk;
+            memcpy(&_buffers[_bufferId]->_array[_buffers[_bufferId]->_index], &data[off], size_t(lenChunk));
+            _buffers[_bufferId]->_index += int(lenChunk);
             off += lenChunk;
             remaining -= lenChunk;
 
