@@ -36,4 +36,3 @@ foreach(dir ${install_dirs})
         endif()
     endif()
 endforeach()
-
