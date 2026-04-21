@@ -299,6 +299,100 @@ static int testEXECodec()
     return 0;
 }
 
+static int testZRLTMalformed()
+{
+    cout << endl
+         << "Malformed ZRLT" << endl;
+    Context ctx;
+    ZRLT codec(ctx);
+
+    {
+        kanzi::byte encoded[1] = { kanzi::byte(2) };
+        kanzi::byte decoded[5];
+        memset(decoded, 0x7E, sizeof(decoded));
+        SliceArray<kanzi::byte> input(encoded, 1, 0);
+        SliceArray<kanzi::byte> output(decoded, 4, 3);
+
+        if (codec.inverse(input, output, 1) == false) {
+            cout << "Valid offset decode failed" << endl;
+            return 1;
+        }
+
+        if ((output._index != 4) || (decoded[3] != kanzi::byte(1)) ||
+            (decoded[4] != kanzi::byte(0x7E))) {
+            cout << "Valid offset decode corrupted output" << endl;
+            return 1;
+        }
+    }
+
+    {
+        kanzi::byte encoded[2] = { kanzi::byte(2), kanzi::byte(2) };
+        kanzi::byte decoded[5];
+        memset(decoded, 0x7E, sizeof(decoded));
+        SliceArray<kanzi::byte> input(encoded, 2, 0);
+        SliceArray<kanzi::byte> output(decoded, 4, 3);
+
+        if (codec.inverse(input, output, 2) != false) {
+            cout << "Oversized offset decode should fail" << endl;
+            return 1;
+        }
+
+        if (decoded[4] != kanzi::byte(0x7E)) {
+            cout << "Oversized offset decode wrote past logical output" << endl;
+            return 1;
+        }
+    }
+
+    {
+        kanzi::byte encoded[1] = { kanzi::byte(2) };
+        kanzi::byte decoded[1] = { kanzi::byte(0) };
+        SliceArray<kanzi::byte> input(encoded, 1, 0);
+        SliceArray<kanzi::byte> output(decoded, 1, 0);
+
+        if (codec.inverse(input, output, 2) != false) {
+            cout << "Oversized encoded length should fail" << endl;
+            return 1;
+        }
+    }
+
+    {
+        kanzi::byte encoded[1] = { kanzi::byte(0xFF) };
+        kanzi::byte decoded[1] = { kanzi::byte(0x7E) };
+        SliceArray<kanzi::byte> input(encoded, 1, 0);
+        SliceArray<kanzi::byte> output(decoded, 1, 0);
+
+        if (codec.inverse(input, output, 1) != false) {
+            cout << "Truncated escape should fail" << endl;
+            return 1;
+        }
+
+        if (decoded[0] != kanzi::byte(0x7E)) {
+            cout << "Truncated escape wrote output" << endl;
+            return 1;
+        }
+    }
+
+    {
+        kanzi::byte encoded[1] = { kanzi::byte(0) };
+        kanzi::byte decoded[1] = { kanzi::byte(0x7E) };
+        SliceArray<kanzi::byte> input(encoded, 1, 0);
+        SliceArray<kanzi::byte> output(decoded, 0, 0);
+
+        if (codec.inverse(input, output, 1) != false) {
+            cout << "Oversized zero run should fail" << endl;
+            return 1;
+        }
+
+        if (decoded[0] != kanzi::byte(0x7E)) {
+            cout << "Oversized zero run wrote output" << endl;
+            return 1;
+        }
+    }
+
+    cout << "Malformed ZRLT tests passed" << endl;
+    return 0;
+}
+
 static Transform<kanzi::byte>* getByteTransform(string name, Context& ctx)
 {
     if (name.compare("SRT") == 0)
@@ -793,6 +887,11 @@ int TestTransforms_main(int argc, const char* argv[])
 
     try {
         res = testEXECodec();
+
+        if (res != 0)
+            return res;
+
+        res = testZRLTMalformed();
 
         if (res != 0)
             return res;
