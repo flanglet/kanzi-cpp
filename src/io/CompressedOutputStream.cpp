@@ -612,6 +612,36 @@ EncodingTask<T>::EncodingTask(SliceArray<kanzi::byte>* iBuffer, SliceArray<kanzi
     _processedBlockId = processedBlockId;
 }
 
+template <class T>
+void EncodingTask<T>::storeProcessedBlockId(int value)
+{
+#ifdef CONCURRENCY_ENABLED
+    {
+        std::lock_guard<std::mutex> lock(*_blockMutex);
+        STORE_ATOMIC(*_processedBlockId, value);
+    }
+
+    _blockCondition->notify_all();
+#else
+    STORE_ATOMIC(*_processedBlockId, value);
+#endif
+}
+
+template <class T>
+void EncodingTask<T>::fetchAddProcessedBlockId()
+{
+#ifdef CONCURRENCY_ENABLED
+    {
+        std::lock_guard<std::mutex> lock(*_blockMutex);
+        FETCH_ADD_ATOMIC(*_processedBlockId, 1);
+    }
+
+    _blockCondition->notify_all();
+#else
+    FETCH_ADD_ATOMIC(*_processedBlockId, 1);
+#endif
+}
+
 // Encode mode + transformed entropy coded data
 // mode | 0b1yy0xxxx => copy block
 //      | 0b0yy00000 => size(size(block))-1
@@ -626,31 +656,6 @@ T EncodingTask<T>::run()
     const int blockLength = _ctx.getInt("size");
     TransformSequence<kanzi::byte>* transform = nullptr;
     EntropyEncoder* ee = nullptr;
-    auto storeProcessedBlockId = [this](int value) {
-#ifdef CONCURRENCY_ENABLED
-        {
-            std::lock_guard<std::mutex> lock(*_blockMutex);
-            STORE_ATOMIC(*_processedBlockId, value);
-        }
-
-        _blockCondition->notify_all();
-#else
-        STORE_ATOMIC(*_processedBlockId, value);
-#endif
-    };
-
-    auto fetchAddProcessedBlockId = [this]() {
-#ifdef CONCURRENCY_ENABLED
-        {
-            std::lock_guard<std::mutex> lock(*_blockMutex);
-            FETCH_ADD_ATOMIC(*_processedBlockId, 1);
-        }
-
-        _blockCondition->notify_all();
-#else
-        FETCH_ADD_ATOMIC(*_processedBlockId, 1);
-#endif
-    };
 
     try {
         if (blockLength == 0) {
