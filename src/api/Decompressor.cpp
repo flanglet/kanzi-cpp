@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <cstring>
 #include "Decompressor.hpp"
 #include "../types.hpp"
 #include "../Error.hpp"
@@ -121,6 +122,12 @@ KANZI_API int CDECL initDecompressor(struct dData* pData, FILE* src, struct dCon
 
         if (fd == -1)
            return Error::ERR_CREATE_DECOMPRESSOR;
+
+        if ((pData->headerless != 0) &&
+            ((memchr(pData->transform, 0, sizeof(pData->transform)) == nullptr) ||
+             (memchr(pData->entropy, 0, sizeof(pData->entropy)) == nullptr))) {
+            return Error::ERR_INVALID_PARAM;
+        }
 
         // Create decompression stream and context
         *pCtx = nullptr;
