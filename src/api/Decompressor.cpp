@@ -168,16 +168,19 @@ KANZI_API int CDECL initDecompressor(struct dData* pData, FILE* src, struct dCon
     }
     catch (const exception&) {
         if (dctx != nullptr) {
-            // pCis is managed by dctx, but might not be assigned yet
-            if (dctx->pCis)
+            if (dctx->pCis != nullptr) {
                delete dctx->pCis;
+               dctx->pCis = nullptr;
+            }
 
             delete dctx;
+            dctx = nullptr;
         }
 
-        // fis is usually owned by pCis, but if pCis wasn't created, we delete it
-        if (fis != nullptr && (dctx == nullptr || dctx->pCis == nullptr))
+        if (fis != nullptr) {
            delete fis;
+           fis = nullptr;
+        }
 
         return Error::ERR_CREATE_DECOMPRESSOR;
     }
