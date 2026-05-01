@@ -830,7 +830,7 @@ T EncodingTask<T>::run()
         delete ee;
         ee = nullptr;
         obs.close();
-        uint64 written = obs.written();
+        const uint64 written = obs.written();
         const uint lw = (written < 8) ? 3 : uint(Global::log2(uint32(written >> 3)) + 4);
 
 #ifdef CONCURRENCY_ENABLED
@@ -855,11 +855,13 @@ T EncodingTask<T>::run()
         int64 ww = int64((written + 7) >> 3);
 
         // Emit data to shared bitstream
-        for (uint n = 0; written > 0; ) {
-            uint chkSize = uint(min(written, uint64(1) << 30));
+        uint64 remaining = written;
+
+        for (uint n = 0; remaining > 0; ) {
+            uint chkSize = uint(min(remaining, uint64(1) << 30));
             _obs->writeBits(&_data->_array[n], chkSize);
             n += ((chkSize + 7) >> 3);
-            written -= uint64(chkSize);
+            remaining -= uint64(chkSize);
         }
 
         // After completion of the entropy coding, increment the block id.
@@ -873,12 +875,6 @@ T EncodingTask<T>::run()
 
 #if !defined(_MSC_VER) || _MSC_VER > 1500
             if (_ctx.getInt("verbosity", 0) > 4) {
-                string oName = _ctx.getString("outputName");
-
-                if (oName.length() == 4) {
-                    std::transform(oName.begin(), oName.end(), oName.begin(), ::toupper);
-                }
-
                 Event evt2(Event::BLOCK_INFO, blockId,
                    int64((written + 7) >> 3), timer.getCurrentTime(), checksum, hashType, blockOffset, uint8(skipFlags));
                 CompressedOutputStream::notifyListeners(_listeners, evt2);
