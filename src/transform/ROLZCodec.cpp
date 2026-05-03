@@ -300,36 +300,6 @@ bool ROLZCodec1::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 matches[*counter] = hash32 | int32(srcIdx);
             }
 
-            // See if the match can be extended backwards
-            // Shift the match start backward over preceding equal bytes.
-            const int matchIdx = match >> 16;
-            const int refPos0 = int(matches[(int(*counter) - 1 - matchIdx) & _maskChecks] & ~ROLZCodec::HASH_MASK);
-            const int mLen0 = match & 0xFFFF;
-            const int maxBack = min(srcIdx - firstLitIdx, min(refPos0, ROLZCodec1::MAX_MATCH - _minMatch - mLen0));
-            int back = 0;
-
-            while ((back < maxBack) && (buf[srcIdx - back - 1] == buf[refPos0 - back - 1]))
-                back++;
-
-            if (back > 0) {
-                // Roll back the swallowed tentative literals from the match tables
-                // so the encoder state stays aligned with the decoder state.
-                const int curSrcIdx = srcIdx;
-
-                for (int i = curSrcIdx; i >= curSrcIdx - back; i--) {
-                    const uint32 key3 = (cond == true) ? ROLZCodec::getKey1(&ref[i]) : ROLZCodec::getKey2(&ref[i]);
-                    _counters[key3] = uint8((_counters[key3] - 1) & _maskChecks);
-                }
-
-                srcIdx -= back;
-                match = (match & 0xFFFF0000) | (mLen0 + back);
-                const uint32 key3 = (cond == true) ? ROLZCodec::getKey1(&ref[srcIdx]) : ROLZCodec::getKey2(&ref[srcIdx]);
-                uint8* counter3 = &_counters[key3];
-                uint32* matches3 = &_matches[key3 << _logPosChecks];
-                *counter3 = (*counter3 + 1) & _maskChecks;
-                matches3[*counter3] = ROLZCodec::hash(&buf[srcIdx]) | int32(srcIdx);
-            }
-
             // token LLLLLMMM -> L lit length, M match length
             const int litLen = srcIdx - firstLitIdx;
             const int token = (litLen < 31) ? litLen << 3 : 0xF8;
