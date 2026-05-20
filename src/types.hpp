@@ -28,7 +28,7 @@ limitations under the License.
        typedef unsigned __int64   uint64_t;
        typedef __int64            int64_t;
     #else
-        #if __cplusplus >= 201103L
+        #if (__cplusplus >= 201103L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201103L)
             // C++11 or later
             #include <cstdint>
             #include <cstddef>
@@ -206,7 +206,7 @@ limitations under the License.
 
     namespace kanzi
     {
-#if __cplusplus >= 201703L
+#if (__cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
         using byte = std::byte;
 #else
         typedef uint8_t byte;
