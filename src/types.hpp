@@ -45,10 +45,10 @@ limitations under the License.
             #define snprintf _snprintf
         #endif
 
-        #if !defined(__x86_64__)
+        #if defined(_M_X64) && !defined(__x86_64__)
             #define __x86_64__  _M_X64
         #endif
-        #if !defined(__i386__)
+        #if defined(_M_IX86) && !defined(__i386__)
             #define __i386__  _M_IX86
         #endif
     #endif
