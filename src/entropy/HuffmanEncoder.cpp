@@ -371,10 +371,12 @@ void HuffmanEncoder::encodeChunk(const kanzi::byte block[], uint count)
             const uint16 codeLen2 = code2 >> 12;
             const uint16 code3 = _codes[int(src[i + 3])];
             const uint16 codeLen3 = code3 >> 12;
-            state = (state << codeLen0) | uint64(code0 & 0x0FFF);
-            state = (state << codeLen1) | uint64(code1 & 0x0FFF);
-            state = (state << codeLen2) | uint64(code2 & 0x0FFF);
-            state = (state << codeLen3) | uint64(code3 & 0x0FFF);
+
+            const uint32 pack01 = (uint32(code0 & 0x0FFF) << codeLen1) | uint32(code1 & 0x0FFF);
+            const uint32 pack23 = (uint32(code2 & 0x0FFF) << codeLen3) | uint32(code3 & 0x0FFF);
+            state = (state << (codeLen0 + codeLen1)) | uint64(pack01);
+            state = (state << (codeLen2 + codeLen3)) | uint64(pack23);
+
             bits += (codeLen0 + codeLen1 + codeLen2 + codeLen3);
             BigEndian::writeLong64(&buf[idx], state << (64 - bits)); // bits cannot be 0
             idx += (bits >> 3);
