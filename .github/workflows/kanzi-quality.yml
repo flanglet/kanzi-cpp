@@ -1,0 +1,97 @@
+name: Kanzi quality
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      baseline_ref:
+        description: Known-bad ref used by the MSVC contrast job
+        required: false
+        default: f583957239707a6913a2a9994527bb1d3f623aa7
+
+env:
+  KANZI_REGRESSION_BASE: f583957239707a6913a2a9994527bb1d3f623aa7
+
+jobs:
+  windows-regression-contrast:
+    name: windows-2025-vs2026 / msvc x64 baseline contrast
+    runs-on: windows-2025-vs2026
+    steps:
+      - uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+      - name: Select known-bad baseline
+        shell: pwsh
+        run: |
+          $baseline = "${{ github.event.inputs.baseline_ref }}"
+          if ([string]::IsNullOrWhiteSpace($baseline)) {
+            $baseline = "${{ env.KANZI_REGRESSION_BASE }}"
+          }
+          "BASELINE_REF=$baseline" >> $env:GITHUB_ENV
+      - name: Build baseline and current testTransforms
+        shell: cmd
+        run: |
+          git worktree add "%RUNNER_TEMP%\baseline" "%BASELINE_REF%"
+          call .github\scripts\msvc_build.cmd "%RUNNER_TEMP%\baseline" "%RUNNER_TEMP%\baseline-msvc-x64" testTransforms x64
+          if errorlevel 1 exit /b %errorlevel%
+          call .github\scripts\msvc_build.cmd "%GITHUB_WORKSPACE%" "%RUNNER_TEMP%\head-msvc-x64" testTransforms x64
+          if errorlevel 1 exit /b %errorlevel%
+      - name: Confirm baseline reproduces transform failure
+        shell: cmd
+        run: python .github\scripts\transform_regression.py --expect fail "%RUNNER_TEMP%\baseline-msvc-x64\testTransforms.exe"
+      - name: Confirm current head fixes transform failure
+        shell: cmd
+        run: python .github\scripts\transform_regression.py --expect pass "%RUNNER_TEMP%\head-msvc-x64\testTransforms.exe"
+
+  unix-transforms:
+    name: ${{ matrix.os }} / ${{ matrix.cxx }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cc: gcc
+            cxx: g++
+          - os: ubuntu-latest
+            cc: clang
+            cxx: clang++
+          - os: macos-latest
+            cc: clang
+            cxx: clang++
+    steps:
+      - uses: actions/checkout@v6.0.1
+      - name: Build testTransforms and kanzi
+        run: |
+          cd src
+          make clean
+          make testTransforms kanzi CC=${{ matrix.cc }} CXX=${{ matrix.cxx }}
+      - name: Run transform tests
+        run: python3 .github/scripts/transform_regression.py --expect pass bin/testTransforms
+      - name: Run stream round trips
+        run: python3 .github/scripts/stream_roundtrip.py bin/kanzi
+
+  windows-transforms:
+    name: windows-2025-vs2026 / msvc ${{ matrix.arch }}
+    runs-on: windows-2025-vs2026
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ x64, x86 ]
+    steps:
+      - uses: actions/checkout@v6.0.1
+      - name: Build and run transform tests
+        shell: cmd
+        run: |
+          call .github\scripts\msvc_build.cmd "%GITHUB_WORKSPACE%" "%RUNNER_TEMP%\head-msvc-${{ matrix.arch }}" testTransforms ${{ matrix.arch }}
+          if errorlevel 1 exit /b %errorlevel%
+          python .github\scripts\transform_regression.py --expect pass "%RUNNER_TEMP%\head-msvc-${{ matrix.arch }}\testTransforms.exe"
+      - name: Build and run stream round trips
+        shell: cmd
+        run: |
+          call .github\scripts\msvc_build.cmd "%GITHUB_WORKSPACE%" "%RUNNER_TEMP%\head-msvc-${{ matrix.arch }}" kanzi ${{ matrix.arch }}
+          if errorlevel 1 exit /b %errorlevel%
+          python .github\scripts\stream_roundtrip.py "%RUNNER_TEMP%\head-msvc-${{ matrix.arch }}\kanzi.exe"

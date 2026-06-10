@@ -455,7 +455,7 @@ int testTransformsCorrectness(const string& name)
         cout << endl
              << "Test " << ii << endl;
         int size = 80000; // Declare size, will be updated in conditions
-        kanzi::byte values[1024 * 1024] = { kanzi::byte(0xAA) };
+        vector<kanzi::byte> values(1024 * 1024, kanzi::byte(0xAA));
 
         if (name == "ALIAS")
           mod = 15 + 12 * ii;
@@ -469,15 +469,15 @@ int testTransformsCorrectness(const string& name)
                 (kanzi::byte)3, (kanzi::byte)3, (kanzi::byte)3, (kanzi::byte)3, (kanzi::byte)3, (kanzi::byte)3, (kanzi::byte)3, (kanzi::byte)3
             };
 
-            memcpy(values, &arr[0], size);
+            memcpy(&values[0], &arr[0], size);
         }
         else if (ii < 10) {
             size = ii;
-            memset(values, ii, size);
+            memset(&values[0], ii, size);
         }
         else if (ii == 10) {
             size = 255;
-            memset(values, ii, size);
+            memset(&values[0], ii, size);
             values[127] = kanzi::byte(255);
         }
         else if (ii == 11) {
@@ -488,12 +488,12 @@ int testTransformsCorrectness(const string& name)
             for (int i = 1; i < 80000; i++)
                 arr[i] = kanzi::byte(8);
 
-            memcpy(values, &arr[0], size);
+            memcpy(&values[0], &arr[0], size);
         }
         else if (ii == 12) {
             size = 8;
             kanzi::byte arr[8] = { (kanzi::byte)0, (kanzi::byte)0, (kanzi::byte)1, (kanzi::byte)1, (kanzi::byte)2, (kanzi::byte)2, (kanzi::byte)3, (kanzi::byte)3 };
-            memcpy(values, &arr[0], size);
+            memcpy(&values[0], &arr[0], size);
         }
         else if (ii == 13) {
             // For RLT
@@ -506,7 +506,7 @@ int testTransformsCorrectness(const string& name)
             }
 
             arr[1] = kanzi::byte(255); // force RLT escape to be first symbol
-            memcpy(values, &arr[0], size);
+            memcpy(&values[0], &arr[0], size);
         }
         else if (ii == 14) {
             // Lots of zeros
@@ -522,7 +522,7 @@ int testTransformsCorrectness(const string& name)
                 arr[i] = kanzi::byte(val);
             }
 
-            memcpy(values, &arr[0], size);
+            memcpy(&values[0], &arr[0], size);
         }
         else if (ii == 15) {
             // Lots of zeros
@@ -538,7 +538,7 @@ int testTransformsCorrectness(const string& name)
                 arr[i] = kanzi::byte(val);
             }
 
-            memcpy(values, &arr[0], size);
+            memcpy(&values[0], &arr[0], size);
         }
         else if (ii == 16) {
             // Totally random
@@ -549,7 +549,7 @@ int testTransformsCorrectness(const string& name)
             for (int j = 20; j < 512; j++)
                 arr[j] = kanzi::byte(rand() % mod);
 
-            memcpy(values, &arr[0], size);
+            memcpy(&values[0], &arr[0], size);
         }
         else if (ii < 25) {
             size = 2048;
@@ -566,7 +566,7 @@ int testTransformsCorrectness(const string& name)
                    arr[j + k] = arr[j + k - step];
             }
 
-            memcpy(values, &arr[0], size);
+            memcpy(&values[0], &arr[0], size);
         }
         else if (ii == 50) {
             cout << "Large random data" << endl;
@@ -576,7 +576,7 @@ int testTransformsCorrectness(const string& name)
             for (int i = 0; i < size; i++)
                 arr[i] = kanzi::byte(rand() % 256);
 
-            memcpy(values, arr, size);
+            memcpy(&values[0], arr, size);
             delete[] arr;
         }
         else {
@@ -601,7 +601,7 @@ int testTransformsCorrectness(const string& name)
                 idx += len;
             }
 
-            memcpy(values, &arr[0], size);
+            memcpy(&values[0], &arr[0], size);
         }
 
         Context ctx;
@@ -665,7 +665,6 @@ int testTransformsCorrectness(const string& name)
             cout << endl
                  << "Encoding error" << endl;
             res = 1;
-            ff = nullptr;
             goto End;
         }
 
@@ -815,6 +814,7 @@ int testTransformsSpeed(const string& name)
                 if ((iba1._index != size) || (iba2._index >= iba1._index)) {
                    cout << endl
                         << "No compression (ratio > 1.0), skip reverse" << endl;
+                   delete ff;
                    continue;
                 }
 
