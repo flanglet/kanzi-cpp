@@ -617,6 +617,10 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             const int32 ref = matches[(_counters[key] - mIdx) & _maskChecks];
             _counters[key] = (_counters[key] + 1) & _maskChecks;
             matches[_counters[key]] = dstIdx;
+
+            if ((dstIdx - ref >= 64) && (mLen >= 64))
+                prefetchRead(&buf[ref + 64]);
+
             dstIdx = ROLZCodec::emitCopy(buf, dstIdx, ref, mLen);
         }
 
@@ -626,8 +630,8 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
 
 End:
     if (success == true) {
-        // Emit last chunk literals
-        if ((output._index + 4 > output._length) || (srcIdx + 4 > input._length)) {
+        // A valid ROLZ block must leave exactly 4 raw tail bytes.
+        if ((output._index + 4 > output._length) || (count - srcIdx != 4)) {
            success = false;
         }
         else {
