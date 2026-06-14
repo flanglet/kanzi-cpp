@@ -28,7 +28,6 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-
 const int CompressedOutputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
 const int CompressedOutputStream::BITSTREAM_FORMAT_VERSION = 6;
 const int CompressedOutputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
@@ -784,7 +783,7 @@ T EncodingTask<T>::run()
         }
 
         _data->_index = 0;
-        ofixedbuf buf(reinterpret_cast<char*>(&_data->_array[_data->_index]), streamsize(_data->_length));
+        growable_ofixedbuf buf(_data);
         ostream os(&buf);
         DefaultOutputBitStream obs(os);
 

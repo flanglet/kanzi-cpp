@@ -39,6 +39,19 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+class ConstantPredictor FINAL : public Predictor
+{
+public:
+    explicit ConstantPredictor(int value) : _value(value) {}
+
+    void update(int) {}
+
+    int get() { return _value; }
+
+private:
+    int _value;
+};
+
 static Predictor* getPredictor(string type)
 {
     if (type.compare("TPAQ") == 0)
@@ -334,6 +347,46 @@ int testEntropyCodecSpeed(const string& name)
     return res;
 }
 
+int testBinaryEntropyBufferGrowth()
+{
+    cout << endl
+         << "=== Buffer growth test for binary entropy codec ===" << endl;
+    const int size = 1 << 20;
+    vector<kanzi::byte> values(size, kanzi::byte(0));
+    vector<kanzi::byte> decoded(size, kanzi::byte(0xAA));
+    stringbuf buffer;
+    iostream ios(&buffer);
+    DefaultOutputBitStream obs(ios, 1 << 15);
+    BinaryEntropyEncoder encoder(obs, new ConstantPredictor(4095), true);
+
+    if (encoder.encode(&values[0], 0, uint(values.size())) != size) {
+        cout << "Encoding error in buffer growth test" << endl;
+        return 1;
+    }
+
+    encoder.dispose();
+    obs.close();
+    ios.rdbuf()->pubseekpos(0);
+    DefaultInputBitStream ibs(ios, 1 << 15);
+    BinaryEntropyDecoder decoder(ibs, new ConstantPredictor(4095), true);
+
+    if (decoder.decode(&decoded[0], 0, uint(decoded.size())) != size) {
+        cout << "Decoding error in buffer growth test" << endl;
+        return 1;
+    }
+
+    decoder.dispose();
+    ibs.close();
+
+    if (memcmp(&values[0], &decoded[0], values.size()) != 0) {
+        cout << "Mismatch in buffer growth test" << endl;
+        return 1;
+    }
+
+    cout << "Buffer growth test passed" << endl;
+    return 0;
+}
+
 #ifdef __GNUG__
 int main(int argc, const char* argv[])
 #else
@@ -343,6 +396,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
     int res = 0;
 
     try {
+        res |= testBinaryEntropyBufferGrowth();
         vector<string> codecs;
         bool doPerf = true;
 

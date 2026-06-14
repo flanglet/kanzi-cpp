@@ -54,6 +54,23 @@ BinaryEntropyEncoder::~BinaryEntropyEncoder()
         delete _predictor;
 }
 
+void BinaryEntropyEncoder::ensureCapacity(int required)
+{
+    if (required <= _sba._length)
+        return;
+
+    const int grownSize = _sba._length + max(_sba._length >> 2, 1 << 20);
+    int newSize = max(required, max(grownSize, 1024));
+    kanzi::byte* buf = new kanzi::byte[newSize];
+
+    if ((_sba._array != nullptr) && (_sba._index > 0))
+        memcpy(buf, _sba._array, size_t(_sba._index));
+
+    delete[] _sba._array;
+    _sba._array = buf;
+    _sba._length = newSize;
+}
+
 int BinaryEntropyEncoder::encode(const kanzi::byte block[], uint blkptr, uint count)
 {
     if (count >= MAX_BLOCK_SIZE)
@@ -71,13 +88,7 @@ int BinaryEntropyEncoder::encode(const kanzi::byte block[], uint blkptr, uint co
 
     const uint bufSize = length + (length >> 3);
 
-    if (_sba._length < int(bufSize)) {
-        if (_sba._array != nullptr)
-            delete[] _sba._array;
-
-        _sba._length = int(bufSize);
-        _sba._array = new kanzi::byte[_sba._length];
-    }
+    ensureCapacity(int(bufSize));
 
     // Split block into chunks, encode chunk and write bit array to bitstream
     while (startChunk < end) {
@@ -137,4 +148,3 @@ void BinaryEntropyEncoder::encodeByte(kanzi::byte val)
     encodeBit(int(val) & 0x02, _predictor->get());
     encodeBit(int(val) & 0x01, _predictor->get());
 }
-

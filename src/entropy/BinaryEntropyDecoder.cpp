@@ -54,6 +54,23 @@ BinaryEntropyDecoder::~BinaryEntropyDecoder()
         delete _predictor;
 }
 
+void BinaryEntropyDecoder::ensureCapacity(int required)
+{
+    if (required <= _sba._length)
+        return;
+
+    const int grownSize = _sba._length + max(_sba._length >> 2, 1 << 20);
+    int newSize = max(required, max(grownSize, 1024));
+    kanzi::byte* buf = new kanzi::byte[newSize];
+
+    if ((_sba._array != nullptr) && (_sba._index > 0))
+        memcpy(buf, _sba._array, size_t(_sba._index));
+
+    delete[] _sba._array;
+    _sba._array = buf;
+    _sba._length = newSize;
+}
+
 int BinaryEntropyDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
 {
     if (count >= MAX_BLOCK_SIZE)
@@ -71,21 +88,17 @@ int BinaryEntropyDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
 
     const uint bufSize = length + (length >> 3);
 
-    if (_sba._length < int(bufSize)) {
-        if (_sba._array != nullptr)
-            delete[] _sba._array;
-
-        _sba._length = int(bufSize);
-        _sba._array = new kanzi::byte[_sba._length];
-    }
+    ensureCapacity(int(bufSize));
 
     // Split block into chunks, read bit array from bitstream and decode chunk
     while (startChunk < end) {
         const uint chunkSize = min(length, end - startChunk);
         const uint szBytes = uint(EntropyUtils::readVarInt(_bitstream));
 
-        if (szBytes > bufSize)
+        if (szBytes > MAX_BLOCK_SIZE)
            return 0;
+
+        ensureCapacity(int(szBytes));
 
         _current = _bitstream.readBits(56);
 
@@ -135,4 +148,3 @@ kanzi::byte BinaryEntropyDecoder::decodeByte()
         | (decodeBit(_predictor->get()) << 1)
         |  decodeBit(_predictor->get()));
 }
-

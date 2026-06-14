@@ -44,6 +44,8 @@ namespace kanzi
 
        void read();
 
+       void ensureCapacity(int required);
+
        void _dispose() const {}
 
    public:
@@ -90,4 +92,3 @@ namespace kanzi
 
 }
 #endif
-
