@@ -337,7 +337,7 @@ void CompressedOutputStream::writeHeader()
 
     cksum = (cksum >> 23) ^ (cksum >> 3);
 
-    if (_obs->writeBits(cksum, 24) != 24)
+    if (_obs->writeBits(uint64(cksum & 0xFFFFFFu), 24) != 24)
         throw IOException("Cannot write checksum to header", Error::ERR_WRITE_FILE);
 }
 
