@@ -95,7 +95,9 @@ int BinaryEntropyDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
         const uint chunkSize = min(length, end - startChunk);
         const uint szBytes = uint(EntropyUtils::readVarInt(_bitstream));
 
-        if (szBytes > MAX_BLOCK_SIZE)
+        const uint64 maxEncodedSize = min(uint64(chunkSize) << 5, uint64(uint(-1) >> 3));
+
+        if (uint64(szBytes) > maxEncodedSize)
            return 0;
 
         ensureCapacity(int(szBytes));
