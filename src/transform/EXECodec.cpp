@@ -85,8 +85,8 @@ bool EXECodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     }
 
     int codeStart = 0;
-    int codeEnd = count - 8;
-    kanzi::byte mode = detectType(&input._array[input._index], count - 4, codeStart, codeEnd);
+    int codeEnd = count;
+    kanzi::byte mode = detectType(&input._array[input._index], count, codeStart, codeEnd);
 
     if ((mode & NOT_EXE) != kanzi::byte(0)) {
         if (_pCtx != nullptr)
@@ -522,8 +522,12 @@ kanzi::byte EXECodec::detectType(const kanzi::byte src[], int count, int& codeSt
     // Best effort
     const uint magic = Magic::getType(src);
     int arch = 0;
+    const int blockSize = count;
 
     if (parseHeader(src, count, magic, arch, codeStart, codeEnd) == true) {
+        if ((codeStart < 0) || (codeStart > blockSize) || (codeEnd < codeStart) || (codeEnd > blockSize))
+            return NOT_EXE | kanzi::byte(Global::UNDEFINED);
+
         switch(arch) {
             case ELF_X86_ARCH:
             case ELF_AMD64_ARCH:
@@ -542,6 +546,12 @@ kanzi::byte EXECodec::detectType(const kanzi::byte src[], int count, int& codeSt
         }
     }
 
+    if ((codeStart < 0) || (codeStart > blockSize) || (codeEnd < codeStart) || (codeEnd > blockSize))
+        return NOT_EXE | kanzi::byte(Global::UNDEFINED);
+
+    if (count <= 0)
+        return NOT_EXE | kanzi::byte(Global::UNDEFINED);
+
     int jumpsX86 = 0;
     int jumpsARM64 = 0;
     uint histo[256] = { 0 };
@@ -550,27 +560,30 @@ kanzi::byte EXECodec::detectType(const kanzi::byte src[], int count, int& codeSt
         histo[int(src[i])]++;
 
         // X86
-        if ((src[i] & X86_MASK_JUMP) == X86_INSTRUCTION_JUMP) {
+        if (((i + 4) < codeEnd) && ((src[i] & X86_MASK_JUMP) == X86_INSTRUCTION_JUMP)) {
             if ((src[i + 4] == kanzi::byte(0)) || (src[i + 4] == kanzi::byte(0xFF))) {
                 // Count relative jumps (CALL = E8/ JUMP = E9 .. .. .. 00/FF)
                 jumpsX86++;
                 continue;
             }
-        } else if (src[i] == X86_TWO_BYTE_PREFIX) {
-            i++;
+        } else if ((src[i] == X86_TWO_BYTE_PREFIX) && (i + 1 < codeEnd)) {
+            int j = i + 1;
 
-            if ((src[i] == kanzi::byte(0x38)) || (src[i] == kanzi::byte(0x3A)))
-                i++;
+            if (((src[j] == kanzi::byte(0x38)) || (src[j] == kanzi::byte(0x3A))) && (j + 1 < codeEnd))
+                j++;
 
             // Count relative conditional jumps (0x0F 0x8?) with 16/32 offsets
-            if ((src[i] & X86_MASK_JCC) == X86_INSTRUCTION_JCC) {
+            if ((src[j] & X86_MASK_JCC) == X86_INSTRUCTION_JCC) {
                 jumpsX86++;
+                i = j;
                 continue;
             }
+
+            i = j;
         }
 
         // ARM
-        if ((i & 3) != 0)
+        if (((i & 3) != 0) || (i + 4 > codeEnd))
             continue;
 
         const int instr = LittleEndian::readInt32(&src[i]);

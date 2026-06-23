@@ -345,7 +345,7 @@ bool RLT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
 
         run += (RUN_THRESHOLD - 1);
 
-        if ((dstIdx + run >= dstEnd) || (run > MAX_RUN)) {
+        if ((dstIdx + run > dstEnd) || (run > MAX_RUN)) {
             res = false;
             break;
         }

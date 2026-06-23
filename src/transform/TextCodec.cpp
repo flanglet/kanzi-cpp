@@ -1334,7 +1334,7 @@ int TextCodec2::emitWordIndex(kanzi::byte dst[], int wIdx)
         return 2;
     }
 
-    // 1 kanzi::byte index (10xxxxxx) with 0x80 excluded
+    // 1 byte index (10xxxxxx) with 0x80 excluded
     dst[0] = kanzi::byte(0x80 | wIdx);
     return 1;
 }
@@ -1456,7 +1456,7 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 }
 
                 // Read word index
-                // 10xxxxxx => 1 kanzi::byte
+                // 10xxxxxx => 1 byte
                 // 110xxxxx => 2 bytes
                 // 1111xxxx => 3 bytes
                 idx = int(cur) & 0x7F;

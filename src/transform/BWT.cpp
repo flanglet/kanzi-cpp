@@ -293,7 +293,7 @@ bool BWT::inverseBiPSIv2(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
     kanzi::byte* dst = &output._array[output._index];
     const int pIdx = getPrimaryIndex(0);
 
-    if ((pIdx < 0) || (pIdx > count))
+    if ((pIdx <= 0) || (pIdx > count))
         return false;
 
     uint* buckets = new uint[65536];
