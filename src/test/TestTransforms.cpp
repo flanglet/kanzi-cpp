@@ -18,6 +18,7 @@ limitations under the License.
 #include <time.h>
 #include <vector>
 #include "../types.hpp"
+#include "../util/strings.hpp"
 #include "../transform/AliasCodec.hpp"
 #include "../transform/EXECodec.hpp"
 #include "../transform/FSDCodec.hpp"
@@ -32,6 +33,8 @@ limitations under the License.
 
 using namespace std;
 using namespace kanzi;
+
+static const int BS_VERSION = 6;
 
 static void writeInt16LE(kanzi::byte buf[], int value)
 {
@@ -304,6 +307,7 @@ static int testZRLTMalformed()
     cout << endl
          << "Malformed ZRLT" << endl;
     Context ctx;
+    ctx.putInt("bsVersion", BS_VERSION);
     ZRLT codec(ctx);
 
     {
@@ -605,7 +609,7 @@ int testTransformsCorrectness(const string& name)
         }
 
         Context ctx;
-        ctx.putInt("bsVersion", 6);
+        ctx.putInt("bsVersion", BS_VERSION);
         ctx.putString("transform", name);
         Transform<kanzi::byte>* ff = getByteTransform(name, ctx);
 
@@ -911,7 +915,7 @@ int TestTransforms_main(int argc, const char* argv[])
         }
         else {
             string str = argv[1];
-            transform(str.begin(), str.end(), str.begin(), ::toupper);
+            transform(str.begin(), str.end(), str.begin(), safeToUpper);
 
             if (str != "-TYPE=ALL") {
                 codecs.push_back(str.substr(6));
@@ -933,7 +937,7 @@ int TestTransforms_main(int argc, const char* argv[])
 
             if (argc > 2) {
                 str = argv[2];
-                transform(str.begin(), str.end(), str.begin(), ::toupper);
+                transform(str.begin(), str.end(), str.begin(), safeToUpper);
                 doPerf = str != "-NOPERF";
             }
         }

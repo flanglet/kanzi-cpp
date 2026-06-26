@@ -18,6 +18,7 @@ limitations under the License.
 #include <iostream>
 #include <time.h>
 #include "../types.hpp"
+#include "../util/strings.hpp"
 #include "../transform/BWT.hpp"
 #include "../transform/BWTS.hpp"
 
@@ -280,7 +281,7 @@ int TestBWT_main(int argc, const char* argv[])
 
     if (argc > 1) {
         string str = argv[1];
-        transform(str.begin(), str.end(), str.begin(), ::toupper);
+        transform(str.begin(), str.end(), str.begin(), safeToUpper);
         doPerf = str != "-NOPERF";
     }
 
@@ -296,4 +297,3 @@ int TestBWT_main(int argc, const char* argv[])
 
     return res;
 }
-

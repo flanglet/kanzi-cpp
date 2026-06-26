@@ -18,6 +18,7 @@ limitations under the License.
 #include <time.h>
 #include <vector>
 #include "../types.hpp"
+#include "../util/strings.hpp"
 #include "../entropy/HuffmanEncoder.hpp"
 #include "../entropy/RangeEncoder.hpp"
 #include "../entropy/ANSRangeEncoder.hpp"
@@ -412,7 +413,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
         }
         else {
             string str = argv[1];
-            transform(str.begin(), str.end(), str.begin(), ::toupper);
+            transform(str.begin(), str.end(), str.begin(), safeToUpper);
 
             if (str == "-TYPE=ALL") {
 #if __cplusplus < 201103L
@@ -430,7 +431,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
 
         if (argc > 2) {
                 str = argv[2];
-                transform(str.begin(), str.end(), str.begin(), ::toupper);
+                transform(str.begin(), str.end(), str.begin(), safeToUpper);
                 doPerf = str != "-NOPERF";
             }
         }

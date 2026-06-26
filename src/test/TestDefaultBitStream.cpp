@@ -19,6 +19,7 @@ limitations under the License.
 #include <fstream>
 #include <streambuf>
 #include <time.h>
+#include "../util/strings.hpp"
 #include "../bitstream/DebugOutputBitStream.hpp"
 #include "../bitstream/DefaultInputBitStream.hpp"
 #include "../bitstream/DefaultOutputBitStream.hpp"
@@ -708,7 +709,7 @@ int TestDefaultBitStream_main(int argc, const char* argv[])
 
     if (argc > 2) {
         string str = argv[2];
-        transform(str.begin(), str.end(), str.begin(), ::toupper);
+        transform(str.begin(), str.end(), str.begin(), safeToUpper);
         doPerf = str != "-NOPERF";
     }
 

@@ -18,6 +18,7 @@ limitations under the License.
 #include <algorithm>
 #include <stdexcept>
 #include "Global.hpp"
+#include "util/strings.hpp"
 
 using namespace kanzi;
 using namespace std;
@@ -397,7 +398,7 @@ Global::DataType Global::detectSimpleType(int count, const uint freqs0[]) {
 #if defined(WIN32) || defined(_WIN32) || defined(_WIN64)
 bool Global::isReservedName(string fileName)
 {
-    transform(fileName.begin(), fileName.end(), fileName.begin(), ::toupper);
+    transform(fileName.begin(), fileName.end(), fileName.begin(), safeToUpper);
     return _singleton._reservedNames.find(fileName) != _singleton._reservedNames.end();
 }
 #else

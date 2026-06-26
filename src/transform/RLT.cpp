@@ -20,6 +20,7 @@ limitations under the License.
 #include "RLT.hpp"
 #include "../Global.hpp"
 #include "../Memory.hpp"
+#include "../util/strings.hpp"
 
 
 using namespace kanzi;
@@ -64,7 +65,7 @@ bool RLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
             return false;
 
         std::string entropyType = _pCtx->getString("entropy");
-        transform(entropyType.begin(), entropyType.end(), entropyType.begin(), ::toupper);
+        transform(entropyType.begin(), entropyType.end(), entropyType.begin(), safeToUpper);
 
         // Fast track if fast entropy coder is used
         if ((entropyType == "NONE") || (entropyType == "ANS0") ||

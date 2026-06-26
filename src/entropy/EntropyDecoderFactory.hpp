@@ -18,6 +18,7 @@ limitations under the License.
 #define knz_EntropyDecoderFactory
 
 #include <algorithm>
+#include "../util/strings.hpp"
 #include "../Context.hpp"
 #include "ANSRangeDecoder.hpp"
 #include "BinaryEntropyDecoder.hpp"
@@ -141,7 +142,7 @@ namespace kanzi {
    inline short EntropyDecoderFactory::getType(const char* str)
    {
        std::string name = str;
-       transform(name.begin(), name.end(), name.begin(), ::toupper);
+       transform(name.begin(), name.end(), name.begin(), safeToUpper);
 
        if (name == "HUFFMAN")
            return HUFFMAN_TYPE;

@@ -22,6 +22,7 @@ limitations under the License.
 #include <sstream>
 #include "../types.hpp"
 #include "../Context.hpp"
+#include "../util/strings.hpp"
 #include "AliasCodec.hpp"
 #include "BWTBlockCodec.hpp"
 #include "BWTS.hpp"
@@ -139,7 +140,7 @@ namespace kanzi {
     uint64 TransformFactory<T>::getTypeToken(const char* tName)
     {
         std::string name(tName);
-        transform(name.begin(), name.end(), name.begin(), ::toupper);
+        transform(name.begin(), name.end(), name.begin(), safeToUpper);
 
         if (name == "TEXT")
             return DICT_TYPE;
@@ -229,7 +230,7 @@ namespace kanzi {
 
             if (ctx.has("entropy")) {
                 std::string entropyType = ctx.getString("entropy");
-                transform(entropyType.begin(), entropyType.end(), entropyType.begin(), ::toupper);
+                transform(entropyType.begin(), entropyType.end(), entropyType.begin(), safeToUpper);
 
                 // Select text encoding based on entropy codec.
                 if ((entropyType == "NONE") || (entropyType == "ANS0") ||
