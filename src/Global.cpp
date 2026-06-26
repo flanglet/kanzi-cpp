@@ -176,7 +176,8 @@ void Global::computeHistogram(const kanzi::byte block[], int length, uint freqs[
         return;
     }
 
-    const uint8* p = reinterpret_cast<const uint8*>(block);
+    const uint8* const base = reinterpret_cast<const uint8*>(block);
+    const uint8* p = base;
 
     if (isOrder0 == true) {
         if (withTotal == true)
@@ -186,7 +187,7 @@ void Global::computeHistogram(const kanzi::byte block[], int length, uint freqs[
         uint f1[256] = { 0 };
         uint f2[256] = { 0 };
         uint f3[256] = { 0 };
-        const uint8* end16 = &p[length & -16];
+        const uint8* end16 = &base[length & -16];
         uint64 q;
 
         while (p < end16) {
@@ -211,7 +212,7 @@ void Global::computeHistogram(const kanzi::byte block[], int length, uint freqs[
             p += 16;
         }
 
-        const uint8* end = &p[length];
+        const uint8* end = &base[length];
 
         while (p < end)
             freqs[*p++]++;
