@@ -77,7 +77,7 @@ namespace kanzi {
            return new FPAQEncoder(obs);
 
        case CM_TYPE:
-           return new BinaryEntropyEncoder(obs, new CMPredictor());
+           return new BinaryEntropyEncoder(obs, new CMPredictor(&ctx));
 
        case TPAQ_TYPE:
            return new BinaryEntropyEncoder(obs, new TPAQPredictor<false>(&ctx));
@@ -172,4 +172,3 @@ namespace kanzi {
    }
 }
 #endif
-

@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef knz_CMPredictor
 #define knz_CMPredictor
 
+#include "../Context.hpp"
 #include "../Predictor.hpp"
 #include "../types.hpp"
 
@@ -41,7 +42,7 @@ namespace kanzi
        int* _pc2;
 
    public:
-       CMPredictor();
+       CMPredictor(Context* pCtx = nullptr);
 
        ~CMPredictor(){}
 
