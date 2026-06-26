@@ -195,11 +195,11 @@ namespace kanzi {
        static const byte MASK_XML_HTML;
        static const byte MASK_DT;
        static const int MASK_LENGTH;
-
        static bool init(int8 cType[256]);
        static int8 CHAR_TYPE[256];
        static const bool INIT;
 
+       static uint computeWordHash(const byte src[], int length);
        static bool sameWords(const byte src[], const byte dst[], int length);
 
        static byte computeStats(const byte block[], int count, uint freqs[], bool strict);
@@ -248,6 +248,16 @@ namespace kanzi {
    }
 #endif
 
+   inline uint TextCodec::computeWordHash(const byte src[], int length)
+   {
+       uint h = HASH1;
+
+       for (int i = 0; i < length; i++)
+           h = h * HASH1 ^ uint(src[i]) * HASH2;
+
+       return h;
+   }
+
    inline bool TextCodec::sameWords(const byte src[], const byte dst[], int length)
    {
        while (length >= 4) {
@@ -268,4 +278,3 @@ namespace kanzi {
    }
 }
 #endif
-

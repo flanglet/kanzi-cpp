@@ -49,7 +49,7 @@ const kanzi::byte TextCodec::MASK_NOT_TEXT = kanzi::byte(0x80);
 const kanzi::byte TextCodec::MASK_CRLF = kanzi::byte(0x40);
 const kanzi::byte TextCodec::MASK_XML_HTML = kanzi::byte(0x20);
 const kanzi::byte TextCodec::MASK_DT = kanzi::byte(0x0F);
-const int TextCodec::MASK_LENGTH = 0x0007FFFF; // 19 bits
+const int TextCodec::MASK_LENGTH = 0x0007FFFF; // 19-bit dictionary index
 
 
 
@@ -181,7 +181,6 @@ bool TextCodec::init(int8 cType[256])
 int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], int maxWords, int startWord)
 {
     int delimAnchor = 0;
-    uint h = HASH1;
     int nbWords = startWord;
     byte* src = reinterpret_cast<byte*>(words);
 
@@ -191,20 +190,21 @@ int TextCodec::createDictionary(char words[], int dictSize, DictEntry dict[], in
 
         if (isUpperCase(src[i])) {
             if (i > delimAnchor) {
-                dict[nbWords] = DictEntry(&src[delimAnchor], h, nbWords, i - delimAnchor);
+                const int length = i - delimAnchor;
+                const uint h = computeWordHash(&src[delimAnchor], length);
+                dict[nbWords] = DictEntry(&src[delimAnchor], h, nbWords, length);
                 nbWords++;
                 delimAnchor = i;
-                h = HASH1;
             }
 
             src[i] ^= byte(0x20);
         }
-
-        h = h * HASH1 ^ uint(src[i]) * HASH2;
     }
 
     if (nbWords < maxWords) {
-        dict[nbWords] = DictEntry(&src[delimAnchor], h, nbWords, dictSize - 1 - delimAnchor);
+        const int length = dictSize - 1 - delimAnchor;
+        const uint h = computeWordHash(&src[delimAnchor], length);
+        dict[nbWords] = DictEntry(&src[delimAnchor], h, nbWords, length);
         nbWords++;
     }
 
@@ -600,33 +600,33 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     }
 
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
+    uint h1 = TextCodec::HASH1;
+    uint h2 = TextCodec::HASH1;
 
     while (srcIdx < srcEnd) {
-        const int8 cType = TextCodec::getType(src[srcIdx]);
+        const byte cur = src[srcIdx];
+        const int8 cType = TextCodec::getType(cur);
 
         if (cType == 0) {
+            const int length = srcIdx - delimAnchor;
+
+            if (length == 1) {
+                h1 = uint(TextCodec::HASH1) * uint(TextCodec::HASH1) ^ uint(cur) * uint(TextCodec::HASH2);
+                h2 = uint(TextCodec::HASH1) * uint(TextCodec::HASH1) ^ (uint(cur) ^ 0x20U) * uint(TextCodec::HASH2);
+            }
+            else {
+                h1 = h1 * TextCodec::HASH1 ^ uint(cur) * TextCodec::HASH2;
+                h2 = h2 * TextCodec::HASH1 ^ uint(cur) * TextCodec::HASH2;
+            }
+
             srcIdx++;
             continue;
         }
 
         if ((srcIdx > delimAnchor + 2) && (cType > 0)) { // At least 2 letters
-            const byte val = src[delimAnchor + 1];
             const int length = srcIdx - delimAnchor - 1;
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
-                // Compute hashes
-                // h1 -> hash of word chars
-                // h2 -> hash of word chars with first char case flipped
-                uint h1 = TextCodec::HASH1;
-                h1 = h1 * TextCodec::HASH1 ^ uint(val) * TextCodec::HASH2;
-                uint h2 = TextCodec::HASH1;
-                h2 = h2 * TextCodec::HASH1 ^ (uint(val) ^ 0x20) * TextCodec::HASH2;
-
-                for (int i = delimAnchor + 2; i < srcIdx; i++) {
-                    h1 = h1 * TextCodec::HASH1 ^ uint(src[i]) * TextCodec::HASH2;
-                    h2 = h2 * TextCodec::HASH1 ^ uint(src[i]) * TextCodec::HASH2;
-                }
-
                 // Check word in dictionary
                 DictEntry* pe = nullptr;
                 prefetchRead(&_dictMap[h1 & _hashMask]);
@@ -1090,33 +1090,33 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
     }
 
     int delimAnchor = TextCodec::isText(src[srcIdx]) ? srcIdx - 1 : srcIdx; // previous delimiter
+    uint h1 = TextCodec::HASH1;
+    uint h2 = TextCodec::HASH1;
 
     while (srcIdx < srcEnd) {
-        const int8 cType = TextCodec::getType(src[srcIdx]);
+        const byte cur = src[srcIdx];
+        const int8 cType = TextCodec::getType(cur);
 
         if (cType == 0) {
+            const int length = srcIdx - delimAnchor;
+
+            if (length == 1) {
+                h1 = uint(TextCodec::HASH1) * uint(TextCodec::HASH1) ^ uint(cur) * uint(TextCodec::HASH2);
+                h2 = uint(TextCodec::HASH1) * uint(TextCodec::HASH1) ^ (uint(cur) ^ 0x20U) * uint(TextCodec::HASH2);
+            }
+            else {
+                h1 = h1 * TextCodec::HASH1 ^ uint(cur) * TextCodec::HASH2;
+                h2 = h2 * TextCodec::HASH1 ^ uint(cur) * TextCodec::HASH2;
+            }
+
             srcIdx++;
             continue;
         }
 
         if ((srcIdx > delimAnchor + 2) && (cType > 0)) {
-            const byte val = src[delimAnchor + 1];
             const int length = srcIdx - delimAnchor - 1;
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
-                // Compute hashes
-                // h1 -> hash of word chars
-                // h2 -> hash of word chars with first char case flipped
-                uint h1 = TextCodec::HASH1;
-                h1 = h1 * TextCodec::HASH1 ^ uint(val) * TextCodec::HASH2;
-                uint h2 = TextCodec::HASH1;
-                h2 = h2 * TextCodec::HASH1 ^ (uint(val) ^ 0x20) * TextCodec::HASH2;
-
-                for (int i = delimAnchor + 2; i < srcIdx; i++) {
-                    h1 = h1 * TextCodec::HASH1 ^ uint(src[i]) * TextCodec::HASH2;
-                    h2 = h2 * TextCodec::HASH1 ^ uint(src[i]) * TextCodec::HASH2;
-                }
-
                 // Check word in dictionary
                 DictEntry* pe = nullptr;
                 prefetchRead(&_dictMap[h1 & _hashMask]);
