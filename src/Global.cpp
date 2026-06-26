@@ -168,7 +168,14 @@ int Global::log2(uint64 x)
 // If withTotal is true, the last spot in each frequencies order 0 array is for the total
 void Global::computeHistogram(const kanzi::byte block[], int length, uint freqs[], bool isOrder0, bool withTotal)
 {
-    const uint8* p = reinterpret_cast<const uint8*>(&block[0]);
+    if (length <= 0) {
+        if ((isOrder0 == true) && (withTotal == true))
+            freqs[256] = 0;
+
+        return;
+    }
+
+    const uint8* p = reinterpret_cast<const uint8*>(block);
 
     if (isOrder0 == true) {
         if (withTotal == true)
@@ -178,7 +185,7 @@ void Global::computeHistogram(const kanzi::byte block[], int length, uint freqs[
         uint f1[256] = { 0 };
         uint f2[256] = { 0 };
         uint f3[256] = { 0 };
-        const uint8* end16 = reinterpret_cast<const uint8*>(&block[length & -16]);
+        const uint8* end16 = &p[length & -16];
         uint64 q;
 
         while (p < end16) {
@@ -203,7 +210,7 @@ void Global::computeHistogram(const kanzi::byte block[], int length, uint freqs[
             p += 16;
         }
 
-        const uint8* end = reinterpret_cast<const uint8*>(&block[length]);
+        const uint8* end = &p[length];
 
         while (p < end)
             freqs[*p++]++;
@@ -399,4 +406,3 @@ bool Global::isReservedName(string)
     return false;
 }
 #endif
-
