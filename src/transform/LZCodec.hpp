@@ -124,7 +124,7 @@ namespace kanzi {
 
         static int findMatch(const byte block[], const int pos, const int ref, const int maxMatch);
 
-        static int readLength(const byte block[], int& pos);
+        static uint readLength(const byte block[], int& pos);
 
         static int32 hash(const byte* p);
     };
@@ -205,20 +205,20 @@ namespace kanzi {
     }
 
     template <bool T>
-    inline int LZXCodec<T>::readLength(const byte block[], int& pos)
+    inline uint LZXCodec<T>::readLength(const byte block[], int& pos)
     {
-        int res = int(block[pos++]);
+        uint res = uint(block[pos++]);
 
         if (res < 254)
             return res;
 
         if (res == 254) {
-            res += ((kanzi::BigEndian::readInt16(&block[pos])) & 0xFFFF);
+            res += uint((kanzi::BigEndian::readInt16(&block[pos])) & 0xFFFF);
             pos += 2;
             return res;
         }
 
-        res += ((kanzi::BigEndian::readInt32(&block[pos])) >> 8);
+        res += (uint32(kanzi::BigEndian::readInt32(&block[pos])) >> 8);
         pos += 3;
         return res;
     }
@@ -264,4 +264,3 @@ namespace kanzi {
 
 }
 #endif
-

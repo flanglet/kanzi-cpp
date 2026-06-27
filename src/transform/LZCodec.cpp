@@ -490,6 +490,7 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
     mLenIdx += mIdx;
 
     const int srcEnd = tkIdx - 13;
+    const int litEnd = tkIdx;
     const int maxDist = ((int(src[12]) & 1) == 0) ? MAX_DISTANCE1 : MAX_DISTANCE2;
     const int minMatch = ((int(src[12]) >> 1) & 0x07) + 2;
     bool res = true;
@@ -503,13 +504,18 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
 
         if (token >= 32) {
             // Get literal length
-            const int litLen = (token >= 0xE0) ? 7 + readLength(src, srcIdx) : token >> 5;
+            const uint litLen = (token >= 0xE0) ? uint(7) + readLength(src, srcIdx) : uint(token >> 5);
+
+            if ((litLen > uint(dstEnd - dstIdx)) || (litLen > uint(litEnd - srcIdx))) {
+                res = false;
+                goto exit;
+            }
 
             // Emit literals
             const kanzi::byte* s = &src[srcIdx];
             kanzi::byte* d = &dst[dstIdx];
-            srcIdx += litLen;
-            dstIdx += litLen;
+            srcIdx += int(litLen);
+            dstIdx += int(litLen);
 
             if (srcIdx >= srcEnd) {
                 memcpy(d, s, litLen);
@@ -525,13 +531,13 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
         if ((token & 0x18) == 0) {
             // Repetition distance, read mLen remainder (if any) outside of token
             mLen = token & 0x03;
-            mLen += (mLen == 3 ? minMatch + readLength(src, mLenIdx) : minMatch);
+            mLen += (mLen == 3 ? minMatch + int(readLength(src, mLenIdx)) : minMatch);
             dist = (token & 0x04) == 0 ? repd0 : repd1;
         }
         else {
             // Read mLen remainder (if any) outside of token
             mLen = token & 0x07;
-            mLen += (mLen == 7 ? minMatch + readLength(src, mLenIdx) : minMatch);
+            mLen += (mLen == 7 ? minMatch + int(readLength(src, mLenIdx)) : minMatch);
             dist = int(src[mIdx++]);
             const int f1 = (token >> 4) & 1;
             const int f2 = (token >> 3) & f1;
@@ -623,6 +629,7 @@ bool LZXCodec<T>::inverseV5(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
     mLenIdx += mIdx;
 
     const int srcEnd = tkIdx - 13;
+    const int litEnd = tkIdx;
     const int mFlag = int(src[12]) & 1;
     const int maxDist = (mFlag == 0) ? MAX_DISTANCE1 : MAX_DISTANCE2;
     const int mmIdx = (int(src[12]) >> 1) & 0x03;
@@ -639,13 +646,18 @@ bool LZXCodec<T>::inverseV5(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
 
         if (token >= 32) {
             // Get literal length
-            const int litLen = (token >= 0xE0) ? 7 + readLength(src, srcIdx) : token >> 5;
+            const uint litLen = (token >= 0xE0) ? uint(7) + readLength(src, srcIdx) : uint(token >> 5);
+
+            if ((litLen > uint(dstEnd - dstIdx)) || (litLen > uint(litEnd - srcIdx))) {
+                res = false;
+                goto exit;
+            }
 
             // Emit literals
             const kanzi::byte* s = &src[srcIdx];
             kanzi::byte* d = &dst[dstIdx];
-            srcIdx += litLen;
-            dstIdx += litLen;
+            srcIdx += int(litLen);
+            dstIdx += int(litLen);
 
             if (srcIdx >= srcEnd) {
                 memcpy(d, s, litLen);
@@ -661,12 +673,12 @@ bool LZXCodec<T>::inverseV5(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
 
         if (mLen == 15) {
             // Repetition distance, read mLen fully outside of token
-            mLen = minMatch + readLength(src, mLenIdx);
+            mLen = minMatch + int(readLength(src, mLenIdx));
             dist = ((token & 0x10) == 0) ? repd0 : repd1;
         }
         else {
             // Read mLen remainder (if any) outside of token
-            mLen = (mLen == 14) ? 14 + minMatch + readLength(src, mLenIdx) : mLen + minMatch;
+            mLen = (mLen == 14) ? 14 + minMatch + int(readLength(src, mLenIdx)) : mLen + minMatch;
             dist = int(src[mIdx++]);
 
             if (mFlag != 0)
