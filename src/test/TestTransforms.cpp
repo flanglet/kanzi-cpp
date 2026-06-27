@@ -28,6 +28,7 @@ limitations under the License.
 #include "../transform/ROLZCodec.hpp"
 #include "../transform/SBRT.hpp"
 #include "../transform/SRT.hpp"
+#include "../transform/TextCodec.hpp"
 #include "../transform/TransformFactory.hpp"
 #include "../transform/ZRLT.hpp"
 
@@ -299,6 +300,68 @@ static int testEXECodec()
         cout << "Identical" << endl;
     }
 
+    return 0;
+}
+
+static int testTextCodecSelfDescribing()
+{
+    cout << endl
+         << "Correctness for TextCodec bitstream selector" << endl;
+    string sample;
+
+    for (int i = 0; i < 64; i++) {
+        sample += "The quick brown fox jumps over the lazy dog. ";
+        sample += "Text compression works best on repeated natural language content. ";
+        sample += "This block verifies that the codec selector is carried in the stream header.\n";
+    }
+
+    vector<kanzi::byte> data(sample.size());
+
+    for (size_t i = 0; i < sample.size(); i++)
+        data[i] = kanzi::byte(sample[i]);
+
+    const int selectorMask = 0x10;
+
+    for (int encType = 1; encType <= 2; encType++) {
+        Context encCtx;
+        encCtx.putInt("textcodec", encType);
+        encCtx.putInt("bsVersion", 7);
+        encCtx.putInt("blockSize", int(data.size()));
+        TextCodec encoder(encCtx);
+        vector<kanzi::byte> encoded(encoder.getMaxEncodedLength(int(data.size())), kanzi::byte(0));
+        SliceArray<kanzi::byte> input(&data[0], int(data.size()), 0);
+        SliceArray<kanzi::byte> output(&encoded[0], int(encoded.size()), 0);
+
+        if (encoder.forward(input, output, int(data.size())) == false) {
+            cout << "Encoding error for TextCodec" << encType << endl;
+            return 1;
+        }
+
+        if ((((int(encoded[0]) & selectorMask) != 0) ? 2 : 1) != encType) {
+            cout << "Invalid codec selector in TextCodec header" << endl;
+            return 1;
+        }
+
+        Context decCtx;
+        decCtx.putInt("textcodec", encType == 1 ? 2 : 1);
+        decCtx.putInt("bsVersion", 7);
+        TextCodec decoder(decCtx);
+        vector<kanzi::byte> decoded(data.size(), kanzi::byte(0));
+        SliceArray<kanzi::byte> encodedInput(&encoded[0], output._index, 0);
+        SliceArray<kanzi::byte> reverse(&decoded[0], int(decoded.size()), 0);
+
+        if (decoder.inverse(encodedInput, reverse, output._index) == false) {
+            cout << "Decoding error for TextCodec" << encType << endl;
+            return 1;
+        }
+
+        if ((reverse._index != int(data.size())) || (memcmp(&data[0], &decoded[0], data.size()) != 0)) {
+            cout << "Round-trip mismatch for TextCodec" << encType << endl;
+            return 1;
+        }
+    }
+
+    cout << "Identical" << endl;
     return 0;
 }
 
@@ -890,6 +953,11 @@ int TestTransforms_main(int argc, const char* argv[])
     int res = 0;
 
     try {
+        res = testTextCodecSelfDescribing();
+
+        if (res != 0)
+            return res;
+
         res = testEXECodec();
 
         if (res != 0)

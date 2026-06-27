@@ -48,6 +48,7 @@ const int TextCodec::LOG_HASHES_SIZE = 24; // 16 MB
 const kanzi::byte TextCodec::MASK_NOT_TEXT = kanzi::byte(0x80);
 const kanzi::byte TextCodec::MASK_CRLF = kanzi::byte(0x40);
 const kanzi::byte TextCodec::MASK_XML_HTML = kanzi::byte(0x20);
+const kanzi::byte TextCodec::MASK_TEXT_CODEC = kanzi::byte(0x10);
 const kanzi::byte TextCodec::MASK_DT = kanzi::byte(0x0F);
 const int TextCodec::MASK_LENGTH = 0x0007FFFF; // 19-bit dictionary index
 
@@ -428,14 +429,32 @@ end:
 
 TextCodec::TextCodec()
 {
-    _delegate = new TextCodec1();
+    _delegate = nullptr;
+    _pCtx = nullptr;
+    _encodingType = 0;
+    _bsVersion = 7;
+    setEncodingType(1);
 }
 
 TextCodec::TextCodec(Context& ctx)
 {
-    int encodingType = ctx.getInt("textcodec", 1);
-    _delegate = (encodingType == 1) ? static_cast<Transform<byte>*>(new TextCodec1(ctx)) :
-        static_cast<Transform<byte>*>(new TextCodec2(ctx));
+    _delegate = nullptr;
+    _pCtx = &ctx;
+    _encodingType = 0;
+    _bsVersion = ctx.getInt("bsVersion", 7);
+    setEncodingType(ctx.getInt("textcodec", 1));
+}
+
+void TextCodec::setEncodingType(int encodingType)
+{
+    if ((_delegate != nullptr) && (_encodingType == encodingType))
+        return;
+
+    delete _delegate;
+    _encodingType = encodingType;
+    _delegate = (encodingType == 1) ?
+        static_cast<Transform<byte>*>(_pCtx == nullptr ? static_cast<Transform<byte>*>(new TextCodec1()) : static_cast<Transform<byte>*>(new TextCodec1(*_pCtx))) :
+        static_cast<Transform<byte>*>(_pCtx == nullptr ? static_cast<Transform<byte>*>(new TextCodec2()) : static_cast<Transform<byte>*>(new TextCodec2(*_pCtx)));
 }
 
 bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
@@ -455,7 +474,17 @@ bool TextCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int c
     if (input._array == output._array)
         return false;
 
-    return _delegate->forward(input, output, count);
+    const int dstIdx = output._index;
+    const bool res = _delegate->forward(input, output, count);
+
+    if ((res == true) && (_bsVersion >= 7)) {
+        if (_encodingType == 1)
+            output._array[dstIdx] &= ~TextCodec::MASK_TEXT_CODEC;
+        else
+            output._array[dstIdx] |= TextCodec::MASK_TEXT_CODEC;
+    }
+
+    return res;
 }
 
 bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
@@ -477,6 +506,13 @@ bool TextCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int c
 
     if ((count < 2) || (input._index + count > input._length))
         return false;
+
+    // Since bsVersion 7, the transform header stores which TextCodec variant
+    // produced the bitstream, so switch delegate before decoding payload bytes.
+    if (_bsVersion >= 7) {
+        const int encodingType = ((input._array[input._index] & TextCodec::MASK_TEXT_CODEC) == byte(0)) ? 1 : 2;
+        setEncodingType(encodingType);
+    }
 
     return _delegate->inverse(input, output, count);
 }

@@ -193,6 +193,7 @@ namespace kanzi {
        static const byte MASK_NOT_TEXT;
        static const byte MASK_CRLF;
        static const byte MASK_XML_HTML;
+       static const byte MASK_TEXT_CODEC;
        static const byte MASK_DT;
        static const int MASK_LENGTH;
        static bool init(int8 cType[256]);
@@ -214,7 +215,12 @@ namespace kanzi {
        static int createDictionary(char words[], int dictSize, DictEntry dict[], int maxWords, int startWord);
        static const int STATIC_DICT_WORDS;
 
+       void setEncodingType(int encodingType);
+
        Transform<byte>* _delegate;
+       Context* _pCtx;
+       int _encodingType;
+       int _bsVersion;
    };
 
    inline DictEntry::DictEntry()
