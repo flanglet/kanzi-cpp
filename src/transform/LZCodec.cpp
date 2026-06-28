@@ -561,12 +561,12 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
         prefetchWrite(&dst[dstIdx]);
 
         // Copy match
-        if (dist >= 32) {
+        if (dist >= 16) {
             do {
                 // No overlap
-                memcpy(&dst[dstIdx], &dst[ref], 32);
-                ref += 32;
-                dstIdx += 32;
+                memcpy(&dst[dstIdx], &dst[ref], 16);
+                ref += 16;
+                dstIdx += 16;
             } while (dstIdx < mEnd);
         }
         else if (dist != 1) {
