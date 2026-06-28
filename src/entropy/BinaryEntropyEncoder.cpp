@@ -27,6 +27,7 @@ const uint64 BinaryEntropyEncoder::MASK_0_24 = 0x0000000000FFFFFF;
 const uint64 BinaryEntropyEncoder::MASK_0_32 = 0x00000000FFFFFFFF;
 const int BinaryEntropyEncoder::MAX_BLOCK_SIZE = 1 << 30;
 const int BinaryEntropyEncoder::MAX_CHUNK_SIZE = 1 << 26;
+static const uint64 BINARY_ENTROPY_BUFFER_FLOOR = 8ULL << 20;
 
 
 BinaryEntropyEncoder::BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor* predictor, bool deallocate)
@@ -86,9 +87,8 @@ int BinaryEntropyEncoder::encode(const kanzi::byte block[], uint blkptr, uint co
         length = (length / 8 < MAX_CHUNK_SIZE) ? count >> 3 : count >> 4;
     }
 
-    const uint bufSize = length + (length >> 3);
-
-    ensureCapacity(int(bufSize));
+    const uint64 bufSize = max(uint64(length + (length >> 3)), BINARY_ENTROPY_BUFFER_FLOOR);
+    ensureCapacity(int(min(bufSize, uint64(0x7FFFFFFF))));
 
     // Split block into chunks, encode chunk and write bit array to bitstream
     while (startChunk < end) {
@@ -127,16 +127,17 @@ void BinaryEntropyEncoder::_dispose()
     _bitstream.writeBits(_low | MASK_0_24, 56);
 }
 
-// no inline
 void BinaryEntropyEncoder::flush()
 {
+    if (_sba._length - _sba._index < 4)
+        ensureCapacity(_sba._index + 4);
+
     BigEndian::writeInt32(&_sba._array[_sba._index], int32(_high >> 24));
     _sba._index += 4;
     _low <<= 32;
     _high = (_high << 32) | MASK_0_32;
 }
 
-// no inline
 void BinaryEntropyEncoder::encodeByte(kanzi::byte val)
 {
     encodeBit(int(val) & 0x80, _predictor->get());
