@@ -502,6 +502,28 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
     while (true) {
         const int token = int(src[tkIdx++]);
 
+        // Get match length and distance
+        int mLen, dist;
+
+        if ((token & 0x18) == 0) {
+            // Repetition distance, read mLen remainder (if any) outside of token
+            mLen = token & 0x03;
+            mLen += (mLen == 3 ? minMatch + int(readLength(src, mLenIdx)) : minMatch);
+            dist = (token & 0x04) == 0 ? repd0 : repd1;
+        }
+        else {
+            // Read mLen remainder (if any) outside of token
+            mLen = token & 0x07;
+            mLen += (mLen == 7 ? minMatch + int(readLength(src, mLenIdx)) : minMatch);
+            dist = int(src[mIdx++]);
+            const int f1 = (token >> 4) & 1;
+            const int f2 = (token >> 3) & f1;
+            dist = (dist << (8 & -f1)) | (-f1 & int(src[mIdx]));
+            mIdx += f1;
+            dist = (dist << (8 & -f2)) | (-f2 & int(src[mIdx]));
+            mIdx += f2;
+        }
+
         if (token >= 32) {
             // Get literal length
             const uint litLen = (token >= 0xE0) ? uint(7) + readLength(src, srcIdx) : uint(token >> 5);
@@ -525,28 +547,6 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
             emitLiterals(s, d, litLen);
         }
 
-        // Get match length and distance
-        int mLen, dist;
-
-        if ((token & 0x18) == 0) {
-            // Repetition distance, read mLen remainder (if any) outside of token
-            mLen = token & 0x03;
-            mLen += (mLen == 3 ? minMatch + int(readLength(src, mLenIdx)) : minMatch);
-            dist = (token & 0x04) == 0 ? repd0 : repd1;
-        }
-        else {
-            // Read mLen remainder (if any) outside of token
-            mLen = token & 0x07;
-            mLen += (mLen == 7 ? minMatch + int(readLength(src, mLenIdx)) : minMatch);
-            dist = int(src[mIdx++]);
-            const int f1 = (token >> 4) & 1;
-            const int f2 = (token >> 3) & f1;
-            dist = (dist << (8 * f1)) | (-f1 & int(src[mIdx]));
-            mIdx += f1;
-            dist = (dist << (8 * f2)) | (-f2 & int(src[mIdx]));
-            mIdx += f2;
-        }
-
         repd1 = repd0;
         repd0 = dist;
         const int mEnd = dstIdx + mLen;
@@ -561,12 +561,12 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
         prefetchWrite(&dst[dstIdx]);
 
         // Copy match
-        if (dist >= 16) {
+        if (dist >= 32) {
             do {
                 // No overlap
-                memcpy(&dst[dstIdx], &dst[ref], 16);
-                ref += 16;
-                dstIdx += 16;
+                memcpy(&dst[dstIdx], &dst[ref], 32);
+                ref += 32;
+                dstIdx += 32;
             } while (dstIdx < mEnd);
         }
         else if (dist != 1) {
