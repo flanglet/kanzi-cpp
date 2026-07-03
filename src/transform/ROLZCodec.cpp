@@ -455,11 +455,14 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
     const int mIdxBufSize = sizeChunk / 4;
     const int tkBufSize = sizeChunk / 4;
     const int lenBufSize = sizeChunk / 5;
-    kanzi::byte* arena = new kanzi::byte[litBufSize + mIdxBufSize + tkBufSize + lenBufSize];
+    // Pad the length buffer so readLength() can safely read up to 4 bytes
+    // after the logical end once the first byte has been validated.
+    kanzi::byte* arena = new kanzi::byte[litBufSize + mIdxBufSize + tkBufSize + lenBufSize + 4];
     SliceArray<kanzi::byte> litBuf(&arena[0], litBufSize);
     SliceArray<kanzi::byte> mIdxBuf(&arena[litBufSize], mIdxBufSize);
     SliceArray<kanzi::byte> tkBuf(&arena[litBufSize + mIdxBufSize], tkBufSize);
     SliceArray<kanzi::byte> lenBuf(&arena[litBufSize + mIdxBufSize + tkBufSize], lenBufSize);
+    memset(&lenBuf._array[lenBufSize], 0, 4);
     memset(&_counters[0], 0, sizeof(_counters));
     bool success = true;
 
@@ -474,6 +477,9 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
         sizeChunk = endChunk - startChunk;
         bool onlyLiterals = false;
         int litLenDecoded = 0;
+        int tkLen = 0;
+        int mLenLen = 0;
+        int mIdxLen = 0;
 
         try
         {
@@ -487,9 +493,9 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             istream is(&buffer);
             DefaultInputBitStream ibs(is, 65536);
             const int litLen = int(ibs.readBits(32));
-            const int tkLen = int(ibs.readBits(32));
-            const int mLenLen = int(ibs.readBits(32));
-            const int mIdxLen = int(ibs.readBits(32));
+            tkLen = int(ibs.readBits(32));
+            mLenLen = int(ibs.readBits(32));
+            mIdxLen = int(ibs.readBits(32));
             const int firstLitLen = min(sizeChunk, 8);
 
             if ((litLen < 0) || (tkLen < 0) || (mLenLen < 0) || (mIdxLen < 0)) {
@@ -554,10 +560,30 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             // token LLLLLMMM -> L lit length, M match length
             const int token = int(tkBuf._array[tkBuf._index++]);
             int mLen = token & 0x07;
-            mLen += (mLen == 7 ? _minMatch + readLength(lenBuf._array, lenBuf._index) : _minMatch);
+
+            if (mLen == 7) {
+                if (lenBuf._index >= mLenLen) {
+                    success = false;
+                    goto End;
+                }
+
+                mLen += _minMatch + readLength(lenBuf._array, lenBuf._index);
+            }
+            else {
+                mLen += _minMatch;
+            }
 
             // Emit literals
-            const int litLen = (token < 0xF8) ? token >> 3 : readLength(lenBuf._array, lenBuf._index) + 31;
+            int litLen = token >> 3;
+
+            if (token >= 0xF8) {
+                if (lenBuf._index >= mLenLen) {
+                    success = false;
+                    goto End;
+                }
+
+                litLen = readLength(lenBuf._array, lenBuf._index) + 31;
+            }
 
             if (litLen > 0) {
                 if (dstIdx + litLen > litBufSize) {
@@ -622,6 +648,13 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 prefetchRead(&buf[ref + 64]);
 
             dstIdx = ROLZCodec::emitCopy(buf, dstIdx, ref, mLen);
+        }
+
+        // Extra validation that all buffer elements have been consumsed
+        if ((tkBuf._index != tkLen) || (mIdxBuf._index != mIdxLen) ||
+            (litBuf._index != litLenDecoded) || (lenBuf._index != mLenLen)) {
+            success = false;
+            goto End;
         }
 
         startChunk = endChunk;
