@@ -239,9 +239,9 @@ bool HuffmanDecoder::decodeChunk(kanzi::byte block[], uint count)
     uint64 state0 = 0, state1 = 0, state2 = 0, state3 = 0; // bits read from bitstream
     uint8 bits0 = 0, bits1 = 0, bits2 = 0, bits3 = 0;      // number of available bits in state
 
-#define READ_STATE(shift, state, idx, bits) do {\
+#define READ_STATE(state, idx, bits) do {\
        const uint8 shift = (56 - bits) & -8; \
-       bits += shift - DECODING_BATCH_SIZE; \
+       bits += (shift - DECODING_BATCH_SIZE); \
        state = (state << shift) | (uint64(BigEndian::readLong64(&_buffer[idx])) >> 1 >> (63 - shift)); /* handle shift = 0 */ \
        idx += (shift >> 3); \
     } while (0);
@@ -255,10 +255,10 @@ bool HuffmanDecoder::decodeChunk(kanzi::byte block[], uint count)
 
     while (n < szFrag - 4) {
         // Fill 64 bits of state from the bitstream for each stream
-        READ_STATE(shift, state0, idx0, bits0);
-        READ_STATE(shift, state1, idx1, bits1);
-        READ_STATE(shift, state2, idx2, bits2);
-        READ_STATE(shift, state3, idx3, bits3);
+        READ_STATE(state0, idx0, bits0);
+        READ_STATE(state1, idx1, bits1);
+        READ_STATE(state2, idx2, bits2);
+        READ_STATE(state3, idx3, bits3);
 
         // Decompress 4 symbols per stream while keeping the decoded values short-lived.
         const uint16 val00 = _table[(state0 >> bits0) & TABLE_MASK]; bits0 -= uint8(val00);
@@ -309,10 +309,10 @@ bool HuffmanDecoder::decodeChunk(kanzi::byte block[], uint count)
     }
 
     // Fill 64 bits of state from the bitstream for each stream
-    READ_STATE(shift, state0, idx0, bits0);
-    READ_STATE(shift, state1, idx1, bits1);
-    READ_STATE(shift, state2, idx2, bits2);
-    READ_STATE(shift, state3, idx3, bits3);
+    READ_STATE(state0, idx0, bits0);
+    READ_STATE(state1, idx1, bits1);
+    READ_STATE(state2, idx2, bits2);
+    READ_STATE(state3, idx3, bits3);
 
     while (n < szFrag) {
         // Decompress 1 symbol per stream
