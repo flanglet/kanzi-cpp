@@ -874,9 +874,11 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     kanzi::byte* dst = &output._array[output._index];
 
     if (_hashSize == 0) {
-        _hashSize = 1 << HASH_LOG;
+        const int newSize = 1 << HASH_LOG;
+        int32* hashes = new int32[newSize];
         delete[] _hashes;
-        _hashes = new int32[_hashSize];
+        _hashes = hashes;
+        _hashSize = newSize;
     }
 
     memset(_hashes, 0, sizeof(int32) * _hashSize);
