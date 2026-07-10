@@ -113,11 +113,10 @@ bool BWT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
 
     // Lazy dynamic memory allocation
     if (_saSize < count) {
-         if (_sa != nullptr)
-             delete[] _sa;
-
+         int* sa = new int[count];
+         delete[] _sa;
+         _sa = sa;
          _saSize = count;
-         _sa = new int[_saSize];
     }
 
     if (_saAlgo.computeBWT(src, dst, _sa, count, _primaryIndexes, getBWTChunks(count)) == false)
@@ -164,11 +163,11 @@ bool BWT::inverseMergeTPSI(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byt
 
     // Lazy dynamic memory allocation
     if (_bufferSize < count) {
-        if (_buffer != nullptr)
-           delete[] _buffer;
-
-        _bufferSize = max(count, 256);
-        _buffer = new uint[_bufferSize];
+        const int newSize = max(count, 256);
+        uint* buffer = new uint[newSize];
+        delete[] _buffer;
+        _buffer = buffer;
+        _bufferSize = newSize;
     }
 
     // Build array of packed index + value (assumes block size < 1<<24)
@@ -282,11 +281,11 @@ bool BWT::inverseBiPSIv2(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
 {
     // Lazy dynamic memory allocations
     if (_bufferSize < count + 1) {
-        if (_buffer != nullptr)
-            delete[] _buffer;
-
-        _bufferSize = max(count + 1, 256);
-        _buffer = new uint[_bufferSize];
+        const int newSize = max(count + 1, 256);
+        uint* buffer = new uint[newSize];
+        delete[] _buffer;
+        _buffer = buffer;
+        _bufferSize = newSize;
     }
 
     const kanzi::byte* src = &input._array[input._index];

@@ -130,31 +130,37 @@ bool LZXCodec<T>::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
         return false;
 
     if (_hashSize == 0) {
-        _hashSize = 1 << HASH_LOG;
-
-        if (_hashes != nullptr)
-            delete[] _hashes;
-
-        _hashes = new int32[_hashSize];
+        const int newSize = 1 << HASH_LOG;
+        int32* hashes = new int32[newSize];
+        delete[] _hashes;
+        _hashes = hashes;
+        _hashSize = newSize;
     }
 
     if (_bufferSize < max(count / 5, 256)) {
-        _bufferSize = max(count / 5, 256);
+        const int newSize = max(count / 5, 256);
+        kanzi::byte* mLenBuf = new kanzi::byte[newSize];
+        kanzi::byte* mBuf = nullptr;
+        kanzi::byte* tkBuf = nullptr;
 
-        if (_mLenBuf != nullptr)
-            delete[] _mLenBuf;
+        try {
+            mBuf = new kanzi::byte[newSize];
+            tkBuf = new kanzi::byte[newSize];
+        }
+        catch (...) {
+            delete[] mLenBuf;
+            delete[] mBuf;
+            delete[] tkBuf;
+            throw;
+        }
 
-        _mLenBuf = new kanzi::byte[_bufferSize];
-
-        if (_mBuf != nullptr)
-            delete[] _mBuf;
-
-        _mBuf = new kanzi::byte[_bufferSize];
-
-        if (_tkBuf != nullptr)
-            delete[] _tkBuf;
-
-        _tkBuf = new kanzi::byte[_bufferSize];
+        delete[] _mLenBuf;
+        delete[] _mBuf;
+        delete[] _tkBuf;
+        _mLenBuf = mLenBuf;
+        _mBuf = mBuf;
+        _tkBuf = tkBuf;
+        _bufferSize = newSize;
     }
 
     memset(_hashes, 0, sizeof(int32) * _hashSize);
@@ -773,12 +779,11 @@ bool LZPCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     const int dstEnd = count - (count >> 6);
 
     if (_hashSize == 0) {
-        _hashSize = 1 << HASH_LOG;
-
-        if (_hashes != nullptr)
-            delete[] _hashes;
-
-        _hashes = new int32[_hashSize];
+        const int newSize = 1 << HASH_LOG;
+        int32* hashes = new int32[newSize];
+        delete[] _hashes;
+        _hashes = hashes;
+        _hashSize = newSize;
     }
 
     memset(_hashes, 0, sizeof(int32) * _hashSize);

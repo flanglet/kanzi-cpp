@@ -90,11 +90,11 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
     const int dim = 255 * _order + 1;
 
     if (_f2sSize < (dim << _logRange)) {
-        if (_f2s != nullptr)
-           delete[] _f2s;
-
-        _f2sSize = dim << _logRange;
-        _f2s = new uint8[_f2sSize];
+        const int newSize = dim << _logRange;
+        uint8* f2s = new uint8[newSize];
+        delete[] _f2s;
+        _f2s = f2s;
+        _f2sSize = newSize;
     }
 
     const uint scale = 1 << _logRange;
@@ -183,11 +183,10 @@ int ANSRangeDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
     const uint minBufSize = 2 * uint(_chunkSize);
 
     if (_bufferSize < minBufSize) {
-        if (_buffer != nullptr)
-            delete[] _buffer;
-
+        kanzi::byte* buffer = new kanzi::byte[minBufSize];
+        delete[] _buffer;
+        _buffer = buffer;
         _bufferSize = minBufSize;
-        _buffer = new kanzi::byte[_bufferSize];
     }
 
     const uint end = blkptr + count;

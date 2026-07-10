@@ -56,17 +56,22 @@ bool BWTS::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
 
     // Lazy dynamic memory allocation
     if (_bufferSize < count) {
+        int* buffer1 = new int[count];
+        int* buffer2 = nullptr;
+
+        try {
+            buffer2 = new int[count];
+        }
+        catch (...) {
+            delete[] buffer1;
+            throw;
+        }
+
+        delete[] _buffer1;
+        delete[] _buffer2;
+        _buffer1 = buffer1;
+        _buffer2 = buffer2;
         _bufferSize = count;
-
-        if (_buffer1 != nullptr)
-           delete[] _buffer1;
-
-        _buffer1 = new int[_bufferSize];
-
-        if (_buffer2 != nullptr)
-           delete[] _buffer2;
-
-        _buffer2 = new int[_bufferSize];
     }
 
     // Aliasing
@@ -192,12 +197,10 @@ bool BWTS::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
 
     // Lazy dynamic memory allocation
     if (_bufferSize < count) {
+        int* buffer1 = new int[count];
+        delete[] _buffer1;
+        _buffer1 = buffer1;
         _bufferSize = count;
-
-        if (_buffer1 != nullptr)
-           delete[] _buffer1;
-
-        _buffer1 = new int[_bufferSize];
     }
 
     // Initialize histogram

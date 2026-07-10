@@ -310,11 +310,10 @@ int HuffmanEncoder::encode(const kanzi::byte block[], uint blkptr, uint count)
     const uint minLenBuf = max(min(sz + (sz >> 3), 2 * count), uint(65536));
 
     if (_bufferSize < minLenBuf) {
-        if (_buffer != nullptr)
-           delete[] _buffer;
-
+        kanzi::byte* buffer = new kanzi::byte[minLenBuf];
+        delete[] _buffer;
+        _buffer = buffer;
         _bufferSize = minLenBuf;
-        _buffer = new kanzi::byte[_bufferSize];
     }
 
     uint startChunk = blkptr;

@@ -158,11 +158,10 @@ int HuffmanDecoder::decodeV6(kanzi::byte block[], uint blkptr, uint count)
     const uint minBufSize = 2 * uint(_chunkSize) + (4 * HUFFMAN_FRAGMENT_GUARD_BYTES);
 
     if (_bufferSize < minBufSize) {
-        if (_buffer != nullptr)
-           delete[] _buffer;
-
+        kanzi::byte* buffer = new kanzi::byte[minBufSize];
+        delete[] _buffer;
+        _buffer = buffer;
         _bufferSize = minBufSize;
-        _buffer = new kanzi::byte[_bufferSize];
     }
 
     uint startChunk = blkptr;
@@ -378,11 +377,10 @@ int HuffmanDecoder::decodeV5(kanzi::byte block[], uint blkptr, uint count)
             const uint minLenBuf = uint(max(sz + (sz >> 3), 1024));
 
             if (_bufferSize < minLenBuf) {
-                if (_buffer != nullptr)
-                   delete[] _buffer;
-
+                kanzi::byte* buffer = new kanzi::byte[minLenBuf];
+                delete[] _buffer;
+                _buffer = buffer;
                 _bufferSize = minLenBuf;
-                _buffer = new kanzi::byte[_bufferSize];
             }
 
             _bitstream.readBits(&_buffer[0], szBits);

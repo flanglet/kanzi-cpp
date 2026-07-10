@@ -232,12 +232,11 @@ bool ROLZCodec1::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
     }
 
     if (_mSize == 0) {
-       _mSize = size_t(ROLZCodec::HASH_SIZE << _logPosChecks);
-
-       if (_matches != nullptr)
-           delete[] _matches;
-
-       _matches = new uint32[_mSize];
+       const size_t newSize = size_t(ROLZCodec::HASH_SIZE << _logPosChecks);
+       uint32* matches = new uint32[newSize];
+       delete[] _matches;
+       _matches = matches;
+       _mSize = newSize;
     }
 
     flags |= (_logPosChecks << 4);
@@ -440,12 +439,11 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
        return false;
 
     if (_mSize < size_t(ROLZCodec::HASH_SIZE << _logPosChecks)) {
-       _mSize = size_t(ROLZCodec::HASH_SIZE << _logPosChecks);
-
-       if (_matches != nullptr)
-           delete[] _matches;
-
-       _matches = new uint32[_mSize];
+       const size_t newSize = size_t(ROLZCodec::HASH_SIZE << _logPosChecks);
+       uint32* matches = new uint32[newSize];
+       delete[] _matches;
+       _matches = matches;
+       _mSize = newSize;
     }
 
     _posChecks = 1 << _logPosChecks;
