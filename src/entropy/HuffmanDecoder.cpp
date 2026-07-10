@@ -333,7 +333,10 @@ bool HuffmanDecoder::decodeChunk(kanzi::byte block[], uint count)
     for (uint i = count4; i < count; i++)
         block[i] = kanzi::byte(_bitstream.readBits(8));
 
-    return true;
+    return ((idx0 << 3) - (bits0 + DECODING_BATCH_SIZE) == szBits0) &&
+           ((idx1 << 3) - (bits1 + DECODING_BATCH_SIZE) == szBits1) &&
+           ((idx2 << 3) - (bits2 + DECODING_BATCH_SIZE) == szBits2) &&
+           ((idx3 << 3) - (bits3 + DECODING_BATCH_SIZE) == szBits3);
 }
 
 int HuffmanDecoder::decodeV5(kanzi::byte block[], uint blkptr, uint count)
@@ -412,13 +415,10 @@ int HuffmanDecoder::decodeV5(kanzi::byte block[], uint blkptr, uint count)
             }
 
             // Last bytes
-            uint nbBits = idx * 8;
-
             while (n < endChunk) {
                 while ((bits < HuffmanCommon::MAX_SYMBOL_SIZE) && (idx < sz)) {
                     state = (state << 8) | uint64(_buffer[idx] & kanzi::byte(0xFF));
                     idx++;
-                    nbBits = (idx == sz) ? szBits : nbBits + 8;
 
                     // 'bits' may overshoot when idx == sz due to padding state bits
                     // It is necessary to compute proper _table indexes
@@ -440,6 +440,9 @@ int HuffmanDecoder::decodeV5(kanzi::byte block[], uint blkptr, uint count)
                 bits -= uint8(val);
                 block[n++] = kanzi::byte(val >> 8);
             }
+
+            if (((idx << 3) - int(bits)) != szBits)
+                return -1;
         }
 
         startChunk = endChunk;

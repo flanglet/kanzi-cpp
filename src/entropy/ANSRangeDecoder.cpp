@@ -235,6 +235,7 @@ bool ANSRangeDecoder::decodeChunk(kanzi::byte block[], uint count)
     memset(_buffer, 0, _bufferSize);
     _bitstream.readBits(&_buffer[0], 8 * sz);
     kanzi::byte* p = &_buffer[0];
+    kanzi::byte* const endPayload = &_buffer[sz];
 
     const int mask = (1 << _logRange) - 1;
     const int count4 = count & -4;
@@ -286,5 +287,5 @@ bool ANSRangeDecoder::decodeChunk(kanzi::byte block[], uint count)
     for (uint i = count4; i < count; i++)
         block[i] = *p++;
 
-    return true;
+    return p == endPayload;
 }

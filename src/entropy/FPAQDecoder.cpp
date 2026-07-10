@@ -104,10 +104,12 @@ int FPAQDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
             _p = _probs[(_ctx & 0xFF) >> 6];
         }
 
+        if (_index > szBytes)
+            return 0;
+
         startChunk = endChunk;
     }
 
     return count;
 }
-
 
