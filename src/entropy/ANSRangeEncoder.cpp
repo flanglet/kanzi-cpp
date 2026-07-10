@@ -50,9 +50,9 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
         throw invalid_argument(ss.str());
     }
 
-    if ((logRange < 8) || (logRange > 16)) {
+    if ((logRange < 8) || (logRange > 15)) {
         stringstream ss;
-        ss << "ANS Codec: Invalid range: " << logRange << " (must be in [8..16])";
+        ss << "ANS Codec: Invalid range: " << logRange << " (must be in [8..15])";
         throw invalid_argument(ss.str());
     }
 
