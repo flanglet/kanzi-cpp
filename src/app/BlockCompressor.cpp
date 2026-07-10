@@ -424,11 +424,13 @@ int BlockCompressor::compress(uint64& outputSize)
             // Wait for results
             for (int i = 0; i < _jobs; i++) {
                 FileCompressResult fcr = results[i].get();
-                res = fcr._code;
                 read += fcr._read;
                 written += fcr._written;
 
-                if (res != 0) {
+                if (fcr._code != 0) {
+                    if (res == 0)
+                        res = fcr._code;
+
                     cerr << fcr._errMsg << endl;
                     // Exit early by telling the workers that the queue is empty
                     queue.clear();

@@ -346,10 +346,12 @@ int BlockDecompressor::decompress(uint64& inputSize)
             // Wait for results
             for (int i = 0; i < _jobs; i++) {
                 FileDecompressResult fdr = results[i].get();
-                res = fdr._code;
                 read += fdr._read;
 
-                if (res != 0) {
+                if (fdr._code != 0) {
+                    if (res == 0)
+                        res = fdr._code;
+
                     cerr << fdr._errMsg << endl;
                     // Exit early by telling the workers that the queue is empty
                     queue.clear();

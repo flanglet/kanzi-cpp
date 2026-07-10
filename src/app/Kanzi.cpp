@@ -928,7 +928,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
             if (from >= 0) {
                 WARNING_OPT_DUPLICATE("--from", arg);
             } else {
-                if ((toInt(arg, from) == false) || (from < 0)) {
+                if ((toInt(arg, from) == false) || (from <= 0)) {
                     cerr << "Invalid start block provided on command line: " << arg << endl;
 
                     if (from == 0) {
