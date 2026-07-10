@@ -141,6 +141,12 @@ bool BWT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
     if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("BWT: Invalid output block");
 
+    if ((count < 0) ||
+        (count > input._length - input._index) ||
+        (count > output._length - output._index) ||
+        (count > MAX_BLOCK_SIZE))
+        return false;
+
     if (count == 1) {
         output._array[output._index++] = input._array[input._index++];
         return true;

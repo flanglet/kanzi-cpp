@@ -193,6 +193,17 @@ bool BWTS::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
     if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("BWTS: Invalid output block");
 
+    if ((count < 0) ||
+        (count > input._length - input._index) ||
+        (count > output._length - output._index))
+        return false;
+
+    if (count > MAX_BLOCK_SIZE) {
+        stringstream ss;
+        ss << "The max BWTS block size is " << MAX_BLOCK_SIZE << ", got " << count;
+        throw invalid_argument(ss.str());
+    }
+
     if (count < 2) {
         if (count == 1)
             output._array[output._index++] = input._array[input._index++];
