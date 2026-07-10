@@ -523,6 +523,26 @@ int testSeek(const string& name)
     obs.close();
     ofs.close();
     cout << "Bits written: " << obs.written() << endl;
+
+    ifstream chk(name.c_str(), ios_base::in | ios_base::binary);
+    chk.read(reinterpret_cast<char*>(output), 128);
+    chk.close();
+
+    for (int i = 0; i < 128; i++) {
+       kanzi::byte expected = kanzi::byte(0xAA);
+
+       if ((i >= 2) && (i < 34))
+           expected = input[98 + i];
+       else if ((i >= 32) && (i < 64))
+           expected = input[i - 22];
+
+       if (output[i] != expected) {
+          cout << "Write failure at index " << i << endl;
+          remove(name.c_str());
+          return 1;
+       }
+    }
+
     remove(name.c_str());
 
     cout << endl;

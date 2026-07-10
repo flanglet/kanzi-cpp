@@ -162,6 +162,7 @@ namespace kanzi
        }
 
        _availBits = 64;
+       _current = 0;
        flush();
        _os.clear();
        _os.seekp(std::streampos(pos >> 3));
