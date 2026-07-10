@@ -543,6 +543,70 @@ static int testTransformCapacityValidation()
     return 0;
 }
 
+static int testOverlappingTransformCopies()
+{
+    cout << endl
+         << "Overlapping transform copies" << endl;
+
+    {
+        NullTransform tf;
+        kanzi::byte buf[6] = {
+            kanzi::byte('a'), kanzi::byte('b'), kanzi::byte('c'),
+            kanzi::byte('d'), kanzi::byte('e'), kanzi::byte('f')
+        };
+        SliceArray<kanzi::byte> input(buf, 4, 0);
+        SliceArray<kanzi::byte> output(buf, 5, 1);
+
+        if (tf.forward(input, output, 4) == false) {
+            cout << "NullTransform overlapping copy failed" << endl;
+            return 1;
+        }
+
+        const kanzi::byte expected[6] = {
+            kanzi::byte('a'), kanzi::byte('a'), kanzi::byte('b'),
+            kanzi::byte('c'), kanzi::byte('d'), kanzi::byte('f')
+        };
+
+        if ((memcmp(buf, expected, 6) != 0) || (input._index != 4) || (output._index != 5)) {
+            cout << "NullTransform overlapping copy corrupted data" << endl;
+            return 1;
+        }
+    }
+
+    {
+        Transform<kanzi::byte>* transforms[8] = {
+            new NullTransform(), nullptr, nullptr, nullptr,
+            nullptr, nullptr, nullptr, nullptr
+        };
+        TransformSequence<kanzi::byte> seq(transforms);
+        seq.setSkipFlags(SKIP_MASK);
+        kanzi::byte buf[6] = {
+            kanzi::byte('a'), kanzi::byte('b'), kanzi::byte('c'),
+            kanzi::byte('d'), kanzi::byte('e'), kanzi::byte('f')
+        };
+        SliceArray<kanzi::byte> input(buf, 4, 0);
+        SliceArray<kanzi::byte> output(buf, 5, 1);
+
+        if (seq.inverse(input, output, 4) == false) {
+            cout << "TransformSequence overlapping copy failed" << endl;
+            return 1;
+        }
+
+        const kanzi::byte expected[6] = {
+            kanzi::byte('a'), kanzi::byte('a'), kanzi::byte('b'),
+            kanzi::byte('c'), kanzi::byte('d'), kanzi::byte('f')
+        };
+
+        if ((memcmp(buf, expected, 6) != 0) || (input._index != 4) || (output._index != 5)) {
+            cout << "TransformSequence overlapping copy corrupted data" << endl;
+            return 1;
+        }
+    }
+
+    cout << "Overlapping transform copies passed" << endl;
+    return 0;
+}
+
 static Transform<kanzi::byte>* getByteTransform(string name, Context& ctx)
 {
     if (name.compare("SRT") == 0)
@@ -1052,6 +1116,11 @@ int TestTransforms_main(int argc, const char* argv[])
             return res;
 
         res = testTransformCapacityValidation();
+
+        if (res != 0)
+            return res;
+
+        res = testOverlappingTransformCopies();
 
         if (res != 0)
             return res;
