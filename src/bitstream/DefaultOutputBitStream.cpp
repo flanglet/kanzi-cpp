@@ -161,7 +161,7 @@ void DefaultOutputBitStream::_close()
     try {
         _os.flush();
 
-        if (_os.bad())
+        if (_os.fail())
             throw BitStreamException("Write to bitstream failed.", BitStreamException::INPUT_OUTPUT);
     }
     catch (const ios_base::failure& e) {
@@ -192,7 +192,7 @@ void DefaultOutputBitStream::flush()
         if (_position > 0) {
             _os.write(reinterpret_cast<char*>(_buffer), _position);
 
-            if (_os.bad())
+            if (_os.fail())
                 throw BitStreamException("Write to bitstream failed", BitStreamException::INPUT_OUTPUT);
 
             _written += (int64(_position) << 3);

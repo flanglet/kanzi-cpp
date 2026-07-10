@@ -713,6 +713,55 @@ int testHasMoreToRead()
     return 0;
 }
 
+int testInputErrorState()
+{
+    cout << endl << "Input Error-State Test" << endl << endl;
+    stringbuf buffer;
+    iostream ios(&buffer);
+    ios.setstate(ios_base::failbit);
+    DefaultInputBitStream ibs(ios, 1024);
+
+    try {
+        ibs.hasMoreToRead();
+        cout << "Expected input error" << endl;
+        return 1;
+    }
+    catch (const BitStreamException& e) {
+        if (e.error() != BitStreamException::INPUT_OUTPUT) {
+            cout << "Unexpected exception code: " << e.error() << endl;
+            return 2;
+        }
+    }
+
+    cout << "Success" << endl;
+    return 0;
+}
+
+int testOutputErrorState()
+{
+    cout << endl << "Output Error-State Test" << endl << endl;
+    stringbuf buffer;
+    iostream ios(&buffer);
+    DefaultOutputBitStream obs(ios, 1024);
+    obs.writeBits(0xAB, 8);
+    ios.setstate(ios_base::failbit);
+
+    try {
+        obs.close();
+        cout << "Expected output error" << endl;
+        return 1;
+    }
+    catch (const BitStreamException& e) {
+        if (e.error() != BitStreamException::INPUT_OUTPUT) {
+            cout << "Unexpected exception code: " << e.error() << endl;
+            return 2;
+        }
+    }
+
+    cout << "Success" << endl;
+    return 0;
+}
+
 
 #ifdef __GNUG__
 int main(int argc, const char* argv[])
@@ -749,6 +798,8 @@ int TestDefaultBitStream_main(int argc, const char* argv[])
        res |= testBitStreamCorrectnessMisaligned1();
        res |= testBitStreamCorrectnessMisaligned2();
        res |= testHasMoreToRead();
+       res |= testInputErrorState();
+       res |= testOutputErrorState();
        res |= testSeek(fileName);
 
        if (doPerf == true) {
