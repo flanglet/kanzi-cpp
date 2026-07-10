@@ -456,6 +456,40 @@ static int testZRLTMalformed()
         }
     }
 
+    {
+        kanzi::byte src[1] = { kanzi::byte(0xFE) };
+        kanzi::byte encoded[2] = { kanzi::byte(0x7E), kanzi::byte(0x7E) };
+        SliceArray<kanzi::byte> input(src, 1, 0);
+        SliceArray<kanzi::byte> output(encoded, 1, 0);
+
+        if (codec.forward(input, output, 1) != false) {
+            cout << "Short escaped forward should fail" << endl;
+            return 1;
+        }
+
+        if ((output._index != 0) || (encoded[1] != kanzi::byte(0x7E))) {
+            cout << "Short escaped forward wrote past logical output" << endl;
+            return 1;
+        }
+    }
+
+    {
+        kanzi::byte src[1] = { kanzi::byte(0) };
+        kanzi::byte encoded[1] = { kanzi::byte(0x7E) };
+        SliceArray<kanzi::byte> input(src, 1, 0);
+        SliceArray<kanzi::byte> output(encoded, 1, 0);
+
+        if (codec.forward(input, output, 1) == false) {
+            cout << "Short zero run forward failed" << endl;
+            return 1;
+        }
+
+        if ((output._index != 1) || (encoded[0] != kanzi::byte(0))) {
+            cout << "Short zero run forward corrupted output" << endl;
+            return 1;
+        }
+    }
+
     cout << "Malformed ZRLT tests passed" << endl;
     return 0;
 }

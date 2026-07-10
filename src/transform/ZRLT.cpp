@@ -42,9 +42,9 @@ bool ZRLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
     kanzi::byte* dst = &output._array[output._index];
     uint srcIdx = 0;
     uint dstIdx = 0;
-    const uint srcEnd = length;
-    const uint dstEnd = length - 16; // do not expand
-    const uint srcEnd4 = length - 4;
+    const uint srcEnd = uint(length);
+    const uint dstEnd = uint(output._length - output._index);
+    const uint srcEnd4 = (length >= 4) ? uint(length - 4) : uint(0);
     bool res = true;
     kanzi::byte zeros[4] = { kanzi::byte(0) };
 
@@ -62,13 +62,14 @@ bool ZRLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
 
             // Encode length
             runLength++;
+            const uint needed = uint(Global::_log2(uint32(runLength)));
 
-            if (dstIdx >= dstEnd) {
+            if (needed > dstEnd - dstIdx) {
                 res = false;
                 break;
             }
 
-            int log = Global::_log2(uint32(runLength));
+            int log = int(needed);
 
             // Write every bit as a kanzi::byte except the most significant one
             while (log >= 4) {
@@ -89,12 +90,13 @@ bool ZRLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
             continue;
         }
 
-        if (dstIdx >= dstEnd) {
+        const int val = int(src[srcIdx]);
+        const uint needed = (val >= 0xFE) ? uint(2) : uint(1);
+
+        if (needed > dstEnd - dstIdx) {
             res = false;
             break;
         }
-
-        const int val = int(src[srcIdx]);
 
         if (val >= 0xFE) {
             dst[dstIdx] = kanzi::byte(0xFF);

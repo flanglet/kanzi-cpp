@@ -183,6 +183,9 @@ namespace kanzi {
        if (count == 0)
            return true;
 
+       if (count > output._length - output._index)
+           return false;
+
        if (_skipFlags == SKIP_MASK) {
             const byte* inPtr  = &input._array[input._index];
             byte* outPtr = &output._array[output._index];
