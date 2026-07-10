@@ -539,6 +539,46 @@ static int testTransformCapacityValidation()
         }
     }
 
+    {
+        BWT tf;
+        SliceArray<kanzi::byte> input(src, 1, 0);
+        SliceArray<kanzi::byte> output(dst, 2, 0);
+
+        if (tf.inverse(input, output, 2) != false) {
+            cout << "BWT inverse should reject oversized input count" << endl;
+            return 1;
+        }
+    }
+
+    {
+        BWTS tf;
+        SliceArray<kanzi::byte> input(src, 2, 0);
+        SliceArray<kanzi::byte> output(dst, 1, 0);
+
+        if (tf.inverse(input, output, 2) != false) {
+            cout << "BWTS inverse should reject oversized output count" << endl;
+            return 1;
+        }
+    }
+
+    {
+        SBRT tf(SBRT::MODE_RANK, ctx);
+        SliceArray<kanzi::byte> input(src, 2, 0);
+        SliceArray<kanzi::byte> output(dst, 2, 0);
+        const int savedIIdx = input._index;
+        const int savedOIdx = output._index;
+
+        if (tf.inverse(input, output, -1) != false) {
+            cout << "SBRT inverse should reject negative counts" << endl;
+            return 1;
+        }
+
+        if ((input._index != savedIIdx) || (output._index != savedOIdx)) {
+            cout << "SBRT inverse negative count should not move indexes" << endl;
+            return 1;
+        }
+    }
+
     cout << "Transform capacity validation passed" << endl;
     return 0;
 }

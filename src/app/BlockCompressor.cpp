@@ -589,6 +589,40 @@ FileCompressTask<T>::FileCompressTask(const Context& ctx, vector<Listener<Event>
 }
 
 template <class T>
+string FileCompressTask<T>::describeStreamState(const std::istream& is)
+{
+    const ios_base::iostate state = is.rdstate();
+
+    if (state == ios_base::goodbit)
+        return "goodbit";
+
+    stringstream ss;
+    bool first = true;
+
+    if ((state & ios_base::eofbit) != 0) {
+        ss << "eofbit";
+        first = false;
+    }
+
+    if ((state & ios_base::failbit) != 0) {
+        if (first == false)
+            ss << '|';
+
+        ss << "failbit";
+        first = false;
+    }
+
+    if ((state & ios_base::badbit) != 0) {
+        if (first == false)
+            ss << '|';
+
+        ss << "badbit";
+    }
+
+    return ss.str();
+}
+
+template <class T>
 T FileCompressTask<T>::run()
 {
     Printer log(cout);
@@ -766,7 +800,21 @@ T FileCompressTask<T>::run()
 
             try {
                 _is->read(reinterpret_cast<char*>(&sa._array[0]), sa._length);
-                len = *_is ? sa._length : int(_is->gcount());
+                len = int(_is->gcount());
+
+                if ((_is->bad() == true) || ((_is->fail() == true) && (_is->eof() == false))) {
+                    const string state = FileCompressTask<T>::describeStreamState(*_is);
+                    CLEANUP_COMP_IS
+                    const uint64 w = _cos->getWritten();
+                    delete[] buf;
+                    delete _cos;
+                    _cos = nullptr;
+                    CLEANUP_COMP_OS
+                    stringstream sserr;
+                    sserr << "Failed to read block from file '" << inputName << "'";
+                    sserr << " (stream state: " << state << ")";
+                    return T(Error::ERR_READ_FILE, read, w, sserr.str().c_str());
+                }
             }
             catch (const exception& e) {
                 CLEANUP_COMP_IS
