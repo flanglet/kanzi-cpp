@@ -1,7 +1,5 @@
 #CC=clang
 #CXX=clang++
-OBJ_DIR = obj
-TEST_OBJ_DIR=$(OBJ_DIR)/test
 APP=kanzi
 APP_STATIC=$(APP)_static
 APP_DYNAMIC=$(APP)_dynamic
@@ -19,6 +17,11 @@ endif
 ifndef CXX_STD
     CXX_STD = c++17
 endif
+
+OBJ_DIR_ROOT = obj
+OBJ_DIR_TAG = $(subst +,x,$(subst /,_,$(subst =,_,$(CXX_STD))))
+OBJ_DIR = $(OBJ_DIR_ROOT)/$(OBJ_DIR_TAG)
+TEST_OBJ_DIR=$(OBJ_DIR)/test
 
 ifndef C_STD
     C_STD = c11
@@ -306,7 +309,7 @@ endif
 
 clean:
 ifeq ($(DETECTED_OS),Windows)
-	del /S $(OBJ_DIR)\*.o
+	if exist $(OBJ_DIR_ROOT) rmdir /S /Q $(OBJ_DIR_ROOT)
 	..\bin\$(APP)$(PROG_SUFFIX) \
 	..\bin\$(APP_STATIC)$(PROG_SUFFIX) \
 	..\bin\$(APP_DYNAMIC)$(PROG_SUFFIX) ..\bin\test*$(PROG_SUFFIX) \
@@ -321,7 +324,7 @@ else
 	../lib/$(STATIC_LIB) ../lib/$(SHARED_LIB) \
 	../lib/$(STATIC_COMP_LIB) ../lib/$(STATIC_DECOMP_LIB) \
 	../lib/$(SHARED_COMP_LIB) ../lib/$(SHARED_DECOMP_LIB)
-	rm -rf $(OBJ_DIR)
+	rm -rf $(OBJ_DIR_ROOT)
 endif
 
 ifeq ($(DETECTED_OS),Windows)
