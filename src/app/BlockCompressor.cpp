@@ -931,6 +931,9 @@ T FileCompressTask<T>::run()
 
     }
 
+#undef CLEANUP_COMP_IS
+#undef CLEANUP_COMP_OS
+
     delete[] buf;
     return T(0, read, encoded, "");
 }
