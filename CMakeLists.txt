@@ -25,8 +25,10 @@ option(KANZI_INSTALL_RELATIVE_RPATH
 
 set(KANZI_CMAKE_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/Kanzi")
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
+# Set C++ standard (user-configurable, defaults to C++17)
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 #set(CMAKE_CXX_COMPILER "clang++")
