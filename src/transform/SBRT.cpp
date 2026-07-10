@@ -54,6 +54,11 @@ bool SBRT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
     if (!SliceArray<kanzi::byte>::isValid(output))
         throw std::invalid_argument("SBRT: Invalid output block");
 
+    if ((count < 0) ||
+        (count > input._length - input._index) ||
+        (count > output._length - output._index))
+        return false;
+
     // Aliasing
     const kanzi::byte* src = &input._array[input._index];
     kanzi::byte* dst = &output._array[output._index];

@@ -20,6 +20,8 @@ limitations under the License.
 #include "../types.hpp"
 #include "../util/strings.hpp"
 #include "../transform/AliasCodec.hpp"
+#include "../transform/BWT.hpp"
+#include "../transform/BWTS.hpp"
 #include "../transform/EXECodec.hpp"
 #include "../transform/FSDCodec.hpp"
 #include "../transform/LZCodec.hpp"
@@ -491,6 +493,53 @@ static int testZRLTMalformed()
     }
 
     cout << "Malformed ZRLT tests passed" << endl;
+    return 0;
+}
+
+static int testTransformCapacityValidation()
+{
+    cout << endl
+         << "Transform capacity validation" << endl;
+
+    Context ctx;
+    ctx.putInt("bsVersion", BS_VERSION);
+    kanzi::byte src[2] = { kanzi::byte(1), kanzi::byte(2) };
+    kanzi::byte dst[2] = { kanzi::byte(0x7E), kanzi::byte(0x7E) };
+
+    {
+        BWT tf;
+        SliceArray<kanzi::byte> input(src, 1, 0);
+        SliceArray<kanzi::byte> output(dst, 2, 0);
+
+        if (tf.forward(input, output, 2) != false) {
+            cout << "BWT should reject oversized input count" << endl;
+            return 1;
+        }
+    }
+
+    {
+        BWTS tf;
+        SliceArray<kanzi::byte> input(src, 2, 0);
+        SliceArray<kanzi::byte> output(dst, 0, 0);
+
+        if (tf.forward(input, output, 1) != false) {
+            cout << "BWTS should reject oversized output count" << endl;
+            return 1;
+        }
+    }
+
+    {
+        SBRT tf(SBRT::MODE_RANK, ctx);
+        SliceArray<kanzi::byte> input(src, 2, 1);
+        SliceArray<kanzi::byte> output(dst, 2, 0);
+
+        if (tf.forward(input, output, 2) != false) {
+            cout << "SBRT should reject oversized remaining input count" << endl;
+            return 1;
+        }
+    }
+
+    cout << "Transform capacity validation passed" << endl;
     return 0;
 }
 
@@ -998,6 +1047,11 @@ int TestTransforms_main(int argc, const char* argv[])
             return res;
 
         res = testZRLTMalformed();
+
+        if (res != 0)
+            return res;
+
+        res = testTransformCapacityValidation();
 
         if (res != 0)
             return res;

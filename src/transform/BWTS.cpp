@@ -36,6 +36,11 @@ bool BWTS::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
     if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("BWTS: Invalid output block");
 
+    if ((count < 0) ||
+        (count > input._length - input._index) ||
+        (count > output._length - output._index))
+        return false;
+
     if (count > MAX_BLOCK_SIZE) {
         // Not a recoverable error: instead of silently fail the transform,
         // issue a fatal error.

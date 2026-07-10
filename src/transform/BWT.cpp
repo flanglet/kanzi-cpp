@@ -100,7 +100,10 @@ bool BWT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
     if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("BWT: Invalid output block");
 
-    if (count > MAX_BLOCK_SIZE)
+    if ((count < 0) ||
+        (count > input._length - input._index) ||
+        (count > output._length - output._index) ||
+        (count > MAX_BLOCK_SIZE))
         return false;
 
     if (count == 1) {
