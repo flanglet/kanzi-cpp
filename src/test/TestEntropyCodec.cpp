@@ -403,9 +403,10 @@ int TestEntropyCodec_main(int argc, const char* argv[])
 
         if (argc == 1) {
 #if __cplusplus < 201103L
-            string allCodecs[8] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
+            string allCodecs[] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
+            const int count = int(sizeof(allCodecs) / sizeof(allCodecs[0]));
 
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < count; i++)
                 codecs.push_back(allCodecs[i]);
 #else
             codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
@@ -418,8 +419,9 @@ int TestEntropyCodec_main(int argc, const char* argv[])
             if (str == "-TYPE=ALL") {
 #if __cplusplus < 201103L
                string allCodecs[] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
+               const int count = int(sizeof(allCodecs) / sizeof(allCodecs[0]));
 
-               for (int i = 0; i < 8; i++)
+               for (int i = 0; i < count; i++)
                    codecs.push_back(allCodecs[i]);
 #else
                codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
