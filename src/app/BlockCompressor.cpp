@@ -360,103 +360,120 @@ int BlockCompressor::compress(uint64& outputSize)
     }
     else {
         vector<FileCompressTask<FileCompressResult>*> tasks;
+        tasks.reserve(nbFiles);
 #ifdef CONCURRENCY_ENABLED
         vector<int> jobsPerTask(nbFiles);
+        vector<FileCompressWorker<FCTask*, FileCompressResult>*> workers;
         Global::computeJobsPerTask(jobsPerTask.data(), _jobs, nbFiles);
 #endif
 
-        if (_reorderFiles == true)
-            sortFilesByPathAndSize(files, true);
+        try {
+            if (_reorderFiles == true)
+                sortFilesByPathAndSize(files, true);
 
-        // Create one task per file
-        for (int i = 0; i < nbFiles; i++) {
-            string oName = formattedOutName;
-            string iName = files[i].fullPath();
+            // Create one task per file
+            for (int i = 0; i < nbFiles; i++) {
+                string oName = formattedOutName;
+                string iName = files[i].fullPath();
 
-            if (oName.length() == 0) {
-                oName = iName + ".knz";
-            }
-            else if ((inputIsDir == true) && (specialOutput == false)) {
-                oName = formattedOutName + iName.substr(formattedInName.size()) + ".knz";
-            }
+                if (oName.length() == 0) {
+                    oName = iName + ".knz";
+                }
+                else if ((inputIsDir == true) && (specialOutput == false)) {
+                    oName = formattedOutName + iName.substr(formattedInName.size()) + ".knz";
+                }
 
-            int blockSize = _blockSize;
+                int blockSize = _blockSize;
 
-            // Set the block size to optimize compression ratio when possible
-            if ((_autoBlockSize == true) && (_jobs > 0)) {
-                const int64 bl = files[i]._size / _jobs;
-                blockSize = int(max(min((bl + 63) & ~63, int64(MAX_BLOCK_SIZE)), int64(MIN_BLOCK_SIZE)));
-            }
+                // Set the block size to optimize compression ratio when possible
+                if ((_autoBlockSize == true) && (_jobs > 0)) {
+                    const int64 bl = files[i]._size / _jobs;
+                    blockSize = int(max(min((bl + 63) & ~63, int64(MAX_BLOCK_SIZE)), int64(MIN_BLOCK_SIZE)));
+                }
 
 #ifdef CONCURRENCY_ENABLED
-            Context taskCtx(_ctx, &pool);
-            taskCtx.putInt("jobs", jobsPerTask[i]);
+                Context taskCtx(_ctx, &pool);
+                taskCtx.putInt("jobs", jobsPerTask[i]);
 #else
-            Context taskCtx(_ctx);
-            taskCtx.putInt("jobs", 1);
+                Context taskCtx(_ctx);
+                taskCtx.putInt("jobs", 1);
 #endif
-            taskCtx.putLong("fileSize", files[i]._size);
-            taskCtx.putString("inputName", iName);
-            taskCtx.putString("outputName", oName);
-            taskCtx.putInt("blockSize", blockSize);
-            FileCompressTask<FileCompressResult>* task = new FileCompressTask<FileCompressResult>(taskCtx, _listeners);
-            tasks.push_back(task);
-        }
+                taskCtx.putLong("fileSize", files[i]._size);
+                taskCtx.putString("inputName", iName);
+                taskCtx.putString("outputName", oName);
+                taskCtx.putInt("blockSize", blockSize);
+                tasks.push_back(new FileCompressTask<FileCompressResult>(taskCtx, _listeners));
+            }
 
-        bool doConcurrent = _jobs > 1;
+            bool doConcurrent = _jobs > 1;
 
 #ifdef CONCURRENCY_ENABLED
-        if (doConcurrent) {
-            vector<FileCompressWorker<FCTask*, FileCompressResult>*> workers;
-            vector<future<FileCompressResult> > results;
-            BoundedConcurrentQueue<FCTask*> queue(nbFiles, &tasks[0]); // !tasks.empty()
+            if (doConcurrent) {
+                vector<future<FileCompressResult> > results;
+                workers.reserve(_jobs);
+                results.reserve(_jobs);
+                BoundedConcurrentQueue<FCTask*> queue(nbFiles, &tasks[0]); // !tasks.empty()
 
-            // Create one worker per job and run it. A worker calls several tasks sequentially.
-            for (int i = 0; i < _jobs; i++) {
-                workers.push_back(new FileCompressWorker<FCTask*, FileCompressResult>(&queue));
+                // Create one worker per job and run it. A worker calls several tasks sequentially.
+                for (int i = 0; i < _jobs; i++) {
+                    workers.push_back(new FileCompressWorker<FCTask*, FileCompressResult>(&queue));
 
-                if (_ctx.getPool() == nullptr)
-                    results.push_back(async(launch::async, &FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
-                else
-                    results.push_back(_ctx.getPool()->schedule(&FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
-            }
+                    if (_ctx.getPool() == nullptr)
+                        results.push_back(async(launch::async, &FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
+                    else
+                        results.push_back(_ctx.getPool()->schedule(&FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
+                }
 
-            // Wait for results
-            for (int i = 0; i < _jobs; i++) {
-                FileCompressResult fcr = results[i].get();
-                read += fcr._read;
-                written += fcr._written;
+                // Wait for results
+                for (int i = 0; i < _jobs; i++) {
+                    FileCompressResult fcr = results[i].get();
+                    read += fcr._read;
+                    written += fcr._written;
 
-                if (fcr._code != 0) {
-                    if (res == 0)
-                        res = fcr._code;
+                    if (fcr._code != 0) {
+                        if (res == 0)
+                            res = fcr._code;
 
-                    cerr << fcr._errMsg << endl;
-                    // Exit early by telling the workers that the queue is empty
-                    queue.clear();
+                        cerr << fcr._errMsg << endl;
+                        // Exit early by telling the workers that the queue is empty
+                        queue.clear();
+                    }
                 }
             }
-
-            for (int i = 0; i < _jobs; i++)
-                delete workers[i];
-        }
 #endif
 
-        if (!doConcurrent) {
-            for (uint i = 0; i < tasks.size(); i++) {
-                FileCompressResult fcr = tasks[i]->run();
-                res = fcr._code;
-                read += fcr._read;
-                written += fcr._written;
+            if (!doConcurrent) {
+                for (uint i = 0; i < tasks.size(); i++) {
+                    FileCompressResult fcr = tasks[i]->run();
+                    res = fcr._code;
+                    read += fcr._read;
+                    written += fcr._written;
 
-                if (res != 0) {
-                    cerr << fcr._errMsg << endl;
-                    break;
+                    if (res != 0) {
+                        cerr << fcr._errMsg << endl;
+                        break;
+                    }
                 }
             }
         }
+        catch (...) {
+#ifdef CONCURRENCY_ENABLED
+            for (uint i = 0; i < workers.size(); i++)
+                delete workers[i];
+#endif
 
-        for (int i = 0; i < nbFiles; i++)
+            for (uint i = 0; i < tasks.size(); i++)
+                delete tasks[i];
+
+            throw;
+        }
+
+#ifdef CONCURRENCY_ENABLED
+        for (uint i = 0; i < workers.size(); i++)
+            delete workers[i];
+#endif
+
+        for (uint i = 0; i < tasks.size(); i++)
             delete tasks[i];
     }
 

@@ -304,147 +304,163 @@ bool BWT::inverseBiPSIv2(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
     if ((pIdx <= 0) || (pIdx > count))
         return false;
 
-    uint* buckets = new uint[65536];
-    memset(&buckets[0], 0, 65536 * sizeof(uint));
-    uint freqs[256] = { 0 };
-    Global::computeHistogram(&input._array[input._index], count, freqs);
-
-    for (int sum = 1, c = 0; c < 256; c++) {
-        const int f = sum;
-        sum += int(freqs[c]);
-        freqs[c] = f;
-
-        if (f != sum) {
-            uint* ptr = &buckets[c << 8];
-            const int hi = min(sum, pIdx);
-
-            for (int i = f; i < hi; i++)
-                ptr[int(src[i])]++;
-
-            const int lo = max(f - 1, pIdx);
-
-            for (int i = lo; i < sum - 1; i++)
-                ptr[int(src[i])]++;
-        }
-    }
-
-    const int lastc = int(src[0]);
-    uint16* fastBits = new uint16[MASK_FASTBITS + 1];
-    memset(&fastBits[0], 0, size_t(MASK_FASTBITS + 1) * sizeof(uint16));
-    int shift = 0;
-
-    while ((count >> shift) > MASK_FASTBITS)
-        shift++;
-
-    for (int v = 0, sum = 1, c = 0; c < 256; c++) {
-        if (c == lastc)
-            sum++;
-
-        uint* ptr = &buckets[c];
-
-        for (int d = 0; d < 256; d++) {
-            const int s = sum;
-            sum += ptr[d << 8];
-            ptr[d << 8] = s;
-
-            if (s == sum)
-                continue;
-
-            for (; v <= ((sum - 1) >> shift); v++)
-                fastBits[v] = uint16((c << 8) | d);
-        }
-    }
-
-    memset(&_buffer[0], 0, size_t(_bufferSize) * sizeof(uint));
-    int n = 0;
-
-    while (n < pIdx) {
-        const int c = int(src[n]);
-        const int p = freqs[c];
-
-        if (p < pIdx)
-            _buffer[buckets[(c << 8) | int(src[p])]++] = n;
-        else if (p > pIdx)
-            _buffer[buckets[(c << 8) | int(src[p - 1])]++] = n;
-
-        freqs[c]++;
-        n++;
-    }
-
-    while (n < count) {
-        const int c = int(src[n]);
-        const int p = freqs[c];
-        freqs[c]++;
-        n++;
-
-        if (p < pIdx)
-            _buffer[buckets[(c << 8) | int(src[p])]++] = n;
-        else if (p > pIdx)
-            _buffer[buckets[(c << 8) | int(src[p - 1])]++] = n;
-    }
-
-    for (int c = 0; c < 256; c++) {
-        for (int d = 0; d < c; d++) {
-            swap(buckets[(d << 8) | c],  buckets[(c << 8) | d]);
-        }
-    }
-
-    const int chunks = getBWTChunks(count);
-
-    // Build inverse
-    const int st = count / chunks;
-    const int ckSize = (chunks * st == count) ? st : st + 1;
-    const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
-
-    if (nbTasks == 1) {
-        InverseBiPSIv2Task<int> task(_buffer, buckets, fastBits, dst, _primaryIndexes,
-            count, 0, ckSize, 0, chunks);
-        task.run();
-    }
-    else {
+    uint* buckets = nullptr;
+    uint16* fastBits = nullptr;
 #ifdef CONCURRENCY_ENABLED
-        // Several chunks may be decoded concurrently (depending on the availability
-        // of jobs per block).
-        int jobsPerTask[64];
-        Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
-        vector<future<int> > futures;
-        vector<InverseBiPSIv2Task<int>*> tasks;
+    vector<InverseBiPSIv2Task<int>*> tasks;
+#endif
 
-        // Create one task per job
-        for (int j = 0, c = 0; j < nbTasks; j++) {
-            // Each task decodes jobsPerTask[j] chunks
-            InverseBiPSIv2Task<int>* task = new InverseBiPSIv2Task<int>(_buffer, buckets, fastBits, dst, _primaryIndexes,
-                count, c * ckSize, ckSize, c, c + jobsPerTask[j]);
-            tasks.push_back(task);
+    try {
+        buckets = new uint[65536];
+        memset(&buckets[0], 0, 65536 * sizeof(uint));
+        uint freqs[256] = { 0 };
+        Global::computeHistogram(&input._array[input._index], count, freqs);
 
-            if (_pool == nullptr)
-               futures.push_back(async(launch::async, &InverseBiPSIv2Task<int>::run, task));
-            else
-               futures.push_back(_pool->schedule(&InverseBiPSIv2Task<int>::run, task));
+        for (int sum = 1, c = 0; c < 256; c++) {
+            const int f = sum;
+            sum += int(freqs[c]);
+            freqs[c] = f;
 
-            c += jobsPerTask[j];
+            if (f != sum) {
+                uint* ptr = &buckets[c << 8];
+                const int hi = min(sum, pIdx);
+
+                for (int i = f; i < hi; i++)
+                    ptr[int(src[i])]++;
+
+                const int lo = max(f - 1, pIdx);
+
+                for (int i = lo; i < sum - 1; i++)
+                    ptr[int(src[i])]++;
+            }
         }
 
-        // Wait for completion of all concurrent tasks
-        for (int j = 0; j < nbTasks; j++)
-            futures[j].get();
+        const int lastc = int(src[0]);
+        fastBits = new uint16[MASK_FASTBITS + 1];
+        memset(&fastBits[0], 0, size_t(MASK_FASTBITS + 1) * sizeof(uint16));
+        int shift = 0;
 
-        // Cleanup
-        for (InverseBiPSIv2Task<int>* task : tasks)
-            delete task;
+        while ((count >> shift) > MASK_FASTBITS)
+            shift++;
+
+        for (int v = 0, sum = 1, c = 0; c < 256; c++) {
+            if (c == lastc)
+                sum++;
+
+            uint* ptr = &buckets[c];
+
+            for (int d = 0; d < 256; d++) {
+                const int s = sum;
+                sum += ptr[d << 8];
+                ptr[d << 8] = s;
+
+                if (s == sum)
+                    continue;
+
+                for (; v <= ((sum - 1) >> shift); v++)
+                    fastBits[v] = uint16((c << 8) | d);
+            }
+        }
+
+        memset(&_buffer[0], 0, size_t(_bufferSize) * sizeof(uint));
+        int n = 0;
+
+        while (n < pIdx) {
+            const int c = int(src[n]);
+            const int p = freqs[c];
+
+            if (p < pIdx)
+                _buffer[buckets[(c << 8) | int(src[p])]++] = n;
+            else if (p > pIdx)
+                _buffer[buckets[(c << 8) | int(src[p - 1])]++] = n;
+
+            freqs[c]++;
+            n++;
+        }
+
+        while (n < count) {
+            const int c = int(src[n]);
+            const int p = freqs[c];
+            freqs[c]++;
+            n++;
+
+            if (p < pIdx)
+                _buffer[buckets[(c << 8) | int(src[p])]++] = n;
+            else if (p > pIdx)
+                _buffer[buckets[(c << 8) | int(src[p - 1])]++] = n;
+        }
+
+        for (int c = 0; c < 256; c++) {
+            for (int d = 0; d < c; d++) {
+                swap(buckets[(d << 8) | c], buckets[(c << 8) | d]);
+            }
+        }
+
+        const int chunks = getBWTChunks(count);
+
+        // Build inverse
+        const int st = count / chunks;
+        const int ckSize = (chunks * st == count) ? st : st + 1;
+        const int nbTasks = (_jobs < chunks) ? _jobs : chunks;
+
+        if (nbTasks == 1) {
+            InverseBiPSIv2Task<int> task(_buffer, buckets, fastBits, dst, _primaryIndexes,
+                count, 0, ckSize, 0, chunks);
+            task.run();
+        }
+        else {
+#ifdef CONCURRENCY_ENABLED
+            // Several chunks may be decoded concurrently (depending on the availability
+            // of jobs per block).
+            int jobsPerTask[64];
+            Global::computeJobsPerTask(jobsPerTask, chunks, nbTasks);
+            vector<future<int> > futures;
+            tasks.reserve(nbTasks);
+            futures.reserve(nbTasks);
+
+            // Create one task per job
+            for (int j = 0, c = 0; j < nbTasks; j++) {
+                // Each task decodes jobsPerTask[j] chunks
+                tasks.push_back(new InverseBiPSIv2Task<int>(_buffer, buckets, fastBits, dst, _primaryIndexes,
+                    count, c * ckSize, ckSize, c, c + jobsPerTask[j]));
+
+                if (_pool == nullptr)
+                   futures.push_back(async(launch::async, &InverseBiPSIv2Task<int>::run, tasks[j]));
+                else
+                   futures.push_back(_pool->schedule(&InverseBiPSIv2Task<int>::run, tasks[j]));
+
+                c += jobsPerTask[j];
+            }
+
+            // Wait for completion of all concurrent tasks
+            for (int j = 0; j < nbTasks; j++)
+                futures[j].get();
 #else
-        // nbTasks > 1 but concurrency is not enabled (should never happen)
+            // nbTasks > 1 but concurrency is not enabled (should never happen)
+            throw invalid_argument("Error during BWT inverse: concurrency not supported");
+#endif
+        }
+
+        dst[count - 1] = kanzi::byte(lastc);
+        input._index += count;
+        output._index += count;
+    }
+    catch (...) {
+#ifdef CONCURRENCY_ENABLED
+        for (uint i = 0; i < tasks.size(); i++)
+            delete tasks[i];
+#endif
         delete[] fastBits;
         delete[] buckets;
-        throw invalid_argument("Error during BWT inverse: concurrency not supported");
-#endif
+        throw;
     }
 
-    dst[count - 1] = kanzi::byte(lastc);
+#ifdef CONCURRENCY_ENABLED
+    for (uint i = 0; i < tasks.size(); i++)
+        delete tasks[i];
+#endif
     delete[] fastBits;
     delete[] buckets;
-    input._index += count;
-    output._index += count;
     return true;
 }
 
