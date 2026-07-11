@@ -101,6 +101,9 @@ bool BWTBlockCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
         return false;
 
     if (_bsVersion > 5) {
+       if ((blockSize < 1) || (input._length - input._index < 1))
+           return false;
+
        // Number of chunks and primary index size in bitstream since bsVersion 6
        kanzi::byte mode = input._array[input._index++];
        const uint logNbChunks = uint(mode >> 2) & 0x07;
