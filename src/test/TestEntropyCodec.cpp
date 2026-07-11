@@ -90,6 +90,24 @@ static string shrinkFPAQDeclaredSize(const string& data)
     return mutated.str();
 }
 
+static string zeroFPAQDeclaredSize(const string& data)
+{
+    istringstream is(data);
+    DefaultInputBitStream ibs(is, 16384);
+    stringbuf mutated;
+    iostream ios(&mutated);
+    DefaultOutputBitStream obs(ios, 16384);
+    const uint32 sz = EntropyUtils::readVarInt(ibs);
+
+    if (sz == 0)
+        return "";
+
+    EntropyUtils::writeVarInt(obs, 0);
+    copyBits(ibs, obs, uint64(data.size()) * 8 - ibs.read());
+    obs.close();
+    return mutated.str();
+}
+
 static string shrinkANSDeclaredSize(const string& data)
 {
     istringstream is(data);
@@ -252,6 +270,39 @@ int testDeclaredPayloadConsumption()
     }
 
     cout << "Declared payload consumption test passed" << endl;
+    return 0;
+}
+
+int testFPAQZeroDeclaredSize()
+{
+    cout << endl
+         << "=== FPAQ zero declared size test ===" << endl;
+    const uint size = 1 << 20;
+    vector<kanzi::byte> values(size);
+
+    for (uint i = 0; i < size; i++)
+        values[i] = kanzi::byte((i * 17) & 0xFF);
+
+    const string encoded = encodeEntropyPayload("FPAQ", &values[0], size);
+
+    if (encoded.empty()) {
+        cout << "Could not encode test payload for FPAQ" << endl;
+        return 1;
+    }
+
+    const string mutated = zeroFPAQDeclaredSize(encoded);
+
+    if (mutated.empty()) {
+        cout << "Could not mutate test payload for FPAQ" << endl;
+        return 2;
+    }
+
+    if (malformedEntropyIsRejected("FPAQ", mutated, size) == false) {
+        cout << "Malformed zero-sized FPAQ payload accepted" << endl;
+        return 3;
+    }
+
+    cout << "FPAQ zero declared size test passed" << endl;
     return 0;
 }
 
@@ -661,6 +712,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
     try {
         res |= testBinaryEntropyBufferGrowth();
         res |= testDeclaredPayloadConsumption();
+        res |= testFPAQZeroDeclaredSize();
         res |= testHuffmanFragmentedRoundTrip();
         vector<string> codecs;
         bool doPerf = true;

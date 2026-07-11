@@ -47,6 +47,7 @@ bool FPAQDecoder::reset()
     _high = TOP;
     _current = 0;
     _ctx = 1;
+    _bufLimit = 0;
     _index = 0;
 
     for (int i = 0; i < 4; i++) {
@@ -85,6 +86,7 @@ int FPAQDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
             memset(&_buf[szBytes], 0, bufSize - szBytes);
 
         _bitstream.readBits(&_buf[0], 8 * szBytes);
+        _bufLimit = szBytes;
         _index = 0;
         const uint chunkSize = min(DEFAULT_CHUNK_SIZE, end - startChunk);
         const uint endChunk = startChunk + chunkSize;
@@ -101,6 +103,10 @@ int FPAQDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
             decodeBit(_p[_ctx]);
             decodeBit(_p[_ctx]);
             block[i] = kanzi::byte(_ctx);
+
+            if (_index > szBytes)
+                return 0;
+
             _p = _probs[(_ctx & 0xFF) >> 6];
         }
 
@@ -112,4 +118,3 @@ int FPAQDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
 
     return count;
 }
-
