@@ -223,21 +223,21 @@ bool BWT::inverseMergeTPSI(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byt
     else {
         const int ckSize = ((count & 7) == 0) ? count >> 3 : (count >> 3) + 1;
         int t0 = getPrimaryIndex(0) - 1;
-        if ((t0 < 0) || (t0 >= _bufferSize)) return false;
+        if ((t0 < 0) || (t0 >= count)) return false;
         int t1 = getPrimaryIndex(1) - 1;
-        if ((t1 < 0) || (t1 >= _bufferSize)) return false;
+        if ((t1 < 0) || (t1 >= count)) return false;
         int t2 = getPrimaryIndex(2) - 1;
-        if ((t2 < 0) || (t2 >= _bufferSize)) return false;
+        if ((t2 < 0) || (t2 >= count)) return false;
         int t3 = getPrimaryIndex(3) - 1;
-        if ((t3 < 0) || (t3 >= _bufferSize)) return false;
+        if ((t3 < 0) || (t3 >= count)) return false;
         int t4 = getPrimaryIndex(4) - 1;
-        if ((t4 < 0) || (t4 >= _bufferSize)) return false;
+        if ((t4 < 0) || (t4 >= count)) return false;
         int t5 = getPrimaryIndex(5) - 1;
-        if ((t5 < 0) || (t5 >= _bufferSize)) return false;
+        if ((t5 < 0) || (t5 >= count)) return false;
         int t6 = getPrimaryIndex(6) - 1;
-        if ((t6 < 0) || (t6 >= _bufferSize)) return false;
+        if ((t6 < 0) || (t6 >= count)) return false;
         int t7 = getPrimaryIndex(7) - 1;
-        if ((t7 < 0) || (t7 >= _bufferSize)) return false;
+        if ((t7 < 0) || (t7 >= count)) return false;
 
         // Last interval [7*chunk:count] smaller when 8*ckSize != count
         const int end = count - ckSize * 7;
@@ -303,6 +303,13 @@ bool BWT::inverseBiPSIv2(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
 
     if ((pIdx <= 0) || (pIdx > count))
         return false;
+
+    for (int i = 1; i < 8; i++) {
+        const int p = getPrimaryIndex(i);
+
+        if ((p <= 0) || (p > count))
+            return false;
+    }
 
     uint* buckets = nullptr;
     uint16* fastBits = nullptr;
