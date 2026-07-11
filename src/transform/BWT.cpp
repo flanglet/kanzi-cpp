@@ -425,23 +425,37 @@ bool BWT::inverseBiPSIv2(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             tasks.reserve(nbTasks);
             futures.reserve(nbTasks);
 
-            // Create one task per job
-            for (int j = 0, c = 0; j < nbTasks; j++) {
-                // Each task decodes jobsPerTask[j] chunks
-                tasks.push_back(new InverseBiPSIv2Task<int>(_buffer, buckets, fastBits, dst, _primaryIndexes,
-                    count, c * ckSize, ckSize, c, c + jobsPerTask[j]));
+            try {
+                // Create one task per job
+                for (int j = 0, c = 0; j < nbTasks; j++) {
+                    // Each task decodes jobsPerTask[j] chunks
+                    tasks.push_back(new InverseBiPSIv2Task<int>(_buffer, buckets, fastBits, dst, _primaryIndexes,
+                        count, c * ckSize, ckSize, c, c + jobsPerTask[j]));
 
-                if (_pool == nullptr)
-                   futures.push_back(async(launch::async, &InverseBiPSIv2Task<int>::run, tasks[j]));
-                else
-                   futures.push_back(_pool->schedule(&InverseBiPSIv2Task<int>::run, tasks[j]));
+                    if (_pool == nullptr)
+                       futures.push_back(async(launch::async, &InverseBiPSIv2Task<int>::run, tasks[j]));
+                    else
+                       futures.push_back(_pool->schedule(&InverseBiPSIv2Task<int>::run, tasks[j]));
 
-                c += jobsPerTask[j];
+                    c += jobsPerTask[j];
+                }
+
+                // Wait for completion of all concurrent tasks
+                for (int j = 0; j < nbTasks; j++)
+                    futures[j].get();
             }
+            catch (...) {
+                for (uint i = 0; i < futures.size(); i++) {
+                    try {
+                        if (futures[i].valid())
+                            futures[i].wait();
+                    }
+                    catch (const exception&) {
+                    }
+                }
 
-            // Wait for completion of all concurrent tasks
-            for (int j = 0; j < nbTasks; j++)
-                futures[j].get();
+                throw;
+            }
 #else
             // nbTasks > 1 but concurrency is not enabled (should never happen)
             throw invalid_argument("Error during BWT inverse: concurrency not supported");

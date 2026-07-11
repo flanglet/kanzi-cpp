@@ -409,35 +409,51 @@ int BlockCompressor::compress(uint64& outputSize)
 
 #ifdef CONCURRENCY_ENABLED
             if (doConcurrent) {
+                BoundedConcurrentQueue<FCTask*> queue(nbFiles, &tasks[0]); // !tasks.empty()
                 vector<future<FileCompressResult> > results;
                 workers.reserve(_jobs);
                 results.reserve(_jobs);
-                BoundedConcurrentQueue<FCTask*> queue(nbFiles, &tasks[0]); // !tasks.empty()
 
-                // Create one worker per job and run it. A worker calls several tasks sequentially.
-                for (int i = 0; i < _jobs; i++) {
-                    workers.push_back(new FileCompressWorker<FCTask*, FileCompressResult>(&queue));
+                try {
+                    // Create one worker per job and run it. A worker calls several tasks sequentially.
+                    for (int i = 0; i < _jobs; i++) {
+                        workers.push_back(new FileCompressWorker<FCTask*, FileCompressResult>(&queue));
 
-                    if (_ctx.getPool() == nullptr)
-                        results.push_back(async(launch::async, &FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
-                    else
-                        results.push_back(_ctx.getPool()->schedule(&FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
-                }
-
-                // Wait for results
-                for (int i = 0; i < _jobs; i++) {
-                    FileCompressResult fcr = results[i].get();
-                    read += fcr._read;
-                    written += fcr._written;
-
-                    if (fcr._code != 0) {
-                        if (res == 0)
-                            res = fcr._code;
-
-                        cerr << fcr._errMsg << endl;
-                        // Exit early by telling the workers that the queue is empty
-                        queue.clear();
+                        if (_ctx.getPool() == nullptr)
+                            results.push_back(async(launch::async, &FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
+                        else
+                            results.push_back(_ctx.getPool()->schedule(&FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
                     }
+
+                    // Wait for results
+                    for (int i = 0; i < _jobs; i++) {
+                        FileCompressResult fcr = results[i].get();
+                        read += fcr._read;
+                        written += fcr._written;
+
+                        if (fcr._code != 0) {
+                            if (res == 0)
+                                res = fcr._code;
+
+                            cerr << fcr._errMsg << endl;
+                            // Exit early by telling the workers that the queue is empty
+                            queue.clear();
+                        }
+                    }
+                }
+                catch (...) {
+                    queue.clear();
+
+                    for (uint i = 0; i < results.size(); i++) {
+                        try {
+                            if (results[i].valid())
+                                results[i].wait();
+                        }
+                        catch (const exception&) {
+                        }
+                    }
+
+                    throw;
                 }
             }
 #endif

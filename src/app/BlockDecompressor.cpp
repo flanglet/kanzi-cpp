@@ -332,34 +332,50 @@ int BlockDecompressor::decompress(uint64& inputSize)
 
 #ifdef CONCURRENCY_ENABLED
             if (doConcurrent) {
+                BoundedConcurrentQueue<FDTask*> queue(nbFiles, &tasks[0]);
                 vector<future<FileDecompressResult> > results;
                 workers.reserve(_jobs);
                 results.reserve(_jobs);
-                BoundedConcurrentQueue<FDTask*> queue(nbFiles, &tasks[0]);
 
-                // Create one worker per job and run it. A worker calls several tasks sequentially.
-                for (int i = 0; i < _jobs; i++) {
-                    workers.push_back(new FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>(&queue));
+                try {
+                    // Create one worker per job and run it. A worker calls several tasks sequentially.
+                    for (int i = 0; i < _jobs; i++) {
+                        workers.push_back(new FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>(&queue));
 
-                    if (_ctx.getPool() == nullptr)
-                        results.push_back(async(launch::async, &FileDecompressWorker<FDTask*, FileDecompressResult>::run, workers[i]));
-                    else
-                        results.push_back(_ctx.getPool()->schedule(&FileDecompressWorker<FDTask*, FileDecompressResult>::run, workers[i]));
-                }
-
-                // Wait for results
-                for (int i = 0; i < _jobs; i++) {
-                    FileDecompressResult fdr = results[i].get();
-                    read += fdr._read;
-
-                    if (fdr._code != 0) {
-                        if (res == 0)
-                            res = fdr._code;
-
-                        cerr << fdr._errMsg << endl;
-                        // Exit early by telling the workers that the queue is empty
-                        queue.clear();
+                        if (_ctx.getPool() == nullptr)
+                            results.push_back(async(launch::async, &FileDecompressWorker<FDTask*, FileDecompressResult>::run, workers[i]));
+                        else
+                            results.push_back(_ctx.getPool()->schedule(&FileDecompressWorker<FDTask*, FileDecompressResult>::run, workers[i]));
                     }
+
+                    // Wait for results
+                    for (int i = 0; i < _jobs; i++) {
+                        FileDecompressResult fdr = results[i].get();
+                        read += fdr._read;
+
+                        if (fdr._code != 0) {
+                            if (res == 0)
+                                res = fdr._code;
+
+                            cerr << fdr._errMsg << endl;
+                            // Exit early by telling the workers that the queue is empty
+                            queue.clear();
+                        }
+                    }
+                }
+                catch (...) {
+                    queue.clear();
+
+                    for (uint i = 0; i < results.size(); i++) {
+                        try {
+                            if (results[i].valid())
+                                results[i].wait();
+                        }
+                        catch (const exception&) {
+                        }
+                    }
+
+                    throw;
                 }
             }
 #endif
