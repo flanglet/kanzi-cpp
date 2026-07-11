@@ -191,7 +191,7 @@ bool BWT::inverseMergeTPSI(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byt
 
     const kanzi::byte* src = &input._array[input._index];
     kanzi::byte* dst = &output._array[output._index];
-    memset(&_buffer[0], 0, size_t(_bufferSize) * sizeof(uint));
+    memset(&_buffer[0], 0, size_t(count) * sizeof(uint));
     const uint end1 = uint(pIdx);
     const uint end2 = uint(count);
 
@@ -369,7 +369,7 @@ bool BWT::inverseBiPSIv2(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             }
         }
 
-        memset(&_buffer[0], 0, size_t(_bufferSize) * sizeof(uint));
+        memset(&_buffer[0], 0, size_t(count) * sizeof(uint));
         int n = 0;
 
         while (n < pIdx) {
