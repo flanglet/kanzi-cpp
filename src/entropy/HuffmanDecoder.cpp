@@ -219,10 +219,14 @@ bool HuffmanDecoder::decodeChunk(kanzi::byte block[], uint count)
     if ((szBits0 > maxFragBits) || (szBits1 > maxFragBits) || (szBits2 > maxFragBits) || (szBits3 > maxFragBits))
         return false;
 
-    int idx0 = 0 * fragStride;
-    int idx1 = 1 * fragStride;
-    int idx2 = 2 * fragStride;
-    int idx3 = 3 * fragStride;
+    const int base0 = 0 * fragStride;
+    const int base1 = 1 * fragStride;
+    const int base2 = 2 * fragStride;
+    const int base3 = 3 * fragStride;
+    int idx0 = base0;
+    int idx1 = base1;
+    int idx2 = base2;
+    int idx3 = base3;
 
     // Read all compressed data from bitstream
     _bitstream.readBits(&_buffer[idx0], szBits0);
@@ -333,10 +337,13 @@ bool HuffmanDecoder::decodeChunk(kanzi::byte block[], uint count)
     for (uint i = count4; i < count; i++)
         block[i] = kanzi::byte(_bitstream.readBits(8));
 
-    return ((idx0 << 3) - (bits0 + DECODING_BATCH_SIZE) == szBits0) &&
-           ((idx1 << 3) - (bits1 + DECODING_BATCH_SIZE) == szBits1) &&
-           ((idx2 << 3) - (bits2 + DECODING_BATCH_SIZE) == szBits2) &&
-           ((idx3 << 3) - (bits3 + DECODING_BATCH_SIZE) == szBits3);
+    const int used0 = ((idx0 - base0) << 3) - (bits0 + DECODING_BATCH_SIZE);
+    const int used1 = ((idx1 - base1) << 3) - (bits1 + DECODING_BATCH_SIZE);
+    const int used2 = ((idx2 - base2) << 3) - (bits2 + DECODING_BATCH_SIZE);
+    const int used3 = ((idx3 - base3) << 3) - (bits3 + DECODING_BATCH_SIZE);
+
+    return (used0 == szBits0) && (used1 == szBits1) &&
+           (used2 == szBits2) && (used3 == szBits3);
 }
 
 int HuffmanDecoder::decodeV5(kanzi::byte block[], uint blkptr, uint count)

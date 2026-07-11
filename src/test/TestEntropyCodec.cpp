@@ -255,6 +255,53 @@ int testDeclaredPayloadConsumption()
     return 0;
 }
 
+int testHuffmanFragmentedRoundTrip()
+{
+    cout << endl
+         << "=== Huffman fragmented round-trip test ===" << endl;
+    const uint size = 1 << 20;
+    vector<kanzi::byte> values(size);
+    vector<kanzi::byte> decoded(size, kanzi::byte(0));
+    uint32 state = 0x12345678;
+
+    for (uint i = 0; i < size; i++) {
+        state = (state * 1103515245U) + 12345U;
+        values[i] = kanzi::byte(state >> 24);
+    }
+
+    stringbuf buffer;
+    iostream ios(&buffer);
+    DefaultOutputBitStream obs(ios, 1 << 15);
+    HuffmanEncoder encoder(obs);
+
+    if (encoder.encode(&values[0], 0, size) != int(size)) {
+        cout << "Encoding error in Huffman fragmented round-trip test" << endl;
+        return 1;
+    }
+
+    encoder.dispose();
+    obs.close();
+    ios.rdbuf()->pubseekpos(0);
+    DefaultInputBitStream ibs(ios, 1 << 15);
+    HuffmanDecoder decoder(ibs);
+
+    if (decoder.decode(&decoded[0], 0, size) != int(size)) {
+        cout << "Decoding error in Huffman fragmented round-trip test" << endl;
+        return 1;
+    }
+
+    decoder.dispose();
+    ibs.close();
+
+    if (memcmp(&values[0], &decoded[0], size) != 0) {
+        cout << "Mismatch in Huffman fragmented round-trip test" << endl;
+        return 1;
+    }
+
+    cout << "Huffman fragmented round-trip test passed" << endl;
+    return 0;
+}
+
 class ConstantPredictor FINAL : public Predictor
 {
 public:
@@ -614,6 +661,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
     try {
         res |= testBinaryEntropyBufferGrowth();
         res |= testDeclaredPayloadConsumption();
+        res |= testHuffmanFragmentedRoundTrip();
         vector<string> codecs;
         bool doPerf = true;
 
