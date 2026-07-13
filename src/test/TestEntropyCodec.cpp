@@ -310,14 +310,17 @@ int testHuffmanFragmentedRoundTrip()
 {
     cout << endl
          << "=== Huffman fragmented round-trip test ===" << endl;
-    const uint size = 1 << 20;
+    const uint size = 1649;
     vector<kanzi::byte> values(size);
     vector<kanzi::byte> decoded(size, kanzi::byte(0));
-    uint32 state = 0x12345678;
+    uint32 state = 3454687338U;
 
     for (uint i = 0; i < size; i++) {
         state = (state * 1103515245U) + 12345U;
-        values[i] = kanzi::byte(state >> 24);
+        const uint32 val0 = state >> 24;
+        state = (state * 1103515245U) + 12345U;
+        const uint32 val1 = state >> 24;
+        values[i] = (val0 < 192) ? kanzi::byte(val1 & 15) : kanzi::byte(val1);
     }
 
     stringbuf buffer;

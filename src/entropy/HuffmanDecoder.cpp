@@ -337,10 +337,10 @@ bool HuffmanDecoder::decodeChunk(kanzi::byte block[], uint count)
     for (uint i = count4; i < count; i++)
         block[i] = kanzi::byte(_bitstream.readBits(8));
 
-    const int used0 = ((idx0 - base0) << 3) - (bits0 + DECODING_BATCH_SIZE);
-    const int used1 = ((idx1 - base1) << 3) - (bits1 + DECODING_BATCH_SIZE);
-    const int used2 = ((idx2 - base2) << 3) - (bits2 + DECODING_BATCH_SIZE);
-    const int used3 = ((idx3 - base3) << 3) - (bits3 + DECODING_BATCH_SIZE);
+    const int used0 = ((idx0 - base0) << 3) - (int(int8(bits0)) + DECODING_BATCH_SIZE);
+    const int used1 = ((idx1 - base1) << 3) - (int(int8(bits1)) + DECODING_BATCH_SIZE);
+    const int used2 = ((idx2 - base2) << 3) - (int(int8(bits2)) + DECODING_BATCH_SIZE);
+    const int used3 = ((idx3 - base3) << 3) - (int(int8(bits3)) + DECODING_BATCH_SIZE);
 
     return (used0 == szBits0) && (used1 == szBits1) &&
            (used2 == szBits2) && (used3 == szBits3);
@@ -448,7 +448,7 @@ int HuffmanDecoder::decodeV5(kanzi::byte block[], uint blkptr, uint count)
                 block[n++] = kanzi::byte(val >> 8);
             }
 
-            if (((idx << 3) - int(bits)) != szBits)
+            if (((idx << 3) - int(int8(bits))) != szBits)
                 return -1;
         }
 
