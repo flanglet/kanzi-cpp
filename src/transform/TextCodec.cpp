@@ -644,9 +644,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         const int8 cType = TextCodec::getType(cur);
 
         if (cType == 0) {
-            const int length = srcIdx - delimAnchor;
-
-            if (length == 1) {
+            if (srcIdx - delimAnchor == 1) {
                 h1 = uint(TextCodec::HASH1) * uint(TextCodec::HASH1) ^ uint(cur) * uint(TextCodec::HASH2);
                 h2 = uint(TextCodec::HASH1) * uint(TextCodec::HASH1) ^ (uint(cur) ^ 0x20U) * uint(TextCodec::HASH2);
             }
@@ -664,8 +662,8 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
                 // Check word in dictionary
-                DictEntry* pe = nullptr;
                 prefetchRead(&_dictMap[h1 & _hashMask]);
+                DictEntry* pe = nullptr;
                 DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
                 if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length))
@@ -679,7 +677,7 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 }
 
                 // Check for hash collisions
-                if ((pe != nullptr) && (!TextCodec::sameWords(&pe->_ptr[1], &src[delimAnchor + 2], length - 1)))
+                if ((pe != nullptr) && (KANZI_UNLIKELY(!TextCodec::sameWords(&pe->_ptr[1], &src[delimAnchor + 2], length - 1))))
                     pe = nullptr;
 
                 if (pe == nullptr) {
@@ -1134,9 +1132,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
         const int8 cType = TextCodec::getType(cur);
 
         if (cType == 0) {
-            const int length = srcIdx - delimAnchor;
-
-            if (length == 1) {
+            if (srcIdx - delimAnchor == 1) {
                 h1 = uint(TextCodec::HASH1) * uint(TextCodec::HASH1) ^ uint(cur) * uint(TextCodec::HASH2);
                 h2 = uint(TextCodec::HASH1) * uint(TextCodec::HASH1) ^ (uint(cur) ^ 0x20U) * uint(TextCodec::HASH2);
             }
@@ -1154,8 +1150,8 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
             if (length <= TextCodec::MAX_WORD_LENGTH) {
                 // Check word in dictionary
-                DictEntry* pe = nullptr;
                 prefetchRead(&_dictMap[h1 & _hashMask]);
+                DictEntry* pe = nullptr;
                 DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
                 if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length))
@@ -1169,7 +1165,7 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 }
 
                 // Check for hash collisions
-                if ((pe != nullptr) && (!TextCodec::sameWords(&pe->_ptr[1], &src[delimAnchor + 2], length - 1)))
+                if ((pe != nullptr) && (KANZI_UNLIKELY(!TextCodec::sameWords(&pe->_ptr[1], &src[delimAnchor + 2], length - 1))))
                     pe = nullptr;
 
                 if (pe == nullptr) {
