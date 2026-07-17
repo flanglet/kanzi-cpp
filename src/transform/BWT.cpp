@@ -433,7 +433,7 @@ bool BWT::inverseBiPSIv2(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                         count, c * ckSize, ckSize, c, c + jobsPerTask[j]));
 
                     if (_pool == nullptr)
-                       futures.push_back(async(launch::async, &InverseBiPSIv2Task<int>::run, tasks[j]));
+                       futures.push_back(std::async(launch::async, &InverseBiPSIv2Task<int>::run, tasks[j]));
                     else
                        futures.push_back(_pool->schedule(&InverseBiPSIv2Task<int>::run, tasks[j]));
 

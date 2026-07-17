@@ -420,7 +420,7 @@ int BlockCompressor::compress(uint64& outputSize)
                         workers.push_back(new FileCompressWorker<FCTask*, FileCompressResult>(&queue));
 
                         if (_ctx.getPool() == nullptr)
-                            results.push_back(async(launch::async, &FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
+                            results.push_back(std::async(launch::async, &FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
                         else
                             results.push_back(_ctx.getPool()->schedule(&FileCompressWorker<FCTask*, FileCompressResult>::run, workers[i]));
                     }

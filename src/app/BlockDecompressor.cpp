@@ -343,7 +343,7 @@ int BlockDecompressor::decompress(uint64& inputSize)
                         workers.push_back(new FileDecompressWorker<FileDecompressTask<FileDecompressResult>*, FileDecompressResult>(&queue));
 
                         if (_ctx.getPool() == nullptr)
-                            results.push_back(async(launch::async, &FileDecompressWorker<FDTask*, FileDecompressResult>::run, workers[i]));
+                            results.push_back(std::async(launch::async, &FileDecompressWorker<FDTask*, FileDecompressResult>::run, workers[i]));
                         else
                             results.push_back(_ctx.getPool()->schedule(&FileDecompressWorker<FDTask*, FileDecompressResult>::run, workers[i]));
                     }
