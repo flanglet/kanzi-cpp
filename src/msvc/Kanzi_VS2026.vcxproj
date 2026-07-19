@@ -1,0 +1,329 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{A7FB6DB8-D93B-4287-8ED8-0E39A52509B3}</ProjectGuid>
+    <RootNamespace>Kanzi</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Kanzi</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros">
+    <KanziSourceRoot>$(ProjectDir)..</KanziSourceRoot>
+  </PropertyGroup>
+  <PropertyGroup>
+    <_ProjectFileVersion>14.0.25431.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>Kanzi64</TargetName>
+    <CodeAnalysisRuleSet>NativeMinimumRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>Kanzi64</TargetName>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <EnableClangTidyCodeAnalysis>true</EnableClangTidyCodeAnalysis>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkTimeCodeGeneration />
+      <TargetMachine>MachineX64</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <OmitFramePointers>false</OmitFramePointers>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/Zc:__cplusplus </AdditionalOptions>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <LinkTimeCodeGeneration>
+      </LinkTimeCodeGeneration>
+      <LargeAddressAware>true</LargeAddressAware>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <MinimalRebuild />
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions</EnableEnhancedInstructionSet>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+      <AdditionalOptions />
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <OmitFramePointers>true</OmitFramePointers>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LargeAddressAware>true</LargeAddressAware>
+      <AdditionalDependencies />
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(KanziSourceRoot);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="$(KanziSourceRoot)\api\Compressor.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\api\Decompressor.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\app\BlockCompressor.cpp">
+      <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ShowIncludes>
+    </ClCompile>
+    <ClCompile Include="$(KanziSourceRoot)\app\BlockDecompressor.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\app\InfoPrinter.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\app\Kanzi.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\bitstream\DebugInputBitStream.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\bitstream\DebugOutputBitStream.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\bitstream\DefaultInputBitStream.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\bitstream\DefaultOutputBitStream.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\ANSRangeDecoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\ANSRangeEncoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\BinaryEntropyDecoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\BinaryEntropyEncoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\CMPredictor.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\EntropyUtils.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\ExpGolombDecoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\ExpGolombEncoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\FPAQDecoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\FPAQEncoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\HuffmanCommon.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\HuffmanDecoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\HuffmanEncoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\RangeDecoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\RangeEncoder.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\entropy\TPAQPredictor.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\Event.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\Global.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\io\CompressedInputStream.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\io\CompressedOutputStream.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\test\TestBWT.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\test\TestCompressedStream.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\test\TestDefaultBitStream.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\test\TestEntropyCodec.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\test\TestTransforms.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\AliasCodec.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\BWT.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\BWTBlockCodec.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\BWTS.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\DivSufSort.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\EXECodec.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\FSDCodec.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\LZCodec.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\RLT.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\ROLZCodec.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\SBRT.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\SRT.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\TextCodec.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\UTFCodec.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\transform\ZRLT.cpp" />
+    <ClCompile Include="$(KanziSourceRoot)\util\WallTimer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(KanziSourceRoot)\api\Compressor.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\api\Decompressor.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\app\BlockCompressor.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\app\BlockDecompressor.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\app\InfoPrinter.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\Context.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\EntropyDecoderFactory.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\EntropyEncoderFactory.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\FPAQDecoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\FPAQEncoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\Memory.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\BitStreamException.hpp"/>
+    <ClInclude Include="$(KanziSourceRoot)\bitstream\DebugInputBitStream.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\bitstream\DebugOutputBitStream.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\bitstream\DefaultInputBitStream.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\bitstream\DefaultOutputBitStream.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\concurrent.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\EntropyDecoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\EntropyEncoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\AdaptiveProbMap.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\ANSRangeDecoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\ANSRangeEncoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\BinaryEntropyDecoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\BinaryEntropyEncoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\CMPredictor.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\EntropyUtils.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\ExpGolombDecoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\ExpGolombEncoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\HuffmanCommon.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\HuffmanDecoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\HuffmanEncoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\NullEntropyDecoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\NullEntropyEncoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\RangeDecoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\RangeEncoder.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\entropy\TPAQPredictor.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\Error.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\Event.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\Global.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\InputBitStream.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\InputStream.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\io\CompressedInputStream.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\io\CompressedOutputStream.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\io\IOException.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\io\IOUtil.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\io\NullOutputStream.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\Listener.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\msvc_dirent.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\OutputBitStream.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\OutputStream.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\Predictor.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\SliceArray.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\Transform.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\AliasCodec.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\BWT.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\BWTBlockCodec.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\BWTS.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\DivSufSort.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\EXECodec.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\FSDCodec.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\LZCodec.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\NullTransform.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\RLT.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\ROLZCodec.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\SBRT.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\SRT.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\TextCodec.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\TransformFactory.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\TransformSequence.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\UTFCodec.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\transform\ZRLT.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\types.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\util\Clock.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\util\fixedbuf.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\util\Printer.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\util\strings.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\util\WallTimer.hpp" />
+    <ClInclude Include="$(KanziSourceRoot)\util\XXHash.hpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

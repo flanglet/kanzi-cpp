@@ -1,1 +1,3 @@
-Copy the files corresponding to your version of Visual Studio to ..\src.
+The Visual Studio 2026 solution and projects can be opened directly from this
+directory. For older Visual Studio versions, copy the corresponding files to
+`..\src` as before.
