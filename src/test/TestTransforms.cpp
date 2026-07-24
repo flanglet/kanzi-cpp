@@ -349,7 +349,8 @@ static int testTextCodecSelfDescribing()
         decCtx.putInt("bsVersion", 7);
         TextCodec decoder(decCtx);
         vector<kanzi::byte> decoded(data.size(), kanzi::byte(0));
-        SliceArray<kanzi::byte> encodedInput(&encoded[0], output._index, 0);
+        // Keep the physical tail available to transforms that use guarded reads.
+        SliceArray<kanzi::byte> encodedInput(&encoded[0], int(encoded.size()), 0);
         SliceArray<kanzi::byte> reverse(&decoded[0], int(decoded.size()), 0);
 
         if (decoder.inverse(encodedInput, reverse, output._index) == false) {
@@ -579,7 +580,178 @@ static int testTransformCapacityValidation()
         }
     }
 
+    {
+        LZPCodec tf;
+        kanzi::byte lzSrc[128];
+        kanzi::byte lzDst[145];
+
+        for (int i = 0; i < 128; i++)
+            lzSrc[i] = kanzi::byte(i);
+
+        memset(lzDst, 0x7E, sizeof(lzDst));
+        SliceArray<kanzi::byte> input(lzSrc, 128, 0);
+        SliceArray<kanzi::byte> output(lzDst, 144, 1);
+        const int savedIIdx = input._index;
+        const int savedOIdx = output._index;
+
+        if (tf.forward(input, output, 128) != false) {
+            cout << "LZP forward should reject insufficient remaining output" << endl;
+            return 1;
+        }
+
+        if ((input._index != savedIIdx) || (output._index != savedOIdx)) {
+            cout << "LZP forward output capacity failure moved indexes" << endl;
+            return 1;
+        }
+    }
+
+    {
+        LZPCodec tf;
+        kanzi::byte lzSrc[128];
+        kanzi::byte lzDst[144];
+
+        for (int i = 0; i < 128; i++)
+            lzSrc[i] = kanzi::byte(i);
+
+        SliceArray<kanzi::byte> input(lzSrc, 128, 1);
+        SliceArray<kanzi::byte> output(lzDst, 144, 0);
+        const int savedIIdx = input._index;
+        const int savedOIdx = output._index;
+
+        if (tf.forward(input, output, 128) != false) {
+            cout << "LZP forward should reject oversized remaining input count" << endl;
+            return 1;
+        }
+
+        if ((input._index != savedIIdx) || (output._index != savedOIdx)) {
+            cout << "LZP forward input capacity failure moved indexes" << endl;
+            return 1;
+        }
+    }
+
+    {
+        LZXCodec<false> tf;
+        kanzi::byte lzSrc[128];
+        kanzi::byte lzEncoded[256];
+        kanzi::byte lzDecoded[128];
+
+        for (int i = 0; i < 128; i++)
+            lzSrc[i] = kanzi::byte(i & 3);
+
+        memset(lzEncoded, 0, sizeof(lzEncoded));
+        memset(lzDecoded, 0x7E, sizeof(lzDecoded));
+        SliceArray<kanzi::byte> input(lzSrc, 128, 0);
+        SliceArray<kanzi::byte> encoded(lzEncoded, int(sizeof(lzEncoded)), 0);
+
+        if (tf.forward(input, encoded, 128) == false) {
+            cout << "LZX setup encoding failed" << endl;
+            return 1;
+        }
+
+        const int encodedSize = encoded._index;
+        SliceArray<kanzi::byte> exactInput(lzEncoded, encodedSize, 0);
+        SliceArray<kanzi::byte> output(lzDecoded, 128, 0);
+
+        if (tf.inverse(exactInput, output, encodedSize) != false) {
+            cout << "LZX should reject input without the read-length guard" << endl;
+            return 1;
+        }
+
+        if ((exactInput._index != 0) || (output._index != 0)) {
+            cout << "LZX guard failure moved slice indexes" << endl;
+            return 1;
+        }
+
+        SliceArray<kanzi::byte> paddedInput(lzEncoded, int(sizeof(lzEncoded)), 0);
+
+        if (tf.inverse(paddedInput, output, encodedSize) == false) {
+            cout << "LZX should accept input with the read-length guard" << endl;
+            return 1;
+        }
+    }
+
     cout << "Transform capacity validation passed" << endl;
+    return 0;
+}
+
+static int testLZPMalformed()
+{
+    cout << endl
+         << "Malformed LZP" << endl;
+    LZPCodec codec;
+
+    {
+        // A MATCH_FLAG at the end of the encoded block has no token byte.
+        kanzi::byte encoded[6] = {
+            kanzi::byte(0), kanzi::byte(0), kanzi::byte(0),
+            kanzi::byte(0), kanzi::byte(0), kanzi::byte(0xFC)
+        };
+        kanzi::byte decoded[128];
+        memset(decoded, 0x7E, sizeof(decoded));
+        SliceArray<kanzi::byte> input(encoded, 6, 0);
+        SliceArray<kanzi::byte> output(decoded, 128, 0);
+
+        if (codec.inverse(input, output, 6) != false) {
+            cout << "Truncated LZP token should fail" << endl;
+            return 1;
+        }
+
+        if ((input._index != 0) || (output._index != 0)) {
+            cout << "Truncated LZP token moved slice indexes" << endl;
+            return 1;
+        }
+    }
+
+    {
+        kanzi::byte encoded[4] = {
+            kanzi::byte(0), kanzi::byte(0), kanzi::byte(0), kanzi::byte(0)
+        };
+        kanzi::byte decoded[8];
+        memset(decoded, 0x7E, sizeof(decoded));
+        SliceArray<kanzi::byte> input(encoded, 4, 0);
+        SliceArray<kanzi::byte> output(decoded, 3, 0);
+
+        if (codec.inverse(input, output, 4) != false) {
+            cout << "Short LZP output should fail" << endl;
+            return 1;
+        }
+
+        if ((input._index != 0) || (output._index != 0) ||
+            (decoded[0] != kanzi::byte(0x7E)) ||
+            (decoded[1] != kanzi::byte(0x7E)) ||
+            (decoded[2] != kanzi::byte(0x7E))) {
+            cout << "Short LZP output was modified" << endl;
+            return 1;
+        }
+    }
+
+    {
+        kanzi::byte encoded[5] = {
+            kanzi::byte(1), kanzi::byte(2), kanzi::byte(3),
+            kanzi::byte(4), kanzi::byte(5)
+        };
+        kanzi::byte decoded[8];
+        memset(decoded, 0x7E, sizeof(decoded));
+        SliceArray<kanzi::byte> input(encoded, 5, 0);
+        SliceArray<kanzi::byte> output(decoded, 4, 0);
+
+        if (codec.inverse(input, output, 5) != false) {
+            cout << "LZP literal output overflow should fail" << endl;
+            return 1;
+        }
+
+        if ((input._index != 0) || (output._index != 0) ||
+            (decoded[0] != kanzi::byte(0x7E)) ||
+            (decoded[1] != kanzi::byte(0x7E)) ||
+            (decoded[2] != kanzi::byte(0x7E)) ||
+            (decoded[3] != kanzi::byte(0x7E)) ||
+            (decoded[4] != kanzi::byte(0x7E))) {
+            cout << "LZP literal output overflow modified output" << endl;
+            return 1;
+        }
+    }
+
+    cout << "Malformed LZP tests passed" << endl;
     return 0;
 }
 
@@ -1151,6 +1323,11 @@ int TestTransforms_main(int argc, const char* argv[])
             return res;
 
         res = testZRLTMalformed();
+
+        if (res != 0)
+            return res;
+
+        res = testLZPMalformed();
 
         if (res != 0)
             return res;

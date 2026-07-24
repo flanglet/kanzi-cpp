@@ -90,7 +90,8 @@ namespace kanzi {
         // Required encoding output buffer size
         int getMaxEncodedLength(int srcLen) const
         {
-            return (srcLen <= 1024) ? srcLen + 16 : srcLen + (srcLen / 64);
+            // readLength() may read two bytes past the encoded block
+            return ((srcLen <= 1024) ? srcLen + 16 : srcLen + (srcLen / 64)) + 2;
         }
 
     private:
@@ -105,6 +106,7 @@ namespace kanzi {
         static const int MIN_MATCH9;
         static const int MAX_MATCH;
         static const int MIN_BLOCK_LENGTH;
+        static const int READ_LENGTH_GUARD;
 
         int32* _hashes;
         int _hashSize;
