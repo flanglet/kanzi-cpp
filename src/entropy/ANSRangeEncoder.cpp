@@ -56,7 +56,8 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
         throw invalid_argument(ss.str());
     }
 
-    _chunkSize = min(chunkSize << (8 * order), MAX_CHUNK_SIZE);
+    const uint64 scaledChunkSize = uint64(chunkSize) << (8 * order);
+    _chunkSize = uint(min(scaledChunkSize, uint64(MAX_CHUNK_SIZE)));
     _order = order;
     const int dim = 255 * order + 1;
     _symbols = new ANSEncSymbol[dim * 256];
