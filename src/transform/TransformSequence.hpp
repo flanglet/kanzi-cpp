@@ -93,7 +93,7 @@ namespace kanzi {
        if (!SliceArray<byte>::isValid(output))
            throw std::invalid_argument("Invalid output block");
 
-       if ((count < 0) || (count + input._index > input._length))
+       if ((count < 0) || (count > input._length - input._index))
            return false;
 
        _skipFlags = SKIP_MASK;
@@ -146,7 +146,8 @@ namespace kanzi {
        }
 
        if ((swaps & 1) == 0) {
-           if ((output._index + count > output._length) || (in->_index + count > in->_length)) {
+           if ((count > output._length - output._index) ||
+               (count > in->_length - in->_index)) {
                _skipFlags = SKIP_MASK;
            }
            else {
@@ -169,7 +170,7 @@ namespace kanzi {
        if (!SliceArray<byte>::isValid(output))
            throw std::invalid_argument("Invalid output block");
 
-       if ((count < 0) || (count + input._index > input._length))
+       if ((count < 0) || (count > input._length - input._index))
            return false;
 
        if (count == 0)
@@ -231,7 +232,8 @@ namespace kanzi {
        }
 
        if ((res == true) && ((swaps & 1) == 0)) {
-           if ((output._index + count > output._length) || (in->_index + count > in->_length))
+           if ((count > output._length - output._index) ||
+               (count > in->_length - in->_index))
                res = false;
            else {
                std::memmove(&output._array[output._index], &in->_array[in->_index], size_t(count));

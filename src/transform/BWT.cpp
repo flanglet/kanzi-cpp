@@ -107,6 +107,9 @@ bool BWT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
         return false;
 
     if (count == 1) {
+        if ((input._index >= input._length) || (output._index >= output._length))
+            return false;
+
         output._array[output._index++] = input._array[input._index++];
         return true;
     }
@@ -148,6 +151,9 @@ bool BWT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
         return false;
 
     if (count == 1) {
+        if ((input._index >= input._length) || (output._index >= output._length))
+            return false;
+
         output._array[output._index++] = input._array[input._index++];
         return true;
     }
