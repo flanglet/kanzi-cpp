@@ -177,6 +177,8 @@ namespace kanzi {
     template <bool T>
     inline void LZXCodec<T>::emitLiterals(const byte src[], byte dst[], int len)
     {
+        // Callers provide trailing padding for this 16-byte copy, which may
+        // read and write up to 15 bytes past the requested literal length.
         for (int i = 0; i < len; i += 16)
             memcpy(&dst[i], &src[i], 16);
     }

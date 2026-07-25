@@ -123,6 +123,9 @@ bool LZXCodec<T>::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
     if (!SliceArray<kanzi::byte>::isValid(input))
         throw invalid_argument("LZ codec: Invalid input block");
 
+    if (count > input._length - input._index)
+        return false;
+
     if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("LZ codec: Invalid output block");
 
@@ -422,7 +425,7 @@ bool LZXCodec<T>::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
     // Emit last literals
     const int litLen = count - anchor;
 
-    if (dstIdx + litLen + tkIdx + mIdx >= output._index + count)
+    if (dstIdx + litLen + tkIdx + mIdx + mLenIdx >= count)
         return false;
 
     if (litLen >= 7) {
@@ -571,12 +574,14 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
             goto exit;
         }
 
-        prefetchWrite(&dst[dstIdx]);
+        if ((dist >= 64) && (mLen >= 64))
+            prefetchRead(&dst[dstIdx + 64]);
 
         // Copy match
         if (dist >= 16) {
             do {
-                // No overlap
+                // The stream decoder supplies trailing padding for this
+                // 16-byte copy, which may write up to 15 bytes past mEnd.
                 memcpy(&dst[dstIdx], &dst[ref], 16);
                 ref += 16;
                 dstIdx += 16;
@@ -725,7 +730,8 @@ bool LZXCodec<T>::inverseV5(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
         // Copy match
         if (dist >= 16) {
             do {
-                // No overlap
+                // The stream decoder supplies trailing padding for this
+                // 16-byte copy, which may write up to 15 bytes past mEnd.
                 memcpy(&dst[dstIdx], &dst[ref], 16);
                 ref += 16;
                 dstIdx += 16;
@@ -964,7 +970,8 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
 
         if (dstIdx >= ref + 16) {
             do {
-                // No overlap
+                // The stream decoder supplies trailing padding for this
+                // 16-byte copy, which may write up to 15 bytes past mEnd.
                 memcpy(&dst[dstIdx], &dst[ref], 16);
                 ref += 16;
                 dstIdx += 16;
