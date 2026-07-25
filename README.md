@@ -141,13 +141,35 @@ Round-trip graph for enwik8 on AMD Ryzen 9950X  (X = compTime + 2*decompTime, Y 
 * Portability: Designed for easy porting to other OSs.
 * Multithreading: Supported by default.
 
-### Visual Studio 2008
-Unzip the file "Kanzi_VS2008.zip" in place.
-The solution generates a Windows 32 binary. Multithreading is not supported with this version.
+### Visual Studio
+The Visual Studio solution and project files are in the `msvc` directory. Open the
+solution corresponding to your Visual Studio version:
 
-### Visual Studio 2022
-Unzip the file "Kanzi_VS2022.zip" in place.
-The solution generates a Windows 64 binary and library.
+* Visual Studio 2008: open `msvc/Kanzi_VS2008.sln`. The solution generates a Windows
+  32-bit binary. Multithreading is not supported with this version.
+* Visual Studio 2022: open `msvc/Kanzi_VS2022.sln`. The solution generates Windows
+  binaries and a 64-bit library.
+* Visual Studio 2026: open `msvc/Kanzi_VS2026.sln`. The solution generates Windows
+  binaries and a 64-bit library.
+
+Select the desired configuration and platform in Visual Studio, then build the
+solution.
+
+To build from the command line, open a Developer Command Prompt for the
+corresponding Visual Studio version and run the following from the repository
+root:
+
+```text
+msbuild msvc\Kanzi_VS2022.sln /m /p:Configuration=Release /p:Platform=x64
+msbuild msvc\Kanzi_VS2026.sln /m /p:Configuration=Release /p:Platform=x64
+```
+
+Use `/p:Platform=Win32` to build the 32-bit target. For Visual Studio 2008,
+use the Visual Studio command-line executable instead:
+
+```text
+VCExpress.exe msvc\Kanzi_VS2008.sln /Build "Debug|Win32"
+```
 
 ### mingw-w64
 Go to the source directory and run 'make clean && mingw32-make.exe kanzi'. The Makefile contains
@@ -210,4 +232,3 @@ Ilya Grebnov
 Disclaimer
 
 Use at your own risk. Always keep a copy of your original files.
-
