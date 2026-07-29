@@ -70,7 +70,8 @@ namespace kanzi {
 
        // Return interpolated probabibility
        const uint16 w = uint16(pr & 127);
-       return int(_data[_index] * (128 - w) + _data[_index + 1] * w) >> 11;
+       return ((_data[_index] << 7) +
+               (int(_data[_index + 1]) - int(_data[_index])) * int(w)) >> 11;
    }
 
 
@@ -120,7 +121,8 @@ namespace kanzi {
 
            // Return interpolated probabibility
            const uint16 w = uint16(pr & 127);
-           return int(_data[_index] * (128 - w) + _data[_index + 1] * w) >> 11;
+           return ((_data[_index] << 7) +
+                   (int(_data[_index + 1]) - int(_data[_index])) * int(w)) >> 11;
        } else {
            _index = ((Global::stretch(pr) + 2048) >> 7) + 32 * ctx;
            return int(_data[_index]) >> 4;
