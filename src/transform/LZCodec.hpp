@@ -57,7 +57,10 @@ namespace kanzi {
             _hashSize = 0;
             _tkBuf = nullptr;
             _mLenBuf = nullptr;
-            _mBuf = nullptr;
+            _lLenBuf = nullptr;
+            _mBuf0 = nullptr;
+            _mBuf1 = nullptr;
+            _mBuf2 = nullptr;
             _bufferSize = 0;
             _pCtx = nullptr;
         }
@@ -69,7 +72,10 @@ namespace kanzi {
             _hashSize = 0;
             _tkBuf = nullptr;
             _mLenBuf = nullptr;
-            _mBuf = nullptr;
+            _lLenBuf = nullptr;
+            _mBuf0 = nullptr;
+            _mBuf1 = nullptr;
+            _mBuf2 = nullptr;
             _bufferSize = 0;
         }
 
@@ -79,7 +85,10 @@ namespace kanzi {
             _hashSize = 0;
             if (_hashes != nullptr) delete[] _hashes;
             if (_mLenBuf != nullptr) delete[] _mLenBuf;
-            if (_mBuf != nullptr) delete[] _mBuf;
+            if (_lLenBuf != nullptr) delete[] _lLenBuf;
+            if (_mBuf0 != nullptr) delete[] _mBuf0;
+            if (_mBuf1 != nullptr) delete[] _mBuf1;
+            if (_mBuf2 != nullptr) delete[] _mBuf2;
             if (_tkBuf != nullptr) delete[] _tkBuf;
         }
 
@@ -90,8 +99,7 @@ namespace kanzi {
         // Required encoding output buffer size
         int getMaxEncodedLength(int srcLen) const
         {
-            // readLength() may read two bytes past the encoded block
-            return ((srcLen <= 1024) ? srcLen + 16 : srcLen + (srcLen / 64)) + 2;
+            return (srcLen <= 1024) ? srcLen + 64 : srcLen + (srcLen / 64) + 64;
         }
 
     private:
@@ -111,10 +119,15 @@ namespace kanzi {
         int32* _hashes;
         int _hashSize;
         byte* _mLenBuf;
-        byte* _mBuf;
+        byte* _lLenBuf;
+        byte* _mBuf0;
+        byte* _mBuf1;
+        byte* _mBuf2;
         byte* _tkBuf;
         int _bufferSize;
         Context* _pCtx;
+
+        bool inverseV7(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
         bool inverseV6(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 

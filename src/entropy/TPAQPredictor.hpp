@@ -341,6 +341,11 @@ namespace kanzi
            bsVersion = ctx->getInt("bsVersion", bsVersion);
        }
 
+       // The ring buffer and hash table use bit masks for indexing.
+       // Normalize their sizes to powers of two before creating the masks.
+       bufferSize = 1u << Global::_log2(bufferSize);
+       hashSize = 1u << Global::_log2(hashSize);
+
        mixersSize <<= (2 * extraMem);
        statesSize <<= (2 * extraMem);
        hashSize <<= (2 * extraMem);

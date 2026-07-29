@@ -17,6 +17,9 @@ limitations under the License.
 #ifndef knz_Memory
 #define knz_Memory
 
+#if __cplusplus >= 202002L
+    #include <bit>
+#endif
 #include <cstring>
 #include "types.hpp"
 
@@ -102,11 +105,17 @@ static KANZI_ALWAYS_INLINE uint64 knz_bswap64(uint64 x) {
 
 // Detect host endianness
 
-#ifndef HOST_IS_LITTLE
-    #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__BIG_ENDIAN__)
-        #define HOST_IS_LITTLE 0
-    #else
-        #define HOST_IS_LITTLE 1
+#if __cplusplus >= 202002L
+    static_assert(std::endian::native == std::endian::little ||
+                  std::endian::native == std::endian::big,
+                  "Kanzi supports only little- and big-endian hosts");
+#else
+    #ifndef HOST_IS_LITTLE
+        #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) || defined(__BIG_ENDIAN__)
+            #define HOST_IS_LITTLE 0
+        #else
+            #define HOST_IS_LITTLE 1
+        #endif
     #endif
 #endif
 
@@ -122,7 +131,10 @@ static KANZI_ALWAYS_INLINE T readEndian(const byte* p) {
 #endif
 
     // Swap if host and source endianness differ
-#if HOST_IS_LITTLE
+#if __cplusplus >= 202002L
+    if constexpr (SourceIsBigEndian !=
+                  (std::endian::native == std::endian::big)) {
+#elif HOST_IS_LITTLE
     if (SourceIsBigEndian) {
 #else
     if (!SourceIsBigEndian) {
@@ -141,7 +153,10 @@ static KANZI_ALWAYS_INLINE T readEndian(const byte* p) {
 template <typename T, bool TargetIsBigEndian>
 static KANZI_ALWAYS_INLINE void writeEndian(byte* p, T val) {
 
-#if HOST_IS_LITTLE
+#if __cplusplus >= 202002L
+    if constexpr (TargetIsBigEndian !=
+                  (std::endian::native == std::endian::big)) {
+#elif HOST_IS_LITTLE
     if (TargetIsBigEndian) {
 #else
     if (!TargetIsBigEndian) {

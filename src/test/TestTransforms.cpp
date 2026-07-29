@@ -37,7 +37,7 @@ limitations under the License.
 using namespace std;
 using namespace kanzi;
 
-static const int BS_VERSION = 6;
+static const int BS_VERSION = 7;
 
 static void writeInt16LE(kanzi::byte buf[], int value)
 {
@@ -632,40 +632,73 @@ static int testTransformCapacityValidation()
     {
         LZXCodec<false> tf;
         kanzi::byte lzSrc[128];
-        kanzi::byte lzEncoded[256];
-        kanzi::byte lzDecoded[128];
+        kanzi::byte lzDst[256];
 
         for (int i = 0; i < 128; i++)
+            lzSrc[i] = kanzi::byte(i);
+
+        SliceArray<kanzi::byte> input(lzSrc, 128, 1);
+        SliceArray<kanzi::byte> output(lzDst, 256, 0);
+        const int savedIIdx = input._index;
+        const int savedOIdx = output._index;
+
+        if (tf.forward(input, output, 128) != false) {
+            cout << "LZX forward should reject oversized remaining input count" << endl;
+            return 1;
+        }
+
+        if ((input._index != savedIIdx) || (output._index != savedOIdx)) {
+            cout << "LZX forward input capacity failure moved indexes" << endl;
+            return 1;
+        }
+    }
+
+    {
+        LZXCodec<false> tf;
+        kanzi::byte lzSrc[128];
+        kanzi::byte lzDst[176];
+
+        for (int i = 0; i < 128; i++)
+            lzSrc[i] = kanzi::byte(i);
+
+        memset(lzDst, 0x7E, sizeof(lzDst));
+        SliceArray<kanzi::byte> input(lzSrc, 128, 0);
+        SliceArray<kanzi::byte> output(lzDst, int(sizeof(lzDst)), 32);
+
+        if (tf.forward(input, output, 128) != false) {
+            cout << "LZX forward should reject incompressible input" << endl;
+            return 1;
+        }
+
+        if ((output._index != 32) || (lzDst[32] != kanzi::byte(0x7E))) {
+            cout << "LZX final-size check wrote output on failure" << endl;
+            return 1;
+        }
+    }
+
+    {
+        Context v7ctx;
+        v7ctx.putInt("bsVersion", 7);
+        LZXCodec<false> encoder(v7ctx);
+        LZXCodec<false> decoder(v7ctx);
+        kanzi::byte lzSrc[256];
+        vector<kanzi::byte> lzEncoded(encoder.getMaxEncodedLength(256));
+        kanzi::byte lzDecoded[512];
+
+        for (int i = 0; i < 256; i++)
             lzSrc[i] = kanzi::byte(i & 3);
 
-        memset(lzEncoded, 0, sizeof(lzEncoded));
-        memset(lzDecoded, 0x7E, sizeof(lzDecoded));
-        SliceArray<kanzi::byte> input(lzSrc, 128, 0);
-        SliceArray<kanzi::byte> encoded(lzEncoded, int(sizeof(lzEncoded)), 0);
+        SliceArray<kanzi::byte> input(lzSrc, 256, 0);
+        SliceArray<kanzi::byte> encoded(&lzEncoded[0], int(lzEncoded.size()), 0);
+        SliceArray<kanzi::byte> output(lzDecoded, 512, 0);
 
-        if (tf.forward(input, encoded, 128) == false) {
-            cout << "LZX setup encoding failed" << endl;
-            return 1;
-        }
-
+        const bool encodedOk = encoder.forward(input, encoded, 256);
         const int encodedSize = encoded._index;
-        SliceArray<kanzi::byte> exactInput(lzEncoded, encodedSize, 0);
-        SliceArray<kanzi::byte> output(lzDecoded, 128, 0);
+        SliceArray<kanzi::byte> encodedInput(&lzEncoded[0], encodedSize, 0);
+        const bool decodedOk = decoder.inverse(encodedInput, output, encodedSize);
 
-        if (tf.inverse(exactInput, output, encodedSize) != false) {
-            cout << "LZX should reject input without the read-length guard" << endl;
-            return 1;
-        }
-
-        if ((exactInput._index != 0) || (output._index != 0)) {
-            cout << "LZX guard failure moved slice indexes" << endl;
-            return 1;
-        }
-
-        SliceArray<kanzi::byte> paddedInput(lzEncoded, int(sizeof(lzEncoded)), 0);
-
-        if (tf.inverse(paddedInput, output, encodedSize) == false) {
-            cout << "LZX should accept input with the read-length guard" << endl;
+        if (!encodedOk || !decodedOk || (output._index != 256) || (memcmp(lzSrc, lzDecoded, 256) != 0)) {
+            cout << "LZX v7 round trip failed" << endl;
             return 1;
         }
     }

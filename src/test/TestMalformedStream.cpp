@@ -196,7 +196,7 @@ int main()
     }
 
     if (expectHeaderFailure("unsupported version",
-            buildHeader(type, version + 1, 0, entropy, transform, blockSize, 0, 0, true),
+            buildHeader(type, version + 2, 0, entropy, transform, blockSize, 0, 0, true),
             Error::ERR_STREAM_VERSION, "cannot read this version") != 0) {
         return 1;
     }

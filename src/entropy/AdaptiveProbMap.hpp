@@ -46,7 +46,9 @@ namespace kanzi {
        _index = 0;
 
        for (int j = 0; j <= 64; j++) {
-           _data[j] = uint16(j << 6) << 4;
+           // 65536 does not fit in uint16. Keep the endpoint aligned
+           // with the maximum target used by the adaptive update.
+           _data[j] = (j == 64) ? uint16(65528) : uint16(j << 10);
        }
 
        for (int i = 1; i < n; i++) {
@@ -93,18 +95,14 @@ namespace kanzi {
        const int mult = (FAST == false) ? 33 : 32;
        _index = 0;
 
-       if (n == 0) {
-           _data = new uint16[mult];
-       }
-       else {
-           _data = new uint16[n * mult];
+       const int size = (n == 0) ? mult : n * mult;
+       _data = new uint16[size];
 
-           for (int j = 0; j < mult; j++)
-               _data[j] = uint16(Global::squash((j - 16) * 128) << 4);
+       for (int j = 0; j < mult; j++)
+           _data[j] = uint16(Global::squash((j - 16) * 128) << 4);
 
-           for (int i = 1; i < n; i++)
-               memcpy(&_data[i * mult], &_data[0], mult * sizeof(uint16));
-       }
+       for (int i = 1; i < n; i++)
+           memcpy(&_data[i * mult], &_data[0], mult * sizeof(uint16));
    }
 
    // Return improved prediction given current bit, prediction and context
@@ -131,4 +129,3 @@ namespace kanzi {
 
 }
 #endif
-
