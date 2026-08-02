@@ -303,7 +303,7 @@ namespace kanzi
        uint hashSize = HASH_SIZE;
        uint extraMem = (T == true) ? 1 : 0;
        uint bufferSize = BUFFER_SIZE;
-       uint bsVersion = 6;
+       uint bsVersion = 7;
 
        if (ctx != nullptr) {
            // Block size requested by the user
@@ -341,10 +341,12 @@ namespace kanzi
            bsVersion = ctx->getInt("bsVersion", bsVersion);
        }
 
-       // The ring buffer and hash table use bit masks for indexing.
-       // Normalize their sizes to powers of two before creating the masks.
-       bufferSize = 1u << Global::_log2(bufferSize);
-       hashSize = 1u << Global::_log2(hashSize);
+       if (bsVersion > 6) {
+          // The ring buffer and hash table use bit masks for indexing.
+          // Normalize their sizes to powers of two before creating the masks.
+          bufferSize = 1u << Global::_log2(bufferSize);
+          hashSize = 1u << Global::_log2(hashSize);
+       }
 
        mixersSize <<= (2 * extraMem);
        statesSize <<= (2 * extraMem);
