@@ -180,7 +180,7 @@ namespace kanzi {
         // Callers provide trailing padding for this 16-byte copy, which may
         // read and write up to 15 bytes past the requested literal length.
         for (int i = 0; i < len; i += 16)
-            memcpy(&dst[i], &src[i], 16);
+            KANZI_MEM_CP16(&dst[i], &src[i]);
     }
 
     template <bool T>

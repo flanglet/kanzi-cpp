@@ -582,7 +582,7 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
             do {
                 // The stream decoder supplies trailing padding for this
                 // 16-byte copy, which may write up to 15 bytes past mEnd.
-                memcpy(&dst[dstIdx], &dst[ref], 16);
+                KANZI_MEM_CP16(&dst[dstIdx], &dst[ref]);
                 ref += 16;
                 dstIdx += 16;
             } while (dstIdx < mEnd);
@@ -732,7 +732,7 @@ bool LZXCodec<T>::inverseV5(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
             do {
                 // The stream decoder supplies trailing padding for this
                 // 16-byte copy, which may write up to 15 bytes past mEnd.
-                memcpy(&dst[dstIdx], &dst[ref], 16);
+                KANZI_MEM_CP16(&dst[dstIdx], &dst[ref]);
                 ref += 16;
                 dstIdx += 16;
             } while (dstIdx < mEnd);
@@ -972,7 +972,7 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
             do {
                 // The stream decoder supplies trailing padding for this
                 // 16-byte copy, which may write up to 15 bytes past mEnd.
-                memcpy(&dst[dstIdx], &dst[ref], 16);
+                KANZI_MEM_CP16(&dst[dstIdx], &dst[ref]);
                 ref += 16;
                 dstIdx += 16;
             } while (dstIdx < mEnd);

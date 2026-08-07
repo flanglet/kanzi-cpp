@@ -18,6 +18,7 @@ limitations under the License.
 #define knz_TextCodec
 
 #include "../Context.hpp"
+#include "../Memory.hpp"
 #include "../Transform.hpp"
 
 
@@ -269,7 +270,7 @@ namespace kanzi {
        while (length >= 4) {
            length -= 4;
 
-           if (memcmp(&src[length], &dst[length], 4) != 0)
+           if (!KANZI_MEM_EQ4(&src[length], &dst[length]))
               return false;
        }
 

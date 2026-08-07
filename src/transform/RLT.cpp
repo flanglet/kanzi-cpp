@@ -124,7 +124,7 @@ bool RLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
         if (prev == src[srcIdx]) {
             const uint32 v = 0x01010101 * uint32(prev);
 
-            if (KANZI_MEM_EQ4(&v, &src[srcIdx])) {
+            if (KANZI_MEM_EQ4(reinterpret_cast<const kanzi::byte*>(&v), &src[srcIdx])) {
                 srcIdx += 4; run += 4;
 
                 if ((run < MAX_RUN4) && (srcIdx < srcEnd4))

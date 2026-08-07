@@ -292,7 +292,7 @@ namespace kanzi {
 
        if (dstIdx - ref >= 8) {
            while (matchLen > 0) {
-               memcpy(&buf[dstIdx], &buf[ref], 8);
+               KANZI_MEM_CP8(&buf[dstIdx], &buf[ref]);
                ref += 8;
                dstIdx += 8;
                matchLen -= 8;
