@@ -122,27 +122,19 @@ bool RLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
     // Main loop
     while (true) {
         if (prev == src[srcIdx]) {
-            const uint32 v = 0x01010101 * uint32(prev);
+            const uint32 v = 0x01010101u * uint32(prev);
+            const uint32 diff = uint32(LittleEndian::readInt32(&src[srcIdx])) ^ v;
 
-            if (KANZI_MEM_EQ4(reinterpret_cast<const kanzi::byte*>(&v), &src[srcIdx])) {
+            if (diff == 0) {
                 srcIdx += 4; run += 4;
 
                 if ((run < MAX_RUN4) && (srcIdx < srcEnd4))
                     continue;
             }
             else {
-                srcIdx++; run++;
-
-                if (prev == src[srcIdx]) {
-                    srcIdx++; run++;
-
-                    if (prev == src[srcIdx]) {
-                        srcIdx++; run++;
-
-                        if ((run < MAX_RUN4) && (srcIdx < srcEnd4))
-                            continue;
-                    }
-                }
+                const int n = Global::trailingZeros(diff) >> 3;
+                srcIdx += n;
+                run += n;
             }
         }
 
