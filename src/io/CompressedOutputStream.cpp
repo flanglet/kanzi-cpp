@@ -29,7 +29,7 @@ using namespace kanzi;
 using namespace std;
 
 const int CompressedOutputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
-const int CompressedOutputStream::BITSTREAM_FORMAT_VERSION = 7;
+const int CompressedOutputStream::BITSTREAM_FORMAT_VERSION = 6;
 const int CompressedOutputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
 const kanzi::byte CompressedOutputStream::COPY_BLOCK_MASK = kanzi::byte(0x80);
 const kanzi::byte CompressedOutputStream::TRANSFORMS_MASK = kanzi::byte(0x10);
