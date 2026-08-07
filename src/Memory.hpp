@@ -23,6 +23,14 @@ limitations under the License.
 #include <cstring>
 #include "types.hpp"
 
+#if !defined(NO_INTRINSICS)
+    #if defined(__ARM_NEON) || defined(__aarch64__)
+        #include <arm_neon.h>
+    #elif defined(__AVX512F__) || defined(__AVX2__) || defined(__SSE2__)
+        #include <immintrin.h>
+    #endif
+#endif
+
 
 namespace kanzi {
 
@@ -93,15 +101,157 @@ static KANZI_ALWAYS_INLINE uint64 knz_bswap64(uint64 x) {
 #endif
 }
 
-#ifdef AGGRESSIVE_OPTIMIZATION
-    // There be dragons!
-    // User assumes responsibility for alignment and aliasing constraints.
-    #define KANZI_MEM_EQ4(x, y) (*(const uint32*)(x) == *(const uint32*)(y))
-    #define KANZI_MEM_EQ8(x, y) (*(const uint64*)(x) == *(const uint64*)(y))
+#if !defined(NO_INTRINSICS) && (defined(__ARM_NEON) || defined(__aarch64__))
+
+    static KANZI_ALWAYS_INLINE bool memEq4(const byte* x, const byte* y)
+    {
+        const uint32x2_t a = vld1_dup_u32(reinterpret_cast<const uint32_t*>(x));
+        const uint32x2_t b = vld1_dup_u32(reinterpret_cast<const uint32_t*>(y));
+        return vget_lane_u32(vceq_u32(a, b), 0) != 0;
+    }
+
+    static KANZI_ALWAYS_INLINE bool memEq8(const byte* x, const byte* y)
+    {
+#if defined(__aarch64__)
+        const uint64x1_t a = vld1_u64(reinterpret_cast<const uint64_t*>(x));
+        const uint64x1_t b = vld1_u64(reinterpret_cast<const uint64_t*>(y));
+        return vget_lane_u64(vceq_u64(a, b), 0) != 0;
 #else
-    #define KANZI_MEM_EQ4(x, y) (std::memcmp((x), (y), 4) == 0)
-    #define KANZI_MEM_EQ8(x, y) (std::memcmp((x), (y), 8) == 0)
+        const uint32x2_t a = vld1_u32(reinterpret_cast<const uint32_t*>(x));
+        const uint32x2_t b = vld1_u32(reinterpret_cast<const uint32_t*>(y));
+        const uint32x2_t eq = vceq_u32(a, b);
+        return (vget_lane_u32(eq, 0) != 0) && (vget_lane_u32(eq, 1) != 0);
 #endif
+    }
+
+    static KANZI_ALWAYS_INLINE void memCp8(byte* dst, const byte* src)
+    {
+        vst1_u8(reinterpret_cast<uint8_t*>(dst), vld1_u8(reinterpret_cast<const uint8_t*>(src)));
+    }
+
+    static KANZI_ALWAYS_INLINE void memCp16(byte* dst, const byte* src)
+    {
+        vst1q_u8(reinterpret_cast<uint8_t*>(dst), vld1q_u8(reinterpret_cast<const uint8_t*>(src)));
+    }
+
+#elif !defined(NO_INTRINSICS) && defined(__AVX512F__)
+
+    static KANZI_ALWAYS_INLINE bool memEq4(const byte* x, const byte* y)
+    {
+        const __mmask16 mask = 0x0001;
+        const __m512i a = _mm512_maskz_loadu_epi32(mask, x);
+        const __m512i b = _mm512_maskz_loadu_epi32(mask, y);
+        return _mm512_mask_cmpeq_epi32_mask(mask, a, b) == mask;
+    }
+
+    static KANZI_ALWAYS_INLINE bool memEq8(const byte* x, const byte* y)
+    {
+        const __mmask8 mask = 0x01;
+        const __m512i a = _mm512_maskz_loadu_epi64(mask, x);
+        const __m512i b = _mm512_maskz_loadu_epi64(mask, y);
+        return _mm512_mask_cmpeq_epi64_mask(mask, a, b) == mask;
+    }
+
+    static KANZI_ALWAYS_INLINE void memCp8(byte* dst, const byte* src)
+    {
+        const __m512i value = _mm512_maskz_loadu_epi64(0x01, src);
+        _mm512_mask_storeu_epi64(dst, 0x01, value);
+    }
+
+    static KANZI_ALWAYS_INLINE void memCp16(byte* dst, const byte* src)
+    {
+        const __m512i value = _mm512_maskz_loadu_epi64(0x03, src);
+        _mm512_mask_storeu_epi64(dst, 0x03, value);
+    }
+
+#elif !defined(NO_INTRINSICS) && defined(__AVX2__)
+
+    static KANZI_ALWAYS_INLINE bool memEq4(const byte* x, const byte* y)
+    {
+        const __m256i mask = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 0, -1);
+        const __m256i a = _mm256_maskload_epi32(reinterpret_cast<const int*>(x), mask);
+        const __m256i b = _mm256_maskload_epi32(reinterpret_cast<const int*>(y), mask);
+        return (_mm256_movemask_epi8(_mm256_cmpeq_epi32(a, b)) & 0x0F) == 0x0F;
+    }
+
+    static KANZI_ALWAYS_INLINE bool memEq8(const byte* x, const byte* y)
+    {
+        const __m256i mask = _mm256_set_epi64x(0, 0, 0, -1);
+        const __m256i a = _mm256_maskload_epi64(reinterpret_cast<const long long*>(x), mask);
+        const __m256i b = _mm256_maskload_epi64(reinterpret_cast<const long long*>(y), mask);
+        return (_mm256_movemask_epi8(_mm256_cmpeq_epi64(a, b)) & 0xFF) == 0xFF;
+    }
+
+    static KANZI_ALWAYS_INLINE void memCp8(byte* dst, const byte* src)
+    {
+        const __m256i mask = _mm256_set_epi64x(0, 0, 0, -1);
+        const __m256i value = _mm256_maskload_epi64(reinterpret_cast<const long long*>(src), mask);
+        _mm256_maskstore_epi64(reinterpret_cast<long long*>(dst), mask, value);
+    }
+
+    static KANZI_ALWAYS_INLINE void memCp16(byte* dst, const byte* src)
+    {
+        const __m256i mask = _mm256_set_epi64x(0, 0, -1, -1);
+        const __m256i value = _mm256_maskload_epi64(reinterpret_cast<const long long*>(src), mask);
+        _mm256_maskstore_epi64(reinterpret_cast<long long*>(dst), mask, value);
+    }
+
+#elif !defined(NO_INTRINSICS) && defined(__SSE2__)
+
+    static KANZI_ALWAYS_INLINE bool memEq4(const byte* x, const byte* y)
+    {
+        const __m128i va = _mm_loadu_si32(x);
+        const __m128i vb = _mm_loadu_si32(y);
+        return _mm_cvtsi128_si32(_mm_cmpeq_epi32(va, vb)) != 0;
+    }
+
+    static KANZI_ALWAYS_INLINE bool memEq8(const byte* x, const byte* y)
+    {
+        const __m128i a = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(x));
+        const __m128i b = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(y));
+        return _mm_movemask_epi8(_mm_cmpeq_epi8(a, b)) == 0xFF;
+    }
+
+    static KANZI_ALWAYS_INLINE void memCp8(byte* dst, const byte* src)
+    {
+        _mm_storel_epi64(reinterpret_cast<__m128i*>(dst),
+                         _mm_loadl_epi64(reinterpret_cast<const __m128i*>(src)));
+    }
+
+    static KANZI_ALWAYS_INLINE void memCp16(byte* dst, const byte* src)
+    {
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dst),
+                         _mm_loadu_si128(reinterpret_cast<const __m128i*>(src)));
+    }
+
+#else
+
+    static KANZI_ALWAYS_INLINE bool memEq4(const byte* x, const byte* y)
+    {
+        return std::memcmp(x, y, 4) == 0;
+    }
+
+    static KANZI_ALWAYS_INLINE bool memEq8(const byte* x, const byte* y)
+    {
+        return std::memcmp(x, y, 8) == 0;
+    }
+
+    static KANZI_ALWAYS_INLINE void memCp8(byte* dst, const byte* src)
+    {
+        memcpy(dst, src, 8);
+    }
+
+    static KANZI_ALWAYS_INLINE void memCp16(byte* dst, const byte* src)
+    {
+        memcpy(dst, src, 16);
+    }
+
+#endif
+
+#define KANZI_MEM_EQ4(x, y) (::kanzi::memEq4((x), (y)))
+#define KANZI_MEM_EQ8(x, y) (::kanzi::memEq8((x), (y)))
+#define KANZI_MEM_CP8(dst, src) (::kanzi::memCp8((dst), (src)))
+#define KANZI_MEM_CP16(dst, src) (::kanzi::memCp16((dst), (src)))
 
 // Detect host endianness
 
