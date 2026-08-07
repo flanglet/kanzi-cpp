@@ -283,17 +283,28 @@ bool RLT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
 
     // Main loop
     while (srcIdx < srcEnd) {
-        if (src[srcIdx] != escape) {
-            // Literal
-            if (dstIdx >= dstEnd) {
+        // Copy a span of literals in one operation. Escaped literals are
+        // encoded as escape, 0, so the first escape always terminates the
+        // current literal span.
+        const byte* const esc = static_cast<const byte*>(
+            std::memchr(&src[srcIdx], int(uint8(escape)), size_t(srcEnd - srcIdx)));
+        const int literalLen = (esc == nullptr) ? (srcEnd - srcIdx) : int(esc - &src[srcIdx]);
+
+        if (literalLen > 0) {
+            if (literalLen > dstEnd - dstIdx) {
                 res = false;
                 break;
             }
 
-            dst[dstIdx++] = src[srcIdx++];
-            continue;
+            std::memcpy(&dst[dstIdx], &src[srcIdx], size_t(literalLen));
+            srcIdx += literalLen;
+            dstIdx += literalLen;
         }
 
+        if (srcIdx >= srcEnd)
+            break;
+
+        // An escape marker was found
         srcIdx++;
 
         if (srcIdx >= srcEnd) {
