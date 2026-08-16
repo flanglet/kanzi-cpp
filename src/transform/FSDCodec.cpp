@@ -18,6 +18,7 @@ limitations under the License.
 #include "FSDCodec.hpp"
 #include "../Global.hpp"
 #include "../Magic.hpp"
+#include "../Memory.hpp"
 
 using namespace kanzi;
 using namespace std;
@@ -232,10 +233,11 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     // Emit modified bytes
     if (mode == DELTA_CODING) {
         while ((srcIdx < srcEnd) && (dstIdx < dstEnd - 1)) {
-            const int delta = 127 + int(src[srcIdx]) - int(src[srcIdx - dist]);
+            const int delta = int(src[srcIdx]) - int(src[srcIdx - dist]);
+            const uint zigzag = uint(delta + 127);
 
-            if ((delta >= 0) && (delta < 255)) {
-                dst[dstIdx++] = kanzi::byte(ZIGZAG1[delta]); // zigzag encode delta
+            if (zigzag < 255) {
+                dst[dstIdx++] = kanzi::byte(ZIGZAG1[zigzag]);
                 srcIdx++;
                 continue;
             }
@@ -247,6 +249,18 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
         }
     }
     else { // mode == XOR_CODING
+        while (srcIdx + 16 <= srcEnd) {
+            KANZI_MEM_XOR16(&dst[dstIdx], &src[srcIdx], &src[srcIdx - dist]);
+            srcIdx += 16;
+            dstIdx += 16;
+        }
+
+        while (srcIdx + 8 <= srcEnd) {
+            KANZI_MEM_XOR8(&dst[dstIdx], &src[srcIdx], &src[srcIdx - dist]);
+            srcIdx += 8;
+            dstIdx += 8;
+        }
+
         while (srcIdx < srcEnd) {
             dst[dstIdx++] = src[srcIdx] ^ src[srcIdx - dist];
             srcIdx++;
@@ -321,7 +335,9 @@ bool FSDCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     if (mode == DELTA_CODING) {
         while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
             if (src[srcIdx] != ESCAPE_TOKEN) {
-                dst[dstIdx] = kanzi::byte(int(dst[dstIdx - dist]) + ZIGZAG2[int(src[srcIdx])]);
+                const int value = int(src[srcIdx]);
+                const int delta = (value >> 1) ^ -(value & 1);
+                dst[dstIdx] = kanzi::byte(int(dst[dstIdx - dist]) + delta);
                 srcIdx++;
                 dstIdx++;
                 continue;
@@ -338,6 +354,21 @@ bool FSDCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
         }
     }
     else if (mode == XOR_CODING) {
+        if (dist == 16) {
+            while ((srcIdx + 16 <= srcEnd) && (dstIdx + 16 <= dstEnd)) {
+                KANZI_MEM_XOR16(&dst[dstIdx], &src[srcIdx], &dst[dstIdx - 16]);
+                srcIdx += 16;
+                dstIdx += 16;
+            }
+        }
+        else if (dist == 8) {
+            while ((srcIdx + 8 <= srcEnd) && (dstIdx + 8 <= dstEnd)) {
+                KANZI_MEM_XOR8(&dst[dstIdx], &src[srcIdx], &dst[dstIdx - 8]);
+                srcIdx += 8;
+                dstIdx += 8;
+            }
+        }
+
         while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
             dst[dstIdx] = src[srcIdx] ^ dst[dstIdx - dist];
             srcIdx++;

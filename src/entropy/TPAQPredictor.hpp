@@ -19,6 +19,7 @@ limitations under the License.
 
 #include <cstring>
 #include "../Context.hpp"
+#include "../Global.hpp"
 #include "../Predictor.hpp"
 #include "../Memory.hpp"
 #include "AdaptiveProbMap.hpp"
@@ -559,6 +560,33 @@ namespace kanzi
        if ((_matchPos != 0) && (uint(_pos - _matchPos) <= _bufferMask)) {
            int r = _matchLen + 2;
 
+           // Compare four pairs at once when both logical ranges are physically
+           // contiguous. Wrapping ranges use the scalar path below.
+           while (r + 6 <= MAX_LENGTH) {
+               const uint p0 = uint(_pos - r - 7) & _bufferMask;
+               const uint p1 = uint(_matchPos - r - 7) & _bufferMask;
+
+               if ((p0 > _bufferMask - 7) || (p1 > _bufferMask - 7))
+                   break;
+
+               // Read as big endian so the newest byte is in the low bits.
+               // This makes trailingZeros() identify the first mismatch in
+               // the same direction as the original pair-by-pair scan.
+               const uint64 diff = uint64(BigEndian::readLong64(&_buffer[p0])) ^
+                                   uint64(BigEndian::readLong64(&_buffer[p1]));
+
+               if (diff != 0) {
+                   // Round down to a complete pair. The scalar loop below
+                   // locates the exact mismatching pair.
+                   r += (Global::trailingZeros(diff) >> 4) << 1;
+                   break;
+               }
+
+               r += 8;
+           }
+
+           // Locate the first mismatching pair and preserve the original
+           // even-length match semantics.
            while (r <= MAX_LENGTH) {
                if ((_buffer[(_pos - r - 1) & _bufferMask]) != (_buffer[(_matchPos - r - 1) & _bufferMask]))
                    break;
