@@ -116,6 +116,8 @@ namespace kanzi {
         int _bufferSize;
         Context* _pCtx;
 
+        bool inverseV7(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
+
         bool inverseV6(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
         bool inverseV5(SliceArray<byte>& src, SliceArray<byte>& dst, int length);

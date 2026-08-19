@@ -11,6 +11,7 @@ string(REPLACE "." ";" KANZI_ABI_VERSION_PARTS "${KANZI_ABI_VERSION}")
 list(GET KANZI_ABI_VERSION_PARTS 0 KANZI_SOVERSION)
 
 option(KANZI_ENABLE_NATIVE_OPTIMIZATIONS "Enable CPU-specific optimizations such as -march=native" ON)
+option(KANZI_USE_INTRINSICS "Enable platform-specific intrinsic implementations" OFF)
 
 set(KANZI_INSTALL_RELATIVE_RPATH_DEFAULT ON)
 
@@ -48,10 +49,17 @@ endif()
 
 if(MSVC)
     set(COMMON_FLAGS "/W4 /O2 /DNDEBUG")
+    if(KANZI_USE_INTRINSICS)
+        string(APPEND COMMON_FLAGS " /DUSE_INTRINSICS")
+    endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} /GR-")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
 else()
     set(COMMON_FLAGS "-Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic")
+
+    if(KANZI_USE_INTRINSICS)
+        string(APPEND COMMON_FLAGS " -DUSE_INTRINSICS")
+    endif()
 
     if(KANZI_ENABLE_NATIVE_OPTIMIZATIONS)
         string(APPEND COMMON_FLAGS " -march=native")

@@ -23,7 +23,7 @@ limitations under the License.
 #include <cstring>
 #include "types.hpp"
 
-#if !defined(NO_INTRINSICS)
+#if defined(USE_INTRINSICS)
     #if defined(__ARM_NEON) || defined(__aarch64__)
         #include <arm_neon.h>
     #elif defined(__AVX512F__) || defined(__AVX2__) || defined(__SSE2__)
@@ -101,7 +101,7 @@ static KANZI_ALWAYS_INLINE uint64 knz_bswap64(uint64 x) {
 #endif
 }
 
-#if !defined(NO_INTRINSICS) && (defined(__ARM_NEON) || defined(__aarch64__))
+#if defined(USE_INTRINSICS) && (defined(__ARM_NEON) || defined(__aarch64__))
 
     static KANZI_ALWAYS_INLINE bool memEq4(const byte* x, const byte* y)
     {
@@ -134,7 +134,7 @@ static KANZI_ALWAYS_INLINE uint64 knz_bswap64(uint64 x) {
         vst1q_u8(reinterpret_cast<uint8_t*>(dst), vld1q_u8(reinterpret_cast<const uint8_t*>(src)));
     }
 
-#elif !defined(NO_INTRINSICS) && defined(__AVX512F__)
+#elif defined(USE_INTRINSICS) && defined(__AVX512F__)
 
     static KANZI_ALWAYS_INLINE bool memEq4(const byte* x, const byte* y)
     {
@@ -160,11 +160,11 @@ static KANZI_ALWAYS_INLINE uint64 knz_bswap64(uint64 x) {
 
     static KANZI_ALWAYS_INLINE void memCp16(byte* dst, const byte* src)
     {
-        const __m512i value = _mm512_maskz_loadu_epi64(0x03, src);
-        _mm512_mask_storeu_epi64(dst, 0x03, value);
+        const __m128i value = _mm_loadu_si128(reinterpret_cast<const __m128i*>(src));
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dst), value);
     }
 
-#elif !defined(NO_INTRINSICS) && defined(__AVX2__)
+#elif defined(USE_INTRINSICS) && defined(__AVX2__)
 
     static KANZI_ALWAYS_INLINE bool memEq4(const byte* x, const byte* y)
     {
@@ -191,12 +191,11 @@ static KANZI_ALWAYS_INLINE uint64 knz_bswap64(uint64 x) {
 
     static KANZI_ALWAYS_INLINE void memCp16(byte* dst, const byte* src)
     {
-        const __m256i mask = _mm256_set_epi64x(0, 0, -1, -1);
-        const __m256i value = _mm256_maskload_epi64(reinterpret_cast<const long long*>(src), mask);
-        _mm256_maskstore_epi64(reinterpret_cast<long long*>(dst), mask, value);
+        const __m128i value = _mm_loadu_si128(reinterpret_cast<const __m128i*>(src));
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(dst), value);
     }
 
-#elif !defined(NO_INTRINSICS) && defined(__SSE2__)
+#elif defined(USE_INTRINSICS) && defined(__SSE2__)
 
     static KANZI_ALWAYS_INLINE bool memEq4(const byte* x, const byte* y)
     {
@@ -250,21 +249,21 @@ static KANZI_ALWAYS_INLINE uint64 knz_bswap64(uint64 x) {
 
 static KANZI_ALWAYS_INLINE void memXor8(byte* dst, const byte* x, const byte* y)
 {
-#if !defined(NO_INTRINSICS) && (defined(__ARM_NEON) || defined(__aarch64__))
+#if defined(USE_INTRINSICS) && (defined(__ARM_NEON) || defined(__aarch64__))
     vst1_u8(reinterpret_cast<uint8_t*>(dst),
             veor_u8(vld1_u8(reinterpret_cast<const uint8_t*>(x)),
                     vld1_u8(reinterpret_cast<const uint8_t*>(y))));
-#elif !defined(NO_INTRINSICS) && defined(__AVX512F__)
+#elif defined(USE_INTRINSICS) && defined(__AVX512F__)
     const __mmask8 mask = 0x01;
     const __m512i a = _mm512_maskz_loadu_epi64(mask, x);
     const __m512i b = _mm512_maskz_loadu_epi64(mask, y);
     _mm512_mask_storeu_epi64(dst, mask, _mm512_xor_si512(a, b));
-#elif !defined(NO_INTRINSICS) && defined(__AVX2__)
+#elif defined(USE_INTRINSICS) && defined(__AVX2__)
     const __m256i mask = _mm256_set_epi64x(0, 0, 0, -1);
     const __m256i a = _mm256_maskload_epi64(reinterpret_cast<const long long*>(x), mask);
     const __m256i b = _mm256_maskload_epi64(reinterpret_cast<const long long*>(y), mask);
     _mm256_maskstore_epi64(reinterpret_cast<long long*>(dst), mask, _mm256_xor_si256(a, b));
-#elif !defined(NO_INTRINSICS) && defined(__SSE2__)
+#elif defined(USE_INTRINSICS) && defined(__SSE2__)
     const __m128i a = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(x));
     const __m128i b = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(y));
     _mm_storel_epi64(reinterpret_cast<__m128i*>(dst), _mm_xor_si128(a, b));
@@ -280,21 +279,21 @@ static KANZI_ALWAYS_INLINE void memXor8(byte* dst, const byte* x, const byte* y)
 
 static KANZI_ALWAYS_INLINE void memXor16(byte* dst, const byte* x, const byte* y)
 {
-#if !defined(NO_INTRINSICS) && (defined(__ARM_NEON) || defined(__aarch64__))
+#if defined(USE_INTRINSICS) && (defined(__ARM_NEON) || defined(__aarch64__))
     vst1q_u8(reinterpret_cast<uint8_t*>(dst),
              veorq_u8(vld1q_u8(reinterpret_cast<const uint8_t*>(x)),
                       vld1q_u8(reinterpret_cast<const uint8_t*>(y))));
-#elif !defined(NO_INTRINSICS) && defined(__AVX512F__)
+#elif defined(USE_INTRINSICS) && defined(__AVX512F__)
     const __mmask8 mask = 0x03;
     const __m512i a = _mm512_maskz_loadu_epi64(mask, x);
     const __m512i b = _mm512_maskz_loadu_epi64(mask, y);
     _mm512_mask_storeu_epi64(dst, mask, _mm512_xor_si512(a, b));
-#elif !defined(NO_INTRINSICS) && defined(__AVX2__)
+#elif defined(USE_INTRINSICS) && defined(__AVX2__)
     const __m256i mask = _mm256_set_epi64x(0, 0, -1, -1);
     const __m256i a = _mm256_maskload_epi64(reinterpret_cast<const long long*>(x), mask);
     const __m256i b = _mm256_maskload_epi64(reinterpret_cast<const long long*>(y), mask);
     _mm256_maskstore_epi64(reinterpret_cast<long long*>(dst), mask, _mm256_xor_si256(a, b));
-#elif !defined(NO_INTRINSICS) && defined(__SSE2__)
+#elif defined(USE_INTRINSICS) && defined(__SSE2__)
     const __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i*>(x));
     const __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i*>(y));
     _mm_storeu_si128(reinterpret_cast<__m128i*>(dst), _mm_xor_si128(a, b));

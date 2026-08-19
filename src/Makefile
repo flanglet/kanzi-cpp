@@ -14,6 +14,14 @@ ifeq ($(CONCURRENCY_DISABLED), 1)
 	CONCURRENCY_FLAG = -DCONCURRENCY_DISABLED
 endif
 
+ifndef USE_INTRINSICS
+    USE_INTRINSICS = 0
+endif
+
+ifeq ($(USE_INTRINSICS), 1)
+    INTRINSICS_FLAG = -DUSE_INTRINSICS
+endif
+
 ifndef CXX_STD
     CXX_STD = c++17
 endif
@@ -49,6 +57,8 @@ else
 		CXXFLAGS += -c -std=$(CXX_STD) -fstrict-aliasing -Wall -Wextra -Wpedantic -Wdeprecated -O3 -fPIC -DNDEBUG -pedantic -fno-rtti $(CONCURRENCY_FLAG)
 	endif
 endif	
+
+CXXFLAGS += $(INTRINSICS_FLAG)
 
 ifeq ($(DETECTED_OS),FreeBSD)
     STATIC_LINK_FLAGS := -static
