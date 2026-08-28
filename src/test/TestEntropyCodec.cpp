@@ -557,6 +557,51 @@ int testEntropyCodecCorrectness(const string& name)
     return res;
 }
 
+static int testExpGolombUnsignedRoundTrip()
+{
+    cout << "=== Correctness test for unsigned EXPGOLOMB ===" << endl;
+    const uint size = 256;
+    kanzi::byte values[size];
+
+    for (uint i = 0; i < size; i++)
+        values[i] = kanzi::byte(i);
+
+    stringbuf buffer;
+    iostream ios(&buffer);
+    DefaultOutputBitStream obs(ios);
+    ExpGolombEncoder encoder(obs, false);
+
+    if (encoder.encode(values, 0, size) != int(size)) {
+        cout << "Unsigned EXPGOLOMB encoding failed" << endl;
+        return 1;
+    }
+
+    encoder.dispose();
+    obs.close();
+    ios.rdbuf()->pubseekpos(0);
+
+    DefaultInputBitStream ibs(ios);
+    ExpGolombDecoder decoder(ibs, false);
+    kanzi::byte decoded[size];
+
+    if (decoder.decode(decoded, 0, size) != int(size)) {
+        cout << "Unsigned EXPGOLOMB decoding failed" << endl;
+        return 1;
+    }
+
+    decoder.dispose();
+    ibs.close();
+
+    for (uint i = 0; i < size; i++) {
+        if (values[i] != decoded[i]) {
+            cout << "Unsigned EXPGOLOMB mismatch at index " << i << endl;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 int testEntropyCodecSpeed(const string& name)
 {
     // Test speed
@@ -713,6 +758,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
     int res = 0;
 
     try {
+        res |= testExpGolombUnsignedRoundTrip();
         res |= testBinaryEntropyBufferGrowth();
         res |= testDeclaredPayloadConsumption();
         res |= testFPAQZeroDeclaredSize();
