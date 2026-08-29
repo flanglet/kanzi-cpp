@@ -757,20 +757,27 @@ const int ROLZDecoder::LITERAL_FLAG = 1;
 const int ROLZDecoder::PSCALE = 0xFFFF;
 
 
-ROLZDecoder::ROLZDecoder(uint litLogSize, uint mLogSize, kanzi::byte buf[], int& idx)
+ROLZDecoder::ROLZDecoder(uint litLogSize, uint mLogSize, kanzi::byte buf[], int& idx, int end)
     : _idx(idx)
     , _low(0)
     , _high(TOP)
     , _current(0)
     , _buf(buf)
+    , _end(end)
+    , _error(false)
     , _c1(1)
     , _ctx(0)
     , _pIdx(LITERAL_FLAG)
 {
-    for (int i = 0; i < 8; i++)
-        _current = (_current << 8) | (uint64(_buf[_idx + i]) & 0xFF);
+    if ((_idx < 0) || (_idx > _end) || (_end - _idx < 8)) {
+        _error = true;
+    }
+    else {
+        for (int i = 0; i < 8; i++)
+            _current = (_current << 8) | (uint64(_buf[_idx + i]) & 0xFF);
 
-    _idx += 8;
+        _idx += 8;
+    }
     _logSizes[MATCH_FLAG] = mLogSize;
     _logSizes[LITERAL_FLAG] = litLogSize;
     _probs[MATCH_FLAG] = new uint16[256 << mLogSize];
@@ -1017,6 +1024,10 @@ bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
     if (input._array == output._array)
         return false;
 
+    if ((count < 5) || (input._index < 0) || (input._length < 0) ||
+        (input._index > input._length - count))
+        return false;
+
     kanzi::byte* src = &input._array[input._index];
     const int dstEnd = BigEndian::readInt32(&src[0]);
 
@@ -1038,7 +1049,7 @@ bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
     }
 
     const bool cond = _minMatch == MIN_MATCH3;
-    ROLZDecoder rd(9, _logPosChecks, &src[0], srcIdx);
+    ROLZDecoder rd(9, _logPosChecks, &src[0], srcIdx, count);
     memset(&_counters[0], 0, sizeof(_counters));
 
     while (startChunk < dstEnd) {
@@ -1057,6 +1068,11 @@ bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
         for (int j = 0; j < n; j++) {
             int val = rd.decode9Bits();
 
+            if (rd.isValid() == false) {
+                output._index += dstIdx;
+                return false;
+            }
+
             // Sanity check
             if ((val >> 8) == MATCH_FLAG) {
                 output._index += dstIdx;
@@ -1074,6 +1090,11 @@ bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             rd.setContext(LITERAL_CTX, dst[dstIdx - 1]);
             int val = rd.decode9Bits();
 
+            if (rd.isValid() == false) {
+                output._index += dstIdx;
+                return false;
+            }
+
             if ((val >> 8) == LITERAL_FLAG) {
                 dst[dstIdx++] = kanzi::byte(val);
             }
@@ -1090,6 +1111,12 @@ bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
 
                 rd.setContext(MATCH_CTX, dst[dstIdx - 1]);
                 const int32 matchIdx = int32(rd.decodeBits(_logPosChecks));
+
+                if (rd.isValid() == false) {
+                    output._index += dstIdx;
+                    return false;
+                }
+
                 const int32 ref = matches[(_counters[key] - matchIdx) & _maskChecks];
                 dstIdx = ROLZCodec::emitCopy(dst, dstIdx, ref, matchLen + _minMatch);
             }

@@ -936,12 +936,27 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
         if ((cur == TextCodec::ESCAPE_TOKEN1) || (cur == TextCodec::ESCAPE_TOKEN2)) {
             // Word in dictionary
             // Read word index (varint 5 bits + 7 bits + 7 bits)
+            if (srcIdx >= srcEnd) {
+                res = false;
+                break;
+            }
+
             int idx = int(src[srcIdx++]);
 
             if (idx >= 128) {
+                if (srcIdx >= srcEnd) {
+                    res = false;
+                    break;
+                }
+
                 const int idx2 = int(src[srcIdx++]);
 
                 if (idx2 >= 128) {
+                    if (srcIdx >= srcEnd) {
+                        res = false;
+                        break;
+                    }
+
                     idx = ((idx & 0x1F) << 14) | ((idx2 & 0x7F) << 7) | int(src[srcIdx]);
                     srcIdx++;
                 }
@@ -1463,9 +1478,19 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 idx = int(cur & TextCodec::MASK_1F);
 
                 if ((cur & TextCodec::MASK_40) != kanzi::byte(0)) {
+                    if (srcIdx >= srcEnd) {
+                        res = false;
+                        break;
+                    }
+
                     const int idx2 = int(src[srcIdx++]);
 
                     if (idx2 >= 128) {
+                        if (srcIdx >= srcEnd) {
+                            res = false;
+                            break;
+                        }
+
                         idx = (idx << 14) | ((idx2 & 0x7F) << 7) | int(src[srcIdx]);
                         srcIdx++;
                     }
@@ -1484,6 +1509,12 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 if (cur == TextCodec::MASK_80) {
                     // Flip first char case
                     flipMask = TextCodec::MASK_20;
+
+                    if (srcIdx >= srcEnd) {
+                        res = false;
+                        break;
+                    }
+
                     cur = src[srcIdx++];
                 }
 
@@ -1495,10 +1526,20 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
 
                 if (idx >= 64) {
                     if (idx >= 112) {
+                        if (srcEnd - srcIdx < 2) {
+                            res = false;
+                            break;
+                        }
+
                         idx = ((idx & 0x0F) << 16) | (int(src[srcIdx]) << 8) | int(src[srcIdx + 1]);
                         srcIdx += 2;
                     }
                     else {
+                        if (srcIdx >= srcEnd) {
+                            res = false;
+                            break;
+                        }
+
                         idx = ((idx & 0x1F) << 8) | int(src[srcIdx]);
                         srcIdx++;
                     }
@@ -1555,6 +1596,11 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
         }
         else {
             if (cur == TextCodec::ESCAPE_TOKEN1) {
+                if (srcIdx >= srcEnd) {
+                    res = false;
+                    break;
+                }
+
                 dst[dstIdx++] = src[srcIdx++];
             }
             else {
