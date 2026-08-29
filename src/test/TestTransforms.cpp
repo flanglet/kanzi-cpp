@@ -497,6 +497,75 @@ static int testZRLTMalformed()
     return 0;
 }
 
+static int testSRTMalformed()
+{
+    cout << endl
+         << "Malformed SRT" << endl;
+    SRT codec;
+
+    // The header declares 1025 bytes while the data area contains 1024.
+    // This used to make SRT::inverse read one byte past the data area.
+    const int headerSize = 257;
+    const int dataSize = 1024;
+    vector<kanzi::byte> encoded(headerSize + dataSize, kanzi::byte(0));
+    encoded[0] = kanzi::byte(0xFF); // frequency[0] = 1023
+    encoded[1] = kanzi::byte(0x07);
+    encoded[2] = kanzi::byte(2);    // frequency[1] = 2
+    encoded[headerSize + 1] = kanzi::byte(1);
+    encoded[headerSize + dataSize - 1] = kanzi::byte(1);
+
+    vector<kanzi::byte> decoded(dataSize, kanzi::byte(0x7E));
+    SliceArray<kanzi::byte> input(&encoded[0], int(encoded.size()), 0);
+    SliceArray<kanzi::byte> output(&decoded[0], int(decoded.size()), 0);
+
+    if (codec.inverse(input, output, int(encoded.size())) != false) {
+        cout << "Inconsistent frequency table should fail" << endl;
+        return 1;
+    }
+
+    for (size_t i = 0; i < decoded.size(); i++) {
+        if (decoded[i] != kanzi::byte(0x7E)) {
+            cout << "Malformed SRT input wrote output" << endl;
+            return 1;
+        }
+    }
+
+    if ((input._index != 0) || (output._index != 0)) {
+        cout << "Malformed SRT input moved slice indexes" << endl;
+        return 1;
+    }
+
+    cout << "Malformed SRT tests passed" << endl;
+    return 0;
+}
+
+static int testROLZXMalformed()
+{
+    cout << endl
+         << "Malformed ROLZX" << endl;
+    kanzi::byte encoded[13] = {
+        kanzi::byte(0x00), kanzi::byte(0x00), kanzi::byte(0x02), kanzi::byte(0x00),
+        kanzi::byte(0x00), kanzi::byte(0x00), kanzi::byte(0x7F), kanzi::byte(0xB1),
+        kanzi::byte(0x47), kanzi::byte(0x07), kanzi::byte(0x91), kanzi::byte(0x2F),
+        kanzi::byte(0xBF)
+    };
+    kanzi::byte decoded[512];
+    memset(decoded, 0x7E, sizeof(decoded));
+    Context ctx;
+    ctx.putString("transform", "ROLZX");
+    ROLZCodec codec(ctx);
+    SliceArray<kanzi::byte> input(encoded, int(sizeof(encoded)), 0);
+    SliceArray<kanzi::byte> output(decoded, int(sizeof(decoded)), 0);
+
+    if (codec.inverse(input, output, int(sizeof(encoded))) != false) {
+        cout << "Truncated ROLZX stream should fail" << endl;
+        return 1;
+    }
+
+    cout << "Malformed ROLZX tests passed" << endl;
+    return 0;
+}
+
 static int testTransformCapacityValidation()
 {
     cout << endl
@@ -868,7 +937,7 @@ static Transform<kanzi::byte>* getByteTransform(string name, Context& ctx)
     return nullptr;
 }
 
-int testTransformsCorrectness(const string& name)
+int testTransformsCorrectness(const string& name, int& errorIteration)
 {
     srand((uint)time(nullptr));
 
@@ -876,6 +945,7 @@ int testTransformsCorrectness(const string& name)
          << "Correctness for " << name << endl;
     int mod = (name == "ZRLT") ? 5 : 256;
     int res = 0;
+    errorIteration = -1;
 
     for (int ii = 0; ii < 51; ii++) {
         cout << endl
@@ -1035,13 +1105,16 @@ int testTransformsCorrectness(const string& name)
         ctx.putString("transform", name);
         Transform<kanzi::byte>* ff = getByteTransform(name, ctx);
 
-        if (ff == nullptr)
+        if (ff == nullptr) {
+            errorIteration = ii;
             return 1;
+        }
 
         Transform<kanzi::byte>* fi = getByteTransform(name, ctx);
 
         if (fi == nullptr) {
             delete ff;
+            errorIteration = ii;
             return 1;
         }
 
@@ -1090,6 +1163,7 @@ int testTransformsCorrectness(const string& name)
 
             cout << endl
                  << "Encoding error" << endl;
+            errorIteration = ii;
             res = 1;
             goto End;
         }
@@ -1126,6 +1200,7 @@ int testTransformsCorrectness(const string& name)
 
         if (fi->inverse(iba2, iba3, count) == false) {
             cout << "Decoding error" << endl;
+            errorIteration = ii;
             res = 1;
             goto End;
         }
@@ -1152,6 +1227,7 @@ int testTransformsCorrectness(const string& name)
                 cout << "Different (index " << i << ": ";
                 cout << (int(input[i]) & 0xFF) << " - " << (int(reverse[i]) & 0xFF);
                 cout << ")" << endl;
+                errorIteration = ii;
                 res = 1;
                 goto End;
             }
@@ -1200,7 +1276,7 @@ int testTransformsSpeed(const string& name)
     Transform<kanzi::byte>* f = getByteTransform(name, ctx);
 
     if (f == nullptr)
-        return 1;
+        return -1;
 
     SliceArray<kanzi::byte> iba1(input, size, 0);
     SliceArray<kanzi::byte> iba2(output, f->getMaxEncodedLength(size), 0);
@@ -1232,6 +1308,10 @@ int testTransformsSpeed(const string& name)
 
         for (int ii = 0; ii < iter; ii++) {
             Transform<kanzi::byte>* ff = getByteTransform(name, ctx);
+
+            if (ff == nullptr)
+                return -1;
+
             iba1._index = 0;
             iba2._index = 0;
             before = clock();
@@ -1246,7 +1326,7 @@ int testTransformsSpeed(const string& name)
 
                 cout << "Encoding error" << endl;
                 delete ff;
-                continue;
+                return -1;
             }
 
             after = clock();
@@ -1258,6 +1338,10 @@ int testTransformsSpeed(const string& name)
 
         for (int ii = 0; ii < iter; ii++) {
             Transform<kanzi::byte>* fi = getByteTransform(name, ctx);
+
+            if (fi == nullptr)
+                return -1;
+
             iba3._index = 0;
             iba2._index = 0;
             before = clock();
@@ -1265,7 +1349,7 @@ int testTransformsSpeed(const string& name)
             if (fi->inverse(iba2, iba3, count) == false) {
                 cout << "Decoding error" << endl;
                 delete fi;
-                return 1;
+                return -1;
             }
 
             after = clock();
@@ -1286,7 +1370,7 @@ int testTransformsSpeed(const string& name)
         if (idx >= 0) {
             cout << "Failure at index " << idx << " (" << (int)iba1._array[idx];
             cout << "<->" << (int)iba3._array[idx] << ")" << endl;
-            res = 1;
+            res = -1;
         }
 
         // MB = 1000 * 1000, MiB = 1024 * 1024
@@ -1310,6 +1394,8 @@ int TestTransforms_main(int argc, const char* argv[])
 #endif
 {
     int res = 0;
+    int errorIteration = -1;
+    string errCodec;
 
     try {
         res = testTextCodecSelfDescribing();
@@ -1323,6 +1409,16 @@ int TestTransforms_main(int argc, const char* argv[])
             return res;
 
         res = testZRLTMalformed();
+
+        if (res != 0)
+            return res;
+
+        res = testSRTMalformed();
+
+        if (res != 0)
+            return res;
+
+        res = testROLZXMalformed();
 
         if (res != 0)
             return res;
@@ -1385,10 +1481,11 @@ int TestTransforms_main(int argc, const char* argv[])
         }
 
         for (vector<string>::iterator it = codecs.begin(); it != codecs.end(); ++it) {
+            errCodec = *it;
             cout << endl
                  << endl
                  << "Test" << *it << endl;
-            res = testTransformsCorrectness(*it);
+            res = testTransformsCorrectness(*it, errorIteration);
 
             if (res)
                break;
@@ -1408,6 +1505,22 @@ int TestTransforms_main(int argc, const char* argv[])
     }
 
     cout << endl;
-    cout << ((res == 0) ? "Success" : "Failure") << endl;
+
+    if (res == 0) {
+       cout << "Success" << endl;
+    } else {
+       cout << "Failure";
+
+       if (res < 0) {
+           cout << " in benchmarking";
+       } else if (errorIteration >= 0) {
+           cout << " in test " << errorIteration;
+       }
+
+       if (errCodec.empty() == false)
+           cout << " (" << errCodec << ")";
+
+       cout << endl;
+    }
     return res;
 }
