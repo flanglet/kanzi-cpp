@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <limits>
 #include <sstream>
 #include "CompressedInputStream.hpp"
 #include "IOException.hpp"
@@ -24,15 +25,15 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
-
 const int CompressedInputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
-const int CompressedInputStream::BITSTREAM_FORMAT_VERSION = 6;
+const int CompressedInputStream::BITSTREAM_FORMAT_VERSION = 7;
 const int CompressedInputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
 const int CompressedInputStream::EXTRA_BUFFER_SIZE = 512;
 const kanzi::byte CompressedInputStream::COPY_BLOCK_MASK = kanzi::byte(0x80);
 const kanzi::byte CompressedInputStream::TRANSFORMS_MASK = kanzi::byte(0x10);
 const int CompressedInputStream::MIN_BITSTREAM_BLOCK_SIZE = 1024;
 const int CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE = 1024 * 1024 * 1024;
+const int CompressedInputStream::TRANSFORMED_COPY_VERSION = 7;
 const int CompressedInputStream::CANCEL_TASKS_ID = -1;
 const int CompressedInputStream::MAX_CONCURRENCY = 64;
 const int CompressedInputStream::MAX_BLOCK_ID = int((uint(1) << 31) - 1);
@@ -626,17 +627,21 @@ void CompressedInputStream::readHeader()
     const uint32 HASH = 0x1E35A7BD;
     uint32 cksum2 = HASH * seed;
 
-    if (bsVersion >= 6)
-        cksum2 ^= (HASH * uint32(~ckSize));
+    typedef uint32 (*Mix32Function)(uint32, uint32, uint32);
+    const Mix32Function mix32 = (bsVersion >= 7) ? CompressedInputStream::mix32_v7
+        : CompressedInputStream::mix32_v6;
 
-    cksum2 ^= (HASH * uint32(~_entropyType));
-    cksum2 ^= (HASH * uint32((~_transformType) >> 32));
-    cksum2 ^= (HASH * uint32(~_transformType));
-    cksum2 ^= (HASH * uint32(~_blockSize));
+    if (bsVersion >= 6)
+        cksum2 = mix32(cksum2, HASH, ckSize);
+
+    cksum2 = mix32(cksum2, HASH, uint32(_entropyType));
+    cksum2 = mix32(cksum2, HASH, uint32(_transformType >> 32));
+    cksum2 = mix32(cksum2, HASH, uint32(_transformType));
+    cksum2 = mix32(cksum2, HASH, uint32(_blockSize));
 
     if (szMask != 0) {
-        cksum2 ^= (HASH * uint32((~_outputSize) >> 32));
-        cksum2 ^= (HASH * uint32(~_outputSize));
+        cksum2 = mix32(cksum2, HASH, uint32(_outputSize >> 32));
+        cksum2 = mix32(cksum2, HASH, uint32(_outputSize));
     }
 
     cksum2 = (cksum2 >> 23) ^ (cksum2 >> 3);
@@ -780,8 +785,92 @@ void DecodingTask<T>::storeProcessedBlockId(int value)
 #endif
 }
 
+template <class T>
+int DecodingTask<T>::readBlockHeader(InputBitStream* ibs, int bsVersion,
+    uint64 encodedBlockLength, uint64 transformType, ParsedBlockHeader& header, string& msg)
+{
+    if (encodedBlockLength < 8) {
+        msg = "Invalid block size";
+        return Error::ERR_BLOCK_SIZE;
+    }
+
+    const kanzi::byte mode = kanzi::byte(ibs->readBits(8));
+    kanzi::byte skipFlags = kanzi::byte(0);
+    bool hasSkipFlags = false;
+    const bool copyBlock = (mode & CompressedInputStream::COPY_BLOCK_MASK) != kanzi::byte(0);
+
+    if (copyBlock == true) {
+        if ((bsVersion >= CompressedInputStream::TRANSFORMED_COPY_VERSION) &&
+            ((mode & CompressedInputStream::TRANSFORMS_MASK) != kanzi::byte(0))) {
+            header._transformedCopy = true;
+
+            if (TransformFactory<kanzi::byte>::getTransformCount(transformType) > 4)
+                hasSkipFlags = true;
+            else
+                skipFlags = (mode << 4) | kanzi::byte(0x0F);
+        }
+    }
+    else if ((mode & CompressedInputStream::TRANSFORMS_MASK) != kanzi::byte(0)) {
+        hasSkipFlags = true;
+    }
+    else {
+        skipFlags = (mode << 4) | kanzi::byte(0x0F);
+    }
+
+    const int dataSize = 1 + (int(mode >> 5) & 0x03);
+    header._size = uint(1 + dataSize + (hasSkipFlags ? 1 : 0) + (bsVersion >= 7 ? 1 : 0));
+
+    if (encodedBlockLength < uint64(header._size << 3)) {
+        msg = "Invalid block size";
+        return Error::ERR_BLOCK_SIZE;
+    }
+
+    header._bytes[0] = mode;
+    uint idx = 1;
+
+    if (hasSkipFlags == true) {
+        skipFlags = kanzi::byte(ibs->readBits(8));
+        header._bytes[idx++] = skipFlags;
+    }
+
+    uint32 preTransformLength = 0;
+
+    for (int i = 0; i < dataSize; i++) {
+        const kanzi::byte value = kanzi::byte(ibs->readBits(8));
+        header._bytes[idx++] = value;
+        preTransformLength = (preTransformLength << 8) | uint32(uint8(value));
+    }
+
+    header._skipFlags = skipFlags;
+    header._preTransformLength = int(preTransformLength);
+    header._rawCopy = copyBlock && !header._transformedCopy;
+
+    if (bsVersion >= 7) {
+        const uint32 headerChecksum = uint32(ibs->readBits(8));
+        header._bytes[idx] = kanzi::byte(headerChecksum);
+        const uint32 hash = 0x1E35A7BDu;
+        uint32 cksum = hash * 0x01030507u;
+        cksum = CompressedInputStream::mix32_v7(cksum, hash, uint32(uint8(mode)));
+        cksum = CompressedInputStream::mix32_v7(cksum, hash, uint32(uint8(skipFlags)));
+        cksum = CompressedInputStream::mix32_v7(cksum, hash, preTransformLength);
+        cksum = CompressedInputStream::mix32_v7(cksum, hash,
+            uint32(encodedBlockLength >> 32));
+        cksum = CompressedInputStream::mix32_v7(cksum, hash,
+            uint32(encodedBlockLength));
+        cksum = (cksum >> 23) ^ (cksum >> 3);
+
+        if (headerChecksum != (cksum & 0xFFu)) {
+            msg = "Invalid bitstream, block header checksum mismatch";
+            return Error::ERR_CRC_CHECK;
+        }
+    }
+
+    return 0;
+}
+
 // Decode mode + transformed entropy coded data
-// mode | 0b1yy0xxxx => copy block
+// mode | 0b1yy0xxxx => raw copy block
+//      | 0b1yy1xxxx => transformed copy block (version >= 7)
 //      | 0b0yy00000 => size(size(block))-1
 //  case 4 transforms or less
 //      | 0b0001xxxx => transform sequence skip flags (1 means skip)
@@ -792,6 +881,7 @@ T DecodingTask<T>::run()
 {
     int blockId = _ctx.getInt("blockId");
     bool streamPerTask = _ctx.getInt("tasks") > 1;
+    const int bsVersion = _ctx.getInt("bsVersion", CompressedInputStream::BITSTREAM_FORMAT_VERSION);
     uint64 tType = _ctx.getLong("tType");
     short eType = short(_ctx.getInt("eType"));
 
@@ -828,26 +918,69 @@ T DecodingTask<T>::run()
             return T(*_data, blockId, 0, 0, 0, "Success");
         }
 
-        if (read > (uint64(1) << 34)) {
+        const uint64 encodedBlockBytes = (read + 7) >> 3;
+        const uint64 encodedBlockLength = read;
+        const int from = _ctx.getInt("from", 1);
+        const int to = _ctx.getInt("to", CompressedInputStream::MAX_BLOCK_ID);
+        const bool bufferBlock = (streamPerTask == true) || (blockId < from);
+        const int maxTransformSize = int(min(max(_blockLength + _blockLength / 2, 2048u),
+                                         uint(CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE)));
+        ParsedBlockHeader blockHeader;
+        bool blockHeaderParsed = false;
+
+        if ((bsVersion >= 7) && (bufferBlock == true)) {
+            string msg;
+            const int error = readBlockHeader(_ibs, bsVersion, encodedBlockLength,
+                tType, blockHeader, msg);
+
+            if (error != 0) {
+                storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
+                return T(*_data, blockId, 0, 0, error, msg);
+            }
+
+            blockHeaderParsed = true;
+
+            if ((blockHeader._preTransformLength <= 0) ||
+                (blockHeader._preTransformLength > maxTransformSize)) {
+                storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
+                stringstream ss;
+                ss << "Invalid compressed block length: " << blockHeader._preTransformLength;
+                return T(*_data, blockId, 0, 0, Error::ERR_READ_FILE, ss.str());
+            }
+
+            const uint64 checksumSize = (_hasher64 != nullptr) ? 8 :
+                ((_hasher32 != nullptr) ? 4 : 0);
+            const uint64 maxEncodedBlockBytes = uint64(blockHeader._preTransformLength) +
+                uint64(blockHeader._size) + checksumSize;
+
+            if (encodedBlockBytes > maxEncodedBlockBytes) {
+                storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
+                return T(*_data, blockId, 0, 0, Error::ERR_BLOCK_SIZE, "Invalid block size");
+            }
+
+            read -= uint64(blockHeader._size << 3);
+        }
+        else if (encodedBlockBytes > uint64(numeric_limits<int>::max())) {
             storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
             return T(*_data, blockId, 0, 0, Error::ERR_BLOCK_SIZE, "Invalid block size");
         }
 
-        const int from = _ctx.getInt("from", 1);
-        const int to = _ctx.getInt("to", CompressedInputStream::MAX_BLOCK_ID);
-        const uint r = uint((read + 7) >> 3);
+        const uint r = uint(encodedBlockBytes);
 
         // Read from the shared bitstream if
         // - there is one that one task (each with their own local bitstream)
         // - the block is going to be skipped (bits must be consumed)
-        if ((streamPerTask == true) || (blockId < from)) {
+        if (bufferBlock == true) {
             if (_data->_length < int(max(_blockLength, r))) {
                 _data->_length = int(max(_blockLength, r));
                 delete[] _data->_array;
                 _data->_array = new kanzi::byte[_data->_length];
             }
 
-            for (int n = 0; read > 0; ) {
+            for (uint i = 0; i < blockHeader._size; i++)
+                _data->_array[i] = blockHeader._bytes[i];
+
+            for (int n = int(blockHeader._size); read > 0; ) {
                 const uint chkSize = uint(min(read, uint64(1) << 30));
                 _ibs->readBits(&_data->_array[n], chkSize);
                 n += ((chkSize + 7) >> 3);
@@ -871,27 +1004,35 @@ T DecodingTask<T>::run()
         istream ios(&buf);
         ibs = (streamPerTask == true) ? new DefaultInputBitStream(ios) : _ibs;
 
-        // Extract block header from bitstream
-        kanzi::byte mode = kanzi::byte(ibs->readBits(8));
-        kanzi::byte skipFlags = kanzi::byte(0);
+        if (blockHeaderParsed == false) {
+            string msg;
+            const int error = readBlockHeader(ibs, bsVersion, encodedBlockLength,
+                tType, blockHeader, msg);
 
-        if ((mode & CompressedInputStream::COPY_BLOCK_MASK) != kanzi::byte(0)) {
+            if (error != 0) {
+                storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
+
+                if (streamPerTask == true)
+                    delete ibs;
+
+                return T(*_data, blockId, 0, checksum1, error, msg);
+            }
+        }
+        else {
+            ibs->readBits(blockHeader._size << 3);
+        }
+
+        const kanzi::byte skipFlags = blockHeader._skipFlags;
+        const bool transformedCopy = blockHeader._transformedCopy;
+        const int preTransformLength = blockHeader._preTransformLength;
+
+        if (blockHeader._rawCopy == true) {
             tType = TransformFactory<kanzi::byte>::NONE_TYPE;
             eType = EntropyDecoderFactory::NONE_TYPE;
         }
-        else {
-            if ((mode & CompressedInputStream::TRANSFORMS_MASK) != kanzi::byte(0))
-                skipFlags = kanzi::byte(ibs->readBits(8));
-            else
-                skipFlags = (mode << 4) | kanzi::byte(0x0F);
+        else if (transformedCopy == true) {
+            eType = EntropyDecoderFactory::NONE_TYPE;
         }
-
-        const int dataSize = 1 + (int(mode >> 5) & 0x03);
-        const int length = dataSize << 3;
-        const uint64 mask = (uint64(1) << length) - 1;
-        const int preTransformLength = int(ibs->readBits(length) & mask);
-        const int maxTransformSize = int(min(max(_blockLength + _blockLength / 2, 2048u),
-                                         uint(CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE)));
 
         if ((preTransformLength <= 0) || (preTransformLength > maxTransformSize)) {
             // Error => cancel concurrent decoding tasks
@@ -903,6 +1044,23 @@ T DecodingTask<T>::run()
                 delete ibs;
 
             return T(*_data, blockId, 0, checksum1, Error::ERR_READ_FILE, ss.str());
+        }
+
+        if ((bsVersion >= 7) && (blockHeaderParsed == false)) {
+            const uint64 checksumSize = (_hasher64 != nullptr) ? 8 :
+                ((_hasher32 != nullptr) ? 4 : 0);
+            const uint64 maxEncodedBlockBytes = uint64(preTransformLength) +
+                uint64(blockHeader._size) + checksumSize;
+
+            if (encodedBlockBytes > maxEncodedBlockBytes) {
+                storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
+
+                if (streamPerTask == true)
+                    delete ibs;
+
+                return T(*_data, blockId, 0, checksum1, Error::ERR_BLOCK_SIZE,
+                    "Invalid block size");
+            }
         }
 
         Event::HashType hashType = Event::NO_HASH;
@@ -945,30 +1103,58 @@ T DecodingTask<T>::run()
         const int savedIdx = _data->_index;
         _ctx.putInt("size", preTransformLength);
 
-        // Each block is decoded separately
-        // Rebuild the entropy decoder to reset block statistics
-        ed = EntropyDecoderFactory::newDecoder(*ibs, _ctx, eType);
+        if (transformedCopy == true) {
+            // The encoder kept the transformed bytes verbatim because entropy
+            // coding expanded the block. Read the payload directly into the
+            // post-entropy buffer, then continue with the inverse transform.
+            for (uint n = 0, remaining = uint(preTransformLength); remaining > 0; ) {
+                const uint chunk = min(remaining, uint(1) << 27);
 
-        // Block entropy decode
-        if (ed->decode(_buffer->_array, 0, preTransformLength) != preTransformLength) {
-            // Error => cancel concurrent decoding tasks
-            storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
-            delete ed;
+                if (ibs->readBits(&_buffer->_array[n], 8 * chunk) != 8 * chunk) {
+                    storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
 
-            if (streamPerTask == true)
+                    if (streamPerTask == true)
+                        delete ibs;
+
+                    return T(*_data, blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
+                        "Entropy decoding failed");
+                }
+
+                n += chunk;
+                remaining -= chunk;
+            }
+
+            if (streamPerTask == true) {
                 delete ibs;
-
-            return T(*_data, blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
-                "Entropy decoding failed");
+                ibs = nullptr;
+            }
         }
+        else {
+            // Each block is decoded separately
+            // Rebuild the entropy decoder to reset block statistics
+            ed = EntropyDecoderFactory::newDecoder(*ibs, _ctx, eType);
 
-        if (streamPerTask == true) {
-            delete ibs;
-            ibs = nullptr;
+            // Block entropy decode
+            if (ed->decode(_buffer->_array, 0, preTransformLength) != preTransformLength) {
+                // Error => cancel concurrent decoding tasks
+                storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
+                delete ed;
+
+                if (streamPerTask == true)
+                    delete ibs;
+
+                return T(*_data, blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
+                    "Entropy decoding failed");
+            }
+
+            if (streamPerTask == true) {
+                delete ibs;
+                ibs = nullptr;
+            }
+
+            delete ed;
+            ed = nullptr;
         }
-
-        delete ed;
-        ed = nullptr;
 
         if (_listeners.size() > 0) {
             // Notify after entropy

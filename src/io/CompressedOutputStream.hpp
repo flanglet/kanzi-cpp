@@ -189,6 +189,12 @@ namespace kanzi {
        static const int CANCEL_TASKS_ID;
        static const int MAX_CONCURRENCY;
 
+       static inline uint32 mix32(uint32 checksum, uint32 hash, uint32 value) {
+           checksum ^= hash * uint32(~value);
+           checksum = (checksum << 13) | (checksum >> 19);
+           return checksum * 5 + 0x52DCE729;
+       }
+
        int _blockSize;
        int _bufferId; // index of current write buffer
        int _jobs;

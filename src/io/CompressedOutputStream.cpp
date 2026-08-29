@@ -29,7 +29,7 @@ using namespace kanzi;
 using namespace std;
 
 const int CompressedOutputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
-const int CompressedOutputStream::BITSTREAM_FORMAT_VERSION = 6;
+const int CompressedOutputStream::BITSTREAM_FORMAT_VERSION = 7;
 const int CompressedOutputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
 const kanzi::byte CompressedOutputStream::COPY_BLOCK_MASK = kanzi::byte(0x80);
 const kanzi::byte CompressedOutputStream::TRANSFORMS_MASK = kanzi::byte(0x10);
@@ -324,15 +324,15 @@ void CompressedOutputStream::writeHeader()
     uint32 seed = 0x01030507 * BITSTREAM_FORMAT_VERSION; // no const to avoid VS2008 warning
     const uint32 HASH = 0x1E35A7BD;
     uint32 cksum = HASH * seed;
-    cksum ^= (HASH * uint32(~ckSize));
-    cksum ^= (HASH * uint32(~_entropyType));
-    cksum ^= (HASH * uint32((~_transformType) >> 32));
-    cksum ^= (HASH * uint32(~_transformType));
-    cksum ^= (HASH * uint32(~_blockSize));
+    cksum = CompressedOutputStream::mix32(cksum, HASH, ckSize);
+    cksum = CompressedOutputStream::mix32(cksum, HASH, uint32(_entropyType));
+    cksum = CompressedOutputStream::mix32(cksum, HASH, uint32(_transformType >> 32));
+    cksum = CompressedOutputStream::mix32(cksum, HASH, uint32(_transformType));
+    cksum = CompressedOutputStream::mix32(cksum, HASH, uint32(_blockSize));
 
     if (szMask != 0) {
-        cksum ^= (HASH * uint32((~_inputSize) >> 32));
-        cksum ^= (HASH * uint32(~_inputSize));
+        cksum = CompressedOutputStream::mix32(cksum, HASH, uint32(_inputSize >> 32));
+        cksum = CompressedOutputStream::mix32(cksum, HASH, uint32(_inputSize));
     }
 
     cksum = (cksum >> 23) ^ (cksum >> 3);
@@ -642,7 +642,8 @@ void EncodingTask<T>::fetchAddProcessedBlockId()
 }
 
 // Encode mode + transformed entropy coded data
-// mode | 0b1yy0xxxx => copy block
+// mode | 0b1yy0xxxx => raw copy block
+//      | 0b1yy1xxxx => transformed copy block (version >= 7)
 //      | 0b0yy00000 => size(size(block))-1
 //  case 4 transforms or less
 //      | 0b0001xxxx => transform sequence skip flags (1 means skip)
@@ -788,8 +789,16 @@ T EncodingTask<T>::run()
         DefaultOutputBitStream obs(os);
 
         // Write block 'header' (mode + compressed length)
+        kanzi::byte headerSkipFlags = skipFlags;
+
         if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != kanzi::byte(0)) || (nbTransforms <= 4)) {
             mode |= kanzi::byte(skipFlags >> 4);
+
+            if ((mode & CompressedOutputStream::COPY_BLOCK_MASK) != kanzi::byte(0))
+                headerSkipFlags = kanzi::byte(0);
+            else
+                headerSkipFlags = (mode << 4) | kanzi::byte(0x0F);
+
             obs.writeBits(uint64(mode), 8);
         }
         else {
@@ -799,6 +808,15 @@ T EncodingTask<T>::run()
         }
 
         obs.writeBits(postTransformLength, 8 * dataSize);
+        // Reserve the block header checksum byte. The encoded block length is
+        // only known after entropy coding, so patch this byte once the complete
+        // temporary block has been written.
+        uint headerChecksumIndex = uint(1 + dataSize);
+
+        if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) == kanzi::byte(0)) && (nbTransforms > 4))
+            headerChecksumIndex++;
+
+        obs.writeBits(uint64(0), 8);
 
         // Write checksum
         if (_hasher32 != nullptr)
@@ -829,7 +847,74 @@ T EncodingTask<T>::run()
         delete ee;
         ee = nullptr;
         obs.close();
-        const uint64 written = obs.written();
+        uint64 written = obs.written();
+
+        // If not a copy block, check if entropy expanded the transformed block
+        if ((mode & CompressedOutputStream::COPY_BLOCK_MASK) == kanzi::byte(0)) {
+            const uint64 rawPayloadBytes = uint64(postTransformLength);
+            const uint64 entropyPayloadBytes = (written + 7) >> 3;
+
+            // If entropy coding expanded the block, rebuild the temporary payload as
+            // a "transformed copy" block. This keeps the transform gains while
+            // bypassing the entropy coder for pathological cases.
+            if (rawPayloadBytes < entropyPayloadBytes) {
+                _data->_index = 0;
+                growable_ofixedbuf copyBuf(_data);
+                ostream copyOs(&copyBuf);
+                DefaultOutputBitStream copyObs(copyOs);
+                kanzi::byte copyMode = kanzi::byte(mode | CompressedOutputStream::COPY_BLOCK_MASK |
+                    CompressedOutputStream::TRANSFORMS_MASK);
+
+                copyObs.writeBits(uint64(copyMode), 8);
+
+                if (nbTransforms > 4)
+                    copyObs.writeBits(uint64(skipFlags), 8);
+
+                copyObs.writeBits(postTransformLength, 8 * dataSize);
+                headerChecksumIndex = uint(1 + dataSize);
+
+                if (nbTransforms > 4) {
+                    headerChecksumIndex++;
+                    headerSkipFlags = skipFlags;
+                }
+                else {
+                    headerSkipFlags = (copyMode << 4) | kanzi::byte(0x0F);
+                }
+
+                copyObs.writeBits(uint64(0), 8);
+
+                if (_hasher32 != nullptr)
+                    copyObs.writeBits(checksum, 32);
+                else if (_hasher64 != nullptr)
+                    copyObs.writeBits(checksum, 64);
+
+                // Reuse the post-transform bytes already present in _buffer:
+                // no entropy coding, just emit the transformed payload verbatim.
+                for (uint n = 0, remaining = uint(postTransformLength); remaining > 0; ) {
+                    const uint chunk = min(remaining, uint(1) << 27);
+                    copyObs.writeBits(&_buffer->_array[n], 8 * chunk);
+                    n += chunk;
+                    remaining -= chunk;
+                }
+
+                copyObs.close();
+                written = copyObs.written();
+                mode = copyMode;
+            }
+        }
+
+        // Protect the block header and its outer encoded bit length independently
+        // from the optional checksum of the decoded payload.
+        const uint32 hash = 0x1E35A7BDu;
+        uint32 cksum = hash * 0x01030507u;
+        cksum = CompressedOutputStream::mix32(cksum, hash, uint32(mode));
+        cksum = CompressedOutputStream::mix32(cksum, hash, uint32(uint8_t(headerSkipFlags)));
+        cksum = CompressedOutputStream::mix32(cksum, hash, uint32(postTransformLength));
+        cksum = CompressedOutputStream::mix32(cksum, hash, uint32(written >> 32));
+        cksum = CompressedOutputStream::mix32(cksum, hash, uint32(written));
+        cksum = (cksum >> 23) ^ (cksum >> 3);
+        _data->_array[headerChecksumIndex] = kanzi::byte(cksum & 0xFFu);
+
         const uint lw = (written < 8) ? 3 : uint(Global::log2(uint32(written >> 3)) + 4);
 
 #ifdef CONCURRENCY_ENABLED

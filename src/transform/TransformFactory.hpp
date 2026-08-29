@@ -79,6 +79,8 @@ namespace kanzi {
 
         static std::string getName(uint64 functionType);
 
+        static int getTransformCount(uint64 functionType);
+
         static TransformSequence<T>* newTransform(Context& ctx, uint64 functionType);
 
     private:
@@ -202,6 +204,21 @@ namespace kanzi {
         std::stringstream ss;
         ss << "Unknown transform type: '" << name << "'";
         throw std::invalid_argument(ss.str());
+    }
+
+    template <class T>
+    int TransformFactory<T>::getTransformCount(uint64 functionType)
+    {
+        int count = 1;
+
+        for (int i = 1; i < 8; i++) {
+            if (((functionType >> (MAX_SHIFT - ONE_SHIFT * i)) & MASK) == NONE_TYPE)
+                break;
+
+            count++;
+        }
+
+        return count;
     }
 
     template <class T>
