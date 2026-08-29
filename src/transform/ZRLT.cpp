@@ -62,14 +62,12 @@ bool ZRLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
 
             // Encode length
             runLength++;
-            const uint needed = uint(Global::_log2(uint32(runLength)));
+            uint log = uint(Global::_log2(uint32(runLength)));
 
-            if (needed > dstEnd - dstIdx) {
+            if (log > dstEnd - dstIdx) {
                 res = false;
                 break;
             }
-
-            int log = int(needed);
 
             // Write every bit as a kanzi::byte except the most significant one
             while (log >= 4) {

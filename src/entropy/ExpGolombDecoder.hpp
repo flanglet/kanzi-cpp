@@ -17,7 +17,6 @@ limitations under the License.
 #ifndef knz_ExpGolombDecoder
 #define knz_ExpGolombDecoder
 
-#include <algorithm>
 #include "../EntropyDecoder.hpp"
 
 namespace kanzi
@@ -62,7 +61,7 @@ namespace kanzi
 
        // Clamp. Do not attempt to detect a corrupted bitstream.
        // Unsigned byte 255 requires an 8-bit suffix; signed values require at most 7.
-       log2 = std::min(log2, 8u - uint(_signed));
+       log2 = log2 <= 8u - uint(_signed) ? log2 : 8u - uint(_signed);
        const uint base = (1u << log2) - 1;
 
        if (_signed == true) {
