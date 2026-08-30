@@ -560,7 +560,7 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             int mLen = token & 0x07;
 
             if (mLen == 7) {
-                if (lenBuf._index >= mLenLen) {
+                if (KANZI_UNLIKELY(lenBuf._index >= mLenLen)) {
                     success = false;
                     goto End;
                 }
@@ -575,7 +575,7 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             int litLen = token >> 3;
 
             if (token >= 0xF8) {
-                if (lenBuf._index >= mLenLen) {
+                if (KANZI_UNLIKELY(lenBuf._index >= mLenLen)) {
                     success = false;
                     goto End;
                 }
@@ -584,7 +584,7 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             }
 
             if (litLen > 0) {
-                if (dstIdx + litLen > litBufSize) {
+                if (KANZI_UNLIKELY(dstIdx + litLen > litBufSize)) {
                     success = false;
                     goto End;
                 }
@@ -616,9 +616,11 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
 
                 litBuf._index += litLen;
                 dstIdx += litLen;
-                prefetchRead(&litBuf._array[litBuf._index]);
 
-                if (dstIdx >= sizeChunk) {
+                if (litLen >= 64)
+                    prefetchRead(&litBuf._array[litBuf._index]);
+
+                if (KANZI_UNLIKELY(dstIdx >= sizeChunk)) {
                     // Last chunk literals not followed by match
                     if (dstIdx == sizeChunk)
                         break;
@@ -630,7 +632,7 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             }
 
             // Sanity check
-            if (output._index + dstIdx + mLen > dstEnd) {
+            if (KANZI_UNLIKELY(output._index + dstIdx + mLen > dstEnd)) {
                 success = false;
                 goto End;
             }
