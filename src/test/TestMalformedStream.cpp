@@ -183,7 +183,7 @@ static int expectBlockFailure(const string& name, const string& data,
 
 int main()
 {
-    const int version = 6;
+    const int version = 7;
     const int type = 0x4B414E5A;
     const int blockSize = 1024;
     const short entropy = EntropyDecoderFactory::ANS0_TYPE;

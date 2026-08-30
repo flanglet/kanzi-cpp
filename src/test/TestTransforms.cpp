@@ -37,7 +37,7 @@ limitations under the License.
 using namespace std;
 using namespace kanzi;
 
-static const int BS_VERSION = 6;
+static const int BS_VERSION = 7;
 
 static void writeInt16LE(kanzi::byte buf[], int value)
 {
