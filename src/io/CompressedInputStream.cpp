@@ -632,7 +632,7 @@ void CompressedInputStream::readHeader()
         : CompressedInputStream::mix32_v6;
 
     if (bsVersion >= 6)
-        cksum2 = mix32(cksum2, HASH, ckSize);
+        cksum2 = mix32(cksum2, HASH, uint32(ckSize));
 
     cksum2 = mix32(cksum2, HASH, uint32(_entropyType));
     cksum2 = mix32(cksum2, HASH, uint32(_transformType >> 32));
