@@ -142,6 +142,9 @@ bool BWTBlockCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
 
        for (int i = 0; i < chunks; i++) {
            // Read block header (mode + primary index)
+           if (input._index >= input._length)
+               return false;
+
            const int blockMode = int(input._array[input._index++]);
            const int pIndexSizeBytes = 1 + ((blockMode >> 6) & 0x03);
 
