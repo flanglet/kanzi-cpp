@@ -52,6 +52,12 @@ const kanzi::byte TextCodec::MASK_TEXT_CODEC = kanzi::byte(0x10);
 const kanzi::byte TextCodec::MASK_DT = kanzi::byte(0x0F);
 const int TextCodec::MASK_LENGTH = 0x0007FFFF; // 19-bit dictionary index
 
+// V7 ranked dictionary indexes. The one-byte form has 63 usable values
+// because 0x80 is reserved for the case-flip marker. The two-byte form has
+// 8192 values, so the three-byte form starts at index 63 + 8192.
+static const int V7_INDEX_BASE2 = 63;
+static const int V7_INDEX_BASE3 = 8255;
+
 
 
 // 1024 of the most common English words with at least 2 chars.
@@ -551,6 +557,7 @@ TextCodec1::TextCodec1(Context& ctx)
 void TextCodec1::reset(int count)
 {
     // Select an appropriate initial dictionary size
+    const int allocatedSize = _dictSize;
     const int log = count < 1024 ? 13 : max(min(Global::log2(uint32(count / 128)), 18), 13);
     _dictSize = max(TextCodec::STATIC_DICT_WORDS + 2, 1 << log);
     const int mapSize = 1 << _logHashSize;
@@ -561,8 +568,10 @@ void TextCodec1::reset(int count)
     for (int i = 0; i < mapSize; i++)
         _dictMap[i] = nullptr;
 
-    if (_dictList == nullptr) {
-        _dictList = new DictEntry[_dictSize];
+    if ((_dictList == nullptr) || (allocatedSize < _dictSize)) {
+        DictEntry* newDict = new DictEntry[_dictSize];
+        delete[] _dictList;
+        _dictList = newDict;
 #if __cplusplus >= 201103L
         memcpy(&_dictList[0], &TextCodec::STATIC_DICTIONARY[0], sizeof(TextCodec::STATIC_DICTIONARY));
 #else
@@ -964,7 +973,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                     idx = ((idx & 0x7F) << 7) | idx2;
                 }
 
-                if (idx >= _dictSize) {
+                if (KANZI_UNLIKELY(idx >= _dictSize)) {
                     res = false;
                     break;
                 }
@@ -983,7 +992,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 delimAnchor = srcIdx;
             }
             else {
-                if (length == 0) {
+                if (KANZI_UNLIKELY(length == 0)) {
                    res = false;
                    break;
                 }
@@ -994,7 +1003,7 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
             }
 
             // Sanity check
-            if (dstIdx + length > dstEnd) {
+            if (KANZI_UNLIKELY(dstIdx + length > dstEnd)) {
                 res = false;
                 break;
             }
@@ -1060,6 +1069,7 @@ TextCodec2::TextCodec2(Context& ctx)
 void TextCodec2::reset(int count)
 {
     // Select an appropriate initial dictionary size
+    const int allocatedSize = _dictSize;
     const int log = count < 1024 ? 13 : max(min(Global::log2(uint32(count / 128)), 18), 13);
     _dictSize = max(TextCodec::STATIC_DICT_WORDS, 1 << log);
     const int mapSize = 1 << _logHashSize;
@@ -1070,8 +1080,10 @@ void TextCodec2::reset(int count)
     for (int i = 0; i < mapSize; i++)
         _dictMap[i] = nullptr;
 
-    if (_dictList == nullptr) {
-        _dictList = new DictEntry[_dictSize];
+    if ((_dictList == nullptr) || (allocatedSize < _dictSize)) {
+        DictEntry* newDict = new DictEntry[_dictSize];
+        delete[] _dictList;
+        _dictList = newDict;
 #if __cplusplus >= 201103L
         memcpy(&_dictList[0], &TextCodec::STATIC_DICTIONARY[0], sizeof(TextCodec::STATIC_DICTIONARY));
 #else
@@ -1364,26 +1376,25 @@ int TextCodec2::emitSymbols(const byte src[], byte dst[], const int srcEnd, cons
 int TextCodec2::emitWordIndex(kanzi::byte dst[], int wIdx)
 {
     // 0x80 is reserved to first symbol case flip
-    wIdx++;
+    if (wIdx < V7_INDEX_BASE2) {
+        dst[0] = kanzi::byte(0x80 | (wIdx + 1));
+        return 1;
+    }
 
-    if (wIdx >= TextCodec::THRESHOLD3) {
-        if (wIdx >= TextCodec::THRESHOLD4) {
-            // 3 kanzi::byte index (1111xxxx xxxxxxxx xxxxxxxx)
-            dst[0] = kanzi::byte(0xF0 | (wIdx >> 16));
-            dst[1] = kanzi::byte(wIdx >> 8);
-            dst[2] = kanzi::byte(wIdx);
-            return 3;
-        }
-
-        // 2 kanzi::byte index (110xxxxx xxxxxxxx)
+    if (wIdx < V7_INDEX_BASE3) {
+        // Encode the rank relative to the one-byte range.
+        wIdx -= V7_INDEX_BASE2;
         dst[0] = kanzi::byte(0xC0 | (wIdx >> 8));
         dst[1] = kanzi::byte(wIdx);
         return 2;
     }
 
-    // 1 byte index (10xxxxxx) with 0x80 excluded
-    dst[0] = kanzi::byte(0x80 | wIdx);
-    return 1;
+    // Encode the rank relative to the one- and two-byte ranges.
+    wIdx -= V7_INDEX_BASE3;
+    dst[0] = kanzi::byte(0xF0 | (wIdx >> 16));
+    dst[1] = kanzi::byte(wIdx >> 8);
+    dst[2] = kanzi::byte(wIdx);
+    return 3;
 }
 
 bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
@@ -1478,7 +1489,7 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 idx = int(cur & TextCodec::MASK_1F);
 
                 if ((cur & TextCodec::MASK_40) != kanzi::byte(0)) {
-                    if (srcIdx >= srcEnd) {
+                    if (KANZI_UNLIKELY(srcIdx >= srcEnd)) {
                         res = false;
                         break;
                     }
@@ -1486,7 +1497,7 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                     const int idx2 = int(src[srcIdx++]);
 
                     if (idx2 >= 128) {
-                        if (srcIdx >= srcEnd) {
+                        if (KANZI_UNLIKELY(srcIdx >= srcEnd)) {
                             res = false;
                             break;
                         }
@@ -1499,18 +1510,20 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                     }
 
                     // Sanity check
-                    if (idx >= _dictSize) {
+                    if (KANZI_UNLIKELY(idx >= _dictSize)) {
                         res = false;
                         break;
                     }
                 }
             }
             else {
+                const bool rankedEncoding = _bsVersion >= 7;
+
                 if (cur == TextCodec::MASK_80) {
                     // Flip first char case
                     flipMask = TextCodec::MASK_20;
 
-                    if (srcIdx >= srcEnd) {
+                    if (KANZI_UNLIKELY(srcIdx >= srcEnd)) {
                         res = false;
                         break;
                     }
@@ -1523,10 +1536,13 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 // 110xxxxx => 2 bytes
                 // 1111xxxx => 3 bytes
                 idx = int(cur) & 0x7F;
+                const bool oneByte = idx < 64;
 
                 if (idx >= 64) {
-                    if (idx >= 112) {
-                        if (srcEnd - srcIdx < 2) {
+                    const bool threeBytes = idx >= 112;
+
+                    if (threeBytes) {
+                        if (KANZI_UNLIKELY(srcEnd - srcIdx < 2)) {
                             res = false;
                             break;
                         }
@@ -1535,7 +1551,7 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                         srcIdx += 2;
                     }
                     else {
-                        if (srcIdx >= srcEnd) {
+                        if (KANZI_UNLIKELY(srcIdx >= srcEnd)) {
                             res = false;
                             break;
                         }
@@ -1544,19 +1560,30 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                         srcIdx++;
                     }
 
-                    // Sanity check before adjusting index
-                    if (idx > _dictSize) {
+                    if (rankedEncoding == true) {
+                        // Add the rank of the shorter forms. This prevents
+                        // zero or negative dictionary indexes for malformed
+                        // multi-byte encodings such as C0 00 or F0 00 00.
+                        idx += threeBytes ? V7_INDEX_BASE3 : V7_INDEX_BASE2;
+
+                        if (KANZI_UNLIKELY(idx >= _dictSize)) {
+                            res = false;
+                            break;
+                        }
+                    }
+                    else if (KANZI_UNLIKELY(idx > _dictSize)) {
+                        // V6 uses the original one-based dictionary index.
                         res = false;
                         break;
                     }
                 }
-                else if (idx == 0) {
+
+                if (KANZI_UNLIKELY(idx == 0)) {
                     res = false;
                     break;
                 }
 
-                // Adjust index
-                idx--;
+                idx -= rankedEncoding ? int(oneByte) : 1;
             }
 
             const int length = (_dictList[idx]._data >> 24) & 0xFF;
@@ -1572,7 +1599,7 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 delimAnchor = srcIdx;
             }
             else {
-                if (length == 0) {
+                if (KANZI_UNLIKELY(length == 0)) {
                    res = false;
                    break;
                 }
@@ -1583,7 +1610,7 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             }
 
             // Sanity check
-            if (dstIdx + length > dstEnd) {
+            if (KANZI_UNLIKELY(dstIdx + length > dstEnd)) {
                 res = false;
                 break;
             }
@@ -1596,7 +1623,7 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
         }
         else {
             if (cur == TextCodec::ESCAPE_TOKEN1) {
-                if (srcIdx >= srcEnd) {
+                if (KANZI_UNLIKELY(srcIdx >= srcEnd)) {
                     res = false;
                     break;
                 }
@@ -1607,7 +1634,7 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 if ((isCRLF == true) && (cur == TextCodec::LF)) {
                     dst[dstIdx++] = TextCodec::CR;
 
-                    if (dstIdx >= dstEnd) {
+                    if (KANZI_UNLIKELY(dstIdx >= dstEnd)) {
                         res = false;
                         break;
                     }
