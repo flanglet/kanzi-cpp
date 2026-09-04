@@ -1105,6 +1105,10 @@ bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 const int matchLen = val & 0xFF;
                 prefetchRead(&_counters[key]);
 
+                // CompressedInputStream provides trailing output padding.
+                // The +3 bound is the regular minimum match length; DNA mode
+                // adds four more bytes, and emitCopy() may write up to seven
+                // bytes past the logical match end.
                 // Sanity check
                 if (dstIdx + matchLen + 3 > dstEnd) {
                     output._index += dstIdx;
