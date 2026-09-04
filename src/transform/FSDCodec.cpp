@@ -114,7 +114,7 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     if (input._array == output._array)
         return false;
 
-    if (output._length < getMaxEncodedLength(count))
+    if (output._length - output._index < getMaxEncodedLength(count))
         return false;
 
     // If too small, skip
