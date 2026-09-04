@@ -526,7 +526,7 @@ T InverseBiPSIv2Task<T>::run()
     kanzi::byte* d6 = &_dst[6 * _ckSize];
     kanzi::byte* d7 = &_dst[7 * _ckSize];
 
-    if (_start + 7 * _ckSize <= _total) {
+    if ((_start + 8 * _ckSize <= _total) && ((_ckSize & 1) == 0)) {
         for (; c + 8 <= _lastChunk; c += 8) {
             const int end = _start + _ckSize;
             uint p0 = _primaryIndexes[c + 0];
