@@ -1158,7 +1158,7 @@ int testTransformsCorrectness(const string& name, int& errorIteration)
         }
 
         const int dstSize = ff->getMaxEncodedLength(size);
-        const int reverseSize = size + (((name == "LZ") || (name == "LZX")) ? 16 : 0);
+        const int reverseSize = size + 16;
         kanzi::byte* input = new kanzi::byte[size];
         kanzi::byte* output = new kanzi::byte[dstSize];
         kanzi::byte* reverse = new kanzi::byte[reverseSize];
@@ -1321,7 +1321,7 @@ int testTransformsSpeed(const string& name)
 
     SliceArray<kanzi::byte> iba1(input, size, 0);
     SliceArray<kanzi::byte> iba2(output, f->getMaxEncodedLength(size), 0);
-    const int reverseSize = size + (((name == "LZ") || (name == "LZX")) ? 16 : 0);
+    const int reverseSize = size + 16;
     SliceArray<kanzi::byte> iba3(reverse, reverseSize, 0);
     int mod = (name == "ZRLT") ? 5 : 256;
     delete f;
