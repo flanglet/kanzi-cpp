@@ -1059,7 +1059,9 @@ bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
     kanzi::byte* src = &input._array[input._index];
     const int dstEnd = BigEndian::readInt32(&src[0]);
 
-    if ((dstEnd <= 0) || (dstEnd > output._length - output._index))
+    const int outputCapacity = output._length - output._index;
+
+    if ((dstEnd <= 0) || (dstEnd > outputCapacity))
         return false;
 
     int srcIdx = 5;
@@ -1091,7 +1093,7 @@ bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
 
         // First literals
         rd.setContext(LITERAL_CTX, kanzi::byte(0));
-        const int n = min(dstEnd - output._index, 8);
+        const int n = min(sizeChunk, 8);
 
         for (int j = 0; j < n; j++) {
             int val = rd.decode9Bits();
@@ -1131,12 +1133,12 @@ bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 const int matchLen = val & 0xFF;
                 prefetchRead(&_counters[key]);
 
-                // CompressedInputStream provides trailing output padding.
-                // The +3 bound is the regular minimum match length; DNA mode
-                // adds four more bytes, and emitCopy() may write up to seven
-                // bytes past the logical match end.
-                // Sanity check
-                if (dstIdx + matchLen + 3 > dstEnd) {
+                const int copyLen = matchLen + _minMatch;
+
+                // Sanity check against the remaining space in the current
+                // chunk. The match length is stored without the minimum
+                // match size, which is data type dependent.
+                if (copyLen > sizeChunk - dstIdx) {
                     output._index += dstIdx;
                     return false;
                 }
@@ -1150,7 +1152,18 @@ bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 }
 
                 const int32 ref = matches[(_counters[key] - matchIdx) & _maskChecks];
-                dstIdx = ROLZCodec::emitCopy(dst, dstIdx, ref, matchLen + _minMatch);
+
+                // emitCopy() uses 8-byte stores when the match distance is
+                // large and may write up to seven bytes past the logical end.
+                // Check that allowance against the absolute output position;
+                // dstIdx alone is relative to the current chunk.
+                if ((dstIdx - ref >= 8) &&
+                    (startChunk + dstIdx + copyLen > outputCapacity - 7)) {
+                    output._index += dstIdx;
+                    return false;
+                }
+
+                dstIdx = ROLZCodec::emitCopy(dst, dstIdx, ref, copyLen);
             }
 
             // Update map

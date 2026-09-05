@@ -32,6 +32,7 @@ limitations under the License.
 #include "../transform/SRT.hpp"
 #include "../transform/TextCodec.hpp"
 #include "../transform/TransformFactory.hpp"
+#include "../transform/UTFCodec.hpp"
 #include "../transform/ZRLT.hpp"
 
 using namespace std;
@@ -825,6 +826,43 @@ static int testLZPMalformed()
     return 0;
 }
 
+static int testUTFMalformed()
+{
+    cout << endl
+         << "Malformed UTF" << endl;
+
+    // One-byte symbols are logically advanced by one byte, but the decoder
+    // copies four bytes from every packed symbol. The fifth alias below is
+    // at the end of the logical output buffer and must be rejected before
+    // the four-byte copy.
+    kanzi::byte encoded[16] = {
+        kanzi::byte(0), kanzi::byte(0), kanzi::byte(0), kanzi::byte(1),
+        kanzi::byte(0), kanzi::byte(0), kanzi::byte(0x41),
+        kanzi::byte(0), kanzi::byte(0), kanzi::byte(0), kanzi::byte(0), kanzi::byte(0),
+        kanzi::byte(0), kanzi::byte(0), kanzi::byte(0), kanzi::byte(0)
+    };
+    kanzi::byte decoded[9];
+    memset(decoded, 0x7E, sizeof(decoded));
+    SliceArray<kanzi::byte> input(encoded, 16, 0);
+    SliceArray<kanzi::byte> output(decoded, 5, 0);
+    UTFCodec codec;
+
+    if (codec.inverse(input, output, 16) != false) {
+        cout << "UTF output overflow should fail" << endl;
+        return 1;
+    }
+
+    for (int i = 5; i < int(sizeof(decoded)); i++) {
+        if (decoded[i] != kanzi::byte(0x7E)) {
+            cout << "UTF output overflow modified the canary" << endl;
+            return 1;
+        }
+    }
+
+    cout << "Malformed UTF tests passed" << endl;
+    return 0;
+}
+
 static int testOverlappingTransformCopies()
 {
     cout << endl
@@ -1428,6 +1466,11 @@ int TestTransforms_main(int argc, const char* argv[])
             return res;
 
         res = testLZPMalformed();
+
+        if (res != 0)
+            return res;
+
+        res = testUTFMalformed();
 
         if (res != 0)
             return res;

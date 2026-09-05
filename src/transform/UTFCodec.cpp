@@ -277,7 +277,9 @@ bool UTFCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
 
         const symb& s = m[alias];
 
-        if (dstIdx + int(s.len) > dstCap)
+        // The symbol length controls the logical output advance, but the
+        // decoder always copies four bytes from the packed symbol value.
+        if (dstIdx + 4 > dstCap)
             return false;
 
         memcpy(&dst[dstIdx], &s.val, 4);
