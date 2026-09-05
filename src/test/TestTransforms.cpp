@@ -702,7 +702,8 @@ static int testTransformCapacityValidation()
         LZXCodec<false> tf;
         kanzi::byte lzSrc[128];
         kanzi::byte lzEncoded[256];
-        kanzi::byte lzDecoded[128];
+        // LZX inverse uses a 16-byte copy and requires trailing destination padding.
+        kanzi::byte lzDecoded[128 + 16];
 
         for (int i = 0; i < 128; i++)
             lzSrc[i] = kanzi::byte(i & 3);
@@ -719,7 +720,7 @@ static int testTransformCapacityValidation()
 
         const int encodedSize = encoded._index;
         SliceArray<kanzi::byte> exactInput(lzEncoded, encodedSize, 0);
-        SliceArray<kanzi::byte> output(lzDecoded, 128, 0);
+        SliceArray<kanzi::byte> output(lzDecoded, int(sizeof(lzDecoded)), 0);
 
         if (tf.inverse(exactInput, output, encodedSize) != false) {
             cout << "LZX should reject input without the read-length guard" << endl;
@@ -1119,15 +1120,16 @@ int testTransformsCorrectness(const string& name, int& errorIteration)
         }
 
         const int dstSize = ff->getMaxEncodedLength(size);
+        const int reverseSize = size + (((name == "LZ") || (name == "LZX")) ? 16 : 0);
         kanzi::byte* input = new kanzi::byte[size];
         kanzi::byte* output = new kanzi::byte[dstSize];
-        kanzi::byte* reverse = new kanzi::byte[size];
+        kanzi::byte* reverse = new kanzi::byte[reverseSize];
 
         SliceArray<kanzi::byte> iba1(input, size, 0);
         SliceArray<kanzi::byte> iba2(output, dstSize, 0);
-        SliceArray<kanzi::byte> iba3(reverse, size, 0);
+        SliceArray<kanzi::byte> iba3(reverse, reverseSize, 0);
         memset(output, 0xAA, dstSize);
-        memset(reverse, 0xAA, size);
+        memset(reverse, 0xAA, reverseSize);
         int count;
 
         for (int i = 0; i < size; i++)
@@ -1273,6 +1275,7 @@ int testTransformsSpeed(const string& name)
     kanzi::byte output[50000] = { kanzi::byte(0) };
     kanzi::byte reverse[50000] = { kanzi::byte(0) };
     Context ctx;
+    ctx.putInt("bsVersion", BS_VERSION);
     Transform<kanzi::byte>* f = getByteTransform(name, ctx);
 
     if (f == nullptr)
@@ -1280,7 +1283,8 @@ int testTransformsSpeed(const string& name)
 
     SliceArray<kanzi::byte> iba1(input, size, 0);
     SliceArray<kanzi::byte> iba2(output, f->getMaxEncodedLength(size), 0);
-    SliceArray<kanzi::byte> iba3(reverse, size, 0);
+    const int reverseSize = size + (((name == "LZ") || (name == "LZX")) ? 16 : 0);
+    SliceArray<kanzi::byte> iba3(reverse, reverseSize, 0);
     int mod = (name == "ZRLT") ? 5 : 256;
     delete f;
 
