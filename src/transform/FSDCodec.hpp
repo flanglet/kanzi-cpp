@@ -53,7 +53,8 @@ namespace kanzi {
        static const int8 ZIGZAG2[256];
 
        Context* _pCtx;
+
+       bool inverseV7(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
    };
 }
 #endif
-
