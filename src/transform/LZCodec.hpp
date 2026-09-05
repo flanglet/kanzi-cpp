@@ -91,7 +91,7 @@ namespace kanzi {
         int getMaxEncodedLength(int srcLen) const
         {
             // readLength() may read two bytes past the encoded block
-            return ((srcLen <= 1024) ? srcLen + 16 : srcLen + (srcLen / 64)) + 2;
+            return ((srcLen <= 1024) ? srcLen + 16 : srcLen + (srcLen / 64)) + 4;
         }
 
     private:
@@ -248,7 +248,6 @@ namespace kanzi {
 
         return n;
     }
-
 
     inline int LZPCodec::findMatch(const byte src[], const int srcIdx, const int ref, const int maxMatch)
     {
