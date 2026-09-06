@@ -378,11 +378,14 @@ int HuffmanDecoder::decodeV5(kanzi::byte block[], uint blkptr, uint count)
         // Read chunk size
         const int szBits = EntropyUtils::readVarInt(_bitstream);
 
-        if ((szBits < 0) || (szBits > int(sizeChunk) * HuffmanCommon::MAX_SYMBOL_SIZE))
+        // A non-empty chunk with multiple symbols cannot have an empty
+        // encoded payload. Treat it as malformed instead of reporting a
+        // successful decode while leaving the destination untouched.
+        if ((szBits <= 0) || (szBits > int(sizeChunk) * HuffmanCommon::MAX_SYMBOL_SIZE))
             return -1;
 
         // Read compressed data from bitstream
-        if (szBits != 0) {
+        {
             const int sz = (szBits + 7) >> 3;
             const uint minLenBuf = uint(max(sz + (sz >> 3), 1024));
 
@@ -400,7 +403,11 @@ int HuffmanDecoder::decodeV5(kanzi::byte block[], uint blkptr, uint count)
             int idx = 0;
             uint n = startChunk;
 
-            while (idx < sz - 8) {
+            // Decode groups of four only while they fit in the requested
+            // output chunk. A malformed payload can otherwise make the last
+            // group write up to three bytes past endChunk before the final
+            // payload-size check is reached.
+            while ((idx < sz - 8) && (n <= endChunk) && (endChunk - n >= 4)) {
                 const uint8 shift = (56 - bits) & -8;
                 state = (state << shift) | (uint64(BigEndian::readLong64(&_buffer[idx])) >> 1 >> (63 - shift)); // handle shift = 0
                 idx += (shift >> 3);
