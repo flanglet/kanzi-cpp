@@ -493,7 +493,6 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
         lenBuf._index = 0;
         mIdxBuf._index = 0;
         tkBuf._index = 0;
-        memset(&_matches[0], 0, sizeof(uint32) * size_t(ROLZCodec::HASH_SIZE << _logPosChecks));
         const int endChunk = min(startChunk + sizeChunk, dstEnd);
         sizeChunk = endChunk - startChunk;
         bool onlyLiterals = false;
@@ -567,6 +566,7 @@ bool ROLZCodec1::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             continue;
         }
 
+        memset(&_matches[0], 0, sizeof(uint32) * size_t(ROLZCodec::HASH_SIZE << _logPosChecks));
         const bool cond = _minMatch == MIN_MATCH3;
         kanzi::byte* buf = &output._array[output._index];
         const kanzi::byte* refBuf = &output._array[output._index - delta];
@@ -1086,7 +1086,8 @@ bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
         memset(&_matches[0], 0, sizeof(uint32) * (ROLZCodec::HASH_SIZE << _logPosChecks));
         const int endChunk = min(startChunk + sizeChunk, dstEnd);
         sizeChunk = endChunk - startChunk;
-        rd.reset();
+        if (startChunk > 0)
+            rd.reset();
         kanzi::byte* dst = &output._array[output._index];
         kanzi::byte* refBuf = &output._array[output._index - delta];
         int dstIdx = 0;

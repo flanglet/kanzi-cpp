@@ -64,7 +64,7 @@ bool ZRLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
             runLength++;
             uint log = uint(Global::_log2(uint32(runLength)));
 
-            if (log > dstEnd - dstIdx) {
+            if (KANZI_UNLIKELY(log > dstEnd - dstIdx)) {
                 res = false;
                 break;
             }
@@ -91,7 +91,7 @@ bool ZRLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
         const int val = int(src[srcIdx]);
         const uint needed = (val >= 0xFE) ? uint(2) : uint(1);
 
-        if (needed > dstEnd - dstIdx) {
+        if (KANZI_UNLIKELY(needed > dstEnd - dstIdx)) {
             res = false;
             break;
         }
@@ -160,7 +160,7 @@ bool ZRLT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
             runLength--;
 
             if (runLength > 0) {
-                if (runLength >= dstEnd - dstIdx)
+                if (KANZI_UNLIKELY(runLength >= dstEnd - dstIdx))
                     goto End;
 
                 memset(&dst[dstIdx], 0, size_t(runLength));
@@ -171,13 +171,38 @@ bool ZRLT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
         }
 
         // Regular data processing
-        if (dstIdx >= dstEnd)
+        if (KANZI_UNLIKELY(dstIdx >= dstEnd))
             return false;
+
+        if (val != 0xFF) {
+            const uint startIdx = srcIdx;
+
+            while ((srcIdx + 4 <= srcEnd) && (dstIdx + 4 <= dstEnd)) {
+                const uint32 word = uint32(LittleEndian::readInt32(&src[srcIdx]));
+                // Detect bytes below 2 or equal to 0xFF before lane-wise subtraction.
+                const uint32 invalid = (((word - 0x02020202U) & ~word) |
+                                        ((~word - 0x01010101U) & word)) & 0x80808080U;
+
+                if (invalid != 0)
+                    break;
+
+                LittleEndian::writeInt32(&dst[dstIdx], int32(word - 0x01010101U));
+                srcIdx += 4;
+                dstIdx += 4;
+            }
+
+            if (srcIdx != startIdx) {
+                if (KANZI_UNLIKELY((srcIdx >= srcEnd) || (dstIdx >= dstEnd)))
+                    break;
+
+                continue;
+            }
+        }
 
         if (val == 0xFF) {
             srcIdx++;
 
-            if (srcIdx >= srcEnd)
+            if (KANZI_UNLIKELY(srcIdx >= srcEnd))
                 return false;
 
             dst[dstIdx] = kanzi::byte(0xFE + int(src[srcIdx]));
@@ -189,7 +214,7 @@ bool ZRLT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
         srcIdx++;
         dstIdx++;
 
-        if ((srcIdx >= srcEnd) || (dstIdx >= dstEnd))
+        if (KANZI_UNLIKELY((srcIdx >= srcEnd) || (dstIdx >= dstEnd)))
             break;
     }
 

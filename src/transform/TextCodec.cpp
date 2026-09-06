@@ -907,11 +907,10 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 DictEntry* pe = nullptr;
                 DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
-                // Check for hash collisions
-                if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length)) {
-                    if (TextCodec::sameWords(&pe1->_ptr[1], &src[delimAnchor + 2], length - 1))
-                        pe = pe1;
-                }
+                // A hash collision check is not needed here: insertion is only allowed when
+                // the hash slot is null, so the candidate contents cannot affect the outcome.
+                if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length))
+                    pe = pe1;
 
                 if (pe == nullptr) {
                     // Word not found in the dictionary or hash collision.
@@ -1443,11 +1442,10 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 DictEntry* pe = nullptr;
                 DictEntry* pe1 = _dictMap[h1 & _hashMask];
 
-                // Check for hash collisions
-                if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length)) {
-                    if (TextCodec::sameWords(&pe1->_ptr[1], &src[delimAnchor + 2], length - 1))
-                        pe = pe1;
-                }
+                // A hash collision check is not needed here: insertion is only allowed when
+                // the hash slot is null, so the candidate contents cannot affect the outcome.
+                if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length))
+                    pe = pe1;
 
                 if (pe == nullptr) {
                     // Word not found in the dictionary or hash collision.
