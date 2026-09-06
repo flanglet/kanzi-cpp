@@ -27,7 +27,6 @@ const uint64 BinaryEntropyEncoder::MASK_0_24 = 0x0000000000FFFFFF;
 const uint64 BinaryEntropyEncoder::MASK_0_32 = 0x00000000FFFFFFFF;
 const int BinaryEntropyEncoder::MAX_BLOCK_SIZE = 1 << 30;
 const int BinaryEntropyEncoder::MAX_CHUNK_SIZE = 1 << 26;
-static const uint64 BINARY_ENTROPY_BUFFER_FLOOR = uint64(8) << 20;
 
 
 BinaryEntropyEncoder::BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor* predictor, bool deallocate)
@@ -60,7 +59,7 @@ void BinaryEntropyEncoder::ensureCapacity(int required)
     if (required <= _sba._length)
         return;
 
-    const int grownSize = _sba._length + max(_sba._length >> 2, 1 << 20);
+    const int grownSize = _sba._length + max(_sba._length >> 2, 1 << 10);
     int newSize = max(required, max(grownSize, 1024));
     kanzi::byte* buf = new kanzi::byte[newSize];
 
@@ -87,7 +86,8 @@ int BinaryEntropyEncoder::encode(const kanzi::byte block[], uint blkptr, uint co
         length = (length / 8 < MAX_CHUNK_SIZE) ? count >> 3 : count >> 4;
     }
 
-    const uint64 bufSize = max(uint64(length + (length >> 3)), BINARY_ENTROPY_BUFFER_FLOOR);
+    const uint extra = max(length >> 3, min(length, uint(1 << 16)));
+    const uint64 bufSize = uint64(length) + uint64(extra);
     ensureCapacity(int(min(bufSize, uint64(0x7FFFFFFF))));
 
     // Split block into chunks, encode chunk and write bit array to bitstream

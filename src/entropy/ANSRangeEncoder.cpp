@@ -165,13 +165,15 @@ int ANSRangeEncoder::encode(const kanzi::byte block[], uint blkptr, uint count)
     const uint end = blkptr + count;
     uint startChunk = blkptr;
     uint sz = uint(_chunkSize);
-    const uint size = max(min(sz + (sz >> 3), 2 * count), uint(65536));
+    const uint size = min(sz, count);
+    const uint extra = max(size >> 3, min(size, uint(1 << 16)));
+    const uint bufSize = size + extra;
 
-    if (_bufferSize < size) {
-        kanzi::byte* buffer = new kanzi::byte[size];
+    if (_bufferSize < bufSize) {
+        kanzi::byte* buffer = new kanzi::byte[bufSize];
         delete[] _buffer;
         _buffer = buffer;
-        _bufferSize = size;
+        _bufferSize = bufSize;
     }
 
     while (startChunk < end) {

@@ -104,8 +104,13 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
     for (int k = 0; k < dim; k++) {
         const int alphabetSize = EntropyUtils::decodeAlphabet(_bitstream, alphabet);
 
-        if (alphabetSize == 0)
+        if (alphabetSize == 0) {
+            if ((_order == 1) && (k == 0))
+                throw BitStreamException("Invalid bitstream: missing ANS1 context 0",
+                    BitStreamException::INVALID_STREAM);
+
             continue;
+        }
 
         uint* f = &frequencies[k << 8];
 
@@ -181,7 +186,9 @@ int ANSRangeDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
         return count;
     }
 
-    const uint minBufSize = 2 * uint(_chunkSize);
+    const uint size = min(uint(_chunkSize), count);
+    const uint extra = max(size >> 3, min(size, uint(1 << 16)));
+    const uint minBufSize = size + extra + 2;
 
     if (_bufferSize < minBufSize) {
         kanzi::byte* buffer = new kanzi::byte[minBufSize];
