@@ -68,10 +68,11 @@ namespace kanzi {
        // Find index: 65*ctx + quantized prediction in [0..64]
        _index = (pr >> 6) + 65 * ctx;
 
-       // Return interpolated probabibility
-       const uint16 w = uint16(pr & 127);
-       return ((_data[_index] << 7) +
-               (int(_data[_index + 1]) - int(_data[_index])) * int(w)) >> 11;
+       // Return interpolated probability. The table index advances every 64
+       // prediction units, so use the matching 6-bit fractional part.
+       const uint16 w = uint16(pr & 63);
+       return ((_data[_index] << 6) +
+               (int(_data[_index + 1]) - int(_data[_index])) * int(w)) >> 10;
    }
 
 
