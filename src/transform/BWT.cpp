@@ -35,6 +35,16 @@ const int BWT::MASK_FASTBITS = (1 << NB_FASTBITS) - 1;
 const int BWT::BLOCK_SIZE_THRESHOLD1 = 256;
 const int BWT::BLOCK_SIZE_THRESHOLD2 = 2 * 1024 * 1024;
 
+#define DECODE_BWT(P, S) \
+    do { \
+        (S) = _fastBits[(P) >> shift]; \
+        if (_buckets[(S)] <= (P)) { \
+            do { \
+                (S)++; \
+            } while (_buckets[(S)] <= (P)); \
+        } \
+    } while (0)
+
 
 BWT::BWT(int jobs)
 {
@@ -197,7 +207,6 @@ bool BWT::inverseMergeTPSI(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byt
 
     const kanzi::byte* src = &input._array[input._index];
     kanzi::byte* dst = &output._array[output._index];
-    memset(&_buffer[0], 0, size_t(count) * sizeof(uint));
     const uint end1 = uint(pIdx);
     const uint end2 = uint(count);
 
@@ -526,9 +535,10 @@ T InverseBiPSIv2Task<T>::run()
     kanzi::byte* d6 = &_dst[6 * _ckSize];
     kanzi::byte* d7 = &_dst[7 * _ckSize];
 
-    if ((_start + 8 * _ckSize <= _total) && ((_ckSize & 1) == 0)) {
+    if (_start + 7 * _ckSize <= _total) {
         for (; c + 8 <= _lastChunk; c += 8) {
-            const int end = _start + _ckSize;
+            const int end = _start + _ckSize - 1;
+            const int end8 = min(end, _total - 7 * _ckSize - 1);
             uint p0 = _primaryIndexes[c + 0];
             uint p1 = _primaryIndexes[c + 1];
             uint p2 = _primaryIndexes[c + 2];
@@ -538,7 +548,7 @@ T InverseBiPSIv2Task<T>::run()
             uint p6 = _primaryIndexes[c + 6];
             uint p7 = _primaryIndexes[c + 7];
 
-            for (int i = _start + 1; i <= end; i += 2) {
+            for (int i = _start + 1; i <= end8; i += 2) {
                 prefetchRead(&_data[p0]);
                 prefetchRead(&_data[p1]);
                 prefetchRead(&_data[p2]);
@@ -631,7 +641,223 @@ T InverseBiPSIv2Task<T>::run()
                 p7 = _data[p7];
             }
 
+            // Keep the eighth chain within its logical end. If the common
+            // extent is odd, retain the low byte for the first seven chains.
+            const bool oddCommon = ((end8 - _start + 1) & 1) != 0;
+
+            if (oddCommon) {
+                // Keep the low byte for the first seven chains; the eighth
+                // chain ends at end8 and only needs the high byte.
+                uint16 s0, s1, s2, s3, s4, s5, s6, s7;
+                DECODE_BWT(p0, s0);
+                DECODE_BWT(p1, s1);
+                DECODE_BWT(p2, s2);
+                DECODE_BWT(p3, s3);
+                DECODE_BWT(p4, s4);
+                DECODE_BWT(p5, s5);
+                DECODE_BWT(p6, s6);
+                DECODE_BWT(p7, s7);
+                d0[end8] = kanzi::byte(s0 >> 8);
+                d1[end8] = kanzi::byte(s1 >> 8);
+                d2[end8] = kanzi::byte(s2 >> 8);
+                d3[end8] = kanzi::byte(s3 >> 8);
+                d4[end8] = kanzi::byte(s4 >> 8);
+                d5[end8] = kanzi::byte(s5 >> 8);
+                d6[end8] = kanzi::byte(s6 >> 8);
+                d7[end8] = kanzi::byte(s7 >> 8);
+
+                if (end8 < end) {
+                    d0[end8 + 1] = kanzi::byte(s0);
+                    d1[end8 + 1] = kanzi::byte(s1);
+                    d2[end8 + 1] = kanzi::byte(s2);
+                    d3[end8 + 1] = kanzi::byte(s3);
+                    d4[end8 + 1] = kanzi::byte(s4);
+                    d5[end8 + 1] = kanzi::byte(s5);
+                    d6[end8 + 1] = kanzi::byte(s6);
+                }
+
+                p0 = _data[p0];
+                p1 = _data[p1];
+                p2 = _data[p2];
+                p3 = _data[p3];
+                p4 = _data[p4];
+                p5 = _data[p5];
+                p6 = _data[p6];
+                p7 = _data[p7];
+            }
+
+            // The last chunk can be shorter than the other seven. Finish the
+            // common extent of the first seven chains without a per-iteration
+            // boundary check for the eighth chain.
+            if (end8 < end) {
+                const int nextPos = end8 + (oddCommon ? 2 : 1);
+                const int tailStart = nextPos + 1;
+
+                for (int i = tailStart; i <= end; i += 2) {
+                    prefetchRead(&_data[p0]);
+                    prefetchRead(&_data[p1]);
+                    prefetchRead(&_data[p2]);
+                    prefetchRead(&_data[p3]);
+                    prefetchRead(&_data[p4]);
+                    prefetchRead(&_data[p5]);
+                    prefetchRead(&_data[p6]);
+                    uint16 s0, s1, s2, s3, s4, s5, s6;
+                    DECODE_BWT(p0, s0);
+                    DECODE_BWT(p1, s1);
+                    DECODE_BWT(p2, s2);
+                    DECODE_BWT(p3, s3);
+                    DECODE_BWT(p4, s4);
+                    DECODE_BWT(p5, s5);
+                    DECODE_BWT(p6, s6);
+                    d0[i - 1] = kanzi::byte(s0 >> 8);
+                    d0[i] = kanzi::byte(s0);
+                    d1[i - 1] = kanzi::byte(s1 >> 8);
+                    d1[i] = kanzi::byte(s1);
+                    d2[i - 1] = kanzi::byte(s2 >> 8);
+                    d2[i] = kanzi::byte(s2);
+                    d3[i - 1] = kanzi::byte(s3 >> 8);
+                    d3[i] = kanzi::byte(s3);
+                    d4[i - 1] = kanzi::byte(s4 >> 8);
+                    d4[i] = kanzi::byte(s4);
+                    d5[i - 1] = kanzi::byte(s5 >> 8);
+                    d5[i] = kanzi::byte(s5);
+                    d6[i - 1] = kanzi::byte(s6 >> 8);
+                    d6[i] = kanzi::byte(s6);
+                    p0 = _data[p0];
+                    p1 = _data[p1];
+                    p2 = _data[p2];
+                    p3 = _data[p3];
+                    p4 = _data[p4];
+                    p5 = _data[p5];
+                    p6 = _data[p6];
+                }
+
+                if ((nextPos <= end) && (((end - nextPos + 1) & 1) != 0)) {
+                    prefetchRead(&_data[p0]);
+                    prefetchRead(&_data[p1]);
+                    prefetchRead(&_data[p2]);
+                    prefetchRead(&_data[p3]);
+                    prefetchRead(&_data[p4]);
+                    prefetchRead(&_data[p5]);
+                    prefetchRead(&_data[p6]);
+                    uint16 s0, s1, s2, s3, s4, s5, s6;
+                    DECODE_BWT(p0, s0);
+                    DECODE_BWT(p1, s1);
+                    DECODE_BWT(p2, s2);
+                    DECODE_BWT(p3, s3);
+                    DECODE_BWT(p4, s4);
+                    DECODE_BWT(p5, s5);
+                    DECODE_BWT(p6, s6);
+                    d0[end] = kanzi::byte(s0 >> 8);
+                    d1[end] = kanzi::byte(s1 >> 8);
+                    d2[end] = kanzi::byte(s2 >> 8);
+                    d3[end] = kanzi::byte(s3 >> 8);
+                    d4[end] = kanzi::byte(s4 >> 8);
+                    d5[end] = kanzi::byte(s5 >> 8);
+                    d6[end] = kanzi::byte(s6 >> 8);
+                }
+            }
+
             _start += (8 * _ckSize);
+        }
+    }
+
+    // Preserve interleaving when a worker owns four or two chunks.
+    if ((_start + 3 * _ckSize <= _total) && ((_ckSize & 1) == 0)) {
+        for (; c + 4 <= _lastChunk; c += 4) {
+            const int end = _start + _ckSize - 1;
+            const int end4 = min(end, _total - 3 * _ckSize - 1);
+            uint p0 = _primaryIndexes[c + 0];
+            uint p1 = _primaryIndexes[c + 1];
+            uint p2 = _primaryIndexes[c + 2];
+            uint p3 = _primaryIndexes[c + 3];
+
+            for (int i = _start + 1; i <= end4; i += 2) {
+                prefetchRead(&_data[p0]);
+                prefetchRead(&_data[p1]);
+                prefetchRead(&_data[p2]);
+                prefetchRead(&_data[p3]);
+                uint16 s0, s1, s2, s3;
+                DECODE_BWT(p0, s0);
+                DECODE_BWT(p1, s1);
+                DECODE_BWT(p2, s2);
+                DECODE_BWT(p3, s3);
+                d0[i - 1] = kanzi::byte(s0 >> 8);
+                d0[i] = kanzi::byte(s0);
+                d1[i - 1] = kanzi::byte(s1 >> 8);
+                d1[i] = kanzi::byte(s1);
+                d2[i - 1] = kanzi::byte(s2 >> 8);
+                d2[i] = kanzi::byte(s2);
+                d3[i - 1] = kanzi::byte(s3 >> 8);
+                d3[i] = kanzi::byte(s3);
+                p0 = _data[p0];
+                p1 = _data[p1];
+                p2 = _data[p2];
+                p3 = _data[p3];
+            }
+
+            if (end4 < end) {
+                const int tailStart = end4 + 1 + (end4 & 1);
+
+                for (int i = tailStart; i <= end; i += 2) {
+                    prefetchRead(&_data[p0]);
+                    prefetchRead(&_data[p1]);
+                    prefetchRead(&_data[p2]);
+                    uint16 s0, s1, s2;
+                    DECODE_BWT(p0, s0);
+                    DECODE_BWT(p1, s1);
+                    DECODE_BWT(p2, s2);
+                    d0[i - 1] = kanzi::byte(s0 >> 8);
+                    d0[i] = kanzi::byte(s0);
+                    d1[i - 1] = kanzi::byte(s1 >> 8);
+                    d1[i] = kanzi::byte(s1);
+                    d2[i - 1] = kanzi::byte(s2 >> 8);
+                    d2[i] = kanzi::byte(s2);
+                    p0 = _data[p0];
+                    p1 = _data[p1];
+                    p2 = _data[p2];
+                }
+            }
+
+            _start += (4 * _ckSize);
+        }
+    }
+
+    if ((_start + _ckSize <= _total) && ((_ckSize & 1) == 0)) {
+        for (; c + 2 <= _lastChunk; c += 2) {
+            const int end = _start + _ckSize - 1;
+            const int end2 = min(end, _total - _ckSize - 1);
+            uint p0 = _primaryIndexes[c + 0];
+            uint p1 = _primaryIndexes[c + 1];
+
+            for (int i = _start + 1; i <= end2; i += 2) {
+                prefetchRead(&_data[p0]);
+                prefetchRead(&_data[p1]);
+                uint16 s0, s1;
+                DECODE_BWT(p0, s0);
+                DECODE_BWT(p1, s1);
+                d0[i - 1] = kanzi::byte(s0 >> 8);
+                d0[i] = kanzi::byte(s0);
+                d1[i - 1] = kanzi::byte(s1 >> 8);
+                d1[i] = kanzi::byte(s1);
+                p0 = _data[p0];
+                p1 = _data[p1];
+            }
+
+            if (end2 < end) {
+                const int tailStart = end2 + 1 + (end2 & 1);
+
+                for (int i = tailStart; i <= end; i += 2) {
+                    prefetchRead(&_data[p0]);
+                    uint16 s0;
+                    DECODE_BWT(p0, s0);
+                    d0[i - 1] = kanzi::byte(s0 >> 8);
+                    d0[i] = kanzi::byte(s0);
+                    p0 = _data[p0];
+                }
+            }
+
+            _start += (2 * _ckSize);
         }
     }
 
@@ -655,3 +881,5 @@ T InverseBiPSIv2Task<T>::run()
 
     return T(0);
 }
+
+#undef DECODE_BWT
