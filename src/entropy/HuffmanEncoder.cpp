@@ -14,7 +14,6 @@ limitations under the License.
 */
 
 #include <algorithm>
-#include <vector>
 #include <sstream>
 
 #include "HuffmanEncoder.hpp"
@@ -141,12 +140,11 @@ int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16
     if (debt == 0)
         return HuffmanCommon::MAX_SYMBOL_SIZE;
 
-    // Check (up to) 6 levels; one vector per size delta
-    vector<int> v[6];
-    size_t vHead[6] = { 0 };
-
-    for (int i = 0; i < 6; i++)
-        v[i].reserve(count - n);
+    // Check (up to) 6 levels; one fixed-size bucket per size delta.
+    // The alphabet is capped at 256 symbols, so no allocation is needed here.
+    uint8 v[6][256];
+    uint16 vSize[6] = { 0 };
+    uint16 vHead[6] = { 0 };
 
     while (n < count) {
         const int idx = HuffmanCommon::MAX_SYMBOL_SIZE - 1 - sizes[ranks[n]];
@@ -154,7 +152,7 @@ int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16
         if ((idx > 5) || (debt < (1 << idx)))
             break;
 
-        v[idx].push_back(n);
+        v[idx][vSize[idx]++] = uint8(n);
         n++;
     }
 
@@ -162,7 +160,7 @@ int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16
 
     // Repay bit debt in a "semi optimized" way
     while ((debt > 0) && (idx >= 0)) {
-        if ((vHead[idx] >= v[idx].size()) || (debt < (1 << idx))) {
+        if ((vHead[idx] >= vSize[idx]) || (debt < (1 << idx))) {
             idx--;
             continue;
         }
@@ -179,7 +177,7 @@ int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16
 
     // Adjust if necessary
     while ((debt > 0) && (idx < 6)) {
-        if (vHead[idx] >= v[idx].size()) {
+        if (vHead[idx] >= vSize[idx]) {
             idx++;
             continue;
         }
