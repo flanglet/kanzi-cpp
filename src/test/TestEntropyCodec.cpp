@@ -306,6 +306,67 @@ int testFPAQZeroDeclaredSize()
     return 0;
 }
 
+int testANS1MissingContext()
+{
+    cout << endl << "=== ANS1 implicit context test ===" << endl;
+    const uint size = 40;
+    const uint alphabet[] = { 1 };
+
+    // Exercise both freshly allocated tables and tables from an earlier chunk.
+    for (int warm = 0; warm < 2; warm++) {
+        stringbuf buffer;
+        iostream ios(&buffer);
+        DefaultOutputBitStream obs(ios, 16384);
+        vector<kanzi::byte> previous(size, kanzi::byte(1));
+
+        if (warm != 0) {
+            ANSRangeEncoder encoder(obs, 1);
+            encoder.encode(&previous[0], 0, size);
+        }
+
+        // Context 0 emits 1; empty context 1 implicitly emits 0.
+        obs.writeBits(uint64(0), 3); // log range = 8
+        EntropyUtils::encodeAlphabet(obs, alphabet, 256, 1);
+
+        for (int i = 1; i < 256; i++)
+            EntropyUtils::encodeAlphabet(obs, alphabet, 256, 0);
+
+        EntropyUtils::writeVarInt(obs, 8);
+
+        for (int i = 0; i < 4; i++)
+            obs.writeBits(uint32(1 << 15), 32);
+
+        // Each lane renormalizes once, on its first symbol.
+        const kanzi::byte payload[8] = { kanzi::byte(0) };
+        obs.writeBits(payload, 64);
+        obs.close();
+
+        istringstream is(buffer.str());
+        DefaultInputBitStream ibs(is, 16384);
+        ANSRangeDecoder decoder(ibs, 1);
+        vector<kanzi::byte> decoded(size);
+
+        if (warm != 0) {
+            if ((decoder.decode(&decoded[0], 0, size) != int(size)) ||
+                (decoded != previous))
+                return 1;
+        }
+
+        if (decoder.decode(&decoded[0], 0, size) != int(size))
+            return 1;
+
+        for (uint i = 0; i < size; i++) {
+            if (decoded[i] != kanzi::byte(1 - ((i % (size / 4)) & 1))) {
+                cout << "Incorrect ANS1 implicit context output" << endl;
+                return 1;
+            }
+        }
+    }
+
+    cout << "ANS1 implicit context test passed" << endl;
+    return 0;
+}
+
 int testHuffmanFragmentedRoundTrip()
 {
     cout << endl
@@ -762,6 +823,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
         res |= testBinaryEntropyBufferGrowth();
         res |= testDeclaredPayloadConsumption();
         res |= testFPAQZeroDeclaredSize();
+        res |= testANS1MissingContext();
         res |= testHuffmanFragmentedRoundTrip();
         vector<string> codecs;
         bool doPerf = true;

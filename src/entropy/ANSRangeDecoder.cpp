@@ -109,6 +109,12 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
                 throw BitStreamException("Invalid bitstream: missing ANS1 context 0",
                     BitStreamException::INVALID_STREAM);
 
+            if (_order == 1) {
+                // Empty ANS1 alphabets implicitly model the singleton {0}.
+                memset(&_f2s[k << _logRange], 0, size_t(scale));
+                _symbols[k << 8].reset(0, scale, _logRange);
+            }
+
             continue;
         }
 

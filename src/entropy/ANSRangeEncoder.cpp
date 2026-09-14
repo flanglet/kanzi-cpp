@@ -108,6 +108,11 @@ int ANSRangeEncoder::updateFrequencies(uint frequencies[], uint lr)
             }
         }
 
+        if ((_order == 1) && (alphabetSize == 0)) {
+            // The empty alphabet marker implicitly models the singleton {0}.
+            _symbols[k << 8].reset(0, 1 << lr, lr);
+        }
+
         encodeHeader(alphabetSize, curAlphabet, f, lr);
         res += alphabetSize;
     }
