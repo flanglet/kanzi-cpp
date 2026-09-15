@@ -508,6 +508,52 @@ static EntropyDecoder* getDecoder(string name, InputBitStream& ibs, Predictor* p
     return nullptr;
 }
 
+static int testBinaryPayloadBoundary()
+{
+    cout << endl
+         << "=== Binary entropy payload boundary test ===" << endl;
+    const uint size = 1 << 16;
+    vector<kanzi::byte> values(size, kanzi::byte(0));
+    stringbuf buffer;
+    iostream ios(&buffer);
+    DefaultOutputBitStream obs(ios, 16384);
+    BinaryEntropyEncoder encoder(obs, new ConstantPredictor(4095), true);
+
+    if (encoder.encode(&values[0], 0, size) != int(size))
+        return 1;
+
+    encoder.dispose();
+    obs.close();
+    const string mutated = zeroFPAQDeclaredSize(buffer.str());
+
+    if (mutated.empty())
+        return 2;
+
+    istringstream is(mutated);
+    DefaultInputBitStream ibs(is, 16384);
+    BinaryEntropyDecoder decoder(ibs, new ConstantPredictor(4095), true);
+    vector<kanzi::byte> decoded(size, kanzi::byte(0));
+    bool accepted = false;
+
+    try {
+        accepted = decoder.decode(&decoded[0], 0, size) == int(size);
+    }
+    catch (const exception&) {
+        // Expected: the first four-byte refill crosses the declared boundary.
+    }
+
+    decoder.dispose();
+    ibs.close();
+
+    if (accepted) {
+        cout << "Malformed binary entropy payload was accepted" << endl;
+        return 3;
+    }
+
+    cout << "Binary entropy payload boundary test passed" << endl;
+    return 0;
+}
+
 int testEntropyCodecCorrectness(const string& name)
 {
     // Test behavior
@@ -821,6 +867,7 @@ int TestEntropyCodec_main(int argc, const char* argv[])
     try {
         res |= testExpGolombUnsignedRoundTrip();
         res |= testBinaryEntropyBufferGrowth();
+        res |= testBinaryPayloadBoundary();
         res |= testDeclaredPayloadConsumption();
         res |= testFPAQZeroDeclaredSize();
         res |= testANS1MissingContext();

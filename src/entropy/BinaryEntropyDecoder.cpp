@@ -16,6 +16,7 @@ limitations under the License.
 #include <algorithm>
 #include <stdexcept>
 #include "BinaryEntropyDecoder.hpp"
+#include "../BitStreamException.hpp"
 #include "../Memory.hpp"
 #include "EntropyUtils.hpp"
 
@@ -41,6 +42,7 @@ BinaryEntropyDecoder::BinaryEntropyDecoder(InputBitStream& bitstream, Predictor*
     _low = 0;
     _high = TOP;
     _current = 0;
+    _payloadEnd = 0;
 }
 
 BinaryEntropyDecoder::~BinaryEntropyDecoder()
@@ -102,6 +104,7 @@ int BinaryEntropyDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
 
         ensureCapacity(int(szBytes));
 
+        _payloadEnd = szBytes;
         _current = _bitstream.readBits(56);
 
         if (szBytes != 0)
@@ -121,6 +124,9 @@ int BinaryEntropyDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
                           |  decodeBit(_predictor->get()));
         }
 
+        if (uint(_sba._index) != _payloadEnd)
+            return 0;
+
         startChunk = endChunk;
     }
 
@@ -131,6 +137,10 @@ int BinaryEntropyDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
 // no inline
 void BinaryEntropyDecoder::read()
 {
+    if (KANZI_UNLIKELY(uint(_sba._index) + 4 > _payloadEnd))
+        throw BitStreamException("Invalid bitstream: binary entropy payload underrun",
+            BitStreamException::INVALID_STREAM);
+
     _low = (_low << 32) & MASK_0_56;
     _high = ((_high << 32) | MASK_0_32) & MASK_0_56;
     const uint64 val = BigEndian::readInt32(&_sba._array[_sba._index]) & MASK_0_32;

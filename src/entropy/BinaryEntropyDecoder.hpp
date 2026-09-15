@@ -41,6 +41,7 @@ namespace kanzi
        InputBitStream& _bitstream;
        bool _deallocate;
        SliceArray<byte> _sba;
+       uint _payloadEnd;
 
        void read();
 
