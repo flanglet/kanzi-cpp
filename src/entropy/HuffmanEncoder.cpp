@@ -142,7 +142,7 @@ int HuffmanEncoder::limitCodeLengths(const uint alphabet[], uint freqs[], uint16
 
     // Check (up to) 6 levels; one fixed-size bucket per size delta.
     // The alphabet is capped at 256 symbols, so no allocation is needed here.
-    uint8 v[6][256];
+    uint8 v[6][256] = { 0 };
     uint16 vSize[6] = { 0 };
     uint16 vHead[6] = { 0 };
 
