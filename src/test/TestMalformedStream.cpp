@@ -156,11 +156,11 @@ static int expectHeaderFailure(const string& name, const string& data,
 }
 
 static int expectBlockFailure(const string& name, const string& data,
-    int expectedError, const string& expectedText)
+    int expectedError, const string& expectedText, int jobs)
 {
     cout << "Test malformed block: " << name << endl;
     istringstream is(data);
-    CompressedInputStream cis(is, 1);
+    CompressedInputStream cis(is, jobs);
     char dst[1];
 
     try {
@@ -170,6 +170,7 @@ static int expectBlockFailure(const string& name, const string& data,
         ASSERT_TRUE(e.error() == expectedError, "Unexpected IOException error code");
         ASSERT_TRUE(string(e.what()).find(expectedText) != string::npos,
             "Unexpected IOException message");
+        ASSERT_TRUE(cis.bad(), "Read failure did not set badbit");
         return 0;
     }
     catch (const exception& e) {
@@ -233,7 +234,13 @@ int main()
 
     if (expectBlockFailure("zero pre-transform length",
             buildMalformedBlockStream(),
-            Error::ERR_READ_FILE, "Invalid compressed block length") != 0) {
+            Error::ERR_READ_FILE, "Invalid compressed block length", 1) != 0) {
+        return 1;
+    }
+
+    if (expectBlockFailure("zero pre-transform length (multi-job)",
+            buildMalformedBlockStream(),
+            Error::ERR_READ_FILE, "Invalid compressed block length", 4) != 0) {
         return 1;
     }
 

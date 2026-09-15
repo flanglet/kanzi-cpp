@@ -45,7 +45,13 @@ BinaryEntropyEncoder::BinaryEntropyEncoder(OutputBitStream& bitstream, Predictor
 
 BinaryEntropyEncoder::~BinaryEntropyEncoder()
 {
-    _dispose();
+    // Destructors must not replace an encoding error or terminate the process
+    // while unwinding after a bitstream failure.
+    try {
+        _dispose();
+    }
+    catch (...) {
+    }
 
     if (_sba._array != nullptr)
         delete[] _sba._array;

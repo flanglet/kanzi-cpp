@@ -25,6 +25,15 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+// Clear ownership before delete so a throwing destructor cannot leave a
+// dangling non-null pointer for later cleanup.
+#define DELETE_AND_NULL(TYPE, PTR) \
+    do { \
+        TYPE* knzTmpPtr = (PTR); \
+        (PTR) = nullptr; \
+        delete knzTmpPtr; \
+    } while (0)
+
 const int CompressedInputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
 const int CompressedInputStream::BITSTREAM_FORMAT_VERSION = 7;
 const int CompressedInputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
@@ -423,6 +432,10 @@ int CompressedInputStream::_get(int inc)
         setstate(ios::badbit);
         throw;
     }
+    catch (...) {
+        setstate(ios::badbit);
+        throw;
+    }
 }
 
 
@@ -431,81 +444,94 @@ istream& CompressedInputStream::read(char* data, streamsize length)
     if (length < 0)
         throw ios_base::failure("Invalid buffer size");
 
-    streamsize remaining = length;
+    try {
+        streamsize remaining = length;
 
-    _gcount = 0;
+        _gcount = 0;
 
-    while (remaining > 0) {
-        // Reuse _get(0) logic logic implicitly
-        if (LOAD_ATOMIC(_initialized) == 0) {
-             readHeader();
+        while (remaining > 0) {
+            // Reuse _get(0) logic implicitly
+            if (LOAD_ATOMIC(_initialized) == 0) {
+                 readHeader();
 
-             for (int i = 0; i < _jobs; i++)
-                 submitBlock(i);
-        }
+                 for (int i = 0; i < _jobs; i++)
+                     submitBlock(i);
+            }
 
-        if (_available == 0) {
-            DecodingTaskResult res;
+            if (_available == 0) {
+                DecodingTaskResult res;
 #ifdef CONCURRENCY_ENABLED
-            if (_futures[_bufferId].valid()) {
-                 res = _futures[_bufferId].get();
-            } else {
-                 setstate(ios::eofbit);
-                 break;
-            }
+                if (_futures[_bufferId].valid()) {
+                     res = _futures[_bufferId].get();
+                } else {
+                     setstate(ios::eofbit);
+                     break;
+                }
 #else
-            res = _results[_bufferId];
+                res = _results[_bufferId];
 #endif
-            if (res._error != 0)
-                throw IOException(res._msg, res._error);
+                if (res._error != 0)
+                    throw IOException(res._msg, res._error);
 
-            if (res._decoded > _blockSize) {
-                stringstream ss;
-                ss << "Block " << res._blockId << " incorrectly decompressed";
-                throw IOException(ss.str(), Error::ERR_PROCESS_BLOCK);
+                if (res._decoded > _blockSize) {
+                    stringstream ss;
+                    ss << "Block " << res._blockId << " incorrectly decompressed";
+                    throw IOException(ss.str(), Error::ERR_PROCESS_BLOCK);
+                }
+
+                if (!_listeners.empty()) {
+                    Event::HashType hashType = Event::NO_HASH;
+
+                    if (_hasher32 != nullptr)
+                        hashType = Event::SIZE_32;
+                    else if (_hasher64 != nullptr)
+                        hashType = Event::SIZE_64;
+
+                    Event evt(Event::AFTER_TRANSFORM, res._blockId,
+                        int64(res._decoded), res._completionTime, res._checksum, hashType);
+                    CompressedInputStream::notifyListeners(_listeners, evt);
+                }
+
+                _available = res._decoded;
+                _buffers[_bufferId]->_index = 0;
+
+                if ((_available == 0) && (res._skipped == false)) {
+                   setstate(ios::eofbit);
+                   break;
+                }
             }
 
-            if (!_listeners.empty()) {
-                Event::HashType hashType = Event::NO_HASH;
+            const streamsize lenChunk = min(remaining, streamsize(_available));
 
-                if (_hasher32 != nullptr)
-                    hashType = Event::SIZE_32;
-                else if (_hasher64 != nullptr)
-                    hashType = Event::SIZE_64;
-
-                Event evt(Event::AFTER_TRANSFORM, res._blockId,
-                    int64(res._decoded), res._completionTime, res._checksum, hashType);
-                CompressedInputStream::notifyListeners(_listeners, evt);
+            if (lenChunk > 0) {
+                memcpy(&data[_gcount], &_buffers[_bufferId]->_array[_buffers[_bufferId]->_index], size_t(lenChunk));
+                _buffers[_bufferId]->_index += int(lenChunk);
+                _gcount += lenChunk;
+                remaining -= lenChunk;
+                _available -= lenChunk;
             }
 
-            _available = res._decoded;
-            _buffers[_bufferId]->_index = 0;
-
-            if ((_available == 0) && (res._skipped == false)) {
-               setstate(ios::eofbit);
-               break;
+            if (_available == 0) {
+                submitBlock(_bufferId);
+                _bufferId = (_bufferId + 1) % _jobs;
+                _consumeBlockId++;
             }
-
         }
 
-        const streamsize lenChunk = min(remaining, streamsize(_available));
-
-        if (lenChunk > 0) {
-            memcpy(&data[_gcount], &_buffers[_bufferId]->_array[_buffers[_bufferId]->_index], size_t(lenChunk));
-            _buffers[_bufferId]->_index += int(lenChunk);
-            _gcount += lenChunk;
-            remaining -= lenChunk;
-            _available -= lenChunk;
-        }
-
-        if (_available == 0) {
-            submitBlock(_bufferId);
-            _bufferId = (_bufferId + 1) % _jobs;
-            _consumeBlockId++;
-        }
+        return *this;
     }
-
-    return *this;
+    catch (const IOException&) {
+        setstate(ios::badbit);
+        throw;
+    }
+    catch (const exception&) {
+        setstate(ios::badbit);
+        throw;
+    }
+    catch (...) {
+        setstate(ios::badbit);
+        throw;
+    }
 }
 
 
@@ -1012,8 +1038,13 @@ T DecodingTask<T>::run()
             if (error != 0) {
                 storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
 
-                if (streamPerTask == true)
-                    delete ibs;
+                if (streamPerTask == true) {
+                    try {
+                        DELETE_AND_NULL(InputBitStream, ibs);
+                    }
+                    catch (...) {
+                    }
+                }
 
                 return T(*_data, blockId, 0, checksum1, error, msg);
             }
@@ -1040,8 +1071,13 @@ T DecodingTask<T>::run()
             stringstream ss;
             ss << "Invalid compressed block length: " << preTransformLength;
 
-            if (streamPerTask == true)
-                delete ibs;
+            if (streamPerTask == true) {
+                try {
+                    DELETE_AND_NULL(InputBitStream, ibs);
+                }
+                catch (...) {
+                }
+            }
 
             return T(*_data, blockId, 0, checksum1, Error::ERR_READ_FILE, ss.str());
         }
@@ -1055,8 +1091,13 @@ T DecodingTask<T>::run()
             if (encodedBlockBytes > maxEncodedBlockBytes) {
                 storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
 
-                if (streamPerTask == true)
-                    delete ibs;
+                if (streamPerTask == true) {
+                    try {
+                        DELETE_AND_NULL(InputBitStream, ibs);
+                    }
+                    catch (...) {
+                    }
+                }
 
                 return T(*_data, blockId, 0, checksum1, Error::ERR_BLOCK_SIZE,
                     "Invalid block size");
@@ -1113,8 +1154,13 @@ T DecodingTask<T>::run()
                 if (ibs->readBits(&_buffer->_array[n], 8 * chunk) != 8 * chunk) {
                     storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
 
-                    if (streamPerTask == true)
-                        delete ibs;
+                    if (streamPerTask == true) {
+                        try {
+                            DELETE_AND_NULL(InputBitStream, ibs);
+                        }
+                        catch (...) {
+                        }
+                    }
 
                     return T(*_data, blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
                         "Entropy decoding failed");
@@ -1125,8 +1171,7 @@ T DecodingTask<T>::run()
             }
 
             if (streamPerTask == true) {
-                delete ibs;
-                ibs = nullptr;
+                DELETE_AND_NULL(InputBitStream, ibs);
             }
         }
         else {
@@ -1138,22 +1183,29 @@ T DecodingTask<T>::run()
             if (ed->decode(_buffer->_array, 0, preTransformLength) != preTransformLength) {
                 // Error => cancel concurrent decoding tasks
                 storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
-                delete ed;
+                try {
+                    DELETE_AND_NULL(EntropyDecoder, ed);
+                }
+                catch (...) {
+                }
 
-                if (streamPerTask == true)
-                    delete ibs;
+                if (streamPerTask == true) {
+                    try {
+                        DELETE_AND_NULL(InputBitStream, ibs);
+                    }
+                    catch (...) {
+                    }
+                }
 
                 return T(*_data, blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
                     "Entropy decoding failed");
             }
 
             if (streamPerTask == true) {
-                delete ibs;
-                ibs = nullptr;
+                DELETE_AND_NULL(InputBitStream, ibs);
             }
 
-            delete ed;
-            ed = nullptr;
+            DELETE_AND_NULL(EntropyDecoder, ed);
         }
 
         if (_listeners.size() > 0) {
@@ -1174,8 +1226,7 @@ T DecodingTask<T>::run()
 
         // Inverse transform
         bool res = transform->inverse(*_buffer, *_data, preTransformLength);
-        delete transform;
-        transform = nullptr;
+        DELETE_AND_NULL(TransformSequence<kanzi::byte>, transform);
 
         if (res == false) {
             storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
@@ -1213,15 +1264,63 @@ T DecodingTask<T>::run()
         // Cancel any in-flight task waiting on this block.
         storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
 
-        if (transform != nullptr)
-            delete transform;
+        if (transform != nullptr) {
+            try {
+                DELETE_AND_NULL(TransformSequence<kanzi::byte>, transform);
+            }
+            catch (...) {
+            }
+        }
 
-        if (ed != nullptr)
-            delete ed;
+        if (ed != nullptr) {
+            try {
+                DELETE_AND_NULL(EntropyDecoder, ed);
+            }
+            catch (...) {
+            }
+        }
 
-        if ((streamPerTask == true) && (ibs != nullptr))
-            delete ibs;
+        if ((streamPerTask == true) && (ibs != nullptr)) {
+            try {
+                DELETE_AND_NULL(InputBitStream, ibs);
+            }
+            catch (...) {
+            }
+        }
 
         return T(*_data, blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK, e.what());
     }
+    catch (...) {
+        // Cancel any in-flight task waiting on this block.
+        storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
+
+        if (transform != nullptr) {
+            try {
+                DELETE_AND_NULL(TransformSequence<kanzi::byte>, transform);
+            }
+            catch (...) {
+            }
+        }
+
+        if (ed != nullptr) {
+            try {
+                DELETE_AND_NULL(EntropyDecoder, ed);
+            }
+            catch (...) {
+            }
+        }
+
+        if ((streamPerTask == true) && (ibs != nullptr)) {
+            try {
+                DELETE_AND_NULL(InputBitStream, ibs);
+            }
+            catch (...) {
+            }
+        }
+
+        return T(*_data, blockId, 0, checksum1, Error::ERR_PROCESS_BLOCK,
+            "Unknown block processing error");
+    }
 }
+
+#undef DELETE_AND_NULL

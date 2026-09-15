@@ -28,6 +28,15 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+// Clear ownership before delete so a throwing destructor cannot leave a
+// dangling non-null pointer for later cleanup.
+#define DELETE_AND_NULL(TYPE, PTR) \
+    do { \
+        TYPE* knzTmpPtr = (PTR); \
+        (PTR) = nullptr; \
+        delete knzTmpPtr; \
+    } while (0)
+
 const int CompressedOutputStream::BITSTREAM_TYPE = 0x4B414E5A; // "KANZ"
 const int CompressedOutputStream::BITSTREAM_FORMAT_VERSION = 7;
 const int CompressedOutputStream::DEFAULT_BUFFER_SIZE = 256 * 1024;
@@ -395,6 +404,7 @@ void CompressedOutputStream::close()
         return;
 
     string errMsg;
+    int errCode = Error::ERR_WRITE_FILE;
 
     try {
         // Submit the last partial block (if any)
@@ -404,23 +414,56 @@ void CompressedOutputStream::close()
         // Wait for ALL pending tasks to complete
         for (int i = 0; i < _jobs; i++) {
             if (_futures[i].valid()) {
-                EncodingTaskResult res = _futures[i].get();
+                try {
+                    EncodingTaskResult res = _futures[i].get();
 
-                if (res._error != 0)
-                    throw IOException(res._msg, res._error);
+                    // Keep the first real worker error. Later tasks may only
+                    // report cancellation or a secondary cleanup failure.
+                    if ((res._error != 0) && (errMsg == "")) {
+                        errMsg = res._msg;
+                        errCode = res._error;
+                    }
+                }
+                catch (const exception& e) {
+                    if (errMsg == "") {
+                        errMsg = e.what();
+                        errCode = Error::ERR_PROCESS_BLOCK;
+                    }
+                }
+                catch (...) {
+                    if (errMsg == "") {
+                        errMsg = "Unknown asynchronous block processing error";
+                        errCode = Error::ERR_PROCESS_BLOCK;
+                    }
+                }
             }
         }
 #endif
 
-        // Write last block: length-3 (0) and 0 bits
-        _obs->writeBits(uint64(0), 5);
-        _obs->writeBits(uint64(0), 3);
-        _obs->close();
+        if (errMsg == "") {
+            // Write last block: length-3 (0) and 0 bits
+            _obs->writeBits(uint64(0), 5);
+            _obs->writeBits(uint64(0), 3);
+            _obs->close();
+        }
+    }
+    catch (const IOException& e) {
+        setstate(ios::badbit);
+        errMsg = e.what();
+        errCode = e.error();
     }
     catch (const exception& e) {
         setstate(ios::badbit);
         errMsg = e.what();
     }
+    catch (...) {
+        setstate(ios::badbit);
+        errMsg = "Unknown compressed stream error";
+        errCode = Error::ERR_WRITE_FILE;
+    }
+
+    if (errMsg != "")
+        setstate(ios::badbit);
 
     STORE_ATOMIC(_closed, 1);
 
@@ -438,7 +481,7 @@ void CompressedOutputStream::close()
     }
 
     if (errMsg != "")
-       throw IOException(errMsg, Error::ERR_WRITE_FILE);
+       throw IOException(errMsg, errCode);
 
     setstate(ios::eofbit);
 }
@@ -451,10 +494,19 @@ void CompressedOutputStream::processBuffer()
 
 #ifdef CONCURRENCY_ENABLED
     if (_futures[_bufferId].valid()) {
-        EncodingTaskResult res = _futures[_bufferId].get();
+        try {
+            EncodingTaskResult res = _futures[_bufferId].get();
 
-        if (res._error != 0)
-            throw IOException(res._msg, res._error);
+            if (res._error != 0) {
+                throw IOException(res._msg, res._error);
+            }
+        }
+        catch (...) {
+            // Do not let another worker access buffers or the shared bitstream
+            // after the caller starts destroying this stream.
+            drainTasks();
+            throw;
+        }
     }
 #endif
 
@@ -471,6 +523,24 @@ void CompressedOutputStream::processBuffer()
 
     _buffers[_bufferId]->_index = 0;
 }
+
+
+#ifdef CONCURRENCY_ENABLED
+void CompressedOutputStream::drainTasks() noexcept
+{
+    for (int i = 0; i < _jobs; i++) {
+        if (_futures[i].valid()) {
+            try {
+                _futures[i].get();
+            }
+            catch (...) {
+                // The caller already has the primary error. The purpose of
+                // this method is to complete every worker before teardown.
+            }
+        }
+    }
+}
+#endif
 
 
 void CompressedOutputStream::submitBlock()
@@ -745,8 +815,7 @@ T EncodingTask<T>::run()
         transform->forward(*_data, *_buffer, blockLength);
         const int nbTransforms = transform->getNbTransforms();
         const kanzi::byte skipFlags = transform->getSkipFlags();
-        delete transform;
-        transform = nullptr;
+        DELETE_AND_NULL(TransformSequence<kanzi::byte>, transform);
         postTransformLength = _buffer->_index;
 
         if (postTransformLength < 0) {
@@ -837,15 +906,19 @@ T EncodingTask<T>::run()
 
         // Entropy encode block
         if (ee->encode(_buffer->_array, 0, postTransformLength) != postTransformLength) {
-            delete ee;
+            try {
+                DELETE_AND_NULL(EntropyEncoder, ee);
+            }
+            catch (...) {
+            }
+
             storeProcessedBlockId(CompressedOutputStream::CANCEL_TASKS_ID);
             return T(blockId, Error::ERR_PROCESS_BLOCK, "Entropy coding failed");
         }
 
         // Dispose before processing statistics (may write to the bitstream)
         ee->dispose();
-        delete ee;
-        ee = nullptr;
+        DELETE_AND_NULL(EntropyEncoder, ee);
         obs.close();
         uint64 written = obs.written();
 
@@ -972,12 +1045,50 @@ T EncodingTask<T>::run()
         // Cancel any in-flight task waiting on this block.
         storeProcessedBlockId(CompressedOutputStream::CANCEL_TASKS_ID);
 
-        if (transform != nullptr)
-            delete transform;
+        // Cleanup must not replace the original block-processing error. In
+        // particular, an encoder destructor may flush its bitstream and can
+        // itself report a stream error while unwinding.
+        if (transform != nullptr) {
+            try {
+                DELETE_AND_NULL(TransformSequence<kanzi::byte>, transform);
+            }
+            catch (...) {
+            }
+        }
 
-        if (ee != nullptr)
-            delete ee;
+        if (ee != nullptr) {
+            try {
+                DELETE_AND_NULL(EntropyEncoder, ee);
+            }
+            catch (...) {
+            }
+        }
 
         return T(blockId, Error::ERR_PROCESS_BLOCK, e.what());
     }
+    catch (...) {
+        // Keep the cancellation and cleanup guarantees even for an exception
+        // type that does not derive from std::exception.
+        storeProcessedBlockId(CompressedOutputStream::CANCEL_TASKS_ID);
+
+        if (transform != nullptr) {
+            try {
+                DELETE_AND_NULL(TransformSequence<kanzi::byte>, transform);
+            }
+            catch (...) {
+            }
+        }
+
+        if (ee != nullptr) {
+            try {
+                DELETE_AND_NULL(EntropyEncoder, ee);
+            }
+            catch (...) {
+            }
+        }
+
+        return T(blockId, Error::ERR_PROCESS_BLOCK, "Unknown block processing error");
+    }
 }
+
+#undef DELETE_AND_NULL

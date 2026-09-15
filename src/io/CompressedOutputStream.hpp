@@ -221,6 +221,9 @@ namespace kanzi {
        std::vector<std::future<EncodingTaskResult> > _futures; // Futures for async tasks
        std::mutex _blockMutex;
        std::condition_variable _blockCondition;
+
+       // Drain all tasks after an asynchronous failure before releasing shared resources.
+       void drainTasks() noexcept;
 #endif
 
        void processBuffer();

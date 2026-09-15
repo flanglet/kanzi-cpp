@@ -37,7 +37,13 @@ FPAQEncoder::FPAQEncoder(OutputBitStream& bitstream)
 
 FPAQEncoder::~FPAQEncoder()
 {
-    _dispose();
+    // Destructors must not replace an encoding error or terminate the process
+    // while unwinding after a bitstream failure.
+    try {
+        _dispose();
+    }
+    catch (...) {
+    }
 }
 
 bool FPAQEncoder::reset()
