@@ -176,10 +176,10 @@ namespace kanzi {
        if (count == 0)
            return true;
 
-       if (count > output._length - output._index)
-           return false;
-
        if (_skipFlags == SKIP_MASK) {
+           if (count > output._length - output._index)
+               return false;
+
            std::memmove(&output._array[output._index], &input._array[input._index], size_t(count));
 
            input._index += count;
