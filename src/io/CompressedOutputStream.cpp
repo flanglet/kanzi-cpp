@@ -834,6 +834,19 @@ T EncodingTask<T>::run()
         // Record size of 'block size' - 1 in bytes
         mode |= kanzi::byte(((dataSize - 1) & 0x03) << 5);
 
+        // Binary entropy codecs reject blocks at or above 1 GiB. The
+        // transformed-copy representation can preserve the transformed data
+        // without passing it through entropy coding.
+        bool transformedCopy = false;
+
+        if ((mode & CompressedOutputStream::COPY_BLOCK_MASK) == kanzi::byte(0)) {
+            if (uint(postTransformLength) >= uint(CompressedOutputStream::MAX_BITSTREAM_BLOCK_SIZE)) {
+                transformedCopy = true;
+                mode |= CompressedOutputStream::COPY_BLOCK_MASK |
+                    CompressedOutputStream::TRANSFORMS_MASK;
+            }
+        }
+
         if (_listeners.size() > 0) {
             // Notify after transform
             Event evt(Event::AFTER_TRANSFORM, blockId,
@@ -860,7 +873,21 @@ T EncodingTask<T>::run()
         // Write block 'header' (mode + compressed length)
         kanzi::byte headerSkipFlags = skipFlags;
 
-        if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != kanzi::byte(0)) || (nbTransforms <= 4)) {
+        if (transformedCopy == true) {
+            if (nbTransforms <= 4) {
+                mode |= kanzi::byte(skipFlags >> 4);
+                headerSkipFlags = (mode << 4) | kanzi::byte(0x0F);
+            }
+            else {
+                headerSkipFlags = skipFlags;
+            }
+
+            obs.writeBits(uint64(mode), 8);
+
+            if (nbTransforms > 4)
+                obs.writeBits(uint64(skipFlags), 8);
+        }
+        else if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) != kanzi::byte(0)) || (nbTransforms <= 4)) {
             mode |= kanzi::byte(skipFlags >> 4);
 
             if ((mode & CompressedOutputStream::COPY_BLOCK_MASK) != kanzi::byte(0))
@@ -882,7 +909,7 @@ T EncodingTask<T>::run()
         // temporary block has been written.
         uint headerChecksumIndex = uint(1 + dataSize);
 
-        if (((mode & CompressedOutputStream::COPY_BLOCK_MASK) == kanzi::byte(0)) && (nbTransforms > 4))
+        if (((mode & CompressedOutputStream::TRANSFORMS_MASK) != kanzi::byte(0)) && (nbTransforms > 4))
             headerChecksumIndex++;
 
         obs.writeBits(uint64(0), 8);
@@ -900,27 +927,44 @@ T EncodingTask<T>::run()
             CompressedOutputStream::notifyListeners(_listeners, evt);
         }
 
-        // Each block is encoded separately
-        // Rebuild the entropy encoder to reset block statistics
-        ee = EntropyEncoderFactory::newEncoder(obs, _ctx, eType);
+        uint64 written = 0;
 
-        // Entropy encode block
-        if (ee->encode(_buffer->_array, 0, postTransformLength) != postTransformLength) {
-            try {
-                DELETE_AND_NULL(EntropyEncoder, ee);
-            }
-            catch (...) {
+        if (transformedCopy == true) {
+            // Entropy coding is unavailable for this transformed block. Keep
+            // the transformed bytes and let the decoder reverse the transforms.
+            for (uint n = 0, remaining = uint(postTransformLength); remaining > 0; ) {
+                const uint chunk = min(remaining, uint(1) << 27);
+                obs.writeBits(&_buffer->_array[n], 8 * chunk);
+                n += chunk;
+                remaining -= chunk;
             }
 
-            storeProcessedBlockId(CompressedOutputStream::CANCEL_TASKS_ID);
-            return T(blockId, Error::ERR_PROCESS_BLOCK, "Entropy coding failed");
+            obs.close();
+            written = obs.written();
         }
+        else {
+            // Each block is encoded separately
+            // Rebuild the entropy encoder to reset block statistics
+            ee = EntropyEncoderFactory::newEncoder(obs, _ctx, eType);
 
-        // Dispose before processing statistics (may write to the bitstream)
-        ee->dispose();
-        DELETE_AND_NULL(EntropyEncoder, ee);
-        obs.close();
-        uint64 written = obs.written();
+            // Entropy encode block
+            if (ee->encode(_buffer->_array, 0, postTransformLength) != postTransformLength) {
+                try {
+                    DELETE_AND_NULL(EntropyEncoder, ee);
+                }
+                catch (...) {
+                }
+
+                storeProcessedBlockId(CompressedOutputStream::CANCEL_TASKS_ID);
+                return T(blockId, Error::ERR_PROCESS_BLOCK, "Entropy coding failed");
+            }
+
+            // Dispose before processing statistics (may write to the bitstream)
+            ee->dispose();
+            DELETE_AND_NULL(EntropyEncoder, ee);
+            obs.close();
+            written = obs.written();
+        }
 
         // If not a copy block, check if entropy expanded the transformed block
         if ((mode & CompressedOutputStream::COPY_BLOCK_MASK) == kanzi::byte(0)) {

@@ -949,8 +949,11 @@ T DecodingTask<T>::run()
         const int from = _ctx.getInt("from", 1);
         const int to = _ctx.getInt("to", CompressedInputStream::MAX_BLOCK_ID);
         const bool bufferBlock = (streamPerTask == true) || (blockId < from);
-        const int maxTransformSize = int(min(max(_blockLength + _blockLength / 2, 2048u),
-                                         uint(CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE)));
+        const uint maxTransformedCopySize = uint(max(_blockLength + _blockLength / 2, 2048u));
+        // Keep the normal bitstream cap for entropy-coded blocks, while
+        // allowing transformed-copy blocks to carry bounded transform expansion.
+        const uint maxEntropyTransformSize = uint(min(maxTransformedCopySize,
+                                                       uint(CompressedInputStream::MAX_BITSTREAM_BLOCK_SIZE)));
         ParsedBlockHeader blockHeader;
         bool blockHeaderParsed = false;
 
@@ -966,8 +969,11 @@ T DecodingTask<T>::run()
 
             blockHeaderParsed = true;
 
+            const uint maxAllowedTransformSize = blockHeader._transformedCopy ?
+                maxTransformedCopySize : maxEntropyTransformSize;
+
             if ((blockHeader._preTransformLength <= 0) ||
-                (blockHeader._preTransformLength > maxTransformSize)) {
+                (uint(blockHeader._preTransformLength) > maxAllowedTransformSize)) {
                 storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
                 stringstream ss;
                 ss << "Invalid compressed block length: " << blockHeader._preTransformLength;
@@ -1065,7 +1071,11 @@ T DecodingTask<T>::run()
             eType = EntropyDecoderFactory::NONE_TYPE;
         }
 
-        if ((preTransformLength <= 0) || (preTransformLength > maxTransformSize)) {
+        const uint maxAllowedTransformSize = transformedCopy ?
+            maxTransformedCopySize : maxEntropyTransformSize;
+
+        if ((preTransformLength <= 0) ||
+            (uint(preTransformLength) > maxAllowedTransformSize)) {
             // Error => cancel concurrent decoding tasks
             storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
             stringstream ss;
