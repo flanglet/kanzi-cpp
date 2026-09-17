@@ -182,7 +182,12 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     // Select xor coding if large signed deltas approach the rate expected for
     // unrelated byte pairs. With modular delta coding, large signed deltas
     // no longer cause expansion, so the old 3% threshold is too conservative.
-    const kanzi::byte mode = (largeDeltas > (count5 >> 2)) ? XOR_CODING : DELTA_CODING;
+    const kanzi::byte coding = (largeDeltas > (count5 >> 2)) ? XOR_CODING : DELTA_CODING;
+
+    // Keep triplet-correlated data interleaved since phase bucketing can
+    // disrupt downstream matches for this layout.
+    const bool bucketed = (dist > 1) && (dist != 3) && (dist != 16);
+    const kanzi::byte mode = kanzi::byte(int(coding) | (bucketed == true ? 2 : 0));
     dst[0] = mode;
     dst[1] = kanzi::byte(dist);
     int srcIdx = 0;
@@ -192,8 +197,33 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     for (int i = 0; i < dist; i++)
         dst[dstIdx++] = src[srcIdx++];
 
-    // Emit modified bytes
-    if (mode == DELTA_CODING) {
+    // Emit modified bytes. The bucketed layout keeps each phase together.
+    if (bucketed == true) {
+        const int bucketLength = 1 << 15;
+        const int tileLength = dist * bucketLength;
+
+        for (int tileStart = 0; tileStart < srcEnd; tileStart += tileLength) {
+            const int tileEnd = min(tileStart + tileLength, srcEnd);
+
+            for (int lane = 0; lane < dist; lane++) {
+                const int firstPos = tileStart + lane + ((tileStart == 0) ? dist : 0);
+
+                for (int pos = firstPos; pos < tileEnd; pos += dist) {
+                    if (coding == DELTA_CODING) {
+                        const uint residual = uint(uint8(int(src[pos]) - int(src[pos - dist])));
+                        const uint zigzag = (residual & 0x80) ? ((256 - residual) << 1) - 1 : residual << 1;
+                        dst[dstIdx++] = kanzi::byte(zigzag);
+                    }
+                    else {
+                        dst[dstIdx++] = src[pos] ^ src[pos - dist];
+                    }
+                }
+            }
+        }
+
+        srcIdx = srcEnd;
+    }
+    else if (coding == DELTA_CODING) {
         while (srcIdx < srcEnd) {
             // Encode the delta modulo 256. The signed difference is not
             // needed to reconstruct a byte, and all 256 residuals fit in
@@ -205,7 +235,7 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
             srcIdx++;
         }
     }
-    else { // mode == XOR_CODING
+    else { // coding == XOR_CODING
         while (srcIdx + 16 <= srcEnd) {
             KANZI_MEM_XOR16(&dst[dstIdx], &src[srcIdx], &src[srcIdx - dist]);
             srcIdx += 16;
@@ -251,9 +281,6 @@ bool FSDCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
 {
     const int bsVersion = (_pCtx == nullptr) ? 7 : _pCtx->getInt("bsVersion", 7);
 
-    if (bsVersion >= 7)
-        return inverseV7(input, output, count);
-
     if (count == 0)
         return true;
 
@@ -279,13 +306,22 @@ bool FSDCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
 
     // Retrieve mode & step value
     const kanzi::byte mode = src[0];
+    const int modeValue = int(mode);
+    const kanzi::byte coding = kanzi::byte(modeValue & 1);
+    const bool bucketed = ((modeValue & 2) != 0);
     const int dist = int(src[1]);
 
     // Sanity check
     if ((dist < 1) || ((dist > 4) && (dist != 8) && (dist != 16)))
         return false;
 
-    if ((count < dist + 2) || (dist > dstEnd))
+    if ((bsVersion >= 7) && ((modeValue & ~3) != 0))
+        return false;
+
+    const int dataLength = count - 2;
+
+    if ((count < dist + 2) || (dist > dstEnd) ||
+        (bucketed && (dataLength > dstEnd)))
         return false;
 
     // Emit first bytes
@@ -294,103 +330,83 @@ bool FSDCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     int dstIdx = dist;
 
     // Recover original bytes
-    if (mode == DELTA_CODING) {
-        while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
-            if (src[srcIdx] != ESCAPE_TOKEN) {
-                const int value = int(src[srcIdx]);
-                const int delta = (value >> 1) ^ -(value & 1);
-                dst[dstIdx] = kanzi::byte(int(dst[dstIdx - dist]) + delta);
+    if (bsVersion < 7) {
+        if (mode == DELTA_CODING) {
+            while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
+                if (src[srcIdx] != ESCAPE_TOKEN) {
+                    const int value = int(src[srcIdx]);
+                    const int delta = (value >> 1) ^ -(value & 1);
+                    dst[dstIdx] = kanzi::byte(int(dst[dstIdx - dist]) + delta);
+                    srcIdx++;
+                    dstIdx++;
+                    continue;
+                }
+
+                srcIdx++;
+
+                if (srcIdx == srcEnd)
+                    return false;
+
+                dst[dstIdx] = src[srcIdx] ^ dst[dstIdx - dist];
                 srcIdx++;
                 dstIdx++;
-                continue;
-            }
-
-            srcIdx++;
-
-            if (srcIdx == srcEnd)
-                return false;
-
-            dst[dstIdx] = src[srcIdx] ^ dst[dstIdx - dist];
-            srcIdx++;
-            dstIdx++;
-        }
-    }
-    else if (mode == XOR_CODING) {
-        if (dist == 16) {
-            while ((srcIdx + 16 <= srcEnd) && (dstIdx + 16 <= dstEnd)) {
-                KANZI_MEM_XOR16(&dst[dstIdx], &src[srcIdx], &dst[dstIdx - 16]);
-                srcIdx += 16;
-                dstIdx += 16;
             }
         }
-        else if (dist == 8) {
-            while ((srcIdx + 8 <= srcEnd) && (dstIdx + 8 <= dstEnd)) {
-                KANZI_MEM_XOR8(&dst[dstIdx], &src[srcIdx], &dst[dstIdx - 8]);
-                srcIdx += 8;
-                dstIdx += 8;
+        else if (mode == XOR_CODING) {
+            if (dist == 16) {
+                while ((srcIdx + 16 <= srcEnd) && (dstIdx + 16 <= dstEnd)) {
+                    KANZI_MEM_XOR16(&dst[dstIdx], &src[srcIdx], &dst[dstIdx - 16]);
+                    srcIdx += 16;
+                    dstIdx += 16;
+                }
+            }
+            else if (dist == 8) {
+                while ((srcIdx + 8 <= srcEnd) && (dstIdx + 8 <= dstEnd)) {
+                    KANZI_MEM_XOR8(&dst[dstIdx], &src[srcIdx], &dst[dstIdx - 8]);
+                    srcIdx += 8;
+                    dstIdx += 8;
+                }
+            }
+
+            while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
+                dst[dstIdx] = src[srcIdx] ^ dst[dstIdx - dist];
+                srcIdx++;
+                dstIdx++;
+            }
+        }
+        else {
+            // Invalid mode
+            return false;
+        }
+    }
+    else if (bucketed) {
+        const int bucketLength = 1 << 15;
+        const int tileLength = dist * bucketLength;
+
+        for (int tileStart = 0; tileStart < dataLength; tileStart += tileLength) {
+            const int tileEnd = min(tileStart + tileLength, dataLength);
+
+            for (int lane = 0; lane < dist; lane++) {
+                const int firstPos = tileStart + lane + ((tileStart == 0) ? dist : 0);
+
+                for (int pos = firstPos; pos < tileEnd; pos += dist) {
+                    if (srcIdx >= srcEnd)
+                        return false;
+
+                    if (coding == DELTA_CODING) {
+                        const uint value = uint(uint8(src[srcIdx++]));
+                        dst[pos] = kanzi::byte(int(dst[pos - dist]) + int(ZIGZAG2[value]));
+                    }
+                    else {
+                        dst[pos] = src[srcIdx++] ^ dst[pos - dist];
+                    }
+                }
             }
         }
 
-        while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
-            dst[dstIdx] = src[srcIdx] ^ dst[dstIdx - dist];
-            srcIdx++;
-            dstIdx++;
-        }
+        dstIdx = dataLength;
     }
-    else {
-        // Invalid mode
-        return false;
-    }
-
-    input._index += srcIdx;
-    output._index += dstIdx;
-    return srcIdx == srcEnd;
-}
-
-
-bool FSDCodec::inverseV7(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
-{
-    if (count == 0)
-        return true;
-
-    if (!SliceArray<kanzi::byte>::isValid(input))
-        throw invalid_argument("FSD codec: Invalid input block");
-
-    if (!SliceArray<kanzi::byte>::isValid(output))
-        throw invalid_argument("FSD codec: Invalid output block");
-
-    if (input._array == output._array)
-        return false;
-
-    if (count < 4)
-        return false;
-
-    if (input._index + count > input._length)
-        return false;
-
-    const int srcEnd = count;
-    const int dstEnd = output._length - output._index;
-    const kanzi::byte* src = &input._array[input._index];
-    kanzi::byte* dst = &output._array[output._index];
-
-    // Retrieve mode & step value
-    const kanzi::byte mode = src[0];
-    const int dist = int(src[1]);
-
-    // Sanity check
-    if ((dist < 1) || ((dist > 4) && (dist != 8) && (dist != 16)))
-        return false;
-
-    if ((count < dist + 2) || (dist > dstEnd))
-        return false;
-
-    // Emit first bytes
-    memcpy(&dst[0], &src[2], size_t(dist));
-    int srcIdx = dist + 2;
-    int dstIdx = dist;
-
-    // Recover original bytes
-    if (mode == DELTA_CODING) {
+    else if (coding == DELTA_CODING) {
         while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
             const uint value = uint(uint8(src[srcIdx++]));
             const int delta = int(ZIGZAG2[value]);
@@ -398,7 +414,7 @@ bool FSDCodec::inverseV7(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             dstIdx++;
         }
     }
-    else if (mode == XOR_CODING) {
+    else if (coding == XOR_CODING) {
         if (dist == 16) {
             while ((srcIdx + 16 <= srcEnd) && (dstIdx + 16 <= dstEnd)) {
                 KANZI_MEM_XOR16(&dst[dstIdx], &src[srcIdx], &dst[dstIdx - 16]);

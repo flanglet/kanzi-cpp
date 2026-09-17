@@ -53,7 +53,6 @@ namespace kanzi {
 
        Context* _pCtx;
 
-       bool inverseV7(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
    };
 }
 #endif

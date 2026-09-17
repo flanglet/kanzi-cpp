@@ -927,6 +927,136 @@ static int testOverlappingTransformCopies()
     return 0;
 }
 
+static int testFSDBucketedRoundTrip()
+{
+    cout << endl
+         << "FSD bucket layout round trip" << endl;
+    const int dist = 4;
+    const int bucketLength = 1 << 15;
+    const int size = 2 * dist * bucketLength;
+    vector<kanzi::byte> data(size);
+
+    for (int lane = 0; lane < dist; lane++) {
+        int value = lane * 37 + 17;
+
+        for (int sample = 0; sample < size / dist; sample++) {
+            data[sample * dist + lane] = kanzi::byte(value);
+            value += (((sample * 17 + lane * 13) % 5) == 0) ? 1 : 0;
+        }
+    }
+
+    Context ctx;
+    ctx.putInt("bsVersion", BS_VERSION);
+    FSDCodec codec(ctx);
+    vector<kanzi::byte> encoded(codec.getMaxEncodedLength(size), kanzi::byte(0));
+    SliceArray<kanzi::byte> input(&data[0], size, 0);
+    SliceArray<kanzi::byte> output(&encoded[0], int(encoded.size()), 0);
+
+    if (codec.forward(input, output, size) == false) {
+        cout << "Bucketed FSD encoding was skipped or failed" << endl;
+        return 1;
+    }
+
+    if ((input._index != size) || (output._index != size + 2) ||
+        (int(output._array[1]) != dist) || ((int(output._array[0]) & 2) == 0)) {
+        cout << "Invalid bucketed FSD header or size" << endl;
+        return 1;
+    }
+
+    int outputIndex = 2 + dist;
+    const int tileLength = dist * bucketLength;
+
+    for (int tileStart = 0; tileStart < size; tileStart += tileLength) {
+        const int tileEnd = min(tileStart + tileLength, size);
+
+        for (int lane = 0; lane < dist; lane++) {
+            const int firstPos = tileStart + lane + ((tileStart == 0) ? dist : 0);
+
+            for (int pos = firstPos; pos < tileEnd; pos += dist) {
+                kanzi::byte expected;
+
+                if ((int(output._array[0]) & 1) == 0) {
+                    const uint residual = uint(uint8(int(data[pos]) - int(data[pos - dist])));
+                    const uint zigzag = (residual & 0x80) ? ((256 - residual) << 1) - 1 : residual << 1;
+                    expected = kanzi::byte(zigzag);
+                }
+                else {
+                    expected = data[pos] ^ data[pos - dist];
+                }
+
+                if (output._array[outputIndex++] != expected) {
+                    cout << "Bucketed FSD output order mismatch" << endl;
+                    return 1;
+                }
+            }
+        }
+    }
+
+    if (outputIndex != output._index) {
+        cout << "Bucketed FSD output length mismatch" << endl;
+        return 1;
+    }
+
+    const int encodedSize = output._index;
+    vector<kanzi::byte> decoded(size, kanzi::byte(0));
+    SliceArray<kanzi::byte> encodedInput(&encoded[0], int(encoded.size()), 0);
+    SliceArray<kanzi::byte> decodedOutput(&decoded[0], size, 0);
+
+    if ((codec.inverse(encodedInput, decodedOutput, encodedSize) == false) ||
+        (encodedInput._index != encodedSize) || (decodedOutput._index != size)) {
+        cout << "Bucketed FSD inverse failed" << endl;
+        return 1;
+    }
+
+    for (int i = 0; i < size; i++) {
+        if (data[i] != decoded[i]) {
+            cout << "Bucketed FSD round trip mismatch" << endl;
+            return 1;
+        }
+    }
+
+    cout << "Bucketed FSD round trip passed" << endl;
+    return 0;
+}
+
+static int testFSDLegacyInverse()
+{
+    cout << endl
+         << "FSD legacy inverse" << endl;
+    const int encodedSize = 8;
+    const int decodedSize = 6;
+    kanzi::byte encoded[encodedSize] = {
+        kanzi::byte(0), kanzi::byte(2), kanzi::byte(10), kanzi::byte(20),
+        kanzi::byte(2), kanzi::byte(3), kanzi::byte(0), kanzi::byte(2)
+    };
+    const kanzi::byte expected[decodedSize] = {
+        kanzi::byte(10), kanzi::byte(20), kanzi::byte(11), kanzi::byte(18),
+        kanzi::byte(11), kanzi::byte(19)
+    };
+    kanzi::byte decoded[decodedSize] = { kanzi::byte(0) };
+    Context ctx;
+    ctx.putInt("bsVersion", 6);
+    FSDCodec codec(ctx);
+    SliceArray<kanzi::byte> input(encoded, encodedSize, 0);
+    SliceArray<kanzi::byte> output(decoded, decodedSize, 0);
+
+    if ((codec.inverse(input, output, encodedSize) == false) ||
+        (input._index != encodedSize) || (output._index != decodedSize)) {
+        cout << "FSD legacy inverse failed" << endl;
+        return 1;
+    }
+
+    for (int i = 0; i < decodedSize; i++) {
+        if (decoded[i] != expected[i]) {
+            cout << "FSD legacy inverse mismatch" << endl;
+            return 1;
+        }
+    }
+
+    cout << "FSD legacy inverse passed" << endl;
+    return 0;
+}
+
 static Transform<kanzi::byte>* getByteTransform(string name, Context& ctx)
 {
     if (name.compare("SRT") == 0)
@@ -1233,6 +1363,7 @@ int testTransformsCorrectness(const string& name, int& errorIteration)
         }
 
         cout << " (Compression ratio: " << (iba2._index * 100 / size) << "%)" << endl;
+
         count = iba2._index;
         iba1._index = 0;
         iba2._index = 0;
@@ -1481,6 +1612,16 @@ int TestTransforms_main(int argc, const char* argv[])
             return res;
 
         res = testOverlappingTransformCopies();
+
+        if (res != 0)
+            return res;
+
+        res = testFSDBucketedRoundTrip();
+
+        if (res != 0)
+            return res;
+
+        res = testFSDLegacyInverse();
 
         if (res != 0)
             return res;
