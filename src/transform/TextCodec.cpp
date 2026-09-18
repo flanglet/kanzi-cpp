@@ -265,6 +265,24 @@ byte TextCodec::computeStats(const byte block[], int count, uint freqs0[], bool 
         freqs0[i] += (f0[i] + f1[i] + f2[i] + f3[i]);
     }
 
+    // Reject simple alphabets before the text heuristic. Ignore line
+    // whitespace so wrapped DNA, Base64, and numeric data are detected too.
+    uint freqsSimple[256];
+    memcpy(&freqsSimple[0], &freqs0[0], sizeof(freqsSimple));
+    const int nbWhitespace = freqsSimple[' '] + freqsSimple['\t'] +
+                             freqsSimple['\n'] + freqsSimple['\r'];
+    const int simpleCount = count - nbWhitespace;
+    freqsSimple[' '] = 0;
+    freqsSimple['\t'] = 0;
+    freqsSimple['\n'] = 0;
+    freqsSimple['\r'] = 0;
+    const Global::DataType simpleType = Global::detectSimpleType(simpleCount, freqsSimple);
+
+    if (simpleType != Global::UNDEFINED) {
+        delete[] freqs1;
+        return TextCodec::MASK_NOT_TEXT | byte(simpleType);
+    }
+
     const int cr = int(CR);
     const int lf = int(LF);
     int nbTextChars = freqs0[cr] + freqs0[lf];
@@ -1376,7 +1394,7 @@ int TextCodec2::emitWordIndex(kanzi::byte dst[], int wIdx)
 {
     // 0x80 is reserved to first symbol case flip
     if (wIdx < V7_INDEX_BASE2) {
-        dst[0] = kanzi::byte(0x80 | (wIdx + 1));
+        dst[0] = kanzi::byte(0x81 + wIdx);
         return 1;
     }
 
