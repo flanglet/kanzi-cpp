@@ -171,18 +171,7 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
 
     const int distances[7] = { 0, 1, 2, 3, 4, 8, 16 };
     const int dist = distances[minIdx];
-    int largeDeltas = 0;
-
-    // Detect best coding by sampling for large deltas
-    for (int i = 2 * count5; i < 3 * count5; i++) {
-        const int delta = int(src[i]) - int(src[i - dist]);
-        largeDeltas += (uint32_t(delta + 127) > 254 ? 1 : 0);
-    }
-
-    // Select xor coding if large signed deltas approach the rate expected for
-    // unrelated byte pairs. With modular delta coding, large signed deltas
-    // no longer cause expansion, so the old 3% threshold is too conservative.
-    const kanzi::byte coding = (largeDeltas > (count5 >> 2)) ? XOR_CODING : DELTA_CODING;
+    const kanzi::byte coding = DELTA_CODING;
 
     // Keep triplet-correlated data interleaved since phase bucketing can
     // disrupt downstream matches for this layout.
@@ -209,21 +198,16 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
                 const int firstPos = tileStart + lane + ((tileStart == 0) ? dist : 0);
 
                 for (int pos = firstPos; pos < tileEnd; pos += dist) {
-                    if (coding == DELTA_CODING) {
-                        const uint residual = uint(uint8(int(src[pos]) - int(src[pos - dist])));
-                        const uint zigzag = (residual & 0x80) ? ((256 - residual) << 1) - 1 : residual << 1;
-                        dst[dstIdx++] = kanzi::byte(zigzag);
-                    }
-                    else {
-                        dst[dstIdx++] = src[pos] ^ src[pos - dist];
-                    }
+                    const uint residual = uint(uint8(int(src[pos]) - int(src[pos - dist])));
+                    const uint zigzag = (residual & 0x80) ? ((256 - residual) << 1) - 1 : residual << 1;
+                    dst[dstIdx++] = kanzi::byte(zigzag);
                 }
             }
         }
 
         srcIdx = srcEnd;
     }
-    else if (coding == DELTA_CODING) {
+    else {
         while (srcIdx < srcEnd) {
             // Encode the delta modulo 256. The signed difference is not
             // needed to reconstruct a byte, and all 256 residuals fit in
@@ -232,24 +216,6 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
             const uint residual = uint(uint8(int(src[srcIdx]) - int(src[srcIdx - dist])));
             const uint zigzag = (residual & 0x80) ? ((256 - residual) << 1) - 1 : residual << 1;
             dst[dstIdx++] = kanzi::byte(zigzag);
-            srcIdx++;
-        }
-    }
-    else { // coding == XOR_CODING
-        while (srcIdx + 16 <= srcEnd) {
-            KANZI_MEM_XOR16(&dst[dstIdx], &src[srcIdx], &src[srcIdx - dist]);
-            srcIdx += 16;
-            dstIdx += 16;
-        }
-
-        while (srcIdx + 8 <= srcEnd) {
-            KANZI_MEM_XOR8(&dst[dstIdx], &src[srcIdx], &src[srcIdx - dist]);
-            srcIdx += 8;
-            dstIdx += 8;
-        }
-
-        while (srcIdx < srcEnd) {
-            dst[dstIdx++] = src[srcIdx] ^ src[srcIdx - dist];
             srcIdx++;
         }
     }
