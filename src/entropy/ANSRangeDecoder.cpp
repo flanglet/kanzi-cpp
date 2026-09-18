@@ -29,6 +29,8 @@ const int ANSRangeDecoder::DEFAULT_ANS0_CHUNK_SIZE = 16384;
 const int ANSRangeDecoder::DEFAULT_LOG_RANGE = 12;
 const int ANSRangeDecoder::MIN_CHUNK_SIZE = 1024;
 const int ANSRangeDecoder::MAX_CHUNK_SIZE = 1 << 27; // 8*MAX_CHUNK_SIZE must not over
+static const int ANS_DECODE_CHECK_INTERVAL = 128;
+static const uint ANS_PAYLOAD_GUARD = 2 * ANS_DECODE_CHECK_INTERVAL + 2;
 
 
 // The chunk size indicates how many bytes are encoded (per block) before
@@ -194,7 +196,7 @@ int ANSRangeDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
 
     const uint size = min(uint(_chunkSize), count);
     const uint extra = max(size >> 3, min(size, uint(1 << 16)));
-    const uint minBufSize = size + extra + 2;
+    const uint minBufSize = size + extra + ANS_PAYLOAD_GUARD;
 
     if (_bufferSize < minBufSize) {
         kanzi::byte* buffer = new kanzi::byte[minBufSize];
@@ -233,7 +235,7 @@ bool ANSRangeDecoder::decodeChunk(kanzi::byte block[], uint count)
     // Read chunk size
     const uint sz = uint(EntropyUtils::readVarInt(_bitstream));
 
-    if ((sz >= MAX_CHUNK_SIZE) || (sz > _bufferSize - 2))
+    if ((sz >= MAX_CHUNK_SIZE) || (sz > _bufferSize - ANS_PAYLOAD_GUARD))
        return false;
 
     // Read initial ANS states
@@ -245,9 +247,12 @@ bool ANSRangeDecoder::decodeChunk(kanzi::byte block[], uint count)
     if (count == 0)
         return true;
 
-    // Read encoded data from bitstream
-    memset(_buffer, 0, _bufferSize);
+    // Read encoded data from bitstream. decodeSymbol() is branchless and may
+    // speculatively read two bytes when no renormalization is needed. Keep a
+    // small, zeroed guard after the declared payload and validate consumption
+    // in batches below.
     _bitstream.readBits(&_buffer[0], 8 * sz);
+    memset(&_buffer[sz], 0, ANS_PAYLOAD_GUARD);
     kanzi::byte* p = &_buffer[0];
     kanzi::byte* const endPayload = &_buffer[sz];
 
@@ -255,19 +260,26 @@ bool ANSRangeDecoder::decodeChunk(kanzi::byte block[], uint count)
     const int count4 = count & -4;
 
     if (_order == 0) {
-        for (int i = 0; i < count4; i += 4) {
-            const uint8 cur3 = _f2s[st3 & mask];
-            block[i] = kanzi::byte(cur3);
-            st3 = decodeSymbol(p, st3, _symbols[cur3], mask);
-            const uint8 cur2 = _f2s[st2 & mask];
-            block[i + 1] = kanzi::byte(cur2);
-            st2 = decodeSymbol(p, st2, _symbols[cur2], mask);
-            const uint8 cur1 = _f2s[st1 & mask];
-            block[i + 2] = kanzi::byte(cur1);
-            st1 = decodeSymbol(p, st1, _symbols[cur1], mask);
-            const uint8 cur0 = _f2s[st0 & mask];
-            block[i + 3] = kanzi::byte(cur0);
-            st0 = decodeSymbol(p, st0, _symbols[cur0], mask);
+        for (int batch = 0; batch < count4; batch += ANS_DECODE_CHECK_INTERVAL) {
+            const int endBatch = min(batch + ANS_DECODE_CHECK_INTERVAL, count4);
+
+            for (int i = batch; i < endBatch; i += 4) {
+                const uint8 cur3 = _f2s[st3 & mask];
+                block[i] = kanzi::byte(cur3);
+                st3 = decodeSymbol(p, st3, _symbols[cur3], mask);
+                const uint8 cur2 = _f2s[st2 & mask];
+                block[i + 1] = kanzi::byte(cur2);
+                st2 = decodeSymbol(p, st2, _symbols[cur2], mask);
+                const uint8 cur1 = _f2s[st1 & mask];
+                block[i + 2] = kanzi::byte(cur1);
+                st1 = decodeSymbol(p, st1, _symbols[cur1], mask);
+                const uint8 cur0 = _f2s[st0 & mask];
+                block[i + 3] = kanzi::byte(cur0);
+                st0 = decodeSymbol(p, st0, _symbols[cur0], mask);
+            }
+
+            if (p > endPayload)
+                return false;
         }
     }
     else {
@@ -278,25 +290,37 @@ bool ANSRangeDecoder::decodeChunk(kanzi::byte block[], uint count)
         int i3 = 3 * quarter;
         int prv0 = 0, prv1 = 0, prv2 = 0, prv3 = 0;
 
-        for ( ; i0 < quarter; i0++, i1++, i2++, i3++) {
-            const uint8 cur3 = _f2s[(prv3 << _logRange) + (st3 & mask)];
-            const uint8 cur2 = _f2s[(prv2 << _logRange) + (st2 & mask)];
-            const uint8 cur1 = _f2s[(prv1 << _logRange) + (st1 & mask)];
-            const uint8 cur0 = _f2s[(prv0 << _logRange) + (st0 & mask)];
-            st3 = decodeSymbol(p, st3, _symbols[(prv3 << 8) | cur3], mask);
-            st2 = decodeSymbol(p, st2, _symbols[(prv2 << 8) | cur2], mask);
-            st1 = decodeSymbol(p, st1, _symbols[(prv1 << 8) | cur1], mask);
-            st0 = decodeSymbol(p, st0, _symbols[(prv0 << 8) | cur0], mask);
-            block[i3] = kanzi::byte(cur3);
-            block[i2] = kanzi::byte(cur2);
-            block[i1] = kanzi::byte(cur1);
-            block[i0] = kanzi::byte(cur0);
-            prv3 = cur3;
-            prv2 = cur2;
-            prv1 = cur1;
-            prv0 = cur0;
+        for (int batch = 0; batch < quarter; batch += ANS_DECODE_CHECK_INTERVAL >> 2) {
+            const int endBatch = min(batch + (ANS_DECODE_CHECK_INTERVAL >> 2), quarter);
+
+            for ( ; i0 < endBatch; i0++, i1++, i2++, i3++) {
+                const uint8 cur3 = _f2s[(prv3 << _logRange) + (st3 & mask)];
+                const uint8 cur2 = _f2s[(prv2 << _logRange) + (st2 & mask)];
+                const uint8 cur1 = _f2s[(prv1 << _logRange) + (st1 & mask)];
+                const uint8 cur0 = _f2s[(prv0 << _logRange) + (st0 & mask)];
+                st3 = decodeSymbol(p, st3, _symbols[(prv3 << 8) | cur3], mask);
+                st2 = decodeSymbol(p, st2, _symbols[(prv2 << 8) | cur2], mask);
+                st1 = decodeSymbol(p, st1, _symbols[(prv1 << 8) | cur1], mask);
+                st0 = decodeSymbol(p, st0, _symbols[(prv0 << 8) | cur0], mask);
+                block[i3] = kanzi::byte(cur3);
+                block[i2] = kanzi::byte(cur2);
+                block[i1] = kanzi::byte(cur1);
+                block[i0] = kanzi::byte(cur0);
+                prv3 = cur3;
+                prv2 = cur2;
+                prv1 = cur1;
+                prv0 = cur0;
+            }
+
+            if (p > endPayload)
+                return false;
         }
     }
+
+    const uint tail = count - uint(count4);
+
+    if (size_t(endPayload - p) < tail)
+        return false;
 
     for (uint i = count4; i < count; i++)
         block[i] = *p++;
