@@ -331,11 +331,7 @@ template <typename T, bool SourceIsBigEndian>
 static KANZI_ALWAYS_INLINE T readEndian(const byte* p) {
     T val;
 
-#ifdef AGGRESSIVE_OPTIMIZATION
-    val = *reinterpret_cast<const T*>(p); // may be unaligned
-#else
     memcpy(&val, p, sizeof(T));
-#endif
 
     // Swap if host and source endianness differ
 #if __cplusplus >= 202002L
@@ -376,11 +372,7 @@ static KANZI_ALWAYS_INLINE void writeEndian(byte* p, T val) {
             val = (T)knz_bswap64((uint64)val);
     }
 
-#ifdef AGGRESSIVE_OPTIMIZATION
-    *reinterpret_cast<T*>(p) = val;
-#else
     memcpy(p, &val, sizeof(T));
-#endif
 }
 
 
