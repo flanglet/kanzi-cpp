@@ -182,8 +182,8 @@ bool AliasCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                     return false;
             }
 
-            // Sort by decreasing order 1 frequencies
-            sort(v.begin(), v.end());
+            // Only the n0 most frequent digrams are used, in decreasing order.
+            partial_sort(v.begin(), v.begin() + n0, v.end());
         }
 
         int16 map16[65536];
