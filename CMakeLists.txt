@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-set(KANZI_PROJECT_VERSION "2.5.3")
+set(KANZI_PROJECT_VERSION "2.6.0")
 set(KANZI_ABI_VERSION "1.0.0")
 project(kanzi VERSION ${KANZI_PROJECT_VERSION} LANGUAGES C CXX)
 
@@ -45,6 +45,10 @@ find_package(Threads REQUIRED)
 
 if(CONCURRENCY_DISABLED)
     add_definitions(-DCONCURRENCY_DISABLED)
+endif()
+
+if(NOT WIN32)
+    add_definitions(-D_FILE_OFFSET_BITS=64)
 endif()
 
 if(MSVC)

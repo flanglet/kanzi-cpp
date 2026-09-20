@@ -1,8 +1,8 @@
-.TH "KANZI" "1" "Feb 2026" "kanzi 2.5" "User Commands"
+.TH "KANZI" "1" "Oct 2026" "kanzi 2.6" "User Commands"
 .SH "NAME"
-\fBkanzi\fR \- Compress and decompress \.knz files
+\fBkanzi\fR \- Compress, decompress, and inspect \.knz files
 .SH "SYNOPSIS"
-\fBkanzi\fR [\fIOPTIONS\fR] [\-i \fIINPUT\-FILE\fR] [\-o \fIOUTPUT\-FILE\fR]
+\fBkanzi\fR [\fIOPTIONS\fR] [\-c|\-d|\-y] [\-i \fIINPUT\-FILE\fR] [\-o \fIOUTPUT\-FILE\fR]
 .SH "DESCRIPTION"
 \fBKanzi\fR is a modern, modular, portable and efficient lossless data compressor\.
 
@@ -25,25 +25,31 @@ Help\.
 
 Compression mode\.
 
+   \fB-c, --compress\fR
+        Compress mode
+
    \fB-i, --input=<inputName>\fR
-        Mandatory name of the input file or directory or 'stdin'
+        Optional name of the input file or directory or 'stdin'. If omitted,
+        input is read from stdin.
         When the source is a directory, all files in it will be processed.
         Provide /. at the end of the directory name to avoid recursion
         (e.g., myDir/. => no recursion)
 
    \fB-o, --output=<outputName>\fR
         Optional name of the output file or directory (defaults to
-        <inputName.knz>) or 'none' or 'stdout'. 'stdout' is not valid
+        <inputName.knz> if input is <inputName> or 'stdout' if input is 'stdin')
+        or 'none' or 'stdout'. 'stdout' is not valid
         when the number of jobs is greater than 1
 
    \fB-b, --block=<size>\fR
-        Size of blocks (default 4|8|16|32 MB based on level, max 1 GB, min 1 KB)
+        Size of blocks (default 4|8|16|32 MiB based on level, max 1 GiB, min 1 KiB)
         'auto' means that the compressor derives the best value
         based on input size (when available) and number of jobs
 
    \fB-l, --level=<compression>\fR
         Set the compression level [0..9]
         Providing this option forces the entropy codec and transform.
+        Defaults to level 3 if not provided.
         See the definitions of the transforms and entropy codecs in the last section.
         0 = NONE&NONE (store)
         1 = LZX&NONE
@@ -78,15 +84,20 @@ Compression mode\.
 
 Decompression mode\.
 
+   \fB-d, --decompress\fR
+        Decompress mode
+
    \fB-i, --input=<inputName>\fR
-        Mandatory name of the input file or directory or 'stdin'
+        Optional name of the input file or directory or 'stdin'. If omitted,
+        input is read from stdin.
         When the source is a directory, all files in it will be processed.
         Provide /. at the end of the directory name to avoid recursion
         (e.g., myDir/. => no recursion)
 
    \fB-o, --output=<outputName>\fR
         Optional name of the output file or directory (defaults to
-        <inputName.bak>) or 'none' or 'stdout'. 'stdout' is not valid
+        <inputName> if input is <inputName.knz>, or <inputName.bak> otherwise,
+        or 'stdout' if input is 'stdin') or 'none' or 'stdout'. 'stdout' is not valid
         when the number of jobs is greater than 1.
 
    \fB--from=blockId\fR
@@ -101,6 +112,9 @@ Decompression mode\.
         If the input is a directory, all processed files under the directory are removed.
 
 Info mode\.
+
+   \fB-y, --info\fR
+        Display information about compressed files
 
    \fB-i, --input=<inputName>\fR
         Mandatory name of the compressed input file.
@@ -133,16 +147,16 @@ Operation modifiers\.
 
 .SS "Examples"
 
-Compress recursively all files under 'dir' in test mode (no output file) using a 4 MB block, compression level 4, and extra verbosity.
+Compress recursively all files under 'dir' in test mode (no output file) using a 4 MiB block, compression level 4, and extra verbosity.
 kanzi -c -i dir -o none -b 4m -l 4 -v 3
 
-Compress foo.txt to foo.txt.knz (overwrite it if it already exists) using the BWT, MTFT, and ZRLT transforms, the FPAQ entropy codec, and 4 threads; generate a checksum for each 4 MB block.
+Compress foo.txt to foo.txt.knz (overwrite it if it already exists) using the BWT, MTFT, and ZRLT transforms, the FPAQ entropy codec, and 4 threads; generate a checksum for each 4 MiB block.
 kanzi -c -i foo.txt -f -t BWT+MTFT+ZRLT -b 4m -e FPAQ -j 4 -x
 
-Compress from stdin (--input option is omitted) to foo.knz using compression level 2, 64 KB blocks, and the default number of threads.
+Compress from stdin (--input option is omitted) to foo.knz using compression level 2, 64 KiB blocks, and the default number of threads.
 cat foo.txt | kanzi -c -o foo.knz -l 2 -b 64k
 
-Decompress foo.txt.knz to foo.txt.knz.bak using 2 threads.
+Decompress foo.txt.knz to foo.txt using 2 threads.
 kanzi -d -i foo.txt.knz -j 2
 
 Decompress foo.txt.knz to stdout and delete the compressed file.

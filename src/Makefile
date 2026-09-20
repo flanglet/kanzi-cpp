@@ -47,6 +47,8 @@ ifeq ($(DETECTED_OS),Windows)
 	CXXFLAGS += -c -std=$(CXX_STD) -Wall -Wextra -O3 -fomit-frame-pointer -fPIC -DNDEBUG -pedantic -march=native -fno-rtti $(CONCURRENCY_FLAG)
 else
 	ARCH ?= $(shell uname -m)
+	CFLAGS += -D_FILE_OFFSET_BITS=64
+	CXXFLAGS += -D_FILE_OFFSET_BITS=64
 
 	# Check for both x86_64 (Linux) and amd64 (FreeBSD)
 	ifneq ($(filter x86_64 amd64,$(ARCH)),)
