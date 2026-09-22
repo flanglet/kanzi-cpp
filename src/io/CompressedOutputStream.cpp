@@ -97,7 +97,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
     _bufferThreshold = blockSize;
     _inputSize = fileSize;
     const int nbBlocks = (_inputSize == 0) ? 0 : int((_inputSize + int64(blockSize - 1)) / int64(blockSize));
-    _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
+    _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY);
     _headless = headerless;
     _initialized = 0;
     _closed = 0;
@@ -192,7 +192,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
 
     _inputSize = ctx.getLong("fileSize", 0);
     const int nbBlocks = (_inputSize == 0) ? 0 : int((_inputSize + int64(blockSize - 1)) / int64(blockSize));
-    _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY - 1);
+    _nbInputBlocks = min(nbBlocks, MAX_CONCURRENCY);
     _jobs = tasks;
     _blockId = 0;
     _inputBlockId = 0;
