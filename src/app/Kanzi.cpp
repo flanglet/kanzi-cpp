@@ -375,7 +375,7 @@ static bool toInt(const string& s, int& res)
 
        const int digit = s[i] - '0';
 
-       if (value > (numeric_limits<int>::max() - digit) / 10)
+       if (value > ((numeric_limits<int>::max)() - digit) / 10)
            return false;
 
        value = value * 10 + digit;
@@ -894,7 +894,7 @@ int processCommandLine(int argc, const char* argv[], Context& map, Printer& log)
                 }
 
                 if ((toInt(arg, blockSize) == false) ||
-                    (uint64(blockSize) > uint64(numeric_limits<int>::max()) / scale)) {
+                    (uint64(blockSize) > uint64((numeric_limits<int>::max)()) / scale)) {
                     cerr << "Invalid block size provided on command line: " << arg << endl;
                     return Error::ERR_INVALID_PARAM;
                 }
