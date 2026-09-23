@@ -773,7 +773,7 @@ T EncodingTask<T>::run()
                 if (skip == false) {
                     uint histo[256] = { 0 };
                     Global::computeHistogram(&_data->_array[_data->_index], blockLength, histo);
-                    const int entropy = Global::computeFirstOrderEntropy1024(blockLength, histo);
+                    const int entropy = Global::computeOrder0Entropy1024(blockLength, histo);
                     skip = entropy >= EntropyUtils::INCOMPRESSIBLE_THRESHOLD;
                     //_ctx.putString("histo0", toString(histo, 256));
                 }

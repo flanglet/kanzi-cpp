@@ -310,7 +310,7 @@ void Global::computeHistogram(const kanzi::byte block[], int length, uint freqs[
 
 // Return the zero order entropy scaled to the [0..1024] range
 // Incoming array size must be 256
-int Global::computeFirstOrderEntropy1024(int blockLen, const uint histo[])
+int Global::computeOrder0Entropy1024(int blockLen, const uint histo[])
 {
     if (blockLen == 0)
         return 0;
@@ -323,6 +323,39 @@ int Global::computeFirstOrderEntropy1024(int blockLen, const uint histo[])
             continue;
 
         sum += ((uint64(histo[i]) * uint64(logLength1024 - Global::log2_1024(histo[i]))) >> 3);
+    }
+
+    return int(sum / uint64(blockLen));
+}
+
+
+// Return the order 1 entropy scaled to the [0..1024] range
+// Incoming array size must be 65536
+int Global::computeOrder1Entropy1024(int blockLen, const uint histo[])
+{
+    if (blockLen == 0)
+        return 0;
+
+    uint64 sum = 0;
+
+    for (int prev = 0; prev < 256; prev++) {
+        const int base = 256 * prev;
+        uint total = 0;
+
+        for (int cur = 0; cur < 256; cur++)
+            total += histo[base + cur];
+
+        if (total == 0)
+            continue;
+
+        const int logTotal = Global::log2_1024(total);
+
+        for (int cur = 0; cur < 256; cur++) {
+            const uint freq = histo[base + cur];
+
+            if (freq != 0)
+                sum += (uint64(freq) * uint64(logTotal - Global::log2_1024(freq))) >> 3;
+        }
     }
 
     return int(sum / uint64(blockLen));

@@ -152,7 +152,7 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     int ent[7];
 
     for (int i = 0; i < 7; i++) {
-        ent[i] = Global::computeFirstOrderEntropy1024(3 * count10, histo[i]);
+        ent[i] = Global::computeOrder0Entropy1024(3 * count10, histo[i]);
 
         if (ent[i] < ent[minIdx])
             minIdx = i;
@@ -233,7 +233,7 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
         histo[0][int(out2[i])]++;
     }
 
-    const int entropy = Global::computeFirstOrderEntropy1024(count5, histo[0]);
+    const int entropy = Global::computeOrder0Entropy1024(count5, histo[0]);
 
     if (entropy >= ent[0])
         return false;
