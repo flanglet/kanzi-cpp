@@ -41,7 +41,7 @@ namespace kanzi
        // If the method returns false, the values of the indexes are best effort only.
        virtual bool inverse(SliceArray<T>& src, SliceArray<T>& dst, int length) = 0;
 
-       // Return the maximum possible length of the tranformed data
+       // Return the maximum possible length of the transformed data
        virtual int getMaxEncodedLength(int srcLen) const = 0;
 
        virtual ~Transform(){}

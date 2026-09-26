@@ -91,8 +91,8 @@ private:
     void _grow(std::size_t required) {
         const std::size_t current = std::size_t(_data->_length);
         const std::size_t written = std::size_t(this->pptr() - this->pbase());
-        const std::size_t grown = current + std::max(current >> 2, std::size_t(1) << 20);
-        const std::size_t newSize = std::max(required, std::max(grown, std::size_t(1024)));
+        const std::size_t grown = current + (std::max)(current >> 2, std::size_t(1) << 20);
+        const std::size_t newSize = (std::max)(required, (std::max)(grown, std::size_t(1024)));
         kanzi::byte* buf = new kanzi::byte[newSize];
 
         if (written > 0)

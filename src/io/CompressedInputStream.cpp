@@ -992,7 +992,7 @@ T DecodingTask<T>::run()
 
             read -= (uint64(blockHeader._size) << 3);
         }
-        else if (encodedBlockBytes > uint64(numeric_limits<int>::max())) {
+        else if (encodedBlockBytes > uint64((numeric_limits<int>::max)())) {
             storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
             return T(*_data, blockId, 0, 0, Error::ERR_BLOCK_SIZE, "Invalid block size");
         }

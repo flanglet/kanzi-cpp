@@ -184,31 +184,31 @@
 			Name="app"
 			>
 			<File
-				RelativePath=".\app\BlockCompressor.cpp"
+				RelativePath="..\src\app\BlockCompressor.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\app\BlockCompressor.hpp"
+				RelativePath="..\src\app\BlockCompressor.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\app\BlockDecompressor.cpp"
+				RelativePath="..\src\app\BlockDecompressor.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\app\BlockDecompressor.hpp"
+				RelativePath="..\src\app\BlockDecompressor.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\app\InfoPrinter.cpp"
+				RelativePath="..\src\app\InfoPrinter.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\app\InfoPrinter.hpp"
+				RelativePath="..\src\app\InfoPrinter.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\app\Kanzi.cpp"
+				RelativePath="..\src\app\Kanzi.cpp"
 				>
 			</File>
 		</Filter>
@@ -216,35 +216,35 @@
 			Name="bitstream"
 			>
 			<File
-				RelativePath=".\bitstream\DebugInputBitStream.cpp"
+				RelativePath="..\src\bitstream\DebugInputBitStream.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\bitstream\DebugInputBitStream.hpp"
+				RelativePath="..\src\bitstream\DebugInputBitStream.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\bitstream\DebugOutputBitStream.cpp"
+				RelativePath="..\src\bitstream\DebugOutputBitStream.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\bitstream\DebugOutputBitStream.hpp"
+				RelativePath="..\src\bitstream\DebugOutputBitStream.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\bitstream\DefaultInputBitStream.cpp"
+				RelativePath="..\src\bitstream\DefaultInputBitStream.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\bitstream\DefaultInputBitStream.hpp"
+				RelativePath="..\src\bitstream\DefaultInputBitStream.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\bitstream\DefaultOutputBitStream.cpp"
+				RelativePath="..\src\bitstream\DefaultOutputBitStream.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\bitstream\DefaultOutputBitStream.hpp"
+				RelativePath="..\src\bitstream\DefaultOutputBitStream.hpp"
 				>
 			</File>
 		</Filter>
@@ -252,151 +252,151 @@
 			Name="entropy"
 			>
 			<File
-				RelativePath=".\entropy\AdaptiveProbMap.hpp"
+				RelativePath="..\src\entropy\AdaptiveProbMap.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\ANSRangeDecoder.cpp"
+				RelativePath="..\src\entropy\ANSRangeDecoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\ANSRangeDecoder.hpp"
+				RelativePath="..\src\entropy\ANSRangeDecoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\ANSRangeEncoder.cpp"
+				RelativePath="..\src\entropy\ANSRangeEncoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\ANSRangeEncoder.hpp"
+				RelativePath="..\src\entropy\ANSRangeEncoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\BinaryEntropyDecoder.cpp"
+				RelativePath="..\src\entropy\BinaryEntropyDecoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\BinaryEntropyDecoder.hpp"
+				RelativePath="..\src\entropy\BinaryEntropyDecoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\BinaryEntropyEncoder.cpp"
+				RelativePath="..\src\entropy\BinaryEntropyEncoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\BinaryEntropyEncoder.hpp"
+				RelativePath="..\src\entropy\BinaryEntropyEncoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\CMPredictor.cpp"
+				RelativePath="..\src\entropy\CMPredictor.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\CMPredictor.hpp"
+				RelativePath="..\src\entropy\CMPredictor.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\EntropyDecoderFactory.hpp"
+				RelativePath="..\src\entropy\EntropyDecoderFactory.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\EntropyEncoderFactory.hpp"
+				RelativePath="..\src\entropy\EntropyEncoderFactory.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\EntropyUtils.cpp"
+				RelativePath="..\src\entropy\EntropyUtils.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\EntropyUtils.hpp"
+				RelativePath="..\src\entropy\EntropyUtils.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\ExpGolombDecoder.cpp"
+				RelativePath="..\src\entropy\ExpGolombDecoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\ExpGolombDecoder.hpp"
+				RelativePath="..\src\entropy\ExpGolombDecoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\ExpGolombEncoder.cpp"
+				RelativePath="..\src\entropy\ExpGolombEncoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\ExpGolombEncoder.hpp"
+				RelativePath="..\src\entropy\ExpGolombEncoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\FPAQDecoder.cpp"
+				RelativePath="..\src\entropy\FPAQDecoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\FPAQDecoder.hpp"
+				RelativePath="..\src\entropy\FPAQDecoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\FPAQEncoder.cpp"
+				RelativePath="..\src\entropy\FPAQEncoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\FPAQEncoder.hpp"
+				RelativePath="..\src\entropy\FPAQEncoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\HuffmanCommon.cpp"
+				RelativePath="..\src\entropy\HuffmanCommon.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\HuffmanCommon.hpp"
+				RelativePath="..\src\entropy\HuffmanCommon.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\HuffmanDecoder.cpp"
+				RelativePath="..\src\entropy\HuffmanDecoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\HuffmanDecoder.hpp"
+				RelativePath="..\src\entropy\HuffmanDecoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\HuffmanEncoder.cpp"
+				RelativePath="..\src\entropy\HuffmanEncoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\HuffmanEncoder.hpp"
+				RelativePath="..\src\entropy\HuffmanEncoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\NullEntropyDecoder.hpp"
+				RelativePath="..\src\entropy\NullEntropyDecoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\NullEntropyEncoder.hpp"
+				RelativePath="..\src\entropy\NullEntropyEncoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\RangeDecoder.cpp"
+				RelativePath="..\src\entropy\RangeDecoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\RangeDecoder.hpp"
+				RelativePath="..\src\entropy\RangeDecoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\RangeEncoder.cpp"
+				RelativePath="..\src\entropy\RangeEncoder.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\RangeEncoder.hpp"
+				RelativePath="..\src\entropy\RangeEncoder.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\TPAQPredictor.cpp"
+				RelativePath="..\src\entropy\TPAQPredictor.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\entropy\TPAQPredictor.hpp"
+				RelativePath="..\src\entropy\TPAQPredictor.hpp"
 				>
 			</File>
 		</Filter>
@@ -404,31 +404,31 @@
 			Name="io"
 			>
 			<File
-				RelativePath=".\io\CompressedInputStream.cpp"
+				RelativePath="..\src\io\CompressedInputStream.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\io\CompressedInputStream.hpp"
+				RelativePath="..\src\io\CompressedInputStream.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\io\CompressedOutputStream.cpp"
+				RelativePath="..\src\io\CompressedOutputStream.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\io\CompressedOutputStream.hpp"
+				RelativePath="..\src\io\CompressedOutputStream.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\io\IOException.hpp"
+				RelativePath="..\src\io\IOException.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\io\IOUtil.hpp"
+				RelativePath="..\src\io\IOUtil.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\io\NullOutputStream.hpp"
+				RelativePath="..\src\io\NullOutputStream.hpp"
 				>
 			</File>
 		</Filter>
@@ -436,23 +436,23 @@
 			Name="test"
 			>
 			<File
-				RelativePath=".\test\TestBWT.cpp"
+				RelativePath="..\src\test\TestBWT.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\test\TestCompressedStream.cpp"
+				RelativePath="..\src\test\TestCompressedStream.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\test\TestDefaultBitStream.cpp"
+				RelativePath="..\src\test\TestDefaultBitStream.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\test\TestEntropyCodec.cpp"
+				RelativePath="..\src\test\TestEntropyCodec.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\test\TestTransforms.cpp"
+				RelativePath="..\src\test\TestTransforms.cpp"
 				>
 			</File>
 		</Filter>
@@ -460,135 +460,135 @@
 			Name="transform"
 			>
 			<File
-				RelativePath=".\transform\AliasCodec.cpp"
+				RelativePath="..\src\transform\AliasCodec.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\AliasCodec.hpp"
+				RelativePath="..\src\transform\AliasCodec.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\BWT.cpp"
+				RelativePath="..\src\transform\BWT.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\BWT.hpp"
+				RelativePath="..\src\transform\BWT.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\BWTBlockCodec.cpp"
+				RelativePath="..\src\transform\BWTBlockCodec.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\BWTBlockCodec.hpp"
+				RelativePath="..\src\transform\BWTBlockCodec.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\BWTS.cpp"
+				RelativePath="..\src\transform\BWTS.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\BWTS.hpp"
+				RelativePath="..\src\transform\BWTS.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\DivSufSort.cpp"
+				RelativePath="..\src\transform\DivSufSort.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\DivSufSort.hpp"
+				RelativePath="..\src\transform\DivSufSort.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\EXECodec.cpp"
+				RelativePath="..\src\transform\EXECodec.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\EXECodec.hpp"
+				RelativePath="..\src\transform\EXECodec.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\FSDCodec.cpp"
+				RelativePath="..\src\transform\FSDCodec.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\FSDCodec.hpp"
+				RelativePath="..\src\transform\FSDCodec.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\LZCodec.cpp"
+				RelativePath="..\src\transform\LZCodec.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\LZCodec.hpp"
+				RelativePath="..\src\transform\LZCodec.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\NullTransform.hpp"
+				RelativePath="..\src\transform\NullTransform.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\RLT.cpp"
+				RelativePath="..\src\transform\RLT.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\RLT.hpp"
+				RelativePath="..\src\transform\RLT.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\ROLZCodec.cpp"
+				RelativePath="..\src\transform\ROLZCodec.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\ROLZCodec.hpp"
+				RelativePath="..\src\transform\ROLZCodec.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\SBRT.cpp"
+				RelativePath="..\src\transform\SBRT.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\SBRT.hpp"
+				RelativePath="..\src\transform\SBRT.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\SRT.cpp"
+				RelativePath="..\src\transform\SRT.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\SRT.hpp"
+				RelativePath="..\src\transform\SRT.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\TextCodec.cpp"
+				RelativePath="..\src\transform\TextCodec.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\TextCodec.hpp"
+				RelativePath="..\src\transform\TextCodec.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\TransformFactory.hpp"
+				RelativePath="..\src\transform\TransformFactory.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\TransformSequence.hpp"
+				RelativePath="..\src\transform\TransformSequence.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\UTFCodec.cpp"
+				RelativePath="..\src\transform\UTFCodec.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\UTFCodec.hpp"
+				RelativePath="..\src\transform\UTFCodec.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\ZRLT.cpp"
+				RelativePath="..\src\transform\ZRLT.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\transform\ZRLT.hpp"
+				RelativePath="..\src\transform\ZRLT.hpp"
 				>
 			</File>
 		</Filter>
@@ -596,31 +596,31 @@
 			Name="util"
 			>
 			<File
-				RelativePath=".\util\Clock.hpp"
+				RelativePath="..\src\util\Clock.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\util\fixedbuf.hpp"
+				RelativePath="..\src\util\fixedbuf.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\util\Printer.hpp"
+				RelativePath="..\src\util\Printer.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\util\strings.hpp"
+				RelativePath="..\src\util\strings.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\util\WallTimer.cpp"
+				RelativePath="..\src\util\WallTimer.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\util\WallTimer.hpp"
+				RelativePath="..\src\util\WallTimer.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\util\XXHash.hpp"
+				RelativePath="..\src\util\XXHash.hpp"
 				>
 			</File>
 		</Filter>
@@ -628,108 +628,108 @@
 			Name="api"
 			>
 			<File
-				RelativePath=".\api\Compressor.cpp"
+				RelativePath="..\src\api\Compressor.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\api\Compressor.hpp"
+				RelativePath="..\src\api\Compressor.hpp"
 				>
 			</File>
 			<File
-				RelativePath=".\api\Decompressor.cpp"
+				RelativePath="..\src\api\Decompressor.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\api\Decompressor.hpp"
+				RelativePath="..\src\api\Decompressor.hpp"
 				>
 			</File>
 		</Filter>
 		<File
-			RelativePath=".\BitStreamException.hpp"
+			RelativePath="..\src\BitStreamException.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\concurrent.hpp"
+			RelativePath="..\src\concurrent.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Context.hpp"
+			RelativePath="..\src\Context.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\EntropyDecoder.hpp"
+			RelativePath="..\src\EntropyDecoder.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\EntropyEncoder.hpp"
+			RelativePath="..\src\EntropyEncoder.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Error.hpp"
+			RelativePath="..\src\Error.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Event.cpp"
+			RelativePath="..\src\Event.cpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Event.hpp"
+			RelativePath="..\src\Event.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Global.cpp"
+			RelativePath="..\src\Global.cpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Global.hpp"
+			RelativePath="..\src\Global.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\InputBitStream.hpp"
+			RelativePath="..\src\InputBitStream.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\InputStream.hpp"
+			RelativePath="..\src\InputStream.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Listener.hpp"
+			RelativePath="..\src\Listener.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Magic.hpp"
+			RelativePath="..\src\Magic.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Memory.hpp"
+			RelativePath="..\src\Memory.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\msvc_dirent.hpp"
+			RelativePath="..\src\msvc_dirent.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\OutputBitStream.hpp"
+			RelativePath="..\src\OutputBitStream.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\OutputStream.hpp"
+			RelativePath="..\src\OutputStream.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Predictor.hpp"
+			RelativePath="..\src\Predictor.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\SliceArray.hpp"
+			RelativePath="..\src\SliceArray.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Transform.hpp"
+			RelativePath="..\src\Transform.hpp"
 			>
 		</File>
 		<File
-			RelativePath=".\types.hpp"
+			RelativePath="..\src\types.hpp"
 			>
 		</File>
 	</Files>
