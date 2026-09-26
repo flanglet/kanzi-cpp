@@ -51,7 +51,7 @@ Kanzi offers a compelling alternative for specific high-performance scenarios:
 
 ## Benchmarks
 
-Kanzi version 2.5.0 C++ implementation
+Kanzi version 2.6.0 C++ implementation
 
 _Note: The default block size at level 9 is 32MB. This limits the number of threads in use, especially with smaller files like enwik8, but all tests below are performed with default values._
 
@@ -60,7 +60,9 @@ _Note: The default block size at level 9 is 32MB. This limits the number of thre
 
 Test machine:
 
-AMD Ryzen 9 9950X 16-Core Processor running Ubuntu 25.10
+AMD Ryzen 9 9950X 16-Core Processor running Ubuntu 26.04.1 LTS
+
+zstd was built from latest github sources.
 
 Download at http://sun.aei.polsl.pl/~sdeor/corpus/silesia.zip
 
@@ -68,28 +70,28 @@ Download at http://sun.aei.polsl.pl/~sdeor/corpus/silesia.zip
 |---------------------------------|-----------------|-----------------|------------------|
 |Original                         |                 |                 |   211,957,760    |
 |lz4 1.1.10 -T16 -4               |        18       |         13      |    79,910,851    |
-|**kanzi -l 1**                   |      **72**     |       **42**    |    79,331,051    |
-|zstd 1.5.8 -T16 -2               |         6       |         11      |    69,443,247    |
-|**kanzi -l 2**                   |      **64**     |       **42**    |    68,616,621    |
+|**kanzi -l 1**                   |      **74**     |       **41**    |    79,184,957    |
+|zstd 1.6.0 -T16 -2               |        57       |         25      |    69,443,247    |
+|**kanzi -l 2**                   |      **59**     |       **41**    |    68,627,321    |
 |brotli 1.1.0 -2                  |       880       |        333      |    68,040,160    |
 |gzip 1.13 -9                     |     10328       |        704      |    67,651,076    |
-|**kanzi -l 3**                   |     **109**     |       **58**    |    63,966,794    |
-|zstd 1.5.8 -T16 -5               |       138       |        123      |    62,867,556    |
-|**kanzi -l 4**                   |     **194**     |      **102**    |    61,183,757    |
-|zstd 1.5.8 -T16 -9               |       320       |        114      |    59,233,481    |
+|**kanzi -l 3**                   |     **102**     |       **55**    |    63,093,409    |
+|zstd 1.6.0 -T16 -5               |       136       |         26      |    62,867,556    |
+|**kanzi -l 4**                   |     **178**     |       **90**    |    60,518,857    |
+|zstd 1.6.0 -T16 -9               |       322       |         24      |    59,233,481    |
 |brotli 1.1.0 -6                  |      4039       |        299      |    58,511,709    |
-|zstd 1.5.8 -T16 -13              |      1820       |        112      |    57,843,283    |
+|zstd 1.6.0 -T16 -13              |      1820       |         26      |    57,843,283    |
 |brotli 1.1.0 -9                  |     23030       |        293      |    56,407,229    |
 |bzip2 1.0.8 -9                   |      8223       |       3453      |    54,588,597    |
-|**kanzi -l 5**                   |     **529**     |      **255**    |    53,853,702    |
-|zstd 1.5.8 -T16 -19              |     11290       |        130      |    52,830,213    |
-|**kanzi -l 6**                   |     **919**     |      **532**    |    49,472,084    |
+|**kanzi -l 5**                   |     **569**     |      **275**    |    53,863,205    |
+|zstd 1.6.0 -T16 -19              |     11090       |         23      |    52,830,213    |
+|**kanzi -l 6**                   |     **922**     |      **523**    |    49,472,110    |
 |xz 5.8.1 -9                      |     43611       |        931      |    48,802,580    |
 |bsc 3.3.11 -T16                  |      1201       |        698      |    47,900,848    |
-|**kanzi -l 7**                   |    **1153**     |      **888**    |    47,330,422    |
+|**kanzi -l 7**                   |    **1150**     |      **885**    |    47,330,431    |
 |bzip3 1.5.1.r3-g428f422 -j 16    |      2348       |       2218      |    47,260,281    |
-|**kanzi -l 8**                   |    **4473**     |     **4881**    |    42,962,913    |
-|**kanzi -l 9**                   |   **11618**     |    **12381**    |    41,520,670    |
+|**kanzi -l 8**                   |    **4484**     |     **4911**    |    43,015,393    |
+|**kanzi -l 9**                   |   **11918**     |    **12665**    |    41,531,309    |
 
 
 
@@ -103,22 +105,22 @@ Round-trip graph for Silesia on AMD Ryzen 9950X (X = compTime + 2*decompTime, Y 
 
 Test machine:
 
-Apple M3 24 GB macOS Sonoma 15.7.3
+AMD Ryzen 9 9950X 16-Core Processor running Ubuntu 26.04.1 LTS
 
 Download at https://mattmahoney.net/dc/enwik8.zip
 
 |   Compressor    | Encoding (ms)  | Decoding (ms)  |    Size      |
 |-----------------|----------------|----------------|--------------|
 |Original         |                |                |  100,000,000 |
-|kanzi -l 1       |       139      |         85     |   42,870,183 |
-|kanzi -l 2       |       131      |         92     |   37,544,247 |
-|kanzi -l 3       |       215      |        123     |   32,551,405 |
-|kanzi -l 4       |       303      |        170     |   29,536,581 |
-|kanzi -l 5       |       670      |        372     |   26,528,254 |
-|kanzi -l 6       |      1009      |        727     |   24,076,765 |
-|kanzi -l 7       |      1607      |       1366     |   22,817,360 |
-|kanzi -l 8       |      6371      |       6752     |   21,181,992 |
-|kanzi -l 9       |      8260      |       8760     |   20,035,144 |
+|kanzi -l 1       |        45      |         22     |   42,941,668 |
+|kanzi -l 2       |        40      |         23     |   37,688,371 |
+|kanzi -l 3       |        78      |         36     |   32,562,496 |
+|kanzi -l 4       |       101      |         65     |   29,466,291 |
+|kanzi -l 5       |       224      |        136     |   26,521,279 |
+|kanzi -l 6       |       351      |        252     |   24,076,777 |
+|kanzi -l 7       |       871      |        691     |   22,817,366 |
+|kanzi -l 8       |      2985      |       3210     |   21,181,998 |
+|kanzi -l 9       |      7163      |       7721     |   20,035,687 |
 
 
 ![Graph for enwik8 on AMD Ryzen 9950X](doc/Plot_enwik8.png)
