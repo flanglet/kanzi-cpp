@@ -235,7 +235,7 @@ bool FSDCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
 
     const int entropy = Global::computeOrder0Entropy1024(count5, histo[0]);
 
-    if (entropy >= ent[0])
+    if (entropy * 100 >= ent[0] * 99)
         return false;
 
     input._index += srcIdx;
