@@ -196,9 +196,30 @@ bool DivSufSort::computeBWT(const kanzi::byte input[], kanzi::byte output[], int
 
 int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m, int indexes[], int idxCount)
 {
-    int pIdx = -1;
     const int st = n / idxCount;
     const int step = (idxCount * st == n) ? st : st + 1;
+
+    if ((step & (step - 1)) == 0) {
+        int shift = 0;
+
+        while ((1 << shift) < step)
+            shift++;
+
+        return constructBWTImpl<true>(bucketA, bucketB, n, m, indexes,
+                                      step, shift);
+    }
+
+    return constructBWTImpl<false>(bucketA, bucketB, n, m, indexes,
+                                   step, 0);
+}
+
+
+template <bool PowerOfTwo>
+int DivSufSort::constructBWTImpl(int bucketA[], int bucketB[], int n, int m,
+                                 int indexes[], int step, int shift)
+{
+    int pIdx = -1;
+    const int mask = step - 1;
 
     if (m > 0) {
         for (int c1 = 254; c1 >= 0; c1--) {
@@ -217,8 +238,13 @@ int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m, int ind
                     continue;
                 }
 
-                if ((s % step) == 0)
+                if (PowerOfTwo) {
+                    if ((s & mask) == 0)
+                        indexes[s >> shift] = j + 1;
+                }
+                else if ((s % step) == 0) {
                     indexes[s / step] = j + 1;
+                }
 
                 s--;
                 const int c0 = _buffer[s];
@@ -244,8 +270,13 @@ int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m, int ind
     int k = bucketA[c2];
 
     if (_buffer[n - 2] < c2) {
-        if (((n - 1) % step) == 0)
+        if (PowerOfTwo) {
+            if (((n - 1) & mask) == 0)
+                indexes[(n - 1) >> shift] = n;
+        }
+        else if (((n - 1) % step) == 0) {
             indexes[(n - 1) / step] = n;
+        }
 
         _sa[k++] = ~_buffer[n - 2];
     }
@@ -266,8 +297,13 @@ int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m, int ind
             continue;
         }
 
-        if ((s % step) == 0)
+        if (PowerOfTwo) {
+            if ((s & mask) == 0)
+                indexes[s >> shift] = i + 1;
+        }
+        else if ((s % step) == 0) {
             indexes[s / step] = i + 1;
+        }
 
         s--;
         const int c0 = _buffer[s];
@@ -280,7 +316,11 @@ int DivSufSort::constructBWT(int bucketA[], int bucketB[], int n, int m, int ind
         }
 
         if ((s > 0) && (_buffer[s - 1] < c0)) {
-            if ((s % step) == 0) {
+            if (PowerOfTwo) {
+                if ((s & mask) == 0)
+                    indexes[s >> shift] = k + 1;
+            }
+            else if ((s % step) == 0) {
                 indexes[s / step] = k + 1;
             }
 
@@ -550,51 +590,53 @@ void DivSufSort::ssSort(const int pa, int first, int last, int buf, int bufSize,
 }
 
 
-int DivSufSort::ssCompare(int pa, int pb, int p2, const int depth) const
+int DivSufSort::compareBytes(const uint8* data, int p1, int end1,
+                             int p2, int end2)
 {
-    int u1 = depth + pa;
-    int u2 = depth + _sa[p2];
-    const int u1n = pb + 2;
-    const int u2n = _sa[p2 + 1] + 2;
+    const int len1 = end1 - p1;
+    const int len2 = end2 - p2;
+    const int common = (len1 < len2) ? len1 : len2;
 
-    if (u1n - u1 > u2n - u2) {
-        while ((u2 < u2n) && (_buffer[u1] == _buffer[u2])) {
-            u1++;
-            u2++;
-        }
+    if (common >= 16) {
+        const int result = std::memcmp(data + p1, data + p2, size_t(common));
+
+        if (result != 0)
+            return (result < 0) ? -1 : 1;
     }
     else {
-        while ((u1 < u1n) && (_buffer[u1] == _buffer[u2])) {
-            u1++;
-            u2++;
+        for (int i = 0; i < common; i++) {
+            if (data[p1 + i] != data[p2 + i])
+                return (data[p1 + i] < data[p2 + i]) ? -1 : 1;
         }
     }
 
-    return (u1 < u1n) ? ((u2 < u2n) ? _buffer[u1] - _buffer[u2] : 1) : ((u2 < u2n) ? -1 : 0);
+    if (len1 < len2)
+        return -1;
+
+    if (len1 > len2)
+        return 1;
+
+    return 0;
+}
+
+
+int DivSufSort::ssCompare(int pa, int pb, int p2, const int depth) const
+{
+    return compareBytes(_buffer,
+                        depth + pa,
+                        pb + 2,
+                        depth + _sa[p2],
+                        _sa[p2 + 1] + 2);
 }
 
 
 int DivSufSort::ssCompare(const int sa1[], const int sa2[], const int depth) const
 {
-    int u1 = depth + sa1[0];
-    int u2 = depth + sa2[0];
-    const int u1n = sa1[1] + 2;
-    const int u2n = sa2[1] + 2;
-
-    if (u1n - u1 > u2n - u2) {
-         while ((u2 < u2n) && (_buffer[u1] == _buffer[u2])) {
-            u1++;
-            u2++;
-        }
-    }
-    else {
-        while ((u1 < u1n) && (_buffer[u1] == _buffer[u2])) {
-            u1++;
-            u2++;
-        }
-    }
-
-    return (u1 < u1n) ? ((u2 < u2n) ? _buffer[u1] - _buffer[u2] : 1) : ((u2 < u2n) ? -1 : 0);
+    return compareBytes(_buffer,
+                        depth + sa1[0],
+                        sa1[1] + 2,
+                        depth + sa2[0],
+                        sa2[1] + 2);
 }
 
 
@@ -2215,4 +2257,3 @@ void DivSufSort::trCopy(int isa, int first, int a, int b, int last, int depth)
         }
     }
 }
-

@@ -141,6 +141,10 @@ namespace kanzi
 
        int constructBWT(int bucketA[], int bucketB[], int n, int m, int indexes[], int idxCount);
 
+       template <bool PowerOfTwo>
+       int constructBWTImpl(int bucketA[], int bucketB[], int n, int m,
+           int indexes[], int step, int shift);
+
        int sortTypeBstar(int bucketA[], int bucketB[], int n);
 
        void ssSort(int pa, int first, int last, int buf, int bufSize,
@@ -157,6 +161,9 @@ namespace kanzi
        void ssBlockSwap(int a, int b, int n);
 
        static int getIndex(int a) { return (a >= 0) ? a : ~a; }
+
+       static int compareBytes(const uint8* data, int p1, int end1,
+           int p2, int end2);
 
        void ssSwapMerge(int pa, int first, int middle, int last, int buf,
            int bufSize, int depth);
@@ -332,4 +339,3 @@ namespace kanzi
 
 }
 #endif
-
