@@ -927,6 +927,86 @@ static int testOverlappingTransformCopies()
     return 0;
 }
 
+static int testAliasApplicability()
+{
+    cout << endl
+         << "Alias applicability" << endl;
+    const int size = 65536;
+    const char repetitiveSymbols[] = { '0', '1', '2', '3', '4', '5',
+                                      '6', '7', '8', '9', 'i', '\n' };
+    vector<kanzi::byte> repetitive(size);
+
+    for (int i = 0; i < size; i++)
+        repetitive[i] = kanzi::byte(repetitiveSymbols[i % 12]);
+
+    Context ctx;
+    ctx.putInt("bsVersion", BS_VERSION);
+    AliasCodec codec(ctx);
+    vector<kanzi::byte> encoded(codec.getMaxEncodedLength(size), kanzi::byte(0));
+    SliceArray<kanzi::byte> input(&repetitive[0], size, 0);
+    SliceArray<kanzi::byte> output(&encoded[0], int(encoded.size()), 0);
+
+    if ((codec.forward(input, output, size) != false) ||
+        (input._index != 0) || (output._index != 0)) {
+        cout << "Alias should skip highly predictable non-DNA data" << endl;
+        return 1;
+    }
+
+    vector<kanzi::byte> varied(size);
+    uint state = 1;
+
+    for (int i = 0; i < size; i++) {
+        state = state * 1664525u + 1013904223u;
+        varied[i] = kanzi::byte(repetitiveSymbols[(state >> 16) % 12]);
+    }
+
+    Context variedCtx;
+    variedCtx.putInt("bsVersion", BS_VERSION);
+    AliasCodec variedCodec(variedCtx);
+    vector<kanzi::byte> variedEncoded(variedCodec.getMaxEncodedLength(size), kanzi::byte(0));
+    SliceArray<kanzi::byte> variedInput(&varied[0], size, 0);
+    SliceArray<kanzi::byte> variedOutput(&variedEncoded[0], int(variedEncoded.size()), 0);
+
+    if ((variedCodec.forward(variedInput, variedOutput, size) == false) ||
+        (variedInput._index != size) || (variedOutput._index >= size)) {
+        cout << "Alias should keep useful small-alphabet packing" << endl;
+        return 1;
+    }
+
+    const char dnaSymbols[] = "ACGTN";
+    vector<kanzi::byte> dna(size);
+
+    for (int i = 0; i < size; i++)
+        dna[i] = kanzi::byte(dnaSymbols[i % 5]);
+
+    Context dnaCtx;
+    dnaCtx.putInt("bsVersion", BS_VERSION);
+    AliasCodec dnaCodec(dnaCtx);
+    vector<kanzi::byte> dnaEncoded(dnaCodec.getMaxEncodedLength(size), kanzi::byte(0));
+    SliceArray<kanzi::byte> dnaInput(&dna[0], size, 0);
+    SliceArray<kanzi::byte> dnaOutput(&dnaEncoded[0], int(dnaEncoded.size()), 0);
+
+    if ((dnaCodec.forward(dnaInput, dnaOutput, size) == false) ||
+        (dnaInput._index != size) || (dnaOutput._index >= size)) {
+        cout << "Alias should keep the DNA packing path" << endl;
+        return 1;
+    }
+
+    vector<kanzi::byte> decoded(size, kanzi::byte(0));
+    SliceArray<kanzi::byte> encodedInput(&dnaEncoded[0], int(dnaEncoded.size()), 0);
+    SliceArray<kanzi::byte> decodedOutput(&decoded[0], size, 0);
+
+    if ((dnaCodec.inverse(encodedInput, decodedOutput, dnaOutput._index) == false) ||
+        (encodedInput._index != dnaOutput._index) || (decodedOutput._index != size) ||
+        (memcmp(&dna[0], &decoded[0], size) != 0)) {
+        cout << "Alias DNA applicability round trip failed" << endl;
+        return 1;
+    }
+
+    cout << "Alias applicability passed" << endl;
+    return 0;
+}
+
 static int testFSDBucketedRoundTrip()
 {
     cout << endl
@@ -1607,6 +1687,11 @@ int TestTransforms_main(int argc, const char* argv[])
             return res;
 
         res = testTransformCapacityValidation();
+
+        if (res != 0)
+            return res;
+
+        res = testAliasApplicability();
 
         if (res != 0)
             return res;

@@ -59,6 +59,10 @@ namespace kanzi {
 
    private:
        static const int MIN_BLOCK_SIZE;
+       static const int ENTROPY_SAMPLE_SIZE;
+       static const int ENTROPY1_MAX;
+
+       static bool isHighlyPredictable(const byte source[], int sourceLength);
 
        Context* _pCtx;
        bool _onlyDNA;
@@ -66,4 +70,3 @@ namespace kanzi {
 }
 
 #endif
-

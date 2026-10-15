@@ -26,6 +26,39 @@ using namespace std;
 
 
 const int AliasCodec::MIN_BLOCK_SIZE = 1024;
+const int AliasCodec::ENTROPY_SAMPLE_SIZE = 64 * 1024;
+const int AliasCodec::ENTROPY1_MAX = 352; // 2.75 bits per byte or less
+
+
+bool AliasCodec::isHighlyPredictable(const kanzi::byte source[], int sourceLength)
+{
+    const int sampleSize = min(sourceLength, AliasCodec::ENTROPY_SAMPLE_SIZE);
+    const int lastOffset = sourceLength - sampleSize;
+    const int offsets[3] = { 0, lastOffset / 2, lastOffset };
+    int previousOffset = -1;
+    uint* histo = new uint[256 * 256];
+    bool predictable = false;
+
+    for (int i = 0; i < 3; i++) {
+        const int offset = offsets[i];
+
+        if (offset == previousOffset)
+            continue;
+
+        previousOffset = offset;
+        fill(histo, histo + 256 * 256, uint(0));
+        Global::computeHistogram(&source[offset], sampleSize, histo, false);
+        const int entropy1 = Global::computeOrder1Entropy1024(sampleSize, histo);
+
+        if (entropy1 <= AliasCodec::ENTROPY1_MAX) {
+            predictable = true;
+            break;
+        }
+    }
+
+    delete[] histo;
+    return predictable;
+}
 
 
 AliasCodec::AliasCodec(Context& ctx) :
@@ -228,6 +261,20 @@ bool AliasCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             dst[1] = kanzi::byte(1);
             dst[dstIdx++] = src[srcIdx++];
         }
+    }
+
+    // Do not replace a highly predictable 5-to-16-symbol block with a packed
+    // representation. The dictionary transforms can use the original byte
+    // contexts directly, whereas the packed representation may hide them.
+    // Keep the check local to the 4-bit packing path. In particular, do not
+    // apply it to DNA blocks: PACK can help the following dictionary
+    // transform on that data.
+    if ((dt != Global::DNA) && (n0 >= 240) && (n0 < 252) &&
+        isHighlyPredictable(src, count)) {
+        if (_pCtx != nullptr)
+            _pCtx->putInt("dataType", Global::UNDEFINED);
+
+        return false;
     }
 
     input._index += srcIdx;
