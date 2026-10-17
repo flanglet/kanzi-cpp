@@ -760,6 +760,7 @@ bool LZXCodec<T>::inverseV7(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
             }
 
             mLen += (mLen == 7 ? minMatch + int(readLength(src, mLenIdx)) : minMatch);
+
             if (KANZI_UNLIKELY(mIdx >= count)) {
                 res = false;
                 goto exit;
@@ -1073,9 +1074,18 @@ bool LZPCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
         _hashes[h] = srcIdx;
         int bestLen = 0;
 
-        // Find a match
-        if ((ref != 0) && KANZI_MEM_EQ8(&src[ref + MIN_MATCH - 8], &src[srcIdx + MIN_MATCH - 8]))
-            bestLen = findMatch(src, srcIdx, ref, srcEnd - srcIdx);
+        // Find a match. Check the last word first, then validate the other
+        // seven words in the minimum match before extending beyond it.
+        if ((ref != 0) &&
+            KANZI_MEM_EQ8(&src[ref + MIN_MATCH - 8], &src[srcIdx + MIN_MATCH - 8]) &&
+            KANZI_MEM_EQ16(&src[ref], &src[srcIdx]) &&
+            KANZI_MEM_EQ16(&src[ref + 16], &src[srcIdx + 16]) &&
+            KANZI_MEM_EQ16(&src[ref + 32], &src[srcIdx + 32]) &&
+            KANZI_MEM_EQ8(&src[ref + 48], &src[srcIdx + 48])) {
+            bestLen = MIN_MATCH + findMatch(src, srcIdx + MIN_MATCH,
+                                            ref + MIN_MATCH,
+                                            srcEnd - srcIdx - MIN_MATCH);
+        }
 
         // No good match ?
         if (bestLen < MIN_MATCH) {
@@ -1096,18 +1106,27 @@ bool LZPCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
         srcIdx += bestLen;
         ctx = LittleEndian::readInt32(&src[srcIdx - 4]);
         dst[dstIdx++] = kanzi::byte(MATCH_FLAG);
-        bestLen -= MIN_MATCH;
+        const int extra = bestLen - MIN_MATCH;
 
         // Emit match length
-        while ((bestLen >= 254) && (dstIdx < dstEnd)) {
-            bestLen -= 254;
-            dst[dstIdx++] = kanzi::byte(0xFE);
+        if (extra < 254) {
+            if (dstIdx >= dstEnd)
+                return false;
+
+            dst[dstIdx++] = kanzi::byte(extra);
         }
+        else {
+            const int extensions = extra / 254;
+            const int remainder = extra % 254;
 
-        if (dstIdx >= dstEnd)
-            return false;
+            // The remainder byte is required after all extension bytes.
+            if ((dstIdx >= dstEnd) || (extensions >= dstEnd - dstIdx))
+                return false;
 
-        dst[dstIdx++] = kanzi::byte(bestLen);
+            memset(&dst[dstIdx], 0xFE, size_t(extensions));
+            dstIdx += extensions;
+            dst[dstIdx++] = kanzi::byte(remainder);
+        }
     }
 
     while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
@@ -1174,6 +1193,79 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     int dstIdx = 4;
 
     while (srcIdx < srcEnd) {
+        // A run of ordinary literals does not need the previous table entry.
+        // Keep the context recurrence and table stores in source order. The
+        // left-shift recurrence is intentional: do not replace it with a
+        // load of the four preceding output bytes.
+        if ((src[srcIdx] != kanzi::byte(MATCH_FLAG)) && (dstIdx < dstEnd)) {
+            const int run = min(8, min(srcEnd - srcIdx, dstEnd - dstIdx));
+            int literalRun = 0;
+
+            while ((literalRun < run) &&
+                   (src[srcIdx + literalRun] != kanzi::byte(MATCH_FLAG)))
+                literalRun++;
+
+            if (literalRun > 0) {
+                const int start = srcIdx;
+
+                int i = 0;
+
+                if (literalRun >= 8) {
+                    uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx;
+                    ctx = (ctx << 8) | uint32(src[start]);
+                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx + 1;
+                    ctx = (ctx << 8) | uint32(src[start + 1]);
+                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx + 2;
+                    ctx = (ctx << 8) | uint32(src[start + 2]);
+                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx + 3;
+                    ctx = (ctx << 8) | uint32(src[start + 3]);
+                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx + 4;
+                    ctx = (ctx << 8) | uint32(src[start + 4]);
+                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx + 5;
+                    ctx = (ctx << 8) | uint32(src[start + 5]);
+                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx + 6;
+                    ctx = (ctx << 8) | uint32(src[start + 6]);
+                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx + 7;
+                    ctx = (ctx << 8) | uint32(src[start + 7]);
+                    i = 8;
+                }
+                else if (literalRun >= 4) {
+                    uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx;
+                    ctx = (ctx << 8) | uint32(src[start]);
+                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx + 1;
+                    ctx = (ctx << 8) | uint32(src[start + 1]);
+                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx + 2;
+                    ctx = (ctx << 8) | uint32(src[start + 2]);
+                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx + 3;
+                    ctx = (ctx << 8) | uint32(src[start + 3]);
+                    i = 4;
+                }
+
+                for (; i < literalRun; i++) {
+                    const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    _hashes[h] = dstIdx + i;
+                    ctx = (ctx << 8) | uint32(src[start + i]);
+                }
+
+                memcpy(&dst[dstIdx], &src[start], size_t(literalRun));
+                srcIdx += literalRun;
+                dstIdx += literalRun;
+                continue;
+            }
+        }
+
         const int32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
         int ref = _hashes[h];
         _hashes[h] = dstIdx;
@@ -1205,6 +1297,26 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
         uint64 mLen = MIN_MATCH;
 
         if (src[srcIdx] == kanzi::byte(0xFE)) {
+            const uint64 feWord = uint64(0xFEFEFEFEFEFEFEFE);
+
+            // Consume complete runs of 0xFE eight bytes at a time. The
+            // little-endian load makes the first non-0xFE byte the first
+            // nonzero byte in diff, so trailingZeros(diff) identifies the
+            // number of preceding extension bytes.
+            while (srcEnd - srcIdx >= 8) {
+                const uint64 diff = uint64(LittleEndian::readLong64(&src[srcIdx])) ^ feWord;
+
+                if (diff != 0) {
+                    const int run = Global::trailingZeros(diff) >> 3;
+                    srcIdx += run;
+                    mLen += uint64(run * 254);
+                    break;
+                }
+
+                srcIdx += 8;
+                mLen += uint64(8 * 254);
+            }
+
             while ((srcIdx < srcEnd) && (src[srcIdx] == kanzi::byte(0xFE))) {
                 srcIdx++;
                 mLen += 254;
@@ -1223,7 +1335,9 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
         const int mEnd = dstIdx + matchLen;
 
 
-        if (dstIdx >= ref + 16) {
+        const int dist = dstIdx - ref;
+
+        if (dist >= 16) {
             do {
                 // The stream decoder supplies trailing padding for this
                 // 16-byte copy, which may write up to 15 bytes past mEnd.
@@ -1232,9 +1346,53 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
                 dstIdx += 16;
             } while (dstIdx < mEnd);
         }
+        else if (dist == 1) {
+            memset(&dst[dstIdx], int(dst[ref]), size_t(matchLen));
+        }
+        else if ((dist == 2) || (dist == 4) || (dist == 8)) {
+            // These distances divide an 8-byte word. Build one complete
+            // period from the valid source bytes, then copy whole words.
+            kanzi::byte pattern[8];
+
+            for (int i = 0; i < 8; i++)
+                pattern[i] = dst[ref + (i % dist)];
+
+            int copied = 0;
+
+            while (matchLen - copied >= 8) {
+                KANZI_MEM_CP8(&dst[dstIdx + copied], &pattern[0]);
+                copied += 8;
+            }
+
+            if (copied < matchLen)
+                memcpy(&dst[dstIdx + copied], &pattern[0], size_t(matchLen - copied));
+        }
         else {
-            for (int i = 0; i < matchLen; i++)
-                dst[dstIdx + i] = dst[ref + i];
+            // For the other short distances, use a local repeated pattern.
+            // The phase changes at every wide copy, so copying from the
+            // already expanded output would be an overlapping copy.
+            kanzi::byte pattern[32];
+
+            for (int i = 0; i < 32; i++)
+                pattern[i] = dst[ref + (i % dist)];
+
+            int copied = 0;
+            int phase = 0;
+
+            while (matchLen - copied >= 16) {
+                KANZI_MEM_CP16(&dst[dstIdx + copied], &pattern[phase]);
+                copied += 16;
+                phase = (phase + 16) % dist;
+            }
+
+            if (matchLen - copied >= 8) {
+                KANZI_MEM_CP8(&dst[dstIdx + copied], &pattern[phase]);
+                copied += 8;
+                phase = (phase + 8) % dist;
+            }
+
+            if (copied < matchLen)
+                memcpy(&dst[dstIdx + copied], &pattern[phase], size_t(matchLen - copied));
         }
 
         dstIdx = mEnd;
