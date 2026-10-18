@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <algorithm>
 #include "LZCodec.hpp"
 #include "../Memory.hpp"
 #include "TransformFactory.hpp"
@@ -29,7 +30,10 @@ LZCodec::LZCodec(Context& ctx)
 {
     const int lzType = ctx.getInt("lz", TransformFactory<kanzi::byte>::LZ_TYPE);
 
-    if (lzType == TransformFactory<kanzi::byte>::LZP_TYPE) {
+    if (lzType == TransformFactory<kanzi::byte>::LZF_TYPE) {
+        _delegate = new LZFCodec(ctx);
+    }
+    else if (lzType == TransformFactory<kanzi::byte>::LZP_TYPE) {
         _delegate = new LZPCodec(ctx);
     }
     else if (lzType == TransformFactory<kanzi::byte>::LZX_TYPE) {
@@ -64,8 +68,6 @@ bool LZCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& o
 
 
 template<>
-const uint LZXCodec<false>::HASH_SEED = 0x1E35A7BD;
-template<>
 const uint LZXCodec<false>::HASH_LOG = 16;
 template<>
 const uint LZXCodec<false>::HASH_RSHIFT = 64 - HASH_LOG;
@@ -88,8 +90,6 @@ const int LZXCodec<false>::MIN_BLOCK_LENGTH = 24;
 template<>
 const int LZXCodec<false>::READ_LENGTH_GUARD = 4;
 template<>
-const uint LZXCodec<true>::HASH_SEED = 0x1E35A7BD;
-template<>
 const uint LZXCodec<true>::HASH_LOG = 19;
 template<>
 const uint LZXCodec<true>::HASH_RSHIFT = 64 - HASH_LOG;
@@ -111,7 +111,6 @@ template<>
 const int LZXCodec<true>::MIN_BLOCK_LENGTH = 24;
 template<>
 const int LZXCodec<true>::READ_LENGTH_GUARD = 4;
-
 
 
 template <bool T>
@@ -226,14 +225,14 @@ bool LZXCodec<T>::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
         const int minRef = max(srcIdx - maxDist, 0);
 
         if ((ref > minRef) && KANZI_MEM_EQ4(&src[srcIdx1], &src[ref])) {
-            // Check repd0 first
+            // Check repd0
             bestLen = findMatch(src, srcIdx1, ref, min(srcEnd - srcIdx1, MAX_MATCH));
         }
         else {
             ref = srcIdx1 - repd[repIdx ^ 1];
 
             if ((ref > minRef) && KANZI_MEM_EQ4(&src[srcIdx1], &src[ref])) {
-                // Check repd1 first
+                // Check repd1
                 bestLen = findMatch(src, srcIdx1, ref, min(srcEnd - srcIdx1, MAX_MATCH));
             }
         }
@@ -291,7 +290,7 @@ bool LZXCodec<T>::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
             }
 
             // Extend backwards
-            while ((srcIdx > anchor) && (ref > minRef) && (src[srcIdx - 1] == src[ref - 1])) {
+            while ((srcIdx > anchor) && (ref > 0) && (src[srcIdx - 1] == src[ref - 1])) {
                 bestLen++;
                 ref--;
                 srcIdx--;
@@ -432,7 +431,6 @@ bool LZXCodec<T>::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
         // 0, 3, 5, and 6; two even and two odd) to reduce hash-table work
         // while retaining coverage.
         anchor = srcIdx + bestLen;
-
         int hashIdx = srcIdx + 1;
 
         while (hashIdx + 6 < anchor) {
@@ -447,12 +445,12 @@ bool LZXCodec<T>::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
             hashIdx += 8;
         }
 
-        while (hashIdx < anchor) {
-            const int32 h = hash(&src[hashIdx]);
-            _hashes[h] = hashIdx;
-            hashIdx++;
-        }
-
+        const int32 hh0 = hash(&src[anchor - 4]);
+        _hashes[hh0] = anchor - 4;
+        const int32 hh1 = hash(&src[anchor - 2]);
+        _hashes[hh1] = anchor - 2;
+        const int32 hh2 = hash(&src[anchor - 1]);
+        _hashes[hh2] = anchor - 1;
         srcIdx = anchor;
     }
 
@@ -1014,7 +1012,6 @@ exit:
 }
 
 
-const uint LZPCodec::HASH_SEED = 0x7FEB352D;
 const uint LZPCodec::HASH_LOG = 16;
 const uint LZPCodec::HASH_SHIFT = 32 - HASH_LOG;
 const int LZPCodec::MIN_MATCH = 64;
@@ -1069,7 +1066,7 @@ bool LZPCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     int dstIdx = 4;
 
     while ((srcIdx < srcEnd - MIN_MATCH) && (dstIdx < dstEnd)) {
-        const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+        const uint32 h = hash(ctx);
         const int32 ref = _hashes[h];
         _hashes[h] = srcIdx;
         int bestLen = 0;
@@ -1130,7 +1127,7 @@ bool LZPCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     }
 
     while ((srcIdx < srcEnd) && (dstIdx < dstEnd)) {
-        const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+        const uint32 h = hash(ctx);
         const int ref = _hashes[h];
         _hashes[h] = srcIdx;
         const uint val = uint(src[srcIdx]);
@@ -1201,8 +1198,7 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
             const int run = min(8, min(srcEnd - srcIdx, dstEnd - dstIdx));
             int literalRun = 0;
 
-            while ((literalRun < run) &&
-                   (src[srcIdx + literalRun] != kanzi::byte(MATCH_FLAG)))
+            while ((literalRun < run) && (src[srcIdx + literalRun] != kanzi::byte(MATCH_FLAG)))
                 literalRun++;
 
             if (literalRun > 0) {
@@ -1211,50 +1207,50 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
                 int i = 0;
 
                 if (literalRun >= 8) {
-                    uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    uint32 h = hash(ctx);
                     _hashes[h] = dstIdx;
                     ctx = (ctx << 8) | uint32(src[start]);
-                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    h = hash(ctx);
                     _hashes[h] = dstIdx + 1;
                     ctx = (ctx << 8) | uint32(src[start + 1]);
-                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    h = hash(ctx);
                     _hashes[h] = dstIdx + 2;
                     ctx = (ctx << 8) | uint32(src[start + 2]);
-                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    h = hash(ctx);
                     _hashes[h] = dstIdx + 3;
                     ctx = (ctx << 8) | uint32(src[start + 3]);
-                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    h = hash(ctx);
                     _hashes[h] = dstIdx + 4;
                     ctx = (ctx << 8) | uint32(src[start + 4]);
-                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    h = hash(ctx);
                     _hashes[h] = dstIdx + 5;
                     ctx = (ctx << 8) | uint32(src[start + 5]);
-                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    h = hash(ctx);
                     _hashes[h] = dstIdx + 6;
                     ctx = (ctx << 8) | uint32(src[start + 6]);
-                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    h = hash(ctx);
                     _hashes[h] = dstIdx + 7;
                     ctx = (ctx << 8) | uint32(src[start + 7]);
                     i = 8;
                 }
                 else if (literalRun >= 4) {
-                    uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    uint32 h = hash(ctx);
                     _hashes[h] = dstIdx;
                     ctx = (ctx << 8) | uint32(src[start]);
-                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    h = hash(ctx);
                     _hashes[h] = dstIdx + 1;
                     ctx = (ctx << 8) | uint32(src[start + 1]);
-                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    h = hash(ctx);
                     _hashes[h] = dstIdx + 2;
                     ctx = (ctx << 8) | uint32(src[start + 2]);
-                    h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    h = hash(ctx);
                     _hashes[h] = dstIdx + 3;
                     ctx = (ctx << 8) | uint32(src[start + 3]);
                     i = 4;
                 }
 
                 for (; i < literalRun; i++) {
-                    const uint32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+                    const uint32 h = hash(ctx);
                     _hashes[h] = dstIdx + i;
                     ctx = (ctx << 8) | uint32(src[start + i]);
                 }
@@ -1266,7 +1262,7 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
             }
         }
 
-        const int32 h = (HASH_SEED * ctx) >> HASH_SHIFT;
+        const int32 h = hash(ctx);
         int ref = _hashes[h];
         _hashes[h] = dstIdx;
 
@@ -1322,19 +1318,17 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
                 mLen += 254;
             }
 
-            if (srcIdx >= srcEnd)
+            if (KANZI_UNLIKELY(srcIdx >= srcEnd))
                 return false;
         }
 
         mLen += uint64(src[srcIdx++]);
 
-        if (mLen > uint64(dstEnd - dstIdx))
+        if (KANZI_UNLIKELY(mLen > uint64(dstEnd - dstIdx)))
             return false;
 
         const int matchLen = int(mLen);
         const int mEnd = dstIdx + matchLen;
-
-
         const int dist = dstIdx - ref;
 
         if (dist >= 16) {
@@ -1346,53 +1340,63 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
                 dstIdx += 16;
             } while (dstIdx < mEnd);
         }
-        else if (dist == 1) {
-            memset(&dst[dstIdx], int(dst[ref]), size_t(matchLen));
-        }
-        else if ((dist == 2) || (dist == 4) || (dist == 8)) {
-            // These distances divide an 8-byte word. Build one complete
-            // period from the valid source bytes, then copy whole words.
-            kanzi::byte pattern[8];
-
-            for (int i = 0; i < 8; i++)
-                pattern[i] = dst[ref + (i % dist)];
-
-            int copied = 0;
-
-            while (matchLen - copied >= 8) {
-                KANZI_MEM_CP8(&dst[dstIdx + copied], &pattern[0]);
-                copied += 8;
-            }
-
-            if (copied < matchLen)
-                memcpy(&dst[dstIdx + copied], &pattern[0], size_t(matchLen - copied));
-        }
         else {
-            // For the other short distances, use a local repeated pattern.
-            // The phase changes at every wide copy, so copying from the
-            // already expanded output would be an overlapping copy.
-            kanzi::byte pattern[32];
+            switch (dist) {
+            case 1:
+                memset(&dst[dstIdx], int(dst[ref]), size_t(matchLen));
+                break;
+            case 2:
+            case 4:
+            case 8: {
+                // These distances divide an 8-byte word. Build one complete
+                // period from the valid source bytes, then copy whole words.
+                kanzi::byte pattern[8];
 
-            for (int i = 0; i < 32; i++)
-                pattern[i] = dst[ref + (i % dist)];
+                for (int i = 0; i < 8; i++)
+                    pattern[i] = dst[ref + (i % dist)];
 
-            int copied = 0;
-            int phase = 0;
+                int copied = 0;
 
-            while (matchLen - copied >= 16) {
-                KANZI_MEM_CP16(&dst[dstIdx + copied], &pattern[phase]);
-                copied += 16;
-                phase = (phase + 16) % dist;
+                while (matchLen - copied >= 8) {
+                    KANZI_MEM_CP8(&dst[dstIdx + copied], &pattern[0]);
+                    copied += 8;
+                }
+
+                if (copied < matchLen)
+                    memcpy(&dst[dstIdx + copied], &pattern[0], size_t(matchLen - copied));
+
+                break;
             }
+            default: {
+                // For the other short distances, use a local repeated pattern.
+                // The phase changes at every wide copy, so copying from the
+                // already expanded output would be an overlapping copy.
+                kanzi::byte pattern[32];
 
-            if (matchLen - copied >= 8) {
-                KANZI_MEM_CP8(&dst[dstIdx + copied], &pattern[phase]);
-                copied += 8;
-                phase = (phase + 8) % dist;
+                for (int i = 0; i < 32; i++)
+                    pattern[i] = dst[ref + (i % dist)];
+
+                int copied = 0;
+                int phase = 0;
+
+                while (matchLen - copied >= 16) {
+                    KANZI_MEM_CP16(&dst[dstIdx + copied], &pattern[phase]);
+                    copied += 16;
+                    phase = (phase + 16) % dist;
+                }
+
+                if (matchLen - copied >= 8) {
+                    KANZI_MEM_CP8(&dst[dstIdx + copied], &pattern[phase]);
+                    copied += 8;
+                    phase = (phase + 8) % dist;
+                }
+
+                if (copied < matchLen)
+                    memcpy(&dst[dstIdx + copied], &pattern[phase], size_t(matchLen - copied));
+
+                break;
             }
-
-            if (copied < matchLen)
-                memcpy(&dst[dstIdx + copied], &pattern[phase], size_t(matchLen - copied));
+            }
         }
 
         dstIdx = mEnd;
@@ -1402,4 +1406,371 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     input._index += srcIdx;
     output._index += dstIdx;
     return srcIdx == srcEnd;
+}
+
+
+const uint LZFCodec::HASH_LOG = 17;
+const int LZFCodec::MIN_MATCH = 6;
+const int LZFCodec::MIN_DISTANCE = 8;
+const int LZFCodec::MAX_DISTANCE = (1 << 26) - 2;
+const int LZFCodec::MAX_MATCH = 65793;
+const int LZFCodec::TAIL = 18;
+const int LZFCodec::MIN_BLOCK_LENGTH = LZFCodec::MIN_MATCH + LZFCodec::TAIL;
+
+
+bool LZFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+{
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input))
+        throw invalid_argument("LZF codec: Invalid input block");
+
+    if (!SliceArray<byte>::isValid(output))
+        throw invalid_argument("LZF codec: Invalid output block");
+
+    // If too small, skip
+    if (count < MIN_BLOCK_LENGTH)
+        return false;
+
+    if (count > input._length - input._index)
+        return false;
+
+    if (output._length - output._index < getMaxEncodedLength(count))
+        return false;
+
+    const byte* src = &input._array[input._index];
+    byte* dst = &output._array[output._index];
+    const int srcEnd = count - TAIL;
+    const int maxDistance = (srcEnd < 4 * 65534) ? 65534 : MAX_DISTANCE;
+
+    if (_hashes == nullptr)
+        _hashes = new int32[1 << HASH_LOG];
+
+    memset(_hashes, 0xFF, (1 << HASH_LOG) * sizeof(int32));
+    int pos = 0;
+    int anchor = 0;
+    int encoded = 5;
+    int repeat = 0;
+    int misses = 0;
+
+    while (pos < srcEnd - MIN_MATCH) {
+        const int h = hash(&src[pos]);
+        const int candidate = _hashes[h];
+        int ref = -1;
+
+        if ((repeat >= MIN_DISTANCE) && (repeat <= pos) &&
+            (memcmp(&src[pos], &src[pos - repeat], size_t(MIN_MATCH)) == 0)) {
+            ref = pos - repeat;
+        }
+        else {
+            const int candidateDistance = pos - candidate;
+            const bool probeCandidate = (candidate >= 0) && (candidateDistance <= maxDistance);
+            const bool prefixMatch = (probeCandidate == true) &&
+                (memcmp(&src[pos], &src[candidate], size_t(MIN_MATCH)) == 0);
+
+            if (candidateDistance >= MIN_DISTANCE) {
+                _hashes[h] = pos;
+                ref = prefixMatch == true ? candidate : -1;
+            }
+            else if (prefixMatch == false) {
+                // Keep a matching candidate while it is too close to encode; later
+                // positions may use it once its distance reaches MIN_DISTANCE.
+                _hashes[h] = pos;
+            }
+
+            if (ref < 0) {
+                pos = pos + 1 + (misses >> 5);
+                misses++;
+                continue;
+            }
+        }
+
+        // Use the pos+1 bound for both searches to avoid recomputing it.
+        const int remaining = srcEnd - pos;
+        const int maxMatch = (std::min)(remaining - 1, int(MAX_MATCH));
+
+        int length = findMatch(src, pos, ref, maxMatch);
+
+        // Probe the next position after a non-repeat match. Prefer
+        // an equally long match at pos + 1 because it reaches one byte farther.
+        // Preserve the fast repeat path and room for the mandatory literal tail.
+        if ((pos - ref != repeat) && (length < remaining)) {
+            const int pos1 = pos + 1;
+            const int h1 = hash(&src[pos1]);
+            const int ref1 = _hashes[h1];
+            const int candidateDistance1 = pos1 - ref1;
+
+            // Hash entries always refer to previously scanned positions.
+            const bool prefixMatch1 = (ref1 >= 0) && (candidateDistance1 <= maxDistance) &&
+                (memcmp(&src[pos1], &src[ref1], size_t(MIN_MATCH)) == 0);
+
+            if (candidateDistance1 >= MIN_DISTANCE) {
+                _hashes[h1] = pos1;
+
+                // Test the last four bytes before extending a competing match.
+                if ((prefixMatch1 == true) &&
+                    KANZI_MEM_EQ4(&src[pos1 + length - 3], &src[ref1 + length - 3])) {
+                    const int length1 = findMatch(src, pos1, ref1, maxMatch);
+
+                    if (length1 >= length) {
+                        pos = pos1;
+                        ref = ref1;
+                        length = length1;
+                    }
+                }
+            }
+            else if (prefixMatch1 == false) {
+                // Keep a matching candidate while it is too close to encode;
+                // later positions may use it once its distance reaches MIN_DISTANCE.
+                _hashes[h1] = pos1;
+            }
+        }
+
+        while ((pos > anchor) && (ref > 0) && (src[pos - 1] == src[ref - 1]) && (length < MAX_MATCH)) {
+            pos--;
+            ref--;
+            length++;
+        }
+
+        const int literals = pos - anchor;
+
+        // Token bits    Meaning
+        // 0000MMMM      Repeat-distance match.
+        // 00FFLLLL      Literal run (FF=01,10,11).
+        // FFDDMMMM      Explicit-distance match (FF=01,10,11); FF selects
+        //               1-3 distance bytes and DD holds the low two bits of (distance - 8).
+        // Literal token 0x3F extends from length 48.
+        if (literals > 0) {
+            if (literals < 48) {
+                dst[encoded++] = byte(literals + 15);
+            }
+            else {
+                if (KANZI_UNLIKELY(literals >= (1 << 24)))
+                    return false;
+
+                dst[encoded++] = byte(0x3F);
+                encoded += writeLength(&dst[encoded], literals - 48);
+            }
+
+            for (int i = 0; i < literals; i += 16)
+                KANZI_MEM_CP16(&dst[encoded + i], &src[anchor + i]);
+
+            encoded += literals;
+        }
+
+        // For either match type, MMMM=0..14 means length 6..20; MMMM=15
+        // adds an extension for (length - 21).
+        const int lenExtra = length - MIN_MATCH;
+        const int lenNibble = (lenExtra < 15) ? lenExtra : 15;
+        const int distance = pos - ref;
+
+        if (distance == repeat) {
+            // Repeat match token 0000MMMM: reuse the last match distance.
+            // The fixed prefix is a type marker, not encoded distance bits.
+            dst[encoded++] = byte(lenNibble);
+        }
+        else {
+            // Pack (distance - 8): low two bits in DD, remaining bits in
+            // 1/2/3 little-endian bytes. One byte covers distances 8..1031;
+            // two cover 1032..262151; larger distances use three bytes.
+            const uint32 value = uint32(distance - MIN_DISTANCE);
+            const int width = (value < 1024) ? 1 : ((value < 262144) ? 2 : 3);
+            dst[encoded++] = byte((width << 6) | ((value & 3) << 4) | lenNibble);
+            LittleEndian::writeInt32(&dst[encoded], int32(value >> 2));
+            encoded += width;
+        }
+
+        if (lenNibble == 15)
+            encoded += writeLength(&dst[encoded], lenExtra - 15);
+
+        anchor = pos + length;
+        _hashes[hash(&src[pos + 2])] = pos + 2;
+        _hashes[hash(&src[pos + 4])] = pos + 4;
+        _hashes[hash(&src[anchor - 4])] = anchor - 4;
+        _hashes[hash(&src[anchor - 3])] = anchor - 3;
+        _hashes[hash(&src[anchor - 1])] = anchor - 1;
+        pos = anchor;
+        repeat = distance;
+        misses = 0;
+    }
+
+    const int literals = count - anchor;
+
+    if (literals < 48)
+        dst[encoded++] = byte(literals + 15);
+    else {
+        if (KANZI_UNLIKELY(literals >= (1 << 24)))
+            return false;
+
+        dst[encoded++] = byte(0x3F);
+        encoded += writeLength(&dst[encoded], literals - 48);
+    }
+
+    memcpy(&dst[encoded], &src[anchor], size_t(literals));
+    encoded += literals;
+
+    if (encoded > count - count / 100)
+        return false;
+
+    LittleEndian::writeInt32(dst, count);
+    dst[4] = byte(((MIN_MATCH - 2) << 1) | (maxDistance == MAX_DISTANCE));
+    input._index += count;
+    output._index += encoded;
+    return true;
+}
+
+bool LZFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count)
+{
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<byte>::isValid(input) || !SliceArray<byte>::isValid(output) ||
+        (count < 6) || (input._array == output._array) ||
+        (count > input._length - input._index - 4) || (output._length - output._index < 15))
+        return false;
+
+    const byte* src = &input._array[input._index];
+    byte* dst = &output._array[output._index];
+    const int size = LittleEndian::readInt32(src);
+
+    if ((size < 24) || (size > output._length - output._index - 15))
+        return false;
+
+    const int flags = int(src[4]);
+
+    if ((flags & 0xE0) != 0)
+        return false;
+
+    const int minMatch = ((flags >> 1) & 15) + 2;
+    const int maxDistance = (flags & 1) ? MAX_DISTANCE : 65534;
+    const byte* ip = &src[5];
+    const byte* const iend = &src[count];
+    byte* op = dst;
+    byte* const oend = &dst[size];
+    int repeat = 0;
+
+    while (ip < iend) {
+        // 0000MMMM: repeat; 00FFLLLL: literal; FFDDMMMM: explicit match.
+        const int token = int(*ip++);
+
+         if ((token ^ 0x30) >= 0x30) {
+            // Match token
+            int distance = repeat;
+            const int width = token >> 6;
+
+            if (width != 0) {
+                if (KANZI_UNLIKELY(width > iend - ip))
+                    return false;
+
+                static const uint32 MASK[4] = { 0, 255, 65535, 16777215 };
+                const uint32 value = uint32(LittleEndian::readInt32(ip)) & MASK[width];
+                const uint32 lowDistance = uint32((token >> 4) & 3);
+                distance = int((value << 2) | lowDistance) + MIN_DISTANCE;
+                ip = &ip[width];
+            }
+
+            int length = token & 15;
+
+            if (KANZI_UNLIKELY((distance < MIN_DISTANCE) || (distance > maxDistance) || (distance > op - dst)))
+                return false;
+
+            if (length == 15) {
+                // MMMM=15 extends from length 15 + minMatch.
+                int extra;
+                int idx = 0;
+
+                if (!readLength(ip, idx, int(iend - ip), extra))
+                    return false;
+
+                ip = &ip[idx];
+                length += extra;
+            }
+
+            length += minMatch;
+
+            if (KANZI_UNLIKELY(length > oend - op - TAIL))
+                return false;
+
+            // For matches up to 20 bytes, a fixed 20-byte copy is safe
+            // when the mandatory literal tail still fits.
+            if (length <= 20) {
+                const byte* ref = &op[-distance];
+
+                if (distance >= 16) {
+                    KANZI_MEM_CP16(op, ref);
+                    memcpy(&op[16], &ref[16], 4);
+                }
+                else {
+                    KANZI_MEM_CP8(op, ref);
+                    KANZI_MEM_CP8(&op[8], &ref[8]);
+                    memcpy(&op[16], &ref[16], 4);
+                }
+
+                op = &op[length];
+                repeat = distance;
+                continue;
+            }
+
+            byte* const end = &op[length];
+            const byte* ref = &op[-distance];
+
+            if (distance >= 16) {
+                do {
+                    KANZI_MEM_CP16(op, ref);
+                    op = &op[16];
+                    ref = &ref[16];
+                } while (op < end);
+            }
+            else {
+                do {
+                    KANZI_MEM_CP8(op, ref);
+                    op = &op[8];
+                    ref = &ref[8];
+                } while (op < end);
+            }
+
+            op = end;
+            repeat = distance;
+        }
+        else {
+            // Literal tokens 16..62 encode lengths 1..47.
+            // Values 0..15 are repeat matches.
+            // Token 0x3F extends from literal length 48.
+            int literals = token - 15;
+
+            if (token == 0x3F) {
+                int extra;
+                int idx = 0;
+
+                if (!readLength(ip, idx, int(iend - ip), extra))
+                    return false;
+
+                ip = &ip[idx];
+                literals = 48 + extra;
+            }
+
+            if (literals == iend - ip) {
+                if (KANZI_UNLIKELY((literals < TAIL) || (literals != oend - op)))
+                    return false;
+
+                memcpy(op, ip, size_t(literals));
+                input._index += count;
+                output._index += size;
+                return true;
+            }
+
+            if (KANZI_UNLIKELY((oend - op - literals < TAIL) || (iend - ip - literals < TAIL)))
+                return false;
+
+            // Emit literals
+            for (int i = 0; i < literals; i += 16)
+                KANZI_MEM_CP16(&op[i], &ip[i]);
+
+            op = &op[literals];
+            ip = &ip[literals];
+        }
+    }
+
+    return false;
 }

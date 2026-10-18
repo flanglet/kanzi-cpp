@@ -191,6 +191,9 @@ target_link_libraries(testDefaultBitStream libkanzi)
 add_executable(testFactories ${SRC_DIR}/test/TestFactories.cpp)
 target_link_libraries(testFactories libkanzi)
 
+add_executable(testLZF ${SRC_DIR}/test/TestLZF.cpp)
+target_link_libraries(testLZF libkanzi)
+
 add_executable(testMalformedStream ${SRC_DIR}/test/TestMalformedStream.cpp)
 target_link_libraries(testMalformedStream libkanzi)
 
@@ -224,7 +227,7 @@ target_link_libraries(kanzi_static libkanzi)
 
 # Custom target to build all tests (Named to avoid conflict with CTest 'make test')
 add_custom_target(build_tests
-    DEPENDS testBWT testTransforms testEntropyCodec testDefaultBitStream testFactories testMalformedStream testCompressedStream testAPI
+    DEPENDS testBWT testTransforms testEntropyCodec testDefaultBitStream testFactories testLZF testMalformedStream testCompressedStream testAPI
 )
 
 # --- CTest Configuration ---
@@ -249,6 +252,7 @@ add_test(NAME Transforms COMMAND testTransforms -type=all -noperf)
 add_test(NAME EntropyCodec COMMAND testEntropyCodec -type=all -noperf)
 add_test(NAME DefaultBitStream COMMAND testDefaultBitStream ${SYSTEM_TEMP_DIR}/testDefaultBitStream.tmp -noperf)
 add_test(NAME Factories COMMAND testFactories)
+add_test(NAME LZF COMMAND testLZF)
 add_test(NAME MalformedStream COMMAND testMalformedStream)
 add_test(NAME CompressedStream COMMAND testCompressedStream)
 add_test(NAME API COMMAND testAPI)

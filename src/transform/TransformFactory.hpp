@@ -67,9 +67,13 @@ namespace kanzi {
             UTF_TYPE = 17, // UTF Codec
             PACK_TYPE = 18, // Alias Codec
             DNA_TYPE = 19, // DNA Alias Codec
-            RESERVED3 = 20, // Reserved
+            LZF_TYPE = 20, // Lempel Ziv Fast
             RESERVED4 = 21, // Reserved
-            RESERVED5 = 22 // Reserved
+            RESERVED5 = 22, // Reserved
+            RESERVED6 = 23, // Reserved
+            RESERVED7 = 24, // Reserved
+            RESERVED8 = 25, // Reserved
+            RESERVED9 = 26, // Reserved
         };
 
 
@@ -180,6 +184,9 @@ namespace kanzi {
         if (name == "LZX")
             return LZX_TYPE;
 
+        if (name == "LZF")
+            return LZF_TYPE;
+
         if (name == "LZP")
             return LZP_TYPE;
 
@@ -270,6 +277,10 @@ namespace kanzi {
 
         case BWTS_TYPE:
             return new BWTS(ctx);
+
+        case LZF_TYPE:
+            ctx.putInt("lz", LZF_TYPE);
+            return new LZCodec(ctx);
 
         case LZX_TYPE:
             ctx.putInt("lz", LZX_TYPE);
@@ -370,6 +381,9 @@ namespace kanzi {
 
         case LZX_TYPE:
             return "LZX";
+
+        case LZF_TYPE:
+            return "LZF";
 
         case LZP_TYPE:
             return "LZP";

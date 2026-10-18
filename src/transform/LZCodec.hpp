@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef knz_LZCodec
 #define knz_LZCodec
 
+#include <climits>
 #include "../Context.hpp"
 #include "../Global.hpp"
 #include "../Transform.hpp"
@@ -48,6 +49,7 @@ namespace kanzi {
     };
 
     // Simple byte oriented LZ77 implementation.
+    // Meant to be used before entropy stage
     template <bool T>
     class LZXCodec FINAL : public Transform<byte> {
     public:
@@ -95,7 +97,6 @@ namespace kanzi {
         }
 
     private:
-        static const uint HASH_SEED;
         static const uint HASH_LOG;
         static const uint HASH_LSHIFT;
         static const uint HASH_RSHIFT;
@@ -163,7 +164,6 @@ namespace kanzi {
         }
 
     private:
-        static const uint HASH_SEED;
         static const uint HASH_LOG;
         static const uint HASH_SHIFT;
         static const int MIN_MATCH;
@@ -173,8 +173,112 @@ namespace kanzi {
         int32* _hashes;
         int _hashSize;
 
+        static uint32 hash(uint32 ctx);
         static int findMatch(const byte block[], const int pos, const int ref, const int maxMatch);
     };
+
+    // Very fast LZ77 codec implementation
+    // Meant to be used without entropy stage
+    class LZFCodec FINAL : public Transform<byte> {
+    public:
+        LZFCodec() : _hashes(nullptr) {}
+        LZFCodec(Context&) : _hashes(nullptr) {}
+
+        ~LZFCodec() { delete[] _hashes; }
+
+        bool forward(SliceArray<byte>& input, SliceArray<byte>& output, int count);
+        bool inverse(SliceArray<byte>& input, SliceArray<byte>& output, int count);
+
+        int getMaxEncodedLength(int srcLen) const
+        {
+            return (srcLen <= 1024) ? srcLen + 32 : srcLen + (srcLen / 64) + 32;
+        }
+
+    private:
+        static const uint HASH_LOG;
+        static const int MIN_MATCH;
+        static const int MIN_DISTANCE;
+        static const int MAX_DISTANCE;
+        static const int MAX_MATCH;
+        static const int TAIL;
+        static const int MIN_BLOCK_LENGTH;
+
+        int32* _hashes;
+
+        static int hash(const byte* p);
+        static int findMatch(const byte src[], int pos, int ref, int limit);
+        static int writeLength(byte dst[], int length);
+        static bool readLength(const byte src[], int& pos, int end, int& length);
+    };
+
+
+    inline int LZFCodec::hash(const byte* p)
+    {
+        return int(((uint64(LittleEndian::readLong64(p)) << 16) * 0x1E35A7BD) >> (64 - HASH_LOG));
+    }
+
+    inline int LZFCodec::findMatch(const byte src[], int pos, int ref, int limit)
+    {
+        int length = MIN_MATCH;
+
+        while (length + 8 <= limit) {
+            const uint64 diff = uint64(LittleEndian::readLong64(&src[pos + length])) ^
+                                uint64(LittleEndian::readLong64(&src[ref + length]));
+
+            if (diff != 0)
+                return length + (Global::trailingZeros(diff) >> 3);
+
+            length += 8;
+        }
+
+        while ((length < limit) && (src[pos + length] == src[ref + length]))
+            length++;
+
+        return length;
+    }
+
+    inline int LZFCodec::writeLength(byte dst[], int length)
+    {
+        if (length < 254) {
+            dst[0] = byte(length);
+            return 1;
+        }
+
+        if (length < 65790) {
+            BigEndian::writeInt32(dst, int32((uint32(length - 254) | 0x00FE0000) << 8));
+            return 3;
+        }
+
+        BigEndian::writeInt32(dst, int32(uint32(length - 255) | 0xFF000000));
+        return 4;
+    }
+
+    inline bool LZFCodec::readLength(const byte src[], int& pos, int end, int& length)
+    {
+        if (pos >= end)
+            return false;
+
+        length = int(src[pos++]);
+
+        if (length < 254)
+            return true;
+
+        if (length == 254) {
+            length += int(BigEndian::readInt16(&src[pos]) & 0xFFFF);
+            pos += 2;
+            return true;
+        }
+
+        length += int(uint32(BigEndian::readInt32(&src[pos])) >> 8);
+        pos += 3;
+        return true;
+    }
+
+    template <bool T>
+    inline int32 LZXCodec<T>::hash(const byte* p)
+    {
+        return ((uint64(LittleEndian::readLong64(p)) << HASH_LSHIFT) * 0x1E35A7BD) >> HASH_RSHIFT;
+    }
 
     template <bool T>
     inline void LZXCodec<T>::emitLiterals(const byte src[], byte dst[], int len)
@@ -186,27 +290,19 @@ namespace kanzi {
     }
 
     template <bool T>
-    inline int32 LZXCodec<T>::hash(const byte* p)
-    {
-        return ((uint64(LittleEndian::readLong64(p)) << HASH_LSHIFT) * HASH_SEED) >> HASH_RSHIFT;
-    }
-
-    template <bool T>
-    inline int LZXCodec<T>::emitLength(byte block[], int length)
+    inline int LZXCodec<T>::emitLength(byte dst[], int length)
     {
         if (length < 254) {
-            block[0] = byte(length);
+            dst[0] = byte(length);
             return 1;
         }
 
         if (length < 65536 + 254) {
-            const uint32 l = (length - 254) | 0x00FE0000;
-            kanzi::BigEndian::writeInt32(&block[0], l << 8);
+            BigEndian::writeInt32(dst, int32((uint32(length - 254) | 0x00FE0000) << 8));
             return 3;
         }
 
-        const uint32 l = (length - 255) | 0xFF000000;
-        kanzi::BigEndian::writeInt32(&block[0], l);
+        BigEndian::writeInt32(dst, int32(uint32(length - 255) | 0xFF000000));
         return 4;
     }
 
@@ -229,7 +325,6 @@ namespace kanzi {
         return res;
     }
 
-
     template <bool T>
     inline int LZXCodec<T>::findMatch(const byte src[], const int srcIdx, const int ref, const int maxMatch)
     {
@@ -249,6 +344,11 @@ namespace kanzi {
         return n;
     }
 
+    inline uint32 LZPCodec::hash(uint32 ctx)
+    {
+        return (0x7FEB352D * ctx) >> HASH_SHIFT;
+    }
+
     inline int LZPCodec::findMatch(const byte src[], const int srcIdx, const int ref, const int maxMatch)
     {
         int n = 0;
@@ -266,6 +366,5 @@ namespace kanzi {
 
         return n;
     }
-
 }
 #endif
