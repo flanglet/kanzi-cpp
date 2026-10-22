@@ -79,6 +79,8 @@ template <class T>
 class Task {
     public:
         Task() {}
+        Task(const Task&) {}
+        Task& operator=(const Task&) { return *this; }
         virtual ~Task() {}
         virtual T run() = 0;
 };

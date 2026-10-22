@@ -35,7 +35,7 @@ namespace kanzi {
    class EntropyEncoderFactory {
    public:
        static const short NONE_TYPE = 0; // No compression
-       static const short HUFFMAN_TYPE = 1; // Huffman
+       static const short HUFFMAN0_TYPE = 1; // Huffman order 0
        static const short FPAQ_TYPE = 2; // Fast PAQ (order 0)
        static const short PAQ_TYPE = 3; // Obsolete
        static const short RANGE_TYPE = 4; // Range
@@ -44,7 +44,7 @@ namespace kanzi {
        static const short TPAQ_TYPE = 7; // Tangelo PAQ
        static const short ANS1_TYPE = 8; // Asymmetric Numerical System order 1
        static const short TPAQX_TYPE = 9; // Tangelo PAQ Extra
-       static const short RESERVED1 = 10; //Reserved
+       static const short HUFFMAN1_TYPE = 10; // Huffman order 1
        static const short RESERVED2 = 11; //Reserved
        static const short RESERVED3 = 12; //Reserved
        static const short RESERVED4 = 13; //Reserved
@@ -62,8 +62,11 @@ namespace kanzi {
    inline EntropyEncoder* EntropyEncoderFactory::newEncoder(OutputBitStream& obs, Context& ctx, short entropyType)
    {
        switch (entropyType) {
-       case HUFFMAN_TYPE:
-           return new HuffmanEncoder(obs);
+       case HUFFMAN0_TYPE:
+           return new HuffmanEncoder(obs, 0);
+
+       case HUFFMAN1_TYPE:
+           return new HuffmanEncoder(obs, 1);
 
        case ANS0_TYPE:
            return new ANSRangeEncoder(obs, 0);
@@ -101,8 +104,11 @@ namespace kanzi {
    inline const char* EntropyEncoderFactory::getName(short entropyType)
    {
        switch (entropyType) {
-       case HUFFMAN_TYPE:
+       case HUFFMAN0_TYPE:
            return "HUFFMAN";
+
+       case HUFFMAN1_TYPE:
+           return "HUFFMAN1";
 
        case ANS0_TYPE:
            return "ANS0";
@@ -142,8 +148,11 @@ namespace kanzi {
        std::string name = str;
        transform(name.begin(), name.end(), name.begin(), safeToUpper);
 
-       if (name == "HUFFMAN")
-           return HUFFMAN_TYPE;
+       if ((name == "HUFFMAN") || (name == "HUFFMAN0"))
+           return HUFFMAN0_TYPE;
+
+       if (name == "HUFFMAN1")
+           return HUFFMAN1_TYPE;
 
        if (name == "ANS0")
            return ANS0_TYPE;

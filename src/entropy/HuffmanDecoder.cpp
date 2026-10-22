@@ -31,7 +31,7 @@ static const uint HUFFMAN_FRAGMENT_GUARD_BYTES = 8;
 
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats.
-HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, Context* pCtx, int chunkSize) : _bitstream(bitstream)
+HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, int order, Context* pCtx, int chunkSize) : _bitstream(bitstream)
 {
     if (chunkSize < 1024)
         throw invalid_argument("Huffman codec: The chunk size must be at least 1024");
@@ -42,11 +42,23 @@ HuffmanDecoder::HuffmanDecoder(InputBitStream& bitstream, Context* pCtx, int chu
         throw invalid_argument(ss.str());
     }
 
-    _chunkSize = chunkSize;
+    if ((order != 0) && (order != 1))
+        throw invalid_argument("Huffman codec: The order must be 0 or 1");
+
+    _order = order;
+    _chunkSize = chunkSize << (5 * order);
     _buffer = nullptr;
     _bufferSize = 0;
+    _tablesOrder1 = nullptr;
     _pCtx = pCtx;
     reset();
+}
+
+HuffmanDecoder::~HuffmanDecoder()
+{
+    _dispose();
+    delete[] _buffer;
+    delete[] _tablesOrder1;
 }
 
 bool HuffmanDecoder::reset()
@@ -144,6 +156,21 @@ int HuffmanDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
     if (count == 0)
         return 0;
 
+    switch (_order) {
+    case 0:
+        return decodeOrder0(block, blkptr, count);
+
+    case 1:
+        return decodeOrder1(block, blkptr, count);
+
+    default:
+        throw invalid_argument("Huffman codec: The order must be 0 or 1");
+    }
+}
+
+
+int HuffmanDecoder::decodeOrder0(kanzi::byte block[], uint blkptr, uint count)
+{
     int bsVersion = _pCtx == nullptr ? 6 : _pCtx->getInt("bsVersion", 6);
 
     if (bsVersion < 6)
@@ -460,6 +487,165 @@ int HuffmanDecoder::decodeV5(kanzi::byte block[], uint blkptr, uint count)
         }
 
         startChunk = endChunk;
+    }
+
+    return count;
+}
+
+int HuffmanDecoder::decodeOrder1(kanzi::byte block[], uint blkptr, uint count)
+{
+    if (_tablesOrder1 == nullptr)
+        _tablesOrder1 = new uint16[256 * (1 << 12)];
+
+    uint16* const tables = _tablesOrder1;
+
+    for (uint start = 0; start < count;) {
+        const uint size = min(uint(_chunkSize), count - start);
+        kanzi::byte* dst = &block[blkptr + start];
+
+        if (size < 32) {
+            _bitstream.readBits(dst, size * 8);
+            start += size;
+            continue;
+        }
+
+        memset(tables, 0, 256 * (1 << 12) * sizeof(uint16));
+
+        for (uint ctx = 0; ctx < 256; ctx++) {
+            const int n = readLengths();
+            uint16* table = &tables[ctx << 12];
+
+            for (int i = 0; i < n; i++) {
+                const uint sym = _alphabet[i];
+                const uint len = _sizes[sym];
+                const uint begin = uint(_codes[sym]) << (12 - len);
+                const uint end = begin + (1U << (12 - len));
+
+                if (end > 4096)
+                    return -1;
+
+                for (uint k = begin; k < end; k++) {
+                    if (table[k] != 0)
+                        return -1;
+
+                    table[k] = uint16((sym << 8) | len);
+                }
+            }
+        }
+
+        const uint fragSize = size / 4;
+        uint nbBits[4];
+
+        for (uint j = 0; j < 4; j++) {
+            const int bits = EntropyUtils::readVarInt(_bitstream);
+
+            if ((bits < int(fragSize)) || (bits > int(fragSize * 12)))
+                return -1;
+
+            nbBits[j] = uint(bits);
+        }
+
+        const uint minBufSize = ((fragSize * 12 + 7) >> 3) + HUFFMAN_FRAGMENT_GUARD_BYTES;
+
+        if (_bufferSize < minBufSize) {
+            kanzi::byte* buffer = new kanzi::byte[minBufSize];
+            delete[] _buffer;
+            _buffer = buffer;
+            _bufferSize = minBufSize;
+        }
+
+        kanzi::byte* const payload = _buffer;
+
+        for (uint j = 0; j < 4; j++) {
+            const uint bytes = (nbBits[j] + 7) >> 3;
+            _bitstream.readBits(&payload[0], nbBits[j]);
+            memset(&payload[bytes], 0, HUFFMAN_FRAGMENT_GUARD_BYTES);
+            int consumed = 0;
+            int idx = 0;
+            uint64 state = 0;
+            uint8 bits = 0;
+            uint prev = (j == 0) ? 0 : uint(dst[j * fragSize - 1]);
+            const uint fragStart = j * fragSize;
+            const uint fragEnd = fragStart + fragSize;
+
+#define READ_STATE_ORDER1(state, idx, bits) do {\
+       const uint8 shift = (56 - bits) & -8; \
+       bits += (shift - DECODING_BATCH_SIZE); \
+       state = (state << shift) | (uint64(BigEndian::readLong64(&payload[idx])) >> 1 >> (63 - shift)); \
+       idx += (shift >> 3); \
+    } while (0)
+
+            uint i = fragStart;
+
+            while (i < fragEnd - 4) {
+                READ_STATE_ORDER1(state, idx, bits);
+
+                const uint16 val0 = tables[(prev << 12) | ((state >> bits) & TABLE_MASK)];
+                const uint len0 = val0 & 255;
+
+                if ((len0 == 0) || ((consumed += int(len0)) > int(nbBits[j])))
+                    return -1;
+
+                bits -= uint8(len0);
+                prev = val0 >> 8;
+                dst[i++] = kanzi::byte(prev);
+
+                const uint16 val1 = tables[(prev << 12) | ((state >> bits) & TABLE_MASK)];
+                const uint len1 = val1 & 255;
+
+                if ((len1 == 0) || ((consumed += int(len1)) > int(nbBits[j])))
+                    return -1;
+
+                bits -= uint8(len1);
+                prev = val1 >> 8;
+                dst[i++] = kanzi::byte(prev);
+
+                const uint16 val2 = tables[(prev << 12) | ((state >> bits) & TABLE_MASK)];
+                const uint len2 = val2 & 255;
+
+                if ((len2 == 0) || ((consumed += int(len2)) > int(nbBits[j])))
+                    return -1;
+
+                bits -= uint8(len2);
+                prev = val2 >> 8;
+                dst[i++] = kanzi::byte(prev);
+
+                const uint16 val3 = tables[(prev << 12) | ((state >> bits) & TABLE_MASK)];
+                const uint len3 = val3 & 255;
+
+                if ((len3 == 0) || ((consumed += int(len3)) > int(nbBits[j])))
+                    return -1;
+
+                bits -= uint8(len3);
+                prev = val3 >> 8;
+                dst[i++] = kanzi::byte(prev);
+                bits += DECODING_BATCH_SIZE;
+            }
+
+            READ_STATE_ORDER1(state, idx, bits);
+
+            while (i < fragEnd) {
+                const uint16 val = tables[(prev << 12) | ((state >> bits) & TABLE_MASK)];
+                const uint len = val & 255;
+
+                if ((len == 0) || ((consumed += int(len)) > int(nbBits[j])))
+                    return -1;
+
+                bits -= uint8(len);
+                prev = val >> 8;
+                dst[i++] = kanzi::byte(prev);
+            }
+
+            const int used = (idx << 3) - (int(int8(bits)) + DECODING_BATCH_SIZE);
+
+            if ((consumed != int(nbBits[j])) || (used != int(nbBits[j])))
+                return -1;
+
+#undef READ_STATE_ORDER1
+        }
+
+        _bitstream.readBits(dst + 4 * fragSize, (size - 4 * fragSize) * 8);
+        start += size;
     }
 
     return count;

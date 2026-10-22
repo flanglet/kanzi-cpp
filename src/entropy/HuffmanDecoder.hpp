@@ -29,9 +29,10 @@ namespace kanzi
    class HuffmanDecoder : public EntropyDecoder
    {
    public:
-       HuffmanDecoder(InputBitStream& bitstream, Context* pCtx = nullptr, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE) ;
+       // Order 1 uses 256 previous-byte models and scales chunkSize by 32 (512 KiB by default).
+       HuffmanDecoder(InputBitStream& bitstream, int order = 0, Context* pCtx = nullptr, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE);
 
-       ~HuffmanDecoder() { _dispose(); if (_buffer != nullptr) delete[] _buffer; }
+       ~HuffmanDecoder();
 
        int decode(byte block[], uint blkptr, uint len);
 
@@ -46,12 +47,19 @@ namespace kanzi
        InputBitStream& _bitstream;
        byte* _buffer;
        uint _bufferSize;
+       uint16* _tablesOrder1;
        uint16 _codes[256];
        uint _alphabet[256];
        uint16 _sizes[256];
        uint16 _table[1 << 12]; // decoding table: code -> size, symbol
        int _chunkSize;
+       int _order;
+
        Context* _pCtx;
+
+       int decodeOrder0(byte block[], uint blkptr, uint count);
+
+       int decodeOrder1(byte block[], uint blkptr, uint count);
 
        int readLengths();
 

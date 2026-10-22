@@ -29,9 +29,10 @@ namespace kanzi
    class HuffmanEncoder : public EntropyEncoder
    {
    public:
-       HuffmanEncoder(OutputBitStream& bitstream, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE);
+       // Order 1 uses 256 previous-byte models and scales chunkSize by 32 (512 KiB by default).
+       HuffmanEncoder(OutputBitStream& bitstream, int order = 0, int chunkSize = HuffmanCommon::MAX_CHUNK_SIZE);
 
-       ~HuffmanEncoder() { _dispose(); if (_buffer != nullptr) delete[] _buffer; }
+       ~HuffmanEncoder();
 
        int updateFrequencies(uint frequencies[]);
 
@@ -46,8 +47,16 @@ namespace kanzi
        OutputBitStream& _bitstream;
        uint16 _codes[256];
        int _chunkSize;
+       int _order;
+
        byte* _buffer;
        uint _bufferSize;
+       uint* _freqs;
+       uint16* _codesOrder1;
+
+       int encodeOrder0(const byte block[], uint blkptr, uint count);
+
+       int encodeOrder1(const byte block[], uint blkptr, uint count);
 
        void encodeChunk(const byte block[], uint count);
 

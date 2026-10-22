@@ -28,7 +28,7 @@ using namespace std;
 // The chunk size indicates how many bytes are encoded (per block) before
 // resetting the frequency stats. 0 means that frequencies calculated at the
 // beginning of the block apply to the whole block.
-HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) : _bitstream(bitstream)
+HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int order, int chunkSize) : _bitstream(bitstream)
 {
     if (chunkSize < 1024)
         throw invalid_argument("Huffman codec: The chunk size must be at least 1024");
@@ -39,10 +39,24 @@ HuffmanEncoder::HuffmanEncoder(OutputBitStream& bitstream, int chunkSize) : _bit
         throw invalid_argument(ss.str());
     }
 
-    _chunkSize = chunkSize;
+    if ((order != 0) && (order != 1))
+        throw invalid_argument("Huffman codec: The order must be 0 or 1");
+
+    _order = order;
+    _chunkSize = chunkSize << (5 * order);
     _buffer = nullptr;
     _bufferSize = 0;
+    _freqs = nullptr;
+    _codesOrder1 = nullptr;
     reset();
+}
+
+HuffmanEncoder::~HuffmanEncoder()
+{
+    _dispose();
+    delete[] _buffer;
+    delete[] _freqs;
+    delete[] _codesOrder1;
 }
 
 bool HuffmanEncoder::reset()
@@ -298,12 +312,27 @@ uint HuffmanEncoder::computeInPlaceSizesPhase2(uint data[], int n)
 }
 
 
-// Dynamically compute the frequencies for every chunk of data in the block
 int HuffmanEncoder::encode(const kanzi::byte block[], uint blkptr, uint count)
 {
     if (count == 0)
         return 0;
 
+    switch (_order) {
+    case 0:
+        return encodeOrder0(block, blkptr, count);
+
+    case 1:
+        return encodeOrder1(block, blkptr, count);
+
+    default:
+        throw invalid_argument("Huffman codec: The order must be 0 or 1");
+    }
+}
+
+
+// Dynamically compute the frequencies for every chunk of data in the block
+int HuffmanEncoder::encodeOrder0(const kanzi::byte block[], uint blkptr, uint count)
+{
     const uint sz = uint(_chunkSize);
     const uint minLenBuf = max(min(sz + (sz >> 3), 2 * count), uint(65536));
 
@@ -416,4 +445,119 @@ void HuffmanEncoder::encodeChunk(const kanzi::byte block[], uint count)
 
     for (uint i = count4; i < count; i++)
         _bitstream.writeBits(uint64(block[i]), 8);
+}
+
+// Four independent fragments. The first fragment starts with context zero;
+// each other fragment starts with the byte immediately preceding it.
+// Headers use the same alphabet and canonical lengths as order zero.
+int HuffmanEncoder::encodeOrder1(const kanzi::byte block[], uint blkptr, uint count)
+{
+    if (_freqs == nullptr)
+        _freqs = new uint[256 * 256];
+
+    if (_codesOrder1 == nullptr)
+        _codesOrder1 = new uint16[256 * 256];
+
+    uint* const freqs = _freqs;
+    uint16* const codes = _codesOrder1;
+
+    for (uint start = 0; start < count;) {
+        const uint size = min(uint(_chunkSize), count - start);
+        const kanzi::byte* src = &block[blkptr + start];
+
+        if (size < 32) {
+            _bitstream.writeBits(src, size * 8);
+            start += size;
+            continue;
+        }
+
+        memset(freqs, 0, 256 * 256 * sizeof(uint));
+        const uint fragSize = size / 4;
+        Global::computeHistogram(src, int(size), freqs, false, false);
+
+        for (uint ctx = 0; ctx < 256; ctx++) {
+            updateFrequencies(&freqs[ctx << 8]);
+            copy(_codes, _codes + 256, &codes[ctx << 8]);
+        }
+
+        // At most twelve bits per symbol, plus padding for the final byte.
+        const uint stride = ((fragSize * 12 + 7) >> 3) + 1;
+        // Keep a write-ahead guard for the 64-bit batch stores below.
+        const uint minBufSize = 4 * stride + 8;
+
+        if (_bufferSize < minBufSize) {
+            kanzi::byte* buffer = new kanzi::byte[minBufSize];
+            delete[] _buffer;
+            _buffer = buffer;
+            _bufferSize = minBufSize;
+        }
+
+        kanzi::byte* const payload = _buffer;
+        uint nbBits[4] = { 0 };
+
+        for (uint j = 0; j < 4; j++) {
+            uint prev = (j == 0) ? 0 : uint(src[j * fragSize - 1]);
+            uint64 state = 0;
+            uint bits = 0;
+            uint pos = j * stride;
+            const uint start = j * fragSize;
+            const uint end = start + fragSize;
+            const uint end4 = start + (fragSize & ~3);
+
+            for (uint i = start; i < end4; i += 4) {
+                const uint16 code0 = codes[(prev << 8) | uint(src[i])];
+                const uint codeLen0 = code0 >> 12;
+                prev = uint(src[i]);
+                const uint16 code1 = codes[(prev << 8) | uint(src[i + 1])];
+                const uint codeLen1 = code1 >> 12;
+                prev = uint(src[i + 1]);
+                const uint16 code2 = codes[(prev << 8) | uint(src[i + 2])];
+                const uint codeLen2 = code2 >> 12;
+                prev = uint(src[i + 2]);
+                const uint16 code3 = codes[(prev << 8) | uint(src[i + 3])];
+                const uint codeLen3 = code3 >> 12;
+                prev = uint(src[i + 3]);
+
+                const uint32 pack01 = (uint32(code0 & 0x0FFF) << codeLen1) |
+                    uint32(code1 & 0x0FFF);
+                const uint32 pack23 = (uint32(code2 & 0x0FFF) << codeLen3) |
+                    uint32(code3 & 0x0FFF);
+                state = (state << (codeLen0 + codeLen1)) | uint64(pack01);
+                state = (state << (codeLen2 + codeLen3)) | uint64(pack23);
+                bits += codeLen0 + codeLen1 + codeLen2 + codeLen3;
+                BigEndian::writeLong64(&payload[pos], state << (64 - bits));
+                pos += bits >> 3;
+                bits &= 7;
+            }
+
+            for (uint i = end4; i < end; i++) {
+                const uint16 code = codes[(prev << 8) | uint(src[i])];
+                const uint codeLen = code >> 12;
+                state = (state << codeLen) | uint64(code & 0x0FFF);
+                bits += codeLen;
+                prev = uint(src[i]);
+            }
+
+            nbBits[j] = (pos - j * stride) * 8 + bits;
+
+            while (bits >= 8) {
+                bits -= 8;
+                payload[pos++] = kanzi::byte(state >> bits);
+            }
+
+            if (bits != 0)
+                payload[pos] = kanzi::byte(state << (8 - bits));
+        }
+
+        for (uint j = 0; j < 4; j++)
+            EntropyUtils::writeVarInt(_bitstream, nbBits[j]);
+
+        for (uint j = 0; j < 4; j++)
+            _bitstream.writeBits(&payload[j * stride], nbBits[j]);
+
+        _bitstream.writeBits(src + 4 * fragSize, (size - 4 * fragSize) * 8);
+        start += size;
+    }
+
+    return count;
 }

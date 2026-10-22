@@ -417,6 +417,71 @@ int testHuffmanFragmentedRoundTrip()
     return 0;
 }
 
+static int testHuffmanOrder1()
+{
+    const uint sizes[] = { 0, 1, 31, 32, 33, 35, 1024, 8191, 8192, 8193, 8225,
+        32767, 32768, 32769, 32801, 131071, 131072, 131073, 262143, 262144,
+        262145, 262177, 524287, 524288, 524289, 524321 };
+
+    for (uint pattern = 0; pattern < 4; pattern++) {
+        for (uint t = 0; t < sizeof(sizes) / sizeof(sizes[0]); t++) {
+            const uint size = sizes[t];
+            vector<kanzi::byte> src(size + 6, kanzi::byte(93));
+            vector<kanzi::byte> dst(size + 6, kanzi::byte(93));
+            uint state = 12345;
+
+            for (uint i = 0; i < size; i++) {
+                state = state * 1664525U + 1013904223U;
+                src[i + 3] = kanzi::byte(pattern == 0 ? 7 : pattern == 1 ? i & 255 :
+                    pattern == 2 ? state >> 24 : ((state >> 24) < 240 ? 0 : state >> 16));
+            }
+
+            stringbuf buffer;
+            iostream io(&buffer);
+            DefaultOutputBitStream obs(io, 16384);
+            HuffmanEncoder enc(obs, 1, 1024);
+
+            if (enc.encode(&src[0], 3, size) != int(size))
+                return 1;
+
+            obs.writeBits(0x12345678, 32);
+            obs.close();
+            io.rdbuf()->pubseekpos(0);
+            DefaultInputBitStream ibs(io, 16384);
+            HuffmanDecoder dec(ibs, 1, NULL, 1024);
+
+            if ((dec.decode(&dst[0], 3, size) != int(size)) || (src != dst) ||
+                (ibs.readBits(32) != 0x12345678))
+                return 1;
+        }
+    }
+
+    // Empty context headers must never decode a referenced context.
+    stringbuf buffer;
+    iostream io(&buffer);
+    DefaultOutputBitStream obs(io, 16384);
+    uint alphabet[256];
+
+    for (uint i = 0; i < 256; i++)
+        EntropyUtils::encodeAlphabet(obs, alphabet, 256, 0);
+
+    for (uint i = 0; i < 4; i++)
+        EntropyUtils::writeVarInt(obs, 8);
+
+    obs.writeBits(uint64(0), 32);
+    obs.close();
+    io.rdbuf()->pubseekpos(0);
+    DefaultInputBitStream ibs(io, 16384);
+    HuffmanDecoder dec(ibs, 1, NULL, 1024);
+    kanzi::byte dst[32];
+
+    if (dec.decode(dst, 0, 32) != -1)
+        return 1;
+
+    cout << "Huffman order-1 boundary tests passed" << endl;
+    return 0;
+}
+
 class ConstantPredictor FINAL : public Predictor
 {
 public:
@@ -446,8 +511,11 @@ static Predictor* getPredictor(string type)
 
 static EntropyEncoder* getEncoder(string name, OutputBitStream& obs, Predictor* predictor)
 {
-    if (name.compare("HUFFMAN") == 0)
-        return new HuffmanEncoder(obs);
+    if ((name.compare("HUFFMAN") == 0) || (name.compare("HUFFMAN0") == 0))
+        return new HuffmanEncoder(obs, 0);
+
+    if (name.compare("HUFFMAN1") == 0)
+        return new HuffmanEncoder(obs, 1);
 
     if (name.compare("ANS0") == 0)
         return new ANSRangeEncoder(obs, 0);
@@ -478,8 +546,11 @@ static EntropyEncoder* getEncoder(string name, OutputBitStream& obs, Predictor* 
 
 static EntropyDecoder* getDecoder(string name, InputBitStream& ibs, Predictor* predictor)
 {
-    if (name.compare("HUFFMAN") == 0)
-        return new HuffmanDecoder(ibs);
+    if ((name.compare("HUFFMAN") == 0) || (name.compare("HUFFMAN0") == 0))
+        return new HuffmanDecoder(ibs, 0);
+
+    if (name.compare("HUFFMAN1") == 0)
+        return new HuffmanDecoder(ibs, 1);
 
     if (name.compare("ANS0") == 0)
         return new ANSRangeDecoder(ibs, 0);
@@ -872,18 +943,19 @@ int TestEntropyCodec_main(int argc, const char* argv[])
         res |= testFPAQZeroDeclaredSize();
         res |= testANS1MissingContext();
         res |= testHuffmanFragmentedRoundTrip();
+        res |= testHuffmanOrder1();
         vector<string> codecs;
         bool doPerf = true;
 
         if (argc == 1) {
 #if __cplusplus < 201103L
-            string allCodecs[] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
+            string allCodecs[] = { "HUFFMAN", "HUFFMAN1", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
             const int count = int(sizeof(allCodecs) / sizeof(allCodecs[0]));
 
             for (int i = 0; i < count; i++)
                 codecs.push_back(allCodecs[i]);
 #else
-            codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
+            codecs = { "HUFFMAN", "HUFFMAN1", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
 #endif
         }
         else {
@@ -892,13 +964,13 @@ int TestEntropyCodec_main(int argc, const char* argv[])
 
             if (str == "-TYPE=ALL") {
 #if __cplusplus < 201103L
-               string allCodecs[] = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
+               string allCodecs[] = { "HUFFMAN", "HUFFMAN1", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
                const int count = int(sizeof(allCodecs) / sizeof(allCodecs[0]));
 
                for (int i = 0; i < count; i++)
                    codecs.push_back(allCodecs[i]);
 #else
-               codecs = { "HUFFMAN", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
+               codecs = { "HUFFMAN", "HUFFMAN1", "ANS0", "ANS1", "RANGE", "EXPGOLOMB", "CM", "TPAQ" };
 #endif
             }
             else {
