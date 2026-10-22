@@ -98,6 +98,18 @@ static int testTransformFactory()
     ASSERT_TRUE(TransformFactory<kanzi::byte>::getName(
         TransformFactory<kanzi::byte>::getType("LZ+NONE+RLT")) == "LZ+RLT",
         "Transform names must round-trip without null transforms");
+    ASSERT_TRUE(TransformFactory<kanzi::byte>::getName(
+        TransformFactory<kanzi::byte>::getType("lzf")) == "LZF",
+        "LZF transform name must round-trip");
+
+    {
+        Context ctx;
+        TransformSequence<kanzi::byte>* seq = TransformFactory<kanzi::byte>::newTransform(ctx,
+            TransformFactory<kanzi::byte>::getType("LZF"));
+        ASSERT_TRUE(seq->getNbTransforms() == 1, "LZF sequence must contain one transform");
+        delete seq;
+    }
+
     ASSERT_TRUE(expectInvalidArgument(callUnknownTransformType),
         "Unknown transform type must throw");
     ASSERT_TRUE(expectInvalidArgument(callTooManyTransforms),
@@ -160,7 +172,16 @@ static int testEntropyFactories()
         "NONE entropy encoder must be case insensitive");
     ASSERT_TRUE(EntropyDecoderFactory::getType("ans0") == EntropyDecoderFactory::ANS0_TYPE,
         "ANS0 entropy decoder must be case insensitive");
-    ASSERT_TRUE(string(EntropyEncoderFactory::getName(EntropyEncoderFactory::HUFFMAN_TYPE)) == "HUFFMAN",
+    const char* huffman0Names[] = { "HUFFMAN", "HUFFMAN0", "huffman", "huffman0" };
+
+    for (uint i = 0; i < sizeof(huffman0Names) / sizeof(huffman0Names[0]); i++) {
+        ASSERT_TRUE(EntropyEncoderFactory::getType(huffman0Names[i]) == EntropyEncoderFactory::HUFFMAN0_TYPE,
+            "HUFFMAN and HUFFMAN0 must select the order-0 encoder");
+        ASSERT_TRUE(EntropyDecoderFactory::getType(huffman0Names[i]) == EntropyDecoderFactory::HUFFMAN0_TYPE,
+            "HUFFMAN and HUFFMAN0 must select the order-0 decoder");
+    }
+
+    ASSERT_TRUE(string(EntropyEncoderFactory::getName(EntropyEncoderFactory::HUFFMAN0_TYPE)) == "HUFFMAN",
         "Encoder name must round-trip");
     ASSERT_TRUE(string(EntropyDecoderFactory::getName(EntropyDecoderFactory::TPAQX_TYPE)) == "TPAQX",
         "Decoder name must round-trip");
@@ -180,7 +201,8 @@ static int testEntropyFactories()
 
     EntropyEncoder* encoders[] = {
         EntropyEncoderFactory::newEncoder(obs, ctx, EntropyEncoderFactory::NONE_TYPE),
-        EntropyEncoderFactory::newEncoder(obs, ctx, EntropyEncoderFactory::HUFFMAN_TYPE),
+        EntropyEncoderFactory::newEncoder(obs, ctx, EntropyEncoderFactory::HUFFMAN0_TYPE),
+        EntropyEncoderFactory::newEncoder(obs, ctx, EntropyEncoderFactory::HUFFMAN1_TYPE),
         EntropyEncoderFactory::newEncoder(obs, ctx, EntropyEncoderFactory::RANGE_TYPE),
         EntropyEncoderFactory::newEncoder(obs, ctx, EntropyEncoderFactory::ANS0_TYPE),
         EntropyEncoderFactory::newEncoder(obs, ctx, EntropyEncoderFactory::ANS1_TYPE),
@@ -202,7 +224,8 @@ static int testEntropyFactories()
 
     EntropyDecoder* decoders[] = {
         EntropyDecoderFactory::newDecoder(ibs, ctx, EntropyDecoderFactory::NONE_TYPE),
-        EntropyDecoderFactory::newDecoder(ibs, ctx, EntropyDecoderFactory::HUFFMAN_TYPE),
+        EntropyDecoderFactory::newDecoder(ibs, ctx, EntropyDecoderFactory::HUFFMAN0_TYPE),
+        EntropyDecoderFactory::newDecoder(ibs, ctx, EntropyDecoderFactory::HUFFMAN1_TYPE),
         EntropyDecoderFactory::newDecoder(ibs, ctx, EntropyDecoderFactory::RANGE_TYPE),
         EntropyDecoderFactory::newDecoder(ibs, ctx, EntropyDecoderFactory::ANS0_TYPE),
         EntropyDecoderFactory::newDecoder(ibs, ctx, EntropyDecoderFactory::ANS1_TYPE),
