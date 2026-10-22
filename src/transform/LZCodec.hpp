@@ -132,6 +132,7 @@ namespace kanzi {
         static uint readLength(const byte block[], int& pos);
 
         static int32 hash(const byte* p);
+        static int32 hash(uint64 value);
     };
 
     class LZPCodec FINAL : public Transform<byte> {
@@ -206,15 +207,28 @@ namespace kanzi {
         int32* _hashes;
 
         static int hash(const byte* p);
+        static int hash(uint64 value);
+        static bool equals6(uint64 value, const byte* p);
         static int findMatch(const byte src[], int pos, int ref, int limit);
         static int writeLength(byte dst[], int length);
         static bool readLength(const byte src[], int& pos, int end, int& length);
     };
 
 
+    inline int LZFCodec::hash(uint64 value)
+    {
+        return int(((value << 16) * 0x1E35A7BD) >> (64 - HASH_LOG));
+    }
+
     inline int LZFCodec::hash(const byte* p)
     {
-        return int(((uint64(LittleEndian::readLong64(p)) << 16) * 0x1E35A7BD) >> (64 - HASH_LOG));
+        return hash(uint64(LittleEndian::readLong64(p)));
+    }
+
+    inline bool LZFCodec::equals6(uint64 value, const byte* p)
+    {
+        const uint64 reference = uint64(LittleEndian::readLong64(p));
+        return ((value ^ reference) & uint64(0x0000FFFFFFFFFFFFULL)) == 0;
     }
 
     inline int LZFCodec::findMatch(const byte src[], int pos, int ref, int limit)
@@ -278,6 +292,12 @@ namespace kanzi {
     inline int32 LZXCodec<T>::hash(const byte* p)
     {
         return ((uint64(LittleEndian::readLong64(p)) << HASH_LSHIFT) * 0x1E35A7BD) >> HASH_RSHIFT;
+    }
+
+    template <bool T>
+    inline int32 LZXCodec<T>::hash(uint64 value)
+    {
+        return ((value << HASH_LSHIFT) * 0x1E35A7BD) >> HASH_RSHIFT;
     }
 
     template <bool T>
