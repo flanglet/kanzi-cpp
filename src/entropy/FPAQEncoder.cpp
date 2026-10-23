@@ -82,21 +82,28 @@ int FPAQEncoder::encode(const kanzi::byte block[], uint blkptr, uint count)
         _index = 0;
         const uint endChunk = startChunk + chunkSize;
         uint16* p = _probs[0];
+        // Keep range state local across the bit updates in this chunk.
+        uint64 low = _low;
+        uint64 high = _high;
+        uint index = 0;
 
         for (uint i = startChunk; i < endChunk; i++) {
             const int val = int(block[i]);
             const int bits = val + 256;
-            encodeBit(val & 0x80, p[1]);
-            encodeBit(val & 0x40, p[bits >> 7]);
-            encodeBit(val & 0x20, p[bits >> 6]);
-            encodeBit(val & 0x10, p[bits >> 5]);
-            encodeBit(val & 0x08, p[bits >> 4]);
-            encodeBit(val & 0x04, p[bits >> 3]);
-            encodeBit(val & 0x02, p[bits >> 2]);
-            encodeBit(val & 0x01, p[bits >> 1]);
+            encodeBit(val & 0x80, p[1], low, high, index, _buf);
+            encodeBit(val & 0x40, p[bits >> 7], low, high, index, _buf);
+            encodeBit(val & 0x20, p[bits >> 6], low, high, index, _buf);
+            encodeBit(val & 0x10, p[bits >> 5], low, high, index, _buf);
+            encodeBit(val & 0x08, p[bits >> 4], low, high, index, _buf);
+            encodeBit(val & 0x04, p[bits >> 3], low, high, index, _buf);
+            encodeBit(val & 0x02, p[bits >> 2], low, high, index, _buf);
+            encodeBit(val & 0x01, p[bits >> 1], low, high, index, _buf);
             p = _probs[val >> 6];
         }
 
+        _low = low;
+        _high = high;
+        _index = index;
         EntropyUtils::writeVarInt(_bitstream, uint32(_index));
         _bitstream.writeBits(&_buf[0], 8 * _index);
         startChunk += chunkSize;

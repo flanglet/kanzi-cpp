@@ -83,7 +83,7 @@ int FPAQDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
 
         _current = _bitstream.readBits(56);
 
-        // read() checks _bufLimit before accessing the buffer, so no padding
+        // decodeBit() checks the payload limit before accessing the buffer, so no padding
         // or clearing beyond the payload is necessary.
         if (szBytes != 0)
             _bitstream.readBits(&_buf[0], szBytes << 3);
@@ -93,26 +93,46 @@ int FPAQDecoder::decode(kanzi::byte block[], uint blkptr, uint count)
         const uint endChunk = startChunk + chunkSize;
         _p = _probs[0];
 
+        // Keep range and context state local across the bit updates.
+        uint64 low = _low;
+        uint64 high = _high;
+        uint64 current = _current;
+        uint index = 0;
+        int ctx = 1;
+        uint16* p = _p;
+        const byte* buf = szBytes ? &_buf[0] : 0;
+
         for (uint i = startChunk; i < endChunk; i++) {
-            _ctx = 1;
-            decodeBit(_p[_ctx]);
-            decodeBit(_p[_ctx]);
-            decodeBit(_p[_ctx]);
-            decodeBit(_p[_ctx]);
-            decodeBit(_p[_ctx]);
-            decodeBit(_p[_ctx]);
-            decodeBit(_p[_ctx]);
-            decodeBit(_p[_ctx]);
-            block[i] = kanzi::byte(_ctx);
+            ctx = 1;
+            decodeBit(low, high, current, p, ctx, index, buf, szBytes);
+            decodeBit(low, high, current, p, ctx, index, buf, szBytes);
+            decodeBit(low, high, current, p, ctx, index, buf, szBytes);
+            decodeBit(low, high, current, p, ctx, index, buf, szBytes);
+            decodeBit(low, high, current, p, ctx, index, buf, szBytes);
+            decodeBit(low, high, current, p, ctx, index, buf, szBytes);
+            decodeBit(low, high, current, p, ctx, index, buf, szBytes);
+            decodeBit(low, high, current, p, ctx, index, buf, szBytes);
+            block[i] = kanzi::byte(ctx);
 
-            if (_index > szBytes)
+            if (index > szBytes) {
+                _low = low;
+                _high = high;
+                _current = current;
+                _index = index;
+                _ctx = ctx;
+                _p = p;
                 return 0;
+            }
 
-            _p = _probs[(_ctx & 0xFF) >> 6];
+            p = _probs[(ctx & 0xFF) >> 6];
         }
 
-        if (_index > szBytes)
-            return 0;
+        _low = low;
+        _high = high;
+        _current = current;
+        _index = index;
+        _ctx = ctx;
+        _p = p;
 
         startChunk = endChunk;
     }

@@ -48,7 +48,8 @@ namespace kanzi
        uint16 _probs[4][256]; // probability of bit=1
 
 
-       void encodeBit(int bit, uint16& prob);
+       static void encodeBit(int bit, uint16& prob, uint64& low, uint64& high,
+           uint& index, std::vector<byte>& buf);
 
        bool reset();
 
@@ -69,20 +70,27 @@ namespace kanzi
    };
 
 
-   inline void FPAQEncoder::encodeBit(int bit, uint16& prob)
+   inline void FPAQEncoder::encodeBit(int bit, uint16& prob, uint64& low,
+       uint64& high, uint& index, std::vector<byte>& buf)
    {
-       // Update probabilities
        if (bit == 0) {
-          _low = _low + ((((_high - _low) >> 8) * uint64(prob)) >> 8) + 1;
-          prob -= uint16(prob >> 6);
-       } else  {
-          _high = _low + ((((_high - _low) >> 8) * uint64(prob)) >> 8);
-          prob -= uint16((prob - PSCALE + 64) >> 6);
+           low += ((((high - low) >> 8) * uint64(prob)) >> 8) + 1;
+           prob -= uint16(prob >> 6);
+       }
+       else {
+           high = low + ((((high - low) >> 8) * uint64(prob)) >> 8);
+           prob -= uint16((prob - PSCALE + 64) >> 6);
        }
 
-       // Write unchanged first 32 bits to bitstream
-       if (((_low ^ _high) >> 24) == 0)
-           flush();
+       if (((low ^ high) >> 24) == 0) {
+           if (size_t(index) + 4 > buf.size())
+               buf.resize(size_t(index) + 4);
+
+           BigEndian::writeInt32(&buf[index], int32(high >> 24));
+           index += 4;
+           low <<= 32;
+           high = (high << 32) | MASK_0_32;
+       }
    }
 
    inline void FPAQEncoder::flush()

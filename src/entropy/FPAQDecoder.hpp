@@ -52,7 +52,8 @@ namespace kanzi
 
        void _dispose() const {}
 
-       int decodeBit(int pred = 2048);
+       static void decodeBit(uint64& low, uint64& high, uint64& current,
+           uint16 p[], int& ctx, uint& index, const byte buf[], uint limit);
 
        bool reset();
 
@@ -71,32 +72,37 @@ namespace kanzi
    };
 
 
-   inline int FPAQDecoder::decodeBit(int prob)
+   inline void FPAQDecoder::decodeBit(uint64& low, uint64& high, uint64& current,
+       uint16 p[], int& ctx, uint& index, const byte buf[], uint limit)
    {
-       // Calculate interval split
-       // Written in a way to maximize accuracy of multiplication/division
-       const uint64 split = ((((_high - _low) >> 8) * uint64(prob)) >> 8) + _low;
-       int bit;
+       const int prob = p[ctx];
+       const uint64 split = ((((high - low) >> 8) * uint64(prob)) >> 8) + low;
 
-       // Update probabilities
-       if (split >= _current) {
-           _high = split;
-           _p[_ctx] -= uint16((_p[_ctx] - PSCALE + 64) >> 6);
-           _ctx += (_ctx + 1);
-           bit = 1;
+       if (split >= current) {
+           high = split;
+           p[ctx] -= uint16((prob - PSCALE + 64) >> 6);
+           ctx += (ctx + 1);
        }
        else {
-           _low = split + 1;
-           _p[_ctx] -= uint16(_p[_ctx] >> 6);
-           _ctx += _ctx;
-           bit = 0;
+           low = split + 1;
+           p[ctx] -= uint16(prob >> 6);
+           ctx += ctx;
        }
 
-       // Read 32 bits from bitstream
-       if (((_low ^ _high) >> 24) == 0)
-           read();
+       // Renormalize the local range state after each bit.
+       if (((low ^ high) >> 24) == 0) {
+           low = (low << 32) & MASK_0_56;
+           high = ((high << 32) | MASK_0_32) & MASK_0_56;
+           current = (current << 32) & MASK_0_56;
 
-       return bit;
+           if (index + 4 > limit) {
+               index = limit + 1;
+           }
+           else {
+               current |= uint64(BigEndian::readInt32(&buf[index])) & MASK_0_32;
+               index += 4;
+           }
+       }
    }
 
 
