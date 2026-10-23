@@ -58,6 +58,7 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
     const int dim = 255 * order + 1;
     _freqs = new uint[dim * 256];
     _symbols = new ANSDecSymbol[dim * 256];
+    _packed = nullptr;
     _buffer = nullptr;
     _bufferSize = 0;
     _f2s = nullptr;
@@ -77,6 +78,7 @@ ANSRangeDecoder::~ANSRangeDecoder()
 
     delete[] _freqs;
     delete[] _symbols;
+    delete[] _packed;
 }
 
 int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
@@ -99,6 +101,12 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
         _f2s = f2s;
         _f2sSize = newSize;
     }
+
+    // The packed map is specialized for the default order-0 12-bit range.
+    const bool packed = (_order == 0) && (_logRange == 12);
+
+    if (packed && (_packed == nullptr))
+        _packed = new uint32[1 << 12];
 
     const uint scale = 1 << _logRange;
     const int llr = Global::_log2(_logRange) + 1;
@@ -176,8 +184,22 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
             if (f[i] == 0)
                 continue;
 
-            memset(&freq2sym[sum], i, size_t(f[i]));
-            symb[i].reset(sum, f[i], _logRange);
+            if (packed) {
+                // Each 12-bit slot stores symbol[8], frequency[12], and
+                // slot - cumulativeFrequency[12], replacing two decode lookups
+                // with one. Here sum is the cumulative frequency and j is that
+                // slot offset, so packed[sum + j] contains the needed values.
+                const uint freq = (f[i] >= scale) ? scale - 1 : f[i];
+                const uint32 entry = (uint32(i) << 24) | (freq << 12);
+
+                for (uint j = 0; j < f[i]; j++)
+                    _packed[sum + j] = entry | j;
+            }
+            else {
+                memset(&freq2sym[sum], i, size_t(f[i]));
+                symb[i].reset(sum, f[i], _logRange);
+            }
+
             sum += f[i];
         }
 
@@ -247,7 +269,7 @@ bool ANSRangeDecoder::decodeChunk(kanzi::byte block[], uint count)
     if (count == 0)
         return true;
 
-    // Read encoded data from bitstream. decodeSymbol() is branchless and may
+    // Read encoded data from bitstream. The branchless decodeSymbol() path may
     // speculatively read two bytes when no renormalization is needed. Keep a
     // small, zeroed guard after the declared payload and validate consumption
     // in batches below.
@@ -263,19 +285,39 @@ bool ANSRangeDecoder::decodeChunk(kanzi::byte block[], uint count)
         for (int batch = 0; batch < count4; batch += ANS_DECODE_CHECK_INTERVAL) {
             const int endBatch = min(batch + ANS_DECODE_CHECK_INTERVAL, count4);
 
-            for (int i = batch; i < endBatch; i += 4) {
-                const uint8 cur3 = _f2s[st3 & mask];
-                block[i] = kanzi::byte(cur3);
-                st3 = decodeSymbol(p, st3, _symbols[cur3], mask);
-                const uint8 cur2 = _f2s[st2 & mask];
-                block[i + 1] = kanzi::byte(cur2);
-                st2 = decodeSymbol(p, st2, _symbols[cur2], mask);
-                const uint8 cur1 = _f2s[st1 & mask];
-                block[i + 2] = kanzi::byte(cur1);
-                st1 = decodeSymbol(p, st1, _symbols[cur1], mask);
-                const uint8 cur0 = _f2s[st0 & mask];
-                block[i + 3] = kanzi::byte(cur0);
-                st0 = decodeSymbol(p, st0, _symbols[cur0], mask);
+            if (_logRange == 12) {
+                const uint32* const packed = _packed;
+
+                for (int i = batch; i < endBatch; i += 4) {
+                    const uint32 entry3 = packed[st3 & mask];
+                    block[i] = kanzi::byte(entry3 >> 24);
+                    st3 = decodeSymbol(p, st3, entry3);
+                    const uint32 entry2 = packed[st2 & mask];
+                    block[i + 1] = kanzi::byte(entry2 >> 24);
+                    st2 = decodeSymbol(p, st2, entry2);
+                    const uint32 entry1 = packed[st1 & mask];
+                    block[i + 2] = kanzi::byte(entry1 >> 24);
+                    st1 = decodeSymbol(p, st1, entry1);
+                    const uint32 entry0 = packed[st0 & mask];
+                    block[i + 3] = kanzi::byte(entry0 >> 24);
+                    st0 = decodeSymbol(p, st0, entry0);
+                }
+            }
+            else {
+                for (int i = batch; i < endBatch; i += 4) {
+                    const uint8 cur3 = _f2s[st3 & mask];
+                    block[i] = kanzi::byte(cur3);
+                    st3 = decodeSymbol<false>(p, st3, _symbols[cur3], mask);
+                    const uint8 cur2 = _f2s[st2 & mask];
+                    block[i + 1] = kanzi::byte(cur2);
+                    st2 = decodeSymbol<false>(p, st2, _symbols[cur2], mask);
+                    const uint8 cur1 = _f2s[st1 & mask];
+                    block[i + 2] = kanzi::byte(cur1);
+                    st1 = decodeSymbol<false>(p, st1, _symbols[cur1], mask);
+                    const uint8 cur0 = _f2s[st0 & mask];
+                    block[i + 3] = kanzi::byte(cur0);
+                    st0 = decodeSymbol<false>(p, st0, _symbols[cur0], mask);
+                }
             }
 
             if (p > endPayload)
@@ -298,10 +340,10 @@ bool ANSRangeDecoder::decodeChunk(kanzi::byte block[], uint count)
                 const uint8 cur2 = _f2s[(prv2 << _logRange) + (st2 & mask)];
                 const uint8 cur1 = _f2s[(prv1 << _logRange) + (st1 & mask)];
                 const uint8 cur0 = _f2s[(prv0 << _logRange) + (st0 & mask)];
-                st3 = decodeSymbol(p, st3, _symbols[(prv3 << 8) | cur3], mask);
-                st2 = decodeSymbol(p, st2, _symbols[(prv2 << 8) | cur2], mask);
-                st1 = decodeSymbol(p, st1, _symbols[(prv1 << 8) | cur1], mask);
-                st0 = decodeSymbol(p, st0, _symbols[(prv0 << 8) | cur0], mask);
+                st3 = decodeSymbol<true>(p, st3, _symbols[(prv3 << 8) | cur3], mask);
+                st2 = decodeSymbol<true>(p, st2, _symbols[(prv2 << 8) | cur2], mask);
+                st1 = decodeSymbol<true>(p, st1, _symbols[(prv1 << 8) | cur1], mask);
+                st0 = decodeSymbol<true>(p, st0, _symbols[(prv0 << 8) | cur0], mask);
                 block[i3] = kanzi::byte(cur3);
                 block[i2] = kanzi::byte(cur2);
                 block[i1] = kanzi::byte(cur1);

@@ -66,6 +66,7 @@ namespace kanzi
       uint8* _f2s;
       int _f2sSize;
       ANSDecSymbol* _symbols;
+      uint32* _packed;
       byte* _buffer;
       uint _bufferSize;
       uint _chunkSize;
@@ -74,7 +75,11 @@ namespace kanzi
 
       bool decodeChunk(byte block[], uint count);
 
+      template<bool branched>
       uint decodeSymbol(byte*& p, uint& st, const ANSDecSymbol& sym, const int mask) const;
+
+      // The packed order-0 table stores symbol, frequency, and slot offset.
+      static uint decodeSymbol(byte*& p, uint st, uint32 entry);
 
       int decodeHeader(uint frequencies[], uint alphabet[]);
 
@@ -89,17 +94,38 @@ namespace kanzi
    }
 
 
+   template<bool branched>
    inline uint ANSRangeDecoder::decodeSymbol(byte*& p, uint& st, const ANSDecSymbol& sym, const int mask) const
    {
       // Compute next ANS state
       // D(x) = (s, q_s (x/M) + mod(x,M) - b_s) where s is such b_s <= x mod M < b_{s+1}
       st = uint(sym._freq) * (st >> _logRange) + (st & mask) - uint(sym._cumFreq);
 
-      // Normalize
-      const int x = (st < ANS_TOP) ? -1 : 0;
-      st = (st << (x & 16)) | (x & ((uint(p[0]) << 8) | uint(p[1])));
-      p -= (x + x);
+      // ANS1 benefits from loading renormalization bytes only when needed.
+      if (branched) {
+          if (st < ANS_TOP) {
+              st = (st << 16) | (uint(p[0]) << 8) | uint(p[1]);
+              p += 2;
+          }
+      }
+      else {
+          const int x = (st < ANS_TOP) ? -1 : 0;
+          st = (st << (x & 16)) | (x & ((uint(p[0]) << 8) | uint(p[1])));
+          p -= (x + x);
+      }
       return st;
+   }
+
+   // Decode with the order-0 table entry: symbol[8], frequency[12], offset[12].
+   inline uint ANSRangeDecoder::decodeSymbol(byte*& p, uint st, uint32 entry)
+   {
+       const uint freq = (entry >> 12) & 4095;
+       const uint offset = entry & 4095;
+       st = freq * (st >> 12) + offset;
+       const int x = (st < ANS_TOP) ? -1 : 0;
+       st = (st << (x & 16)) | (x & ((uint(p[0]) << 8) | uint(p[1])));
+       p -= (x + x);
+       return st;
    }
 
 }
