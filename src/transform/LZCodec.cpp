@@ -33,6 +33,9 @@ LZCodec::LZCodec(Context& ctx)
     if (lzType == TransformFactory<kanzi::byte>::LZF_TYPE) {
         _delegate = new LZFCodec(ctx);
     }
+    else if (lzType == TransformFactory<kanzi::byte>::LZPX_TYPE) {
+        _delegate = new LZPXCodec(ctx);
+    }
     else if (lzType == TransformFactory<kanzi::byte>::LZP_TYPE) {
         _delegate = new LZPCodec(ctx);
     }
@@ -1757,4 +1760,238 @@ bool LZFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     }
 
     return false;
+}
+
+
+const uint LZPXCodec::HASH_LOG = 17;
+const uint LZPXCodec::HASH_SHIFT = 15;
+const int LZPXCodec::CHUNK_SIZE = 65536;
+const int LZPXCodec::MIN_CHUNK_SIZE = 34;
+const int LZPXCodec::MIN_ABSENT_CODES = 16;
+
+// Each chunk starts with the minimum match length - 2 and a 256-bit literal
+// bitmap (least significant bit first). Absent bytes, in ascending order,
+// encode end-of-block, then consecutive lengths starting at the minimum.
+// The predictor is shared across subblocks and updated for every source byte.
+bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
+{
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<kanzi::byte>::isValid(input))
+        throw invalid_argument("LZPX codec: Invalid input block");
+
+    if (!SliceArray<kanzi::byte>::isValid(output))
+        throw invalid_argument("LZPX codec: Invalid output block");
+
+    if ((count < 4) || (count > input._length - input._index) ||
+        (count > output._length - output._index) || (input._array == output._array))
+        return false;
+
+    if (_hashes == nullptr)
+        _hashes = new int32[1 << HASH_LOG];
+
+    memset(_hashes, 0, sizeof(int32) * (1 << HASH_LOG));
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
+    const int minMatch = 2;
+    int srcIdx = 0;
+    int dstIdx = 0;
+
+    // Chunks need their own token alphabet: absent byte values encode the
+    // end marker and match lengths. Limit chunks to 64 KiB and reserve at
+    // least MIN_ABSENT_CODES values; the predictor table spans all chunks.
+    while (srcIdx < count) {
+        int size = min(count - srcIdx, CHUNK_SIZE);
+        uint freqs[256] = { 0 };
+        Global::computeHistogram(&src[srcIdx], size, freqs);
+        int alphabet = 0;
+
+        for (int i = 0; i < 256; i++)
+            alphabet += (freqs[i] != 0);
+
+        // Keep at least 32 match codes, as in flzp. Dense alphabets need
+        // smaller subblocks; locate the first prefix with 223 distinct bytes.
+        if (alphabet > 256 - MIN_ABSENT_CODES) {
+            memset(freqs, 0, sizeof(freqs));
+            alphabet = 0;
+            size = 0;
+
+            while (alphabet < 256 - MIN_ABSENT_CODES) {
+                const uint val = uint(src[srcIdx + size++]);
+                alphabet += (freqs[val]++ == 0);
+            }
+        }
+
+        if (count - dstIdx < MIN_CHUNK_SIZE)
+            return false;
+
+        dst[dstIdx++] = kanzi::byte(minMatch - 2);
+        memset(&dst[dstIdx], 0, 32);
+        kanzi::byte codes[256];
+        int nbCodes = 0;
+
+        // Mark present bytes as literals; absent bytes become end and match codes.
+        for (int i = 0; i < 256; i++) {
+            if (freqs[i] == 0)
+                codes[nbCodes++] = kanzi::byte(i);
+            else
+                dst[dstIdx + (i >> 3)] |= kanzi::byte(1 << (i & 7));
+        }
+
+        dstIdx += 32;
+        const int end = srcIdx + size;
+        const int maxMatch = minMatch + nbCodes - 2;
+
+        if (srcIdx == 0) {
+            // The first four bytes have no preceding context, so emit them as literals.
+            while (srcIdx < 4) {
+                if (dstIdx >= count)
+                    return false;
+
+                dst[dstIdx++] = src[srcIdx++];
+            }
+        }
+
+        // Main loop
+        while (srcIdx < end) {
+            int length = 0;
+            const uint32 h = hash(uint32(LittleEndian::readInt32(&src[srcIdx - 4])), HASH_SHIFT);
+            const int ref = _hashes[h];
+
+            if (ref != 0) {
+                const int limit = min(maxMatch, end - srcIdx);
+                length = findMatch(src, srcIdx, ref, limit);
+            }
+
+            if (dstIdx >= count)
+                return false;
+
+            if (length < minMatch) {
+                dst[dstIdx++] = src[srcIdx];
+                _hashes[hash(uint32(LittleEndian::readInt32(&src[srcIdx - 4])), HASH_SHIFT)] = srcIdx;
+                srcIdx++;
+            }
+            else {
+                dst[dstIdx++] = codes[length - minMatch + 1];
+                const int next = srcIdx + length;
+
+                // Update hash positions
+                while (srcIdx < next) {
+                    _hashes[hash(uint32(LittleEndian::readInt32(&src[srcIdx - 4])), HASH_SHIFT)] = srcIdx;
+                    srcIdx++;
+                }
+            }
+        }
+
+        if (dstIdx >= count)
+            return false;
+
+        dst[dstIdx++] = codes[0];
+    }
+
+    if (dstIdx > count - count / 100)
+        return false;
+
+    input._index += count;
+    output._index += dstIdx;
+    return true;
+}
+
+
+bool LZPXCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
+{
+    if (count == 0)
+        return true;
+
+    if (!SliceArray<kanzi::byte>::isValid(input))
+        throw invalid_argument("LZPX codec: Invalid input block");
+
+    if (!SliceArray<kanzi::byte>::isValid(output))
+        throw invalid_argument("LZPX codec: Invalid output block");
+
+    if ((count < MIN_CHUNK_SIZE) || (count > input._length - input._index) || (input._array == output._array))
+        return false;
+
+    if (_hashes == nullptr)
+        _hashes = new int32[1 << HASH_LOG];
+
+    memset(_hashes, 0, sizeof(int32) * (1 << HASH_LOG));
+    const kanzi::byte* src = &input._array[input._index];
+    kanzi::byte* dst = &output._array[output._index];
+    const int dstEnd = output._length - output._index;
+    int srcIdx = 0;
+    int dstIdx = 0;
+
+    // Each chunk header defines its token alphabet. Decode through its end
+    // marker before reading the next header; the predictor table spans chunks.
+    while (srcIdx < count) {
+        if (count - srcIdx < MIN_CHUNK_SIZE)
+            return false;
+
+        const int minMatch = int(uint(src[srcIdx++])) + 2;
+
+        int lengths[256];
+        int nbCodes = 0;
+
+        for (int i = 0; i < 256; i++) {
+            if ((uint(src[srcIdx + (i >> 3)]) & (1 << (i & 7))) != 0)
+                lengths[i] = -1;
+            else
+                lengths[i] = (nbCodes++ == 0) ? 0 : minMatch + nbCodes - 2;
+        }
+
+        srcIdx += 32;
+
+        if (nbCodes < 2)
+            return false;
+
+        const int blockStart = dstIdx;
+        bool endBlock = false;
+
+        // Main loop
+        while (srcIdx < count) {
+            const kanzi::byte val = src[srcIdx++];
+            int length = lengths[uint(val)];
+
+            if (length == 0) {
+                endBlock = true;
+                break;
+            }
+
+            int ref = 0;
+
+            if (length > 0) {
+                if (dstIdx < 4)
+                    return false;
+
+                ref = _hashes[hash(uint32(LittleEndian::readInt32(&dst[dstIdx - 4])), HASH_SHIFT)];
+
+                if ((ref == 0) || (ref >= dstIdx))
+                    return false;
+            }
+            else {
+                length = 1;
+            }
+
+            if ((length > dstEnd - dstIdx) || (length > CHUNK_SIZE - (dstIdx - blockStart)))
+                return false;
+
+            const int next = dstIdx + length;
+
+            while (dstIdx < next) {
+                if (dstIdx >= 4)
+                    _hashes[hash(uint32(LittleEndian::readInt32(&dst[dstIdx - 4])), HASH_SHIFT)] = dstIdx;
+
+                dst[dstIdx++] = (ref == 0) ? val : dst[ref++];
+            }
+        }
+
+        if ((endBlock == false) || (dstIdx == blockStart))
+            return false;
+    }
+
+    input._index += count;
+    output._index += dstIdx;
+    return true;
 }

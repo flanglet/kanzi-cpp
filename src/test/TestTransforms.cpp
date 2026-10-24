@@ -745,6 +745,85 @@ static int testTransformCapacityValidation()
     return 0;
 }
 
+static int testLZPX()
+{
+    LZPXCodec codec;
+    uint32 seed = 1;
+    const int sizes[] = { 128, 1024, 65535, 65536, 65537, 131073 };
+
+    for (int mode = 0; mode < 4; mode++) {
+        for (int k = 0; k < 6; k++) {
+            const int size = sizes[k];
+            vector<kanzi::byte> src(size + 7);
+            vector<kanzi::byte> enc(size + 9);
+            vector<kanzi::byte> dec(size + 6, kanzi::byte(0xA5));
+
+            for (int i = 0; i < size; i++) {
+                seed = seed * 1664525 + 1013904223;
+                src[i + 7] = kanzi::byte((mode == 0) ? 7 : (mode == 1) ? i % 13 :
+                    (mode == 2) ? (seed >> 24) : (seed >> 24) & 3);
+            }
+
+            SliceArray<kanzi::byte> input(&src[0], size + 7, 7);
+            SliceArray<kanzi::byte> output(&enc[0], size + 9, 9);
+
+            if (codec.forward(input, output, size) == false) {
+                if ((input._index != 7) || (output._index != 9) || ((mode < 2) && (size >= 1024)))
+                    return 1;
+
+                continue;
+            }
+
+            const int length = output._index - 9;
+            SliceArray<kanzi::byte> encoded(&enc[0], output._index, 9);
+            SliceArray<kanzi::byte> decoded(&dec[0], size + 5, 5);
+
+            if ((codec.inverse(encoded, decoded, length) == false) ||
+                (encoded._index != output._index) || (decoded._index != size + 5) ||
+                (memcmp(&src[7], &dec[5], size) != 0) ||
+                (dec[4] != kanzi::byte(0xA5)) || (dec[size + 5] != kanzi::byte(0xA5)))
+                return 1;
+
+            encoded._index = 9;
+            decoded._index = 5;
+
+            if (codec.inverse(encoded, decoded, length - 1) ||
+                (encoded._index != 9) || (decoded._index != 5))
+                return 1;
+
+            decoded._length--;
+
+            if (codec.inverse(encoded, decoded, length))
+                return 1;
+        }
+    }
+
+    // A non-default minimum length: five literals followed by a length-4
+    // overlapping match. Absent byte 0 is EOB and absent byte 1 is length 4.
+    kanzi::byte encoded[40] = { kanzi::byte(2) };
+    encoded[13] = kanzi::byte(2); // Literal 'a' (97)
+
+    for (int i = 33; i < 38; i++)
+        encoded[i] = kanzi::byte('a');
+
+    encoded[38] = kanzi::byte(1);
+    kanzi::byte decoded[9];
+    SliceArray<kanzi::byte> input(encoded, 40);
+    SliceArray<kanzi::byte> output(decoded, 9);
+
+    if ((codec.inverse(input, output, 40) == false) || (output._index != 9))
+        return 1;
+
+    for (int i = 0; i < 9; i++) {
+        if (decoded[i] != kanzi::byte('a'))
+            return 1;
+    }
+
+    cout << "LZPX tests passed" << endl;
+    return 0;
+}
+
+
 static int testLZPMalformed()
 {
     cout << endl
@@ -1075,6 +1154,9 @@ static Transform<kanzi::byte>* getByteTransform(string name, Context& ctx)
         ctx.putInt("lz", TransformFactory<kanzi::byte>::LZX_TYPE);
         return new LZCodec(ctx);
     }
+
+    if (name.compare("LZPX") == 0)
+        return new LZPXCodec(ctx);
 
     if (name.compare("LZP") == 0){
         ctx.putInt("lz", TransformFactory<kanzi::byte>::LZP_TYPE);
@@ -1592,6 +1674,11 @@ int TestTransforms_main(int argc, const char* argv[])
             return res;
 
         res = testROLZXMalformed();
+
+        if (res != 0)
+            return res;
+
+        res = testLZPX();
 
         if (res != 0)
             return res;

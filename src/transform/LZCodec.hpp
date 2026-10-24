@@ -25,6 +25,7 @@ limitations under the License.
 
 namespace kanzi {
 
+    // Fast Lempel Ziv 77 implementation
     class LZCodec FINAL : public Transform<byte> {
 
     public:
@@ -35,7 +36,6 @@ namespace kanzi {
         ~LZCodec() { delete _delegate; }
 
         bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
-
         bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
         // Required encoding output buffer size
@@ -48,93 +48,8 @@ namespace kanzi {
         Transform<byte>* _delegate;
     };
 
-    // Simple byte oriented LZ77 implementation.
-    // Meant to be used before entropy stage
-    template <bool T>
-    class LZXCodec FINAL : public Transform<byte> {
-    public:
-        LZXCodec()
-        {
-            _hashes = nullptr;
-            _hashSize = 0;
-            _tkBuf = nullptr;
-            _mLenBuf = nullptr;
-            _mBuf = nullptr;
-            _bufferSize = 0;
-            _pCtx = nullptr;
-        }
-
-        LZXCodec(Context& ctx) :
-            _pCtx(&ctx)
-        {
-            _hashes = nullptr;
-            _hashSize = 0;
-            _tkBuf = nullptr;
-            _mLenBuf = nullptr;
-            _mBuf = nullptr;
-            _bufferSize = 0;
-        }
-
-        ~LZXCodec()
-        {
-            _bufferSize = 0;
-            _hashSize = 0;
-            if (_hashes != nullptr) delete[] _hashes;
-            if (_mLenBuf != nullptr) delete[] _mLenBuf;
-            if (_mBuf != nullptr) delete[] _mBuf;
-            if (_tkBuf != nullptr) delete[] _tkBuf;
-        }
-
-        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
-
-        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
-
-        // Required encoding output buffer size
-        int getMaxEncodedLength(int srcLen) const
-        {
-            // readLength() may read two bytes past the encoded block
-            return ((srcLen <= 1024) ? srcLen + 16 : srcLen + (srcLen / 64)) + 4;
-        }
-
-    private:
-        static const uint HASH_LOG;
-        static const uint HASH_LSHIFT;
-        static const uint HASH_RSHIFT;
-        static const int MAX_DISTANCE1;
-        static const int MAX_DISTANCE2;
-        static const int MIN_MATCH4;
-        static const int MIN_MATCH6;
-        static const int MIN_MATCH9;
-        static const int MAX_MATCH;
-        static const int MIN_BLOCK_LENGTH;
-        static const int READ_LENGTH_GUARD;
-
-        int32* _hashes;
-        int _hashSize;
-        byte* _mLenBuf;
-        byte* _mBuf;
-        byte* _tkBuf;
-        int _bufferSize;
-        Context* _pCtx;
-
-        bool inverseV7(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
-
-        bool inverseV6(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
-
-        bool inverseV5(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
-
-        static int emitLength(byte block[], int len);
-
-        static void emitLiterals(const byte src[], byte dst[], int len);
-
-        static int findMatch(const byte block[], const int pos, const int ref, const int maxMatch);
-
-        static uint readLength(const byte block[], int& pos);
-
-        static int32 hash(const byte* p);
-        static int32 hash(uint64 value);
-    };
-
+    // Fast LZ Prediction implementation with a high min match length.
+    // Meant to be used before BWT or entropy stage
     class LZPCodec FINAL : public Transform<byte> {
     public:
         LZPCodec()
@@ -155,7 +70,6 @@ namespace kanzi {
         }
 
         bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
-
         bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
         // Required encoding output buffer size
@@ -175,8 +89,39 @@ namespace kanzi {
         int _hashSize;
 
         static uint32 hash(uint32 ctx);
+        static uint32 hash(uint32 ctx, uint shift);
         static int findMatch(const byte block[], const int pos, const int ref, const int maxMatch);
     };
+
+    // LZ Prediction with absent-byte match length codes based on Matt Mahoney's FLZP
+    class LZPXCodec FINAL : public Transform<byte> {
+    public:
+        LZPXCodec() : _hashes(nullptr) {}
+        LZPXCodec(Context&) : _hashes(nullptr) {}
+
+        ~LZPXCodec() { delete[] _hashes; }
+
+        bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
+        bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
+
+        int getMaxEncodedLength(int srcLen) const { return srcLen; }
+
+    private:
+        static const uint HASH_LOG;
+        static const uint HASH_SHIFT;
+        static const int CHUNK_SIZE;
+        static const int MIN_CHUNK_SIZE;
+        static const int MIN_ABSENT_CODES;
+
+        static uint32 hash(uint32 ctx, uint shift);
+        static int findMatch(const byte block[], const int pos, const int ref, const int maxMatch);
+
+        int32* _hashes;
+
+        LZPXCodec(const LZPXCodec&);
+        LZPXCodec& operator=(const LZPXCodec&);
+    };
+
 
     // Very fast LZ77 codec implementation
     // Meant to be used without entropy stage
@@ -366,10 +311,38 @@ namespace kanzi {
 
     inline uint32 LZPCodec::hash(uint32 ctx)
     {
-        return (0x7FEB352D * ctx) >> HASH_SHIFT;
+        return hash(ctx, HASH_SHIFT);
+    }
+
+    inline uint32 LZPCodec::hash(uint32 ctx, uint shift)
+    {
+        return (0x7FEB352D * ctx) >> shift;
     }
 
     inline int LZPCodec::findMatch(const byte src[], const int srcIdx, const int ref, const int maxMatch)
+    {
+        int n = 0;
+
+        while (n + 8 <= maxMatch) {
+            const int64 diff = LittleEndian::readLong64(&src[srcIdx + n]) ^ LittleEndian::readLong64(&src[ref + n]);
+
+            if (diff != 0) {
+                n += (Global::trailingZeros(uint64(diff)) >> 3);
+                break;
+            }
+
+            n += 8;
+        }
+
+        return n;
+    }
+
+    inline uint32 LZPXCodec::hash(uint32 ctx, uint shift)
+    {
+        return (0x7FEB352D * ctx) >> shift;
+    }
+
+    inline int LZPXCodec::findMatch(const byte src[], const int srcIdx, const int ref, const int maxMatch)
     {
         int n = 0;
 
