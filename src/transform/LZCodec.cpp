@@ -1766,13 +1766,13 @@ bool LZFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 const uint LZPXCodec::HASH_LOG = 17;
 const uint LZPXCodec::HASH_SHIFT = 15;
 const int LZPXCodec::CHUNK_SIZE = 65536;
-const int LZPXCodec::MIN_CHUNK_SIZE = 34;
+const int LZPXCodec::MIN_CHUNK_SIZE = 33;
 const int LZPXCodec::MIN_ABSENT_CODES = 16;
 
-// Each chunk starts with the minimum match length - 2 and a 256-bit literal
-// bitmap (least significant bit first). Absent bytes, in ascending order,
-// encode end-of-block, then consecutive lengths starting at the minimum.
-// The predictor is shared across subblocks and updated for every source byte.
+// Each transform block starts with the minimum match length - 2. Each chunk
+// then starts with a 256-bit literal bitmap (least significant bit first).
+// Absent bytes, in ascending order, encode end-of-block, then consecutive
+// lengths starting at the minimum. The predictor is shared across chunks.
 bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
@@ -1798,10 +1798,15 @@ bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
     int srcIdx = 0;
     int dstIdx = 0;
 
+    dst[dstIdx++] = kanzi::byte(minMatch - 2);
+
     // Chunks need their own token alphabet: absent byte values encode the
     // end marker and match lengths. Limit chunks to 64 KiB and reserve at
     // least MIN_ABSENT_CODES values; the predictor table spans all chunks.
     while (srcIdx < count) {
+        if (count - dstIdx < MIN_CHUNK_SIZE)
+            return false;
+
         int size = min(count - srcIdx, CHUNK_SIZE);
         uint freqs[256] = { 0 };
         Global::computeHistogram(&src[srcIdx], size, freqs);
@@ -1810,23 +1815,20 @@ bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
         for (int i = 0; i < 256; i++)
             alphabet += (freqs[i] != 0);
 
-        // Keep at least 32 match codes, as in flzp. Dense alphabets need
-        // smaller subblocks; locate the first prefix with 223 distinct bytes.
+        // Keep at least MIN_ABSENT_CODES absent values: one for the end marker
+        // and the rest for match lengths. Dense alphabets need smaller chunks.
         if (alphabet > 256 - MIN_ABSENT_CODES) {
             memset(freqs, 0, sizeof(freqs));
             alphabet = 0;
             size = 0;
 
             while (alphabet < 256 - MIN_ABSENT_CODES) {
-                const uint val = uint(src[srcIdx + size++]);
+                const uint val = uint(src[srcIdx + size]);
                 alphabet += (freqs[val]++ == 0);
+                size++;
             }
         }
 
-        if (count - dstIdx < MIN_CHUNK_SIZE)
-            return false;
-
-        dst[dstIdx++] = kanzi::byte(minMatch - 2);
         memset(&dst[dstIdx], 0, 32);
         kanzi::byte codes[256];
         int nbCodes = 0;
@@ -1845,12 +1847,12 @@ bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
 
         if (srcIdx == 0) {
             // The first four bytes have no preceding context, so emit them as literals.
-            while (srcIdx < 4) {
-                if (dstIdx >= count)
-                    return false;
+            if (count - dstIdx < 4)
+                return false;
 
-                dst[dstIdx++] = src[srcIdx++];
-            }
+            memcpy(&dst[dstIdx], &src[srcIdx], 4);
+            dstIdx += 4;
+            srcIdx += 4;
         }
 
         // Main loop
@@ -1910,7 +1912,7 @@ bool LZPXCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
     if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("LZPX codec: Invalid output block");
 
-    if ((count < MIN_CHUNK_SIZE) || (count > input._length - input._index) || (input._array == output._array))
+    if ((count < MIN_CHUNK_SIZE + 1) || (count > input._length - input._index) || (input._array == output._array))
         return false;
 
     if (_hashes == nullptr)
@@ -1923,13 +1925,29 @@ bool LZPXCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
     int srcIdx = 0;
     int dstIdx = 0;
 
-    // Each chunk header defines its token alphabet. Decode through its end
-    // marker before reading the next header; the predictor table spans chunks.
+    // The transform header defines the minimum match length once. Each chunk
+    // then defines its own token alphabet; the predictor table spans chunks.
+    const int minMatch = int(uint(src[srcIdx++])) + 2;
+
+    // The first four output bytes seed the hash context. Validate them
+    // against the first chunk alphabet before entering the chunk loop.
+    const int firstChunk = srcIdx;
+
+    if (count - firstChunk < 32 + 4)
+        return false;
+
+    const int firstTokens = firstChunk + 32;
+
+    for (int i = 0; i < 4; i++) {
+        const uint val = uint(src[firstTokens + i]);
+
+        if ((uint(src[firstChunk + (val >> 3)]) & (1 << (val & 7))) == 0)
+            return false;
+    }
+
     while (srcIdx < count) {
         if (count - srcIdx < MIN_CHUNK_SIZE)
             return false;
-
-        const int minMatch = int(uint(src[srcIdx++])) + 2;
 
         int lengths[256];
         int nbCodes = 0;
@@ -1941,11 +1959,10 @@ bool LZPXCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
                 lengths[i] = (nbCodes++ == 0) ? 0 : minMatch + nbCodes - 2;
         }
 
-        srcIdx += 32;
-
         if (nbCodes < 2)
             return false;
 
+        srcIdx += 32;
         const int blockStart = dstIdx;
         bool endBlock = false;
 
@@ -1959,20 +1976,21 @@ bool LZPXCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
                 break;
             }
 
-            int ref = 0;
-
-            if (length > 0) {
-                if (dstIdx < 4)
+            if (length < 0) {
+                if ((dstIdx >= dstEnd) || (dstIdx - blockStart >= CHUNK_SIZE))
                     return false;
 
-                ref = _hashes[hash(uint32(LittleEndian::readInt32(&dst[dstIdx - 4])), HASH_SHIFT)];
+                if (dstIdx >= 4)
+                    _hashes[hash(uint32(LittleEndian::readInt32(&dst[dstIdx - 4])), HASH_SHIFT)] = dstIdx;
 
-                if ((ref == 0) || (ref >= dstIdx))
-                    return false;
+                dst[dstIdx++] = val;
+                continue;
             }
-            else {
-                length = 1;
-            }
+
+            int ref = _hashes[hash(uint32(LittleEndian::readInt32(&dst[dstIdx - 4])), HASH_SHIFT)];
+
+            if ((ref == 0) || (ref >= dstIdx))
+                return false;
 
             if ((length > dstEnd - dstIdx) || (length > CHUNK_SIZE - (dstIdx - blockStart)))
                 return false;
@@ -1980,10 +1998,8 @@ bool LZPXCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
             const int next = dstIdx + length;
 
             while (dstIdx < next) {
-                if (dstIdx >= 4)
-                    _hashes[hash(uint32(LittleEndian::readInt32(&dst[dstIdx - 4])), HASH_SHIFT)] = dstIdx;
-
-                dst[dstIdx++] = (ref == 0) ? val : dst[ref++];
+                _hashes[hash(uint32(LittleEndian::readInt32(&dst[dstIdx - 4])), HASH_SHIFT)] = dstIdx;
+                dst[dstIdx++] = dst[ref++];
             }
         }
 
