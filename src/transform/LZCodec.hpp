@@ -169,7 +169,6 @@ namespace kanzi {
         int _hashSize;
 
         static uint32 hash(uint32 ctx);
-        static uint32 hash(uint32 ctx, uint shift);
         static int findMatch(const byte block[], const int pos, const int ref, const int maxMatch);
     };
 
@@ -191,6 +190,7 @@ namespace kanzi {
         static const uint HASH_SHIFT;
         static const int CHUNK_SIZE;
         static const int MIN_CHUNK_SIZE;
+        static const int MIN_MATCH;
         static const int MIN_ABSENT_CODES;
 
         static uint32 hash(uint32 ctx, uint shift);
@@ -391,12 +391,7 @@ namespace kanzi {
 
     inline uint32 LZPCodec::hash(uint32 ctx)
     {
-        return hash(ctx, HASH_SHIFT);
-    }
-
-    inline uint32 LZPCodec::hash(uint32 ctx, uint shift)
-    {
-        return (0x7FEB352D * ctx) >> shift;
+        return (0x7FEB352D * ctx) >> HASH_SHIFT;
     }
 
     inline int LZPCodec::findMatch(const byte src[], const int srcIdx, const int ref, const int maxMatch)

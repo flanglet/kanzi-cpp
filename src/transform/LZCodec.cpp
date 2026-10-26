@@ -1767,6 +1767,7 @@ const uint LZPXCodec::HASH_LOG = 17;
 const uint LZPXCodec::HASH_SHIFT = 15;
 const int LZPXCodec::CHUNK_SIZE = 65536;
 const int LZPXCodec::MIN_CHUNK_SIZE = 33;
+const int LZPXCodec::MIN_MATCH = 2;
 const int LZPXCodec::MIN_ABSENT_CODES = 16;
 
 // Each transform block starts with the minimum match length - 2. Each chunk
@@ -1794,11 +1795,10 @@ bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
     memset(_hashes, 0, sizeof(int32) * (1 << HASH_LOG));
     const kanzi::byte* src = &input._array[input._index];
     kanzi::byte* dst = &output._array[output._index];
-    const int minMatch = 2;
     int srcIdx = 0;
     int dstIdx = 0;
 
-    dst[dstIdx++] = kanzi::byte(minMatch - 2);
+    dst[dstIdx++] = kanzi::byte(MIN_MATCH - 2);
 
     // Chunks need their own token alphabet: absent byte values encode the
     // end marker and match lengths. Limit chunks to 64 KiB and reserve at
@@ -1809,24 +1809,31 @@ bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
 
         int size = min(count - srcIdx, CHUNK_SIZE);
         uint freqs[256] = { 0 };
-        Global::computeHistogram(&src[srcIdx], size, freqs);
         int alphabet = 0;
+        int boundary = 0;
+        const int maxAlphabet = 256 - MIN_ABSENT_CODES;
 
-        for (int i = 0; i < 256; i++)
-            alphabet += (freqs[i] != 0);
+        // Remember where the number of distinct bytes reaches the limit.
+        // If another distinct byte appears, end the chunk at that boundary.
+        // Otherwise, keep the full chunk. This preserves the original chunk
+        // boundaries while avoiding a full scan when the limit is exceeded.
+        // The literal bitmap only needs presence flags, not byte counts.
+        for (int i = 0; i < size; i++) {
+            const uint val = uint(src[srcIdx + i]);
 
-        // Keep at least MIN_ABSENT_CODES absent values: one for the end marker
-        // and the rest for match lengths. Dense alphabets need smaller chunks.
-        if (alphabet > 256 - MIN_ABSENT_CODES) {
-            memset(freqs, 0, sizeof(freqs));
-            alphabet = 0;
-            size = 0;
+            if (freqs[val] != 0)
+                continue;
 
-            while (alphabet < 256 - MIN_ABSENT_CODES) {
-                const uint val = uint(src[srcIdx + size]);
-                alphabet += (freqs[val]++ == 0);
-                size++;
+            if (alphabet == maxAlphabet) {
+                size = boundary;
+                break;
             }
+
+            freqs[val] = 1;
+            alphabet++;
+
+            if (alphabet == maxAlphabet)
+                boundary = i + 1;
         }
 
         memset(&dst[dstIdx], 0, 32);
@@ -1843,7 +1850,7 @@ bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
 
         dstIdx += 32;
         const int end = srcIdx + size;
-        const int maxMatch = minMatch + nbCodes - 2;
+        const int maxMatch = MIN_MATCH + nbCodes - 2;
 
         if (srcIdx == 0) {
             // The first four bytes have no preceding context, so emit them as literals.
@@ -1869,13 +1876,13 @@ bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
             if (dstIdx >= count)
                 return false;
 
-            if (length < minMatch) {
+            if (length < MIN_MATCH) {
                 dst[dstIdx++] = src[srcIdx];
                 _hashes[hash(uint32(LittleEndian::readInt32(&src[srcIdx - 4])), HASH_SHIFT)] = srcIdx;
                 srcIdx++;
             }
             else {
-                dst[dstIdx++] = codes[length - minMatch + 1];
+                dst[dstIdx++] = codes[length - MIN_MATCH + 1];
                 const int next = srcIdx + length;
 
                 // Update hash positions
