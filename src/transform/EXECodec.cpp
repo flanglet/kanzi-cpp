@@ -22,6 +22,18 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+// Return true if an eight-byte word contains an x86 opcode or escape byte.
+static inline bool exeHasSpecial(uint64 word)
+{
+    const uint64 ones = uint64(0x0101010101010101ULL);
+    const uint64 high = uint64(0x8080808080808080ULL);
+    const uint64 a = word ^ uint64(0x0F0F0F0F0F0F0F0FULL);
+    const uint64 b = word ^ uint64(0x9B9B9B9B9B9B9B9BULL);
+    const uint64 c = (word & uint64(0xFEFEFEFEFEFEFEFEULL)) ^ uint64(0xE8E8E8E8E8E8E8E8ULL);
+    return (((a - ones) & ~a & high) | ((b - ones) & ~b & high) |
+            ((c - ones) & ~c & high)) != 0;
+}
+
 const kanzi::byte EXECodec::X86_MASK_JUMP = kanzi::byte(0xFE);
 const kanzi::byte EXECodec::X86_INSTRUCTION_JUMP = kanzi::byte(0xE8);
 const kanzi::byte EXECodec::X86_INSTRUCTION_JCC = kanzi::byte(0x80);
@@ -135,6 +147,14 @@ bool EXECodec::forwardX86(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
     }
 
     while ((srcIdx < codeEnd) && (dstIdx < dstEnd)) {
+        if ((codeEnd - srcIdx >= 8) && (dstEnd - dstIdx >= 8) &&
+            !exeHasSpecial(uint64(LittleEndian::readLong64(&src[srcIdx])))) {
+            memcpy(&dst[dstIdx], &src[srcIdx], 8);
+            srcIdx += 8;
+            dstIdx += 8;
+            continue;
+        }
+
         if (src[srcIdx] == X86_TWO_BYTE_PREFIX) {
             if (srcIdx + 1 >= codeEnd) {
                 boundaryReached = true;
@@ -358,6 +378,14 @@ bool EXECodec::inverseX86(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
     }
 
     while (srcIdx < codeEnd) {
+        if ((codeEnd - srcIdx >= 8) && (dstEnd - dstIdx >= 8) &&
+            !exeHasSpecial(uint64(LittleEndian::readLong64(&src[srcIdx])))) {
+            memcpy(&dst[dstIdx], &src[srcIdx], 8);
+            srcIdx += 8;
+            dstIdx += 8;
+            continue;
+        }
+
         if (src[srcIdx] == X86_TWO_BYTE_PREFIX) {
             if (srcIdx + 1 >= codeEnd) {
                 // Accept legacy streams where a trailing 0x0F was emitted in
@@ -558,6 +586,27 @@ kanzi::byte EXECodec::detectType(const kanzi::byte src[], int count, int& codeSt
     uint histo[256] = { 0 };
 
     for (int i = codeStart; i < codeEnd; i++) {
+        // Process ordinary aligned bytes together while preserving the scalar
+        // detector's handling of x86 prefixes and ARM branch counts.
+        if (((i & 3) == 0) && (codeEnd - i >= 8) &&
+            !exeHasSpecial(uint64(LittleEndian::readLong64(&src[i])))) {
+            for (int j = 0; j < 8; j++)
+                histo[int(src[i + j])]++;
+
+            for (int j = 0; j < 8; j += 4) {
+                const int instr = LittleEndian::readInt32(&src[i + j]);
+                const int opcode = instr & ARM_B_OPCODE_MASK;
+                const int cbOpcode = instr & ARM_CB_OPCODE_MASK;
+
+                if ((opcode == ARM_OPCODE_B) || (opcode == ARM_OPCODE_BL) ||
+                    (cbOpcode == ARM_OPCODE_CBZ) || (cbOpcode == ARM_OPCODE_CBNZ))
+                    jumpsARM64++;
+            }
+
+            i += 7;
+            continue;
+        }
+
         histo[int(src[i])]++;
 
         // X86
@@ -592,7 +641,7 @@ kanzi::byte EXECodec::detectType(const kanzi::byte src[], int count, int& codeSt
         const int opcode2 = instr & ARM_CB_OPCODE_MASK;
 
         if ((opcode1 == ARM_OPCODE_B) || (opcode1 == ARM_OPCODE_BL) ||
-             (opcode2 == ARM_OPCODE_CBZ) || (opcode2 == ARM_OPCODE_CBNZ))
+            (opcode2 == ARM_OPCODE_CBZ) || (opcode2 == ARM_OPCODE_CBNZ))
             jumpsARM64++;
     }
 
@@ -652,7 +701,7 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
                                  int64(LittleEndian::readInt32(&pe[28]))) == false)
                     return false;
 
-                arch = LittleEndian::readInt16(&pe[4]);
+                arch = int(uint16(LittleEndian::readInt16(&pe[4])));
             }
 
             return true;
@@ -682,8 +731,9 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
                         int typeSection = int(LittleEndian::readInt32(&src[startEntry + 4]));
                         const int64 offSection = LittleEndian::readLong64(&src[startEntry + 0x18]);
                         const int64 lenSection = LittleEndian::readLong64(&src[startEntry + 0x20]);
+                        const uint64 flags = uint64(LittleEndian::readLong64(&src[startEntry + 8]));
 
-                        if ((typeSection == 1) && (lenSection >= 64)) {
+                        if ((typeSection == 1) && ((flags & 4) != 0) && (lenSection >= 64)) {
                             if (setCodeRange(count, codeStart, codeEnd, offSection, lenSection) == false)
                                 return false;
                         }
@@ -706,8 +756,9 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
                         int typeSection = int(LittleEndian::readInt32(&src[startEntry + 4]));
                         const int64 offSection = int64(LittleEndian::readInt32(&src[startEntry + 0x10]));
                         const int64 lenSection = int64(LittleEndian::readInt32(&src[startEntry + 0x14]));
+                        const uint64 flags = uint64(LittleEndian::readInt32(&src[startEntry + 8]));
 
-                        if ((typeSection == 1) && (lenSection >= 64)) {
+                        if ((typeSection == 1) && ((flags & 4) != 0) && (lenSection >= 64)) {
                             if (setCodeRange(count, codeStart, codeEnd, offSection, lenSection) == false)
                                 return false;
                         }
@@ -734,8 +785,9 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
                         int typeSection = int(BigEndian::readInt32(&src[startEntry + 4]));
                         const int64 offSection = BigEndian::readLong64(&src[startEntry + 0x18]);
                         const int64 lenSection = BigEndian::readLong64(&src[startEntry + 0x20]);
+                        const uint64 flags = uint64(BigEndian::readLong64(&src[startEntry + 8]));
 
-                        if ((typeSection == 1) && (lenSection >= 64)) {
+                        if ((typeSection == 1) && ((flags & 4) != 0) && (lenSection >= 64)) {
                             if (setCodeRange(count, codeStart, codeEnd, offSection, lenSection) == false)
                                 return false;
                         }
@@ -758,8 +810,9 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
                         int typeSection = int(BigEndian::readInt32(&src[startEntry + 4]));
                         const int64 offSection = int64(BigEndian::readInt32(&src[startEntry + 0x10]));
                         const int64 lenSection = int64(BigEndian::readInt32(&src[startEntry + 0x14]));
+                        const uint64 flags = uint64(BigEndian::readInt32(&src[startEntry + 8]));
 
-                        if ((typeSection == 1) && (lenSection >= 64)) {
+                        if ((typeSection == 1) && ((flags & 4) != 0) && (lenSection >= 64)) {
                             if (setCodeRange(count, codeStart, codeEnd, offSection, lenSection) == false)
                                 return false;
                         }
