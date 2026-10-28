@@ -75,7 +75,7 @@ namespace kanzi {
        int getMaxEncodedLength(int srcLen) const { return srcLen; }
 
    private:
-       DictEntry** _dictMap;
+       uint32* _dictMap; // Dictionary index + 1; zero denotes an empty slot
        DictEntry* _dictList;
        byte _escapes[2];
        int _staticDictSize;
@@ -116,7 +116,7 @@ namespace kanzi {
        int getMaxEncodedLength(int srcLen) const { return srcLen; }
 
    private:
-       DictEntry** _dictMap;
+       uint32* _dictMap; // Dictionary index + 1; zero denotes an empty slot
        DictEntry* _dictList;
        int _staticDictSize;
        int _dictSize;

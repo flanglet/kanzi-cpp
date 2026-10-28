@@ -581,10 +581,10 @@ void TextCodec1::reset(int count)
     const int mapSize = 1 << _logHashSize;
 
     if (_dictMap == nullptr)
-        _dictMap = new DictEntry*[mapSize];
+        _dictMap = new uint32[mapSize];
 
     for (int i = 0; i < mapSize; i++)
-        _dictMap[i] = nullptr;
+        _dictMap[i] = 0;
 
     if ((_dictList == nullptr) || (allocatedSize < _dictSize)) {
         DictEntry* newDict = new DictEntry[_dictSize];
@@ -605,7 +605,7 @@ void TextCodec1::reset(int count)
     }
 
     for (int i = 0; i < _staticDictSize; i++)
-        _dictMap[_dictList[i]._hash & _hashMask] = &_dictList[i];
+        _dictMap[_dictList[i]._hash & _hashMask] = uint32(i + 1);
 
     // Pre-allocate all dictionary entries
     for (int i = _staticDictSize; i < _dictSize; i++)
@@ -691,13 +691,15 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 // Check word in dictionary
                 prefetchRead(&_dictMap[h1 & _hashMask]);
                 DictEntry* pe = nullptr;
-                DictEntry* pe1 = _dictMap[h1 & _hashMask];
+                const uint32 mapIndex1 = _dictMap[h1 & _hashMask];
+                DictEntry* pe1 = (mapIndex1 == 0) ? nullptr : &_dictList[mapIndex1 - 1];
 
                 if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length))
                     pe = pe1;
                 else {
                     prefetchRead(&_dictMap[h2 & _hashMask]);
-                    DictEntry* pe2 = _dictMap[h2 & _hashMask];
+                    const uint32 mapIndex2 = _dictMap[h2 & _hashMask];
+                    DictEntry* pe2 = (mapIndex2 == 0) ? nullptr : &_dictList[mapIndex2 - 1];
 
                     if ((pe2 != nullptr) && (pe2->_hash == h2) && ((pe2->_data >> 24) == length))
                         pe = pe2;
@@ -715,14 +717,14 @@ bool TextCodec1::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
                         if ((pe3->_data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
                             // Reuse old entry
-                            _dictMap[pe3->_hash & _hashMask] = nullptr;
+                            _dictMap[pe3->_hash & _hashMask] = 0;
                             pe3->_ptr = &src[delimAnchor + 1];
                             pe3->_hash = h1;
                             pe3->_data = (length << 24) | words;
                         }
 
                         // Update hash map
-                        _dictMap[h1 & _hashMask] = pe3;
+                        _dictMap[h1 & _hashMask] = uint32(words + 1);
                         words++;
 
                         // Dictionary full ? Expand or reset index to end of static dictionary
@@ -794,9 +796,9 @@ bool TextCodec1::expandDictionary()
     delete[] _dictList;
     _dictList = newDict;
 
-    // Reset map (values must point to addresses of new DictEntry items)
+    // Rebuild map in the same order after dictionary growth.
     for (int i = 0; i < _dictSize; i++) {
-        _dictMap[_dictList[i]._hash & _hashMask] = &_dictList[i];
+        _dictMap[_dictList[i]._hash & _hashMask] = uint32(i + 1);
     }
 
     _dictSize <<= 1;
@@ -923,7 +925,8 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
                 // Lookup word in dictionary
                 DictEntry* pe = nullptr;
-                DictEntry* pe1 = _dictMap[h1 & _hashMask];
+                const uint32 mapIndex1 = _dictMap[h1 & _hashMask];
+                DictEntry* pe1 = (mapIndex1 == 0) ? nullptr : &_dictList[mapIndex1 - 1];
 
                 // A hash collision check is not needed here: insertion is only allowed when
                 // the hash slot is null, so the candidate contents cannot affect the outcome.
@@ -938,13 +941,13 @@ bool TextCodec1::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
                         if ((e._data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
                             // Reuse old entry
-                            _dictMap[e._hash & _hashMask] = nullptr;
+                            _dictMap[e._hash & _hashMask] = 0;
                             e._ptr = &src[delimAnchor + 1];
                             e._hash = h1;
                             e._data = (length << 24) | words;
                         }
 
-                        _dictMap[h1 & _hashMask] = &e;
+                        _dictMap[h1 & _hashMask] = uint32(words + 1);
                         words++;
 
                         // Dictionary full ? Expand or reset index to end of static dictionary
@@ -1092,10 +1095,10 @@ void TextCodec2::reset(int count)
     const int mapSize = 1 << _logHashSize;
 
     if (_dictMap == nullptr)
-        _dictMap = new DictEntry*[mapSize];
+        _dictMap = new uint32[mapSize];
 
     for (int i = 0; i < mapSize; i++)
-        _dictMap[i] = nullptr;
+        _dictMap[i] = 0;
 
     if ((_dictList == nullptr) || (allocatedSize < _dictSize)) {
         DictEntry* newDict = new DictEntry[_dictSize];
@@ -1110,7 +1113,7 @@ void TextCodec2::reset(int count)
     }
 
     for (int i = 0; i < _staticDictSize; i++)
-        _dictMap[_dictList[i]._hash & _hashMask] = &_dictList[i];
+        _dictMap[_dictList[i]._hash & _hashMask] = uint32(i + 1);
 
     // Pre-allocate all dictionary entries
     for (int i = _staticDictSize; i < _dictSize; i++)
@@ -1196,13 +1199,15 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
                 // Check word in dictionary
                 prefetchRead(&_dictMap[h1 & _hashMask]);
                 DictEntry* pe = nullptr;
-                DictEntry* pe1 = _dictMap[h1 & _hashMask];
+                const uint32 mapIndex1 = _dictMap[h1 & _hashMask];
+                DictEntry* pe1 = (mapIndex1 == 0) ? nullptr : &_dictList[mapIndex1 - 1];
 
                 if ((pe1 != nullptr) && (pe1->_hash == h1) && ((pe1->_data >> 24) == length))
                     pe = pe1;
                 else {
                     prefetchRead(&_dictMap[h2 & _hashMask]);
-                    DictEntry* pe2 = _dictMap[h2 & _hashMask];
+                    const uint32 mapIndex2 = _dictMap[h2 & _hashMask];
+                    DictEntry* pe2 = (mapIndex2 == 0) ? nullptr : &_dictList[mapIndex2 - 1];
 
                     if ((pe2 != nullptr) && (pe2->_hash == h2) && ((pe2->_data >> 24) == length))
                         pe = pe2;
@@ -1220,14 +1225,14 @@ bool TextCodec2::forward(SliceArray<byte>& input, SliceArray<byte>& output, int 
 
                         if ((pe3->_data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
                             // Reuse old entry
-                            _dictMap[pe3->_hash & _hashMask] = nullptr;
+                            _dictMap[pe3->_hash & _hashMask] = 0;
                             pe3->_ptr = &src[delimAnchor + 1];
                             pe3->_hash = h1;
                             pe3->_data = (length << 24) | words;
                         }
 
                         // Update hash map
-                        _dictMap[h1 & _hashMask] = pe3;
+                        _dictMap[h1 & _hashMask] = uint32(words + 1);
                         words++;
 
                         // Dictionary full ? Expand or reset index to end of static dictionary
@@ -1301,9 +1306,9 @@ bool TextCodec2::expandDictionary()
     delete[] _dictList;
     _dictList = newDict;
 
-    // Reset map (values must point to addresses of new DictEntry items)
+    // Rebuild map in the same order after dictionary growth.
     for (int i = 0; i < _dictSize; i++) {
-        _dictMap[_dictList[i]._hash & _hashMask] = &_dictList[i];
+        _dictMap[_dictList[i]._hash & _hashMask] = uint32(i + 1);
     }
 
     _dictSize <<= 1;
@@ -1458,7 +1463,8 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
 
                 // Lookup word in dictionary
                 DictEntry* pe = nullptr;
-                DictEntry* pe1 = _dictMap[h1 & _hashMask];
+                const uint32 mapIndex1 = _dictMap[h1 & _hashMask];
+                DictEntry* pe1 = (mapIndex1 == 0) ? nullptr : &_dictList[mapIndex1 - 1];
 
                 // A hash collision check is not needed here: insertion is only allowed when
                 // the hash slot is null, so the candidate contents cannot affect the outcome.
@@ -1473,13 +1479,13 @@ bool TextCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
 
                         if ((e._data & TextCodec::MASK_LENGTH) >= _staticDictSize) {
                             // Reuse old entry
-                            _dictMap[e._hash & _hashMask] = nullptr;
+                            _dictMap[e._hash & _hashMask] = 0;
                             e._ptr = &src[delimAnchor + 1];
                             e._hash = h1;
                             e._data = (length << 24) | words;
                         }
 
-                        _dictMap[h1 & _hashMask] = &e;
+                        _dictMap[h1 & _hashMask] = uint32(words + 1);
                         words++;
 
                         // Dictionary full ? Expand or reset index to end of static dictionary
