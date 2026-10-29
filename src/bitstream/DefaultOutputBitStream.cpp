@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+#include <algorithm>
 #include "DefaultOutputBitStream.hpp"
 
 using namespace kanzi;
@@ -36,7 +37,6 @@ DefaultOutputBitStream::DefaultOutputBitStream(OutputStream& os, uint bufferSize
     _current = 0;
     _written = 0;
     _closed = false;
-    memset(&_buffer[0], 0, size_t(_bufferSize));
 }
 
 uint DefaultOutputBitStream::writeBits(const kanzi::byte bits[], uint count)
@@ -82,23 +82,31 @@ uint DefaultOutputBitStream::writeBits(const kanzi::byte bits[], uint count)
         const uint a = _availBits;
 
         while (remaining >= 256) {
-            const uint64 v1 = uint64(BigEndian::readLong64(&bits[start]));
-            const uint64 v2 = uint64(BigEndian::readLong64(&bits[start + 8]));
-            const uint64 v3 = uint64(BigEndian::readLong64(&bits[start + 16]));
-            const uint64 v4 = uint64(BigEndian::readLong64(&bits[start + 24]));
-            _current |= (v1 >> r);
-
             if (_position >= _bufferSize - 32)
                 flush();
 
-            BigEndian::writeLong64(&_buffer[_position], _current);
-            BigEndian::writeLong64(&_buffer[_position + 8],  (v1 << a) | (v2 >> r));
-            BigEndian::writeLong64(&_buffer[_position + 16], (v2 << a) | (v3 >> r));
-            BigEndian::writeLong64(&_buffer[_position + 24], (v3 << a) | (v4 >> r));
-            _position += 32;
-            _current = (v4 << a);
-            start += 32;
-            remaining -= 256;
+            const uint bytes = std::min((remaining >> 8) << 5,
+                ((_bufferSize - 8 - _position) >> 5) << 5);
+            const kanzi::byte* src = &bits[start];
+            kanzi::byte* dst = &_buffer[_position];
+            uint64 current = _current;
+
+            for (uint offset = 0; offset < bytes; offset += 32) {
+                const uint64 v1 = BigEndian::readLong64(&src[offset]);
+                const uint64 v2 = BigEndian::readLong64(&src[offset + 8]);
+                const uint64 v3 = BigEndian::readLong64(&src[offset + 16]);
+                const uint64 v4 = BigEndian::readLong64(&src[offset + 24]);
+                BigEndian::writeLong64(&dst[offset], current | (v1 >> r));
+                BigEndian::writeLong64(&dst[offset + 8], (v1 << a) | (v2 >> r));
+                BigEndian::writeLong64(&dst[offset + 16], (v2 << a) | (v3 >> r));
+                BigEndian::writeLong64(&dst[offset + 24], (v3 << a) | (v4 >> r));
+                current = v4 << a;
+            }
+
+            _current = current;
+            _position += bytes;
+            start += bytes;
+            remaining -= bytes << 3;
             _availBits = 64;
         }
 

@@ -116,18 +116,28 @@ uint DefaultInputBitStream::readBits(kanzi::byte bits[], uint count)
                 continue;
             }
 
-            const uint64 v1 = BigEndian::readLong64(&_buffer[_position + 0]);
-            const uint64 v2 = BigEndian::readLong64(&_buffer[_position + 8]);
-            const uint64 v3 = BigEndian::readLong64(&_buffer[_position + 16]);
-            const uint64 v4 = BigEndian::readLong64(&_buffer[_position + 24]);
-            _current = v4;
-            _position += 32;
-            BigEndian::writeLong64(&bits[start + 0], (v0 << r) | (v1 >> a));
-            BigEndian::writeLong64(&bits[start + 8], (v1 << r) | (v2 >> a));
-            BigEndian::writeLong64(&bits[start + 16], (v2 << r) | (v3 >> a));
-            BigEndian::writeLong64(&bits[start + 24], (v3 << r) | (v4 >> a));
-            start += 32;
-            remaining -= 256;
+            const uint bytes = min((remaining >> 8) << 5,
+                uint((_maxPosition + 1 - _position) >> 5) << 5);
+            const kanzi::byte* src = &_buffer[_position];
+            kanzi::byte* dst = &bits[start];
+            uint64 current = _current;
+
+            for (uint offset = 0; offset < bytes; offset += 32) {
+                const uint64 v1 = BigEndian::readLong64(&src[offset]);
+                const uint64 v2 = BigEndian::readLong64(&src[offset + 8]);
+                const uint64 v3 = BigEndian::readLong64(&src[offset + 16]);
+                const uint64 v4 = BigEndian::readLong64(&src[offset + 24]);
+                BigEndian::writeLong64(&dst[offset], (current << r) | (v1 >> a));
+                BigEndian::writeLong64(&dst[offset + 8], (v1 << r) | (v2 >> a));
+                BigEndian::writeLong64(&dst[offset + 16], (v2 << r) | (v3 >> a));
+                BigEndian::writeLong64(&dst[offset + 24], (v3 << r) | (v4 >> a));
+                current = v4;
+            }
+
+            _current = current;
+            _position += bytes;
+            start += bytes;
+            remaining -= bytes << 3;
         }
 
         while (remaining >= 64) {
