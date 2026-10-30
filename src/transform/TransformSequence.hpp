@@ -106,7 +106,6 @@ namespace kanzi {
        SliceArray<T> buffer(nullptr, 0, 0);
        const int blockSize = count;
        const int requiredSize = getMaxEncodedLength(blockSize);
-       int swaps = 0;
 
        // Process transforms sequentially
        for (int i = 0; i < _length; i++) {
@@ -142,10 +141,9 @@ namespace kanzi {
            in->_index = savedIIdx;
            out->_index = savedOIdx;
            std::swap(in, out);
-           swaps++;
        }
 
-       if ((swaps & 1) == 0) {
+       if (in != &output) {
            if ((count > output._length - output._index) ||
                (count > in->_length - in->_index)) {
                _skipFlags = SKIP_MASK;
