@@ -353,7 +353,7 @@ int CompressedInputStream::_get(int inc)
                 submitBlock(i);
         }
 
-        if (_available == 0) {
+        while (_available == 0) {
             if (LOAD_ATOMIC(_closed) == 1)
                 throw ios_base::failure("Stream closed");
 
@@ -403,6 +403,7 @@ int CompressedInputStream::_get(int inc)
                 submitBlock(_bufferId);
                 _bufferId = (_bufferId + 1) % _jobs;
                 _consumeBlockId++;
+                continue;
             }
 
             _buffers[_bufferId]->_index = 0;
