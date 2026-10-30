@@ -116,30 +116,47 @@ class Task {
            throw std::invalid_argument("The number of threads must be in [1..1024]");
 
        // Start and run threads
-       for (int i = 0; i < threads; i++)
-           _workers.emplace_back(
-               [this]
-               {
-                   for(;;)
+       try {
+           for (int i = 0; i < threads; i++)
+               _workers.emplace_back(
+                   [this]
                    {
-                       std::function<void()> task;
-
+                       for(;;)
                        {
-                           std::unique_lock<std::mutex> lock(_mutex);
-                           _condition.wait(lock,
-                               [this] { return _stop || !_tasks.empty(); });
+                           std::function<void()> task;
 
-                           if (_stop && _tasks.empty())
-                               return;
+                           {
+                               std::unique_lock<std::mutex> lock(_mutex);
+                               _condition.wait(lock,
+                                   [this] { return _stop || !_tasks.empty(); });
 
-                           task = std::move(_tasks.front());
-                           _tasks.pop();
+                               if (_stop && _tasks.empty())
+                                   return;
+
+                               task = std::move(_tasks.front());
+                               _tasks.pop();
+                           }
+
+                           task();
                        }
-
-                       task();
                    }
-               }
-           );
+               );
+       }
+       catch (...) {
+           {
+               std::unique_lock<std::mutex> lock(_mutex);
+               _stop = true;
+           }
+
+           _condition.notify_all();
+
+           for (std::thread& w : _workers) {
+               if (w.joinable())
+                   w.join();
+           }
+
+           throw;
+       }
    }
 
 
