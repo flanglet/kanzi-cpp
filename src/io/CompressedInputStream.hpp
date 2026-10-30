@@ -317,6 +317,8 @@ namespace kanzi
 
        void submitBlock(int bufferId);
 
+       bool isFullBlockExpected(const DecodingTaskResult& res) const;
+
        int _get(int inc);
 
        static void notifyListeners(std::vector<Listener<Event>*>& listeners, const Event& evt);

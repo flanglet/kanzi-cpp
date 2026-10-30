@@ -343,6 +343,20 @@ void CompressedInputStream::submitBlock(int bufferId)
 }
 
 
+bool CompressedInputStream::isFullBlockExpected(const DecodingTaskResult& res) const
+{
+    if ((_outputSize <= 0) || (res._skipped == true))
+        return false;
+
+    // 'to' is exclusive: blocks at or beyond it are intentionally not decoded.
+    if (res._blockId >= _ctx.getInt("to", MAX_BLOCK_ID))
+        return false;
+
+    // Full-sized blocks precede any partial final block.
+    return uint64(res._blockId) <= (uint64(_outputSize) / uint64(_blockSize));
+}
+
+
 int CompressedInputStream::_get(int inc)
 {
     try {
@@ -372,7 +386,8 @@ int CompressedInputStream::_get(int inc)
             if (res._error != 0)
                 throw IOException(res._msg, res._error);
 
-            if (res._decoded > _blockSize) {
+            if ((res._decoded > _blockSize) ||
+                (isFullBlockExpected(res) && (res._decoded != _blockSize))) {
                 stringstream ss;
                 ss << "Block " << res._blockId << " incorrectly decompressed";
                 throw IOException(ss.str(), Error::ERR_PROCESS_BLOCK);
@@ -474,7 +489,8 @@ istream& CompressedInputStream::read(char* data, streamsize length)
                 if (res._error != 0)
                     throw IOException(res._msg, res._error);
 
-                if (res._decoded > _blockSize) {
+                if ((res._decoded > _blockSize) ||
+                    (isFullBlockExpected(res) && (res._decoded != _blockSize))) {
                     stringstream ss;
                     ss << "Block " << res._blockId << " incorrectly decompressed";
                     throw IOException(ss.str(), Error::ERR_PROCESS_BLOCK);
