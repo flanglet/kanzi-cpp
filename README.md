@@ -219,6 +219,13 @@ ctest
 By default, the cmake build generates a dynamically linked executable.
 Choose ```make kanzi_static``` to build a statically linked executable.
 
+On Alpine Linux, musl defaults to 128 KiB per worker-thread stack (while glibc typically provides several MiB).
+Since Kanzi requires bigger stacks, you must build like so:
+```
+cmake -S . -B build-stack -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS="-Wl,-z,stack-size=1048576"
+cmake --build build-stack --target kanzi_static
+```
+
 Credits
 
 Matt Mahoney,
