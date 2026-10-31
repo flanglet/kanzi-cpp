@@ -14,6 +14,7 @@ limitations under the License.
 */
 
 #include <cstring>
+#include <cstdio>
 #include "Decompressor.hpp"
 #include "../types.hpp"
 #include "../Error.hpp"
@@ -22,18 +23,6 @@ limitations under the License.
 #include "../transform/TransformFactory.hpp"
 #include "../entropy/EntropyDecoderFactory.hpp"
 
-
-#ifdef _MSC_VER
-   #include <io.h>
-   #define FILENO(f) _fileno(f)
-   #define READ(fd, buf, n) _read(fd, buf, uint(n))
-   #define WRITE(fd, buf, n) _write(fd, buf, uint(n))
-#else
-   #include <unistd.h>
-   #define FILENO(f) fileno(f)
-   #define READ(fd, buf, n) read(fd, buf, n)
-   #define WRITE(fd, buf, n) write(fd, buf, n)
-#endif
 
 using namespace std;
 using namespace kanzi;
@@ -52,14 +41,14 @@ namespace kanzi {
 
    class ifstreambuf FINAL : public streambuf {
      public:
-       ifstreambuf(int fd) : _fd(fd) {
+       ifstreambuf(FILE* file) : _file(file) {
           // gptr() = egptr() initially forces underflow() on first read
           setg(_buffer + 4, _buffer + 4, _buffer + 4);
        }
 
      private:
        static const int BUF_SIZE = 1024 + 4;
-       int _fd;
+       FILE* _file;
        char _buffer[BUF_SIZE];
 
        virtual int_type underflow() {
@@ -77,7 +66,7 @@ namespace kanzi {
            }
 
            // Read new data
-           const int n = int(READ(_fd, _buffer + 4, BUF_SIZE - 4));
+           const int n = int(fread(_buffer + 4, 1, BUF_SIZE - 4, _file));
 
            if (n <= 0)
                return EOF;
@@ -97,7 +86,7 @@ namespace kanzi {
          ifstreambuf _buf;
 
       public:
-         FileInputStream(int fd) : istream(nullptr), _buf(fd) {
+         FileInputStream(FILE* file) : istream(nullptr), _buf(file) {
             rdbuf(&_buf);
          }
    };
@@ -118,11 +107,6 @@ KANZI_API int CDECL initDecompressor(struct dData* pData, FILE* src, struct dCon
     FileInputStream* fis = nullptr;
 
     try {
-        const int fd = FILENO(src);
-
-        if (fd == -1)
-           return Error::ERR_CREATE_DECOMPRESSOR;
-
         if ((pData->headerless != 0) &&
             ((memchr(pData->transform, 0, sizeof(pData->transform)) == nullptr) ||
              (memchr(pData->entropy, 0, sizeof(pData->entropy)) == nullptr))) {
@@ -131,7 +115,7 @@ KANZI_API int CDECL initDecompressor(struct dData* pData, FILE* src, struct dCon
 
         // Create decompression stream and context
         *pCtx = nullptr;
-        fis = new FileInputStream(fd);
+        fis = new FileInputStream(src);
         dctx = new dContext();
         dctx->pCis = nullptr;
         dctx->fis = nullptr;

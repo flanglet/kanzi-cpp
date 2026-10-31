@@ -15,6 +15,7 @@ limitations under the License.
 
 #include <sys/stat.h>
 #include <cstring>
+#include <cstdio>
 #include "Compressor.hpp"
 #include "../types.hpp"
 #include "../Error.hpp"
@@ -40,13 +41,9 @@ limitations under the License.
 #ifdef _MSC_VER
    #include <io.h>
    #define FILENO(f) _fileno(f)
-   #define READ(fd, buf, n) _read(fd, buf, uint(n))
-   #define WRITE(fd, buf, n) _write(fd, buf, uint(n))
 #else
    #include <unistd.h>
    #define FILENO(f) fileno(f)
-   #define READ(fd, buf, n) read(fd, buf, n)
-   #define WRITE(fd, buf, n) write(fd, buf, n)
 #endif
 
 using namespace std;
@@ -65,7 +62,7 @@ namespace kanzi {
     class ofstreambuf FINAL : public streambuf
     {
     public:
-        ofstreambuf(int fd) : _fd(fd), _buffer(65536) {
+        ofstreambuf(FILE* file) : _file(file), _buffer(65536) {
             // Initialize put pointers to the beginning of the buffer
             setp(&_buffer[0], &_buffer[0] + _buffer.size());
         }
@@ -118,21 +115,24 @@ namespace kanzi {
                 // Flush full buffer
                 if (flush() == EOF) return n - remaining;
 
-                // If the remaining chunk is large, write directly to FD to avoid double copy
+                // If the remaining chunk is large, write directly to FILE to avoid double copy
                 if (remaining >= streamsize(_buffer.size())) {
                     streamsize toWrite = remaining;
 
                     while (toWrite > 0) {
-                        const ptrdiff_t written = ptrdiff_t(WRITE(_fd, src, toWrite));
+                        const size_t written = fwrite(src, 1, size_t(toWrite), _file);
 
-                        if (written <= 0)
+                        if (written == 0)
                             return n - remaining; // Error
 
                         src += written;
                         toWrite -= streamsize(written);
+                        remaining -= streamsize(written);
+
+                        if (ferror(_file) != 0)
+                            return n - remaining;
                     }
 
-                    remaining = 0;
                 }
             }
 
@@ -140,7 +140,7 @@ namespace kanzi {
         }
 
     private:
-        int _fd;
+        FILE* _file;
         std::vector<char> _buffer;
 
         int flush() {
@@ -150,13 +150,18 @@ namespace kanzi {
                 ptrdiff_t remaining = n;
 
                 while (remaining > 0) {
-                    const ptrdiff_t written = ptrdiff_t(WRITE(_fd, dst, remaining));
-
-                    if (written <= 0)
-                        return EOF;
-
+                    const size_t written = fwrite(dst, 1, size_t(remaining), _file);
                     dst += written;
-                    remaining -= written;
+                    remaining -= ptrdiff_t(written);
+
+                    if ((written == 0) || (ferror(_file) != 0)) {
+                        if (remaining > 0)
+                            memmove(pbase(), dst, size_t(remaining));
+
+                        pbump(-int(n));
+                        pbump(int(remaining));
+                        return EOF;
+                    }
                 }
 
                 pbump(-int(n)); // Reset pbump by subtracting the amount written
@@ -172,7 +177,7 @@ namespace kanzi {
           ofstreambuf _buf;
 
        public:
-          FileOutputStream(int fd) : ostream(nullptr), _buf(fd) {
+          FileOutputStream(FILE* file) : ostream(nullptr), _buf(file) {
               rdbuf(&_buf);
           }
     };
@@ -191,9 +196,6 @@ KANZI_API int CDECL initCompressor(struct cData* pData, FILE* dst, struct cConte
     try {
         // Process params
         const int fd = FILENO(dst);
-
-        if (fd == -1)
-           return Error::ERR_CREATE_COMPRESSOR;
 
         if ((memchr(pData->transform, 0, sizeof(pData->transform)) == nullptr) ||
             (memchr(pData->entropy, 0, sizeof(pData->entropy)) == nullptr)) {
@@ -219,12 +221,12 @@ KANZI_API int CDECL initCompressor(struct cData* pData, FILE* dst, struct cConte
         size_t fileSize = 0;
         struct STAT sbuf;
 
-        if (FSTAT(fd, &sbuf) == 0) {
+        if ((fd != -1) && (FSTAT(fd, &sbuf) == 0)) {
            fileSize = size_t(sbuf.st_size);
         }
 
         // Create compression stream and update context
-        fos = new FileOutputStream(fd);
+        fos = new FileOutputStream(dst);
         cctx = new cContext();
 
         cctx->pCos = new CompressedOutputStream(*fos, pData->jobs,
