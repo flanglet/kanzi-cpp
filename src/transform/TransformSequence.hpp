@@ -105,30 +105,37 @@ namespace kanzi {
        SliceArray<T>* out = &output;
        SliceArray<T> buffer(nullptr, 0, 0);
        const int blockSize = count;
-       const int requiredSize = getMaxEncodedLength(blockSize);
 
        // Process transforms sequentially
        for (int i = 0; i < _length; i++) {
            if (_transforms[i] == nullptr)
                continue;
 
-           // Check that the output buffer has enough room. If not, allocate a new one.
-           if (out->_length < requiredSize) {
+           // Bound each transform by its own maximum output size. This also
+           // prevents a transform from using padding in an alternating buffer
+           // to exceed the capacity advertised for this stage.
+           const int requiredSize = _transforms[i]->getMaxEncodedLength(count);
+
+           // Check that the output buffer has enough remaining room. If not,
+           // use a temporary buffer or grow it.
+           if (out->_length - out->_index < requiredSize) {
                if ((out == &input) || (out == &output))
                    out = &buffer;
 
-               if (out->_length < requiredSize) {
+               if (out->_length - out->_index < requiredSize) {
+                   const int requiredCapacity = out->_index + requiredSize;
                    delete[] out->_array;
-                   out->_array = new T[requiredSize];
-                   out->_length = requiredSize;
+                   out->_array = new T[requiredCapacity];
+                   out->_length = requiredCapacity;
                }
            }
 
            const int savedIIdx = in->_index;
            const int savedOIdx = out->_index;
+           SliceArray<T> outView(out->_array, savedOIdx + requiredSize, savedOIdx);
 
            // Apply forward transform
-           if (_transforms[i]->forward(*in, *out, count) == false) {
+           if (_transforms[i]->forward(*in, outView, count) == false) {
                // Transform failed. Either it does not apply to this type
                // of data or a recoverable error occurred => revert
                in->_index = savedIIdx;
@@ -136,6 +143,7 @@ namespace kanzi {
                continue;
            }
 
+           out->_index = outView._index;
            _skipFlags &= ~byte(1 << (7 - i));
            count = out->_index - savedOIdx;
            in->_index = savedIIdx;
