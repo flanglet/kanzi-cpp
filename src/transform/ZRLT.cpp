@@ -26,6 +26,9 @@ using namespace std;
 
 bool ZRLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int length)
 {
+    if (length < 0)
+        return false;
+
     if (length == 0)
         return true;
 
@@ -35,6 +38,9 @@ bool ZRLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
     if (!SliceArray<kanzi::byte>::isValid(output))
         throw invalid_argument("ZRLT: Invalid output block");
 
+    if (length > input._length - input._index)
+        return false;
+
     if (output._length - output._index < getMaxEncodedLength(length))
         return false;
 
@@ -43,7 +49,9 @@ bool ZRLT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outp
     uint srcIdx = 0;
     uint dstIdx = 0;
     const uint srcEnd = uint(length);
-    const uint dstEnd = uint(output._length - output._index);
+    // ZRLT is only useful when it does not expand its input. Limit the output
+    // even when the caller provides extra padding in the destination buffer.
+    const uint dstEnd = uint(length);
     const uint srcEnd4 = (length >= 4) ? uint(length - 4) : uint(0);
     bool res = true;
     kanzi::byte zeros[4] = { kanzi::byte(0) };
