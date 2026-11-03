@@ -193,6 +193,8 @@ namespace kanzi {
            return true;
        }
 
+       const int savedInputIndex = input._index;
+       const int savedOutputIndex = output._index;
        const int blockSize = count;
        bool res = true;
        SliceArray<T>* in = &input;
@@ -246,8 +248,16 @@ namespace kanzi {
 	   }
        }
 
-       input._index += blockSize;
-       output._index += count;
+       if (res == true) {
+           input._index += blockSize;
+           output._index += count;
+       }
+       else {
+           // A child decoder may have advanced either slice before failing.
+           input._index = savedInputIndex;
+           output._index = savedOutputIndex;
+       }
+
        delete[] buffer._array;
        return res;
    }
