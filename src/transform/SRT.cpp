@@ -130,7 +130,8 @@ bool SRT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
 
     const int dataLength = length - headerSize;
 
-    if (dataLength < 0)
+    // Empty input is represented by a zero-length transform block, not a header-only block.
+    if (dataLength <= 0)
         return false;
 
     // The frequency table must describe exactly the data following the header.

@@ -1146,7 +1146,13 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
         return false;
 
     const int srcEnd = count;
-    const int dstEnd = output._length - output._index;
+    const int dstCapacity = output._length - output._index;
+
+    // The 16-byte match copy may write up to 15 bytes past the match end.
+    if (dstCapacity < 15)
+        return false;
+
+    const int dstEnd = dstCapacity - 15;
     const kanzi::byte* src = &input._array[input._index];
     kanzi::byte* dst = &output._array[output._index];
 
@@ -1314,8 +1320,6 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
 
         if (dist >= 16) {
             do {
-                // The stream decoder supplies trailing padding for this
-                // 16-byte copy, which may write up to 15 bytes past mEnd.
                 KANZI_MEM_CP16(&dst[dstIdx], &dst[ref]);
                 ref += 16;
                 dstIdx += 16;

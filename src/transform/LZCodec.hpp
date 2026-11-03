@@ -150,6 +150,8 @@ namespace kanzi {
         }
 
         bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
+        // Inverse requires 15 bytes of trailing destination padding beyond
+        // the maximum decoded output. The output slice length includes padding.
         bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
 
         // Required encoding output buffer size

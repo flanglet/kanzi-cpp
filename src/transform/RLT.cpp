@@ -267,11 +267,17 @@ bool RLT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
     bool res = true;
     const kanzi::byte escape = src[srcIdx++];
 
-    if ((srcIdx < srcEnd) && (src[srcIdx] == escape)) {
+    if (srcIdx >= srcEnd)
+        return false;
+
+    if (src[srcIdx] == escape) {
         srcIdx++;
 
+        if (srcIdx >= srcEnd)
+            return false;
+
         // The data cannot start with a run but may start with an escape literal
-        if ((srcIdx < srcEnd) && (src[srcIdx] != kanzi::byte(0)))
+        if (src[srcIdx] != kanzi::byte(0))
             return false;
 
         if (dstIdx >= dstEnd)
