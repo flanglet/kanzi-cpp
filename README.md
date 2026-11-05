@@ -30,7 +30,7 @@ There is a Go implementation available here: https://github.com/flanglet/kanzi-g
        src="https://img.shields.io/coverity/scan/16859.svg"/>
 </a>
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/flanglet/kanzi-cpp)
+[![Ask DeepWiki](https://img.shields.io/badge/Ask-DeepWiki-blue)](https://deepwiki.com/flanglet/kanzi-cpp)
 
 
 ## Why Kanzi
@@ -134,6 +134,12 @@ Round-trip graph for enwik8 on AMD Ryzen 9950X  (X = compTime + 2*decompTime, Y 
 [Comprehensive lzbench benchmarks](https://github.com/flanglet/kanzi-cpp/wiki/Performance)
 
 [More round trip scores](https://github.com/flanglet/kanzi-cpp/wiki/Round%E2%80%90trips-scores)
+
+External benchmarks:
+
+[LZBench](https://github.com/inikep/lzbench)
+
+[TurboBench](https://github.com/powturbo/TurboBench)
 
 
 ## Build Kanzi
