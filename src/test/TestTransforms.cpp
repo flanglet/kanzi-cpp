@@ -69,8 +69,18 @@ static vector<kanzi::byte> createPEBlock(int arch)
     data[posPE + 2] = kanzi::byte(0);
     data[posPE + 3] = kanzi::byte(0);
     writeInt16LE(&data[posPE + 4], arch);
+    writeInt16LE(&data[posPE + 6], 1); // one section
+    writeInt16LE(&data[posPE + 20], 224); // PE32 optional header size
     writeInt32LE(&data[posPE + 28], codeLen);
-    writeInt32LE(&data[posPE + 44], codeStart);
+    writeInt32LE(&data[posPE + 44], 0x1000); // BaseOfCode RVA
+
+    // Map BaseOfCode to the code bytes through a valid executable section.
+    const int section = posPE + 24 + 224;
+    writeInt32LE(&data[section + 8], codeLen); // VirtualSize
+    writeInt32LE(&data[section + 12], 0x1000); // VirtualAddress
+    writeInt32LE(&data[section + 16], codeLen); // SizeOfRawData
+    writeInt32LE(&data[section + 20], codeStart); // PointerToRawData
+    writeInt32LE(&data[section + 36], 0x60000020); // Executable code section
     return data;
 }
 
@@ -819,6 +829,21 @@ static int testLZPX()
             return 1;
     }
 
+    // A match cannot precede the four bytes needed to seed its hash context.
+    kanzi::byte earlyMatch[37] = { kanzi::byte(0) };
+    earlyMatch[33] = kanzi::byte(1);
+    kanzi::byte earlyMatchOutput[8];
+    SliceArray<kanzi::byte> badInput(earlyMatch, 37);
+    SliceArray<kanzi::byte> badOutput(earlyMatchOutput, 8);
+
+    const bool earlyMatchResult = codec.inverse(badInput, badOutput, 37);
+
+    if (earlyMatchResult || (badInput._index != 0) || (badOutput._index != 0)) {
+        cout << "LZPX early match validation failed: result=" << earlyMatchResult
+             << ", input index=" << badInput._index << ", output index=" << badOutput._index << endl;
+        return 1;
+    }
+
     cout << "LZPX tests passed" << endl;
     return 0;
 }
@@ -836,10 +861,10 @@ static int testLZPMalformed()
             kanzi::byte(0), kanzi::byte(0), kanzi::byte(0),
             kanzi::byte(0), kanzi::byte(0), kanzi::byte(0xFC)
         };
-        kanzi::byte decoded[128];
+        kanzi::byte decoded[128 + 15];
         memset(decoded, 0x7E, sizeof(decoded));
         SliceArray<kanzi::byte> input(encoded, 6, 0);
-        SliceArray<kanzi::byte> output(decoded, 128, 0);
+        SliceArray<kanzi::byte> output(decoded, int(sizeof(decoded)), 0);
 
         if (codec.inverse(input, output, 6) != false) {
             cout << "Truncated LZP token should fail" << endl;
@@ -856,10 +881,10 @@ static int testLZPMalformed()
         kanzi::byte encoded[4] = {
             kanzi::byte(0), kanzi::byte(0), kanzi::byte(0), kanzi::byte(0)
         };
-        kanzi::byte decoded[8];
+        kanzi::byte decoded[3 + 15];
         memset(decoded, 0x7E, sizeof(decoded));
         SliceArray<kanzi::byte> input(encoded, 4, 0);
-        SliceArray<kanzi::byte> output(decoded, 3, 0);
+        SliceArray<kanzi::byte> output(decoded, int(sizeof(decoded)), 0);
 
         if (codec.inverse(input, output, 4) != false) {
             cout << "Short LZP output should fail" << endl;
@@ -880,10 +905,10 @@ static int testLZPMalformed()
             kanzi::byte(1), kanzi::byte(2), kanzi::byte(3),
             kanzi::byte(4), kanzi::byte(5)
         };
-        kanzi::byte decoded[8];
+        kanzi::byte decoded[4 + 15];
         memset(decoded, 0x7E, sizeof(decoded));
         SliceArray<kanzi::byte> input(encoded, 5, 0);
-        SliceArray<kanzi::byte> output(decoded, 4, 0);
+        SliceArray<kanzi::byte> output(decoded, int(sizeof(decoded)), 0);
 
         if (codec.inverse(input, output, 5) != false) {
             cout << "LZP literal output overflow should fail" << endl;
@@ -1370,6 +1395,7 @@ int testTransformsCorrectness(const string& name, int& errorIteration)
         }
 
         const int dstSize = ff->getMaxEncodedLength(size);
+        // Leave trailing space for inverse codecs with 16-byte copy padding.
         const int reverseSize = size + 16;
         kanzi::byte* input = new kanzi::byte[size];
         kanzi::byte* output = new kanzi::byte[dstSize];

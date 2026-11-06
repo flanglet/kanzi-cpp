@@ -1228,10 +1228,35 @@ void DivSufSort::ssMultiKeyIntroSort(int pa, int first, int last, int depth)
         std::swap(_sa[first], _sa[a]);
         int b = first;
 
-        // partition
-        while (++b < last) {
-            if ((x = p[sapa[_sa[b]]]) != v)
+        // Probe two suffixes before testing either key to overlap their dependent loads.
+        bool mismatch = false;
+
+        while (last - b > 2) {
+            const int x0 = p[sapa[_sa[b + 1]]];
+            const int x1 = p[sapa[_sa[b + 2]]];
+
+            if (x0 != v) {
+                b++;
+                x = x0;
+                mismatch = true;
                 break;
+            }
+
+            if (x1 != v) {
+                b += 2;
+                x = x1;
+                mismatch = true;
+                break;
+            }
+
+            b += 2;
+        }
+
+        if (!mismatch) {
+            while (++b < last) {
+                if ((x = p[sapa[_sa[b]]]) != v)
+                    break;
+            }
         }
 
         a = b;
@@ -1250,9 +1275,34 @@ void DivSufSort::ssMultiKeyIntroSort(int pa, int first, int last, int depth)
 
         int c = last;
 
-        while (--c > b) {
-            if ((x = p[sapa[_sa[c]]]) != v)
+        bool mismatch2 = false;
+
+        while (c - b > 2) {
+            const int x0 = p[sapa[_sa[c - 1]]];
+            const int x1 = p[sapa[_sa[c - 2]]];
+
+            if (x0 != v) {
+                c--;
+                x = x0;
+                mismatch2 = true;
                 break;
+            }
+
+            if (x1 != v) {
+                c -= 2;
+                x = x1;
+                mismatch2 = true;
+                break;
+            }
+
+            c -= 2;
+        }
+
+        if (!mismatch2) {
+            while (--c > b) {
+                if ((x = p[sapa[_sa[c]]]) != v)
+                    break;
+            }
         }
 
         int d = c;
