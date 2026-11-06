@@ -695,10 +695,63 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
 
             if ((posPE > 0) && (posPE <= count - 48) && (LittleEndian::readInt32(&src[posPE]) == WIN_PE)) {
                 const kanzi::byte* pe = &src[posPE];
+                const int numSections = int(uint16(LittleEndian::readInt16(&pe[6])));
+                const int optionalHeaderSize = int(uint16(LittleEndian::readInt16(&pe[20])));
+                const int64 sectionTable = int64(posPE) + 24 + optionalHeaderSize;
 
-                if (setCodeRange(count, codeStart, codeEnd,
-                                 int64(LittleEndian::readInt32(&pe[44])),
-                                 int64(LittleEndian::readInt32(&pe[28]))) == false)
+                if ((numSections <= 0) || (optionalHeaderSize < 24) ||
+                    (sectionTable > int64(count)) ||
+                    (int64(numSections) > (int64(count) - sectionTable) / 40))
+                    return false;
+
+                const uint32 baseCodeRva = uint32(LittleEndian::readInt32(&pe[44]));
+                const uint32 sizeOfCode = uint32(LittleEndian::readInt32(&pe[28]));
+                bool foundCodeSection = false;
+
+                // Map BaseOfCode (an RVA) to the corresponding bytes on disk.
+                for (int i = 0; i < numSections; i++) {
+                    const int64 section = sectionTable + int64(i) * 40;
+                    const uint32 virtualSize = uint32(LittleEndian::readInt32(&src[section + 8]));
+                    const uint32 virtualAddress = uint32(LittleEndian::readInt32(&src[section + 12]));
+                    const uint32 rawSize = uint32(LittleEndian::readInt32(&src[section + 16]));
+                    const uint32 rawOffset = uint32(LittleEndian::readInt32(&src[section + 20]));
+                    const uint32 characteristics = uint32(LittleEndian::readInt32(&src[section + 36]));
+                    const uint64 virtualEnd = uint64(virtualAddress) + uint64(max(virtualSize, rawSize));
+
+                    if (((characteristics & uint32(0x20000000)) == 0) ||
+                        (uint64(baseCodeRva) < uint64(virtualAddress)) ||
+                        (uint64(baseCodeRva) >= virtualEnd))
+                        continue;
+
+                    const uint64 delta = uint64(baseCodeRva) - uint64(virtualAddress);
+
+                    if (delta >= uint64(rawSize))
+                        continue;
+
+                    const uint64 fileOffset = uint64(rawOffset) + delta;
+
+                    if (fileOffset >= uint64(count))
+                        continue;
+
+                    uint64 codeLength = uint64(rawSize) - delta;
+
+                    if ((sizeOfCode != 0) && (uint64(sizeOfCode) < codeLength))
+                        codeLength = uint64(sizeOfCode);
+
+                    if (uint64(count) - fileOffset < codeLength)
+                        codeLength = uint64(count) - fileOffset;
+
+                    if (codeLength < 64)
+                        continue;
+
+                    if (setCodeRange(count, codeStart, codeEnd, int64(fileOffset), int64(codeLength)) == false)
+                        return false;
+
+                    foundCodeSection = true;
+                    break;
+                }
+
+                if (foundCodeSection == false)
                     return false;
 
                 arch = int(uint16(LittleEndian::readInt16(&pe[4])));
