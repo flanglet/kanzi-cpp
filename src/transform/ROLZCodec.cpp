@@ -206,8 +206,8 @@ bool ROLZCodec1::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
     SliceArray<kanzi::byte> tkBuf(&arena[litBufSize + lenBufSize + mIdxBufSize], tkBufSize);
     memset(&_counters[0], 0, sizeof(_counters));
     bool success = true;
-    const int litOrder = (count < (1 << 17)) ? 0 : 1;
-    int flags = litOrder;
+    int litOrder = 0;
+    int flags = 0;
     _minMatch = MIN_MATCH3;
     int delta = 2;
 
@@ -344,6 +344,13 @@ bool ROLZCodec1::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
         lenBuf._index += (litLen >= 31 ? emitLength(&lenBuf._array[lenBuf._index], litLen - 31) : 0);
         memcpy(&litBuf._array[litBuf._index], &buf[firstLitIdx], size_t(litLen));
         litBuf._index += litLen;
+
+        // Choose from the first chunk's literals and keep the header order
+        // consistent across all chunks.
+        if (startChunk == 0) {
+            litOrder = (litBuf._index < (1 << 17)) ? 0 : 1;
+            dst[4] = kanzi::byte(flags | litOrder);
+        }
 
         try {
             // Encode literal, match length and match index buffers
