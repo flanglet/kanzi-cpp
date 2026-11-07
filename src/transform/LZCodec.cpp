@@ -567,6 +567,11 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
     int repd1 = count;
 
     while (true) {
+        if (KANZI_UNLIKELY(tkIdx >= tokenEnd)) {
+            res = false;
+            goto exit;
+        }
+
         const int token = int(src[tkIdx++]);
 
         // Get match length and distance
@@ -576,7 +581,7 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
             // Repetition distance, read mLen remainder (if any) outside of token
             mLen = token & 0x03;
 
-            if (KANZI_UNLIKELY((mLen == 3) && (mLenIdx >= count))) {
+            if (KANZI_UNLIKELY((mLenIdx >= count) && (mLen == 3))) {
                 res = false;
                 goto exit;
             }
@@ -588,12 +593,13 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
             // Read mLen remainder (if any) outside of token
             mLen = token & 0x07;
 
-            if (KANZI_UNLIKELY((mLen == 7) && (mLenIdx >= count))) {
+            if (KANZI_UNLIKELY((mLenIdx >= count) && (mLen == 7))) {
                 res = false;
                 goto exit;
             }
 
             mLen += (mLen == 7 ? minMatch + int(readLength(src, mLenIdx)) : minMatch);
+
             if (KANZI_UNLIKELY(mIdx >= count)) {
                 res = false;
                 goto exit;
@@ -612,7 +618,7 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
             // Get literal length
             const uint litLen = (token >= 0xE0) ? uint(7) + readLength(src, srcIdx) : uint(token >> 5);
 
-            if ((litLen > uint(dstEnd - dstIdx)) || (litLen > uint(litEnd - srcIdx))) {
+            if (KANZI_UNLIKELY((litLen > uint(dstEnd - dstIdx)) || (litLen > uint(litEnd - srcIdx)))) {
                 res = false;
                 goto exit;
             }
@@ -725,6 +731,11 @@ bool LZXCodec<T>::inverseV7(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
     int repd1 = count;
 
     while (true) {
+        if (KANZI_UNLIKELY(tkIdx >= tokenEnd)) {
+            res = false;
+            goto exit;
+        }
+
         const int token = int(src[tkIdx++]);
 
         // Get match length and distance
@@ -880,6 +891,11 @@ bool LZXCodec<T>::inverseV5(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
     int repd1 = 0;
 
     while (true) {
+        if (KANZI_UNLIKELY(tkIdx >= tokenEnd)) {
+            res = false;
+            goto exit;
+        }
+
         const int token = int(src[tkIdx++]);
 
         if (token >= 32) {
@@ -1755,8 +1771,12 @@ bool LZFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
                 return false;
 
             // Emit literals
-            for (int i = 0; i < literals; i += 16)
+            int i = 0;
+
+            do {
                 KANZI_MEM_CP16(&op[i], &ip[i]);
+                i += 16;
+            } while (i < literals);
 
             op = &op[literals];
             ip = &ip[literals];
