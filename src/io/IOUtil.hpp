@@ -121,9 +121,7 @@ namespace kanzi
            std::stringstream ss;
            ss << "Cannot access input file '" << target << "': " << strerror(errno);
            errors.push_back(ss.str());
-
-           if (cfg._continueOnErrors == false)
-              return;
+           return;
        }
 
     #ifdef _WIN32
@@ -150,7 +148,10 @@ namespace kanzi
              target += PATH_SEPARATOR;
        }
        else {
-          target.resize(target.size() - 1);
+          if ((target.size() >= 2) && (target[target.size() - 2] == PATH_SEPARATOR) && (target[target.size() - 1] == '.'))
+             target.resize(target.size() - 1);
+          else if (target[target.size() - 1] != PATH_SEPARATOR)
+             target += PATH_SEPARATOR;
        }
 
        DIR* dir = opendir(target.c_str());
@@ -176,6 +177,8 @@ namespace kanzi
                        closedir(dir);
                        return;
                    }
+
+                   continue;
                }
 
             #ifdef _WIN32
