@@ -281,7 +281,7 @@ KANZI_API int CDECL compress(struct cContext* pCtx, const unsigned char* src, si
         const uint64 w = pCos->getWritten();
         pCos->write((const char*)src, streamsize(inSize));
         res = pCos->good() ? 0 : Error::ERR_WRITE_FILE;
-        *outSize = int(pCos->getWritten() - w);
+        *outSize = size_t(pCos->getWritten() - w);
     }
     catch (const IOException& ioe) {
         return ioe.error();
@@ -307,7 +307,7 @@ KANZI_API int CDECL disposeCompressor(struct cContext** ppCtx, size_t* outSize) 
         if (pCos != nullptr) {
             const uint64 w = pCos->getWritten();
             pCos->close();
-            *outSize = int(pCos->getWritten() - w);
+            *outSize = size_t(pCos->getWritten() - w);
             delete pCos;
             pCos = nullptr;
             pCtx->pCos = nullptr;

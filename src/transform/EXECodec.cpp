@@ -768,17 +768,17 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
             if (isLittleEndian == true) {
                 if (src[4] == kanzi::byte(2)) {
                     // 64 bits
-                    const int nbEntries = int(LittleEndian::readInt16(&src[0x3C]));
-                    const int szEntry = int(LittleEndian::readInt16(&src[0x3A]));
+                    const int nbEntries = int(uint16(LittleEndian::readInt16(&src[0x3C])));
+                    const int szEntry = int(uint16(LittleEndian::readInt16(&src[0x3A])));
                     const int64 posSection = LittleEndian::readLong64(&src[0x28]);
 
-                    if ((szEntry <= 0) || (posSection < 0) || (posSection > int64(count) - 0x28))
+                    if ((szEntry < 0x28) || (posSection < 0) || (posSection > int64(count) - 0x28))
                         return false;
 
                     for (int i = 0; i < nbEntries; i++) {
                         const int64 startEntry = posSection + int64(i) * int64(szEntry);
 
-                        if (startEntry > int64(count) - 0x28)
+                        if ((startEntry < posSection) || (startEntry > int64(count) - 0x28))
                             return false;
 
                         int typeSection = int(LittleEndian::readInt32(&src[startEntry + 4]));
@@ -793,23 +793,23 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
                     }
                 } else {
                     // 32 bits
-                    const int nbEntries = int(LittleEndian::readInt16(&src[0x30]));
-                    const int szEntry = int(LittleEndian::readInt16(&src[0x2E]));
-                    const int64 posSection = int64(LittleEndian::readInt32(&src[0x20]));
+                    const int nbEntries = int(uint16(LittleEndian::readInt16(&src[0x30])));
+                    const int szEntry = int(uint16(LittleEndian::readInt16(&src[0x2E])));
+                    const int64 posSection = int64(uint32(LittleEndian::readInt32(&src[0x20])));
 
-                    if ((szEntry <= 0) || (posSection < 0) || (posSection > int64(count) - 0x18))
+                    if ((szEntry < 0x18) || (posSection < 0) || (posSection > int64(count) - 0x18))
                         return false;
 
                     for (int i = 0; i < nbEntries; i++) {
                         const int64 startEntry = posSection + int64(i) * int64(szEntry);
 
-                        if (startEntry > int64(count) - 0x18)
+                        if ((startEntry < posSection) || (startEntry > int64(count) - 0x18))
                             return false;
 
                         int typeSection = int(LittleEndian::readInt32(&src[startEntry + 4]));
-                        const int64 offSection = int64(LittleEndian::readInt32(&src[startEntry + 0x10]));
-                        const int64 lenSection = int64(LittleEndian::readInt32(&src[startEntry + 0x14]));
-                        const uint64 flags = uint64(LittleEndian::readInt32(&src[startEntry + 8]));
+                        const int64 offSection = int64(uint32(LittleEndian::readInt32(&src[startEntry + 0x10])));
+                        const int64 lenSection = int64(uint32(LittleEndian::readInt32(&src[startEntry + 0x14])));
+                        const uint64 flags = uint64(uint32(LittleEndian::readInt32(&src[startEntry + 8])));
 
                         if ((typeSection == 1) && ((flags & 4) != 0) && (lenSection >= 64)) {
                             if (setCodeRange(count, codeStart, codeEnd, offSection, lenSection) == false)
@@ -818,21 +818,21 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
                     }
                 }
 
-                arch = LittleEndian::readInt16(&src[18]);
+                arch = int(uint16(LittleEndian::readInt16(&src[18])));
             } else {
                 if (src[4] == kanzi::byte(2)) {
                     // 64 bits
-                    const int nbEntries = int(BigEndian::readInt16(&src[0x3C]));
-                    const int szEntry = int(BigEndian::readInt16(&src[0x3A]));
+                    const int nbEntries = int(uint16(BigEndian::readInt16(&src[0x3C])));
+                    const int szEntry = int(uint16(BigEndian::readInt16(&src[0x3A])));
                     const int64 posSection = BigEndian::readLong64(&src[0x28]);
 
-                    if ((szEntry <= 0) || (posSection < 0) || (posSection > int64(count) - 0x28))
+                    if ((szEntry < 0x28) || (posSection < 0) || (posSection > int64(count) - 0x28))
                         return false;
 
                     for (int i = 0; i < nbEntries; i++) {
                         const int64 startEntry = posSection + int64(i) * int64(szEntry);
 
-                        if (startEntry > int64(count) - 0x28)
+                        if ((startEntry < posSection) || (startEntry > int64(count) - 0x28))
                             return false;
 
                         int typeSection = int(BigEndian::readInt32(&src[startEntry + 4]));
@@ -847,23 +847,23 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
                     }
                 } else {
                     // 32 bits
-                    const int nbEntries = int(BigEndian::readInt16(&src[0x30]));
-                    const int szEntry = int(BigEndian::readInt16(&src[0x2E]));
-                    const int64 posSection = int64(BigEndian::readInt32(&src[0x20]));
+                    const int nbEntries = int(uint16(BigEndian::readInt16(&src[0x30])));
+                    const int szEntry = int(uint16(BigEndian::readInt16(&src[0x2E])));
+                    const int64 posSection = int64(uint32(BigEndian::readInt32(&src[0x20])));
 
-                    if ((szEntry <= 0) || (posSection < 0) || (posSection > int64(count) - 0x18))
+                    if ((szEntry < 0x18) || (posSection < 0) || (posSection > int64(count) - 0x18))
                         return false;
 
                     for (int i = 0; i < nbEntries; i++) {
                         const int64 startEntry = posSection + int64(i) * int64(szEntry);
 
-                        if (startEntry > int64(count) - 0x18)
+                        if ((startEntry < posSection) || (startEntry > int64(count) - 0x18))
                             return false;
 
                         int typeSection = int(BigEndian::readInt32(&src[startEntry + 4]));
-                        const int64 offSection = int64(BigEndian::readInt32(&src[startEntry + 0x10]));
-                        const int64 lenSection = int64(BigEndian::readInt32(&src[startEntry + 0x14]));
-                        const uint64 flags = uint64(BigEndian::readInt32(&src[startEntry + 8]));
+                        const int64 offSection = int64(uint32(BigEndian::readInt32(&src[startEntry + 0x10])));
+                        const int64 lenSection = int64(uint32(BigEndian::readInt32(&src[startEntry + 0x14])));
+                        const uint64 flags = uint64(uint32(BigEndian::readInt32(&src[startEntry + 8])));
 
                         if ((typeSection == 1) && ((flags & 4) != 0) && (lenSection >= 64)) {
                             if (setCodeRange(count, codeStart, codeEnd, offSection, lenSection) == false)
@@ -872,7 +872,7 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
                     }
                 }
 
-                arch = BigEndian::readInt16(&src[18]);
+                arch = int(uint16(BigEndian::readInt16(&src[18])));
             }
 
             codeStart = min(codeStart, count);
@@ -881,19 +881,24 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
         }
     } else if ((magic == Magic::MAC_MAGIC32) || (magic == Magic::MAC_CIGAM32) || (magic == Magic::MAC_MAGIC64) || (magic == Magic::MAC_CIGAM64)) {
 
+        bool isLittleEndian = (magic == Magic::MAC_CIGAM32) || (magic == Magic::MAC_CIGAM64);
         bool is64Bits = (magic == Magic::MAC_MAGIC64) || (magic == Magic::MAC_CIGAM64);
         codeStart = 0;
         static char MAC_TEXT_SEGMENT[] = "__TEXT";
         static char MAC_TEXT_SECTION[] = "__text";
 
         if (count >= 64) {
-            int type = LittleEndian::readInt32(&src[12]);
+            int type = isLittleEndian ? LittleEndian::readInt32(&src[12]) : BigEndian::readInt32(&src[12]);
 
             if (type != MAC_MH_EXECUTE)
                 return false;
 
-            arch = LittleEndian::readInt32(&src[4]);
-            int nbCmds = LittleEndian::readInt32(&src[0x10]);
+            arch = isLittleEndian ? LittleEndian::readInt32(&src[4]) : BigEndian::readInt32(&src[4]);
+            int nbCmds = isLittleEndian ? LittleEndian::readInt32(&src[0x10]) : BigEndian::readInt32(&src[0x10]);
+
+            if (nbCmds < 0)
+                return false;
+
             int pos = (is64Bits == true) ? 0x20 : 0x1C;
             int cmd = 0;
 
@@ -901,8 +906,8 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
                 if ((pos < 0) || (pos > count - 8))
                     return false;
 
-                int ldCmd = LittleEndian::readInt32(&src[pos]);
-                int szCmd = LittleEndian::readInt32(&src[pos + 4]);
+                int ldCmd = isLittleEndian ? LittleEndian::readInt32(&src[pos]) : BigEndian::readInt32(&src[pos]);
+                int szCmd = isLittleEndian ? LittleEndian::readInt32(&src[pos + 4]) : BigEndian::readInt32(&src[pos + 4]);
                 int szSegHdr = (is64Bits == true) ? 0x48 : 0x38;
 
                 if ((szCmd < 8) || (szCmd > count - pos))
@@ -923,16 +928,26 @@ bool EXECodec::parseHeader(const kanzi::byte src[], int count, uint magic, int& 
                         if (memcmp(&src[posSection], reinterpret_cast<kanzi::byte*>(MAC_TEXT_SECTION), 6) == 0) {
                             // Text section in TEXT segment
                             if (is64Bits == true) {
-                                if (setCodeRange(count, codeStart, codeEnd,
-                                                 LittleEndian::readLong64(&src[posSection + 0x30]),
-                                                 int64(LittleEndian::readInt32(&src[posSection + 0x28]))) == false)
+                                const int64 offSection = isLittleEndian
+                                    ? LittleEndian::readLong64(&src[posSection + 0x30])
+                                    : BigEndian::readLong64(&src[posSection + 0x30]);
+                                const int64 lenSection = int64(uint32(isLittleEndian
+                                    ? LittleEndian::readInt32(&src[posSection + 0x28])
+                                    : BigEndian::readInt32(&src[posSection + 0x28])));
+
+                                if (setCodeRange(count, codeStart, codeEnd, offSection, lenSection) == false)
                                     return false;
 
                                 break;
                             } else {
-                                if (setCodeRange(count, codeStart, codeEnd,
-                                                 int64(LittleEndian::readInt32(&src[posSection + 0x2C])),
-                                                 int64(LittleEndian::readInt32(&src[posSection + 0x28]))) == false)
+                                const int64 offSection = int64(uint32(isLittleEndian
+                                    ? LittleEndian::readInt32(&src[posSection + 0x2C])
+                                    : BigEndian::readInt32(&src[posSection + 0x2C])));
+                                const int64 lenSection = int64(uint32(isLittleEndian
+                                    ? LittleEndian::readInt32(&src[posSection + 0x28])
+                                    : BigEndian::readInt32(&src[posSection + 0x28])));
+
+                                if (setCodeRange(count, codeStart, codeEnd, offSection, lenSection) == false)
                                     return false;
 
                                 break;
