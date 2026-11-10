@@ -961,6 +961,7 @@ T DecodingTask<T>::run()
             return T(*_data, blockId, 0, 0, 0, "Success");
         }
 
+        const uint64 blockStartBit = _ibs->read();
         const uint64 encodedBlockBytes = (read + 7) >> 3;
         const uint64 encodedBlockLength = read;
         const int from = _ctx.getInt("from", 1);
@@ -1207,7 +1208,11 @@ T DecodingTask<T>::run()
             ed = EntropyDecoderFactory::newDecoder(*ibs, _ctx, eType);
 
             // Block entropy decode
-            if (ed->decode(_buffer->_array, 0, preTransformLength) != preTransformLength) {
+            const int decodedLength = ed->decode(_buffer->_array, 0, preTransformLength);
+            const bool readPastBlock = (streamPerTask == false) &&
+                ((_ibs->read() - blockStartBit) > encodedBlockLength);
+
+            if ((decodedLength != preTransformLength) || (readPastBlock == true)) {
                 // Error => cancel concurrent decoding tasks
                 storeProcessedBlockId(CompressedInputStream::CANCEL_TASKS_ID);
                 try {
