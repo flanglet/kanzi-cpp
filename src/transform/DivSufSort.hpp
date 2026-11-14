@@ -263,9 +263,7 @@ namespace kanzi
        }
 
        if (sa[isad + sa[v4]] > sa[isad + sa[v5]]) {
-           const int t = v4;
-           v4 = v5;
-           v5 = t;
+           std::swap(v4, v5);
        }
 
        if (sa[isad + sa[v2]] > sa[isad + sa[v4]]) {
