@@ -185,6 +185,7 @@ static int expectBlockFailure(const string& name, const string& data,
 int main()
 {
     const int version = 7;
+    const int unsupportedVersion = 15; // Max 4-bit version
     const int type = 0x4B414E5A;
     const int blockSize = 1024;
     const short entropy = EntropyDecoderFactory::ANS0_TYPE;
@@ -197,7 +198,7 @@ int main()
     }
 
     if (expectHeaderFailure("unsupported version",
-            buildHeader(type, version + 1, 0, entropy, transform, blockSize, 0, 0, true),
+            buildHeader(type, unsupportedVersion, 0, entropy, transform, blockSize, 0, 0, true),
             Error::ERR_STREAM_VERSION, "cannot read this version") != 0) {
         return 1;
     }
