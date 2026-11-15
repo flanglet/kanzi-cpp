@@ -259,7 +259,12 @@ namespace kanzi {
     inline bool LZFCodec::equals6(uint64 value, const byte* p)
     {
         const uint64 reference = uint64(LittleEndian::readLong64(p));
+#if (__cplusplus >= 201103L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201103L)
         return ((value ^ reference) & uint64(0x0000FFFFFFFFFFFFULL)) == 0;
+#else
+        const uint64 mask = (uint64(0xFFFFFFFFU) << 16) | uint64(0xFFFFU);
+        return ((value ^ reference) & mask) == 0;
+#endif
     }
 
     inline int LZFCodec::findMatch(const byte src[], int pos, int ref, int limit)

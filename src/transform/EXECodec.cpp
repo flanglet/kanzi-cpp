@@ -22,14 +22,29 @@ limitations under the License.
 using namespace kanzi;
 using namespace std;
 
+#if !((__cplusplus >= 201103L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201103L))
+static inline uint64 exeRepeat32(uint32 value)
+{
+    return (uint64(value) << 32) | uint64(value);
+}
+#endif
+
 // Return true if an eight-byte word contains an x86 opcode or escape byte.
 static inline bool exeHasSpecial(uint64 word)
 {
+#if (__cplusplus >= 201103L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201103L)
     const uint64 ones = uint64(0x0101010101010101ULL);
     const uint64 high = uint64(0x8080808080808080ULL);
     const uint64 a = word ^ uint64(0x0F0F0F0F0F0F0F0FULL);
     const uint64 b = word ^ uint64(0x9B9B9B9B9B9B9B9BULL);
     const uint64 c = (word & uint64(0xFEFEFEFEFEFEFEFEULL)) ^ uint64(0xE8E8E8E8E8E8E8E8ULL);
+#else
+    const uint64 ones = exeRepeat32(0x01010101U);
+    const uint64 high = exeRepeat32(0x80808080U);
+    const uint64 a = word ^ exeRepeat32(0x0F0F0F0FU);
+    const uint64 b = word ^ exeRepeat32(0x9B9B9B9BU);
+    const uint64 c = (word & exeRepeat32(0xFEFEFEFEU)) ^ exeRepeat32(0xE8E8E8E8U);
+#endif
     return (((a - ones) & ~a & high) | ((b - ones) & ~b & high) |
             ((c - ones) & ~c & high)) != 0;
 }

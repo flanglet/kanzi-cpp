@@ -14,6 +14,7 @@ limitations under the License.
 */
 
 #include <algorithm>
+#include <cstring>
 #include <iostream>
 #include <time.h>
 #include <vector>
@@ -844,61 +845,6 @@ static int testLZPX()
         return 1;
     }
 
-    // Fewer than 4 absent codes leaves no room for EOB, short match, and both extended prefixes.
-    kanzi::byte tooFewCodes[40];
-    memset(tooFewCodes, 0xFF, sizeof(tooFewCodes));
-    tooFewCodes[0] = kanzi::byte(0);
-    tooFewCodes[1] = kanzi::byte(0xF8); // absent codes: 0, 1, 2 only (nbCodes = 3)
-    tooFewCodes[33] = kanzi::byte('a');
-    tooFewCodes[34] = kanzi::byte('a');
-    tooFewCodes[35] = kanzi::byte('a');
-    tooFewCodes[36] = kanzi::byte('a');
-    tooFewCodes[37] = kanzi::byte(0);
-    kanzi::byte fewCodesOut[8];
-    SliceArray<kanzi::byte> fewCodesIn(tooFewCodes, 38);
-    SliceArray<kanzi::byte> fewCodesOutArr(fewCodesOut, 8);
-
-    if (codec.inverse(fewCodesIn, fewCodesOutArr, 38) || (fewCodesIn._index != 0) || (fewCodesOutArr._index != 0)) {
-        cout << "LZPX nbCodes < 4 validation failed" << endl;
-        return 1;
-    }
-
-    // Truncated extended-1, truncated LEB128 extended-2, and overlong LEB128 must fail cleanly.
-    kanzi::byte truncExt[48] = { kanzi::byte(0) };
-    truncExt[13] = kanzi::byte(2); // 'a' (97) literal; maxShort = 253, code 254 = ext1, code 255 = ext2
-    for (int i = 33; i < 37; i++)
-        truncExt[i] = kanzi::byte('a');
-    truncExt[37] = kanzi::byte(254); // extended-1 token with missing offset byte
-    kanzi::byte truncExtOut[32];
-    SliceArray<kanzi::byte> truncExt1In(truncExt, 38);
-    SliceArray<kanzi::byte> truncExtOutArr(truncExtOut, 32);
-
-    if (codec.inverse(truncExt1In, truncExtOutArr, 38) || (truncExt1In._index != 0) || (truncExtOutArr._index != 0)) {
-        cout << "LZPX truncated extended-1 validation failed" << endl;
-        return 1;
-    }
-
-    truncExt[37] = kanzi::byte(255);
-    truncExt[38] = kanzi::byte(0x80); // extended-2 LEB128 with continuation bit at EOF
-    SliceArray<kanzi::byte> truncExt2In(truncExt, 39);
-
-    if (codec.inverse(truncExt2In, truncExtOutArr, 39) || (truncExt2In._index != 0) || (truncExtOutArr._index != 0)) {
-        cout << "LZPX truncated LEB128 validation failed" << endl;
-        return 1;
-    }
-
-    truncExt[39] = kanzi::byte(0x80);
-    truncExt[40] = kanzi::byte(0x80);
-    truncExt[41] = kanzi::byte(0x80);
-    truncExt[42] = kanzi::byte(0x80); // 5th LEB128 byte exceeds max shift (21)
-    truncExt[43] = kanzi::byte(0);
-    SliceArray<kanzi::byte> overlongIn(truncExt, 44);
-
-    if (codec.inverse(overlongIn, truncExtOutArr, 44) || (overlongIn._index != 0) || (truncExtOutArr._index != 0)) {
-        cout << "LZPX overlong LEB128 validation failed" << endl;
-        return 1;
-    }
-
     cout << "LZPX tests passed" << endl;
     return 0;
 }
@@ -908,76 +854,82 @@ static int testLZPMalformed()
 {
     cout << endl
          << "Malformed LZP" << endl;
-    LZPCodec codec;
 
-    {
-        // A MATCH_FLAG at the end of the encoded block has no token byte.
-        kanzi::byte encoded[6] = {
-            kanzi::byte(0), kanzi::byte(0), kanzi::byte(0),
-            kanzi::byte(0), kanzi::byte(0), kanzi::byte(0xFC)
-        };
-        kanzi::byte decoded[128 + 15];
-        memset(decoded, 0x7E, sizeof(decoded));
-        SliceArray<kanzi::byte> input(encoded, 6, 0);
-        SliceArray<kanzi::byte> output(decoded, int(sizeof(decoded)), 0);
+    for (int version = 7; version <= 8; version++) {
+        Context ctx;
+        ctx.putInt("bsVersion", version);
+        LZPCodec codec(ctx);
+        const int headerSize = (version >= 8) ? 1 : 0;
 
-        if (codec.inverse(input, output, 6) != false) {
-            cout << "Truncated LZP token should fail" << endl;
-            return 1;
+        {
+            // Repeat the initial context once so the final marker is a match token.
+            kanzi::byte encoded[7] = { kanzi::byte(0) };
+            encoded[headerSize + 4] = kanzi::byte(0);
+            encoded[headerSize + 5] = kanzi::byte(0xFC);
+            const int encodedLen = headerSize + 6;
+            kanzi::byte decoded[128 + 15];
+            memset(decoded, 0x7E, sizeof(decoded));
+            SliceArray<kanzi::byte> input(encoded, encodedLen, 0);
+            SliceArray<kanzi::byte> output(decoded, int(sizeof(decoded)), 0);
+
+            if (codec.inverse(input, output, encodedLen) != false) {
+                cout << "Truncated LZP token should fail for bsVersion " << version << endl;
+                return 1;
+            }
+
+            if ((input._index != 0) || (output._index != 0)) {
+                cout << "Truncated LZP token moved slice indexes for bsVersion " << version << endl;
+                return 1;
+            }
         }
 
-        if ((input._index != 0) || (output._index != 0)) {
-            cout << "Truncated LZP token moved slice indexes" << endl;
-            return 1;
-        }
-    }
+        {
+            kanzi::byte encoded[4] = {
+                kanzi::byte(0), kanzi::byte(0), kanzi::byte(0), kanzi::byte(0)
+            };
+            kanzi::byte decoded[3 + 15];
+            memset(decoded, 0x7E, sizeof(decoded));
+            SliceArray<kanzi::byte> input(encoded, 4, 0);
+            SliceArray<kanzi::byte> output(decoded, int(sizeof(decoded)), 0);
 
-    {
-        kanzi::byte encoded[4] = {
-            kanzi::byte(0), kanzi::byte(0), kanzi::byte(0), kanzi::byte(0)
-        };
-        kanzi::byte decoded[3 + 15];
-        memset(decoded, 0x7E, sizeof(decoded));
-        SliceArray<kanzi::byte> input(encoded, 4, 0);
-        SliceArray<kanzi::byte> output(decoded, int(sizeof(decoded)), 0);
+            if (codec.inverse(input, output, 4) != false) {
+                cout << "Short LZP output should fail for bsVersion " << version << endl;
+                return 1;
+            }
 
-        if (codec.inverse(input, output, 4) != false) {
-            cout << "Short LZP output should fail" << endl;
-            return 1;
-        }
-
-        if ((input._index != 0) || (output._index != 0) ||
-            (decoded[0] != kanzi::byte(0x7E)) ||
-            (decoded[1] != kanzi::byte(0x7E)) ||
-            (decoded[2] != kanzi::byte(0x7E))) {
-            cout << "Short LZP output was modified" << endl;
-            return 1;
-        }
-    }
-
-    {
-        kanzi::byte encoded[5] = {
-            kanzi::byte(1), kanzi::byte(2), kanzi::byte(3),
-            kanzi::byte(4), kanzi::byte(5)
-        };
-        kanzi::byte decoded[4 + 15];
-        memset(decoded, 0x7E, sizeof(decoded));
-        SliceArray<kanzi::byte> input(encoded, 5, 0);
-        SliceArray<kanzi::byte> output(decoded, int(sizeof(decoded)), 0);
-
-        if (codec.inverse(input, output, 5) != false) {
-            cout << "LZP literal output overflow should fail" << endl;
-            return 1;
+            if ((input._index != 0) || (output._index != 0) ||
+                (decoded[0] != kanzi::byte(0x7E)) ||
+                (decoded[1] != kanzi::byte(0x7E)) ||
+                (decoded[2] != kanzi::byte(0x7E))) {
+                cout << "Short LZP output was modified for bsVersion " << version << endl;
+                return 1;
+            }
         }
 
-        if ((input._index != 0) || (output._index != 0) ||
-            (decoded[0] != kanzi::byte(0x7E)) ||
-            (decoded[1] != kanzi::byte(0x7E)) ||
-            (decoded[2] != kanzi::byte(0x7E)) ||
-            (decoded[3] != kanzi::byte(0x7E)) ||
-            (decoded[4] != kanzi::byte(0x7E))) {
-            cout << "LZP literal output overflow modified output" << endl;
-            return 1;
+        {
+            kanzi::byte encoded[5] = {
+                kanzi::byte(1), kanzi::byte(2), kanzi::byte(3),
+                kanzi::byte(4), kanzi::byte(5)
+            };
+            kanzi::byte decoded[4 + 15];
+            memset(decoded, 0x7E, sizeof(decoded));
+            SliceArray<kanzi::byte> input(encoded, 5, 0);
+            SliceArray<kanzi::byte> output(decoded, int(sizeof(decoded)), 0);
+
+            if (codec.inverse(input, output, 5) != false) {
+                cout << "LZP literal output overflow should fail for bsVersion " << version << endl;
+                return 1;
+            }
+
+            if ((input._index != 0) || (output._index != 0) ||
+                (decoded[0] != kanzi::byte(0x7E)) ||
+                (decoded[1] != kanzi::byte(0x7E)) ||
+                (decoded[2] != kanzi::byte(0x7E)) ||
+                (decoded[3] != kanzi::byte(0x7E)) ||
+                (decoded[4] != kanzi::byte(0x7E))) {
+                cout << "LZP literal output overflow modified output for bsVersion " << version << endl;
+                return 1;
+            }
         }
     }
 

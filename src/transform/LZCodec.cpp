@@ -1047,8 +1047,8 @@ bool LZPCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
 
     memset(_hashes, 0, sizeof(int32) * _hashSize);
     int dstIdx = 0;
-if (_bsVersion >= 8) // !!! TEMP
-    dst[dstIdx++] = kanzi::byte((minMatch - 2) & 0x7F); // emit minMatch
+    if (_bsVersion >= 8) // !!! TEMP
+       dst[dstIdx++] = kanzi::byte((minMatch - 2) & 0x7F); // emit minMatch
     dst[dstIdx++] = src[0];
     dst[dstIdx++] = src[1];
     dst[dstIdx++] = src[2];
@@ -1169,7 +1169,7 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     const int dstEnd = dstCapacity - 15;
     const kanzi::byte* src = &input._array[input._index];
     kanzi::byte* dst = &output._array[output._index];
-    const int minMatch = hasMinMatchHeader ? ((int(uint(src[0])) & 0x7F) + 2) : 64;
+    const int minMatch = hasMinMatchHeader ? ((int(src[0]) & 0x7F) + 2) : 64;
 
     if (dstEnd < count)
         return false;

@@ -73,7 +73,11 @@ namespace kanzi {
             RESERVED6 = 23, // Reserved
             RESERVED7 = 24, // Reserved
             RESERVED8 = 25, // Reserved
+#if (__cplusplus >= 201103L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201103L)
             RESERVED9 = 26, // Reserved
+#else
+            RESERVED9 = 26 // Reserved
+#endif
         };
 
 
