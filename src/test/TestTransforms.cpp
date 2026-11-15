@@ -844,6 +844,61 @@ static int testLZPX()
         return 1;
     }
 
+    // Fewer than 4 absent codes leaves no room for EOB, short match, and both extended prefixes.
+    kanzi::byte tooFewCodes[40];
+    memset(tooFewCodes, 0xFF, sizeof(tooFewCodes));
+    tooFewCodes[0] = kanzi::byte(0);
+    tooFewCodes[1] = kanzi::byte(0xF8); // absent codes: 0, 1, 2 only (nbCodes = 3)
+    tooFewCodes[33] = kanzi::byte('a');
+    tooFewCodes[34] = kanzi::byte('a');
+    tooFewCodes[35] = kanzi::byte('a');
+    tooFewCodes[36] = kanzi::byte('a');
+    tooFewCodes[37] = kanzi::byte(0);
+    kanzi::byte fewCodesOut[8];
+    SliceArray<kanzi::byte> fewCodesIn(tooFewCodes, 38);
+    SliceArray<kanzi::byte> fewCodesOutArr(fewCodesOut, 8);
+
+    if (codec.inverse(fewCodesIn, fewCodesOutArr, 38) || (fewCodesIn._index != 0) || (fewCodesOutArr._index != 0)) {
+        cout << "LZPX nbCodes < 4 validation failed" << endl;
+        return 1;
+    }
+
+    // Truncated extended-1, truncated LEB128 extended-2, and overlong LEB128 must fail cleanly.
+    kanzi::byte truncExt[48] = { kanzi::byte(0) };
+    truncExt[13] = kanzi::byte(2); // 'a' (97) literal; maxShort = 253, code 254 = ext1, code 255 = ext2
+    for (int i = 33; i < 37; i++)
+        truncExt[i] = kanzi::byte('a');
+    truncExt[37] = kanzi::byte(254); // extended-1 token with missing offset byte
+    kanzi::byte truncExtOut[32];
+    SliceArray<kanzi::byte> truncExt1In(truncExt, 38);
+    SliceArray<kanzi::byte> truncExtOutArr(truncExtOut, 32);
+
+    if (codec.inverse(truncExt1In, truncExtOutArr, 38) || (truncExt1In._index != 0) || (truncExtOutArr._index != 0)) {
+        cout << "LZPX truncated extended-1 validation failed" << endl;
+        return 1;
+    }
+
+    truncExt[37] = kanzi::byte(255);
+    truncExt[38] = kanzi::byte(0x80); // extended-2 LEB128 with continuation bit at EOF
+    SliceArray<kanzi::byte> truncExt2In(truncExt, 39);
+
+    if (codec.inverse(truncExt2In, truncExtOutArr, 39) || (truncExt2In._index != 0) || (truncExtOutArr._index != 0)) {
+        cout << "LZPX truncated LEB128 validation failed" << endl;
+        return 1;
+    }
+
+    truncExt[39] = kanzi::byte(0x80);
+    truncExt[40] = kanzi::byte(0x80);
+    truncExt[41] = kanzi::byte(0x80);
+    truncExt[42] = kanzi::byte(0x80); // 5th LEB128 byte exceeds max shift (21)
+    truncExt[43] = kanzi::byte(0);
+    SliceArray<kanzi::byte> overlongIn(truncExt, 44);
+
+    if (codec.inverse(overlongIn, truncExtOutArr, 44) || (overlongIn._index != 0) || (truncExtOutArr._index != 0)) {
+        cout << "LZPX overlong LEB128 validation failed" << endl;
+        return 1;
+    }
+
     cout << "LZPX tests passed" << endl;
     return 0;
 }

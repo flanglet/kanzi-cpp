@@ -293,9 +293,23 @@ namespace kanzi {
             ctx.putInt("lz", LZ_TYPE);
             return new LZCodec(ctx);
 
-        case LZPX_TYPE:
+        case LZPX_TYPE: {
+            int lzpxType = 1;
+
+            if (ctx.has("entropy")) {
+                std::string entropyType = ctx.getString("entropy");
+                transform(entropyType.begin(), entropyType.end(), entropyType.begin(), safeToUpper);
+
+                // Select LZPX type based on entropy codec.
+                if ((entropyType == "NONE") || (entropyType == "ANS0") ||
+                   (entropyType == "HUFFMAN") || (entropyType == "RANGE"))
+                    lzpxType = 2;
+            }
+
+            ctx.putInt("lzpxType", lzpxType);
             ctx.putInt("lz", LZPX_TYPE);
             return new LZCodec(ctx);
+        }
 
         case LZP_TYPE:
             ctx.putInt("lz", LZP_TYPE);

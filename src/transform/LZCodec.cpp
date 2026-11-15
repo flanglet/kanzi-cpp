@@ -159,8 +159,8 @@ bool LZXCodec<T>::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
         _hashSize = newSize;
     }
 
-    if (_bufferSize < max(count / 5, 256)) {
-        const int newSize = max(count / 5, 256);
+    if (_bufferSize < max(count / 4, 256)) {
+        const int newSize = max(count / 4, 256);
         kanzi::byte* mLenBuf = new kanzi::byte[newSize];
         kanzi::byte* mBuf = nullptr;
         kanzi::byte* tkBuf = nullptr;
@@ -214,6 +214,7 @@ bool LZXCodec<T>::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
     int mIdx = 0;
     int mLenIdx = 0;
     int tkIdx = 0;
+    int mBufSize = _bufferSize;
     int repd[] = { count, count };
     int repIdx = 0;
     int srcInc = 0;
@@ -409,27 +410,17 @@ bool LZXCodec<T>::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte
             dstIdx += litLen;
         }
 
-        if (mIdx >= _bufferSize - 8) {
+        if (mIdx >= mBufSize - 8) {
             // Expand match buffer
-            kanzi::byte* mBuf = new kanzi::byte[(_bufferSize * 3) / 2];
-            memcpy(&mBuf[0], &_mBuf[0], _bufferSize);
+            const int newSize = (mBufSize * 3) / 2;
+            kanzi::byte* mBuf = new kanzi::byte[newSize];
+            memcpy(&mBuf[0], &_mBuf[0], mBufSize);
 
-            if ( _mBuf != nullptr)
+            if (_mBuf != nullptr)
                 delete[] _mBuf;
 
             _mBuf = mBuf;
-
-            if (mLenIdx >= _bufferSize - 8) {
-                kanzi::byte* mLenBuf = new kanzi::byte[(_bufferSize * 3) / 2];
-                memcpy(&mLenBuf[0], &_mLenBuf[0], _bufferSize);
-
-                if (_mLenBuf != nullptr)
-                   delete[] _mLenBuf;
-
-                _mLenBuf = mLenBuf;
-            }
-
-            _bufferSize = (_bufferSize * 3) / 2;
+            mBufSize = newSize;
         }
 
         // Fill _hashes and update positions. The current position was already
@@ -618,7 +609,7 @@ bool LZXCodec<T>::inverseV6(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
             // Get literal length
             const uint litLen = (token >= 0xE0) ? uint(7) + readLength(src, srcIdx) : uint(token >> 5);
 
-            if (KANZI_UNLIKELY((litLen > uint(dstEnd - dstIdx)) || (litLen > uint(litEnd - srcIdx)))) {
+            if (KANZI_UNLIKELY((uint(srcIdx) + litLen > uint(litEnd)) || (litLen > uint(dstEnd - dstIdx)))) {
                 res = false;
                 goto exit;
             }
@@ -902,7 +893,7 @@ bool LZXCodec<T>::inverseV5(SliceArray<kanzi::byte>& input, SliceArray<kanzi::by
             // Get literal length
             const uint litLen = (token >= 0xE0) ? uint(7) + readLength(src, srcIdx) : uint(token >> 5);
 
-            if ((litLen > uint(dstEnd - dstIdx)) || (litLen > uint(litEnd - srcIdx))) {
+            if (KANZI_UNLIKELY((uint(srcIdx) + litLen > uint(litEnd)) || (litLen > uint(dstEnd - dstIdx)))) {
                 res = false;
                 goto exit;
             }
@@ -1044,6 +1035,7 @@ bool LZPCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     kanzi::byte* dst = &output._array[output._index];
     const int srcEnd = count;
     const int dstEnd = count - (count >> 6);
+    const int minMatch = MIN_MATCH;
 
     if (_hashSize == 0) {
         const int newSize = 1 << HASH_LOG;
@@ -1054,35 +1046,37 @@ bool LZPCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     }
 
     memset(_hashes, 0, sizeof(int32) * _hashSize);
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-    dst[3] = src[3];
+    int dstIdx = 0;
+if (_bsVersion >= 8) // !!! TEMP
+    dst[dstIdx++] = kanzi::byte((minMatch - 2) & 0x7F); // emit minMatch
+    dst[dstIdx++] = src[0];
+    dst[dstIdx++] = src[1];
+    dst[dstIdx++] = src[2];
+    dst[dstIdx++] = src[3];
     uint ctx = LittleEndian::readInt32(&src[0]);
     int srcIdx = 4;
-    int dstIdx = 4;
 
-    while ((srcIdx < srcEnd - MIN_MATCH) && (dstIdx < dstEnd)) {
+    while ((srcIdx < srcEnd - minMatch) && (dstIdx < dstEnd)) {
         const uint32 h = hash(ctx);
         const int32 ref = _hashes[h];
         _hashes[h] = srcIdx;
         int bestLen = 0;
 
-        // Find a match. Check the last word first, then validate the other
-        // seven words in the minimum match before extending beyond it.
+        // Check the last word first, then validate the rest of the minimum
+        // match before extending beyond it.
         if ((ref != 0) &&
-            KANZI_MEM_EQ8(&src[ref + MIN_MATCH - 8], &src[srcIdx + MIN_MATCH - 8]) &&
+            KANZI_MEM_EQ8(&src[ref + minMatch - 8], &src[srcIdx + minMatch - 8]) &&
             KANZI_MEM_EQ16(&src[ref], &src[srcIdx]) &&
             KANZI_MEM_EQ16(&src[ref + 16], &src[srcIdx + 16]) &&
             KANZI_MEM_EQ16(&src[ref + 32], &src[srcIdx + 32]) &&
             KANZI_MEM_EQ8(&src[ref + 48], &src[srcIdx + 48])) {
-            bestLen = MIN_MATCH + findMatch(src, srcIdx + MIN_MATCH,
-                                            ref + MIN_MATCH,
-                                            srcEnd - srcIdx - MIN_MATCH);
+            bestLen = minMatch + findMatch(src, srcIdx + minMatch,
+                                           ref + minMatch,
+                                           srcEnd - srcIdx - minMatch);
         }
 
         // No good match ?
-        if (bestLen < MIN_MATCH) {
+        if (bestLen < minMatch) {
             const uint val = uint(src[srcIdx]);
             ctx = (ctx << 8) | val;
             dst[dstIdx++] = src[srcIdx++];
@@ -1098,9 +1092,10 @@ bool LZPCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
         }
 
         srcIdx += bestLen;
+        prefetchRead(&src[srcIdx]);
         ctx = LittleEndian::readInt32(&src[srcIdx - 4]);
         dst[dstIdx++] = kanzi::byte(MATCH_FLAG);
-        const int extra = bestLen - MIN_MATCH;
+        const int extra = bestLen - minMatch;
 
         // Emit match length
         if (extra < 254) {
@@ -1114,7 +1109,7 @@ bool LZPCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
             const int remainder = extra % 254;
 
             // The remainder byte is required after all extension bytes.
-            if ((dstIdx >= dstEnd) || (extensions >= dstEnd - dstIdx))
+            if (extensions >= dstEnd - dstIdx)
                 return false;
 
             memset(&dst[dstIdx], 0xFE, size_t(extensions));
@@ -1158,19 +1153,23 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     if (count > input._length - input._index)
         return false;
 
-    if (count < 4)
+    const bool hasMinMatchHeader = _bsVersion >= 8;
+    const int headerSize = hasMinMatchHeader ? 1 : 0;
+
+    if (count < 4 + hasMinMatchHeader)
         return false;
 
-    const int srcEnd = count;
     const int dstCapacity = output._length - output._index;
 
     // The 16-byte match copy may write up to 15 bytes past the match end.
     if (dstCapacity < 15)
         return false;
 
+    const int srcEnd = count;
     const int dstEnd = dstCapacity - 15;
     const kanzi::byte* src = &input._array[input._index];
     kanzi::byte* dst = &output._array[output._index];
+    const int minMatch = hasMinMatchHeader ? ((int(uint(src[0])) & 0x7F) + 2) : 64;
 
     if (dstEnd < count)
         return false;
@@ -1184,12 +1183,12 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
     }
 
     memset(_hashes, 0, sizeof(int32) * _hashSize);
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-    dst[3] = src[3];
+    dst[0] = src[headerSize];
+    dst[1] = src[headerSize + 1];
+    dst[2] = src[headerSize + 2];
+    dst[3] = src[headerSize + 3];
     uint32 ctx = LittleEndian::readInt32(&dst[0]);
-    int srcIdx = 4;
+    int srcIdx = headerSize + 4;
     int dstIdx = 4;
 
     while (srcIdx < srcEnd) {
@@ -1293,7 +1292,7 @@ bool LZPCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& 
             continue;
         }
 
-        uint64 mLen = MIN_MATCH;
+        uint64 mLen = uint64(minMatch);
 
         if (src[srcIdx] == kanzi::byte(0xFE)) {
             const uint64 feWord = uint64(0xFEFEFEFEFEFEFEFE);
@@ -1544,10 +1543,12 @@ bool LZFCodec::forward(SliceArray<byte>& input, SliceArray<byte>& output, int co
 
         // Token bits    Meaning
         // 0000MMMM      Repeat-distance match.
-        // 00FFLLLL      Literal run (FF=01,10,11).
+        // 00FFLLLL      Literal run; FF selects the length band:
+        //               01=1..16, 10=17..32, 11=33..47 literals.
+        //               LLLL is the offset within the band; 0x3F introduces
+        //               an extended length of 48 or more.
         // FFDDMMMM      Explicit-distance match (FF=01,10,11); FF selects
         //               1-3 distance bytes and DD holds the low two bits of (distance - 8).
-        // Literal token 0x3F extends from length 48.
         if (literals > 0) {
             if (literals < 48) {
                 dst[encoded++] = byte(literals + 15);
@@ -1658,7 +1659,7 @@ bool LZFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
     int repeat = 0;
 
     while (ip < iend) {
-        // 0000MMMM: repeat; 00FFLLLL: literal; FFDDMMMM: explicit match.
+        // 0000MMMM: repeat; 00FFLLLL: literal length band; FFDDMMMM: explicit match.
         const int token = int(*ip++);
 
          if ((token ^ 0x30) >= 0x30) {
@@ -1787,17 +1788,21 @@ bool LZFCodec::inverse(SliceArray<byte>& input, SliceArray<byte>& output, int co
 }
 
 
-const uint LZPXCodec::HASH_LOG = 17;
-const uint LZPXCodec::HASH_SHIFT = 15;
-const int LZPXCodec::CHUNK_SIZE = 65536;
+const uint LZPXCodec::HASH_LOG = 18;
+const uint LZPXCodec::HASH_SHIFT = 14;
+const int LZPXCodec::CHUNK_SIZE = 4194304;
 const int LZPXCodec::MIN_CHUNK_SIZE = 33;
 const int LZPXCodec::MIN_MATCH = 2;
 const int LZPXCodec::MIN_ABSENT_CODES = 16;
 
-// Each transform block starts with the minimum match length - 2. Each chunk
-// then starts with a 256-bit literal bitmap (least significant bit first).
-// Absent bytes, in ascending order, encode end-of-block, then consecutive
-// lengths starting at the minimum. The predictor is shared across chunks.
+// The block header stores minMatch-2 in its low 6 bits; its high bit selects
+// stride 8. Each chunk starts with a 256-bit literal bitmap (least significant bit first).
+// Absent bytes are split into:
+// - codes[0]: end-of-chunk marker
+// - codes[1..nbCodes-3]: 1-byte short matches [minMatch .. maxShort]
+// - codes[nbCodes-2]: matches [maxShort+1 .. maxShort+256] followed by 1 byte offset (0..255)
+// - codes[nbCodes-1]: matches >= maxShort+257 followed by unsigned LEB128 (7 bits/byte, 0x80=more)
+// The predictor table spans all chunks.
 bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)
 {
     if (count == 0)
@@ -1813,68 +1818,70 @@ bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
         (count > output._length - output._index) || (input._array == output._array))
         return false;
 
-    if (_hashes == nullptr)
-        _hashes = new int32[1 << HASH_LOG];
+    if (_hashes64 == nullptr)
+        _hashes64 = new uint64[1 << HASH_LOG];
 
-    memset(_hashes, 0, sizeof(int32) * (1 << HASH_LOG));
+    memset(_hashes64, 0, sizeof(uint64) * (1 << HASH_LOG));
     const kanzi::byte* src = &input._array[input._index];
     kanzi::byte* dst = &output._array[output._index];
     int srcIdx = 0;
     int dstIdx = 0;
 
-    dst[dstIdx++] = kanzi::byte(MIN_MATCH - 2);
+    dst[dstIdx++] = kanzi::byte(((MIN_MATCH - 2) & 0x3F) | ((_hashStride == 8) ? 0x80 : 0));
+
+    uint64* const hashes = _hashes64;
+    const int stride = _hashStride;
 
     // Chunks need their own token alphabet: absent byte values encode the
-    // end marker and match lengths. Limit chunks to 64 KiB and reserve at
-    // least MIN_ABSENT_CODES values; the predictor table spans all chunks.
+    // end marker, short match lengths, and the extended-length prefix.
+    // Limit chunks to CHUNK_SIZE and adapt the alphabet cap for long chunks.
     while (srcIdx < count) {
         if (count - dstIdx < MIN_CHUNK_SIZE)
             return false;
 
         int size = min(count - srcIdx, CHUNK_SIZE);
-        uint freqs[256] = { 0 };
+        uint64 seen[4] = { 0, 0, 0, 0 };
         int alphabet = 0;
-        int boundary = 0;
-        const int maxAlphabet = 256 - MIN_ABSENT_CODES;
 
-        // Remember where the number of distinct bytes reaches the limit.
-        // If another distinct byte appears, end the chunk at that boundary.
-        // Otherwise, keep the full chunk. This preserves the original chunk
-        // boundaries while avoiding a full scan when the limit is exceeded.
-        // The literal bitmap only needs presence flags, not byte counts.
         for (int i = 0; i < size; i++) {
             const uint val = uint(src[srcIdx + i]);
+            const uint64 bit = uint64(1) << (val & 63);
+            uint64& word = seen[val >> 6];
 
-            if (freqs[val] != 0)
+            if ((word & bit) != 0)
                 continue;
 
-            if (alphabet == maxAlphabet) {
-                size = boundary;
+            const int maxAlphabet = (i < 4096) ? (256 - MIN_ABSENT_CODES) : 216;
+
+            if (alphabet >= maxAlphabet) {
+                size = i;
                 break;
             }
 
-            freqs[val] = 1;
+            word |= bit;
             alphabet++;
-
-            if (alphabet == maxAlphabet)
-                boundary = i + 1;
         }
 
-        memset(&dst[dstIdx], 0, 32);
         kanzi::byte codes[256];
         int nbCodes = 0;
 
         // Mark present bytes as literals; absent bytes become end and match codes.
-        for (int i = 0; i < 256; i++) {
-            if (freqs[i] == 0)
-                codes[nbCodes++] = kanzi::byte(i);
-            else
-                dst[dstIdx + (i >> 3)] |= kanzi::byte(1 << (i & 7));
+        for (int k = 0; k < 4; k++) {
+            LittleEndian::writeLong64(&dst[dstIdx + (k << 3)], int64(seen[k]));
+            uint64 absent = ~seen[k];
+
+            while (absent != 0) {
+                codes[nbCodes++] = kanzi::byte((k << 6) | Global::trailingZeros(absent));
+                absent &= absent - 1;
+            }
         }
 
         dstIdx += 32;
         const int end = srcIdx + size;
-        const int maxMatch = MIN_MATCH + nbCodes - 2;
+
+        // Reserve 3 control codes (EOB, 1-byte long offset, LEB128 long offset),
+        // leaving nbCodes - 3 absent bytes for 1-byte short lengths [MIN_MATCH .. maxShort].
+        const int maxShort = MIN_MATCH + nbCodes - 4;
 
         if (srcIdx == 0) {
             // The first four bytes have no preceding context, so emit them as literals.
@@ -1890,30 +1897,84 @@ bool LZPXCodec::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
         while (srcIdx < end) {
             int length = 0;
             const uint32 h = hash(uint32(LittleEndian::readInt32(&src[srcIdx - 4])), HASH_SHIFT);
-            const int ref = _hashes[h];
+            const uint64 entry = hashes[h];
+            const int ref = int(entry >> 16);
+            const uint16 tag = (srcIdx + 2 <= count) ? uint16(LittleEndian::readInt16(&src[srcIdx])) : 0;
 
-            if (ref != 0) {
-                const int limit = min(maxMatch, end - srcIdx);
+            if ((ref != 0) && (end - srcIdx >= MIN_MATCH) && (uint16(entry) == tag)) {
+                const int limit = end - srcIdx;
                 length = findMatch(src, srcIdx, ref, limit);
+
+                if ((stride == 8) && (length >= MIN_MATCH) && (srcIdx + length + 1 < end)) {
+                    const uint32 h2 = hash(uint32(LittleEndian::readInt32(&src[srcIdx - 3])), HASH_SHIFT);
+                    const uint64 entry2 = hashes[h2];
+                    const int ref2 = int(entry2 >> 16);
+
+                    if ((ref2 != 0) && (uint16(entry2) == uint16(LittleEndian::readInt16(&src[srcIdx + 1])))) {
+                        const int limit2 = end - srcIdx - 1;
+                        const int length2 = findMatch(src, srcIdx + 1, ref2, limit2);
+
+                        if (length2 > length)
+                            length = 0;
+                    }
+                }
             }
 
             if (dstIdx >= count)
                 return false;
 
+            hashes[h] = (uint64(srcIdx) << 16) | tag;
+
             if (length < MIN_MATCH) {
                 dst[dstIdx++] = src[srcIdx];
-                _hashes[hash(uint32(LittleEndian::readInt32(&src[srcIdx - 4])), HASH_SHIFT)] = srcIdx;
                 srcIdx++;
             }
             else {
-                dst[dstIdx++] = codes[length - MIN_MATCH + 1];
+                if (length <= maxShort) {
+                    dst[dstIdx++] = codes[length - MIN_MATCH + 1];
+                }
+                else {
+                    int rem = length - (maxShort + 1);
+
+                    if (rem < 256) {
+                        // Medium match [maxShort+1 .. maxShort+256]: prefix code + 1 byte (0..255).
+                        dst[dstIdx++] = codes[nbCodes - 2];
+
+                        if (dstIdx >= count)
+                            return false;
+
+                        dst[dstIdx++] = kanzi::byte(rem);
+                    }
+                    else {
+                        // Long match >= maxShort+257: prefix code + LEB128 of (length - maxShort - 257).
+                        // Write 7 bits per byte (LSB first); set bit 7 (0x80) on all but the last byte.
+                        dst[dstIdx++] = codes[nbCodes - 1];
+                        rem -= 256;
+
+                        while (rem >= 128) {
+                            if (dstIdx >= count)
+                                return false;
+
+                            dst[dstIdx++] = kanzi::byte((rem & 0x7F) | 0x80);
+                            rem >>= 7;
+                        }
+
+                        if (dstIdx >= count)
+                            return false;
+
+                        dst[dstIdx++] = kanzi::byte(rem);
+                    }
+                }
+
                 const int next = srcIdx + length;
 
-                // Update hash positions
-                while (srcIdx < next) {
-                    _hashes[hash(uint32(LittleEndian::readInt32(&src[srcIdx - 4])), HASH_SHIFT)] = srcIdx;
-                    srcIdx++;
+                // Sample hash positions at a fixed stride within this match.
+                for (int hashPos = srcIdx + stride; hashPos < next; hashPos += stride) {
+                    const uint16 t = (hashPos + 2 <= count) ? uint16(LittleEndian::readInt16(&src[hashPos])) : 0;
+                    hashes[hash(uint32(LittleEndian::readInt32(&src[hashPos - 4])), HASH_SHIFT)] = (uint64(hashPos) << 16) | t;
                 }
+
+                srcIdx = next;
             }
         }
 
@@ -1956,9 +2017,12 @@ bool LZPXCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
     int srcIdx = 0;
     int dstIdx = 0;
 
-    // The transform header defines the minimum match length once. Each chunk
-    // then defines its own token alphabet; the predictor table spans chunks.
-    const int minMatch = int(uint(src[srcIdx++])) + 2;
+    // The transform header carries the hash stride and minimum match length.
+    const uint header = uint(src[srcIdx++]);
+    const int stride = ((header & 0x80) != 0) ? 8 : 1;
+    _hashStride = stride;
+    const int minMatch = int(header & 0x3F) + 2;
+    int32* const hashes = _hashes;
 
     // The first four output bytes seed the hash context. Validate them
     // against the first chunk alphabet before entering the chunk loop.
@@ -1976,23 +2040,49 @@ bool LZPXCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
             return false;
     }
 
+    // Maintain the 4-byte hash context in a register (little-endian order)
+    // to avoid store-to-load forwarding stalls on dst[dstIdx - 4].
+    uint32 ctx = 0;
+
     while (srcIdx < count) {
         if (count - srcIdx < MIN_CHUNK_SIZE)
             return false;
 
         int lengths[256];
-        int nbCodes = 0;
 
-        for (int i = 0; i < 256; i++) {
-            if ((uint(src[srcIdx + (i >> 3)]) & (1 << (i & 7))) != 0)
-                lengths[i] = -1;
-            else
-                lengths[i] = (nbCodes++ == 0) ? 0 : minMatch + nbCodes - 2;
+        for (int i = 0; i < 256; i++)
+            lengths[i] = -1;
+
+        int nbCodes = 0;
+        int firstCode = 0;
+
+        // Extract absent bytes (0 bits in the 256-bit bitmap) in ascending order.
+        // Assign consecutive match lengths starting at (minMatch - 1) so that:
+        // - 0th code (overwritten to 0 below) = EOB
+        // - next codes = short matches [minMatch .. maxShort]
+        // - second-to-last code = maxShort + 1 (base for 1-byte offset 0..255)
+        // - last code = maxShort + 2 (marker for base maxShort + 257 + LEB128)
+        for (int k = 0; k < 4; k++) {
+            uint64 absent = ~uint64(LittleEndian::readLong64(&src[srcIdx + (k << 3)]));
+
+            while (absent != 0) {
+                const int code = (k << 6) | Global::trailingZeros(absent);
+                lengths[code] = minMatch + nbCodes - 1;
+
+                if (nbCodes == 0)
+                    firstCode = code;
+
+                nbCodes++;
+                absent &= absent - 1;
+            }
         }
 
-        if (nbCodes < 2)
+        // Need EOB, at least 1 short length, and both extended-length codes.
+        if (nbCodes < 4)
             return false;
 
+        lengths[firstCode] = 0;
+        const int maxShort = minMatch + nbCodes - 4;
         srcIdx += 32;
         const int blockStart = dstIdx;
         bool endBlock = false;
@@ -2012,13 +2102,49 @@ bool LZPXCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
                     return false;
 
                 if (dstIdx >= 4)
-                    _hashes[hash(uint32(LittleEndian::readInt32(&dst[dstIdx - 4])), HASH_SHIFT)] = dstIdx;
+                    hashes[hash(ctx, HASH_SHIFT)] = dstIdx;
 
                 dst[dstIdx++] = val;
+                ctx = (ctx >> 8) | (uint32(val) << 24);
                 continue;
             }
 
-            int ref = _hashes[hash(uint32(LittleEndian::readInt32(&dst[dstIdx - 4])), HASH_SHIFT)];
+            // Decode lengths longer than maxShort:
+            // - length == maxShort + 1: read 1 unsigned byte offset (adds 0..255).
+            // - length == maxShort + 2: base is maxShort + 257, plus 7-bit LEB128 varint
+            //   (at most 4 varint bytes, since CHUNK_SIZE < 2^28).
+            if (length > maxShort) {
+                if (length == maxShort + 1) {
+                    if (srcIdx >= count)
+                        return false;
+
+                    length += int(src[srcIdx++]);
+
+                    if (length > CHUNK_SIZE)
+                        return false;
+                }
+                else {
+                    length = maxShort + 1 + 256;
+                    uint32 shift = 0;
+                    int b;
+
+                    do {
+                        if ((srcIdx >= count) || (shift > 21))
+                            return false;
+
+                        b = int(src[srcIdx++]);
+                        length += int(uint32(b & 0x7F) << shift);
+
+                        if (length > CHUNK_SIZE)
+                            return false;
+
+                        shift += 7;
+                    } while (b >= 128);
+                }
+            }
+
+            const uint32 h = hash(ctx, HASH_SHIFT);
+            const int ref = hashes[h];
 
             if ((ref == 0) || (ref >= dstIdx))
                 return false;
@@ -2026,12 +2152,66 @@ bool LZPXCodec::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>&
             if ((length > dstEnd - dstIdx) || (length > CHUNK_SIZE - (dstIdx - blockStart)))
                 return false;
 
+            hashes[h] = dstIdx;
+            const int dist = dstIdx - ref;
             const int next = dstIdx + length;
 
-            while (dstIdx < next) {
-                _hashes[hash(uint32(LittleEndian::readInt32(&dst[dstIdx - 4])), HASH_SHIFT)] = dstIdx;
-                dst[dstIdx++] = dst[ref++];
+            // Fast 8-byte sloppy copy for non-overlapping matches with tail slack;
+            // byte loop otherwise (avoid vectorizing short-match/overlap copies).
+            if ((dist >= 8) && (next + 7 <= dstEnd)) {
+                int n = 0;
+
+                do {
+                    memcpy(&dst[dstIdx + n], &dst[ref + n], 8);
+                    n += 8;
+                } while (n < length);
             }
+            else {
+#if defined(__clang__)
+                #pragma clang loop vectorize(disable) unroll(disable)
+#endif
+                for (int n = 0; n < length; n++)
+                    dst[dstIdx + n] = dst[ref + n];
+            }
+
+            // Update sampled hash entries and advance rolling ctx. When dist >= length,
+            // read from the source ref rather than dst to avoid store-to-load stalls.
+            if (stride > 1) {
+                for (int p = dstIdx + stride; p < next; p += stride)
+                    hashes[hash(uint32(LittleEndian::readInt32(&dst[p - 4])), HASH_SHIFT)] = p;
+
+                if (dist >= length) {
+                    if (length >= 4)
+                        ctx = uint32(LittleEndian::readInt32(&dst[ref + length - 4]));
+                    else if (length == 2)
+                        ctx = (ctx >> 16) | (uint32(uint16(LittleEndian::readInt16(&dst[ref]))) << 16);
+                    else if (length == 3)
+                        ctx = (ctx >> 24) | (uint32(LittleEndian::readInt32(&dst[ref])) << 8);
+                    else
+                        ctx = uint32(LittleEndian::readInt32(&dst[next - 4]));
+                }
+                else {
+                    ctx = uint32(LittleEndian::readInt32(&dst[next - 4]));
+                }
+            }
+            else {
+                // hashes[h] for dstIdx was already updated above; advance n from 0 to
+                // feed ctx before overwriting dstIdx + n for n >= 1.
+                if (dist >= length) {
+                    for (int n = 0; n < length; n++) {
+                        hashes[hash(ctx, HASH_SHIFT)] = dstIdx + n;
+                        ctx = (ctx >> 8) | (uint32(dst[ref + n]) << 24);
+                    }
+                }
+                else {
+                    for (int p = dstIdx + 1; p < next; p++)
+                        hashes[hash(uint32(LittleEndian::readInt32(&dst[p - 4])), HASH_SHIFT)] = p;
+
+                    ctx = uint32(LittleEndian::readInt32(&dst[next - 4]));
+                }
+            }
+
+            dstIdx = next;
         }
 
         if ((endBlock == false) || (dstIdx == blockStart))

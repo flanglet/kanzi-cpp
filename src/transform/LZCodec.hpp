@@ -132,13 +132,13 @@ namespace kanzi {
     // Meant to be used before BWT or entropy stage
     class LZPCodec FINAL : public Transform<byte> {
     public:
-        LZPCodec()
+        LZPCodec() : _bsVersion(8)
         {
             _hashes = nullptr;
             _hashSize = 0;
         }
 
-        LZPCodec(Context&)
+        LZPCodec(Context& ctx) : _bsVersion(ctx.getInt("bsVersion", 8))
         {
             _hashes = nullptr;
             _hashSize = 0;
@@ -167,6 +167,7 @@ namespace kanzi {
         static const int MIN_BLOCK_LENGTH;
         static const int MATCH_FLAG;
 
+        int _bsVersion;
         int32* _hashes;
         int _hashSize;
 
@@ -177,10 +178,11 @@ namespace kanzi {
     // LZ Prediction with absent-byte match length codes based on Matt Mahoney's FLZP
     class LZPXCodec FINAL : public Transform<byte> {
     public:
-        LZPXCodec() : _hashes(nullptr) {}
-        LZPXCodec(Context&) : _hashes(nullptr) {}
+        LZPXCodec() : _hashes(nullptr), _hashes64(nullptr), _hashStride(1) {}
+        LZPXCodec(Context& ctx) : _hashes(nullptr), _hashes64(nullptr),
+            _hashStride(ctx.has("lzpxType") && (ctx.getInt("lzpxType", 1) == 2) ? 8 : 1) {}
 
-        ~LZPXCodec() { delete[] _hashes; }
+        ~LZPXCodec() { delete[] _hashes; delete[] _hashes64; }
 
         bool forward(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
         bool inverse(SliceArray<byte>& src, SliceArray<byte>& dst, int length);
@@ -199,6 +201,8 @@ namespace kanzi {
         static int findMatch(const byte block[], const int pos, const int ref, const int maxMatch);
 
         int32* _hashes;
+        uint64* _hashes64;
+        int _hashStride;
 
         LZPXCodec(const LZPXCodec&);
         LZPXCodec& operator=(const LZPXCodec&);
@@ -416,7 +420,7 @@ namespace kanzi {
 
     inline uint32 LZPXCodec::hash(uint32 ctx, uint shift)
     {
-        return (0x7FEB352D * ctx) >> shift;
+        return (0x7FEB352D * (ctx ^ (ctx >> 16))) >> shift;
     }
 
     inline int LZPXCodec::findMatch(const byte src[], const int srcIdx, const int ref, const int maxMatch)
@@ -426,13 +430,23 @@ namespace kanzi {
         while (n + 8 <= maxMatch) {
             const int64 diff = LittleEndian::readLong64(&src[srcIdx + n]) ^ LittleEndian::readLong64(&src[ref + n]);
 
-            if (diff != 0) {
-                n += (Global::trailingZeros(uint64(diff)) >> 3);
-                break;
-            }
+            if (diff != 0)
+                return n + (Global::trailingZeros(uint64(diff)) >> 3);
 
             n += 8;
         }
+
+        if (n + 4 <= maxMatch) {
+            const int32 diff = LittleEndian::readInt32(&src[srcIdx + n]) ^ LittleEndian::readInt32(&src[ref + n]);
+
+            if (diff != 0)
+                return n + (Global::trailingZeros(uint32(diff)) >> 3);
+
+            n += 4;
+        }
+
+        while ((n < maxMatch) && (src[srcIdx + n] == src[ref + n]))
+            n++;
 
         return n;
     }
