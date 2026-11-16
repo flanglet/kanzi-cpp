@@ -357,7 +357,7 @@ bool ROLZCodec1::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             const int remaining = outputCapacity - dstIdx;
 
             if (remaining <= 0) {
-                input._index = startChunk + srcIdx;
+                input._index += startChunk;
                 success = false;
                 goto End;
             }
@@ -387,7 +387,7 @@ bool ROLZCodec1::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
                 // I/O failure. Preserve the transform's usual false result
                 // for that case, while propagating other bitstream errors.
                 if (os.fail() == true) {
-                    input._index = startChunk + srcIdx;
+                    input._index += startChunk;
                     success = false;
                     goto End;
                 }
@@ -396,7 +396,7 @@ bool ROLZCodec1::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
             }
 
             if (os.fail() == true) {
-                input._index = startChunk + srcIdx;
+                input._index += startChunk;
                 success = false;
                 goto End;
             }
@@ -414,19 +414,20 @@ bool ROLZCodec1::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
 End:
     if (success == true) {
         if (dstIdx + 4 > outputCapacity) {
-            input._index = srcEnd;
+            input._index += srcEnd;
+            success = false;
         }
         else {
             // Emit last literals
             memcpy(&dst[dstIdx], &src[srcEnd], 4);
             dstIdx += 4;
-            input._index = srcEnd + 4;
+            input._index += srcEnd + 4;
         }
     }
 
     output._index += dstIdx;
     delete[] arena;
-    return (input._index == count) && (dstIdx < count);
+    return (success == true) && (dstIdx < count);
 }
 
 
@@ -1003,7 +1004,7 @@ bool ROLZCodec2::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
         const int endChunk = min(startChunk + sizeChunk, srcEnd);
         sizeChunk = endChunk - startChunk;
         re.reset();
-        src = &input._array[startChunk];
+        src = &input._array[input._index + startChunk];
         srcIdx = 0;
 
         // First literals
@@ -1046,9 +1047,10 @@ bool ROLZCodec2::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>
     }
 
     re.dispose();
-    input._index = startChunk - sizeChunk + srcIdx;
+    const int processed = startChunk - sizeChunk + srcIdx;
+    input._index += processed;
     output._index += dstIdx;
-    return (input._index == count) && (dstIdx < count);
+    return (processed == count) && (dstIdx < count);
 }
 
 bool ROLZCodec2::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& output, int count)

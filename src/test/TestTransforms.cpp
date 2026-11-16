@@ -574,6 +574,36 @@ static int testROLZXMalformed()
         return 1;
     }
 
+    // Regression: when ROLZ forward aborts on an incompressible block whose
+    // match-finder step-ahead cursor (srcIdx += 1 + (srcInc >> 6)) lands on
+    // count (e.g. count == 653, where sizeChunk == 649 and srcIdx steps from
+    // 648 to 653), forward() must still return false instead of reporting a
+    // 5-byte header as a valid compressed block.
+    {
+        vector<kanzi::byte> raw(700);
+        uint32 s = 0x12345678u;
+
+        for (size_t i = 0; i < raw.size(); i++) {
+            s = s * 1664525u + 1013904223u;
+            raw[i] = kanzi::byte(s >> 24);
+        }
+
+        Context rolzCtx;
+        rolzCtx.putString("transform", "ROLZ");
+        ROLZCodec rolz(rolzCtx);
+
+        for (int len = 648; len <= 660; len++) {
+            vector<kanzi::byte> dstBuf(size_t(rolz.getMaxEncodedLength(len)));
+            SliceArray<kanzi::byte> in(&raw[0], len, 0);
+            SliceArray<kanzi::byte> out(&dstBuf[0], int(dstBuf.size()), 0);
+
+            if (rolz.forward(in, out, len) != false) {
+                cout << "Incompressible ROLZ block (length " << len << ") should fail" << endl;
+                return 1;
+            }
+        }
+    }
+
     cout << "Malformed ROLZX tests passed" << endl;
     return 0;
 }
