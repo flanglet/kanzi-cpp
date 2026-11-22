@@ -15,6 +15,8 @@ limitations under the License.
 
 #include <cstring>
 #include <stdexcept>
+#include "../Global.hpp"
+#include "../Memory.hpp"
 #include "SRT.hpp"
 
 using namespace kanzi;
@@ -38,22 +40,37 @@ bool SRT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
     uint8 r2s[256] = { 0 };
     const kanzi::byte* src = &input._array[input._index];
 
-    // find first symbols and count occurrences
-    for (int i = 0, b = 0; i < length;) {
-        uint8 c = uint8(src[i]);
-        int j = i + 1;
+    // Count symbol frequencies and recover first-appearance order for initial MTF list
+    Global::computeHistogram(src, length, freqs, true, false);
+    int firstPos[256];
+    uint8 order[256];
+    int nbOrder = 0;
 
-        while ((j < length) && (src[j] == kanzi::byte(c)))
-            j++;
+    for (int c = 0; c < 256; c++) {
+        if (freqs[c] == 0)
+            continue;
 
-        if (freqs[c] == 0) {
-            r2s[b] = c;
-            s2r[c] = uint8(b);
-            b++;
+        const void* p = memchr(src, c, size_t(length));
+        firstPos[c] = int(static_cast<const kanzi::byte*>(p) - src);
+        order[nbOrder++] = uint8(c);
+    }
+
+    for (int i = 1; i < nbOrder; i++) {
+        const uint8 c = order[i];
+        const int pos = firstPos[c];
+        int j = i - 1;
+
+        while ((j >= 0) && (firstPos[order[j]] > pos)) {
+            order[j + 1] = order[j];
+            j--;
         }
 
-        freqs[c] += (j - i);
-        i = j;
+        order[j + 1] = c;
+    }
+
+    for (int i = 0; i < nbOrder; i++) {
+        r2s[i] = order[i];
+        s2r[order[i]] = uint8(i);
     }
 
     // init arrays
@@ -74,7 +91,7 @@ bool SRT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
 
     // encoding
     for (int i = 0; i < length;) {
-        uint8 c = uint8(src[i]);
+        const uint8 c = uint8(src[i]);
         int r = s2r[c];
         int p = buckets[c];
         dst[p] = kanzi::byte(r);
@@ -94,10 +111,37 @@ bool SRT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
 
         i++;
 
-        while ((i < length) && (src[i] == kanzi::byte(c))) {
-            dst[p] = kanzi::byte(0);
-            p++;
-            i++;
+        // Emit runs of identical bytes as zeros in bulk using 64-bit word scan
+        if ((i < length) && (src[i] == kanzi::byte(c))) {
+            int j = i + 1;
+            const uint64 c8 = uint64(c) * 0x0101010101010101ULL;
+
+            while (j + 8 <= length) {
+                const uint64 w = uint64(LittleEndian::readLong64(&src[j])) ^ c8;
+
+                if (w != 0) {
+                    j += Global::trailingZeros(w) >> 3;
+                    break;
+                }
+
+                j += 8;
+            }
+
+            while ((j < length) && (src[j] == kanzi::byte(c)))
+                j++;
+
+            const int run = j - i;
+
+            if (run <= 4) {
+                for (int k = 0; k < run; k++)
+                    dst[p + k] = kanzi::byte(0);
+            }
+            else {
+                memset(&dst[p], 0, size_t(run));
+            }
+
+            p += run;
+            i = j;
         }
 
         buckets[c] = p;
@@ -176,33 +220,84 @@ bool SRT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
     kanzi::byte* dst = &output._array[output._index];
 
     // decoding
-    for (int i = 0; i < length; i++) {
-        dst[i] = kanzi::byte(c);
+    int i = 0;
 
-        if (buckets[c] < bucketEnds[c]) {
-            const uint8 r = uint8(src[buckets[c]]);
-            buckets[c]++;
+    while (i < length) {
+        int pos = buckets[c];
+        const int end = bucketEnds[c];
 
-            if (r == 0)
-                continue;
+        if (pos < end) {
+            if (src[pos] == kanzi::byte(0)) {
+                // Scan consecutive zeros in bucket c and emit runs of c in bulk
+                int run = 1;
 
-        if (r <= 8) {
-            if (r >= 1) r2s[0] = r2s[1];
-            if (r >= 2) r2s[1] = r2s[2];
-            if (r >= 3) r2s[2] = r2s[3];
-            if (r >= 4) r2s[3] = r2s[4];
-            if (r >= 5) r2s[4] = r2s[5];
-            if (r >= 6) r2s[5] = r2s[6];
-            if (r >= 7) r2s[6] = r2s[7];
-            if (r >= 8) r2s[7] = r2s[8];
-        } else {
-            memmove(&r2s[0], &r2s[1], size_t(r));
-        }
+                if ((pos + 1 < end) && (src[pos + 1] == kanzi::byte(0))) {
+                    run = 2;
+
+                    while (pos + run + 8 <= end) {
+                        const uint64 w = uint64(LittleEndian::readLong64(&src[pos + run]));
+
+                        if (w != 0) {
+                            run += Global::trailingZeros(w) >> 3;
+                            break;
+                        }
+
+                        run += 8;
+                    }
+
+                    while ((pos + run < end) && (src[pos + run] == kanzi::byte(0)))
+                        run++;
+                }
+
+                if ((run <= 8) && (i + 8 <= length)) {
+                    const uint64 c8 = uint64(c) * 0x0101010101010101ULL;
+                    memcpy(&dst[i], &c8, 8);
+                }
+                else {
+                    memset(&dst[i], c, size_t(run));
+                }
+
+                i += run;
+                pos += run;
+                buckets[c] = pos;
+
+                if (pos >= end) {
+                    dst[i++] = kanzi::byte(c);
+
+                    if (nbSymbols == 1)
+                        continue;
+
+                    nbSymbols--;
+                    memmove(&r2s[0], &r2s[1], size_t(nbSymbols));
+                    c = r2s[0];
+                    continue;
+                }
+            }
+
+            dst[i++] = kanzi::byte(c);
+            const uint8 r = uint8(src[pos]);
+            buckets[c] = pos + 1;
+
+            if (r <= 8) {
+                if (r >= 1) r2s[0] = r2s[1];
+                if (r >= 2) r2s[1] = r2s[2];
+                if (r >= 3) r2s[2] = r2s[3];
+                if (r >= 4) r2s[3] = r2s[4];
+                if (r >= 5) r2s[4] = r2s[5];
+                if (r >= 6) r2s[5] = r2s[6];
+                if (r >= 7) r2s[6] = r2s[7];
+                if (r >= 8) r2s[7] = r2s[8];
+            }
+            else {
+                memmove(&r2s[0], &r2s[1], size_t(r));
+            }
 
             r2s[r] = c;
             c = r2s[0];
         }
         else {
+            dst[i++] = kanzi::byte(c);
+
             if (nbSymbols == 1)
                 continue;
 
