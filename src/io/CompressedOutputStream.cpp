@@ -101,6 +101,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
     _headless = headerless;
     _initialized = 0;
     _closed = 0;
+    _allocator = nullptr;
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
     _entropyType = EntropyEncoderFactory::getType(entropy.c_str());
     _transformType = TransformFactory<kanzi::byte>::getType(transform.c_str());
@@ -152,7 +153,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
        _buffers[i] = new SliceArray<kanzi::byte>(nullptr, 0, 0);
 
     const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
-    SliceArray<kanzi::byte>::ensureCapacity(*_buffers[0], bufSize);
+    SliceArray<kanzi::byte>::ensureCapacity(*_buffers[0], bufSize, _allocator);
 }
 
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, bool headerless)
@@ -203,6 +204,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
     _initialized = 0;
     _closed = 0;
     _headless = headerless;
+    _allocator = _ctx.getAllocator();
     _obs = new DefaultOutputBitStream(os, DEFAULT_BUFFER_SIZE);
     _ctx.putInt("bsVersion", BITSTREAM_FORMAT_VERSION);
     string entropyCodec = ctx.getString("entropy");
@@ -251,7 +253,7 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
 
     // Allocate first buffer and add padding for incompressible blocks
     const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
-    SliceArray<kanzi::byte>::ensureCapacity(*_buffers[0], bufSize);
+    SliceArray<kanzi::byte>::ensureCapacity(*_buffers[0], bufSize, _allocator);
 }
 
 CompressedOutputStream::~CompressedOutputStream()
@@ -264,7 +266,7 @@ CompressedOutputStream::~CompressedOutputStream()
     }
 
     for (int i = 0; i < 2 * _jobs; i++) {
-        SliceArray<kanzi::byte>::releaseBuffer(*_buffers[i]);
+        SliceArray<kanzi::byte>::releaseBuffer(*_buffers[i], _allocator);
         delete _buffers[i];
     }
 
@@ -471,7 +473,7 @@ void CompressedOutputStream::close()
 
     // Release resources
     for (int i = 0; i < 2 * _jobs; i++) {
-        SliceArray<kanzi::byte>::releaseBuffer(*_buffers[i]);
+        SliceArray<kanzi::byte>::releaseBuffer(*_buffers[i], _allocator);
         _buffers[i]->_index = 0;
     }
 
@@ -509,7 +511,7 @@ void CompressedOutputStream::processBuffer()
     const int bufSize = max(bSize, 65536);
 
     if (_buffers[_bufferId]->_length == 0)
-        SliceArray<kanzi::byte>::ensureCapacity(*_buffers[_bufferId], bufSize);
+        SliceArray<kanzi::byte>::ensureCapacity(*_buffers[_bufferId], bufSize, _allocator);
 
     _buffers[_bufferId]->_index = 0;
 }
@@ -623,7 +625,7 @@ ostream& CompressedOutputStream::put(char c)
             const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
 
             if (_buffers[_bufferId]->_length == 0)
-                SliceArray<kanzi::byte>::ensureCapacity(*_buffers[_bufferId], bufSize);
+                SliceArray<kanzi::byte>::ensureCapacity(*_buffers[_bufferId], bufSize, _allocator);
 
             _buffers[_bufferId]->_index = 0;
         }
@@ -786,7 +788,7 @@ T EncodingTask<T>::run()
                _ctx.putInt("dataType", Global::EXE);
         }
 
-        SliceArray<kanzi::byte>::ensureCapacity(*_buffer, requiredSize);
+        SliceArray<kanzi::byte>::ensureCapacity(*_buffer, requiredSize, _ctx.getAllocator());
 
         // Forward transform (ignore error, encode skipFlags)
         // _data->_length is at least blockLength
@@ -834,16 +836,16 @@ T EncodingTask<T>::run()
         }
 
         const int bufSize = max(CompressedOutputStream::DEFAULT_BUFFER_SIZE,
-                                max(postTransformLength, blockLength + (blockLength >> 3)));
+                                max(postTransformLength + 64, blockLength + (blockLength >> 3)));
 
         if (_data->_length < bufSize) {
             // Rare case where the transform expanded the input or
             // entropy coder may expand size.
-            SliceArray<kanzi::byte>::ensureCapacity(*_data, bufSize);
+            SliceArray<kanzi::byte>::ensureCapacity(*_data, bufSize, _ctx.getAllocator());
         }
 
         _data->_index = 0;
-        growable_ofixedbuf buf(_data);
+        growable_ofixedbuf buf(_data, _ctx.getAllocator());
         ostream os(&buf);
         DefaultOutputBitStream obs(os);
 
@@ -953,7 +955,7 @@ T EncodingTask<T>::run()
             // bypassing the entropy coder for pathological cases.
             if (rawPayloadBytes < entropyPayloadBytes) {
                 _data->_index = 0;
-                growable_ofixedbuf copyBuf(_data);
+                growable_ofixedbuf copyBuf(_data, _ctx.getAllocator());
                 ostream copyOs(&copyBuf);
                 DefaultOutputBitStream copyObs(copyOs);
                 kanzi::byte copyMode = kanzi::byte(mode | CompressedOutputStream::COPY_BLOCK_MASK |

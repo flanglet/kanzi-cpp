@@ -17,6 +17,9 @@ limitations under the License.
 #ifndef knz_SliceArray
 #define knz_SliceArray
 
+#include <cstddef>
+#include "ScratchAllocator.hpp"
+
 namespace kanzi
 {
 
@@ -46,8 +49,8 @@ namespace kanzi
 
       // Utility methods
       static bool isValid(const SliceArray& sa);
-      static void releaseBuffer(SliceArray& sa);
-      static void ensureCapacity(SliceArray& sa, int requiredSize);
+      static void releaseBuffer(SliceArray& sa, ScratchAllocator* allocator = nullptr);
+      static void ensureCapacity(SliceArray& sa, int requiredSize, ScratchAllocator* allocator = nullptr);
    };
 
    template <class T>
@@ -56,25 +59,33 @@ namespace kanzi
    }
 
    template <class T>
-   inline void SliceArray<T>::releaseBuffer(SliceArray& sa) {
-       // Clear pointer and length before freeing so exception unwinds never see stale pointers.
+   inline void SliceArray<T>::releaseBuffer(SliceArray& sa, ScratchAllocator* allocator) {
+       // Save and clear pointer/length before releasing so size-aware allocators
+       // receive the prior capacity and exception unwinds never see stale pointers.
        T* arr = sa._array;
+       const int len = sa._length;
        sa._array = nullptr;
        sa._length = 0;
 
-       if (arr != nullptr)
-           delete[] arr;
+       if (arr != nullptr) {
+           if (allocator != nullptr)
+               allocator->release(reinterpret_cast<byte*>(arr), std::size_t(len) * sizeof(T));
+           else
+               delete[] arr;
+       }
    }
 
    template <class T>
-   inline void SliceArray<T>::ensureCapacity(SliceArray& sa, int requiredSize) {
+   inline void SliceArray<T>::ensureCapacity(SliceArray& sa, int requiredSize, ScratchAllocator* allocator) {
        if ((sa._array != nullptr) && (sa._length >= requiredSize))
            return;
 
-       releaseBuffer(sa);
+       releaseBuffer(sa, allocator);
 
        if (requiredSize > 0) {
-           sa._array = new T[requiredSize];
+           sa._array = (allocator != nullptr)
+               ? reinterpret_cast<T*>(allocator->allocate(std::size_t(requiredSize) * sizeof(T)))
+               : new T[requiredSize];
            sa._length = requiredSize;
        }
    }

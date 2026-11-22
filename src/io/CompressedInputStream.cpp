@@ -90,6 +90,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is,
     _initialized = 0;
     _closed = 0;
     _gcount = 0;
+    _allocator = nullptr;
     _ibs = new DefaultInputBitStream(is, DEFAULT_BUFFER_SIZE);
     _jobs = tasks;
     _outputSize = originalSize;
@@ -140,6 +141,7 @@ CompressedInputStream::CompressedInputStream(InputStream& is, Context& ctx, bool
     : InputStream(is.rdbuf())
     , _ctx(ctx)
     , _parentCtx(&ctx)
+    , _allocator(_ctx.getAllocator())
 {
     int tasks = _ctx.getInt("jobs", 1);
 
@@ -260,7 +262,7 @@ CompressedInputStream::~CompressedInputStream()
     }
 
     for (int i = 0; i < 2 * _jobs; i++) {
-        SliceArray<kanzi::byte>::releaseBuffer(*_buffers[i]);
+        SliceArray<kanzi::byte>::releaseBuffer(*_buffers[i], _allocator);
         delete _buffers[i];
     }
 
@@ -281,7 +283,7 @@ CompressedInputStream::~CompressedInputStream()
 void CompressedInputStream::submitBlock(int bufferId)
 {
     const int blkSize = max(_blockSize + EXTRA_BUFFER_SIZE, _blockSize + (_blockSize >> 4));
-    SliceArray<kanzi::byte>::ensureCapacity(*_buffers[bufferId], blkSize);
+    SliceArray<kanzi::byte>::ensureCapacity(*_buffers[bufferId], blkSize, _allocator);
 
     Context copyCtx(_ctx);
     copyCtx.putLong("tType", _transformType);
@@ -764,7 +766,7 @@ void CompressedInputStream::close()
 
     // Buffer cleanup: force error on any subsequent read attempt
     for (int i = 0; i < 2 * _jobs; i++) {
-        SliceArray<kanzi::byte>::releaseBuffer(*_buffers[i]);
+        SliceArray<kanzi::byte>::releaseBuffer(*_buffers[i], _allocator);
         _buffers[i]->_index = 0;
     }
 }
@@ -1008,7 +1010,7 @@ T DecodingTask<T>::run()
         // - there is one that one task (each with their own local bitstream)
         // - the block is going to be skipped (bits must be consumed)
         if (bufferBlock == true) {
-            SliceArray<kanzi::byte>::ensureCapacity(*_data, int(max(_blockLength, r)));
+            SliceArray<kanzi::byte>::ensureCapacity(*_data, int(max(_blockLength, r)), _ctx.getAllocator());
 
             for (uint i = 0; i < blockHeader._size; i++)
                 _data->_array[i] = blockHeader._bytes[i];
@@ -1143,7 +1145,7 @@ T DecodingTask<T>::run()
         }
 
         const int bufferSize = max(int(_blockLength), preTransformLength + CompressedInputStream::EXTRA_BUFFER_SIZE);
-        SliceArray<kanzi::byte>::ensureCapacity(*_buffer, bufferSize);
+        SliceArray<kanzi::byte>::ensureCapacity(*_buffer, bufferSize, _ctx.getAllocator());
 
         const int savedIdx = _data->_index;
         _ctx.putInt("size", preTransformLength);

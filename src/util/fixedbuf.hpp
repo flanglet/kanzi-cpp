@@ -21,6 +21,7 @@ limitations under the License.
 #include <cstddef>
 #include <cstring>
 #include <streambuf>
+#include "../ScratchAllocator.hpp"
 #include "../SliceArray.hpp"
 #include "../types.hpp"
 
@@ -52,8 +53,10 @@ public:
 
 class growable_ofixedbuf FINAL : public std::streambuf {
 public:
-    explicit growable_ofixedbuf(kanzi::SliceArray<kanzi::byte>* data)
+    explicit growable_ofixedbuf(kanzi::SliceArray<kanzi::byte>* data,
+                                kanzi::ScratchAllocator* allocator = nullptr)
         : _data(data)
+        , _allocator(allocator)
     {
         this->setp(reinterpret_cast<char*>(_data->_array),
                    reinterpret_cast<char*>(_data->_array) + _data->_length);
@@ -87,20 +90,29 @@ protected:
 
 private:
     kanzi::SliceArray<kanzi::byte>* _data;
+    kanzi::ScratchAllocator* _allocator;
 
     void _grow(std::size_t required) {
         const std::size_t current = std::size_t(_data->_length);
         const std::size_t written = std::size_t(this->pptr() - this->pbase());
         const std::size_t grown = current + (std::max)(current >> 2, std::size_t(1) << 20);
         const std::size_t newSize = (std::max)(required, (std::max)(grown, std::size_t(1024)));
-        kanzi::byte* buf = new kanzi::byte[newSize];
+        kanzi::byte* buf = (_allocator != nullptr)
+            ? _allocator->allocate(newSize)
+            : new kanzi::byte[newSize];
 
         if (written > 0)
             std::memcpy(buf, _data->_array, written);
 
-        delete[] _data->_array;
+        kanzi::byte* oldArr = _data->_array;
         _data->_array = buf;
         _data->_length = int(newSize);
+
+        if (_allocator != nullptr)
+            _allocator->release(oldArr, current);
+        else
+            delete[] oldArr;
+
         this->setp(reinterpret_cast<char*>(_data->_array),
                    reinterpret_cast<char*>(_data->_array) + _data->_length);
         this->pbump(int(written));
