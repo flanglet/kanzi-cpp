@@ -76,7 +76,7 @@ namespace kanzi {
 
 
    // return p = 1/(1 + exp(-d)), d scaled by 8 bits, p scaled by 12 bits
-   inline int Global::squash(int d)
+   KANZI_ALWAYS_INLINE int Global::squash(int d)
    {
        if (d >= 2048)
            return 4095;
@@ -84,7 +84,7 @@ namespace kanzi {
        return (d <= -2048) ? 0 : SQUASH[d + 2047];
    }
 
-   inline int Global::stretch(int d)
+   KANZI_ALWAYS_INLINE int Global::stretch(int d)
    {
        return STRETCH[d];
    }
