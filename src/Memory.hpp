@@ -21,6 +21,7 @@ limitations under the License.
     #include <bit>
 #endif
 #include <cstring>
+#include <new>
 #include "types.hpp"
 
 #if defined(USE_INTRINSICS)
@@ -30,6 +31,8 @@ limitations under the License.
         #include <immintrin.h>
     #endif
 #endif
+
+#include "ScratchAllocator.hpp"
 
 
 namespace kanzi {
@@ -347,6 +350,26 @@ static KANZI_ALWAYS_INLINE void memXor16(byte* dst, const byte* x, const byte* y
 #define KANZI_MEM_CP16(dst, src) (::kanzi::memCp16((dst), (src)))
 #define KANZI_MEM_XOR8(dst, x, y) (::kanzi::memXor8((dst), (x), (y)))
 #define KANZI_MEM_XOR16(dst, x, y) (::kanzi::memXor16((dst), (x), (y)))
+
+
+// Default allocator (uses ::operator new / ::operator delete for standard max alignment)
+class HeapScratchAllocator : public kanzi::ScratchAllocator {
+public:
+    kanzi::byte* allocate(std::size_t size)
+    {
+        if (size == 0)
+            return nullptr;
+
+        return static_cast<kanzi::byte*>(::operator new(size));
+    }
+
+    void release(kanzi::byte* data, std::size_t)
+    {
+        if (data != nullptr)
+            ::operator delete(data);
+    }
+};
+
 
 // Detect host endianness
 

@@ -25,6 +25,7 @@ limitations under the License.
 #endif
 
 #include "concurrent.hpp" // definition of CONCURRENCY_ENABLED
+#include "ScratchAllocator.hpp"
 
 namespace kanzi {
 
@@ -50,14 +51,16 @@ namespace kanzi {
    public:
 
    #ifdef CONCURRENCY_ENABLED
-       Context(ThreadPool* p = nullptr) : _pool(p) {}
-       Context(const Context& c) : _map(c._map), _pool(c._pool) {}
-       Context(const Context& c, ThreadPool* p) : _map(c._map), _pool(p) {}
+       Context(ThreadPool* p = nullptr, ScratchAllocator* a = nullptr) : _pool(p), _allocator(a) {}
+       Context(const Context& c) : _map(c._map), _pool(c._pool), _allocator(c._allocator) {}
+       Context(const Context& c, ThreadPool* p) : _map(c._map), _pool(p), _allocator(c._allocator) {}
+       Context(const Context& c, ThreadPool* p, ScratchAllocator* a) : _map(c._map), _pool(p), _allocator(a) {}
        Context& operator=(const Context& c) = default;
    #else
-       Context() {}
-       Context(const Context& c) : _map(c._map) {}
-       Context& operator=(const Context& c) { _map = c._map; return *this; }
+       Context(ScratchAllocator* a = nullptr) : _allocator(a) {}
+       Context(const Context& c) : _map(c._map), _allocator(c._allocator) {}
+       Context(const Context& c, ScratchAllocator* a) : _map(c._map), _allocator(a) {}
+       Context& operator=(const Context& c) { _map = c._map; _allocator = c._allocator; return *this; }
    #endif
 
        ~Context() {}
@@ -73,6 +76,9 @@ namespace kanzi {
        void putLong(const std::string& key, int64 value);
        void putString(const std::string& key, const std::string& value);
 
+       ScratchAllocator* getAllocator() const { return _allocator; }
+       void setAllocator(ScratchAllocator* a) { _allocator = a; }
+
    #ifdef CONCURRENCY_ENABLED
        ThreadPool* getPool() const { return _pool; }
    #endif
@@ -83,6 +89,7 @@ namespace kanzi {
    #ifdef CONCURRENCY_ENABLED
        ThreadPool* _pool;
    #endif
+       ScratchAllocator* _allocator;
    };
 
 
