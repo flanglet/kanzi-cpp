@@ -214,6 +214,7 @@ namespace kanzi {
        std::vector<Listener<Event>*> _listeners;
        std::vector<int> _jobsPerTask;
        Context _ctx;
+       ScratchAllocator* _allocator;
        bool _headless;
 
 #ifdef CONCURRENCY_ENABLED

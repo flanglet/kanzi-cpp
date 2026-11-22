@@ -303,6 +303,7 @@ namespace kanzi
        std::streamsize _gcount;
        Context _ctx;
        Context* _parentCtx; // not owner
+       ScratchAllocator* _allocator;
        bool _headless;
        std::vector<int> _jobsPerTask;
 
