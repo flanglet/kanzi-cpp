@@ -147,11 +147,12 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os,
 
     // Allocate first buffer and add padding for incompressible blocks
     _buffers = new SliceArray<kanzi::byte>*[2 * _jobs];
-    const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
-    _buffers[0] = new SliceArray<kanzi::byte>(new kanzi::byte[bufSize], bufSize, 0);
 
-    for (int i = 1; i < 2 * _jobs; i++)
+    for (int i = 0; i < 2 * _jobs; i++)
        _buffers[i] = new SliceArray<kanzi::byte>(nullptr, 0, 0);
+
+    const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
+    SliceArray<kanzi::byte>::ensureCapacity(*_buffers[0], bufSize);
 }
 
 CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, bool headerless)
@@ -245,12 +246,12 @@ CompressedOutputStream::CompressedOutputStream(OutputStream& os, Context& ctx, b
 
     _buffers = new SliceArray<kanzi::byte>*[2 * _jobs];
 
+    for (int i = 0; i < 2 * _jobs; i++)
+       _buffers[i] = new SliceArray<kanzi::byte>(nullptr, 0, 0);
+
     // Allocate first buffer and add padding for incompressible blocks
     const int bufSize = max(_blockSize + (_blockSize >> 3), DEFAULT_BUFFER_SIZE);
-    _buffers[0] = new SliceArray<kanzi::byte>(new kanzi::byte[bufSize], bufSize, 0);
-
-    for (int i = 1; i < 2 * _jobs; i++)
-       _buffers[i] = new SliceArray<kanzi::byte>(nullptr, 0, 0);
+    SliceArray<kanzi::byte>::ensureCapacity(*_buffers[0], bufSize);
 }
 
 CompressedOutputStream::~CompressedOutputStream()
@@ -263,9 +264,7 @@ CompressedOutputStream::~CompressedOutputStream()
     }
 
     for (int i = 0; i < 2 * _jobs; i++) {
-        if (_buffers[i]->_array != nullptr)
-           delete[] _buffers[i]->_array;
-
+        SliceArray<kanzi::byte>::releaseBuffer(*_buffers[i]);
         delete _buffers[i];
     }
 
@@ -472,11 +471,7 @@ void CompressedOutputStream::close()
 
     // Release resources
     for (int i = 0; i < 2 * _jobs; i++) {
-        if (_buffers[i]->_array != nullptr)
-           delete[] _buffers[i]->_array;
-
-        _buffers[i]->_array = nullptr;
-        _buffers[i]->_length = 0;
+        SliceArray<kanzi::byte>::releaseBuffer(*_buffers[i]);
         _buffers[i]->_index = 0;
     }
 
@@ -513,13 +508,8 @@ void CompressedOutputStream::processBuffer()
     const int bSize = _blockSize + (_blockSize >> 6);
     const int bufSize = max(bSize, 65536);
 
-    if (_buffers[_bufferId]->_length == 0) {
-        if (_buffers[_bufferId]->_array != nullptr)
-            delete[] _buffers[_bufferId]->_array;
-
-        _buffers[_bufferId]->_array = new kanzi::byte[bufSize];
-        _buffers[_bufferId]->_length = bufSize;
-    }
+    if (_buffers[_bufferId]->_length == 0)
+        SliceArray<kanzi::byte>::ensureCapacity(*_buffers[_bufferId], bufSize);
 
     _buffers[_bufferId]->_index = 0;
 }
@@ -632,13 +622,8 @@ ostream& CompressedOutputStream::put(char c)
             // Allocation / Reset logic
             const int bufSize = max(_blockSize + (_blockSize >> 6), 65536);
 
-            if (_buffers[_bufferId]->_length == 0) {
-                 if (_buffers[_bufferId]->_array != nullptr)
-                     delete[] _buffers[_bufferId]->_array;
-
-                _buffers[_bufferId]->_array = new kanzi::byte[bufSize];
-                _buffers[_bufferId]->_length = bufSize;
-            }
+            if (_buffers[_bufferId]->_length == 0)
+                SliceArray<kanzi::byte>::ensureCapacity(*_buffers[_bufferId], bufSize);
 
             _buffers[_bufferId]->_index = 0;
         }
@@ -801,13 +786,7 @@ T EncodingTask<T>::run()
                _ctx.putInt("dataType", Global::EXE);
         }
 
-        if (_buffer->_length < requiredSize) {
-            if (_buffer->_array != nullptr)
-               delete[] _buffer->_array;
-
-            _buffer->_array = new kanzi::byte[requiredSize];
-            _buffer->_length = requiredSize;
-        }
+        SliceArray<kanzi::byte>::ensureCapacity(*_buffer, requiredSize);
 
         // Forward transform (ignore error, encode skipFlags)
         // _data->_length is at least blockLength
@@ -860,9 +839,7 @@ T EncodingTask<T>::run()
         if (_data->_length < bufSize) {
             // Rare case where the transform expanded the input or
             // entropy coder may expand size.
-            delete[] _data->_array;
-            _data->_length = bufSize;
-            _data->_array = new kanzi::byte[_data->_length];
+            SliceArray<kanzi::byte>::ensureCapacity(*_data, bufSize);
         }
 
         _data->_index = 0;

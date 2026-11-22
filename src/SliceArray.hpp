@@ -46,11 +46,37 @@ namespace kanzi
 
       // Utility methods
       static bool isValid(const SliceArray& sa);
+      static void releaseBuffer(SliceArray& sa);
+      static void ensureCapacity(SliceArray& sa, int requiredSize);
    };
 
    template <class T>
    inline bool SliceArray<T>::isValid(const SliceArray& sa) {
        return ((sa._array != nullptr) && (sa._index >= 0) && (sa._length >= 0) && (sa._index <= sa._length));
+   }
+
+   template <class T>
+   inline void SliceArray<T>::releaseBuffer(SliceArray& sa) {
+       // Clear pointer and length before freeing so exception unwinds never see stale pointers.
+       T* arr = sa._array;
+       sa._array = nullptr;
+       sa._length = 0;
+
+       if (arr != nullptr)
+           delete[] arr;
+   }
+
+   template <class T>
+   inline void SliceArray<T>::ensureCapacity(SliceArray& sa, int requiredSize) {
+       if ((sa._array != nullptr) && (sa._length >= requiredSize))
+           return;
+
+       releaseBuffer(sa);
+
+       if (requiredSize > 0) {
+           sa._array = new T[requiredSize];
+           sa._length = requiredSize;
+       }
    }
 
 #if __cplusplus < 201103L
