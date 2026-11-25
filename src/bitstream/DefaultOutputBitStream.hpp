@@ -152,7 +152,8 @@ namespace kanzi
 
        // Flush buffer
        // Round down to byte alignment
-       const uint a = _availBits - (_availBits & 7);
+       const uint padding = _availBits & 7;
+       const uint a = _availBits - padding;
 
        for (int i = 56; i >= int(a); i -= 8) {
           _buffer[_position++] = byte(_current >> uint(i));
@@ -163,6 +164,7 @@ namespace kanzi
 
        _availBits = 64;
        _current = 0;
+       _written -= padding;
        flush();
        _os.clear();
        _os.seekp(std::streampos(pos >> 3));
