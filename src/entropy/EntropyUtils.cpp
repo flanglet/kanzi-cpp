@@ -198,7 +198,7 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
 
     if (abs(delta) <= errThr) {
         // Fast path (small error): just adjust the max frequency
-        freqs[idxMax] -= delta;
+        freqs[idxMax] = uint(int(freqs[idxMax]) - delta);
         return alphabetSize;
     }
 
@@ -214,21 +214,21 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
     // Slow path: spread error across frequencies
     const int inc = (delta < 0) ? 1 : -1;
     delta = abs(delta);
-    int round = 0;
+    uint minFreq = 2;
 
-    while ((++round < 6) && (delta > 0)) {
+    while (delta > 0) {
         int adjustments = 0;
 
         for (int i = 0; i < alphabetSize; i++) {
             const int idx = alphabet[i];
 
-            // Skip small frequencies to avoid big distortion
-            // Do not zero out frequencies
-            if (freqs[idx] <= 2)
+            // Skip small frequencies first to reduce big distortion;
+            // never decrement a present symbol below 1.
+            if (freqs[idx] <= minFreq)
                 continue;
 
             // Adjust frequency
-            freqs[idx] += inc;
+            freqs[idx] = uint(int(freqs[idx]) + inc);
             adjustments++;
             delta--;
 
@@ -236,11 +236,16 @@ int EntropyUtils::normalizeFrequencies(uint freqs[], uint alphabet[], int length
                 break;
         }
 
-        if (adjustments == 0)
-           break;
+        if (adjustments == 0) {
+            const uint floorFreq = (inc == -1) ? 1 : 0;
+
+            if (minFreq <= floorFreq)
+                break;
+
+            minFreq--;
+        }
     }
 
-    freqs[idxMax] = max(freqs[idxMax] - delta, uint(1));
     return alphabetSize;
 }
 
