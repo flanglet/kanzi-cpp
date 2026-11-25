@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef knz_SRT
 #define knz_SRT
 
+#include <climits>
 #include "../Context.hpp"
 #include "../Transform.hpp"
 
@@ -35,9 +36,13 @@ namespace kanzi {
 
        bool inverse(SliceArray<byte>& pSrc, SliceArray<byte>& pDst, int length);
 
-       int getMaxEncodedLength(int srcLen) const { return srcLen + 1024 /* max header size */; }
+       int getMaxEncodedLength(int srcLen) const {
+           return (srcLen > INT_MAX - MAX_HEADER_SIZE) ? INT_MAX : srcLen + MAX_HEADER_SIZE;
+       }
 
    private:
+       static const int MAX_HEADER_SIZE = 256 * 5; // One varint per symbol, up to five bytes each.
+
        static int preprocess(const uint freqs[], uint8 symbols[]);
 
        static int encodeHeader(const uint freqs[], byte dst[]);

@@ -32,7 +32,7 @@ bool SRT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
     if (!SliceArray<kanzi::byte>::isValid(output))
         throw std::invalid_argument("SRT: Invalid output block");
 
-    if (output._length - output._index < getMaxEncodedLength(length))
+    if ((length < 0) || (output._length - output._index - MAX_HEADER_SIZE < length))
         return false;
 
     uint freqs[256] = { 0 };
