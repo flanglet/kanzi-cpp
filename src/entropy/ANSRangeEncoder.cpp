@@ -225,7 +225,7 @@ void ANSRangeEncoder::encodeChunk(const kanzi::byte block[], int end)
             st3 = encodeSymbol(p, st3, _symbols[int(block[i - 3])]);
         }
     }
-    else { // order 1
+    else if (end4 != 0) { // Order 1. A shorter chunk has only raw tail bytes.
         const int quarter = end4 >> 2;
         int i0 = 1 * quarter - 2;
         int i1 = 2 * quarter - 2;
