@@ -29,8 +29,9 @@ InfoPrinter::InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os
     , _type(type)
     , _level(infoLevel)
     , _headerInfo(0)
+    , _firstBlockId(firstBlockId)
 {
-    STORE_ATOMIC(_nextBlockId, firstBlockId);
+    STORE_ATOMIC(_nextBlockId, _firstBlockId);
 
     if (type == InfoPrinter::COMPRESSION) {
         _thresholds[0] = Event::COMPRESSION_START;
@@ -58,8 +59,18 @@ void InfoPrinter::processEvent(const Event& evt)
         return;
     }
 
+    const Event::Type t = evt.getType();
+
+    if (t == _thresholds[0]) {
 #ifdef CONCURRENCY_ENABLED
-    Event::Type t = evt.getType();
+        std::lock_guard<std::mutex> lock(_mutex);
+        _pendingBlocks.clear();
+        STORE_ATOMIC(_nextBlockId, _firstBlockId);
+#endif
+        _blocks.clear();
+    }
+
+#ifdef CONCURRENCY_ENABLED
 
     if (t == Event::BEFORE_TRANSFORM || t == Event::AFTER_TRANSFORM ||
         t == Event::BEFORE_ENTROPY || t == Event::AFTER_ENTROPY) {
@@ -158,9 +169,9 @@ void InfoPrinter::processEventOrdered(const Event& evt)
     string msg;
 
     if (type == _thresholds[1]) {
-        BlockInfo* bi = new BlockInfo();
-        bi->_timeStamp1 = evt.getTime();
-        bi->_stage0Size = evt.getSize();
+        BlockInfo bi;
+        bi._timeStamp1 = evt.getTime();
+        bi._stage0Size = evt.getSize();
         _blocks[blockId] = bi;
 
         if (_level >= 5) {
@@ -168,12 +179,12 @@ void InfoPrinter::processEventOrdered(const Event& evt)
         }
     }
     else if (type == _thresholds[2]) {
-        std::map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
+        std::map<int, BlockInfo>::iterator it = _blocks.find(blockId);
 
         if (it == _blocks.end())
             return;
 
-        BlockInfo& bi = *it->second;
+        BlockInfo& bi = it->second;
         bi._timeStamp2 = evt.getTime();
 
         if (_level >= 5) {
@@ -184,12 +195,12 @@ void InfoPrinter::processEventOrdered(const Event& evt)
         }
     }
     else if (type == _thresholds[3]) {
-        std::map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
+        std::map<int, BlockInfo>::iterator it = _blocks.find(blockId);
 
         if (it == _blocks.end())
            return;
 
-        BlockInfo& bi = *it->second;
+        BlockInfo& bi = it->second;
         bi._timeStamp3 = evt.getTime();
         bi._stage1Size = evt.getSize();
 
@@ -197,12 +208,12 @@ void InfoPrinter::processEventOrdered(const Event& evt)
             msg = evt.toString();
     }
     else if (type == _thresholds[4]) {
-        std::map<int, BlockInfo*>::iterator it = _blocks.find(blockId);
+        std::map<int, BlockInfo>::iterator it = _blocks.find(blockId);
 
         if (it == _blocks.end())
             return;
 
-        const BlockInfo& bi = *it->second;
+        const BlockInfo& bi = it->second;
         stringstream ss;
 
         if (_level >= 5) {
@@ -234,7 +245,6 @@ void InfoPrinter::processEventOrdered(const Event& evt)
             msg = ss.str();
         }
 
-        delete it->second;
         _blocks.erase(it);
     }
     else if ((evt.getType() == Event::AFTER_HEADER_DECODING) && (_level >= 3)) {

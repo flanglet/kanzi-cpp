@@ -42,7 +42,7 @@ namespace kanzi
           WallTimer::TimeData _timeStamp2;
           WallTimer::TimeData _timeStamp3;
 
-       BlockInfo() : _stage0Size(0), _stage1Size(0) {}
+       BlockInfo() : _stage0Size(0), _stage1Size(0), _timeStamp1(), _timeStamp2(), _timeStamp3() {}
    };
 
    class InfoPrinter : public Listener<Event> {
@@ -50,7 +50,6 @@ namespace kanzi
           enum Type { COMPRESSION, DECOMPRESSION, INFO };
 
           InfoPrinter(int infoLevel, InfoPrinter::Type type, OutputStream& os, int firstBlockId = 1);
-          ~InfoPrinter() {}
 
           void processEvent(const Event& evt);
 
@@ -72,13 +71,14 @@ namespace kanzi
           int _headerInfo;
 
           // Per-block state
-          std::map<int, BlockInfo*> _blocks;
+          std::map<int, BlockInfo> _blocks;
 
           Event::Type _thresholds[6];
 #ifdef CONCURRENCY_ENABLED
           std::mutex _mutex;
 #endif
           std::map<int, std::vector<Event> > _pendingBlocks;
+          const int _firstBlockId;
           atomic_int_t _nextBlockId;
    };
 
