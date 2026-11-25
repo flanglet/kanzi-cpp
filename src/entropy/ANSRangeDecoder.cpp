@@ -175,8 +175,8 @@ int ANSRangeDecoder::decodeHeader(uint frequencies[], uint alphabet[])
         // Infer first frequency
         if (scale <= sum) {
             stringstream ss;
-            ss << "Invalid bitstream: incorrect frequency " << frequencies[alphabet[0]];
-            ss << " for symbol '" << alphabet[0] << "' in ANS range decoder";
+            ss << "Invalid bitstream: ANS frequency sum " << sum;
+            ss << " must be less than scale " << scale << " in context " << k;
             throw BitStreamException(ss.str(), BitStreamException::INVALID_STREAM);
         }
 
