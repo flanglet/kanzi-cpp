@@ -61,7 +61,13 @@ ANSRangeEncoder::ANSRangeEncoder(OutputBitStream& bitstream, int order, int chun
     _order = order;
     const int dim = 255 * order + 1;
     _symbols = new ANSEncSymbol[dim * 256];
-    _freqs = new uint[dim * 257]; // freqs[x][256] = total(freqs[x][0..255])
+    try {
+        _freqs = new uint[dim * 257]; // freqs[x][256] = total(freqs[x][0..255])
+    }
+    catch (...) {
+        delete[] _symbols;
+        throw;
+    }
     _buffer = nullptr;
     _bufferSize = 0;
     _logRange = (order == 0) ? logRange : max(logRange - 1, 8);

@@ -57,7 +57,13 @@ ANSRangeDecoder::ANSRangeDecoder(InputBitStream& bitstream, int order, int chunk
     _order = order;
     const int dim = 255 * order + 1;
     _freqs = new uint[dim * 256];
-    _symbols = new ANSDecSymbol[dim * 256];
+    try {
+        _symbols = new ANSDecSymbol[dim * 256];
+    }
+    catch (...) {
+        delete[] _freqs;
+        throw;
+    }
     _packed = nullptr;
     _buffer = nullptr;
     _bufferSize = 0;
