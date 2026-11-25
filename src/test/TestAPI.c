@@ -447,10 +447,12 @@ static void test_basic_decompression(void)
     const char* input  = "Hello Kanzi! Hello Compression!";
     const size_t in_len = strlen(input);
 
-    // Step 1: Compress to temporary file
+    // Step 1: Compress over existing data in the destination file.
     const char* f_name = "tmp_comp.bin";
     FILE* fcomp = fopen(f_name, "wb");
     ASSERT(fcomp != NULL, "failed to open file");
+    ASSERT(fputc(0, fcomp) != EOF, "failed to seed output file");
+    ASSERT(fseek(fcomp, 0, SEEK_SET) == 0, "failed to seek to start of output file");
 
     struct cData cparams;
     memset(&cparams, 0, sizeof(cparams));

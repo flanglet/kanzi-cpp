@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#include <sys/stat.h>
 #include <cstring>
 #include <cstdio>
 #include "Compressor.hpp"
@@ -24,27 +23,6 @@ limitations under the License.
 #include "../transform/TransformFactory.hpp"
 #include "../entropy/EntropyEncoderFactory.hpp"
 
-
-// Note stat64/lstat64 are deprecated on MacOS/Linux
-// Use _FILE_OFFSET_BITS and stat/lstat instead
-
-#ifdef _WIN32
-   #define FSTAT _fstat64
-   #define STAT _stat64
-#else
-   #define _FILE_OFFSET_BITS 64
-   #define FSTAT fstat
-   #define STAT stat
-#endif
-
-
-#ifdef _MSC_VER
-   #include <io.h>
-   #define FILENO(f) _fileno(f)
-#else
-   #include <unistd.h>
-   #define FILENO(f) fileno(f)
-#endif
 
 using namespace std;
 using namespace kanzi;
@@ -195,8 +173,6 @@ KANZI_API int CDECL initCompressor(struct cData* pData, FILE* dst, struct cConte
 
     try {
         // Process params
-        const int fd = FILENO(dst);
-
         if ((memchr(pData->transform, 0, sizeof(pData->transform)) == nullptr) ||
             (memchr(pData->entropy, 0, sizeof(pData->entropy)) == nullptr)) {
             return Error::ERR_INVALID_PARAM;
@@ -218,13 +194,6 @@ KANZI_API int CDECL initCompressor(struct cData* pData, FILE* dst, struct cConte
         pData->blockSize = (pData->blockSize + 15) & -16;
 
         *pCtx = nullptr;
-        size_t fileSize = 0;
-        struct STAT sbuf;
-
-        if ((fd != -1) && (FSTAT(fd, &sbuf) == 0)) {
-           fileSize = size_t(sbuf.st_size);
-        }
-
         // Create compression stream and update context
         fos = new FileOutputStream(dst);
         cctx = new cContext();
@@ -232,7 +201,7 @@ KANZI_API int CDECL initCompressor(struct cData* pData, FILE* dst, struct cConte
         cctx->pCos = new CompressedOutputStream(*fos, pData->jobs,
                                                 pData->entropy, pData->transform,
                                                 int(pData->blockSize), pData->checksum,
-                                                uint64(fileSize),
+                                                0, // The C API receives input incrementally, so its total size is unknown.
 #ifdef CONCURRENCY_ENABLED
                                                 nullptr,
 #endif
