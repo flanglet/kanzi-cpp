@@ -212,8 +212,10 @@ KANZI_API int CDECL decompress(struct dContext* pCtx, unsigned char* dst,
         const uint64 r = pCis->getRead();
         pCis->read((char*)dst, std::streamsize(*outSize));
 
-        if (!pCis->good() && !pCis->eof())
+        if (pCis->bad() || (pCis->fail() && !pCis->eof())) {
+            *outSize = 0;
             return Error::ERR_READ_FILE;
+        }
 
         if (inSize)
             *inSize = size_t(pCis->getRead() - r);

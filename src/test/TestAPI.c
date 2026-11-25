@@ -500,6 +500,10 @@ static void test_basic_decompression(void)
     ASSERT(produced == in_len, "failed to decompress data: invalid data size");
     ASSERT(memcmp(outbuf, input, in_len) == 0, "failed to decompress data: data differ from original");
 
+    produced = sizeof(outbuf);
+    ASSERT(decompress(dctx, outbuf, &readComp, &produced) == 0, "clean EOF should succeed");
+    ASSERT(produced == 0, "clean EOF should produce no data");
+
     ASSERT(disposeDecompressor(&dctx) == 0, "failed to dispose decompressor");
 
     fclose(fdec);
