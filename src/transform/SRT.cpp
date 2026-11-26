@@ -114,7 +114,11 @@ bool SRT::forward(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
         // Emit runs of identical bytes as zeros in bulk using 64-bit word scan
         if ((i < length) && (src[i] == kanzi::byte(c))) {
             int j = i + 1;
+#if (__cplusplus >= 201103L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201103L)
             const uint64 c8 = uint64(c) * 0x0101010101010101ULL;
+#else
+            const uint64 c8 = uint64(c) * ((uint64(0x01010101U) << 32) | uint64(0x01010101U));
+#endif
 
             while (j + 8 <= length) {
                 const uint64 w = uint64(LittleEndian::readLong64(&src[j])) ^ c8;
@@ -250,7 +254,11 @@ bool SRT::inverse(SliceArray<kanzi::byte>& input, SliceArray<kanzi::byte>& outpu
                 }
 
                 if ((run <= 8) && (i + 8 <= length)) {
+#if (__cplusplus >= 201103L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201103L)
                     const uint64 c8 = uint64(c) * 0x0101010101010101ULL;
+#else
+                    const uint64 c8 = uint64(c) * ((uint64(0x01010101U) << 32) | uint64(0x01010101U));
+#endif
                     memcpy(&dst[i], &c8, 8);
                 }
                 else {
