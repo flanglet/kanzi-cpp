@@ -60,6 +60,8 @@ namespace kanzi {
    private:
        static const int MIN_BLOCK_SIZE;
 
+       static int encodeDigram8(const byte* src, byte* dst, int dstIdx, int count, const uint8* map8);
+
        Context* _pCtx;
        bool _onlyDNA;
    };
