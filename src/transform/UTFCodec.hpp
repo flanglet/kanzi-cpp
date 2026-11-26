@@ -17,98 +17,44 @@ limitations under the License.
 #ifndef knz_UTFCodec
 #define knz_UTFCodec
 
+#include <climits>
 #include "../Context.hpp"
 #include "../Transform.hpp"
 
 
 namespace kanzi
 {
-    typedef struct ssUTF
-    {
-        uint32 val;
-        uint32 freq;
-
-        ssUTF(uint32 v, uint32 f) : val(v), freq(f) {}
-
-        friend bool operator< (ssUTF const& lhs, ssUTF const& rhs) {
-            int r;
-            return ((r = int(lhs.freq - rhs.freq)) != 0) ? r > 0 : lhs.val > rhs.val;
-        }
-    } sdUTF;
-
-    
     // UTF8 encoder/decoder
     class UTFCodec FINAL : public Transform<byte> {
     public:
-        UTFCodec() : _pCtx(nullptr), _aliasMap(nullptr) {}
+        UTFCodec() : _pCtx(nullptr), _aliasMap(nullptr), _tokens(nullptr), _tokensCap(0) {}
 
-        UTFCodec(Context& ctx) : _pCtx(&ctx), _aliasMap(nullptr) {}
+        UTFCodec(Context& ctx) : _pCtx(&ctx), _aliasMap(nullptr), _tokens(nullptr), _tokensCap(0) {}
 
-        ~UTFCodec() { delete[] _aliasMap; }
+        ~UTFCodec() { delete[] _aliasMap; delete[] _tokens; }
 
         bool forward(SliceArray<byte>& source, SliceArray<byte>& destination, int length);
 
         bool inverse(SliceArray<byte>& source, SliceArray<byte>& destination, int length);
 
-        int getMaxEncodedLength(int srcLen) const { return srcLen + 8192; }
+        int getMaxEncodedLength(int srcLen) const { return (srcLen > INT_MAX - 8192) ? INT_MAX : srcLen + 8192; }
 
     private:
 
         static const int MIN_BLOCK_SIZE;
-        static const int LEN_SEQ[256];
+        static const uint8 MIN_B1[32];
+        static const uint8 SPAN_B1[32];
+        static const uint64 HIGH_BIT_MASK;
 
         Context* _pCtx;
         uint32* _aliasMap;
-       
-        static bool validate(const byte block[], int count);
+        uint32* _tokens;
+        int _tokensCap;
 
-        static int pack(const byte in[], uint32& out);
+        static uint64 countHighBitBytes(const byte src[], int start, int srcEnd);
 
         static int unpack(uint32 in, byte out[]);
    };
-
-
-    inline int UTFCodec::pack(const byte in[], uint32& out)
-    {   
-       int s;
-
-       switch (int(in[0]) >> 4) {
-       case 0:
-       case 1:
-       case 2:
-       case 3:
-       case 4:
-       case 5:
-       case 6:
-       case 7:
-           out = uint32(in[0]);
-           s = 1;
-           break;
-
-       case 12:
-       case 13:
-           out = (1 << 19) | (uint32(in[0]) << 8) | uint32(in[1]);
-           s = 2;
-           break; 
-
-       case 14:
-           out = (2 << 19) | ((uint32(in[0]) & 0x0F) << 12) | ((uint32(in[1]) & 0x3F) << 6) | (uint32(in[2]) & 0x3F);
-           s = 3;
-           break;
-
-       case 15:
-           out = (4 << 19) | ((uint32(in[0]) & 0x07) << 18) | ((uint32(in[1]) & 0x3F) << 12) | ((uint32(in[2]) & 0x3F) << 6) | (uint32(in[3]) & 0x3F);
-           s = 4;
-           break;
-
-       default:
-           out = 0;
-           s = 0; // signal invalid value
-           break;
-       }
-
-       return s; 
-    }
 
 
     inline int UTFCodec::unpack(uint32 in, byte out[]) 
